@@ -30,10 +30,10 @@ export function Globe({ className = "" }: { className?: string }) {
       glowColor: [0.18, 0.55, 1],
       markers: [
         { location: [-1.286389, 36.817223], size: 0.09 }, // Nairobi
-        { location: [-4.0435, 39.6682], size: 0.06 },     // Mombasa
-        { location: [0.5143, 35.2698], size: 0.05 },      // Eldoret
-        { location: [-0.1022, 34.7617], size: 0.05 },     // Kisumu
-        { location: [-0.4906, 35.6667], size: 0.04 },     // Nakuru
+        { location: [-4.0435, 39.6682], size: 0.06 }, // Mombasa
+        { location: [0.5143, 35.2698], size: 0.05 }, // Eldoret
+        { location: [-0.1022, 34.7617], size: 0.05 }, // Kisumu
+        { location: [-0.4906, 35.6667], size: 0.04 }, // Nakuru
         { location: [1.0, 38.0], size: 0.03 },
       ],
     });
@@ -53,8 +53,12 @@ export function Globe({ className = "" }: { className?: string }) {
 
   return (
     <div className={`relative aspect-square w-full max-w-[640px] mx-auto ${className}`}>
-      <div className="absolute inset-0 rounded-full blur-3xl opacity-60"
-        style={{ background: "radial-gradient(circle, oklch(0.68 0.19 249 / 0.35), transparent 60%)" }} />
+      <div
+        className="absolute inset-0 rounded-full blur-3xl opacity-60"
+        style={{
+          background: "radial-gradient(circle, oklch(0.68 0.19 249 / 0.35), transparent 60%)",
+        }}
+      />
       <canvas
         ref={canvasRef}
         onPointerDown={(e) => {

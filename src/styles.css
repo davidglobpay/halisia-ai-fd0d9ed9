@@ -80,10 +80,10 @@
   --border: oklch(0.98 0.02 240 / 0.12);
   --input: oklch(0.98 0.02 240 / 0.08);
   --ring: oklch(0.68 0.19 249);
-  --electric: oklch(0.68 0.19 249);          /* #2D8CFF */
-  --cyan-glow: oklch(0.87 0.14 208);         /* #62E9FF */
-  --emerald-glow: oklch(0.78 0.18 165);      /* #18E39A */
-  --amber-glow: oklch(0.83 0.15 82);         /* #FFC857 */
+  --electric: oklch(0.68 0.19 249); /* #2D8CFF */
+  --cyan-glow: oklch(0.87 0.14 208); /* #62E9FF */
+  --emerald-glow: oklch(0.78 0.18 165); /* #18E39A */
+  --amber-glow: oklch(0.83 0.15 82); /* #FFC857 */
   --chart-1: oklch(0.68 0.19 249);
   --chart-2: oklch(0.87 0.14 208);
   --chart-3: oklch(0.78 0.18 165);
@@ -120,18 +120,17 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     font-family: var(--font-display);
     letter-spacing: -0.02em;
   }
 }
 
 @utility glass {
-  background: linear-gradient(
-    135deg,
-    oklch(1 0 0 / 0.08) 0%,
-    oklch(1 0 0 / 0.03) 100%
-  );
+  background: linear-gradient(135deg, oklch(1 0 0 / 0.08) 0%, oklch(1 0 0 / 0.03) 100%);
   backdrop-filter: blur(28px) saturate(140%);
   border: 1px solid oklch(1 0 0 / 0.12);
   box-shadow:
@@ -140,11 +139,7 @@
 }
 
 @utility glass-strong {
-  background: linear-gradient(
-    135deg,
-    oklch(1 0 0 / 0.12) 0%,
-    oklch(1 0 0 / 0.05) 100%
-  );
+  background: linear-gradient(135deg, oklch(1 0 0 / 0.12) 0%, oklch(1 0 0 / 0.05) 100%);
   backdrop-filter: blur(40px) saturate(160%);
   border: 1px solid oklch(1 0 0 / 0.16);
   box-shadow:
@@ -160,23 +155,46 @@
 }
 
 @utility text-gradient {
-  background: linear-gradient(135deg, oklch(0.97 0.01 240) 0%, oklch(0.87 0.14 208) 60%, oklch(0.68 0.19 249) 100%);
+  background: linear-gradient(
+    135deg,
+    oklch(0.97 0.01 240) 0%,
+    oklch(0.87 0.14 208) 60%,
+    oklch(0.68 0.19 249) 100%
+  );
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
 @keyframes float-slow {
-  0%, 100% { transform: translateY(0) }
-  50% { transform: translateY(-8px) }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
 }
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 oklch(0.68 0.19 249 / 0.5), 0 0 40px oklch(0.87 0.14 208 / 0.25); }
-  50% { box-shadow: 0 0 0 12px oklch(0.68 0.19 249 / 0), 0 0 60px oklch(0.87 0.14 208 / 0.45); }
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 oklch(0.68 0.19 249 / 0.5),
+      0 0 40px oklch(0.87 0.14 208 / 0.25);
+  }
+  50% {
+    box-shadow:
+      0 0 0 12px oklch(0.68 0.19 249 / 0),
+      0 0 60px oklch(0.87 0.14 208 / 0.45);
+  }
 }
 @keyframes shimmer {
-  0% { background-position: -200% 0 }
-  100% { background-position: 200% 0 }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 @utility animate-float {

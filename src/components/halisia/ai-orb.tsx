@@ -35,9 +35,15 @@ export function AIOrb({ context }: { context?: string }) {
         body: JSON.stringify({ messages: next, context }),
       });
       const data = await res.json();
-      setMessages((m) => [...m, { role: "assistant", content: data.reply ?? "I couldn't reach my brain — try again." }]);
+      setMessages((m) => [
+        ...m,
+        { role: "assistant", content: data.reply ?? "I couldn't reach my brain — try again." },
+      ]);
     } catch {
-      setMessages((m) => [...m, { role: "assistant", content: "Network hiccup. Please try again." }]);
+      setMessages((m) => [
+        ...m,
+        { role: "assistant", content: "Network hiccup. Please try again." },
+      ]);
     } finally {
       setLoading(false);
     }
@@ -63,11 +69,18 @@ export function AIOrb({ context }: { context?: string }) {
         <div className="fixed bottom-6 right-6 z-40 w-[min(400px,calc(100vw-2rem))] h-[min(600px,calc(100vh-3rem))] glass-strong rounded-3xl flex flex-col overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-full animate-pulse-glow"
-                style={{ background: "radial-gradient(circle at 30% 30%, oklch(0.87 0.14 208), oklch(0.68 0.19 249))" }} />
+              <div
+                className="h-8 w-8 rounded-full animate-pulse-glow"
+                style={{
+                  background:
+                    "radial-gradient(circle at 30% 30%, oklch(0.87 0.14 208), oklch(0.68 0.19 249))",
+                }}
+              />
               <div>
                 <div className="text-sm font-semibold">HALISIA Assistant</div>
-                <div className="text-[11px] text-muted-foreground">Explains reasoning · shares confidence</div>
+                <div className="text-[11px] text-muted-foreground">
+                  Explains reasoning · shares confidence
+                </div>
               </div>
             </div>
             <button onClick={() => setOpen(false)} className="p-1.5 rounded-full hover:bg-white/10">

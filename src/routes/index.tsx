@@ -35,7 +35,9 @@ function Landing() {
             transition={{ duration: 0.7 }}
           >
             <div className="inline-flex items-center gap-2 glass rounded-full pl-1 pr-3 py-1 text-xs text-muted-foreground mb-6">
-              <span className="px-2 py-0.5 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground font-medium">Kenya · Beta</span>
+              <span className="px-2 py-0.5 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground font-medium">
+                Kenya · Beta
+              </span>
               Land intelligence, not listings.
             </div>
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-semibold leading-[1.02] tracking-tight">
@@ -45,7 +47,8 @@ function Landing() {
             </h1>
             <p className="mt-6 text-lg text-muted-foreground max-w-xl leading-relaxed">
               HALISIA turns any location into trusted, human-centered intelligence — infrastructure,
-              environmental risk, community context and investment signals, with confidence you can weigh.
+              environmental risk, community context and investment signals, with confidence you can
+              weigh.
             </p>
 
             <div className="mt-8 max-w-xl">
@@ -69,9 +72,15 @@ function Landing() {
             </div>
 
             <div className="mt-10 flex items-center gap-6 text-xs text-muted-foreground">
-              <div className="flex items-center gap-2"><BadgeCheck className="h-4 w-4 text-accent" /> Confidence-scored</div>
-              <div className="flex items-center gap-2"><Users className="h-4 w-4 text-accent" /> Community-verified</div>
-              <div className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-accent" /> Never legal advice</div>
+              <div className="flex items-center gap-2">
+                <BadgeCheck className="h-4 w-4 text-accent" /> Confidence-scored
+              </div>
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-accent" /> Community-verified
+              </div>
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-accent" /> Never legal advice
+              </div>
             </div>
           </motion.div>
 
@@ -90,7 +99,9 @@ function Landing() {
               transition={{ delay: 0.8 }}
             >
               <div className="text-[10px] uppercase tracking-widest text-accent">Nairobi</div>
-              <div className="text-sm mt-0.5">Livable score <span className="font-semibold">82</span></div>
+              <div className="text-sm mt-0.5">
+                Livable score <span className="font-semibold">82</span>
+              </div>
               <div className="text-[11px] text-muted-foreground">High infra · Medium flood</div>
             </motion.div>
             <motion.div
@@ -101,7 +112,9 @@ function Landing() {
               transition={{ delay: 1.1 }}
             >
               <div className="text-[10px] uppercase tracking-widest text-cyan-glow">Mombasa</div>
-              <div className="text-sm mt-0.5">Investment trend <span className="font-semibold">+11% YoY</span></div>
+              <div className="text-sm mt-0.5">
+                Investment trend <span className="font-semibold">+11% YoY</span>
+              </div>
               <div className="text-[11px] text-muted-foreground">Confidence: Medium</div>
             </motion.div>
           </motion.div>
@@ -123,13 +136,17 @@ function Landing() {
       <section id="intelligence" className="py-24 md:py-32">
         <div className="mx-auto max-w-7xl px-4">
           <div className="max-w-2xl">
-            <div className="text-xs uppercase tracking-[0.25em] text-accent">Intelligence Engine</div>
+            <div className="text-xs uppercase tracking-[0.25em] text-accent">
+              Intelligence Engine
+            </div>
             <h2 className="mt-3 text-3xl md:text-5xl font-semibold tracking-tight">
-              Every location, translated into <span className="text-gradient">signals you can trust</span>.
+              Every location, translated into{" "}
+              <span className="text-gradient">signals you can trust</span>.
             </h2>
             <p className="mt-4 text-muted-foreground text-lg">
-              We fuse satellite data, infrastructure records, environmental models and community observations —
-              then let AI structure them into a profile with reasoning and uncertainty.
+              We fuse satellite data, infrastructure records, environmental models and community
+              observations — then let AI structure them into a profile with reasoning and
+              uncertainty.
             </p>
           </div>
 
@@ -160,13 +177,21 @@ function Landing() {
         <div className="mx-auto max-w-7xl px-4">
           <div className="glass-strong rounded-[36px] p-2 relative overflow-hidden">
             <div className="relative rounded-[28px] overflow-hidden border border-white/10 aspect-[16/9] bg-[#0a1735]">
-              <div className="absolute inset-0 opacity-90"
-                style={{ backgroundImage: "radial-gradient(circle at 30% 30%, oklch(0.68 0.19 249 / 0.35), transparent 60%), radial-gradient(circle at 70% 70%, oklch(0.87 0.14 208 / 0.25), transparent 60%)" }} />
-              <div className="absolute inset-0"
+              <div
+                className="absolute inset-0 opacity-90"
                 style={{
-                  backgroundImage: "linear-gradient(oklch(1 0 0 / 0.06) 1px, transparent 1px), linear-gradient(90deg, oklch(1 0 0 / 0.06) 1px, transparent 1px)",
+                  backgroundImage:
+                    "radial-gradient(circle at 30% 30%, oklch(0.68 0.19 249 / 0.35), transparent 60%), radial-gradient(circle at 70% 70%, oklch(0.87 0.14 208 / 0.25), transparent 60%)",
+                }}
+              />
+              <div
+                className="absolute inset-0"
+                style={{
+                  backgroundImage:
+                    "linear-gradient(oklch(1 0 0 / 0.06) 1px, transparent 1px), linear-gradient(90deg, oklch(1 0 0 / 0.06) 1px, transparent 1px)",
                   backgroundSize: "40px 40px",
-                }} />
+                }}
+              />
               <div className="absolute inset-0 grid place-items-center">
                 <Link
                   to="/explore"
@@ -207,18 +232,27 @@ function Landing() {
       <section id="trust" className="py-24 md:py-32">
         <div className="mx-auto max-w-7xl px-4 grid lg:grid-cols-2 gap-12 items-center">
           <div>
-            <div className="text-xs uppercase tracking-[0.25em] text-accent">Trust before automation</div>
+            <div className="text-xs uppercase tracking-[0.25em] text-accent">
+              Trust before automation
+            </div>
             <h2 className="mt-3 text-3xl md:text-5xl font-semibold tracking-tight">
               AI that shows its work — and its uncertainty.
             </h2>
             <p className="mt-4 text-muted-foreground text-lg leading-relaxed">
-              Every score comes with evidence, confidence level and what we don't yet know.
-              We won't tell you a plot is “safe” or “legal” — we'll show you what we found and
-              recommend when to bring in a surveyor, lawyer or local expert.
+              Every score comes with evidence, confidence level and what we don't yet know. We won't
+              tell you a plot is “safe” or “legal” — we'll show you what we found and recommend when
+              to bring in a surveyor, lawyer or local expert.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              {["Reasoning shown", "Confidence Low/Med/High", "Sources cited", "Community-weighted"].map((t) => (
-                <span key={t} className="glass rounded-full px-3.5 py-1.5 text-xs">{t}</span>
+              {[
+                "Reasoning shown",
+                "Confidence Low/Med/High",
+                "Sources cited",
+                "Community-weighted",
+              ].map((t) => (
+                <span key={t} className="glass rounded-full px-3.5 py-1.5 text-xs">
+                  {t}
+                </span>
               ))}
             </div>
           </div>
@@ -252,8 +286,8 @@ function Landing() {
               Start with any place in Kenya.
             </h2>
             <p className="mt-4 text-muted-foreground max-w-xl mx-auto">
-              Free intelligence profile for every location. Premium reports include deeper environmental,
-              legal-context and construction feasibility signals with cited sources.
+              Free intelligence profile for every location. Premium reports include deeper
+              environmental, legal-context and construction feasibility signals with cited sources.
             </p>
             <div className="mt-8 flex items-center justify-center gap-3">
               <Link
@@ -262,7 +296,9 @@ function Landing() {
               >
                 Launch HALISIA <ArrowRight className="h-4 w-4" />
               </Link>
-              <a href="#intelligence" className="glass rounded-full px-6 py-3 text-sm">How it works</a>
+              <a href="#intelligence" className="glass rounded-full px-6 py-3 text-sm">
+                How it works
+              </a>
             </div>
           </div>
         </div>
@@ -281,12 +317,36 @@ function Landing() {
 }
 
 const PILLARS = [
-  { icon: Layers, title: "Infrastructure", body: "Roads, water, power, fibre — mapped and scored with source confidence." },
-  { icon: Waves, title: "Environmental risk", body: "Flooding, terrain, elevation and long-rain vulnerability, modelled per parcel." },
-  { icon: ShieldCheck, title: "Safety & stability", body: "Perceived safety and community context, weighted by contributor reputation." },
-  { icon: Users, title: "Community intelligence", body: "Photos, voice notes, and stories from people who actually live nearby." },
-  { icon: Brain, title: "AI reasoning", body: "Every score explains why. Uncertainty is a first-class citizen." },
-  { icon: MapPinned, title: "Investment signals", body: "Growth corridors, price trend, development pipeline — never as absolute truth." },
+  {
+    icon: Layers,
+    title: "Infrastructure",
+    body: "Roads, water, power, fibre — mapped and scored with source confidence.",
+  },
+  {
+    icon: Waves,
+    title: "Environmental risk",
+    body: "Flooding, terrain, elevation and long-rain vulnerability, modelled per parcel.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Safety & stability",
+    body: "Perceived safety and community context, weighted by contributor reputation.",
+  },
+  {
+    icon: Users,
+    title: "Community intelligence",
+    body: "Photos, voice notes, and stories from people who actually live nearby.",
+  },
+  {
+    icon: Brain,
+    title: "AI reasoning",
+    body: "Every score explains why. Uncertainty is a first-class citizen.",
+  },
+  {
+    icon: MapPinned,
+    title: "Investment signals",
+    body: "Growth corridors, price trend, development pipeline — never as absolute truth.",
+  },
 ];
 
 const TRUST = [
@@ -295,4 +355,3 @@ const TRUST = [
   { stat: "Kenya", label: "first · global by design" },
   { stat: "0", label: "hidden auto-decisions" },
 ];
-
