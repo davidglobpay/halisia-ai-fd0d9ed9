@@ -10,6 +10,7 @@ export function Globe({ className = "" }: { className?: string }) {
   useEffect(() => {
     let phi = 0;
     let width = 0;
+    let raf = 0;
     const onResize = () => canvasRef.current && (width = canvasRef.current.offsetWidth);
     window.addEventListener("resize", onResize);
     onResize();
@@ -35,15 +36,16 @@ export function Globe({ className = "" }: { className?: string }) {
         { location: [-0.4906, 35.6667], size: 0.04 },     // Nakuru
         { location: [1.0, 38.0], size: 0.03 },
       ],
-      onRender: (state) => {
-        if (!pointerInteracting.current) phi += 0.0035;
-        state.phi = phi + r;
-        state.width = width * 2;
-        state.height = width * 2;
-      },
     });
+    const tick = () => {
+      if (pointerInteracting.current === null) phi += 0.0035;
+      globe.update({ phi: phi + r, width: width * 2, height: width * 2 });
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
     setTimeout(() => canvasRef.current && (canvasRef.current.style.opacity = "1"));
     return () => {
+      cancelAnimationFrame(raf);
       globe.destroy();
       window.removeEventListener("resize", onResize);
     };
