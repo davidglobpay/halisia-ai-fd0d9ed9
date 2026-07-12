@@ -1,12 +1,15 @@
 import { Link } from "@tanstack/react-router";
+import halisiaLogo from "@/assets/halisia-logo.png.asset.json";
 
 export function Navbar() {
   return (
     <header className="fixed top-4 left-1/2 z-50 w-[min(1200px,calc(100%-2rem))] -translate-x-1/2 glass rounded-full px-3 py-2 flex items-center justify-between">
       <Link to="/" className="flex items-center gap-2 pl-3">
-        <div className="relative h-7 w-7 rounded-full bg-gradient-to-br from-primary to-accent shadow-[0_0_20px_oklch(0.68_0.19_249/0.6)]">
-          <div className="absolute inset-1 rounded-full border border-white/40" />
-        </div>
+        <img
+          src={halisiaLogo.url}
+          alt="HALISIA.AI"
+          className="h-8 w-8 rounded-full object-cover shadow-[0_0_20px_oklch(0.68_0.19_249/0.5)]"
+        />
         <span className="font-display font-semibold tracking-tight text-[15px]">
           HALISIA<span className="text-accent">·</span>AI
         </span>
