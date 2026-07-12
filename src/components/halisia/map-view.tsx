@@ -1,4 +1,11 @@
+/// <reference types="google.maps" />
 import { useEffect, useRef } from "react";
+
+declare global {
+  interface Window {
+    google: typeof google;
+  }
+}
 
 let loaderPromise: Promise<typeof google> | null = null;
 function loadMaps(): Promise<typeof google> {
