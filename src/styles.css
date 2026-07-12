@@ -184,5 +184,3 @@
 }
 @utility animate-pulse-glow {
   animation: pulse-glow 2.6s ease-in-out infinite;
-  }
-}
