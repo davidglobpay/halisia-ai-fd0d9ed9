@@ -18,8 +18,13 @@ export function SearchBar({
     if (q.trim()) onSearch(q.trim());
   };
   return (
-    <form onSubmit={submit} className={`glass-strong rounded-full flex items-center gap-2 ${size === "lg" ? "px-3 py-2" : "px-2.5 py-1.5"}`}>
-      <div className={`${size === "lg" ? "h-11 w-11" : "h-9 w-9"} rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0`}>
+    <form
+      onSubmit={submit}
+      className={`glass-strong rounded-full flex items-center gap-2 ${size === "lg" ? "px-3 py-2" : "px-2.5 py-1.5"}`}
+    >
+      <div
+        className={`${size === "lg" ? "h-11 w-11" : "h-9 w-9"} rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0`}
+      >
         <Search className={`${size === "lg" ? "h-5 w-5" : "h-4 w-4"} text-accent`} />
       </div>
       <input

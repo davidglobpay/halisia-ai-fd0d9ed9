@@ -7,13 +7,35 @@ export function Navbar() {
         <div className="relative h-7 w-7 rounded-full bg-gradient-to-br from-primary to-accent shadow-[0_0_20px_oklch(0.68_0.19_249/0.6)]">
           <div className="absolute inset-1 rounded-full border border-white/40" />
         </div>
-        <span className="font-display font-semibold tracking-tight text-[15px]">HALISIA<span className="text-accent">·</span>AI</span>
+        <span className="font-display font-semibold tracking-tight text-[15px]">
+          HALISIA<span className="text-accent">·</span>AI
+        </span>
       </Link>
       <nav className="hidden md:flex items-center gap-1 text-sm text-muted-foreground">
-        <Link to="/explore" className="px-3 py-1.5 rounded-full hover:text-foreground hover:bg-white/5 transition">Explore</Link>
-        <a href="#intelligence" className="px-3 py-1.5 rounded-full hover:text-foreground hover:bg-white/5 transition">Intelligence</a>
-        <a href="#trust" className="px-3 py-1.5 rounded-full hover:text-foreground hover:bg-white/5 transition">Trust</a>
-        <a href="#pricing" className="px-3 py-1.5 rounded-full hover:text-foreground hover:bg-white/5 transition">Reports</a>
+        <Link
+          to="/explore"
+          className="px-3 py-1.5 rounded-full hover:text-foreground hover:bg-white/5 transition"
+        >
+          Explore
+        </Link>
+        <a
+          href="#intelligence"
+          className="px-3 py-1.5 rounded-full hover:text-foreground hover:bg-white/5 transition"
+        >
+          Intelligence
+        </a>
+        <a
+          href="#trust"
+          className="px-3 py-1.5 rounded-full hover:text-foreground hover:bg-white/5 transition"
+        >
+          Trust
+        </a>
+        <a
+          href="#pricing"
+          className="px-3 py-1.5 rounded-full hover:text-foreground hover:bg-white/5 transition"
+        >
+          Reports
+        </a>
       </nav>
       <Link
         to="/explore"

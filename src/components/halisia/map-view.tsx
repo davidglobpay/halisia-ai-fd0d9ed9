@@ -19,7 +19,8 @@ function loadMaps(): Promise<typeof google> {
   const key = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
   const channel = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID;
   loaderPromise = new Promise((resolve, reject) => {
-    (window as unknown as { __initHalisiaMap?: () => void }).__initHalisiaMap = () => resolve(window.google);
+    (window as unknown as { __initHalisiaMap?: () => void }).__initHalisiaMap = () =>
+      resolve(window.google);
     const s = document.createElement("script");
     s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&loading=async&callback=__initHalisiaMap&channel=${channel}`;
     s.async = true;
@@ -34,7 +35,11 @@ const HALISIA_STYLE: google.maps.MapTypeStyle[] = [
   { elementType: "geometry", stylers: [{ color: "#0a1735" }] },
   { elementType: "labels.text.stroke", stylers: [{ color: "#0a1735" }] },
   { elementType: "labels.text.fill", stylers: [{ color: "#8ab4ff" }] },
-  { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#c9e1ff" }] },
+  {
+    featureType: "administrative.locality",
+    elementType: "labels.text.fill",
+    stylers: [{ color: "#c9e1ff" }],
+  },
   { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#7fb0ff" }] },
   { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#0f2a3d" }] },
   { featureType: "road", elementType: "geometry", stylers: [{ color: "#132a55" }] },
@@ -87,7 +92,11 @@ export function MapView({
   const mapRef = useRef<google.maps.Map | null>(null);
   const markerRef = useRef<google.maps.Marker | null>(null);
   const clickListenerRef = useRef<google.maps.MapsEventListener | null>(null);
-  const overlayRefs = useRef<Partial<Record<OverlayId, google.maps.MVCObject & { setMap: (m: google.maps.Map | null) => void }>>>({});
+  const overlayRefs = useRef<
+    Partial<
+      Record<OverlayId, google.maps.MVCObject & { setMap: (m: google.maps.Map | null) => void }>
+    >
+  >({});
 
   useEffect(() => {
     let cancelled = false;
@@ -149,7 +158,10 @@ export function MapView({
     const g = window.google;
     if (!m || !g?.maps) return;
     const wanted = new Set(overlays);
-    const ensure = (id: OverlayId, make: () => google.maps.MVCObject & { setMap: (m: google.maps.Map | null) => void }) => {
+    const ensure = (
+      id: OverlayId,
+      make: () => google.maps.MVCObject & { setMap: (m: google.maps.Map | null) => void },
+    ) => {
       const has = overlayRefs.current[id];
       if (wanted.has(id) && !has) {
         const layer = make();
@@ -187,7 +199,10 @@ export function MapView({
 
   return (
     <div className={`relative overflow-hidden ${className}`}>
-      <div ref={el} className={`absolute inset-0 ${theme === "light" ? "bg-[#f5f7fb]" : "bg-[#0a1735]"}`} />
+      <div
+        ref={el}
+        className={`absolute inset-0 ${theme === "light" ? "bg-[#f5f7fb]" : "bg-[#0a1735]"}`}
+      />
       <div className="pointer-events-none absolute inset-0 rounded-[inherit] shadow-[inset_0_0_120px_oklch(0_0_0/0.6)]" />
     </div>
   );

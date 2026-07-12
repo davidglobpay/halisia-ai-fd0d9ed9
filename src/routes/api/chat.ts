@@ -45,12 +45,18 @@ export const Route = createFileRoute("/api/chat")({
             const body = await res.text();
             console.error("AI gateway error", res.status, body);
             if (res.status === 429)
-              return Response.json({ reply: "I'm getting a lot of questions right now — please try again in a moment." });
+              return Response.json({
+                reply: "I'm getting a lot of questions right now — please try again in a moment.",
+              });
             if (res.status === 402)
-              return Response.json({ reply: "AI credits are exhausted. Please top up in Settings → Plans & credits." });
+              return Response.json({
+                reply: "AI credits are exhausted. Please top up in Settings → Plans & credits.",
+              });
             return Response.json({ reply: "I hit a snag reaching my model. Try again shortly." });
           }
-          const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+          const data = (await res.json()) as {
+            choices?: Array<{ message?: { content?: string } }>;
+          };
           const reply = data?.choices?.[0]?.message?.content ?? "I couldn't form a reply.";
           return Response.json({ reply });
         } catch (err) {

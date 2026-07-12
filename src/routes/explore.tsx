@@ -3,11 +3,30 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 import { AIOrb } from "@/components/halisia/ai-orb";
 import { IntelligenceCards } from "@/components/halisia/intelligence-cards";
-import { MapView, type MapLocation, type MapTypeId, type MapTheme, type OverlayId } from "@/components/halisia/map-view";
+import {
+  MapView,
+  type MapLocation,
+  type MapTypeId,
+  type MapTheme,
+  type OverlayId,
+} from "@/components/halisia/map-view";
 import { Navbar } from "@/components/halisia/navbar";
 import { SearchBar } from "@/components/halisia/search-bar";
 import { geocodeAddress } from "@/lib/geocode.functions";
-import { Layers, Satellite, Ruler, Bookmark, MapPinned, Mountain, Sun, Moon, Bike, Bus, TrafficCone, Check } from "lucide-react";
+import {
+  Layers,
+  Satellite,
+  Ruler,
+  Bookmark,
+  MapPinned,
+  Mountain,
+  Sun,
+  Moon,
+  Bike,
+  Bus,
+  TrafficCone,
+  Check,
+} from "lucide-react";
 
 const searchSchema = z.object({ q: z.string().optional() });
 
@@ -15,9 +34,15 @@ export const Route = createFileRoute("/explore")({
   head: () => ({
     meta: [
       { title: "Explore — HALISIA AI" },
-      { name: "description", content: "Search any location in Kenya and see an AI-scored land intelligence dashboard." },
+      {
+        name: "description",
+        content: "Search any location in Kenya and see an AI-scored land intelligence dashboard.",
+      },
       { property: "og:title", content: "Explore — HALISIA AI" },
-      { property: "og:description", content: "AI-scored land intelligence for any place in Kenya." },
+      {
+        property: "og:description",
+        content: "AI-scored land intelligence for any place in Kenya.",
+      },
     ],
   }),
   validateSearch: searchSchema,
@@ -83,9 +108,7 @@ function Explore() {
               void runSearch(query);
             }}
           />
-          {error && (
-            <div className="mt-3 text-sm text-amber-glow">{error}</div>
-          )}
+          {error && <div className="mt-3 text-sm text-amber-glow">{error}</div>}
         </div>
 
         <div className="mt-6 grid lg:grid-cols-[1fr_420px] gap-4">
@@ -98,19 +121,21 @@ function Explore() {
               mapType={mapType}
               theme={theme}
               overlays={overlays}
-              onMapClick={({ lat, lng }) => setLoc({ lat, lng, address: `${lat.toFixed(5)}, ${lng.toFixed(5)}` })}
+              onMapClick={({ lat, lng }) =>
+                setLoc({ lat, lng, address: `${lat.toFixed(5)}, ${lng.toFixed(5)}` })
+              }
               className="rounded-[22px] h-[70vh] min-h-[520px]"
             />
             {/* Overlay controls */}
             <div className="pointer-events-none absolute inset-0 p-4 flex flex-col justify-between">
               <div className="pointer-events-auto flex flex-wrap items-start gap-2 self-start">
                 <div className="flex items-center gap-1 glass rounded-full p-1">
-                  {([
+                  {[
                     { id: "roadmap" as const, icon: MapPinned, label: "Map" },
                     { id: "satellite" as const, icon: Satellite, label: "Satellite" },
                     { id: "hybrid" as const, icon: Layers, label: "Hybrid" },
                     { id: "terrain" as const, icon: Mountain, label: "Terrain" },
-                  ]).map((t) => {
+                  ].map((t) => {
                     const active = mapType === t.id;
                     return (
                       <button
@@ -146,16 +171,18 @@ function Explore() {
                   >
                     <Layers className="h-3.5 w-3.5" /> Layers
                     {overlays.length > 0 && (
-                      <span className="ml-1 rounded-full bg-accent/25 px-1.5 py-0.5 text-[10px] text-accent">{overlays.length}</span>
+                      <span className="ml-1 rounded-full bg-accent/25 px-1.5 py-0.5 text-[10px] text-accent">
+                        {overlays.length}
+                      </span>
                     )}
                   </button>
                   {layersOpen && (
                     <div className="absolute left-0 mt-2 w-56 rounded-2xl glass-strong p-2 shadow-2xl z-10">
-                      {([
+                      {[
                         { id: "traffic" as const, icon: TrafficCone, label: "Traffic" },
                         { id: "transit" as const, icon: Bus, label: "Transit" },
                         { id: "bicycling" as const, icon: Bike, label: "Bicycling" },
-                      ]).map((l) => {
+                      ].map((l) => {
                         const on = overlays.includes(l.id);
                         return (
                           <button
