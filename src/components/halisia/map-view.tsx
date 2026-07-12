@@ -1,6 +1,10 @@
 /// <reference types="google.maps" />
 import { useEffect, useRef } from "react";
 
+export type MapTypeId = "roadmap" | "satellite" | "hybrid" | "terrain";
+export type MapTheme = "dark" | "light";
+export type OverlayId = "traffic" | "transit" | "bicycling";
+
 declare global {
   interface Window {
     google: typeof google;
@@ -42,6 +46,22 @@ const HALISIA_STYLE: google.maps.MapTypeStyle[] = [
   { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#62e9ff" }] },
 ];
 
+// Minimal, clean light palette — Apple-Maps-like.
+const HALISIA_LIGHT: google.maps.MapTypeStyle[] = [
+  { elementType: "geometry", stylers: [{ color: "#f5f7fb" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#3a4a66" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#ffffff" }] },
+  { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#5a6b85" }] },
+  { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#dff0e2" }] },
+  { featureType: "road", elementType: "geometry", stylers: [{ color: "#ffffff" }] },
+  { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#e2e6ee" }] },
+  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#ffd77a" }] },
+  { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#e8b850" }] },
+  { featureType: "transit", elementType: "geometry", stylers: [{ color: "#e6e9f2" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: "#bcdcf5" }] },
+  { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#3d7ba8" }] },
+];
+
 export type MapLocation = { lat: number; lng: number; label?: string };
 
 export function MapView({
@@ -49,15 +69,25 @@ export function MapView({
   zoom = 12,
   marker,
   className = "",
+  mapType = "roadmap",
+  theme = "dark",
+  overlays = [],
+  onMapClick,
 }: {
   center?: MapLocation;
   zoom?: number;
   marker?: MapLocation | null;
   className?: string;
+  mapType?: MapTypeId;
+  theme?: MapTheme;
+  overlays?: OverlayId[];
+  onMapClick?: (loc: { lat: number; lng: number }) => void;
 }) {
   const el = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const markerRef = useRef<google.maps.Marker | null>(null);
+  const clickListenerRef = useRef<google.maps.MapsEventListener | null>(null);
+  const overlayRefs = useRef<Partial<Record<OverlayId, google.maps.MVCObject & { setMap: (m: google.maps.Map | null) => void }>>>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -67,11 +97,13 @@ export function MapView({
         mapRef.current = new g.maps.Map(el.current, {
           center,
           zoom,
-          styles: HALISIA_STYLE,
+          styles: theme === "light" ? HALISIA_LIGHT : HALISIA_STYLE,
+          mapTypeId: mapType,
           disableDefaultUI: true,
           zoomControl: true,
           gestureHandling: "greedy",
-          backgroundColor: "#0a1735",
+          backgroundColor: theme === "light" ? "#f5f7fb" : "#0a1735",
+          tilt: 45,
         });
       })
       .catch((e) => console.error(e));
@@ -86,6 +118,52 @@ export function MapView({
     mapRef.current.panTo(center);
     mapRef.current.setZoom(zoom);
   }, [center.lat, center.lng, zoom]);
+
+  // Theme + mapType
+  useEffect(() => {
+    const m = mapRef.current;
+    if (!m) return;
+    m.setOptions({
+      styles: theme === "light" ? HALISIA_LIGHT : HALISIA_STYLE,
+      backgroundColor: theme === "light" ? "#f5f7fb" : "#0a1735",
+    });
+    m.setMapTypeId(mapType);
+  }, [theme, mapType]);
+
+  // Click to inspect anywhere
+  useEffect(() => {
+    const m = mapRef.current;
+    if (!m || !window.google?.maps) return;
+    clickListenerRef.current?.remove();
+    if (!onMapClick) return;
+    clickListenerRef.current = m.addListener("click", (e: google.maps.MapMouseEvent) => {
+      if (!e.latLng) return;
+      onMapClick({ lat: e.latLng.lat(), lng: e.latLng.lng() });
+    });
+    return () => clickListenerRef.current?.remove();
+  }, [onMapClick]);
+
+  // Built-in Google overlays (traffic/transit/bicycling)
+  useEffect(() => {
+    const m = mapRef.current;
+    const g = window.google;
+    if (!m || !g?.maps) return;
+    const wanted = new Set(overlays);
+    const ensure = (id: OverlayId, make: () => google.maps.MVCObject & { setMap: (m: google.maps.Map | null) => void }) => {
+      const has = overlayRefs.current[id];
+      if (wanted.has(id) && !has) {
+        const layer = make();
+        layer.setMap(m);
+        overlayRefs.current[id] = layer;
+      } else if (!wanted.has(id) && has) {
+        has.setMap(null);
+        delete overlayRefs.current[id];
+      }
+    };
+    ensure("traffic", () => new g.maps.TrafficLayer());
+    ensure("transit", () => new g.maps.TransitLayer());
+    ensure("bicycling", () => new g.maps.BicyclingLayer());
+  }, [overlays]);
 
   useEffect(() => {
     if (!mapRef.current || !window.google?.maps) return;
@@ -109,7 +187,7 @@ export function MapView({
 
   return (
     <div className={`relative overflow-hidden ${className}`}>
-      <div ref={el} className="absolute inset-0 bg-[#0a1735]" />
+      <div ref={el} className={`absolute inset-0 ${theme === "light" ? "bg-[#f5f7fb]" : "bg-[#0a1735]"}`} />
       <div className="pointer-events-none absolute inset-0 rounded-[inherit] shadow-[inset_0_0_120px_oklch(0_0_0/0.6)]" />
     </div>
   );
