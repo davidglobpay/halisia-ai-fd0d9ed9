@@ -13,6 +13,7 @@ import {
 import { Navbar } from "@/components/halisia/navbar";
 import { SearchBar } from "@/components/halisia/search-bar";
 import { geocodeAddress } from "@/lib/geocode.functions";
+import { reverseGeocode } from "@/lib/reverse-geocode.functions";
 import {
   Layers,
   Satellite,
@@ -70,6 +71,19 @@ function Explore() {
   const toggleOverlay = (id: OverlayId) =>
     setOverlays((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
+  const inspectPoint = async (lat: number, lng: number) => {
+    setLoc({ lat, lng, address: `${lat.toFixed(5)}, ${lng.toFixed(5)}` });
+    setLoading(true);
+    try {
+      const res = await reverseGeocode({ data: { lat, lng } });
+      if (res.ok) setLoc({ lat, lng, address: res.address });
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const runSearch = async (query: string) => {
     setLoading(true);
     setError(null);
@@ -121,9 +135,7 @@ function Explore() {
               mapType={mapType}
               theme={theme}
               overlays={overlays}
-              onMapClick={({ lat, lng }) =>
-                setLoc({ lat, lng, address: `${lat.toFixed(5)}, ${lng.toFixed(5)}` })
-              }
+              onMapClick={({ lat, lng }) => void inspectPoint(lat, lng)}
               className="rounded-[22px] h-[70vh] min-h-[520px]"
             />
             {/* Overlay controls */}

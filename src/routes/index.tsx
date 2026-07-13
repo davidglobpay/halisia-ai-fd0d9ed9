@@ -11,7 +11,7 @@ import {
   Sparkles,
   BadgeCheck,
 } from "lucide-react";
-import { Globe } from "@/components/halisia/globe";
+import { Kenya3DMap } from "@/components/halisia/kenya-3d-map";
 import { Navbar } from "@/components/halisia/navbar";
 import { SearchBar } from "@/components/halisia/search-bar";
 import { AIOrb } from "@/components/halisia/ai-orb";
@@ -90,7 +90,14 @@ function Landing() {
             transition={{ duration: 1.2, ease: "easeOut" }}
             className="relative"
           >
-            <Globe />
+            <Kenya3DMap
+              onSelect={({ lat, lng }) =>
+                navigate({
+                  to: "/explore",
+                  search: { q: `${lat.toFixed(5)}, ${lng.toFixed(5)}` },
+                })
+              }
+            />
             {/* Floating callouts */}
             <motion.div
               className="hidden md:block absolute top-6 -left-4 glass rounded-2xl p-3 max-w-[200px] animate-float"
