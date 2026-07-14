@@ -1,7 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { zodValidator, fallback } from "@tanstack/zod-adapter";
-import { z } from "zod";
 import {
   ArrowRight,
   Brain,
@@ -19,17 +17,11 @@ import {
   Star,
 } from "lucide-react";
 import { Kenya3DMap } from "@/components/halisia/kenya-3d-map";
-import { KenyaCounties } from "@/components/halisia/kenya-counties";
 import { Navbar } from "@/components/halisia/navbar";
 import { SearchBar } from "@/components/halisia/search-bar";
 import { AIOrb } from "@/components/halisia/ai-orb";
 
 export const Route = createFileRoute("/")({
-  validateSearch: zodValidator(
-    z.object({
-      compare: fallback(z.string(), "").default(""),
-    }),
-  ),
   component: Landing,
 });
 
