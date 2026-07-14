@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   MapPin,
@@ -10,8 +10,16 @@ import {
   GitCompare,
   Check,
   Sparkles,
+  FileDown,
 } from "lucide-react";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useSearch } from "@tanstack/react-router";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { generateCountyComparisonPdf } from "@/lib/pdf-county-compare";
 
 // Kenya bounding box used to place county pins on the stylized map plane.
 const BOUNDS = { north: 5.5, south: -4.8, east: 42.0, west: 33.9 };
@@ -271,14 +279,54 @@ function pctPos(lat: number, lng: number) {
   return { x, y };
 }
 
-function confidenceDots(level: Confidence) {
+// Human-readable meaning of a confidence level for each metric.
+const CONFIDENCE_MEANING: Record<MetricId, Record<Confidence, string>> = {
+  livability: {
+    High: "Cross-referenced against infrastructure, safety and amenity data with recent updates.",
+    Medium: "Based on partial signals — some inputs are older or modelled.",
+    Low: "Sparse ground data — treat the score as directional.",
+  },
+  population: {
+    High: "Sourced from the latest KNBS census with current administrative boundaries.",
+    Medium: "Interpolated between census cycles or aggregated across sub-counties.",
+    Low: "Estimate only — official figures unavailable at this granularity.",
+  },
+  growth: {
+    High: "Multi-year comparable-plot data with strong sample size.",
+    Medium: "Limited comparable transactions — trend is indicative.",
+    Low: "Very thin market data — growth signal is inferred, not measured.",
+  },
+  water: {
+    High: "Direct utility coverage records and community reports agree.",
+    Medium: "Utility coverage confirmed but service reliability varies by season.",
+    Low: "Little verified data — expect surprises during dry spells.",
+  },
+};
+
+function ConfidenceDots({ level, metric }: { level: Confidence; metric: MetricId }) {
   const n = level === "High" ? 3 : level === "Medium" ? 2 : 1;
+  const label = `${METRICS.find((m) => m.id === metric)?.label} confidence: ${level}`;
   return (
-    <span className="inline-flex items-center gap-0.5" aria-label={`Confidence ${level}`}>
-      {[0, 1, 2].map((i) => (
-        <span key={i} className={`h-1 w-1 rounded-full ${i < n ? "bg-accent" : "bg-white/15"}`} />
-      ))}
-    </span>
+    <Tooltip delayDuration={150}>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          aria-label={`${label}. ${CONFIDENCE_MEANING[metric][level]}`}
+          className="inline-flex items-center gap-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 rounded-full p-0.5"
+        >
+          {[0, 1, 2].map((i) => (
+            <span
+              key={i}
+              className={`h-1 w-1 rounded-full ${i < n ? "bg-accent" : "bg-white/15"}`}
+            />
+          ))}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="max-w-[220px] text-left">
+        <div className="font-semibold">{label}</div>
+        <div className="mt-1 opacity-90">{CONFIDENCE_MEANING[metric][level]}</div>
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -286,9 +334,41 @@ export function KenyaCounties() {
   const [active, setActive] = useState<County | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
   const [metric, setMetric] = useState<MetricId>("livability");
-  const [selected, setSelected] = useState<string[]>([]);
   const [compareOpen, setCompareOpen] = useState(false);
   const navigate = useNavigate();
+  const search = useSearch({ from: "/" });
+
+  // Selected counties are persisted in the URL (?compare=Nairobi,Mombasa)
+  // so a refresh or shared link restores the exact comparison.
+  const selected = useMemo(() => {
+    const raw = search.compare ?? "";
+    if (!raw) return [] as string[];
+    const names = new Set(COUNTIES.map((c) => c.name));
+    return raw
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => names.has(s))
+      .slice(0, 4);
+  }, [search.compare]);
+
+  const setSelected = (updater: (prev: string[]) => string[]) => {
+    const next = updater(selected).slice(0, 4);
+    void navigate({
+      to: "/",
+      search: { compare: next.join(",") },
+      replace: true,
+      resetScroll: false,
+    });
+  };
+
+  // If the URL arrived pre-loaded with a comparison, open the panel.
+  useEffect(() => {
+    if (selected.length > 0 && !compareOpen) {
+      setCompareOpen(true);
+    }
+    // Only run on mount / when URL changes externally.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const focused = hovered ?? active?.name ?? null;
 
@@ -310,11 +390,12 @@ export function KenyaCounties() {
   const selectedCounties = COUNTIES.filter((c) => selected.includes(c.name));
 
   return (
-    <section id="counties" className="py-24 md:py-32 border-t border-white/5">
+    <TooltipProvider delayDuration={150}>
+    <section id="counties" className="py-24 md:py-32 border-t border-white/5" aria-labelledby="counties-heading">
       <div className="mx-auto max-w-7xl px-4">
         <div className="max-w-2xl">
           <div className="text-xs uppercase tracking-[0.25em] text-accent">County intelligence</div>
-          <h2 className="mt-3 text-3xl md:text-5xl font-semibold tracking-tight">
+          <h2 id="counties-heading" className="mt-3 text-3xl md:text-5xl font-semibold tracking-tight">
             Kenya, county by county — <span className="text-gradient">float, click, decide</span>.
           </h2>
           <p className="mt-4 text-muted-foreground text-lg">
@@ -324,8 +405,8 @@ export function KenyaCounties() {
         </div>
 
         {/* Metric filter */}
-        <div className="mt-8 flex flex-wrap items-center gap-2">
-          <div className="inline-flex items-center gap-1 glass rounded-full p-1">
+        <div className="mt-8 flex flex-wrap items-center gap-2" role="toolbar" aria-label="County map controls">
+          <div className="inline-flex items-center gap-1 glass rounded-full p-1" role="radiogroup" aria-label="Displayed metric">
             <span className="pl-3 pr-1 text-[10px] uppercase tracking-widest text-muted-foreground inline-flex items-center gap-1">
               <Filter className="h-3 w-3 text-accent" /> Metric
             </span>
@@ -337,6 +418,8 @@ export function KenyaCounties() {
                   onClick={() => setMetric(m.id)}
                   className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs transition ${on ? "bg-white/15 text-foreground" : "text-muted-foreground hover:text-foreground"}`}
                   data-testid={`metric-${m.id}`}
+                  role="radio"
+                  aria-checked={on}
                 >
                   <m.icon className="h-3.5 w-3.5" /> {m.label}
                 </button>
@@ -349,14 +432,16 @@ export function KenyaCounties() {
               onClick={() => setCompareOpen(true)}
               className="glass-strong rounded-full px-3 py-1.5 text-xs inline-flex items-center gap-1.5 text-foreground"
               data-testid="open-compare"
+              aria-label={`Open comparison panel with ${selected.length} selected counties`}
             >
               <GitCompare className="h-3.5 w-3.5 text-accent" /> Compare {selected.length}
             </button>
           )}
           {selected.length > 0 && (
             <button
-              onClick={() => setSelected([])}
+              onClick={() => setSelected(() => [])}
               className="text-xs text-muted-foreground hover:text-foreground"
+              aria-label="Clear selected counties"
             >
               Clear
             </button>
@@ -418,10 +503,20 @@ export function KenyaCounties() {
                   data-testid={`county-pin-${c.name.toLowerCase()}`}
                   onClick={() => setActive(c)}
                   onDoubleClick={() => toggleSelected(c.name)}
+                  onKeyDown={(e) => {
+                    if (e.key === "c" || e.key === "C" || e.key === "+") {
+                      e.preventDefault();
+                      toggleSelected(c.name);
+                    }
+                  }}
+                  onFocus={() => setHovered(c.name)}
+                  onBlur={() => setHovered(null)}
                   onMouseEnter={() => setHovered(c.name)}
                   onMouseLeave={() => setHovered(null)}
-                  className="absolute -translate-x-1/2 -translate-y-1/2 group"
+                  className="absolute -translate-x-1/2 -translate-y-1/2 group focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-full"
                   style={{ left: `${p.x}%`, top: `${p.y}%` }}
+                  aria-label={`${c.name}, ${c.region}. ${METRICS.find((m) => m.id === metric)?.label} ${metricDisplay(c, metric)}. ${isSelected ? "In comparison." : ""} Press Enter to open details, C to toggle compare.`}
+                  aria-pressed={isSelected}
                   initial={{ opacity: 0, scale: 0.5, y: 8 }}
                   whileInView={{ opacity: 1, scale: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -445,7 +540,7 @@ export function KenyaCounties() {
                     }}
                   />
                   {isSelected && (
-                    <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-accent grid place-items-center">
+                    <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-accent grid place-items-center" aria-hidden>
                       <Check className="h-2 w-2 text-background" />
                     </div>
                   )}
@@ -635,31 +730,56 @@ export function KenyaCounties() {
           <div className="text-xs uppercase tracking-[0.25em] text-accent mb-3">
             All counties · showing {METRICS.find((m) => m.id === metric)?.label}
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          <ul
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 list-none p-0"
+            aria-label="County cards synced with the map"
+          >
             {COUNTIES.map((c) => {
               const isFocused = focused === c.name;
               const isSelected = selected.includes(c.name);
               return (
-                <div
+                <li
                   key={c.name}
                   onMouseEnter={() => setHovered(c.name)}
                   onMouseLeave={() => setHovered(null)}
-                  onClick={() => setActive(c)}
                   data-testid={`county-card-${c.name.toLowerCase()}`}
-                  className={`cursor-pointer rounded-2xl p-4 transition ${isFocused ? "glass-strong ring-1 ring-accent/40 -translate-y-0.5" : "glass hover:bg-white/10"}`}
+                  className={`rounded-2xl p-4 transition ${isFocused ? "glass-strong ring-1 ring-accent/40 -translate-y-0.5" : "glass hover:bg-white/10"}`}
                 >
-                  <div className="flex items-start justify-between">
+                  <button
+                    type="button"
+                    onClick={() => setActive(c)}
+                    onFocus={() => setHovered(c.name)}
+                    onBlur={() => setHovered(null)}
+                    onKeyDown={(e) => {
+                      if (e.key === "c" || e.key === "C" || e.key === "+") {
+                        e.preventDefault();
+                        toggleSelected(c.name);
+                      }
+                    }}
+                    aria-label={`${c.name}, ${c.region}. Open details. Press C to toggle compare.`}
+                    className="w-full flex items-start justify-between text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 rounded-md"
+                  >
                     <div>
                       <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
                         {c.region}
                       </div>
                       <div className="text-sm font-semibold text-foreground">{c.name}</div>
                     </div>
-                    <button
+                    <span
                       onClick={(e) => {
                         e.stopPropagation();
                         toggleSelected(c.name);
                       }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          toggleSelected(c.name);
+                        }
+                      }}
+                      role="checkbox"
+                      aria-checked={isSelected}
+                      tabIndex={0}
                       className={`h-5 w-5 grid place-items-center rounded-md transition ${isSelected ? "bg-accent text-background" : "bg-white/5 text-muted-foreground hover:bg-white/10"}`}
                       aria-label={isSelected ? "Remove from compare" : "Add to compare"}
                     >
@@ -668,13 +788,13 @@ export function KenyaCounties() {
                       ) : (
                         <span className="text-xs">+</span>
                       )}
-                    </button>
-                  </div>
+                    </span>
+                  </button>
                   <div className="mt-3 flex items-end justify-between">
                     <div className="text-lg font-semibold text-foreground">
                       {metricDisplay(c, metric)}
                     </div>
-                    {confidenceDots(c.confidence[metric])}
+                    <ConfidenceDots level={c.confidence[metric]} metric={metric} />
                   </div>
                   <div className="mt-2 h-1 rounded-full bg-white/5 overflow-hidden">
                     <div
@@ -684,10 +804,10 @@ export function KenyaCounties() {
                       }}
                     />
                   </div>
-                </div>
+                </li>
               );
             })}
-          </div>
+          </ul>
         </div>
       </div>
 
@@ -700,6 +820,9 @@ export function KenyaCounties() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 bg-background/70 backdrop-blur-md p-4 md:p-10 flex items-center justify-center"
             onClick={() => setCompareOpen(false)}
+            role="dialog"
+            aria-modal="true"
+            aria-label={`County comparison: ${selectedCounties.map((c) => c.name).join(", ")}`}
           >
             <motion.div
               initial={{ y: 20, opacity: 0 }}
@@ -717,13 +840,27 @@ export function KenyaCounties() {
                   <h3 className="mt-1 text-2xl font-semibold tracking-tight">
                     Comparing {selectedCounties.length} counties
                   </h3>
+                  <div className="mt-1 text-[11px] text-muted-foreground">
+                    Selection is saved in the URL — copy it to share.
+                  </div>
                 </div>
-                <button
-                  onClick={() => setCompareOpen(false)}
-                  className="h-8 w-8 grid place-items-center rounded-full glass text-muted-foreground hover:text-foreground"
-                >
-                  <X className="h-4 w-4" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => generateCountyComparisonPdf(selectedCounties)}
+                    className="glass rounded-full px-3 py-2 text-xs inline-flex items-center gap-1.5 hover:bg-white/10 transition"
+                    data-testid="download-compare-pdf"
+                    aria-label="Download comparison as PDF"
+                  >
+                    <FileDown className="h-3.5 w-3.5 text-accent" /> Download PDF
+                  </button>
+                  <button
+                    onClick={() => setCompareOpen(false)}
+                    className="h-8 w-8 grid place-items-center rounded-full glass text-muted-foreground hover:text-foreground"
+                    aria-label="Close comparison panel"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
 
               <div
@@ -761,7 +898,7 @@ export function KenyaCounties() {
                             <span className="text-sm font-semibold text-foreground">
                               {metricDisplay(c, m.id)}
                             </span>
-                            {confidenceDots(c.confidence[m.id])}
+                            <ConfidenceDots level={c.confidence[m.id]} metric={m.id} />
                           </div>
                         );
                       })}
@@ -799,6 +936,7 @@ export function KenyaCounties() {
         )}
       </AnimatePresence>
     </section>
+    </TooltipProvider>
   );
 }
 
@@ -812,12 +950,14 @@ function Stat({
   suffix,
   icon: Icon,
   confidence,
+  metric,
 }: {
   label: string;
   value: string;
   suffix?: string;
   icon?: React.ComponentType<{ className?: string }>;
   confidence?: Confidence;
+  metric?: MetricId;
 }) {
   return (
     <div className="glass rounded-2xl px-3 py-2.5">
@@ -825,7 +965,7 @@ function Stat({
         <span className="inline-flex items-center gap-1">
           {Icon && <Icon className="h-3 w-3 text-accent" />} {label}
         </span>
-        {confidence && confidenceDots(confidence)}
+        {confidence && metric && <ConfidenceDots level={confidence} metric={metric} />}
       </div>
       <div className="mt-1 text-sm font-semibold text-foreground">
         {value}
