@@ -24,6 +24,7 @@ import {
   Globe2,
   Flame,
   History,
+  Camera,
 } from "lucide-react";
 import { getLocationIntel, type LocationIntel } from "@/lib/location-intel.functions";
 import { generateNarrative, type NarrativeOutput } from "@/lib/ai-narrative.functions";
@@ -32,6 +33,8 @@ import { LeafletLayersMap } from "@/components/halisia/leaflet-layers-map";
 import { CesiumGlobe } from "@/components/halisia/cesium-globe";
 import { HeatmapMap } from "@/components/halisia/heatmap-map";
 import { TimelinePanel } from "@/components/halisia/timeline-panel";
+import { MapillaryView } from "@/components/halisia/mapillary-view";
+import { NotificationsBell } from "@/components/halisia/notifications-bell";
 
 type TabId =
   | "overview"
@@ -42,6 +45,7 @@ type TabId =
   | "heatmap"
   | "globe"
   | "timeline"
+  | "street"
   | "evidence"
   | "ai";
 
@@ -54,6 +58,7 @@ const TABS: Array<{ id: TabId; label: string; icon: React.ElementType }> = [
   { id: "heatmap", label: "Heatmap", icon: Flame },
   { id: "globe", label: "Globe", icon: Globe2 },
   { id: "timeline", label: "Timeline", icon: History },
+  { id: "street", label: "Street", icon: Camera },
   { id: "evidence", label: "Evidence", icon: MapPin },
   { id: "ai", label: "AI", icon: Sparkles },
 ];
