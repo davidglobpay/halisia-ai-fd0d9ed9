@@ -174,69 +174,65 @@ export function KenyaCountyMap() {
   };
 
   // Init map + polygons
-  useEffect(
-    () => {
-      let cancelled = false;
-      setMapReady(false);
-      setMapError(null);
-      loadGoogleMaps()
-        .then((g: typeof google) => {
-          if (cancelled || !mapEl.current) return;
-          setMapError(null);
-          const map = new g.maps.Map(mapEl.current, {
-            center: { lat: 0.5, lng: 37.9 },
-            zoom: 6,
-            mapTypeId: "roadmap",
-            disableDefaultUI: true,
-            zoomControl: true,
-            gestureHandling: "greedy",
-            backgroundColor: "#0a1735",
-            styles: [
-              { elementType: "geometry", stylers: [{ color: "#0a1735" }] },
-              { elementType: "labels.text.fill", stylers: [{ color: "#8ab4ff" }] },
-              { elementType: "labels.text.stroke", stylers: [{ color: "#0a1735" }] },
-              {
-                featureType: "administrative",
-                elementType: "geometry",
-                stylers: [{ visibility: "off" }],
-              },
-              { featureType: "poi", stylers: [{ visibility: "off" }] },
-              { featureType: "road", elementType: "geometry", stylers: [{ color: "#0f2050" }] },
-              { featureType: "water", elementType: "geometry", stylers: [{ color: "#050d24" }] },
-            ],
-          });
-          mapRef.current = map;
-          const data = new g.maps.Data({ map });
-          dataLayerRef.current = data;
-          data.addGeoJson(getCountiesGeoJson());
-
-          data.addListener("mouseover", (e: google.maps.Data.MouseEvent) => {
-            const code = e.feature.getProperty("code") as number;
-            setHoverCode(code);
-          });
-          data.addListener("mouseout", () => setHoverCode(null));
-          data.addListener("click", (e: google.maps.Data.MouseEvent) => {
-            const code = e.feature.getProperty("code") as number;
-            toggleSelect(code);
-            const el = cardRefs.current[code];
-            if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-          });
-          setMapReady(true);
-        })
-        .catch((err: unknown) => {
-          console.error(err);
-          if (!cancelled)
-            setMapError("Couldn't load Google Maps. Check your connection and retry.");
+  useEffect(() => {
+    let cancelled = false;
+    setMapReady(false);
+    setMapError(null);
+    loadGoogleMaps()
+      .then((g: typeof google) => {
+        if (cancelled || !mapEl.current) return;
+        setMapError(null);
+        const map = new g.maps.Map(mapEl.current, {
+          center: { lat: 0.5, lng: 37.9 },
+          zoom: 6,
+          mapTypeId: "roadmap",
+          disableDefaultUI: true,
+          zoomControl: true,
+          gestureHandling: "greedy",
+          backgroundColor: "#0a1735",
+          styles: [
+            { elementType: "geometry", stylers: [{ color: "#0a1735" }] },
+            { elementType: "labels.text.fill", stylers: [{ color: "#8ab4ff" }] },
+            { elementType: "labels.text.stroke", stylers: [{ color: "#0a1735" }] },
+            {
+              featureType: "administrative",
+              elementType: "geometry",
+              stylers: [{ visibility: "off" }],
+            },
+            { featureType: "poi", stylers: [{ visibility: "off" }] },
+            { featureType: "road", elementType: "geometry", stylers: [{ color: "#0f2050" }] },
+            { featureType: "water", elementType: "geometry", stylers: [{ color: "#050d24" }] },
+          ],
         });
-      return () => {
-        cancelled = true;
-        dataLayerRef.current?.setMap(null);
-        dataLayerRef.current = null;
-        mapRef.current = null;
-      };
-    },
-    [loadAttempt],
-  );
+        mapRef.current = map;
+        const data = new g.maps.Data({ map });
+        dataLayerRef.current = data;
+        data.addGeoJson(getCountiesGeoJson());
+
+        data.addListener("mouseover", (e: google.maps.Data.MouseEvent) => {
+          const code = e.feature.getProperty("code") as number;
+          setHoverCode(code);
+        });
+        data.addListener("mouseout", () => setHoverCode(null));
+        data.addListener("click", (e: google.maps.Data.MouseEvent) => {
+          const code = e.feature.getProperty("code") as number;
+          toggleSelect(code);
+          const el = cardRefs.current[code];
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+        });
+        setMapReady(true);
+      })
+      .catch((err: unknown) => {
+        console.error(err);
+        if (!cancelled) setMapError("Couldn't load Google Maps. Check your connection and retry.");
+      });
+    return () => {
+      cancelled = true;
+      dataLayerRef.current?.setMap(null);
+      dataLayerRef.current = null;
+      mapRef.current = null;
+    };
+  }, [loadAttempt]);
 
   // Re-style whenever metric / hover / selection changes.
   useEffect(() => {

@@ -108,7 +108,6 @@ export function MapView({
       Object.values(overlayRefs.current).forEach((layer) => layer?.setMap(null));
       overlayRefs.current = {};
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadAttempt]);
 
   useEffect(() => {

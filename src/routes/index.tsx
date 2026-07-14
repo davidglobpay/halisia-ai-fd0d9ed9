@@ -356,6 +356,14 @@ function Landing() {
         </div>
       </footer>
 
+      <Link
+        to="/explore"
+        className="fixed bottom-6 right-6 z-50 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground px-5 py-3 text-sm font-semibold shadow-[0_8px_32px_-8px_oklch(0.68_0.19_249)] hover:brightness-110 hover:scale-105 transition-all"
+        aria-label="Launch HALISIA app"
+      >
+        Launch app <ArrowRight className="h-4 w-4" />
+      </Link>
+
       <AIOrb />
     </div>
   );

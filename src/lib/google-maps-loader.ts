@@ -47,7 +47,8 @@ export function resetGoogleMapsLoader() {
 }
 
 export function loadGoogleMaps(): Promise<typeof google> {
-  if (typeof window === "undefined") return Promise.reject(new Error("Google Maps needs a browser"));
+  if (typeof window === "undefined")
+    return Promise.reject(new Error("Google Maps needs a browser"));
   if (window.google?.maps) return ensureGoogleMapsReady();
   if (mapsPromise) return mapsPromise;
 
