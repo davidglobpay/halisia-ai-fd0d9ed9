@@ -136,6 +136,8 @@ export function KenyaCountyMap() {
   const [downloading, setDownloading] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
   const [mapError, setMapError] = useState<string | null>(null);
+  const [mapReady, setMapReady] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [copied, setCopied] = useState(false);
   const [showConfidence, setShowConfidence] = useState(false);
   const mapEl = useRef<HTMLDivElement>(null);
@@ -175,8 +177,10 @@ export function KenyaCountyMap() {
   useEffect(
     () => {
       let cancelled = false;
-      loadMaps()
-        .then((g) => {
+      setMapReady(false);
+      setMapError(null);
+      loadGoogleMaps()
+        .then((g: typeof google) => {
           if (cancelled || !mapEl.current) return;
           setMapError(null);
           const map = new g.maps.Map(mapEl.current, {
@@ -217,31 +221,33 @@ export function KenyaCountyMap() {
             const el = cardRefs.current[code];
             if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
           });
+          setMapReady(true);
         })
-        .catch((err) => {
+        .catch((err: unknown) => {
           console.error(err);
           if (!cancelled)
             setMapError("Couldn't load Google Maps. Check your connection and retry.");
         });
       return () => {
         cancelled = true;
+        dataLayerRef.current?.setMap(null);
+        dataLayerRef.current = null;
+        mapRef.current = null;
       };
     },
-    [
-      /* re-run on manual retry via key */
-    ],
+    [loadAttempt],
   );
 
   // Re-style whenever metric / hover / selection changes.
   useEffect(() => {
     const data = dataLayerRef.current;
-    if (!data) return;
+    if (!mapReady || !data) return;
     data.setStyle((feature) => {
       const code = feature.getProperty("code") as number;
       return styleFor(code, hoverCode === code, selected.includes(code));
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [metric, hoverCode, selected, min, max]);
+  }, [mapReady, metric, hoverCode, selected, min, max]);
 
   function toggleSelect(code: number) {
     setSelected((prev) => {
@@ -472,12 +478,8 @@ export function KenyaCountyMap() {
                   <button
                     onClick={() => {
                       setMapError(null);
-                      loaderPromise = null;
-                      // Trigger effect by nudging a state — reuse hover reset.
-                      setHoverCode((h) => (h === -1 ? null : -1));
-                      setTimeout(() => setHoverCode(null), 0);
-                      // Full retry: reload maps by re-running init effect on next mount.
-                      window.location.reload();
+                      resetGoogleMapsLoader();
+                      setLoadAttempt((n) => n + 1);
                     }}
                     className="mt-4 inline-flex items-center gap-2 glass rounded-full px-4 py-2 text-xs hover:bg-white/10"
                   >
