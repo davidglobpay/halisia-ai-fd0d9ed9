@@ -12,6 +12,24 @@ const CALLBACK_NAME = "__halisiaGoogleMapsReady";
 
 let mapsPromise: Promise<typeof google> | null = null;
 
+function waitForMapConstructor(g: typeof google, timeoutMs = 8_000): Promise<typeof google> {
+  return new Promise((resolve, reject) => {
+    const started = Date.now();
+    const check = () => {
+      if (typeof g.maps.Map === "function") {
+        resolve(g);
+        return;
+      }
+      if (Date.now() - started > timeoutMs) {
+        reject(new Error("Google Maps loaded without the Map library"));
+        return;
+      }
+      window.setTimeout(check, 50);
+    };
+    check();
+  });
+}
+
 async function ensureGoogleMapsReady(): Promise<typeof google> {
   const g = window.google;
   if (!g?.maps) throw new Error("Google Maps is not available yet");
@@ -21,11 +39,7 @@ async function ensureGoogleMapsReady(): Promise<typeof google> {
     await g.maps.importLibrary("marker").catch(() => undefined);
   }
 
-  if (typeof g.maps.Map !== "function") {
-    throw new Error("Google Maps loaded without the Map library");
-  }
-
-  return g;
+  return waitForMapConstructor(g);
 }
 
 export function resetGoogleMapsLoader() {
