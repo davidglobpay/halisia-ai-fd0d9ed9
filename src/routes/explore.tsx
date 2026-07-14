@@ -72,6 +72,8 @@ function Explore() {
   const [layersOpen, setLayersOpen] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
+  const [pdfStage, setPdfStage] = useState<string>("");
+  const [geoStage, setGeoStage] = useState<string>("");
 
   const toggleOverlay = (id: OverlayId) =>
     setOverlays((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -79,6 +81,7 @@ function Explore() {
   const inspectPoint = async (lat: number, lng: number) => {
     setLoc({ lat, lng, address: `${lat.toFixed(5)}, ${lng.toFixed(5)}` });
     setLoading(true);
+    setGeoStage("Reverse-geocoding pin…");
     try {
       const res = await reverseGeocode({ data: { lat, lng } });
       if (res.ok) setLoc({ lat, lng, address: res.address });
@@ -86,6 +89,7 @@ function Explore() {
       console.error(e);
     } finally {
       setLoading(false);
+      setGeoStage("");
     }
   };
 
@@ -116,17 +120,30 @@ function Explore() {
   const downloadDossier = async () => {
     setDownloading(true);
     setPdfError(null);
+    setPdfStage("Fetching evidence maps…");
     try {
+      // Micro-stage updates so users see progress rather than a spinner freeze.
+      const stageTimer = window.setTimeout(
+        () => setPdfStage("Rendering intelligence pages…"),
+        1200,
+      );
+      const stageTimer2 = window.setTimeout(
+        () => setPdfStage("Compiling PDF…"),
+        2600,
+      );
       await generateLocationDossier({
         lat: active.lat,
         lng: active.lng,
         address: active.address,
       });
+      window.clearTimeout(stageTimer);
+      window.clearTimeout(stageTimer2);
     } catch (e) {
       console.error(e);
       setPdfError("Couldn't generate the PDF. Please try again.");
     } finally {
       setDownloading(false);
+      setPdfStage("");
     }
   };
 
@@ -246,6 +263,11 @@ function Explore() {
                 </button>
               </div>
             </div>
+            {geoStage && (
+              <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 glass-strong rounded-full px-4 py-2 text-xs text-foreground inline-flex items-center gap-2">
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-accent" /> {geoStage}
+              </div>
+            )}
           </div>
 
           {/* SIDE PANEL */}
@@ -258,7 +280,8 @@ function Explore() {
             >
               {downloading ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Building dossier…
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {pdfStage || "Building dossier…"}
                 </>
               ) : (
                 <>
@@ -266,6 +289,11 @@ function Explore() {
                 </>
               )}
             </button>
+            {downloading && (
+              <div className="mb-2 h-1 w-full rounded-full bg-white/5 overflow-hidden">
+                <div className="h-full w-1/3 bg-gradient-to-r from-primary to-accent animate-[pulse_1.4s_ease-in-out_infinite]" />
+              </div>
+            )}
             {pdfError && <div className="mb-2 text-xs text-amber-glow">{pdfError}</div>}
             <IntelligenceDashboard lat={active.lat} lng={active.lng} address={active.address} />
           </div>
