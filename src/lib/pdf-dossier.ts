@@ -29,10 +29,12 @@ export async function generateLocationDossier(opts: { lat: number; lng: number; 
     fetchStaticMap({ data: { lat, lng, layer: "hybrid", zoom: 16 } }),
     fetchStaticMap({ data: { lat, lng, layer: "satellite", zoom: 17 } }),
   ]);
-  const pick = (i: number): { dataUrl: string | null } =>
-    settled[i].status === "fulfilled"
-      ? { dataUrl: (settled[i] as PromiseFulfilledResult<{ dataUrl: string }>).value.dataUrl }
-      : { dataUrl: null };
+  const pick = (i: number): { dataUrl: string | null } => {
+    const s = settled[i];
+    if (s.status !== "fulfilled") return { dataUrl: null };
+    const v = s.value as { ok?: boolean; dataUrl?: string };
+    return { dataUrl: v.ok && v.dataUrl ? v.dataUrl : null };
+  };
   const base = pick(0);
   const terrain = pick(1);
   const hybrid = pick(2);
