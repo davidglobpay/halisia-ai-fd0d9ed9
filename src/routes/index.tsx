@@ -25,8 +25,7 @@ import { SearchBar } from "@/components/halisia/search-bar";
 import { AIOrb } from "@/components/halisia/ai-orb";
 
 export const Route = createFileRoute("/")({
-  validateSearch: (s) =>
-    z.object({ compare: fallback(z.string(), "").default("") }).parse(s),
+  validateSearch: (s) => z.object({ compare: fallback(z.string(), "").default("") }).parse(s),
   component: Landing,
 });
 

@@ -23,9 +23,9 @@ import {
 
 type County = { code: number; name: string; lat: number; lng: number };
 
-const COUNTIES: County[] = (
-  countiesData as { features: { properties: County }[] }
-).features.map((f) => f.properties);
+const COUNTIES: County[] = (countiesData as { features: { properties: County }[] }).features.map(
+  (f) => f.properties,
+);
 
 const METRIC_ICONS: Record<CountyMetric, typeof Activity> = {
   livability: Activity,
@@ -105,9 +105,7 @@ function ConfidenceDots({
       {[0, 1, 2].map((i) => (
         <span
           key={i}
-          className={`h-1.5 w-1.5 rounded-full ${
-            i < n ? "bg-accent" : "bg-white/15"
-          }`}
+          className={`h-1.5 w-1.5 rounded-full ${i < n ? "bg-accent" : "bg-white/15"}`}
         />
       ))}
     </span>
@@ -143,10 +141,7 @@ export function KenyaCountyMap() {
   }, [selected]);
 
   // Values for the current metric (used to normalise ramp).
-  const values = useMemo(
-    () => COUNTIES.map((c) => metricValue(c.code, metric)),
-    [metric],
-  );
+  const values = useMemo(() => COUNTIES.map((c) => metricValue(c.code, metric)), [metric]);
   const min = Math.min(...values);
   const max = Math.max(...values);
 
@@ -181,7 +176,11 @@ export function KenyaCountyMap() {
             { elementType: "geometry", stylers: [{ color: "#0a1735" }] },
             { elementType: "labels.text.fill", stylers: [{ color: "#8ab4ff" }] },
             { elementType: "labels.text.stroke", stylers: [{ color: "#0a1735" }] },
-            { featureType: "administrative", elementType: "geometry", stylers: [{ visibility: "off" }] },
+            {
+              featureType: "administrative",
+              elementType: "geometry",
+              stylers: [{ visibility: "off" }],
+            },
             { featureType: "poi", stylers: [{ visibility: "off" }] },
             { featureType: "road", elementType: "geometry", stylers: [{ color: "#0f2050" }] },
             { featureType: "water", elementType: "geometry", stylers: [{ color: "#050d24" }] },
@@ -208,7 +207,6 @@ export function KenyaCountyMap() {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Re-style whenever metric / hover / selection changes.
@@ -249,10 +247,7 @@ export function KenyaCountyMap() {
 
   // Card grid — sorted by current metric desc.
   const sortedCounties = useMemo(
-    () =>
-      [...COUNTIES].sort(
-        (a, b) => metricValue(b.code, metric) - metricValue(a.code, metric),
-      ),
+    () => [...COUNTIES].sort((a, b) => metricValue(b.code, metric) - metricValue(a.code, metric)),
     [metric],
   );
 
@@ -272,8 +267,7 @@ export function KenyaCountyMap() {
               id="counties-heading"
               className="mt-3 text-3xl md:text-5xl font-semibold tracking-tight"
             >
-              47 counties.{" "}
-              <span className="text-gradient">Real boundaries, live signals.</span>
+              47 counties. <span className="text-gradient">Real boundaries, live signals.</span>
             </h2>
             <p className="mt-4 text-muted-foreground text-lg">
               Hover to explore, click to compare up to four counties side-by-side. Every metric
@@ -399,9 +393,7 @@ export function KenyaCountyMap() {
                                 {METRIC_LABELS[mk].split(" ")[0]}
                               </span>
                               <span className="inline-flex items-center gap-1.5">
-                                <span className="font-medium">
-                                  {formatMetric(mk, m[mk])}
-                                </span>
+                                <span className="font-medium">{formatMetric(mk, m[mk])}</span>
                                 <ConfidenceDots
                                   level={confidence(code, mk)}
                                   metric={mk}
