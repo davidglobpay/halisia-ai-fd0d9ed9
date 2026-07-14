@@ -4,12 +4,10 @@ import L from "leaflet";
 import "leaflet.heat";
 import type { LocationIntel } from "@/lib/location-intel.functions";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type HeatLayer = any;
-
-function HeatLayer({ points }: { points: Array<[number, number, number]> }) {
+function HeatOverlay({ points }: { points: Array<[number, number, number]> }) {
   const map = useMap();
-  const ref = useRef<HeatLayer | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ref = useRef<any>(null);
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const layer = (L as any).heatLayer(points, {
@@ -72,7 +70,7 @@ export default function HeatmapMap({
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
           attribution="© OpenStreetMap · © CARTO"
         />
-        {points.length > 0 && <HeatLayer points={points} />}
+        {points.length > 0 && <HeatOverlay points={points} />}
         <Marker position={[lat, lng]}>
           <Popup>
             <div className="text-xs">
