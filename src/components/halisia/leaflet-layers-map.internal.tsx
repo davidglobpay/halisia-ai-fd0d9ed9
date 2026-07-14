@@ -13,7 +13,13 @@ const DefaultIcon = L.icon({
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
-const BASEMAPS: Array<{ id: string; name: string; url: string; attribution: string; max?: number }> = [
+const BASEMAPS: Array<{
+  id: string;
+  name: string;
+  url: string;
+  attribution: string;
+  max?: number;
+}> = [
   {
     id: "osm",
     name: "OpenStreetMap",

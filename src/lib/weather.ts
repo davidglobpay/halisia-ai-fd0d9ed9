@@ -34,7 +34,11 @@ export interface OpenMeteoResponse {
   elevation: number;
 }
 
-export async function fetchOpenMeteo(lat: number, lng: number, signal?: AbortSignal): Promise<OpenMeteoResponse> {
+export async function fetchOpenMeteo(
+  lat: number,
+  lng: number,
+  signal?: AbortSignal,
+): Promise<OpenMeteoResponse> {
   const url = new URL("https://api.open-meteo.com/v1/forecast");
   url.searchParams.set("latitude", String(lat));
   url.searchParams.set("longitude", String(lng));

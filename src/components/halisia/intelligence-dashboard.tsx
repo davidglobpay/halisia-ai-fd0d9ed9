@@ -190,9 +190,9 @@ export function IntelligenceDashboard({
           <div className="space-y-2">
             <LeafletLayersMap lat={lat} lng={lng} label={address} />
             <div className="text-[11px] text-muted-foreground px-1">
-              Multi-source GIS: Esri satellite, OpenStreetMap, Carto dark/light, OpenTopoMap
-              relief, OpenRailway & OpenSeaMap overlays. Toggle basemaps and overlays via the top
-              right control.
+              Multi-source GIS: Esri satellite, OpenStreetMap, Carto dark/light, OpenTopoMap relief,
+              OpenRailway & OpenSeaMap overlays. Toggle basemaps and overlays via the top right
+              control.
             </div>
           </div>
         )}

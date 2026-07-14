@@ -54,7 +54,10 @@ export function WeatherPanel({ lat, lng }: { lat: number; lng: number }) {
         areaStyle: {
           color: {
             type: "linear",
-            x: 0, y: 0, x2: 0, y2: 1,
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
             colorStops: [
               { offset: 0, color: "rgba(125,211,252,0.45)" },
               { offset: 1, color: "rgba(125,211,252,0)" },
@@ -87,7 +90,10 @@ export function WeatherPanel({ lat, lng }: { lat: number; lng: number }) {
         itemStyle: {
           color: {
             type: "linear",
-            x: 0, y: 0, x2: 0, y2: 1,
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
             colorStops: [
               { offset: 0, color: "#38bdf8" },
               { offset: 1, color: "#0ea5e9" },
@@ -111,7 +117,8 @@ export function WeatherPanel({ lat, lng }: { lat: number; lng: number }) {
             {Math.round(current.temperature_2m)}°C
           </div>
           <div className="text-xs text-muted-foreground pb-1.5">
-            Feels {Math.round(current.apparent_temperature)}° · {wmoDescription(current.weather_code)}
+            Feels {Math.round(current.apparent_temperature)}° ·{" "}
+            {wmoDescription(current.weather_code)}
           </div>
         </div>
         <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
@@ -163,8 +170,8 @@ export function WeatherPanel({ lat, lng }: { lat: number; lng: number }) {
         </ul>
       </div>
       <div className="text-[11px] text-muted-foreground px-1">
-        Live from Open-Meteo · no API key required. Elevation model {q.data.elevation.toFixed(0)} m ·
-        timezone {q.data.timezone}.
+        Live from Open-Meteo · no API key required. Elevation model {q.data.elevation.toFixed(0)} m
+        · timezone {q.data.timezone}.
       </div>
     </div>
   );
