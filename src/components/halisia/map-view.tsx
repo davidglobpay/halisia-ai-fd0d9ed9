@@ -1,35 +1,11 @@
 /// <reference types="google.maps" />
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { AlertTriangle, Loader2, RefreshCw } from "lucide-react";
+import { loadGoogleMaps, resetGoogleMapsLoader } from "@/lib/google-maps-loader";
 
 export type MapTypeId = "roadmap" | "satellite" | "hybrid" | "terrain";
 export type MapTheme = "dark" | "light";
 export type OverlayId = "traffic" | "transit" | "bicycling";
-
-declare global {
-  interface Window {
-    google: typeof google;
-  }
-}
-
-let loaderPromise: Promise<typeof google> | null = null;
-function loadMaps(): Promise<typeof google> {
-  if (typeof window === "undefined") return Promise.reject(new Error("SSR"));
-  if (window.google?.maps) return Promise.resolve(window.google);
-  if (loaderPromise) return loaderPromise;
-  const key = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
-  const channel = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID;
-  loaderPromise = new Promise((resolve, reject) => {
-    (window as unknown as { __initHalisiaMap?: () => void }).__initHalisiaMap = () =>
-      resolve(window.google);
-    const s = document.createElement("script");
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&loading=async&callback=__initHalisiaMap&channel=${channel}`;
-    s.async = true;
-    s.defer = true;
-    s.onerror = () => reject(new Error("Failed to load Google Maps"));
-    document.head.appendChild(s);
-  });
-  return loaderPromise;
-}
 
 const HALISIA_STYLE: google.maps.MapTypeStyle[] = [
   { elementType: "geometry", stylers: [{ color: "#0a1735" }] },
