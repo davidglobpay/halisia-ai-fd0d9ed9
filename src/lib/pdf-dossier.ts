@@ -19,11 +19,7 @@ const SCORES = [
   { key: 10, label: "Construction readiness", note: "Soil & survey data limited" },
 ];
 
-export async function generateLocationDossier(opts: {
-  lat: number;
-  lng: number;
-  address: string;
-}) {
+export async function generateLocationDossier(opts: { lat: number; lng: number; address: string }) {
   const { lat, lng, address } = opts;
 
   // Fetch evidence maps in parallel
@@ -67,7 +63,11 @@ export async function generateLocationDossier(opts: {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
   doc.setTextColor(...muted);
-  doc.text(`${lat.toFixed(5)}, ${lng.toFixed(5)}  ·  Generated ${new Date().toLocaleString()}`, M, 100);
+  doc.text(
+    `${lat.toFixed(5)}, ${lng.toFixed(5)}  ·  Generated ${new Date().toLocaleString()}`,
+    M,
+    100,
+  );
 
   // Livability panel
   doc.setFillColor(255, 255, 255);
@@ -107,7 +107,11 @@ export async function generateLocationDossier(opts: {
   // Footer
   doc.setFontSize(8);
   doc.setTextColor(...muted);
-  doc.text("Informational only — verify title, survey and zoning with a licensed professional.", M, H - 30);
+  doc.text(
+    "Informational only — verify title, survey and zoning with a licensed professional.",
+    M,
+    H - 30,
+  );
   doc.text("halisia.ai", W - M - 40, H - 30);
 
   // ---------- Page 2: Intelligence scores ----------
@@ -166,10 +170,26 @@ export async function generateLocationDossier(opts: {
   const imgH = 180;
 
   const evidence = [
-    { img: terrain.dataUrl, title: "Terrain & slope", desc: "Contour shading indicates gradient — steeper slopes drain faster but complicate construction." },
-    { img: hybrid.dataUrl, title: "Built environment", desc: "Hybrid view overlays road network on satellite imagery to reveal built density and access." },
-    { img: sat.dataUrl, title: "High-resolution satellite", desc: "Direct visual of vegetation, water bodies and hard-surface coverage around the parcel." },
-    { img: base.dataUrl, title: "Drainage & flood context", desc: "Blue water features and low-lying land around the marker suggest natural drainage paths." },
+    {
+      img: terrain.dataUrl,
+      title: "Terrain & slope",
+      desc: "Contour shading indicates gradient — steeper slopes drain faster but complicate construction.",
+    },
+    {
+      img: hybrid.dataUrl,
+      title: "Built environment",
+      desc: "Hybrid view overlays road network on satellite imagery to reveal built density and access.",
+    },
+    {
+      img: sat.dataUrl,
+      title: "High-resolution satellite",
+      desc: "Direct visual of vegetation, water bodies and hard-surface coverage around the parcel.",
+    },
+    {
+      img: base.dataUrl,
+      title: "Drainage & flood context",
+      desc: "Blue water features and low-lying land around the marker suggest natural drainage paths.",
+    },
   ];
 
   evidence.forEach((e, i) => {
@@ -228,7 +248,11 @@ export async function generateLocationDossier(opts: {
 
   drawFooter(doc, W, H, M, muted);
 
-  const safe = address.replace(/[^a-z0-9]+/gi, "-").toLowerCase().slice(0, 50) || "location";
+  const safe =
+    address
+      .replace(/[^a-z0-9]+/gi, "-")
+      .toLowerCase()
+      .slice(0, 50) || "location";
   doc.save(`halisia-dossier-${safe}.pdf`);
 }
 
@@ -250,15 +274,13 @@ function drawHeader(
   doc.text(title, M, 75);
 }
 
-function drawFooter(
-  doc: jsPDF,
-  W: number,
-  H: number,
-  M: number,
-  muted: [number, number, number],
-) {
+function drawFooter(doc: jsPDF, W: number, H: number, M: number, muted: [number, number, number]) {
   doc.setFontSize(8);
   doc.setTextColor(...muted);
-  doc.text("Informational only — verify title, survey and zoning with a licensed professional.", M, H - 30);
+  doc.text(
+    "Informational only — verify title, survey and zoning with a licensed professional.",
+    M,
+    H - 30,
+  );
   doc.text("halisia.ai", W - M - 40, H - 30);
 }

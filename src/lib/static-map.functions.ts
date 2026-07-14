@@ -38,7 +38,11 @@ export const fetchStaticMap = createServerFn({ method: "POST" })
 
     const mapType = MAP_TYPES[data.layer];
     const styleParts = STYLES[data.layer]
-      ? STYLES[data.layer].split("&style=").filter(Boolean).map(s => `style=${s}`).join("&")
+      ? STYLES[data.layer]
+          .split("&style=")
+          .filter(Boolean)
+          .map((s) => `style=${s}`)
+          .join("&")
       : "";
 
     const params = new URLSearchParams({
