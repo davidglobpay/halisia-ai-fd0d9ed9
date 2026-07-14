@@ -341,13 +341,13 @@ export function KenyaCounties() {
   // Selected counties are persisted in the URL (?compare=Nairobi,Mombasa)
   // so a refresh or shared link restores the exact comparison.
   const selected = useMemo(() => {
-    const raw = search.compare ?? "";
+    const raw: string = (search as { compare?: string }).compare ?? "";
     if (!raw) return [] as string[];
     const names = new Set(COUNTIES.map((c) => c.name));
     return raw
       .split(",")
-      .map((s) => s.trim())
-      .filter((s) => names.has(s))
+      .map((s: string) => s.trim())
+      .filter((s: string) => names.has(s))
       .slice(0, 4);
   }, [search.compare]);
 
@@ -593,13 +593,9 @@ export function KenyaCounties() {
                 <div className="mt-2 pt-2 border-t border-white/10 flex items-center justify-between text-muted-foreground">
                   <span>Confidence</span>
                   <span className="inline-flex items-center gap-2">
-                    <span className="inline-flex items-center gap-0.5">
-                      {confidenceDots("Low")}
-                    </span>
+                    <ConfidenceDots level="Low" metric={metric} />
                     <span>Low</span>
-                    <span className="inline-flex items-center gap-0.5">
-                      {confidenceDots("High")}
-                    </span>
+                    <ConfidenceDots level="High" metric={metric} />
                     <span>High</span>
                   </span>
                 </div>
