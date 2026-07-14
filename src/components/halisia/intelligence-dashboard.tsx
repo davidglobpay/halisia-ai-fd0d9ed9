@@ -21,13 +21,29 @@ import {
   ArrowRight,
   CloudSun,
   Layers as LayersIcon,
+  Globe2,
+  Flame,
+  History,
 } from "lucide-react";
 import { getLocationIntel, type LocationIntel } from "@/lib/location-intel.functions";
 import { generateNarrative, type NarrativeOutput } from "@/lib/ai-narrative.functions";
 import { WeatherPanel } from "@/components/halisia/weather-panel";
 import { LeafletLayersMap } from "@/components/halisia/leaflet-layers-map";
+import { CesiumGlobe } from "@/components/halisia/cesium-globe";
+import { HeatmapMap } from "@/components/halisia/heatmap-map";
+import { TimelinePanel } from "@/components/halisia/timeline-panel";
 
-type TabId = "overview" | "weather" | "environment" | "amenities" | "layers" | "evidence" | "ai";
+type TabId =
+  | "overview"
+  | "weather"
+  | "environment"
+  | "amenities"
+  | "layers"
+  | "heatmap"
+  | "globe"
+  | "timeline"
+  | "evidence"
+  | "ai";
 
 const TABS: Array<{ id: TabId; label: string; icon: React.ElementType }> = [
   { id: "overview", label: "Overview", icon: Activity },
@@ -35,6 +51,9 @@ const TABS: Array<{ id: TabId; label: string; icon: React.ElementType }> = [
   { id: "environment", label: "Environment", icon: Leaf },
   { id: "amenities", label: "Amenities", icon: Store },
   { id: "layers", label: "GIS", icon: LayersIcon },
+  { id: "heatmap", label: "Heatmap", icon: Flame },
+  { id: "globe", label: "Globe", icon: Globe2 },
+  { id: "timeline", label: "Timeline", icon: History },
   { id: "evidence", label: "Evidence", icon: MapPin },
   { id: "ai", label: "AI", icon: Sparkles },
 ];
@@ -196,6 +215,25 @@ export function IntelligenceDashboard({
             </div>
           </div>
         )}
+        {tab === "heatmap" && (
+          <div className="space-y-2">
+            <HeatmapMap lat={lat} lng={lng} intel={intelQ.data} />
+            <div className="text-[11px] text-muted-foreground px-1">
+              Density heatmap of nearby amenities (Google Places). Warmer colours = more services
+              concentrated within a short walk.
+            </div>
+          </div>
+        )}
+        {tab === "globe" && (
+          <div className="space-y-2">
+            <CesiumGlobe lat={lat} lng={lng} label={address} />
+            <div className="text-[11px] text-muted-foreground px-1">
+              True 3D globe rendered with CesiumJS. Drag to orbit, scroll to zoom, right-click to
+              tilt.
+            </div>
+          </div>
+        )}
+        {tab === "timeline" && <TimelinePanel lat={lat} lng={lng} />}
         {tab === "evidence" && <EvidenceTab intel={intelQ.data} />}
         {tab === "ai" && (
           <AITab narrative={narrativeQ.data} loading={narrativeQ.isLoading || intelQ.isLoading} />

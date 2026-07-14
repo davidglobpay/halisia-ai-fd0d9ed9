@@ -86,3 +86,36 @@ export function wmoDescription(code: number): string {
   };
   return map[code] ?? "—";
 }
+
+// -------- Historical archive (past 12 months) --------
+// https://open-meteo.com/en/docs/historical-weather-api
+export interface OpenMeteoArchive {
+  daily: {
+    time: string[];
+    temperature_2m_max: number[];
+    temperature_2m_min: number[];
+    precipitation_sum: number[];
+  };
+}
+
+export async function fetchOpenMeteoArchive(
+  lat: number,
+  lng: number,
+  signal?: AbortSignal,
+): Promise<OpenMeteoArchive> {
+  const end = new Date();
+  end.setDate(end.getDate() - 5); // archive lags ~5 days
+  const start = new Date(end);
+  start.setFullYear(start.getFullYear() - 1);
+  const iso = (d: Date) => d.toISOString().slice(0, 10);
+  const url = new URL("https://archive-api.open-meteo.com/v1/archive");
+  url.searchParams.set("latitude", String(lat));
+  url.searchParams.set("longitude", String(lng));
+  url.searchParams.set("start_date", iso(start));
+  url.searchParams.set("end_date", iso(end));
+  url.searchParams.set("daily", "temperature_2m_max,temperature_2m_min,precipitation_sum");
+  url.searchParams.set("timezone", "auto");
+  const res = await fetch(url.toString(), { signal });
+  if (!res.ok) throw new Error(`Open-Meteo archive ${res.status}`);
+  return (await res.json()) as OpenMeteoArchive;
+}
