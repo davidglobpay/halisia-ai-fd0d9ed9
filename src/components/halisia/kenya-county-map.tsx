@@ -149,16 +149,21 @@ function ConfidenceDots({
 export function KenyaCountyMap() {
   const [metric, setMetric] = useState<CountyMetric>("livability");
   const [hoverCode, setHoverCode] = useState<number | null>(null);
-  const [selected, setSelected] = useState<number[]>(() => {
-    if (typeof window === "undefined") return [];
+  const [selected, setSelected] = useState<number[]>([]);
+  const [hydrated, setHydrated] = useState(false);
+
+  // Hydrate ?compare=… from URL after mount so SSR markup matches the client.
+  useEffect(() => {
+    setHydrated(true);
     const raw = new URLSearchParams(window.location.search).get("compare");
-    if (!raw) return [];
-    return raw
+    if (!raw) return;
+    const initial = raw
       .split(",")
       .map((n) => parseInt(n, 10))
       .filter((n) => Number.isFinite(n) && COUNTIES.some((c) => c.code === n))
       .slice(0, 4);
-  });
+    if (initial.length) setSelected(initial);
+  }, []);
   const [downloading, setDownloading] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
   const [mapError, setMapError] = useState<string | null>(null);
@@ -172,11 +177,12 @@ export function KenyaCountyMap() {
   // Sync ?compare=… in URL without triggering a router re-render.
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (!hydrated) return;
     const url = new URL(window.location.href);
     if (selected.length) url.searchParams.set("compare", selected.join(","));
     else url.searchParams.delete("compare");
     window.history.replaceState({}, "", url.toString());
-  }, [selected]);
+  }, [selected, hydrated]);
 
   // Values for the current metric (used to normalise ramp).
   const values = useMemo(() => COUNTIES.map((c) => metricValue(c.code, metric)), [metric]);
