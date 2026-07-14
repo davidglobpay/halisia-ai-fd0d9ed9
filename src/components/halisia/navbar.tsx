@@ -4,7 +4,7 @@ import halisiaLogo from "@/assets/halisia-logo.png.asset.json";
 export function Navbar() {
   return (
     <header className="fixed top-0 inset-x-0 z-50 w-full glass-strong border-b border-white/10 px-6 py-3 flex items-center justify-between">
-      <Link to="/" className="flex items-center gap-2.5">
+      <Link to="/" search={{ compare: "" }} className="flex items-center gap-2.5">
         <img
           src={halisiaLogo.url}
           alt="HALISIA.AI"

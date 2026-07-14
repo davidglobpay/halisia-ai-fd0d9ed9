@@ -49,18 +49,25 @@ type TabId =
   | "evidence"
   | "ai";
 
-const TABS: Array<{ id: TabId; label: string; icon: React.ElementType }> = [
-  { id: "overview", label: "Overview", icon: Activity },
-  { id: "weather", label: "Weather", icon: CloudSun },
-  { id: "environment", label: "Environment", icon: Leaf },
-  { id: "amenities", label: "Amenities", icon: Store },
-  { id: "layers", label: "GIS", icon: LayersIcon },
-  { id: "heatmap", label: "Heatmap", icon: Flame },
-  { id: "globe", label: "Globe", icon: Globe2 },
-  { id: "timeline", label: "Timeline", icon: History },
-  { id: "street", label: "Street", icon: Camera },
-  { id: "evidence", label: "Evidence", icon: MapPin },
-  { id: "ai", label: "AI", icon: Sparkles },
+type WaveId = "core" | "wave1" | "wave2" | "wave3";
+const WAVE_META: Record<WaveId, { label: string; hint: string }> = {
+  core: { label: "Core", hint: "Base intelligence" },
+  wave1: { label: "Wave 1", hint: "GIS · Weather · Charts" },
+  wave2: { label: "Wave 2", hint: "3D · Heatmap · Timeline" },
+  wave3: { label: "Wave 3", hint: "Street · Alerts" },
+};
+const TABS: Array<{ id: TabId; label: string; icon: React.ElementType; wave: WaveId }> = [
+  { id: "overview", label: "Overview", icon: Activity, wave: "core" },
+  { id: "environment", label: "Environment", icon: Leaf, wave: "core" },
+  { id: "amenities", label: "Amenities", icon: Store, wave: "core" },
+  { id: "evidence", label: "Evidence", icon: MapPin, wave: "core" },
+  { id: "ai", label: "AI", icon: Sparkles, wave: "core" },
+  { id: "weather", label: "Weather", icon: CloudSun, wave: "wave1" },
+  { id: "layers", label: "GIS", icon: LayersIcon, wave: "wave1" },
+  { id: "globe", label: "Globe", icon: Globe2, wave: "wave2" },
+  { id: "heatmap", label: "Heatmap", icon: Flame, wave: "wave2" },
+  { id: "timeline", label: "Timeline", icon: History, wave: "wave2" },
+  { id: "street", label: "Street", icon: Camera, wave: "wave3" },
 ];
 
 function aqiTone(aqi: number | null | undefined) {
@@ -183,25 +190,45 @@ export function IntelligenceDashboard({
         )}
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-1 glass rounded-full p-1">
-        {TABS.map((t) => {
-          const active = t.id === tab;
-          const Icon = t.icon;
+      {/* Tabs grouped by wave */}
+      <div className="space-y-1.5">
+        {(Object.keys(WAVE_META) as WaveId[]).map((wave) => {
+          const items = TABS.filter((t) => t.wave === wave);
+          if (!items.length) return null;
+          const meta = WAVE_META[wave];
           return (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-full px-2 py-1.5 text-[11px] transition ${
-                active
-                  ? "bg-white/15 text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              data-testid={`tab-${t.id}`}
-            >
-              <Icon className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">{t.label}</span>
-            </button>
+            <div key={wave} className="glass rounded-2xl p-1.5">
+              <div className="flex items-center justify-between px-1.5 pt-0.5 pb-1">
+                <span className="text-[9px] uppercase tracking-[0.18em] text-accent font-semibold">
+                  {meta.label}
+                </span>
+                <span className="text-[9px] uppercase tracking-widest text-muted-foreground">
+                  {meta.hint}
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                {items.map((t) => {
+                  const active = t.id === tab;
+                  const Icon = t.icon;
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => setTab(t.id)}
+                      className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-full px-2 py-1.5 text-[11px] transition ${
+                        active
+                          ? "bg-white/15 text-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                      data-testid={`tab-${t.id}`}
+                      aria-label={`${meta.label} · ${t.label}`}
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">{t.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           );
         })}
       </div>
