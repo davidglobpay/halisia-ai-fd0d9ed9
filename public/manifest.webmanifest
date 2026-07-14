@@ -1,0 +1,26 @@
+{
+  "name": "HALISIA AI — Land Intelligence",
+  "short_name": "HALISIA AI",
+  "description": "AI-powered land intelligence for Kenya. Understand any place before you buy, build, or invest.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#050d24",
+  "theme_color": "#050d24",
+  "categories": ["productivity", "utilities", "business"],
+  "icons": [
+    {
+      "src": "/__l5e/assets-v1/eaf782f4-aa1d-41af-b976-26132704ef49/halisia-logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/__l5e/assets-v1/eaf782f4-aa1d-41af-b976-26132704ef49/halisia-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
