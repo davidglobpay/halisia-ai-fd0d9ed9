@@ -248,6 +248,7 @@ export function IntelligenceDashboard({
           </div>
         )}
         {tab === "timeline" && <TimelinePanel lat={lat} lng={lng} />}
+        {tab === "street" && <MapillaryView lat={lat} lng={lng} address={address} />}
         {tab === "evidence" && <EvidenceTab intel={intelQ.data} />}
         {tab === "ai" && (
           <AITab narrative={narrativeQ.data} loading={narrativeQ.isLoading || intelQ.isLoading} />
