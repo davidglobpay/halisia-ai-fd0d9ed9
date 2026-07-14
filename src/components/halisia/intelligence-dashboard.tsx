@@ -134,8 +134,17 @@ export function IntelligenceDashboard({
       {/* Header card */}
       <div className="glass-strong rounded-2xl p-4 relative overflow-hidden">
         <div className="absolute -top-16 -right-16 h-40 w-40 rounded-full blur-3xl opacity-40 bg-gradient-to-br from-primary to-accent" />
-        <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-          Location intelligence
+        <div className="flex items-start gap-2">
+          <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+            Location intelligence
+          </div>
+          <div className="ml-auto -mt-1 -mr-1">
+            <NotificationsBell
+              lat={lat}
+              lng={lng}
+              aqi={intelQ.data?.airQuality?.universalAqi ?? null}
+            />
+          </div>
         </div>
         <div className="mt-1 text-lg font-semibold leading-tight line-clamp-2">{address}</div>
         <div className="text-xs text-muted-foreground mt-0.5">
