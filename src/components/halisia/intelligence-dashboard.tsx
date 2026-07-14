@@ -19,16 +19,22 @@ import {
   ShieldAlert,
   CheckCircle2,
   ArrowRight,
+  CloudSun,
+  Layers as LayersIcon,
 } from "lucide-react";
 import { getLocationIntel, type LocationIntel } from "@/lib/location-intel.functions";
 import { generateNarrative, type NarrativeOutput } from "@/lib/ai-narrative.functions";
+import { WeatherPanel } from "@/components/halisia/weather-panel";
+import { LeafletLayersMap } from "@/components/halisia/leaflet-layers-map";
 
-type TabId = "overview" | "environment" | "amenities" | "evidence" | "ai";
+type TabId = "overview" | "weather" | "environment" | "amenities" | "layers" | "evidence" | "ai";
 
 const TABS: Array<{ id: TabId; label: string; icon: React.ElementType }> = [
   { id: "overview", label: "Overview", icon: Activity },
+  { id: "weather", label: "Weather", icon: CloudSun },
   { id: "environment", label: "Environment", icon: Leaf },
   { id: "amenities", label: "Amenities", icon: Store },
+  { id: "layers", label: "GIS", icon: LayersIcon },
   { id: "evidence", label: "Evidence", icon: MapPin },
   { id: "ai", label: "AI", icon: Sparkles },
 ];
