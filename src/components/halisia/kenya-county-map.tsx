@@ -190,7 +190,7 @@ export function KenyaCountyMap() {
         mapRef.current = map;
         const data = new g.maps.Data({ map });
         dataLayerRef.current = data;
-        data.addGeoJson(countiesData as unknown as google.maps.Data.GeoJson);
+        data.addGeoJson(countiesData as unknown as object);
 
         data.addListener("mouseover", (e: google.maps.Data.MouseEvent) => {
           const code = e.feature.getProperty("code") as number;
