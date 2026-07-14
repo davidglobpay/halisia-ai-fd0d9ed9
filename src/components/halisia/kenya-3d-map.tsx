@@ -1,6 +1,7 @@
 /// <reference types="google.maps" />
 import { useEffect, useRef, useState } from "react";
-import { MapPin, Loader2 } from "lucide-react";
+import { AlertTriangle, MapPin, Loader2, RefreshCw } from "lucide-react";
+import { loadGoogleMaps, resetGoogleMapsLoader } from "@/lib/google-maps-loader";
 
 // Kenya viewport
 const KENYA_CENTER = { lat: 0.5, lng: 37.9 };
@@ -10,26 +11,6 @@ const KENYA_BOUNDS = {
   east: 42.0,
   west: 33.9,
 };
-
-let loaderPromise: Promise<typeof google> | null = null;
-function loadMaps(): Promise<typeof google> {
-  if (typeof window === "undefined") return Promise.reject(new Error("SSR"));
-  if (window.google?.maps) return Promise.resolve(window.google);
-  if (loaderPromise) return loaderPromise;
-  const key = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
-  const channel = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID;
-  loaderPromise = new Promise((resolve, reject) => {
-    (window as unknown as { __initHalisiaMap?: () => void }).__initHalisiaMap = () =>
-      resolve(window.google);
-    const s = document.createElement("script");
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&loading=async&callback=__initHalisiaMap&channel=${channel}`;
-    s.async = true;
-    s.defer = true;
-    s.onerror = () => reject(new Error("Failed to load Google Maps"));
-    document.head.appendChild(s);
-  });
-  return loaderPromise;
-}
 
 export function Kenya3DMap({
   className = "",
@@ -45,11 +26,15 @@ export function Kenya3DMap({
   const headingRef = useRef<number>(0);
   const pausedRef = useRef<boolean>(false);
   const [ready, setReady] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  const [mapError, setMapError] = useState<string | null>(null);
   const [hint, setHint] = useState<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    loadMaps()
+    setReady(false);
+    setMapError(null);
+    loadGoogleMaps()
       .then((g) => {
         if (cancelled || !el.current) return;
         const map = new g.maps.Map(el.current, {
@@ -110,14 +95,17 @@ export function Kenya3DMap({
           window.setTimeout(() => onSelect?.({ lat, lng }), 250);
         });
       })
-      .catch((e) => console.error(e));
+      .catch((e) => {
+        console.error(e);
+        if (!cancelled) setMapError("Google Maps could not open. Check your connection and retry.");
+      });
     return () => {
       cancelled = true;
       cancelAnimationFrame(rafRef.current);
       markerRef.current?.setMap(null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadAttempt]);
 
   return (
     <div
@@ -149,6 +137,27 @@ export function Kenya3DMap({
         <div className="absolute inset-0 grid place-items-center text-muted-foreground text-sm">
           <div className="flex items-center gap-2">
             <Loader2 className="h-4 w-4 animate-spin" /> Loading 3D Kenya…
+          </div>
+        </div>
+      )}
+
+      {mapError && (
+        <div
+          role="alert"
+          className="absolute inset-0 grid place-items-center bg-[#050d24]/95 p-6 text-center"
+        >
+          <div>
+            <AlertTriangle className="mx-auto h-6 w-6 text-amber-glow" />
+            <div className="mt-3 text-sm text-foreground">{mapError}</div>
+            <button
+              onClick={() => {
+                resetGoogleMapsLoader();
+                setLoadAttempt((n) => n + 1);
+              }}
+              className="mt-4 inline-flex items-center gap-2 glass rounded-full px-4 py-2 text-xs hover:bg-white/10"
+            >
+              <RefreshCw className="h-3.5 w-3.5" /> Retry map
+            </button>
           </div>
         </div>
       )}

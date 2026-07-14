@@ -1,6 +1,7 @@
 /// <reference types="google.maps" />
 import { useEffect, useMemo, useRef, useState } from "react";
 import countiesData from "@/data/kenya-counties.json";
+import { loadGoogleMaps, resetGoogleMapsLoader } from "@/lib/google-maps-loader";
 import {
   METRIC_LABELS,
   countyMetrics,
@@ -37,38 +38,6 @@ const METRIC_ICONS: Record<CountyMetric, typeof Activity> = {
   growth: TrendingUp,
   water: Droplets,
 };
-
-let loaderPromise: Promise<typeof google> | null = null;
-function loadMaps(): Promise<typeof google> {
-  if (typeof window === "undefined") return Promise.reject(new Error("SSR"));
-  const w = window as unknown as { google?: typeof google };
-  if (w.google?.maps) return Promise.resolve(w.google);
-  if (loaderPromise) return loaderPromise;
-  const key = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
-  const channel = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID;
-  loaderPromise = new Promise((resolve, reject) => {
-    (window as unknown as { __initHalisiaMap?: () => void }).__initHalisiaMap = () =>
-      resolve((window as unknown as { google: typeof google }).google);
-    const existing = document.querySelector<HTMLScriptElement>('script[data-halisia-maps="1"]');
-    if (existing) {
-      existing.addEventListener("load", () =>
-        resolve((window as unknown as { google: typeof google }).google),
-      );
-      return;
-    }
-    const s = document.createElement("script");
-    s.dataset.halisiaMaps = "1";
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&loading=async&callback=__initHalisiaMap&channel=${channel}`;
-    s.async = true;
-    s.defer = true;
-    s.onerror = () => {
-      loaderPromise = null;
-      reject(new Error("Failed to load Google Maps"));
-    };
-    document.head.appendChild(s);
-  });
-  return loaderPromise;
-}
 
 // Session-scoped cache for the parsed GeoJSON. The file is bundled, but reusing
 // the same parsed object across re-mounts avoids re-parsing on tab switches.
@@ -167,6 +136,8 @@ export function KenyaCountyMap() {
   const [downloading, setDownloading] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
   const [mapError, setMapError] = useState<string | null>(null);
+  const [mapReady, setMapReady] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [copied, setCopied] = useState(false);
   const [showConfidence, setShowConfidence] = useState(false);
   const mapEl = useRef<HTMLDivElement>(null);
@@ -206,8 +177,10 @@ export function KenyaCountyMap() {
   useEffect(
     () => {
       let cancelled = false;
-      loadMaps()
-        .then((g) => {
+      setMapReady(false);
+      setMapError(null);
+      loadGoogleMaps()
+        .then((g: typeof google) => {
           if (cancelled || !mapEl.current) return;
           setMapError(null);
           const map = new g.maps.Map(mapEl.current, {
@@ -248,31 +221,33 @@ export function KenyaCountyMap() {
             const el = cardRefs.current[code];
             if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
           });
+          setMapReady(true);
         })
-        .catch((err) => {
+        .catch((err: unknown) => {
           console.error(err);
           if (!cancelled)
             setMapError("Couldn't load Google Maps. Check your connection and retry.");
         });
       return () => {
         cancelled = true;
+        dataLayerRef.current?.setMap(null);
+        dataLayerRef.current = null;
+        mapRef.current = null;
       };
     },
-    [
-      /* re-run on manual retry via key */
-    ],
+    [loadAttempt],
   );
 
   // Re-style whenever metric / hover / selection changes.
   useEffect(() => {
     const data = dataLayerRef.current;
-    if (!data) return;
+    if (!mapReady || !data) return;
     data.setStyle((feature) => {
       const code = feature.getProperty("code") as number;
       return styleFor(code, hoverCode === code, selected.includes(code));
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [metric, hoverCode, selected, min, max]);
+  }, [mapReady, metric, hoverCode, selected, min, max]);
 
   function toggleSelect(code: number) {
     setSelected((prev) => {
@@ -503,12 +478,8 @@ export function KenyaCountyMap() {
                   <button
                     onClick={() => {
                       setMapError(null);
-                      loaderPromise = null;
-                      // Trigger effect by nudging a state — reuse hover reset.
-                      setHoverCode((h) => (h === -1 ? null : -1));
-                      setTimeout(() => setHoverCode(null), 0);
-                      // Full retry: reload maps by re-running init effect on next mount.
-                      window.location.reload();
+                      resetGoogleMapsLoader();
+                      setLoadAttempt((n) => n + 1);
                     }}
                     className="mt-4 inline-flex items-center gap-2 glass rounded-full px-4 py-2 text-xs hover:bg-white/10"
                   >
