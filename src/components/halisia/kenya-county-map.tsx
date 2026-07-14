@@ -160,6 +160,10 @@ export function KenyaCountyMap() {
       .slice(0, 4);
   });
   const [downloading, setDownloading] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+  const [mapError, setMapError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [showConfidence, setShowConfidence] = useState(false);
   const mapEl = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const dataLayerRef = useRef<google.maps.Data | null>(null);
@@ -198,6 +202,7 @@ export function KenyaCountyMap() {
     loadMaps()
       .then((g) => {
         if (cancelled || !mapEl.current) return;
+        setMapError(null);
         const map = new g.maps.Map(mapEl.current, {
           center: { lat: 0.5, lng: 37.9 },
           zoom: 6,
@@ -223,7 +228,7 @@ export function KenyaCountyMap() {
         mapRef.current = map;
         const data = new g.maps.Data({ map });
         dataLayerRef.current = data;
-        data.addGeoJson(countiesData as unknown as object);
+        data.addGeoJson(getCountiesGeoJson());
 
         data.addListener("mouseover", (e: google.maps.Data.MouseEvent) => {
           const code = e.feature.getProperty("code") as number;
@@ -237,11 +242,14 @@ export function KenyaCountyMap() {
           if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
         });
       })
-      .catch((err) => console.error(err));
+      .catch((err) => {
+        console.error(err);
+        if (!cancelled) setMapError("Couldn't load Google Maps. Check your connection and retry.");
+      });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [/* re-run on manual retry via key */]);
 
   // Re-style whenever metric / hover / selection changes.
   useEffect(() => {
@@ -269,13 +277,44 @@ export function KenyaCountyMap() {
   async function downloadCompare() {
     if (selected.length < 2) return;
     setDownloading(true);
+    setPdfError(null);
     try {
       const chosen = COUNTIES.filter((c) => selected.includes(c.code));
       await generateCountyComparePdf(chosen);
     } catch (e) {
       console.error(e);
+      setPdfError(
+        !navigator.onLine
+          ? "You're offline. Reconnect and retry the download."
+          : "Couldn't build the comparison PDF. Retry, or reduce the number of counties.",
+      );
     } finally {
       setDownloading(false);
+    }
+  }
+
+  async function copyShareLink() {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    if (selected.length) url.searchParams.set("compare", selected.join(","));
+    else url.searchParams.delete("compare");
+    try {
+      await navigator.clipboard.writeText(url.toString());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      // Fallback: select the URL into a temporary input
+      const ta = document.createElement("textarea");
+      ta.value = url.toString();
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand("copy");
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1800);
+      } finally {
+        document.body.removeChild(ta);
+      }
     }
   }
 
