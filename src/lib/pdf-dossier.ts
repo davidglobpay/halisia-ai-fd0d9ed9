@@ -125,7 +125,7 @@ export async function generateLocationDossier(opts: { lat: number; lng: number; 
     return { ...s, value: s.invert ? 100 - raw : raw };
   });
 
-  let y = 110;
+  const y = 110;
   const colW = (W - M * 2 - 20) / 2;
   const rowH = 80;
   scores.forEach((s, i) => {
