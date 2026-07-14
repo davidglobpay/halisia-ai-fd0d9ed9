@@ -7,6 +7,7 @@ import {
   formatMetric,
   type CountyMetric,
 } from "@/lib/county-metrics";
+import { fetchStaticMap } from "@/lib/static-map.functions";
 
 type County = { code: number; name: string; lat: number; lng: number };
 
@@ -103,6 +104,67 @@ export async function generateCountyComparePdf(counties: County[]) {
     H - 20,
   );
   doc.text("halisia.ai", W - M - 40, H - 20);
+
+  // ---- Page 2: Map data evidence ----
+  const maps = await Promise.all(
+    counties.map((c) =>
+      fetchStaticMap({ data: { lat: c.lat, lng: c.lng, layer: "roadmap-light", zoom: 9 } }).catch(
+        () => null,
+      ),
+    ),
+  );
+  if (maps.some(Boolean)) {
+    doc.addPage("a4", "landscape");
+    doc.setFillColor(...bg);
+    doc.rect(0, 0, W, H, "F");
+    doc.setFillColor(...accent);
+    doc.rect(0, 0, W, 6, "F");
+    doc.setTextColor(...muted);
+    doc.setFontSize(10);
+    doc.text("HALISIA.AI · MAP DATA EVIDENCE", M, 36);
+    doc.setTextColor(...ink);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(20);
+    doc.text("County map evidence", M, 66);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(...muted);
+    doc.text(
+      "Static-map basemaps captured from Google Maps Platform for each selected county centroid.",
+      M,
+      84,
+    );
+    const mTop = 110;
+    const imgH = 200;
+    counties.forEach((c, i) => {
+      const x = M + i * (colW + colGap);
+      doc.setFillColor(255, 255, 255);
+      doc.roundedRect(x, mTop, colW, imgH + 60, 12, 12, "F");
+      const map = maps[i];
+      if (map?.dataUrl) {
+        try {
+          doc.addImage(map.dataUrl, "PNG", x + 8, mTop + 8, colW - 16, imgH, undefined, "FAST");
+        } catch {
+          /* ignore image errors */
+        }
+      }
+      doc.setTextColor(...ink);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.text(c.name, x + 12, mTop + imgH + 30);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(...muted);
+      doc.text(
+        `Centroid ${c.lat.toFixed(3)}°, ${c.lng.toFixed(3)}° · Source: Google Maps Platform`,
+        x + 12,
+        mTop + imgH + 46,
+      );
+    });
+    doc.setFontSize(8);
+    doc.setTextColor(...muted);
+    doc.text("halisia.ai · map data evidence", M, H - 20);
+  }
 
   const safe =
     counties
