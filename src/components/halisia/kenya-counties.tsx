@@ -1,6 +1,16 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, TrendingUp, Users, Droplets, X } from "lucide-react";
+import {
+  MapPin,
+  TrendingUp,
+  Users,
+  Droplets,
+  X,
+  Sparkles,
+  Filter,
+  GitCompare,
+  Check,
+} from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 
 // Kenya bounding box used to place county pins on the stylized map plane.
@@ -13,8 +23,16 @@ type County = {
   lng: number;
   livability: number;
   population: string; // human readable
+  populationN: number; // numeric for scaling
   growth: string; // YoY price signal
+  growthN: number; // numeric (percent)
   water: "Reliable" | "Intermittent" | "Scarce";
+  confidence: {
+    livability: "Low" | "Medium" | "High";
+    population: "Low" | "Medium" | "High";
+    growth: "Low" | "Medium" | "High";
+    water: "Low" | "Medium" | "High";
+  };
   vibe: string;
   highlights: string[];
 };
