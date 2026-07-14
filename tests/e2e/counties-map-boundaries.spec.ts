@@ -57,24 +57,26 @@ test.describe("Kenya county map — realistic boundaries + interactions", () => 
     // We probe via window.google — if the browser key/referrer is restricted in
     // the test env, skip the runtime check with a clear message instead of a
     // flaky failure.
-    const featureCount = await page.waitForFunction(
-      () => {
-        const g = (window as unknown as { google?: typeof google }).google;
-        if (!g?.maps) return false;
-        // Find any Map instance mounted in the DOM via the test container.
-        const el = document.querySelector('[data-testid="county-map"]');
-        if (!el) return false;
-        // Google stores the Map instance on the DOM node under a private key;
-        // instead of poking internals, count paths rendered by the Data layer.
-        const paths = document.querySelectorAll(
-          '[data-testid="county-map"] div[style*="z-index"] svg path, ' +
-            '[data-testid="county-map"] canvas',
-        );
-        return paths.length >= 1 ? paths.length : false;
-      },
-      null,
-      { timeout: 25_000 },
-    ).catch(() => null);
+    const featureCount = await page
+      .waitForFunction(
+        () => {
+          const g = (window as unknown as { google?: typeof google }).google;
+          if (!g?.maps) return false;
+          // Find any Map instance mounted in the DOM via the test container.
+          const el = document.querySelector('[data-testid="county-map"]');
+          if (!el) return false;
+          // Google stores the Map instance on the DOM node under a private key;
+          // instead of poking internals, count paths rendered by the Data layer.
+          const paths = document.querySelectorAll(
+            '[data-testid="county-map"] div[style*="z-index"] svg path, ' +
+              '[data-testid="county-map"] canvas',
+          );
+          return paths.length >= 1 ? paths.length : false;
+        },
+        null,
+        { timeout: 25_000 },
+      )
+      .catch(() => null);
 
     if (!featureCount) {
       test.info().annotations.push({
