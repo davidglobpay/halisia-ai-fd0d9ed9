@@ -37,7 +37,6 @@ export async function generateLocationDossier(opts: { lat: number; lng: number; 
   const terrain = pick(1);
   const hybrid = pick(2);
   const sat = pick(3);
-  const mapsMissing = !base.dataUrl && !terrain.dataUrl && !hybrid.dataUrl && !sat.dataUrl;
 
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const W = doc.internal.pageSize.getWidth();
