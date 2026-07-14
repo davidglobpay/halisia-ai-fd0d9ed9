@@ -197,59 +197,65 @@ export function KenyaCountyMap() {
   };
 
   // Init map + polygons
-  useEffect(() => {
-    let cancelled = false;
-    loadMaps()
-      .then((g) => {
-        if (cancelled || !mapEl.current) return;
-        setMapError(null);
-        const map = new g.maps.Map(mapEl.current, {
-          center: { lat: 0.5, lng: 37.9 },
-          zoom: 6,
-          mapTypeId: "roadmap",
-          disableDefaultUI: true,
-          zoomControl: true,
-          gestureHandling: "greedy",
-          backgroundColor: "#0a1735",
-          styles: [
-            { elementType: "geometry", stylers: [{ color: "#0a1735" }] },
-            { elementType: "labels.text.fill", stylers: [{ color: "#8ab4ff" }] },
-            { elementType: "labels.text.stroke", stylers: [{ color: "#0a1735" }] },
-            {
-              featureType: "administrative",
-              elementType: "geometry",
-              stylers: [{ visibility: "off" }],
-            },
-            { featureType: "poi", stylers: [{ visibility: "off" }] },
-            { featureType: "road", elementType: "geometry", stylers: [{ color: "#0f2050" }] },
-            { featureType: "water", elementType: "geometry", stylers: [{ color: "#050d24" }] },
-          ],
-        });
-        mapRef.current = map;
-        const data = new g.maps.Data({ map });
-        dataLayerRef.current = data;
-        data.addGeoJson(getCountiesGeoJson());
+  useEffect(
+    () => {
+      let cancelled = false;
+      loadMaps()
+        .then((g) => {
+          if (cancelled || !mapEl.current) return;
+          setMapError(null);
+          const map = new g.maps.Map(mapEl.current, {
+            center: { lat: 0.5, lng: 37.9 },
+            zoom: 6,
+            mapTypeId: "roadmap",
+            disableDefaultUI: true,
+            zoomControl: true,
+            gestureHandling: "greedy",
+            backgroundColor: "#0a1735",
+            styles: [
+              { elementType: "geometry", stylers: [{ color: "#0a1735" }] },
+              { elementType: "labels.text.fill", stylers: [{ color: "#8ab4ff" }] },
+              { elementType: "labels.text.stroke", stylers: [{ color: "#0a1735" }] },
+              {
+                featureType: "administrative",
+                elementType: "geometry",
+                stylers: [{ visibility: "off" }],
+              },
+              { featureType: "poi", stylers: [{ visibility: "off" }] },
+              { featureType: "road", elementType: "geometry", stylers: [{ color: "#0f2050" }] },
+              { featureType: "water", elementType: "geometry", stylers: [{ color: "#050d24" }] },
+            ],
+          });
+          mapRef.current = map;
+          const data = new g.maps.Data({ map });
+          dataLayerRef.current = data;
+          data.addGeoJson(getCountiesGeoJson());
 
-        data.addListener("mouseover", (e: google.maps.Data.MouseEvent) => {
-          const code = e.feature.getProperty("code") as number;
-          setHoverCode(code);
+          data.addListener("mouseover", (e: google.maps.Data.MouseEvent) => {
+            const code = e.feature.getProperty("code") as number;
+            setHoverCode(code);
+          });
+          data.addListener("mouseout", () => setHoverCode(null));
+          data.addListener("click", (e: google.maps.Data.MouseEvent) => {
+            const code = e.feature.getProperty("code") as number;
+            toggleSelect(code);
+            const el = cardRefs.current[code];
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+          });
+        })
+        .catch((err) => {
+          console.error(err);
+          if (!cancelled)
+            setMapError("Couldn't load Google Maps. Check your connection and retry.");
         });
-        data.addListener("mouseout", () => setHoverCode(null));
-        data.addListener("click", (e: google.maps.Data.MouseEvent) => {
-          const code = e.feature.getProperty("code") as number;
-          toggleSelect(code);
-          const el = cardRefs.current[code];
-          if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-        });
-      })
-      .catch((err) => {
-        console.error(err);
-        if (!cancelled) setMapError("Couldn't load Google Maps. Check your connection and retry.");
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [/* re-run on manual retry via key */]);
+      return () => {
+        cancelled = true;
+      };
+    },
+    [
+      /* re-run on manual retry via key */
+    ],
+  );
 
   // Re-style whenever metric / hover / selection changes.
   useEffect(() => {
@@ -411,38 +417,36 @@ export function KenyaCountyMap() {
               </button>
             </div>
             <dl className="mt-5 grid sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
-              {(
-                [
-                  {
-                    m: "livability" as CountyMetric,
-                    src: "Composite of infrastructure, amenity density, air quality and safety proxies.",
-                    high: "All four sub-signals present and cross-checked with public datasets.",
-                    med: "Two or three sub-signals present; some are county-level estimates.",
-                    low: "Only one sub-signal available; treat as directional guidance.",
-                  },
-                  {
-                    m: "population" as CountyMetric,
-                    src: "KNBS 2019 census + projected growth from national statistics.",
-                    high: "Census figure with recent (<2y) mid-year projection.",
-                    med: "Census figure only, projected linearly.",
-                    low: "Estimated from constituency roll-ups.",
-                  },
-                  {
-                    m: "growth" as CountyMetric,
-                    src: "YoY change from county GDP releases and building-approval proxies.",
-                    high: "Government release + independent market data agree within 2pp.",
-                    med: "Single source; last 12 months.",
-                    low: "Modelled from national trend; no county-specific release.",
-                  },
-                  {
-                    m: "water" as CountyMetric,
-                    src: "WASREB reliability index + rainfall/borehole coverage.",
-                    high: "WASREB score present and matches on-the-ground utility reporting.",
-                    med: "WASREB score present but no utility corroboration.",
-                    low: "Rainfall proxy only; no piped-supply data.",
-                  },
-                ]
-              ).map((row) => (
+              {[
+                {
+                  m: "livability" as CountyMetric,
+                  src: "Composite of infrastructure, amenity density, air quality and safety proxies.",
+                  high: "All four sub-signals present and cross-checked with public datasets.",
+                  med: "Two or three sub-signals present; some are county-level estimates.",
+                  low: "Only one sub-signal available; treat as directional guidance.",
+                },
+                {
+                  m: "population" as CountyMetric,
+                  src: "KNBS 2019 census + projected growth from national statistics.",
+                  high: "Census figure with recent (<2y) mid-year projection.",
+                  med: "Census figure only, projected linearly.",
+                  low: "Estimated from constituency roll-ups.",
+                },
+                {
+                  m: "growth" as CountyMetric,
+                  src: "YoY change from county GDP releases and building-approval proxies.",
+                  high: "Government release + independent market data agree within 2pp.",
+                  med: "Single source; last 12 months.",
+                  low: "Modelled from national trend; no county-specific release.",
+                },
+                {
+                  m: "water" as CountyMetric,
+                  src: "WASREB reliability index + rainfall/borehole coverage.",
+                  high: "WASREB score present and matches on-the-ground utility reporting.",
+                  med: "WASREB score present but no utility corroboration.",
+                  low: "Rainfall proxy only; no piped-supply data.",
+                },
+              ].map((row) => (
                 <div key={row.m} className="rounded-2xl bg-white/5 border border-white/10 p-3">
                   <dt className="flex items-center justify-between text-foreground font-semibold">
                     <span>{METRIC_LABELS[row.m]}</span>
