@@ -14,6 +14,7 @@ import { Navbar } from "@/components/halisia/navbar";
 import { SearchBar } from "@/components/halisia/search-bar";
 import { geocodeAddress } from "@/lib/geocode.functions";
 import { reverseGeocode } from "@/lib/reverse-geocode.functions";
+import { generateLocationDossier } from "@/lib/pdf-dossier";
 import {
   Layers,
   Satellite,
@@ -27,6 +28,8 @@ import {
   Bus,
   TrafficCone,
   Check,
+  FileDown,
+  Loader2,
 } from "lucide-react";
 
 const searchSchema = z.object({ q: z.string().optional() });
@@ -67,6 +70,8 @@ function Explore() {
   const [theme, setTheme] = useState<MapTheme>("dark");
   const [overlays, setOverlays] = useState<OverlayId[]>([]);
   const [layersOpen, setLayersOpen] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
 
   const toggleOverlay = (id: OverlayId) =>
     setOverlays((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -107,6 +112,23 @@ function Explore() {
   }, [q]);
 
   const active = loc ?? DEFAULT;
+
+  const downloadDossier = async () => {
+    setDownloading(true);
+    setPdfError(null);
+    try {
+      await generateLocationDossier({
+        lat: active.lat,
+        lng: active.lng,
+        address: active.address,
+      });
+    } catch (e) {
+      console.error(e);
+      setPdfError("Couldn't generate the PDF. Please try again.");
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen">
@@ -228,6 +250,23 @@ function Explore() {
 
           {/* SIDE PANEL */}
           <div className="lg:max-h-[calc(70vh+16px)] lg:overflow-y-auto pr-1 lg:sticky lg:top-24">
+            <button
+              onClick={downloadDossier}
+              disabled={downloading}
+              className="mb-3 w-full glass-strong rounded-2xl px-4 py-3 text-sm font-medium inline-flex items-center justify-center gap-2 hover:bg-white/10 transition disabled:opacity-60"
+              data-testid="download-dossier"
+            >
+              {downloading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Building dossier…
+                </>
+              ) : (
+                <>
+                  <FileDown className="h-4 w-4 text-accent" /> Download PDF dossier
+                </>
+              )}
+            </button>
+            {pdfError && <div className="mb-2 text-xs text-amber-glow">{pdfError}</div>}
             <IntelligenceCards lat={active.lat} lng={active.lng} label={active.address} />
           </div>
         </div>
