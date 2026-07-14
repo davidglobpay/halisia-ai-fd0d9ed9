@@ -1,5 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
+import { zodValidator, fallback } from "@tanstack/zod-adapter";
+import { z } from "zod";
 import {
   ArrowRight,
   Brain,
@@ -23,6 +25,11 @@ import { SearchBar } from "@/components/halisia/search-bar";
 import { AIOrb } from "@/components/halisia/ai-orb";
 
 export const Route = createFileRoute("/")({
+  validateSearch: zodValidator(
+    z.object({
+      compare: fallback(z.string(), "").default(""),
+    }),
+  ),
   component: Landing,
 });
 
