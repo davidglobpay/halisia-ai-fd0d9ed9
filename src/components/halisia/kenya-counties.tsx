@@ -1,10 +1,24 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, TrendingUp, Users, Droplets, X } from "lucide-react";
+import {
+  MapPin,
+  TrendingUp,
+  Users,
+  Droplets,
+  X,
+  Filter,
+  GitCompare,
+  Check,
+  Sparkles,
+} from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 
 // Kenya bounding box used to place county pins on the stylized map plane.
 const BOUNDS = { north: 5.5, south: -4.8, east: 42.0, west: 33.9 };
+
+type Confidence = "Low" | "Medium" | "High";
+type Water = "Reliable" | "Intermittent" | "Scarce";
+type MetricId = "livability" | "population" | "growth" | "water";
 
 type County = {
   name: string;
@@ -12,9 +26,12 @@ type County = {
   lat: number;
   lng: number;
   livability: number;
-  population: string; // human readable
-  growth: string; // YoY price signal
-  water: "Reliable" | "Intermittent" | "Scarce";
+  population: string;
+  populationN: number; // millions
+  growth: string;
+  growthN: number; // percent
+  water: Water;
+  confidence: Record<MetricId, Confidence>;
   vibe: string;
   highlights: string[];
 };
@@ -27,8 +44,11 @@ const COUNTIES: County[] = [
     lng: 36.817,
     livability: 82,
     population: "4.7M",
+    populationN: 4.7,
     growth: "+9% YoY",
+    growthN: 9,
     water: "Intermittent",
+    confidence: { livability: "High", population: "High", growth: "High", water: "Medium" },
     vibe: "Dense urban core with strong infrastructure and diverse neighborhoods.",
     highlights: ["Fintech & HQ hub", "Best fibre coverage", "Traffic pressure"],
   },
@@ -39,8 +59,11 @@ const COUNTIES: County[] = [
     lng: 39.668,
     livability: 76,
     population: "1.2M",
+    populationN: 1.2,
     growth: "+11% YoY",
+    growthN: 11,
     water: "Scarce",
+    confidence: { livability: "High", population: "High", growth: "Medium", water: "High" },
     vibe: "Coastal port city, tourism-led, humid tropical climate.",
     highlights: ["Port & logistics", "Beachfront demand", "Salinity risk"],
   },
@@ -51,8 +74,11 @@ const COUNTIES: County[] = [
     lng: 34.768,
     livability: 71,
     population: "610k",
+    populationN: 0.61,
     growth: "+7% YoY",
+    growthN: 7,
     water: "Reliable",
+    confidence: { livability: "Medium", population: "High", growth: "Medium", water: "High" },
     vibe: "Lakeside trade hub with agricultural hinterland and rising civic investment.",
     highlights: ["Lake Victoria access", "Agri-processing", "Malaria zone"],
   },
@@ -63,8 +89,11 @@ const COUNTIES: County[] = [
     lng: 36.08,
     livability: 78,
     population: "570k",
+    populationN: 0.57,
     growth: "+13% YoY",
+    growthN: 13,
     water: "Reliable",
+    confidence: { livability: "High", population: "Medium", growth: "High", water: "High" },
     vibe: "Fast-growing satellite city with cooler climate and horticulture belt.",
     highlights: ["Lake Nakuru NP", "Cheap land bank", "Volcanic soils"],
   },
@@ -75,8 +104,11 @@ const COUNTIES: County[] = [
     lng: 35.269,
     livability: 74,
     population: "475k",
+    populationN: 0.475,
     growth: "+10% YoY",
+    growthN: 10,
     water: "Reliable",
+    confidence: { livability: "Medium", population: "Medium", growth: "Medium", water: "High" },
     vibe: "Highland grain basket and athletics capital, cool year-round.",
     highlights: ["Grain economy", "Training altitude", "Frost risk"],
   },
@@ -87,8 +119,11 @@ const COUNTIES: County[] = [
     lng: 36.958,
     livability: 77,
     population: "760k",
+    populationN: 0.76,
     growth: "+6% YoY",
+    growthN: 6,
     water: "Reliable",
+    confidence: { livability: "Medium", population: "High", growth: "Medium", water: "High" },
     vibe: "Highland county at the foot of Mt Kenya — tea, coffee and quiet livability.",
     highlights: ["Coffee & tea", "Cool climate", "Mountain water"],
   },
@@ -99,8 +134,11 @@ const COUNTIES: County[] = [
     lng: 34.752,
     livability: 68,
     population: "1.9M",
+    populationN: 1.9,
     growth: "+5% YoY",
+    growthN: 5,
     water: "Reliable",
+    confidence: { livability: "Medium", population: "High", growth: "Low", water: "Medium" },
     vibe: "Densely populated western county with the last equatorial rainforest.",
     highlights: ["Rainforest", "Sugarcane belt", "Land fragmentation"],
   },
@@ -111,8 +149,11 @@ const COUNTIES: County[] = [
     lng: 37.267,
     livability: 72,
     population: "1.4M",
+    populationN: 1.4,
     growth: "+12% YoY",
+    growthN: 12,
     water: "Intermittent",
+    confidence: { livability: "Medium", population: "High", growth: "Medium", water: "Medium" },
     vibe: "Nairobi commuter belt with rapid peri-urban expansion.",
     highlights: ["Konza tech city", "Dry hills", "Diaspora buyers"],
   },
@@ -123,8 +164,11 @@ const COUNTIES: County[] = [
     lng: 36.83,
     livability: 80,
     population: "2.4M",
+    populationN: 2.4,
     growth: "+10% YoY",
+    growthN: 10,
     water: "Reliable",
+    confidence: { livability: "High", population: "High", growth: "High", water: "High" },
     vibe: "Green Nairobi metro extension — schools, gated estates, coffee estates converted to housing.",
     highlights: ["Gated estates", "School density", "Traffic spillover"],
   },
@@ -135,8 +179,11 @@ const COUNTIES: County[] = [
     lng: 39.849,
     livability: 73,
     population: "1.5M",
+    populationN: 1.5,
     growth: "+14% YoY",
+    growthN: 14,
     water: "Intermittent",
+    confidence: { livability: "Medium", population: "High", growth: "High", water: "Medium" },
     vibe: "Emerging coastal alternative to Mombasa — creeks, resorts, remote-work villas.",
     highlights: ["Vipingo growth", "Digital nomads", "Coastal erosion"],
   },
@@ -147,8 +194,11 @@ const COUNTIES: County[] = [
     lng: 36.777,
     livability: 69,
     population: "1.1M",
+    populationN: 1.1,
     growth: "+15% YoY",
+    growthN: 15,
     water: "Scarce",
+    confidence: { livability: "Medium", population: "Medium", growth: "High", water: "High" },
     vibe: "Vast plains south of Nairobi — Maasai heartland, aggressive land subdivision.",
     highlights: ["Land-banking hotspot", "Wildlife dispersal", "Water trucking"],
   },
@@ -159,12 +209,61 @@ const COUNTIES: County[] = [
     lng: 35.31,
     livability: 74,
     population: "1.2M",
+    populationN: 1.2,
     growth: "+9% YoY",
+    growthN: 9,
     water: "Reliable",
+    confidence: { livability: "Medium", population: "High", growth: "Medium", water: "High" },
     vibe: "Wheat and maize highland, home to Eldoret metro.",
     highlights: ["Agri-industrial", "New airport routes", "Cold snaps"],
   },
 ];
+
+const WATER_SCORE: Record<Water, number> = { Reliable: 90, Intermittent: 60, Scarce: 30 };
+
+const METRICS: Array<{
+  id: MetricId;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  unit: string;
+}> = [
+  { id: "livability", label: "Livability", icon: Sparkles, unit: "/100" },
+  { id: "population", label: "Population", icon: Users, unit: "M" },
+  { id: "growth", label: "Growth", icon: TrendingUp, unit: "% YoY" },
+  { id: "water", label: "Water", icon: Droplets, unit: "" },
+];
+
+function metricValue(c: County, m: MetricId): number {
+  switch (m) {
+    case "livability":
+      return c.livability;
+    case "population":
+      return c.populationN;
+    case "growth":
+      return c.growthN;
+    case "water":
+      return WATER_SCORE[c.water];
+  }
+}
+
+function metricDisplay(c: County, m: MetricId): string {
+  switch (m) {
+    case "livability":
+      return `${c.livability}`;
+    case "population":
+      return c.population;
+    case "growth":
+      return c.growth;
+    case "water":
+      return c.water;
+  }
+}
+
+// Scale metric value into a 0-1 range for pin size / heat color.
+function metricNorm(value: number, min: number, max: number): number {
+  if (max === min) return 0.5;
+  return Math.max(0, Math.min(1, (value - min) / (max - min)));
+}
 
 function pctPos(lat: number, lng: number) {
   const x = ((lng - BOUNDS.west) / (BOUNDS.east - BOUNDS.west)) * 100;
@@ -172,9 +271,43 @@ function pctPos(lat: number, lng: number) {
   return { x, y };
 }
 
+function confidenceDots(level: Confidence) {
+  const n = level === "High" ? 3 : level === "Medium" ? 2 : 1;
+  return (
+    <span className="inline-flex items-center gap-0.5" aria-label={`Confidence ${level}`}>
+      {[0, 1, 2].map((i) => (
+        <span key={i} className={`h-1 w-1 rounded-full ${i < n ? "bg-accent" : "bg-white/15"}`} />
+      ))}
+    </span>
+  );
+}
+
 export function KenyaCounties() {
   const [active, setActive] = useState<County | null>(null);
+  const [hovered, setHovered] = useState<string | null>(null);
+  const [metric, setMetric] = useState<MetricId>("livability");
+  const [selected, setSelected] = useState<string[]>([]);
+  const [compareOpen, setCompareOpen] = useState(false);
   const navigate = useNavigate();
+
+  const focused = hovered ?? active?.name ?? null;
+
+  const range = useMemo(() => {
+    const vals = COUNTIES.map((c) => metricValue(c, metric));
+    return { min: Math.min(...vals), max: Math.max(...vals) };
+  }, [metric]);
+
+  const toggleSelected = (name: string) => {
+    setSelected((prev) =>
+      prev.includes(name)
+        ? prev.filter((n) => n !== name)
+        : prev.length >= 4
+          ? prev
+          : [...prev, name],
+    );
+  };
+
+  const selectedCounties = COUNTIES.filter((c) => selected.includes(c.name));
 
   return (
     <section id="counties" className="py-24 md:py-32 border-t border-white/5">
@@ -185,12 +318,52 @@ export function KenyaCounties() {
             Kenya, county by county — <span className="text-gradient">float, click, decide</span>.
           </h2>
           <p className="mt-4 text-muted-foreground text-lg">
-            Every county has its own economic pulse, water story and land dynamics. Tap a marker to
-            see the summary, then jump into the full location workspace.
+            Switch the metric on the map, hover to sync with the cards below, and multi-select
+            counties to compare their dynamics side-by-side.
           </p>
         </div>
 
-        <div className="mt-12 grid lg:grid-cols-[1.15fr_1fr] gap-6 items-start">
+        {/* Metric filter */}
+        <div className="mt-8 flex flex-wrap items-center gap-2">
+          <div className="inline-flex items-center gap-1 glass rounded-full p-1">
+            <span className="pl-3 pr-1 text-[10px] uppercase tracking-widest text-muted-foreground inline-flex items-center gap-1">
+              <Filter className="h-3 w-3 text-accent" /> Metric
+            </span>
+            {METRICS.map((m) => {
+              const on = metric === m.id;
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => setMetric(m.id)}
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs transition ${on ? "bg-white/15 text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                  data-testid={`metric-${m.id}`}
+                >
+                  <m.icon className="h-3.5 w-3.5" /> {m.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {selected.length > 0 && (
+            <button
+              onClick={() => setCompareOpen(true)}
+              className="glass-strong rounded-full px-3 py-1.5 text-xs inline-flex items-center gap-1.5 text-foreground"
+              data-testid="open-compare"
+            >
+              <GitCompare className="h-3.5 w-3.5 text-accent" /> Compare {selected.length}
+            </button>
+          )}
+          {selected.length > 0 && (
+            <button
+              onClick={() => setSelected([])}
+              className="text-xs text-muted-foreground hover:text-foreground"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+
+        <div className="mt-6 grid lg:grid-cols-[1.15fr_1fr] gap-6 items-start">
           {/* Floating map plane */}
           <div
             className="relative aspect-[4/5] w-full rounded-[36px] overflow-hidden glass-strong"
@@ -212,7 +385,6 @@ export function KenyaCounties() {
                 maskImage: "radial-gradient(ellipse at center, black 45%, transparent 85%)",
               }}
             />
-            {/* stylised Kenya silhouette */}
             <svg
               viewBox="0 0 100 100"
               preserveAspectRatio="none"
@@ -233,15 +405,21 @@ export function KenyaCounties() {
               </defs>
             </svg>
 
-            {/* Floating county pins */}
             {COUNTIES.map((c, i) => {
               const p = pctPos(c.lat, c.lng);
-              const isActive = active?.name === c.name;
+              const isFocused = focused === c.name;
+              const isSelected = selected.includes(c.name);
+              const n = metricNorm(metricValue(c, metric), range.min, range.max);
+              const size = 10 + n * 14; // 10-24px
+              const hue = 200 + n * 50; // cool → warm
               return (
                 <motion.button
                   key={c.name}
                   data-testid={`county-pin-${c.name.toLowerCase()}`}
                   onClick={() => setActive(c)}
+                  onDoubleClick={() => toggleSelected(c.name)}
+                  onMouseEnter={() => setHovered(c.name)}
+                  onMouseLeave={() => setHovered(null)}
                   className="absolute -translate-x-1/2 -translate-y-1/2 group"
                   style={{ left: `${p.x}%`, top: `${p.y}%` }}
                   initial={{ opacity: 0, scale: 0.5, y: 8 }}
@@ -256,26 +434,88 @@ export function KenyaCounties() {
                   whileHover={{ scale: 1.15, y: -3 }}
                 >
                   <div
-                    className={`h-3 w-3 rounded-full ring-4 ring-primary/20 animate-pulse ${
-                      isActive ? "bg-accent" : "bg-primary"
-                    }`}
+                    className="rounded-full ring-4 transition-all"
+                    style={{
+                      height: `${size}px`,
+                      width: `${size}px`,
+                      background: `oklch(0.75 0.18 ${hue})`,
+                      boxShadow: isFocused
+                        ? `0 0 0 3px oklch(0.87 0.14 208 / 0.6), 0 0 30px oklch(0.75 0.18 ${hue} / 0.8)`
+                        : `0 0 20px oklch(0.75 0.18 ${hue} / 0.5)`,
+                    }}
                   />
+                  {isSelected && (
+                    <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-accent grid place-items-center">
+                      <Check className="h-2 w-2 text-background" />
+                    </div>
+                  )}
                   <div
                     className={`pointer-events-none absolute left-1/2 -translate-x-1/2 mt-1.5 whitespace-nowrap rounded-full glass px-2 py-0.5 text-[10px] transition ${
-                      isActive
+                      isFocused
                         ? "text-foreground bg-white/15"
                         : "text-muted-foreground group-hover:text-foreground"
                     }`}
                   >
-                    {c.name} · {c.livability}
+                    {c.name} · {metricDisplay(c, metric)}
                   </div>
                 </motion.button>
               );
             })}
 
-            <div className="pointer-events-none absolute bottom-3 left-3 glass rounded-full px-3 py-1.5 text-[10px] uppercase tracking-widest text-accent">
-              <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
-              Live · County pulse
+            {/* Legend */}
+            <div className="pointer-events-none absolute bottom-3 left-3 right-3 flex items-end justify-between gap-2">
+              <div className="glass-strong rounded-2xl px-3 py-2 text-[10px] max-w-[220px]">
+                <div className="uppercase tracking-widest text-accent mb-1.5 flex items-center justify-between">
+                  <span>{METRICS.find((m) => m.id === metric)?.label} scale</span>
+                </div>
+                <div
+                  className="h-1.5 rounded-full"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, oklch(0.75 0.18 200), oklch(0.75 0.18 225), oklch(0.75 0.18 250))",
+                  }}
+                />
+                <div className="mt-1 flex justify-between text-muted-foreground">
+                  <span>
+                    {metric === "population"
+                      ? `${range.min.toFixed(1)}M`
+                      : metric === "growth"
+                        ? `${range.min}%`
+                        : metric === "water"
+                          ? "Scarce"
+                          : range.min}
+                  </span>
+                  <span>
+                    {metric === "population"
+                      ? `${range.max.toFixed(1)}M`
+                      : metric === "growth"
+                        ? `${range.max}%`
+                        : metric === "water"
+                          ? "Reliable"
+                          : range.max}
+                  </span>
+                </div>
+                <div className="mt-2 pt-2 border-t border-white/10 flex items-center justify-between text-muted-foreground">
+                  <span>Confidence</span>
+                  <span className="inline-flex items-center gap-2">
+                    <span className="inline-flex items-center gap-0.5">
+                      {confidenceDots("Low")}
+                    </span>
+                    <span>Low</span>
+                    <span className="inline-flex items-center gap-0.5">
+                      {confidenceDots("High")}
+                    </span>
+                    <span>High</span>
+                  </span>
+                </div>
+                <div className="mt-1 text-[9px] text-muted-foreground/70">
+                  Double-click a pin to add to compare.
+                </div>
+              </div>
+              <div className="glass rounded-full px-3 py-1.5 text-[10px] uppercase tracking-widest text-accent">
+                <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
+                Live · County pulse
+              </div>
             </div>
           </div>
 
@@ -308,12 +548,32 @@ export function KenyaCounties() {
                   </p>
 
                   <div className="mt-5 grid grid-cols-3 gap-2">
-                    <Stat label="Livability" value={`${active.livability}`} suffix="/100" />
-                    <Stat label="Population" value={active.population} icon={Users} />
-                    <Stat label="Growth" value={active.growth} icon={TrendingUp} />
+                    <Stat
+                      label="Livability"
+                      value={`${active.livability}`}
+                      suffix="/100"
+                      confidence={active.confidence.livability}
+                    />
+                    <Stat
+                      label="Population"
+                      value={active.population}
+                      icon={Users}
+                      confidence={active.confidence.population}
+                    />
+                    <Stat
+                      label="Growth"
+                      value={active.growth}
+                      icon={TrendingUp}
+                      confidence={active.confidence.growth}
+                    />
                   </div>
                   <div className="mt-3 grid grid-cols-2 gap-2">
-                    <Stat label="Water" value={active.water} icon={Droplets} />
+                    <Stat
+                      label="Water"
+                      value={active.water}
+                      icon={Droplets}
+                      confidence={active.confidence.water}
+                    />
                     <Stat
                       label="Coords"
                       value={`${active.lat.toFixed(2)}, ${active.lng.toFixed(2)}`}
@@ -329,17 +589,26 @@ export function KenyaCounties() {
                     ))}
                   </div>
 
-                  <button
-                    onClick={() =>
-                      navigate({
-                        to: "/explore",
-                        search: { q: `${active.name}, Kenya` },
-                      })
-                    }
-                    className="mt-6 w-full inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground text-sm font-medium px-5 py-2.5"
-                  >
-                    Open {active.name} workspace →
-                  </button>
+                  <div className="mt-5 flex items-center gap-2">
+                    <button
+                      onClick={() => toggleSelected(active.name)}
+                      className={`flex-1 rounded-full px-3 py-2 text-xs inline-flex items-center justify-center gap-1.5 transition ${selected.includes(active.name) ? "bg-accent/20 text-accent" : "glass text-muted-foreground hover:text-foreground"}`}
+                    >
+                      <GitCompare className="h-3.5 w-3.5" />
+                      {selected.includes(active.name) ? "In compare" : "Add to compare"}
+                    </button>
+                    <button
+                      onClick={() =>
+                        navigate({
+                          to: "/explore",
+                          search: { q: `${active.name}, Kenya` },
+                        })
+                      }
+                      className="flex-1 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground text-xs font-medium px-3 py-2"
+                    >
+                      Open workspace →
+                    </button>
+                  </div>
                 </motion.div>
               ) : (
                 <motion.div
@@ -353,27 +622,188 @@ export function KenyaCounties() {
                     Tap a pin
                   </div>
                   Click any floating marker on the map to see that county's livability, population,
-                  growth and water reliability at a glance.
-                  <div className="mt-6 grid grid-cols-3 gap-2">
-                    {COUNTIES.slice(0, 6).map((c) => (
-                      <button
-                        key={c.name}
-                        onClick={() => setActive(c)}
-                        className="glass rounded-2xl px-3 py-2 text-left text-xs hover:bg-white/10 transition"
-                      >
-                        <div className="text-foreground font-medium">{c.name}</div>
-                        <div className="text-muted-foreground">Livable {c.livability}</div>
-                      </button>
-                    ))}
-                  </div>
+                  growth and water reliability at a glance. Double-click pins (or use the buttons
+                  below) to build a comparison of up to four counties.
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
         </div>
+
+        {/* County cards below map, synced with hover */}
+        <div className="mt-10">
+          <div className="text-xs uppercase tracking-[0.25em] text-accent mb-3">
+            All counties · showing {METRICS.find((m) => m.id === metric)?.label}
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {COUNTIES.map((c) => {
+              const isFocused = focused === c.name;
+              const isSelected = selected.includes(c.name);
+              return (
+                <div
+                  key={c.name}
+                  onMouseEnter={() => setHovered(c.name)}
+                  onMouseLeave={() => setHovered(null)}
+                  onClick={() => setActive(c)}
+                  data-testid={`county-card-${c.name.toLowerCase()}`}
+                  className={`cursor-pointer rounded-2xl p-4 transition ${isFocused ? "glass-strong ring-1 ring-accent/40 -translate-y-0.5" : "glass hover:bg-white/10"}`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                        {c.region}
+                      </div>
+                      <div className="text-sm font-semibold text-foreground">{c.name}</div>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleSelected(c.name);
+                      }}
+                      className={`h-5 w-5 grid place-items-center rounded-md transition ${isSelected ? "bg-accent text-background" : "bg-white/5 text-muted-foreground hover:bg-white/10"}`}
+                      aria-label={isSelected ? "Remove from compare" : "Add to compare"}
+                    >
+                      {isSelected ? (
+                        <Check className="h-3 w-3" />
+                      ) : (
+                        <span className="text-xs">+</span>
+                      )}
+                    </button>
+                  </div>
+                  <div className="mt-3 flex items-end justify-between">
+                    <div className="text-lg font-semibold text-foreground">
+                      {metricDisplay(c, metric)}
+                    </div>
+                    {confidenceDots(c.confidence[metric])}
+                  </div>
+                  <div className="mt-2 h-1 rounded-full bg-white/5 overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-primary to-accent"
+                      style={{
+                        width: `${metricNorm(metricValue(c, metric), range.min, range.max) * 100}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
+
+      {/* Compare panel */}
+      <AnimatePresence>
+        {compareOpen && selectedCounties.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-background/70 backdrop-blur-md p-4 md:p-10 flex items-center justify-center"
+            onClick={() => setCompareOpen(false)}
+          >
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 20, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="glass-strong rounded-3xl p-6 w-full max-w-6xl max-h-[85vh] overflow-auto"
+              data-testid="compare-panel"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="text-xs uppercase tracking-[0.25em] text-accent">
+                    Side-by-side
+                  </div>
+                  <h3 className="mt-1 text-2xl font-semibold tracking-tight">
+                    Comparing {selectedCounties.length} counties
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setCompareOpen(false)}
+                  className="h-8 w-8 grid place-items-center rounded-full glass text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div
+                className="mt-6 grid gap-3"
+                style={{
+                  gridTemplateColumns: `160px repeat(${selectedCounties.length}, minmax(0, 1fr))`,
+                }}
+              >
+                <div />
+                {selectedCounties.map((c) => (
+                  <div key={c.name} className="glass rounded-2xl p-3">
+                    <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                      {c.region}
+                    </div>
+                    <div className="text-sm font-semibold text-foreground">{c.name}</div>
+                  </div>
+                ))}
+
+                {METRICS.map((m) => {
+                  const vals = selectedCounties.map((c) => metricValue(c, m.id));
+                  const best = Math.max(...vals);
+                  return (
+                    <RowFragment key={m.id}>
+                      <div className="text-xs text-muted-foreground inline-flex items-center gap-1.5 py-3">
+                        <m.icon className="h-3.5 w-3.5 text-accent" /> {m.label}
+                      </div>
+                      {selectedCounties.map((c) => {
+                        const v = metricValue(c, m.id);
+                        const isBest = v === best && selectedCounties.length > 1;
+                        return (
+                          <div
+                            key={c.name + m.id}
+                            className={`rounded-xl px-3 py-3 flex items-center justify-between ${isBest ? "bg-accent/10 ring-1 ring-accent/40" : "bg-white/5"}`}
+                          >
+                            <span className="text-sm font-semibold text-foreground">
+                              {metricDisplay(c, m.id)}
+                            </span>
+                            {confidenceDots(c.confidence[m.id])}
+                          </div>
+                        );
+                      })}
+                    </RowFragment>
+                  );
+                })}
+
+                <div className="text-xs text-muted-foreground py-3">Highlights</div>
+                {selectedCounties.map((c) => (
+                  <div key={c.name + "hl"} className="rounded-xl bg-white/5 px-3 py-3 space-y-1">
+                    {c.highlights.map((h) => (
+                      <div
+                        key={h}
+                        className="text-[11px] text-foreground/80 flex items-center gap-1.5"
+                      >
+                        <span className="h-1 w-1 rounded-full bg-accent" /> {h}
+                      </div>
+                    ))}
+                  </div>
+                ))}
+
+                <div className="text-xs text-muted-foreground py-3">Action</div>
+                {selectedCounties.map((c) => (
+                  <button
+                    key={c.name + "cta"}
+                    onClick={() => navigate({ to: "/explore", search: { q: `${c.name}, Kenya` } })}
+                    className="rounded-xl bg-gradient-to-r from-primary to-accent text-primary-foreground text-xs font-medium px-3 py-3"
+                  >
+                    Open {c.name} →
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
+}
+
+function RowFragment({ children }: { children: React.ReactNode }) {
+  return <>{children}</>;
 }
 
 function Stat({
@@ -381,16 +811,21 @@ function Stat({
   value,
   suffix,
   icon: Icon,
+  confidence,
 }: {
   label: string;
   value: string;
   suffix?: string;
   icon?: React.ComponentType<{ className?: string }>;
+  confidence?: Confidence;
 }) {
   return (
     <div className="glass rounded-2xl px-3 py-2.5">
-      <div className="text-[10px] uppercase tracking-widest text-muted-foreground flex items-center gap-1">
-        {Icon && <Icon className="h-3 w-3 text-accent" />} {label}
+      <div className="text-[10px] uppercase tracking-widest text-muted-foreground flex items-center justify-between gap-1">
+        <span className="inline-flex items-center gap-1">
+          {Icon && <Icon className="h-3 w-3 text-accent" />} {label}
+        </span>
+        {confidence && confidenceDots(confidence)}
       </div>
       <div className="mt-1 text-sm font-semibold text-foreground">
         {value}
