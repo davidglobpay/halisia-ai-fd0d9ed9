@@ -220,7 +220,15 @@ export async function generateLocationDossier(opts: { lat: number; lng: number; 
     const yy = 110 + row * (imgH + 70);
     doc.setFillColor(255, 255, 255);
     doc.roundedRect(x, yy, imgW, imgH + 60, 8, 8, "F");
-    doc.addImage(e.img, "PNG", x + 8, yy + 8, imgW - 16, imgH - 16);
+    if (e.img) {
+      doc.addImage(e.img, "PNG", x + 8, yy + 8, imgW - 16, imgH - 16);
+    } else {
+      doc.setFillColor(235, 240, 248);
+      doc.roundedRect(x + 8, yy + 8, imgW - 16, imgH - 16, 6, 6, "F");
+      doc.setFontSize(8);
+      doc.setTextColor(...muted);
+      doc.text("Imagery unavailable", x + 16, yy + imgH / 2);
+    }
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
     doc.setTextColor(...ink);
