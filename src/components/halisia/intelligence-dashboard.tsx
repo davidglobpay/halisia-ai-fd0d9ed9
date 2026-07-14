@@ -183,8 +183,19 @@ export function IntelligenceDashboard({
         {tab === "overview" && (
           <OverviewTab intel={intelQ.data} loading={intelQ.isLoading} narrative={narrativeQ.data} />
         )}
+        {tab === "weather" && <WeatherPanel lat={lat} lng={lng} />}
         {tab === "environment" && <EnvironmentTab intel={intelQ.data} loading={intelQ.isLoading} />}
         {tab === "amenities" && <AmenitiesTab intel={intelQ.data} loading={intelQ.isLoading} />}
+        {tab === "layers" && (
+          <div className="space-y-2">
+            <LeafletLayersMap lat={lat} lng={lng} label={address} />
+            <div className="text-[11px] text-muted-foreground px-1">
+              Multi-source GIS: Esri satellite, OpenStreetMap, Carto dark/light, OpenTopoMap
+              relief, OpenRailway & OpenSeaMap overlays. Toggle basemaps and overlays via the top
+              right control.
+            </div>
+          </div>
+        )}
         {tab === "evidence" && <EvidenceTab intel={intelQ.data} />}
         {tab === "ai" && (
           <AITab narrative={narrativeQ.data} loading={narrativeQ.isLoading || intelQ.isLoading} />
