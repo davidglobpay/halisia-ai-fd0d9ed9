@@ -358,10 +358,14 @@ function Landing() {
 
       <Link
         to="/explore"
-        className="fixed bottom-6 right-6 z-50 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground px-5 py-3 text-sm font-semibold shadow-[0_8px_32px_-8px_oklch(0.68_0.19_249)] hover:brightness-110 hover:scale-105 transition-all"
-        aria-label="Launch HALISIA app"
+        preload="intent"
+        className="fixed z-50 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground px-5 py-3 text-sm font-semibold shadow-[0_8px_32px_-8px_oklch(0.68_0.19_249)] hover:brightness-110 hover:scale-105 transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background right-4 sm:right-6 bottom-[max(1rem,env(safe-area-inset-bottom))] sm:bottom-6"
+        aria-label="Launch HALISIA intelligence workspace"
+        title="Launch HALISIA app"
       >
-        Launch app <ArrowRight className="h-4 w-4" />
+        <span className="hidden xs:inline sm:inline">Launch app</span>
+        <span className="sm:hidden">Launch</span>
+        <ArrowRight className="h-4 w-4" aria-hidden="true" />
       </Link>
 
       <AIOrb />

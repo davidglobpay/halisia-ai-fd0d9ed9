@@ -22,13 +22,21 @@ const SCORES = [
 export async function generateLocationDossier(opts: { lat: number; lng: number; address: string }) {
   const { lat, lng, address } = opts;
 
-  // Fetch evidence maps in parallel
-  const [base, terrain, hybrid, sat] = await Promise.all([
+  // Fetch evidence maps in parallel — never let a static-map failure block the PDF.
+  const settled = await Promise.allSettled([
     fetchStaticMap({ data: { lat, lng, layer: "roadmap-light", zoom: 15 } }),
     fetchStaticMap({ data: { lat, lng, layer: "terrain", zoom: 13 } }),
     fetchStaticMap({ data: { lat, lng, layer: "hybrid", zoom: 16 } }),
     fetchStaticMap({ data: { lat, lng, layer: "satellite", zoom: 17 } }),
   ]);
+  const pick = (i: number): { dataUrl: string | null } =>
+    settled[i].status === "fulfilled"
+      ? { dataUrl: (settled[i] as PromiseFulfilledResult<{ dataUrl: string }>).value.dataUrl }
+      : { dataUrl: null };
+  const base = pick(0);
+  const terrain = pick(1);
+  const hybrid = pick(2);
+  const sat = pick(3);
 
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const W = doc.internal.pageSize.getWidth();
@@ -98,11 +106,23 @@ export async function generateLocationDossier(opts: { lat: number; lng: number; 
   doc.text("Cross-referenced against public geodata,", W - M - 160, 183);
   doc.text("terrain elevation, and network coverage.", W - M - 160, 195);
 
-  // Hero map (light view)
-  doc.addImage(base.dataUrl, "PNG", M, 230, W - M * 2, 320);
-  doc.setFontSize(8);
-  doc.setTextColor(...muted);
-  doc.text("Fig 1 · Light basemap · parcel centroid marked", M, 565);
+  // Hero map (light view) — degrade gracefully if the static-map API is not authorized.
+  if (base.dataUrl) {
+    doc.addImage(base.dataUrl, "PNG", M, 230, W - M * 2, 320);
+    doc.setFontSize(8);
+    doc.setTextColor(...muted);
+    doc.text("Fig 1 · Light basemap · parcel centroid marked", M, 565);
+  } else {
+    doc.setFillColor(235, 240, 248);
+    doc.roundedRect(M, 230, W - M * 2, 320, 10, 10, "F");
+    doc.setFontSize(10);
+    doc.setTextColor(...muted);
+    doc.text(
+      "Basemap unavailable — enable the Static Maps API for this key to embed live evidence.",
+      M + 20,
+      390,
+    );
+  }
 
   // Footer
   doc.setFontSize(8);
@@ -199,7 +219,15 @@ export async function generateLocationDossier(opts: { lat: number; lng: number; 
     const yy = 110 + row * (imgH + 70);
     doc.setFillColor(255, 255, 255);
     doc.roundedRect(x, yy, imgW, imgH + 60, 8, 8, "F");
-    doc.addImage(e.img, "PNG", x + 8, yy + 8, imgW - 16, imgH - 16);
+    if (e.img) {
+      doc.addImage(e.img, "PNG", x + 8, yy + 8, imgW - 16, imgH - 16);
+    } else {
+      doc.setFillColor(235, 240, 248);
+      doc.roundedRect(x + 8, yy + 8, imgW - 16, imgH - 16, 6, 6, "F");
+      doc.setFontSize(8);
+      doc.setTextColor(...muted);
+      doc.text("Imagery unavailable", x + 16, yy + imgH / 2);
+    }
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
     doc.setTextColor(...ink);
