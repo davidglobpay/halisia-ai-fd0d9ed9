@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { AIOrb } from "@/components/halisia/ai-orb";
-import { IntelligenceCards } from "@/components/halisia/intelligence-cards";
+import { IntelligenceDashboard } from "@/components/halisia/intelligence-dashboard";
 import {
   MapView,
   type MapLocation,
@@ -249,7 +249,7 @@ function Explore() {
           </div>
 
           {/* SIDE PANEL */}
-          <div className="lg:max-h-[calc(70vh+16px)] lg:overflow-y-auto pr-1 lg:sticky lg:top-24">
+          <div className="lg:sticky lg:top-24 pr-1">
             <button
               onClick={downloadDossier}
               disabled={downloading}
@@ -267,7 +267,7 @@ function Explore() {
               )}
             </button>
             {pdfError && <div className="mb-2 text-xs text-amber-glow">{pdfError}</div>}
-            <IntelligenceCards lat={active.lat} lng={active.lng} label={active.address} />
+            <IntelligenceDashboard lat={active.lat} lng={active.lng} address={active.address} />
           </div>
         </div>
       </div>

@@ -10,6 +10,11 @@ import {
   Waves,
   Sparkles,
   BadgeCheck,
+  Search,
+  MousePointerClick,
+  FileText,
+  Quote,
+  Star,
 } from "lucide-react";
 import { Kenya3DMap } from "@/components/halisia/kenya-3d-map";
 import { Navbar } from "@/components/halisia/navbar";
@@ -282,6 +287,87 @@ function Landing() {
         </div>
       </section>
 
+      {/* HOW IT WORKS */}
+      <section id="how" className="py-24 md:py-32 border-t border-white/5">
+        <div className="mx-auto max-w-7xl px-4">
+          <div className="max-w-2xl">
+            <div className="text-xs uppercase tracking-[0.25em] text-accent">Three steps</div>
+            <h2 className="mt-3 text-3xl md:text-5xl font-semibold tracking-tight">
+              From a name on a signboard to a{" "}
+              <span className="text-gradient">decision you can defend</span>.
+            </h2>
+          </div>
+          <div className="mt-14 grid md:grid-cols-3 gap-4">
+            {STEPS.map((s, i) => (
+              <motion.div
+                key={s.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-80px" }}
+                transition={{ delay: i * 0.08 }}
+                className="glass rounded-3xl p-6 relative overflow-hidden"
+              >
+                <div className="absolute top-4 right-5 text-5xl font-semibold text-white/5">
+                  {String(i + 1).padStart(2, "0")}
+                </div>
+                <div className="h-11 w-11 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+                  <s.icon className="h-5 w-5 text-accent" />
+                </div>
+                <h3 className="mt-4 text-lg font-semibold">{s.title}</h3>
+                <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">{s.body}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* TESTIMONIALS */}
+      <section id="voices" className="py-24">
+        <div className="mx-auto max-w-7xl px-4">
+          <div className="max-w-2xl">
+            <div className="text-xs uppercase tracking-[0.25em] text-accent">Field voices</div>
+            <h2 className="mt-3 text-3xl md:text-5xl font-semibold tracking-tight">
+              Built with buyers, builders, and diaspora investors.
+            </h2>
+          </div>
+          <div className="mt-14 grid md:grid-cols-3 gap-4">
+            {VOICES.map((v, i) => (
+              <motion.div
+                key={v.name}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.08 }}
+                className="glass rounded-3xl p-6 flex flex-col"
+              >
+                <Quote className="h-5 w-5 text-accent" />
+                <p className="mt-3 text-sm leading-relaxed text-foreground/90 flex-1">
+                  "{v.quote}"
+                </p>
+                <div className="mt-5 flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-xs font-semibold text-primary-foreground">
+                    {v.name
+                      .split(" ")
+                      .map((s) => s[0])
+                      .join("")
+                      .slice(0, 2)}
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium">{v.name}</div>
+                    <div className="text-[11px] text-muted-foreground">{v.role}</div>
+                  </div>
+                  <div className="ml-auto flex items-center gap-0.5 text-amber-glow">
+                    {Array.from({ length: 5 }).map((_, s) => (
+                      <Star key={s} className="h-3 w-3 fill-current" />
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* PRICING / CTA */}
       <section id="pricing" className="py-24">
         <div className="mx-auto max-w-5xl px-4">
@@ -361,4 +447,43 @@ const TRUST = [
   { stat: "3-tier", label: "confidence on every score" },
   { stat: "Kenya", label: "first · global by design" },
   { stat: "0", label: "hidden auto-decisions" },
+];
+
+const STEPS = [
+  {
+    icon: Search,
+    title: "Search or drop a pin",
+    body: "Any town, road, plot number, or lat/lng in Kenya. The 3D map takes you there.",
+  },
+  {
+    icon: MousePointerClick,
+    title: "See live intelligence",
+    body: "Real Google Maps signals — elevation, air quality, schools, hospitals, transit — plus an AI reading with strengths, watch-outs, and next steps.",
+  },
+  {
+    icon: FileText,
+    title: "Download the dossier",
+    body: "A printable PDF with map evidence and analysis. Share with your surveyor, lawyer, family, or investor.",
+  },
+];
+
+const VOICES = [
+  {
+    name: "Achieng O.",
+    role: "First-time buyer · Kiambu",
+    quote:
+      "I was about to wire the deposit for a plot that turned out to be in a seasonal flood line. HALISIA showed the elevation and long-rains context in one screen.",
+  },
+  {
+    name: "Brian K.",
+    role: "Diaspora investor · Houston",
+    quote:
+      "I can't fly home for every viewing. Pulling up the same intelligence my cousin sees on the ground makes the conversation honest, fast, and quantitative.",
+  },
+  {
+    name: "Wanjiru M.",
+    role: "Small developer · Ruaka",
+    quote:
+      "The confidence bands are the killer feature. It doesn't pretend to know everything — it tells me exactly where to spend my next site visit.",
+  },
 ];
