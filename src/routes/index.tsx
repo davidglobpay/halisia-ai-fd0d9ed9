@@ -184,62 +184,6 @@ function Landing() {
         </div>
       </section>
 
-      {/* MAP PREVIEW BAND */}
-      <section className="py-16">
-        <div className="mx-auto max-w-7xl px-4">
-          <div className="glass-strong rounded-[36px] p-2 relative overflow-hidden">
-            <div className="relative rounded-[28px] overflow-hidden border border-white/10 aspect-[16/9] bg-[#0a1735]">
-              <div
-                className="absolute inset-0 opacity-90"
-                style={{
-                  backgroundImage:
-                    "radial-gradient(circle at 30% 30%, oklch(0.68 0.19 249 / 0.35), transparent 60%), radial-gradient(circle at 70% 70%, oklch(0.87 0.14 208 / 0.25), transparent 60%)",
-                }}
-              />
-              <div
-                className="absolute inset-0"
-                style={{
-                  backgroundImage:
-                    "linear-gradient(oklch(1 0 0 / 0.06) 1px, transparent 1px), linear-gradient(90deg, oklch(1 0 0 / 0.06) 1px, transparent 1px)",
-                  backgroundSize: "40px 40px",
-                }}
-              />
-              <div className="absolute inset-0 grid place-items-center">
-                <Link
-                  to="/explore"
-                  className="glass-strong rounded-full px-5 py-3 text-sm font-medium inline-flex items-center gap-2 hover:brightness-110 transition"
-                >
-                  <MapPinned className="h-4 w-4 text-accent" />
-                  Open the live map
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-
-              {/* floating chips */}
-              {[
-                { top: "18%", left: "22%", label: "Karen · 78" },
-                { top: "40%", left: "58%", label: "Kilimani · 84" },
-                { top: "62%", left: "34%", label: "Ruiru · 71" },
-                { top: "30%", left: "80%", label: "Nyali · 76" },
-              ].map((c, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 8 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.1 * i }}
-                  className="absolute glass rounded-full text-xs px-3 py-1.5 flex items-center gap-1.5"
-                  style={{ top: c.top, left: c.left }}
-                >
-                  <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
-                  {c.label}
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* TRUST */}
       <section id="trust" className="py-24 md:py-32">
         <div className="mx-auto max-w-7xl px-4 grid lg:grid-cols-2 gap-12 items-center">
