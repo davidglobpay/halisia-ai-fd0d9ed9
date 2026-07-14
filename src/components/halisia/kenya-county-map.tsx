@@ -19,6 +19,10 @@ import {
   X as XIcon,
   FileDown,
   Loader2,
+  AlertTriangle,
+  RefreshCw,
+  Link as LinkIcon,
+  Info,
 } from "lucide-react";
 
 type County = { code: number; name: string; lat: number; lng: number };
@@ -57,10 +61,40 @@ function loadMaps(): Promise<typeof google> {
     s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&loading=async&callback=__initHalisiaMap&channel=${channel}`;
     s.async = true;
     s.defer = true;
-    s.onerror = () => reject(new Error("Failed to load Google Maps"));
+    s.onerror = () => {
+      loaderPromise = null;
+      reject(new Error("Failed to load Google Maps"));
+    };
     document.head.appendChild(s);
   });
   return loaderPromise;
+}
+
+// Session-scoped cache for the parsed GeoJSON. The file is bundled, but reusing
+// the same parsed object across re-mounts avoids re-parsing on tab switches.
+let cachedGeoJson: object | null = null;
+function getCountiesGeoJson(): object {
+  if (cachedGeoJson) return cachedGeoJson;
+  if (typeof window !== "undefined") {
+    try {
+      const cached = window.sessionStorage.getItem("halisia:counties:v1");
+      if (cached) {
+        cachedGeoJson = JSON.parse(cached);
+        return cachedGeoJson as object;
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+  cachedGeoJson = countiesData as unknown as object;
+  if (typeof window !== "undefined") {
+    try {
+      window.sessionStorage.setItem("halisia:counties:v1", JSON.stringify(cachedGeoJson));
+    } catch {
+      /* quota exceeded — safe to ignore */
+    }
+  }
+  return cachedGeoJson;
 }
 
 // Colour ramp: low → high on the same metric range.
@@ -126,6 +160,10 @@ export function KenyaCountyMap() {
       .slice(0, 4);
   });
   const [downloading, setDownloading] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+  const [mapError, setMapError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [showConfidence, setShowConfidence] = useState(false);
   const mapEl = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const dataLayerRef = useRef<google.maps.Data | null>(null);
@@ -159,55 +197,65 @@ export function KenyaCountyMap() {
   };
 
   // Init map + polygons
-  useEffect(() => {
-    let cancelled = false;
-    loadMaps()
-      .then((g) => {
-        if (cancelled || !mapEl.current) return;
-        const map = new g.maps.Map(mapEl.current, {
-          center: { lat: 0.5, lng: 37.9 },
-          zoom: 6,
-          mapTypeId: "roadmap",
-          disableDefaultUI: true,
-          zoomControl: true,
-          gestureHandling: "greedy",
-          backgroundColor: "#0a1735",
-          styles: [
-            { elementType: "geometry", stylers: [{ color: "#0a1735" }] },
-            { elementType: "labels.text.fill", stylers: [{ color: "#8ab4ff" }] },
-            { elementType: "labels.text.stroke", stylers: [{ color: "#0a1735" }] },
-            {
-              featureType: "administrative",
-              elementType: "geometry",
-              stylers: [{ visibility: "off" }],
-            },
-            { featureType: "poi", stylers: [{ visibility: "off" }] },
-            { featureType: "road", elementType: "geometry", stylers: [{ color: "#0f2050" }] },
-            { featureType: "water", elementType: "geometry", stylers: [{ color: "#050d24" }] },
-          ],
-        });
-        mapRef.current = map;
-        const data = new g.maps.Data({ map });
-        dataLayerRef.current = data;
-        data.addGeoJson(countiesData as unknown as object);
+  useEffect(
+    () => {
+      let cancelled = false;
+      loadMaps()
+        .then((g) => {
+          if (cancelled || !mapEl.current) return;
+          setMapError(null);
+          const map = new g.maps.Map(mapEl.current, {
+            center: { lat: 0.5, lng: 37.9 },
+            zoom: 6,
+            mapTypeId: "roadmap",
+            disableDefaultUI: true,
+            zoomControl: true,
+            gestureHandling: "greedy",
+            backgroundColor: "#0a1735",
+            styles: [
+              { elementType: "geometry", stylers: [{ color: "#0a1735" }] },
+              { elementType: "labels.text.fill", stylers: [{ color: "#8ab4ff" }] },
+              { elementType: "labels.text.stroke", stylers: [{ color: "#0a1735" }] },
+              {
+                featureType: "administrative",
+                elementType: "geometry",
+                stylers: [{ visibility: "off" }],
+              },
+              { featureType: "poi", stylers: [{ visibility: "off" }] },
+              { featureType: "road", elementType: "geometry", stylers: [{ color: "#0f2050" }] },
+              { featureType: "water", elementType: "geometry", stylers: [{ color: "#050d24" }] },
+            ],
+          });
+          mapRef.current = map;
+          const data = new g.maps.Data({ map });
+          dataLayerRef.current = data;
+          data.addGeoJson(getCountiesGeoJson());
 
-        data.addListener("mouseover", (e: google.maps.Data.MouseEvent) => {
-          const code = e.feature.getProperty("code") as number;
-          setHoverCode(code);
+          data.addListener("mouseover", (e: google.maps.Data.MouseEvent) => {
+            const code = e.feature.getProperty("code") as number;
+            setHoverCode(code);
+          });
+          data.addListener("mouseout", () => setHoverCode(null));
+          data.addListener("click", (e: google.maps.Data.MouseEvent) => {
+            const code = e.feature.getProperty("code") as number;
+            toggleSelect(code);
+            const el = cardRefs.current[code];
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+          });
+        })
+        .catch((err) => {
+          console.error(err);
+          if (!cancelled)
+            setMapError("Couldn't load Google Maps. Check your connection and retry.");
         });
-        data.addListener("mouseout", () => setHoverCode(null));
-        data.addListener("click", (e: google.maps.Data.MouseEvent) => {
-          const code = e.feature.getProperty("code") as number;
-          toggleSelect(code);
-          const el = cardRefs.current[code];
-          if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-        });
-      })
-      .catch((err) => console.error(err));
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+      return () => {
+        cancelled = true;
+      };
+    },
+    [
+      /* re-run on manual retry via key */
+    ],
+  );
 
   // Re-style whenever metric / hover / selection changes.
   useEffect(() => {
@@ -235,13 +283,44 @@ export function KenyaCountyMap() {
   async function downloadCompare() {
     if (selected.length < 2) return;
     setDownloading(true);
+    setPdfError(null);
     try {
       const chosen = COUNTIES.filter((c) => selected.includes(c.code));
       await generateCountyComparePdf(chosen);
     } catch (e) {
       console.error(e);
+      setPdfError(
+        !navigator.onLine
+          ? "You're offline. Reconnect and retry the download."
+          : "Couldn't build the comparison PDF. Retry, or reduce the number of counties.",
+      );
     } finally {
       setDownloading(false);
+    }
+  }
+
+  async function copyShareLink() {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    if (selected.length) url.searchParams.set("compare", selected.join(","));
+    else url.searchParams.delete("compare");
+    try {
+      await navigator.clipboard.writeText(url.toString());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      // Fallback: select the URL into a temporary input
+      const ta = document.createElement("textarea");
+      ta.value = url.toString();
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand("copy");
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1800);
+      } finally {
+        document.body.removeChild(ta);
+      }
     }
   }
 
@@ -273,6 +352,15 @@ export function KenyaCountyMap() {
               Hover to explore, click to compare up to four counties side-by-side. Every metric
               carries a confidence badge — hover for what it means.
             </p>
+            <button
+              onClick={() => setShowConfidence((v) => !v)}
+              aria-expanded={showConfidence}
+              aria-controls="confidence-definitions"
+              className="mt-3 inline-flex items-center gap-1.5 text-xs text-accent hover:text-foreground transition"
+            >
+              <Info className="h-3.5 w-3.5" />
+              {showConfidence ? "Hide" : "Show"} confidence definitions
+            </button>
           </div>
 
           {/* Metric filter */}
@@ -303,6 +391,91 @@ export function KenyaCountyMap() {
           </div>
         </div>
 
+        {showConfidence && (
+          <div
+            id="confidence-definitions"
+            role="region"
+            aria-label="Confidence dot definitions"
+            className="mt-6 glass rounded-3xl p-5"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="text-xs uppercase tracking-widest text-accent">
+                  Confidence definitions
+                </div>
+                <p className="mt-1 text-sm text-muted-foreground max-w-2xl">
+                  Three dots = cross-verified, two = partial, one = directional. Each metric is
+                  scored independently against its own sources.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowConfidence(false)}
+                aria-label="Close confidence definitions"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <XIcon className="h-4 w-4" />
+              </button>
+            </div>
+            <dl className="mt-5 grid sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+              {[
+                {
+                  m: "livability" as CountyMetric,
+                  src: "Composite of infrastructure, amenity density, air quality and safety proxies.",
+                  high: "All four sub-signals present and cross-checked with public datasets.",
+                  med: "Two or three sub-signals present; some are county-level estimates.",
+                  low: "Only one sub-signal available; treat as directional guidance.",
+                },
+                {
+                  m: "population" as CountyMetric,
+                  src: "KNBS 2019 census + projected growth from national statistics.",
+                  high: "Census figure with recent (<2y) mid-year projection.",
+                  med: "Census figure only, projected linearly.",
+                  low: "Estimated from constituency roll-ups.",
+                },
+                {
+                  m: "growth" as CountyMetric,
+                  src: "YoY change from county GDP releases and building-approval proxies.",
+                  high: "Government release + independent market data agree within 2pp.",
+                  med: "Single source; last 12 months.",
+                  low: "Modelled from national trend; no county-specific release.",
+                },
+                {
+                  m: "water" as CountyMetric,
+                  src: "WASREB reliability index + rainfall/borehole coverage.",
+                  high: "WASREB score present and matches on-the-ground utility reporting.",
+                  med: "WASREB score present but no utility corroboration.",
+                  low: "Rainfall proxy only; no piped-supply data.",
+                },
+              ].map((row) => (
+                <div key={row.m} className="rounded-2xl bg-white/5 border border-white/10 p-3">
+                  <dt className="flex items-center justify-between text-foreground font-semibold">
+                    <span>{METRIC_LABELS[row.m]}</span>
+                  </dt>
+                  <dd className="mt-1 text-muted-foreground">{row.src}</dd>
+                  <dl className="mt-3 space-y-1.5">
+                    {(
+                      [
+                        ["high", row.high],
+                        ["med", row.med],
+                        ["low", row.low],
+                      ] as const
+                    ).map(([lvl, txt]) => (
+                      <div key={lvl} className="flex items-start gap-2">
+                        <ConfidenceDots
+                          level={lvl}
+                          metric={row.m}
+                          countyName={METRIC_LABELS[row.m]}
+                        />
+                        <span className="text-muted-foreground leading-snug">{txt}</span>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
+              ))}
+            </dl>
+          </div>
+        )}
+
         <div className="mt-8 grid lg:grid-cols-[1.4fr_1fr] gap-4">
           {/* MAP */}
           <div className="glass-strong rounded-3xl p-2 relative">
@@ -313,6 +486,31 @@ export function KenyaCountyMap() {
               role="application"
               aria-label="Interactive map of Kenya counties"
             />
+            {mapError && (
+              <div
+                role="alert"
+                className="absolute inset-2 rounded-[22px] bg-[#0a1735]/95 flex items-center justify-center p-6 text-center"
+              >
+                <div>
+                  <AlertTriangle className="h-6 w-6 text-amber-glow mx-auto" />
+                  <div className="mt-3 text-sm">{mapError}</div>
+                  <button
+                    onClick={() => {
+                      setMapError(null);
+                      loaderPromise = null;
+                      // Trigger effect by nudging a state — reuse hover reset.
+                      setHoverCode((h) => (h === -1 ? null : -1));
+                      setTimeout(() => setHoverCode(null), 0);
+                      // Full retry: reload maps by re-running init effect on next mount.
+                      window.location.reload();
+                    }}
+                    className="mt-4 inline-flex items-center gap-2 glass rounded-full px-4 py-2 text-xs hover:bg-white/10"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" /> Retry
+                  </button>
+                </div>
+              </div>
+            )}
             {/* Legend */}
             <div className="pointer-events-none absolute left-4 bottom-4 glass rounded-2xl px-3 py-2 text-[11px] flex items-center gap-2">
               <span className="text-muted-foreground uppercase tracking-widest text-[9px]">
@@ -410,22 +608,58 @@ export function KenyaCountyMap() {
               )}
             </div>
 
-            <button
-              onClick={downloadCompare}
-              disabled={selected.length < 2 || downloading}
-              data-testid="compare-pdf"
-              className="mt-4 w-full glass-strong rounded-2xl px-4 py-3 text-sm font-medium inline-flex items-center justify-center gap-2 hover:bg-white/10 transition disabled:opacity-40"
-            >
-              {downloading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Building comparison PDF…
-                </>
-              ) : (
-                <>
-                  <FileDown className="h-4 w-4 text-accent" /> Download comparison PDF
-                </>
+            <div className="mt-4 space-y-2">
+              {pdfError && (
+                <div
+                  role="alert"
+                  className="rounded-2xl border border-amber-glow/40 bg-amber-glow/10 px-3 py-2 text-xs flex items-start gap-2"
+                >
+                  <AlertTriangle className="h-3.5 w-3.5 text-amber-glow mt-0.5 shrink-0" />
+                  <span className="flex-1">{pdfError}</span>
+                  <button
+                    onClick={downloadCompare}
+                    className="inline-flex items-center gap-1 text-amber-glow hover:text-foreground font-medium"
+                  >
+                    <RefreshCw className="h-3 w-3" /> Retry
+                  </button>
+                </div>
               )}
-            </button>
+              <div className="grid grid-cols-[1fr_auto] gap-2">
+                <button
+                  onClick={downloadCompare}
+                  disabled={selected.length < 2 || downloading}
+                  data-testid="compare-pdf"
+                  className="glass-strong rounded-2xl px-4 py-3 text-sm font-medium inline-flex items-center justify-center gap-2 hover:bg-white/10 transition disabled:opacity-40"
+                >
+                  {downloading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" /> Building PDF…
+                    </>
+                  ) : (
+                    <>
+                      <FileDown className="h-4 w-4 text-accent" /> Download comparison PDF
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={copyShareLink}
+                  disabled={selected.length === 0}
+                  data-testid="compare-share"
+                  aria-label="Copy share link for this comparison"
+                  className="glass rounded-2xl px-4 py-3 text-xs font-medium inline-flex items-center justify-center gap-1.5 hover:bg-white/10 transition disabled:opacity-40"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="h-4 w-4 text-accent" /> Copied
+                    </>
+                  ) : (
+                    <>
+                      <LinkIcon className="h-4 w-4" /> Share
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
