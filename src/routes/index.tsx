@@ -1,4 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { z } from "zod";
+import { fallback } from "@tanstack/zod-adapter";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
@@ -17,11 +19,13 @@ import {
   Star,
 } from "lucide-react";
 import { Kenya3DMap } from "@/components/halisia/kenya-3d-map";
+import { KenyaCountyMap } from "@/components/halisia/kenya-county-map";
 import { Navbar } from "@/components/halisia/navbar";
 import { SearchBar } from "@/components/halisia/search-bar";
 import { AIOrb } from "@/components/halisia/ai-orb";
 
 export const Route = createFileRoute("/")({
+  validateSearch: (s) => z.object({ compare: fallback(z.string(), "").default("") }).parse(s),
   component: Landing,
 });
 
@@ -143,6 +147,9 @@ function Landing() {
           }}
         />
       </section>
+
+      {/* COUNTY INTELLIGENCE MAP */}
+      <KenyaCountyMap />
 
       {/* INTELLIGENCE PILLARS */}
       <section id="intelligence" className="py-24 md:py-32">
