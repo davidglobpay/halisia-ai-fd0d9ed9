@@ -12,13 +12,29 @@ const CALLBACK_NAME = "__halisiaGoogleMapsReady";
 
 let mapsPromise: Promise<typeof google> | null = null;
 
+async function ensureGoogleMapsReady(): Promise<typeof google> {
+  const g = window.google;
+  if (!g?.maps) throw new Error("Google Maps is not available yet");
+
+  if (typeof g.maps.importLibrary === "function") {
+    await g.maps.importLibrary("maps");
+    await g.maps.importLibrary("marker").catch(() => undefined);
+  }
+
+  if (typeof g.maps.Map !== "function") {
+    throw new Error("Google Maps loaded without the Map library");
+  }
+
+  return g;
+}
+
 export function resetGoogleMapsLoader() {
   mapsPromise = null;
 }
 
 export function loadGoogleMaps(): Promise<typeof google> {
   if (typeof window === "undefined") return Promise.reject(new Error("Google Maps needs a browser"));
-  if (window.google?.maps) return Promise.resolve(window.google);
+  if (window.google?.maps) return ensureGoogleMapsReady();
   if (mapsPromise) return mapsPromise;
 
   const key = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
@@ -31,8 +47,20 @@ export function loadGoogleMaps(): Promise<typeof google> {
 
     const finish = () => {
       if (settled || !window.google?.maps) return;
-      settled = true;
-      resolve(window.google);
+      ensureGoogleMapsReady()
+        .then((g) => {
+          if (settled) return;
+          settled = true;
+          window.clearTimeout(timeout);
+          resolve(g);
+        })
+        .catch((error: unknown) => {
+          if (settled) return;
+          settled = true;
+          window.clearTimeout(timeout);
+          mapsPromise = null;
+          reject(error);
+        });
     };
 
     window[CALLBACK_NAME] = finish;
@@ -79,7 +107,6 @@ export function loadGoogleMaps(): Promise<typeof google> {
     script.addEventListener(
       "load",
       () => {
-        window.clearTimeout(timeout);
         finish();
       },
       { once: true },
