@@ -604,22 +604,58 @@ export function KenyaCountyMap() {
               )}
             </div>
 
-            <button
-              onClick={downloadCompare}
-              disabled={selected.length < 2 || downloading}
-              data-testid="compare-pdf"
-              className="mt-4 w-full glass-strong rounded-2xl px-4 py-3 text-sm font-medium inline-flex items-center justify-center gap-2 hover:bg-white/10 transition disabled:opacity-40"
-            >
-              {downloading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Building comparison PDF…
-                </>
-              ) : (
-                <>
-                  <FileDown className="h-4 w-4 text-accent" /> Download comparison PDF
-                </>
+            <div className="mt-4 space-y-2">
+              {pdfError && (
+                <div
+                  role="alert"
+                  className="rounded-2xl border border-amber-glow/40 bg-amber-glow/10 px-3 py-2 text-xs flex items-start gap-2"
+                >
+                  <AlertTriangle className="h-3.5 w-3.5 text-amber-glow mt-0.5 shrink-0" />
+                  <span className="flex-1">{pdfError}</span>
+                  <button
+                    onClick={downloadCompare}
+                    className="inline-flex items-center gap-1 text-amber-glow hover:text-foreground font-medium"
+                  >
+                    <RefreshCw className="h-3 w-3" /> Retry
+                  </button>
+                </div>
               )}
-            </button>
+              <div className="grid grid-cols-[1fr_auto] gap-2">
+                <button
+                  onClick={downloadCompare}
+                  disabled={selected.length < 2 || downloading}
+                  data-testid="compare-pdf"
+                  className="glass-strong rounded-2xl px-4 py-3 text-sm font-medium inline-flex items-center justify-center gap-2 hover:bg-white/10 transition disabled:opacity-40"
+                >
+                  {downloading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" /> Building PDF…
+                    </>
+                  ) : (
+                    <>
+                      <FileDown className="h-4 w-4 text-accent" /> Download comparison PDF
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={copyShareLink}
+                  disabled={selected.length === 0}
+                  data-testid="compare-share"
+                  aria-label="Copy share link for this comparison"
+                  className="glass rounded-2xl px-4 py-3 text-xs font-medium inline-flex items-center justify-center gap-1.5 hover:bg-white/10 transition disabled:opacity-40"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="h-4 w-4 text-accent" /> Copied
+                    </>
+                  ) : (
+                    <>
+                      <LinkIcon className="h-4 w-4" /> Share
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
