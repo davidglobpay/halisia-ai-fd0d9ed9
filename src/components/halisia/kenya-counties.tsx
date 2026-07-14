@@ -180,9 +180,7 @@ export function KenyaCounties() {
     <section id="counties" className="py-24 md:py-32 border-t border-white/5">
       <div className="mx-auto max-w-7xl px-4">
         <div className="max-w-2xl">
-          <div className="text-xs uppercase tracking-[0.25em] text-accent">
-            County intelligence
-          </div>
+          <div className="text-xs uppercase tracking-[0.25em] text-accent">County intelligence</div>
           <h2 className="mt-3 text-3xl md:text-5xl font-semibold tracking-tight">
             Kenya, county by county — <span className="text-gradient">float, click, decide</span>.
           </h2>
@@ -211,8 +209,7 @@ export function KenyaCounties() {
                 backgroundImage:
                   "linear-gradient(oklch(1 0 0 / 0.05) 1px, transparent 1px), linear-gradient(90deg, oklch(1 0 0 / 0.05) 1px, transparent 1px)",
                 backgroundSize: "40px 40px",
-                maskImage:
-                  "radial-gradient(ellipse at center, black 45%, transparent 85%)",
+                maskImage: "radial-gradient(ellipse at center, black 45%, transparent 85%)",
               }}
             />
             {/* stylised Kenya silhouette */}
@@ -317,7 +314,11 @@ export function KenyaCounties() {
                   </div>
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     <Stat label="Water" value={active.water} icon={Droplets} />
-                    <Stat label="Coords" value={`${active.lat.toFixed(2)}, ${active.lng.toFixed(2)}`} icon={MapPin} />
+                    <Stat
+                      label="Coords"
+                      value={`${active.lat.toFixed(2)}, ${active.lng.toFixed(2)}`}
+                      icon={MapPin}
+                    />
                   </div>
 
                   <div className="mt-5 space-y-1.5">
@@ -351,8 +352,8 @@ export function KenyaCounties() {
                   <div className="text-xs uppercase tracking-[0.25em] text-accent mb-2">
                     Tap a pin
                   </div>
-                  Click any floating marker on the map to see that county's livability,
-                  population, growth and water reliability at a glance.
+                  Click any floating marker on the map to see that county's livability, population,
+                  growth and water reliability at a glance.
                   <div className="mt-6 grid grid-cols-3 gap-2">
                     {COUNTIES.slice(0, 6).map((c) => (
                       <button

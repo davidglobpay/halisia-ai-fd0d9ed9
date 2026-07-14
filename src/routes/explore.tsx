@@ -127,10 +127,7 @@ function Explore() {
         () => setPdfStage("Rendering intelligence pages…"),
         1200,
       );
-      const stageTimer2 = window.setTimeout(
-        () => setPdfStage("Compiling PDF…"),
-        2600,
-      );
+      const stageTimer2 = window.setTimeout(() => setPdfStage("Compiling PDF…"), 2600);
       await generateLocationDossier({
         lat: active.lat,
         lng: active.lng,
