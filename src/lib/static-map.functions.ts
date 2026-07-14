@@ -34,7 +34,9 @@ export const fetchStaticMap = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const lovable = process.env.LOVABLE_API_KEY;
     const mapsKey = process.env.GOOGLE_MAPS_API_KEY;
-    if (!lovable || !mapsKey) throw new Error("Google Maps not configured");
+    if (!lovable || !mapsKey) {
+      return { ok: false as const, error: "Google Maps not configured" };
+    }
 
     const mapType = MAP_TYPES[data.layer];
     const styleParts = STYLES[data.layer]
@@ -56,16 +58,22 @@ export const fetchStaticMap = createServerFn({ method: "POST" })
 
     const url = `https://connector-gateway.lovable.dev/google_maps/maps/api/staticmap?${params.toString()}${styleParts ? `&${styleParts}` : ""}`;
 
-    const res = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${lovable}`,
-        "X-Connection-Api-Key": mapsKey,
-      },
-    });
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${lovable}`,
+          "X-Connection-Api-Key": mapsKey,
+        },
+      });
+    } catch (e) {
+      console.error("Static map network error", e);
+      return { ok: false as const, error: "network_error" };
+    }
     if (!res.ok) {
-      const body = await res.text();
-      console.error("Static map failed", res.status, body);
-      throw new Error(`Static map failed [${res.status}]`);
+      const body = await res.text().catch(() => "");
+      console.error("Static map failed", res.status, body.slice(0, 200));
+      return { ok: false as const, error: `status_${res.status}` };
     }
     const buf = new Uint8Array(await res.arrayBuffer());
     let binary = "";
