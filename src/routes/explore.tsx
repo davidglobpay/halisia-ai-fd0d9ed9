@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { AIOrb } from "@/components/halisia/ai-orb";
-import { IntelligenceCards } from "@/components/halisia/intelligence-cards";
+import { IntelligenceDashboard } from "@/components/halisia/intelligence-dashboard";
 import {
   MapView,
   type MapLocation,
@@ -267,7 +267,7 @@ function Explore() {
               )}
             </button>
             {pdfError && <div className="mb-2 text-xs text-amber-glow">{pdfError}</div>}
-            <IntelligenceCards lat={active.lat} lng={active.lng} label={active.address} />
+            <IntelligenceDashboard lat={active.lat} lng={active.lng} address={active.address} />
           </div>
         </div>
       </div>
