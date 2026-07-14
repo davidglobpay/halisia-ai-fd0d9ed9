@@ -19,16 +19,22 @@ import {
   ShieldAlert,
   CheckCircle2,
   ArrowRight,
+  CloudSun,
+  Layers as LayersIcon,
 } from "lucide-react";
 import { getLocationIntel, type LocationIntel } from "@/lib/location-intel.functions";
 import { generateNarrative, type NarrativeOutput } from "@/lib/ai-narrative.functions";
+import { WeatherPanel } from "@/components/halisia/weather-panel";
+import { LeafletLayersMap } from "@/components/halisia/leaflet-layers-map";
 
-type TabId = "overview" | "environment" | "amenities" | "evidence" | "ai";
+type TabId = "overview" | "weather" | "environment" | "amenities" | "layers" | "evidence" | "ai";
 
 const TABS: Array<{ id: TabId; label: string; icon: React.ElementType }> = [
   { id: "overview", label: "Overview", icon: Activity },
+  { id: "weather", label: "Weather", icon: CloudSun },
   { id: "environment", label: "Environment", icon: Leaf },
   { id: "amenities", label: "Amenities", icon: Store },
+  { id: "layers", label: "GIS", icon: LayersIcon },
   { id: "evidence", label: "Evidence", icon: MapPin },
   { id: "ai", label: "AI", icon: Sparkles },
 ];
@@ -177,8 +183,19 @@ export function IntelligenceDashboard({
         {tab === "overview" && (
           <OverviewTab intel={intelQ.data} loading={intelQ.isLoading} narrative={narrativeQ.data} />
         )}
+        {tab === "weather" && <WeatherPanel lat={lat} lng={lng} />}
         {tab === "environment" && <EnvironmentTab intel={intelQ.data} loading={intelQ.isLoading} />}
         {tab === "amenities" && <AmenitiesTab intel={intelQ.data} loading={intelQ.isLoading} />}
+        {tab === "layers" && (
+          <div className="space-y-2">
+            <LeafletLayersMap lat={lat} lng={lng} label={address} />
+            <div className="text-[11px] text-muted-foreground px-1">
+              Multi-source GIS: Esri satellite, OpenStreetMap, Carto dark/light, OpenTopoMap relief,
+              OpenRailway & OpenSeaMap overlays. Toggle basemaps and overlays via the top right
+              control.
+            </div>
+          </div>
+        )}
         {tab === "evidence" && <EvidenceTab intel={intelQ.data} />}
         {tab === "ai" && (
           <AITab narrative={narrativeQ.data} loading={narrativeQ.isLoading || intelQ.isLoading} />
