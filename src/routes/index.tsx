@@ -329,6 +329,7 @@ function Landing() {
             <div className="mt-8 flex items-center justify-center gap-3">
               <Link
                 to="/explore"
+                data-testid="launch-cta"
                 className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground font-medium px-6 py-3 shadow-[0_10px_40px_-10px_oklch(0.68_0.19_249)]"
               >
                 Launch HALISIA <ArrowRight className="h-4 w-4" />
