@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  quality:
+    name: Typecheck · Lint · Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - name: Prettier check
+        run: bunx prettier --check .
+      - name: Typecheck
+        run: bun run typecheck
+      - name: Lint (max-warnings=0)
+        run: bunx eslint . --max-warnings=0
+      - name: Vite build (development)
+        run: bunx vite build --mode development
+      - name: Vite build (production)
+        run: bunx vite build --mode production
+
+  e2e:
+    name: Playwright E2E
+    runs-on: ubuntu-latest
+    needs: quality
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: bunx playwright install --with-deps chromium
+      - name: Run Playwright tests
+        run: bunx playwright test
+        env:
+          CI: "1"

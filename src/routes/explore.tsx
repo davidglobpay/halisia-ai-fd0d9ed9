@@ -272,6 +272,15 @@ function Explore() {
 
           {/* SIDE PANEL */}
           <div className="lg:sticky lg:top-24 pr-1">
+            <div
+              className="mb-3 glass rounded-2xl px-4 py-2.5 text-xs text-muted-foreground"
+              data-testid="active-address"
+            >
+              <span className="uppercase tracking-widest text-accent text-[10px] mr-2">
+                Inspecting
+              </span>
+              {active.address}
+            </div>
             <button
               onClick={downloadDossier}
               disabled={downloading}
