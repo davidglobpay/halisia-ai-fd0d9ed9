@@ -107,11 +107,23 @@ export async function generateLocationDossier(opts: { lat: number; lng: number; 
   doc.text("Cross-referenced against public geodata,", W - M - 160, 183);
   doc.text("terrain elevation, and network coverage.", W - M - 160, 195);
 
-  // Hero map (light view)
-  doc.addImage(base.dataUrl, "PNG", M, 230, W - M * 2, 320);
-  doc.setFontSize(8);
-  doc.setTextColor(...muted);
-  doc.text("Fig 1 · Light basemap · parcel centroid marked", M, 565);
+  // Hero map (light view) — degrade gracefully if the static-map API is not authorized.
+  if (base.dataUrl) {
+    doc.addImage(base.dataUrl, "PNG", M, 230, W - M * 2, 320);
+    doc.setFontSize(8);
+    doc.setTextColor(...muted);
+    doc.text("Fig 1 · Light basemap · parcel centroid marked", M, 565);
+  } else {
+    doc.setFillColor(235, 240, 248);
+    doc.roundedRect(M, 230, W - M * 2, 320, 10, 10, "F");
+    doc.setFontSize(10);
+    doc.setTextColor(...muted);
+    doc.text(
+      "Basemap unavailable — enable the Static Maps API for this key to embed live evidence.",
+      M + 20,
+      390,
+    );
+  }
 
   // Footer
   doc.setFontSize(8);
