@@ -113,10 +113,7 @@ export async function fetchOpenMeteoArchive(
   url.searchParams.set("longitude", String(lng));
   url.searchParams.set("start_date", iso(start));
   url.searchParams.set("end_date", iso(end));
-  url.searchParams.set(
-    "daily",
-    "temperature_2m_max,temperature_2m_min,precipitation_sum",
-  );
+  url.searchParams.set("daily", "temperature_2m_max,temperature_2m_min,precipitation_sum");
   url.searchParams.set("timezone", "auto");
   const res = await fetch(url.toString(), { signal });
   if (!res.ok) throw new Error(`Open-Meteo archive ${res.status}`);

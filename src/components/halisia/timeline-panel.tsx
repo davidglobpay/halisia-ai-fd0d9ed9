@@ -7,10 +7,7 @@ import { fetchOpenMeteoArchive, type OpenMeteoArchive } from "@/lib/weather";
 
 // Aggregate daily archive into monthly buckets.
 function monthlyBuckets(a: OpenMeteoArchive) {
-  const buckets = new Map<
-    string,
-    { tMin: number[]; tMax: number[]; precip: number }
-  >();
+  const buckets = new Map<string, { tMin: number[]; tMax: number[]; precip: number }>();
   const { time, temperature_2m_max, temperature_2m_min, precipitation_sum } = a.daily;
   for (let i = 0; i < time.length; i++) {
     const key = time[i].slice(0, 7);
