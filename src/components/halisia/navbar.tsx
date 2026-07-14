@@ -44,12 +44,6 @@ export function Navbar() {
         <span className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground hidden lg:block">
           Land Intelligence · Kenya
         </span>
-        <Link
-          to="/explore"
-          className="inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 text-xs font-semibold uppercase tracking-widest text-accent-foreground shadow-[0_0_24px_oklch(0.78_0.17_210/0.45)] hover:brightness-110 transition"
-        >
-          Launch app
-        </Link>
       </div>
     </header>
   );
