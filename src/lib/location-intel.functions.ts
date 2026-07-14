@@ -176,26 +176,14 @@ export const getLocationIntel = createServerFn({ method: "POST" })
         fetchNearby(data.lat, data.lng, ["school", "primary_school", "secondary_school"], 6),
         fetchNearby(data.lat, data.lng, ["hospital", "doctor", "pharmacy"], 6),
         fetchNearby(data.lat, data.lng, ["supermarket", "grocery_store"], 6),
-        fetchNearby(
-          data.lat,
-          data.lng,
-          ["bus_station", "transit_station", "train_station"],
-          6,
-        ),
+        fetchNearby(data.lat, data.lng, ["bus_station", "transit_station", "train_station"], 6),
         fetchNearby(data.lat, data.lng, ["restaurant", "cafe"], 6),
         fetchNearby(data.lat, data.lng, ["bank", "atm"], 6),
       ]);
 
     // Build photo URLs. Places Photos (New): GET /v1/{name}/media?maxWidthPx=...
     // The photo endpoint returns a redirect to an image; the browser key can hit it directly.
-    const photoRefs = [
-      ...schools,
-      ...hospitals,
-      ...groceries,
-      ...restaurants,
-      ...transit,
-      ...banks,
-    ]
+    const photoRefs = [...schools, ...hospitals, ...groceries, ...restaurants, ...transit, ...banks]
       .map((p) => p.photoRef)
       .filter((x): x is string => !!x)
       .slice(0, 8);

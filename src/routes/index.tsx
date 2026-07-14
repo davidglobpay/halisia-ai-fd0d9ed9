@@ -341,7 +341,9 @@ function Landing() {
                 className="glass rounded-3xl p-6 flex flex-col"
               >
                 <Quote className="h-5 w-5 text-accent" />
-                <p className="mt-3 text-sm leading-relaxed text-foreground/90 flex-1">"{v.quote}"</p>
+                <p className="mt-3 text-sm leading-relaxed text-foreground/90 flex-1">
+                  "{v.quote}"
+                </p>
                 <div className="mt-5 flex items-center gap-3">
                   <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-xs font-semibold text-primary-foreground">
                     {v.name
