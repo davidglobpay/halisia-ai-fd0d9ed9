@@ -249,7 +249,7 @@ function Explore() {
           </div>
 
           {/* SIDE PANEL */}
-          <div className="lg:max-h-[calc(70vh+16px)] lg:overflow-y-auto pr-1 lg:sticky lg:top-24">
+          <div className="lg:sticky lg:top-24 pr-1">
             <button
               onClick={downloadDossier}
               disabled={downloading}
