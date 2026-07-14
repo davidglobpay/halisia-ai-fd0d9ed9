@@ -19,6 +19,10 @@ import {
   X as XIcon,
   FileDown,
   Loader2,
+  AlertTriangle,
+  RefreshCw,
+  Link as LinkIcon,
+  Info,
 } from "lucide-react";
 
 type County = { code: number; name: string; lat: number; lng: number };
@@ -57,10 +61,40 @@ function loadMaps(): Promise<typeof google> {
     s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&loading=async&callback=__initHalisiaMap&channel=${channel}`;
     s.async = true;
     s.defer = true;
-    s.onerror = () => reject(new Error("Failed to load Google Maps"));
+    s.onerror = () => {
+      loaderPromise = null;
+      reject(new Error("Failed to load Google Maps"));
+    };
     document.head.appendChild(s);
   });
   return loaderPromise;
+}
+
+// Session-scoped cache for the parsed GeoJSON. The file is bundled, but reusing
+// the same parsed object across re-mounts avoids re-parsing on tab switches.
+let cachedGeoJson: object | null = null;
+function getCountiesGeoJson(): object {
+  if (cachedGeoJson) return cachedGeoJson;
+  if (typeof window !== "undefined") {
+    try {
+      const cached = window.sessionStorage.getItem("halisia:counties:v1");
+      if (cached) {
+        cachedGeoJson = JSON.parse(cached);
+        return cachedGeoJson as object;
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+  cachedGeoJson = countiesData as unknown as object;
+  if (typeof window !== "undefined") {
+    try {
+      window.sessionStorage.setItem("halisia:counties:v1", JSON.stringify(cachedGeoJson));
+    } catch {
+      /* quota exceeded — safe to ignore */
+    }
+  }
+  return cachedGeoJson;
 }
 
 // Colour ramp: low → high on the same metric range.
