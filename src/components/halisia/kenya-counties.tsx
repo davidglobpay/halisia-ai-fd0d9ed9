@@ -221,7 +221,12 @@ const COUNTIES: County[] = [
 
 const WATER_SCORE: Record<Water, number> = { Reliable: 90, Intermittent: 60, Scarce: 30 };
 
-const METRICS: Array<{ id: MetricId; label: string; icon: React.ComponentType<{ className?: string }>; unit: string }> = [
+const METRICS: Array<{
+  id: MetricId;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  unit: string;
+}> = [
   { id: "livability", label: "Livability", icon: Sparkles, unit: "/100" },
   { id: "population", label: "Population", icon: Users, unit: "M" },
   { id: "growth", label: "Growth", icon: TrendingUp, unit: "% YoY" },
@@ -271,10 +276,7 @@ function confidenceDots(level: Confidence) {
   return (
     <span className="inline-flex items-center gap-0.5" aria-label={`Confidence ${level}`}>
       {[0, 1, 2].map((i) => (
-        <span
-          key={i}
-          className={`h-1 w-1 rounded-full ${i < n ? "bg-accent" : "bg-white/15"}`}
-        />
+        <span key={i} className={`h-1 w-1 rounded-full ${i < n ? "bg-accent" : "bg-white/15"}`} />
       ))}
     </span>
   );
@@ -297,7 +299,11 @@ export function KenyaCounties() {
 
   const toggleSelected = (name: string) => {
     setSelected((prev) =>
-      prev.includes(name) ? prev.filter((n) => n !== name) : prev.length >= 4 ? prev : [...prev, name],
+      prev.includes(name)
+        ? prev.filter((n) => n !== name)
+        : prev.length >= 4
+          ? prev
+          : [...prev, name],
     );
   };
 
@@ -657,7 +663,11 @@ export function KenyaCounties() {
                       className={`h-5 w-5 grid place-items-center rounded-md transition ${isSelected ? "bg-accent text-background" : "bg-white/5 text-muted-foreground hover:bg-white/10"}`}
                       aria-label={isSelected ? "Remove from compare" : "Add to compare"}
                     >
-                      {isSelected ? <Check className="h-3 w-3" /> : <span className="text-xs">+</span>}
+                      {isSelected ? (
+                        <Check className="h-3 w-3" />
+                      ) : (
+                        <span className="text-xs">+</span>
+                      )}
                     </button>
                   </div>
                   <div className="mt-3 flex items-end justify-between">
@@ -763,7 +773,10 @@ export function KenyaCounties() {
                 {selectedCounties.map((c) => (
                   <div key={c.name + "hl"} className="rounded-xl bg-white/5 px-3 py-3 space-y-1">
                     {c.highlights.map((h) => (
-                      <div key={h} className="text-[11px] text-foreground/80 flex items-center gap-1.5">
+                      <div
+                        key={h}
+                        className="text-[11px] text-foreground/80 flex items-center gap-1.5"
+                      >
                         <span className="h-1 w-1 rounded-full bg-accent" /> {h}
                       </div>
                     ))}
@@ -774,9 +787,7 @@ export function KenyaCounties() {
                 {selectedCounties.map((c) => (
                   <button
                     key={c.name + "cta"}
-                    onClick={() =>
-                      navigate({ to: "/explore", search: { q: `${c.name}, Kenya` } })
-                    }
+                    onClick={() => navigate({ to: "/explore", search: { q: `${c.name}, Kenya` } })}
                     className="rounded-xl bg-gradient-to-r from-primary to-accent text-primary-foreground text-xs font-medium px-3 py-3"
                   >
                     Open {c.name} →
