@@ -73,10 +73,15 @@ export function MapView({
       Record<OverlayId, google.maps.MVCObject & { setMap: (m: google.maps.Map | null) => void }>
     >
   >({});
+  const [mapReady, setMapReady] = useState(false);
+  const [mapError, setMapError] = useState<string | null>(null);
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
-    loadMaps()
+    setMapReady(false);
+    setMapError(null);
+    loadGoogleMaps()
       .then((g) => {
         if (cancelled || !el.current) return;
         mapRef.current = new g.maps.Map(el.current, {
@@ -90,34 +95,43 @@ export function MapView({
           backgroundColor: theme === "light" ? "#f5f7fb" : "#0a1735",
           tilt: 45,
         });
+        setMapReady(true);
       })
-      .catch((e) => console.error(e));
+      .catch((e) => {
+        console.error(e);
+        if (!cancelled) setMapError("Google Maps could not open. Check your connection and retry.");
+      });
     return () => {
       cancelled = true;
+      clickListenerRef.current?.remove();
+      markerRef.current?.setMap(null);
+      Object.values(overlayRefs.current).forEach((layer) => layer?.setMap(null));
+      overlayRefs.current = {};
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadAttempt]);
 
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapReady || !mapRef.current) return;
     mapRef.current.panTo(center);
     mapRef.current.setZoom(zoom);
-  }, [center.lat, center.lng, zoom]);
+  }, [mapReady, center.lat, center.lng, zoom]);
 
   // Theme + mapType
   useEffect(() => {
     const m = mapRef.current;
-    if (!m) return;
+    if (!mapReady || !m) return;
     m.setOptions({
       styles: theme === "light" ? HALISIA_LIGHT : HALISIA_STYLE,
       backgroundColor: theme === "light" ? "#f5f7fb" : "#0a1735",
     });
     m.setMapTypeId(mapType);
-  }, [theme, mapType]);
+  }, [mapReady, theme, mapType]);
 
   // Click to inspect anywhere
   useEffect(() => {
     const m = mapRef.current;
-    if (!m || !window.google?.maps) return;
+    if (!mapReady || !m || !window.google?.maps) return;
     clickListenerRef.current?.remove();
     if (!onMapClick) return;
     clickListenerRef.current = m.addListener("click", (e: google.maps.MapMouseEvent) => {
@@ -125,13 +139,13 @@ export function MapView({
       onMapClick({ lat: e.latLng.lat(), lng: e.latLng.lng() });
     });
     return () => clickListenerRef.current?.remove();
-  }, [onMapClick]);
+  }, [mapReady, onMapClick]);
 
   // Built-in Google overlays (traffic/transit/bicycling)
   useEffect(() => {
     const m = mapRef.current;
     const g = window.google;
-    if (!m || !g?.maps) return;
+    if (!mapReady || !m || !g?.maps) return;
     const wanted = new Set(overlays);
     const ensure = (
       id: OverlayId,
@@ -150,10 +164,10 @@ export function MapView({
     ensure("traffic", () => new g.maps.TrafficLayer());
     ensure("transit", () => new g.maps.TransitLayer());
     ensure("bicycling", () => new g.maps.BicyclingLayer());
-  }, [overlays]);
+  }, [mapReady, overlays]);
 
   useEffect(() => {
-    if (!mapRef.current || !window.google?.maps) return;
+    if (!mapReady || !mapRef.current || !window.google?.maps) return;
     markerRef.current?.setMap(null);
     if (marker) {
       markerRef.current = new window.google.maps.Marker({
@@ -170,7 +184,7 @@ export function MapView({
         },
       });
     }
-  }, [marker?.lat, marker?.lng, marker?.label]);
+  }, [mapReady, marker?.lat, marker?.lng, marker?.label]);
 
   return (
     <div className={`relative overflow-hidden ${className}`}>
@@ -179,6 +193,33 @@ export function MapView({
         className={`absolute inset-0 ${theme === "light" ? "bg-[#f5f7fb]" : "bg-[#0a1735]"}`}
       />
       <div className="pointer-events-none absolute inset-0 rounded-[inherit] shadow-[inset_0_0_120px_oklch(0_0_0/0.6)]" />
+      {!mapReady && !mapError && (
+        <div className="absolute inset-0 grid place-items-center text-muted-foreground text-sm">
+          <div className="inline-flex items-center gap-2 glass rounded-full px-4 py-2">
+            <Loader2 className="h-4 w-4 animate-spin text-accent" /> Opening map…
+          </div>
+        </div>
+      )}
+      {mapError && (
+        <div
+          role="alert"
+          className="absolute inset-0 grid place-items-center bg-[#0a1735]/95 p-6 text-center"
+        >
+          <div>
+            <AlertTriangle className="mx-auto h-6 w-6 text-amber-glow" />
+            <div className="mt-3 text-sm text-foreground">{mapError}</div>
+            <button
+              onClick={() => {
+                resetGoogleMapsLoader();
+                setLoadAttempt((n) => n + 1);
+              }}
+              className="mt-4 inline-flex items-center gap-2 glass rounded-full px-4 py-2 text-xs hover:bg-white/10"
+            >
+              <RefreshCw className="h-3.5 w-3.5" /> Retry map
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
