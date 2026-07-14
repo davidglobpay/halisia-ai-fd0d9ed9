@@ -1,6 +1,7 @@
 /// <reference types="google.maps" />
 import { useEffect, useMemo, useRef, useState } from "react";
 import countiesData from "@/data/kenya-counties.json";
+import { loadGoogleMaps, resetGoogleMapsLoader } from "@/lib/google-maps-loader";
 import {
   METRIC_LABELS,
   countyMetrics,
@@ -37,38 +38,6 @@ const METRIC_ICONS: Record<CountyMetric, typeof Activity> = {
   growth: TrendingUp,
   water: Droplets,
 };
-
-let loaderPromise: Promise<typeof google> | null = null;
-function loadMaps(): Promise<typeof google> {
-  if (typeof window === "undefined") return Promise.reject(new Error("SSR"));
-  const w = window as unknown as { google?: typeof google };
-  if (w.google?.maps) return Promise.resolve(w.google);
-  if (loaderPromise) return loaderPromise;
-  const key = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
-  const channel = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID;
-  loaderPromise = new Promise((resolve, reject) => {
-    (window as unknown as { __initHalisiaMap?: () => void }).__initHalisiaMap = () =>
-      resolve((window as unknown as { google: typeof google }).google);
-    const existing = document.querySelector<HTMLScriptElement>('script[data-halisia-maps="1"]');
-    if (existing) {
-      existing.addEventListener("load", () =>
-        resolve((window as unknown as { google: typeof google }).google),
-      );
-      return;
-    }
-    const s = document.createElement("script");
-    s.dataset.halisiaMaps = "1";
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&loading=async&callback=__initHalisiaMap&channel=${channel}`;
-    s.async = true;
-    s.defer = true;
-    s.onerror = () => {
-      loaderPromise = null;
-      reject(new Error("Failed to load Google Maps"));
-    };
-    document.head.appendChild(s);
-  });
-  return loaderPromise;
-}
 
 // Session-scoped cache for the parsed GeoJSON. The file is bundled, but reusing
 // the same parsed object across re-mounts avoids re-parsing on tab switches.
