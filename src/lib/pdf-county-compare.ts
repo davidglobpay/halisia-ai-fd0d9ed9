@@ -140,10 +140,11 @@ export async function generateCountyComparePdf(counties: County[]) {
       const x = M + i * (colW + colGap);
       doc.setFillColor(255, 255, 255);
       doc.roundedRect(x, mTop, colW, imgH + 60, 12, 12, "F");
-      const map = maps[i];
-      if (map?.dataUrl) {
+      const m = maps[i];
+      const dataUrl = m && "ok" in m && m.ok ? m.dataUrl : null;
+      if (dataUrl) {
         try {
-          doc.addImage(map.dataUrl, "PNG", x + 8, mTop + 8, colW - 16, imgH, undefined, "FAST");
+          doc.addImage(dataUrl, "PNG", x + 8, mTop + 8, colW - 16, imgH, undefined, "FAST");
         } catch {
           /* ignore image errors */
         }
