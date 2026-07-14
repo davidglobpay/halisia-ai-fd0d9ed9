@@ -17,6 +17,7 @@ import {
   Star,
 } from "lucide-react";
 import { Kenya3DMap } from "@/components/halisia/kenya-3d-map";
+import { KenyaCounties } from "@/components/halisia/kenya-counties";
 import { Navbar } from "@/components/halisia/navbar";
 import { SearchBar } from "@/components/halisia/search-bar";
 import { AIOrb } from "@/components/halisia/ai-orb";
