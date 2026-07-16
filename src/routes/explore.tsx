@@ -133,6 +133,10 @@ function Explore() {
         lat: active.lat,
         lng: active.lng,
         address: active.address,
+        shareUrl:
+          typeof window !== "undefined"
+            ? `${window.location.origin}/report?lat=${active.lat}&lng=${active.lng}&address=${encodeURIComponent(active.address)}`
+            : undefined,
       });
       window.clearTimeout(stageTimer);
       window.clearTimeout(stageTimer2);
