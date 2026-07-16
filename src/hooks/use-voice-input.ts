@@ -17,10 +17,7 @@ interface SpeechRecognitionLike extends EventTarget {
   onend: (() => void) | null;
 }
 
-export function useVoiceInput(opts: {
-  onFinal: (transcript: string) => void;
-  lang?: string;
-}) {
+export function useVoiceInput(opts: { onFinal: (transcript: string) => void; lang?: string }) {
   const { onFinal, lang = "en-US" } = opts;
   const [supported, setSupported] = useState(false);
   const [listening, setListening] = useState(false);
