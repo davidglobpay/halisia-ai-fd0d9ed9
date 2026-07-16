@@ -18,24 +18,20 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute("/report")({
   validateSearch: zodValidator(searchSchema),
-  head: ({ match }) => {
-    const s = match.search as { address?: string };
-    const addr = s.address?.trim() || "Land intelligence report";
-    return {
-      meta: [
-        { title: `${addr} — HALISIA AI Report` },
-        {
-          name: "description",
-          content: `Shareable HALISIA AI land intelligence dossier for ${addr}.`,
-        },
-        { property: "og:title", content: `${addr} — HALISIA AI Report` },
-        {
-          property: "og:description",
-          content: "Environmental, infrastructure and AI-scored intelligence for this location.",
-        },
-      ],
-    };
-  },
+  head: () => ({
+    meta: [
+      { title: "Shared Land Report — HALISIA AI" },
+      {
+        name: "description",
+        content: "Shareable HALISIA AI land intelligence dossier — view-only report for a specific location.",
+      },
+      { property: "og:title", content: "Shared Land Report — HALISIA AI" },
+      {
+        property: "og:description",
+        content: "Environmental, infrastructure and AI-scored intelligence for this location.",
+      },
+    ],
+  }),
   component: ReportPage,
 });
 
