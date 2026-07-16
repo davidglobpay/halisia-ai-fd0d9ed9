@@ -21,6 +21,12 @@ export function Navbar() {
         >
           Explore
         </Link>
+        <Link
+          to="/title-deed"
+          className="px-3 py-1.5 rounded-full hover:text-foreground hover:bg-white/5 transition"
+        >
+          Title Deed
+        </Link>
         <a
           href="#intelligence"
           className="px-3 py-1.5 rounded-full hover:text-foreground hover:bg-white/5 transition"
