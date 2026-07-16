@@ -20,7 +20,12 @@ export function MapsDiagnostics({ lat, lng }: { lat: number; lng: number }) {
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
 
-  useEffect(() => subscribeMapDiagnostics(setD), []);
+  useEffect(() => {
+    const unsub = subscribeMapDiagnostics(setD);
+    return () => {
+      unsub();
+    };
+  }, []);
 
   if (!d) return null;
   const err = classifyMapError(d.lastError);
