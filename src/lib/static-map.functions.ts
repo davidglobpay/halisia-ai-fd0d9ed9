@@ -77,7 +77,12 @@ export const fetchStaticMap = createServerFn({ method: "POST" })
         lastErr = `status_${res.status}`;
         console.error("Static map failed", res.status, body.slice(0, 200));
         if (!retryable) {
-          return { ok: false as const, error: lastErr, status: res.status, detail: body.slice(0, 200) };
+          return {
+            ok: false as const,
+            error: lastErr,
+            status: res.status,
+            detail: body.slice(0, 200),
+          };
         }
       } catch (e) {
         lastErr = "network_error";

@@ -34,7 +34,11 @@ export function MapsDiagnostics({ lat, lng }: { lat: number; lng: number }) {
     setTesting(true);
     setTestResult(null);
     const r = await fetchStaticMapCached({ lat, lng, layer: "roadmap-light", zoom: 12 });
-    setTestResult(r.ok ? "Success — thumbnail fetched." : `Failed: ${r.error}${"status" in r && r.status ? ` (HTTP ${r.status})` : ""}`);
+    setTestResult(
+      r.ok
+        ? "Success — thumbnail fetched."
+        : `Failed: ${r.error}${"status" in r && r.status ? ` (HTTP ${r.status})` : ""}`,
+    );
     setTesting(false);
   };
 
@@ -75,7 +79,9 @@ export function MapsDiagnostics({ lat, lng }: { lat: number; lng: number }) {
           <span>{jsBadge.label}</span>
         </div>
         <div className="flex items-center gap-2 text-muted-foreground">
-          <span className="font-mono">Static: {d.attempts} attempts · {d.hits} cached · {d.failures} failed</span>
+          <span className="font-mono">
+            Static: {d.attempts} attempts · {d.hits} cached · {d.failures} failed
+          </span>
         </div>
         <div className="text-muted-foreground">
           Last success: <span className="text-foreground">{timeAgo(d.lastSuccessAt)}</span>

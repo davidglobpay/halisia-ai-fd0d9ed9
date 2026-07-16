@@ -19,7 +19,11 @@ const SCORES = [
   { key: 10, label: "Construction readiness", note: "Soil & survey data limited" },
 ];
 
-export async function generateLocationDossier(opts: { lat: number; lng: number; address: string }): Promise<{
+export async function generateLocationDossier(opts: {
+  lat: number;
+  lng: number;
+  address: string;
+}): Promise<{
   ok: true;
   mapsRequested: number;
   mapsSucceeded: number;

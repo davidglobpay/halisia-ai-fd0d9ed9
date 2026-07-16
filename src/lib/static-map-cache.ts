@@ -167,6 +167,10 @@ export function classifyMapError(e: { error: string; status?: number } | null): 
       actionable: true,
     };
   if (e.error === "network_error")
-    return { title: "Network error", hint: "The request couldn't reach the Maps gateway.", actionable: false };
+    return {
+      title: "Network error",
+      hint: "The request couldn't reach the Maps gateway.",
+      actionable: false,
+    };
   return { title: `Error: ${e.error}`, hint: "See console logs for details.", actionable: false };
 }
