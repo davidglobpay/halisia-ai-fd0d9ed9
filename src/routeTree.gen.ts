@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TitleDeedRouteImport } from './routes/title-deed'
+import { Route as ReportRouteImport } from './routes/report'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
@@ -17,6 +18,11 @@ import { Route as ApiChatRouteImport } from './routes/api/chat'
 const TitleDeedRoute = TitleDeedRouteImport.update({
   id: '/title-deed',
   path: '/title-deed',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportRoute = ReportRouteImport.update({
+  id: '/report',
+  path: '/report',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExploreRoute = ExploreRouteImport.update({
@@ -38,12 +44,14 @@ const ApiChatRoute = ApiChatRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/explore': typeof ExploreRoute
+  '/report': typeof ReportRoute
   '/title-deed': typeof TitleDeedRoute
   '/api/chat': typeof ApiChatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/explore': typeof ExploreRoute
+  '/report': typeof ReportRoute
   '/title-deed': typeof TitleDeedRoute
   '/api/chat': typeof ApiChatRoute
 }
@@ -51,20 +59,22 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/explore': typeof ExploreRoute
+  '/report': typeof ReportRoute
   '/title-deed': typeof TitleDeedRoute
   '/api/chat': typeof ApiChatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/explore' | '/title-deed' | '/api/chat'
+  fullPaths: '/' | '/explore' | '/report' | '/title-deed' | '/api/chat'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/explore' | '/title-deed' | '/api/chat'
-  id: '__root__' | '/' | '/explore' | '/title-deed' | '/api/chat'
+  to: '/' | '/explore' | '/report' | '/title-deed' | '/api/chat'
+  id: '__root__' | '/' | '/explore' | '/report' | '/title-deed' | '/api/chat'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ExploreRoute: typeof ExploreRoute
+  ReportRoute: typeof ReportRoute
   TitleDeedRoute: typeof TitleDeedRoute
   ApiChatRoute: typeof ApiChatRoute
 }
@@ -76,6 +86,13 @@ declare module '@tanstack/react-router' {
       path: '/title-deed'
       fullPath: '/title-deed'
       preLoaderRoute: typeof TitleDeedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/report': {
+      id: '/report'
+      path: '/report'
+      fullPath: '/report'
+      preLoaderRoute: typeof ReportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/explore': {
@@ -105,6 +122,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ExploreRoute: ExploreRoute,
+  ReportRoute: ReportRoute,
   TitleDeedRoute: TitleDeedRoute,
   ApiChatRoute: ApiChatRoute,
 }

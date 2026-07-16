@@ -1,5 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 
+export type ValidationStep = {
+  name: string;
+  status: "pass" | "warn" | "fail";
+  detail: string;
+  score: number; // 0-100
+};
+
 export type DeedFields = {
   titleNumber: string | null;
   lrNumber: string | null;
@@ -14,7 +21,132 @@ export type DeedFields = {
   locationHint: string | null;
   confidence: number; // 0-100
   notes: string | null;
+  fieldConfidence: Record<string, number>;
+  validationSteps: ValidationStep[];
 };
+
+const KENYAN_COUNTIES = [
+  "Nairobi","Mombasa","Kisumu","Kiambu","Nakuru","Machakos","Kajiado","Uasin Gishu",
+  "Nyeri","Meru","Kilifi","Kwale","Kakamega","Bungoma","Kericho","Bomet","Trans Nzoia",
+  "Nandi","Laikipia","Nyandarua","Muranga","Embu","Kirinyaga","Tharaka Nithi","Isiolo",
+  "Marsabit","Turkana","West Pokot","Baringo","Samburu","Narok","Migori","Homa Bay",
+  "Siaya","Busia","Vihiga","Elgeyo Marakwet","Taita Taveta","Tana River","Lamu",
+  "Garissa","Wajir","Mandera","Kitui","Makueni",
+];
+
+function scoreField(value: string | null, patterns: RegExp[]): number {
+  if (!value) return 0;
+  const v = value.trim();
+  if (v.length < 2) return 20;
+  const matches = patterns.filter((p) => p.test(v)).length;
+  const base = 40 + Math.min(30, v.length * 2);
+  return Math.min(100, base + matches * 15);
+}
+
+function computeValidation(f: Omit<DeedFields, "fieldConfidence" | "validationSteps">): {
+  steps: ValidationStep[];
+  overall: number;
+} {
+  const steps: ValidationStep[] = [];
+
+  // 1. Format normalization
+  const refPresent = !!(f.titleNumber || f.lrNumber || f.parcelNumber);
+  steps.push({
+    name: "Reference format",
+    status: refPresent ? "pass" : "fail",
+    detail: refPresent
+      ? "At least one identifier (Title / L.R. / Parcel) detected."
+      : "No recognisable deed reference in the input.",
+    score: refPresent ? 90 : 20,
+  });
+
+  // 2. Kenyan county validity
+  const countyMatch = f.county
+    ? KENYAN_COUNTIES.find((c) => c.toLowerCase() === f.county!.toLowerCase().trim())
+    : null;
+  steps.push({
+    name: "County recognised",
+    status: countyMatch ? "pass" : f.county ? "warn" : "warn",
+    detail: countyMatch
+      ? `Matched Kenyan county "${countyMatch}".`
+      : f.county
+        ? `"${f.county}" isn't in the 47-county list — check spelling.`
+        : "No county provided; geolocation will fall back to registry.",
+    score: countyMatch ? 95 : f.county ? 55 : 40,
+  });
+
+  // 3. Locality resolvable
+  const localityOk = !!(f.locationHint || f.county || f.registry);
+  steps.push({
+    name: "Locality resolvable",
+    status: localityOk ? "pass" : "fail",
+    detail: localityOk
+      ? "Enough information to attempt geolocation."
+      : "Missing locality — cannot place on the map.",
+    score: localityOk ? 80 : 15,
+  });
+
+  // 4. Registered date sanity
+  const yearMatch = f.registrationDate?.match(/(19|20)\d{2}/);
+  const year = yearMatch ? Number(yearMatch[0]) : null;
+  const now = new Date().getFullYear();
+  const dateOk = year ? year >= 1900 && year <= now : false;
+  steps.push({
+    name: "Registration date",
+    status: dateOk ? "pass" : f.registrationDate ? "warn" : "warn",
+    detail: dateOk
+      ? `Year ${year} is within a plausible range.`
+      : f.registrationDate
+        ? `Could not parse a valid year from "${f.registrationDate}".`
+        : "No registration date extracted.",
+    score: dateOk ? 85 : 45,
+  });
+
+  // 5. Area unit sanity
+  const areaOk = f.registeredArea
+    ? /(ha|hectare|acre|m2|sqm|sq\s*m)/i.test(f.registeredArea)
+    : false;
+  steps.push({
+    name: "Area units",
+    status: areaOk ? "pass" : f.registeredArea ? "warn" : "warn",
+    detail: areaOk
+      ? "Registered area includes a recognised unit."
+      : f.registeredArea
+        ? "Area found but no unit — verify against the source."
+        : "Registered area not extracted.",
+    score: areaOk ? 80 : 40,
+  });
+
+  const overall = Math.round(steps.reduce((a, s) => a + s.score, 0) / steps.length);
+  return { steps, overall };
+}
+
+function computeFieldConfidence(
+  f: Omit<DeedFields, "fieldConfidence" | "validationSteps" | "confidence" | "notes">,
+): Record<string, number> {
+  return {
+    titleNumber: scoreField(f.titleNumber, [/^[A-Z]{2,4}[\s\-/]?\d/i, /\d{3,}/]),
+    lrNumber: scoreField(f.lrNumber, [/^\d+\/\d+/, /BLOCK/i]),
+    parcelNumber: scoreField(f.parcelNumber, [/\//, /\d{3,}/]),
+    registry: scoreField(f.registry, [/registry/i, /^[A-Z][a-z]/]),
+    county: scoreField(f.county, [/^[A-Z][a-z]{2,}/]),
+    registeredArea: scoreField(f.registeredArea, [/(ha|acre|m2|sqm)/i, /\d/]),
+    surveyNumber: scoreField(f.surveyNumber, [/\d{2,}/]),
+    leaseTerm: scoreField(f.leaseTerm, [/\d+\s*year/i]),
+    registrationDate: scoreField(f.registrationDate, [/\d{4}/, /[/\-.]/]),
+    registeredOwner: scoreField(f.registeredOwner, [/^[A-Z][a-z]/]),
+    locationHint: scoreField(f.locationHint, [/[A-Z][a-z]/]),
+  };
+}
+
+function enrich(
+  base: Omit<DeedFields, "fieldConfidence" | "validationSteps">,
+): DeedFields {
+  const fieldConfidence = computeFieldConfidence(base);
+  const { steps, overall } = computeValidation(base);
+  const blended = Math.round(base.confidence * 0.5 + overall * 0.5);
+  return { ...base, confidence: blended, fieldConfidence, validationSteps: steps };
+}
 
 function heuristicExtract(text: string): DeedFields {
   const t = text.replace(/\s+/g, " ");
@@ -22,7 +154,7 @@ function heuristicExtract(text: string): DeedFields {
     const m = t.match(re);
     return m ? m[1].trim() : null;
   };
-  return {
+  const base = {
     titleNumber: pick(/title\s*(?:no.?|number)[:\s]*([A-Z0-9/\-.]+)/i),
     lrNumber: pick(/\bL.?R.?\s*(?:no.?)?[:\s]*([A-Z0-9/\-.]+)/i),
     parcelNumber: pick(/parcel\s*(?:no.?|number)[:\s]*([A-Z0-9/\-.]+)/i),
@@ -41,6 +173,7 @@ function heuristicExtract(text: string): DeedFields {
     confidence: 40,
     notes: "Extracted via local heuristics — AI enhancement unavailable.",
   };
+  return enrich(base);
 }
 
 export const extractDeedFields = createServerFn({ method: "POST" })
@@ -97,7 +230,7 @@ ${data.text}
       const j = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
       const raw = j.choices?.[0]?.message?.content ?? "";
       const parsed = JSON.parse(raw) as Partial<DeedFields>;
-      return {
+      const base = {
         titleNumber: parsed.titleNumber ?? null,
         lrNumber: parsed.lrNumber ?? null,
         parcelNumber: parsed.parcelNumber ?? null,
@@ -112,6 +245,7 @@ ${data.text}
         confidence: Math.max(0, Math.min(100, Math.round(Number(parsed.confidence) || 60))),
         notes: parsed.notes ?? null,
       };
+      return enrich(base);
     } catch (e) {
       console.error("deed extract failed", e);
       return heuristicExtract(data.text);

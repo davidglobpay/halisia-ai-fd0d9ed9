@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   FileUp,
   Loader2,
@@ -11,6 +11,12 @@ import {
   X,
   Check,
   MapPin,
+  Mic,
+  MicOff,
+  History,
+  Share2,
+  Trash2,
+  ExternalLink,
 } from "lucide-react";
 import { Navbar } from "@/components/halisia/navbar";
 import { MapView } from "@/components/halisia/map-view";
@@ -18,6 +24,9 @@ import { IntelligenceDashboard } from "@/components/halisia/intelligence-dashboa
 import { extractDeedFields, type DeedFields } from "@/lib/deed-extract.functions";
 import { geocodeAddress } from "@/lib/geocode.functions";
 import { generateLocationDossier } from "@/lib/pdf-dossier";
+import { useDeedHistory, type DeedHistoryEntry } from "@/hooks/use-deed-history";
+import { useVoiceInput } from "@/hooks/use-voice-input";
+import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/title-deed")({
   head: () => ({
@@ -55,6 +64,107 @@ function TitleDeedPage() {
   const [error, setError] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [copiedShare, setCopiedShare] = useState(false);
+  const history = useDeedHistory();
+
+  const processQueryValue = useCallback(
+    async (value: string) => {
+      const q = value.trim();
+      if (!q) return;
+      setError(null);
+      setStage("extract");
+      setProgressMsg("Interpreting reference…");
+      try {
+        const label =
+          queryType === "title"
+            ? "Title Number"
+            : queryType === "lr"
+              ? "L.R. Number"
+              : queryType === "parcel"
+                ? "Parcel Number"
+                : "Registry";
+        const synthetic = `${label}: ${q}`;
+        const extracted = await extractDeedFields({ data: { text: synthetic } });
+        setFields(extracted);
+        setOcrText(synthetic);
+
+        // Geolocate and capture result for history in one flow
+        setStage("locate");
+        setProgressMsg("Geolocating parcel…");
+        setProgress(0);
+        const parts = [extracted.locationHint, extracted.registry, extracted.county]
+          .filter(Boolean)
+          .join(", ");
+        const geoQuery = parts || extracted.county || extracted.registry || "";
+        let located: { lat: number; lng: number; address: string } | null = null;
+        if (geoQuery) {
+          try {
+            const res = await geocodeAddress({ data: { query: geoQuery } });
+            if (res.ok) {
+              located = { lat: res.lat, lng: res.lng, address: res.address };
+              setLoc(located);
+            }
+          } catch (err) {
+            console.warn("locate failed", err);
+          }
+        }
+        setStage("done");
+        history.add({
+          mode: "query",
+          label: `${label}: ${q}`,
+          queryType,
+          queryValue: q,
+          fields: {
+            titleNumber: extracted.titleNumber,
+            lrNumber: extracted.lrNumber,
+            parcelNumber: extracted.parcelNumber,
+            county: extracted.county,
+            registry: extracted.registry,
+            confidence: extracted.confidence,
+          },
+          location: located ?? undefined,
+        });
+      } catch (e) {
+        console.error(e);
+        setError(e instanceof Error ? e.message : "Search failed");
+        setStage("error");
+      }
+    },
+    [queryType, history],
+  );
+
+  const voice = useVoiceInput({
+    onFinal: (transcript) => {
+      const cleaned = transcript.replace(/[.,!?]$/g, "").trim();
+      setQueryValue(cleaned);
+      setMode("query");
+      setTimeout(() => processQueryValue(cleaned), 50);
+    },
+  });
+
+  const shareUrl = useMemo(() => {
+    if (!loc || typeof window === "undefined") return "";
+    const params = new URLSearchParams({
+      lat: String(loc.lat),
+      lng: String(loc.lng),
+      address: loc.address,
+    });
+    const ref =
+      fields?.titleNumber || fields?.lrNumber || fields?.parcelNumber || queryValue || "";
+    if (ref) params.set("ref", ref);
+    return `${window.location.origin}/report?${params.toString()}`;
+  }, [loc, fields, queryValue]);
+
+  const copyShare = async () => {
+    if (!shareUrl) return;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopiedShare(true);
+      setTimeout(() => setCopiedShare(false), 1600);
+    } catch {
+      /* ignore */
+    }
+  };
 
   const reset = () => {
     setStage("idle");
@@ -132,6 +242,19 @@ function TitleDeedPage() {
 
       await locateFrom(extracted);
       setStage("done");
+      history.add({
+        mode: "upload",
+        label: file.name,
+        fileName: file.name,
+        fields: {
+          titleNumber: extracted.titleNumber,
+          lrNumber: extracted.lrNumber,
+          parcelNumber: extracted.parcelNumber,
+          county: extracted.county,
+          registry: extracted.registry,
+          confidence: extracted.confidence,
+        },
+      });
     } catch (e) {
       console.error(e);
       setError(e instanceof Error ? e.message : "Processing failed");
@@ -139,31 +262,14 @@ function TitleDeedPage() {
     }
   };
 
-  const processQuery = async () => {
-    if (!queryValue.trim()) return;
-    setError(null);
-    setStage("extract");
-    setProgressMsg("Interpreting reference…");
-    try {
-      // Synthesize minimal OCR-like text so the AI can normalize + guess a locality.
-      const label =
-        queryType === "title"
-          ? "Title Number"
-          : queryType === "lr"
-            ? "L.R. Number"
-            : queryType === "parcel"
-              ? "Parcel Number"
-              : "Registry";
-      const synthetic = `${label}: ${queryValue.trim()}`;
-      const extracted = await extractDeedFields({ data: { text: synthetic } });
-      setFields(extracted);
-      setOcrText(synthetic);
-      await locateFrom(extracted);
-      setStage("done");
-    } catch (e) {
-      console.error(e);
-      setError(e instanceof Error ? e.message : "Search failed");
-      setStage("error");
+  const processQuery = () => processQueryValue(queryValue);
+
+  const replayEntry = (entry: DeedHistoryEntry) => {
+    if (entry.mode === "query" && entry.queryValue) {
+      setMode("query");
+      if (entry.queryType) setQueryType(entry.queryType);
+      setQueryValue(entry.queryValue);
+      processQueryValue(entry.queryValue);
     }
   };
 
@@ -171,7 +277,12 @@ function TitleDeedPage() {
     if (!loc) return;
     setDownloading(true);
     try {
-      await generateLocationDossier({ lat: loc.lat, lng: loc.lng, address: loc.address });
+      await generateLocationDossier({
+        lat: loc.lat,
+        lng: loc.lng,
+        address: loc.address,
+        shareUrl,
+      });
     } catch (e) {
       console.error(e);
     } finally {
@@ -259,6 +370,25 @@ function TitleDeedPage() {
                     }
                     className="flex-1 rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm focus:outline-none focus:border-accent/60"
                   />
+                  {voice.supported && (
+                    <button
+                      type="button"
+                      onClick={voice.listening ? voice.stop : voice.start}
+                      aria-pressed={voice.listening}
+                      title={voice.listening ? "Stop listening" : "Speak the title deed number"}
+                      className={`rounded-2xl px-3 py-3 text-sm inline-flex items-center justify-center transition ${
+                        voice.listening
+                          ? "bg-accent/20 border border-accent/60 text-foreground animate-pulse"
+                          : "glass border border-white/10 text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {voice.listening ? (
+                        <MicOff className="h-4 w-4" />
+                      ) : (
+                        <Mic className="h-4 w-4" />
+                      )}
+                    </button>
+                  )}
                   <button
                     onClick={processQuery}
                     disabled={!queryValue.trim() || busy}
@@ -272,6 +402,14 @@ function TitleDeedPage() {
                     Analyze
                   </button>
                 </div>
+                {(voice.interim || voice.error) && (
+                  <div className="text-[11px]">
+                    {voice.interim && (
+                      <span className="text-accent">Listening: &ldquo;{voice.interim}&rdquo;…</span>
+                    )}
+                    {voice.error && <span className="text-amber-glow">{voice.error}</span>}
+                  </div>
+                )}
                 <p className="text-[11px] text-muted-foreground">
                   Without an authorized registry integration, we can normalize the reference and
                   attempt a locality lookup. Exact parcel boundaries require official data.
@@ -400,32 +538,95 @@ function TitleDeedPage() {
                 <div className="grid sm:grid-cols-2 gap-2 text-sm">
                   {(
                     [
-                      ["Title No.", fields.titleNumber],
-                      ["L.R. No.", fields.lrNumber],
-                      ["Parcel No.", fields.parcelNumber],
-                      ["Registry", fields.registry],
-                      ["County", fields.county],
-                      ["Registered area", fields.registeredArea],
-                      ["Survey No.", fields.surveyNumber],
-                      ["Lease term", fields.leaseTerm],
-                      ["Registered date", fields.registrationDate],
-                      ["Registered owner", fields.registeredOwner],
-                      ["Locality hint", fields.locationHint],
+                      ["Title No.", fields.titleNumber, "titleNumber"],
+                      ["L.R. No.", fields.lrNumber, "lrNumber"],
+                      ["Parcel No.", fields.parcelNumber, "parcelNumber"],
+                      ["Registry", fields.registry, "registry"],
+                      ["County", fields.county, "county"],
+                      ["Registered area", fields.registeredArea, "registeredArea"],
+                      ["Survey No.", fields.surveyNumber, "surveyNumber"],
+                      ["Lease term", fields.leaseTerm, "leaseTerm"],
+                      ["Registered date", fields.registrationDate, "registrationDate"],
+                      ["Registered owner", fields.registeredOwner, "registeredOwner"],
+                      ["Locality hint", fields.locationHint, "locationHint"],
                     ] as const
-                  ).map(([label, val]) => (
-                    <div
-                      key={label}
-                      className="rounded-xl border border-white/5 bg-black/20 px-3 py-2"
-                    >
-                      <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                        {label}
+                  ).map(([label, val, key]) => {
+                    const score = fields.fieldConfidence?.[key] ?? 0;
+                    const tone =
+                      score >= 75
+                        ? "text-accent"
+                        : score >= 45
+                          ? "text-amber-glow"
+                          : "text-muted-foreground";
+                    const barTone =
+                      score >= 75
+                        ? "from-primary to-accent"
+                        : score >= 45
+                          ? "from-amber-glow to-amber-glow"
+                          : "from-white/20 to-white/10";
+                    return (
+                      <div
+                        key={label}
+                        className="rounded-xl border border-white/5 bg-black/20 px-3 py-2"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                            {label}
+                          </div>
+                          {val && (
+                            <div className={`text-[10px] tabular-nums ${tone}`}>{score}%</div>
+                          )}
+                        </div>
+                        <div className={val ? "text-foreground" : "text-muted-foreground/60"}>
+                          {val ?? "—"}
+                        </div>
+                        {val && (
+                          <div className="mt-1.5 h-1 rounded-full bg-white/5 overflow-hidden">
+                            <div
+                              className={`h-full bg-gradient-to-r ${barTone} transition-all`}
+                              style={{ width: `${score}%` }}
+                            />
+                          </div>
+                        )}
                       </div>
-                      <div className={val ? "text-foreground" : "text-muted-foreground/60"}>
-                        {val ?? "—"}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
+
+                {fields.validationSteps?.length > 0 && (
+                  <div className="mt-5">
+                    <h4 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2">
+                      Validation steps
+                    </h4>
+                    <div className="space-y-1.5">
+                      {fields.validationSteps.map((s) => {
+                        const dot =
+                          s.status === "pass"
+                            ? "bg-accent"
+                            : s.status === "warn"
+                              ? "bg-amber-glow"
+                              : "bg-red-400";
+                        return (
+                          <div
+                            key={s.name}
+                            className="rounded-xl border border-white/5 bg-black/20 px-3 py-2 text-xs flex items-start gap-3"
+                          >
+                            <span className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${dot}`} />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="font-medium text-foreground">{s.name}</div>
+                                <div className="text-[10px] tabular-nums text-muted-foreground">
+                                  {s.score}%
+                                </div>
+                              </div>
+                              <div className="text-muted-foreground mt-0.5">{s.detail}</div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
                 {fields.notes && (
                   <p className="mt-3 text-[11px] text-muted-foreground">Notes: {fields.notes}</p>
                 )}
@@ -477,27 +678,165 @@ function TitleDeedPage() {
                   </span>
                   {loc.address}
                 </div>
-                <button
-                  onClick={downloadReport}
-                  disabled={downloading}
-                  className="w-full glass-strong rounded-2xl px-4 py-3 text-sm font-medium inline-flex items-center justify-center gap-2 hover:bg-white/10 transition disabled:opacity-60"
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={downloadReport}
+                    disabled={downloading}
+                    className="glass-strong rounded-2xl px-3 py-3 text-xs font-medium inline-flex items-center justify-center gap-2 hover:bg-white/10 transition disabled:opacity-60"
+                  >
+                    {downloading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" /> Building…
+                      </>
+                    ) : (
+                      <>
+                        <FileDown className="h-4 w-4 text-accent" /> Download PDF
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={copyShare}
+                    className="glass-strong rounded-2xl px-3 py-3 text-xs font-medium inline-flex items-center justify-center gap-2 hover:bg-white/10 transition"
+                    title={shareUrl}
+                  >
+                    {copiedShare ? (
+                      <>
+                        <Check className="h-4 w-4 text-accent" /> Link copied
+                      </>
+                    ) : (
+                      <>
+                        <Share2 className="h-4 w-4 text-accent" /> Copy share link
+                      </>
+                    )}
+                  </button>
+                </div>
+                <Link
+                  to="/report"
+                  search={{
+                    lat: loc.lat,
+                    lng: loc.lng,
+                    address: loc.address,
+                    ref:
+                      fields?.titleNumber ||
+                      fields?.lrNumber ||
+                      fields?.parcelNumber ||
+                      queryValue ||
+                      "",
+                  }}
+                  target="_blank"
+                  rel="noopener"
+                  className="text-[11px] text-muted-foreground hover:text-accent inline-flex items-center gap-1"
                 >
-                  {downloading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" /> Building report…
-                    </>
-                  ) : (
-                    <>
-                      <FileDown className="h-4 w-4 text-accent" /> Download land intelligence report
-                    </>
-                  )}
-                </button>
+                  <ExternalLink className="h-3 w-3" /> Open shareable view
+                </Link>
                 <IntelligenceDashboard lat={loc.lat} lng={loc.lng} address={loc.address} />
               </>
             )}
+
+            <HistoryPanel
+              items={history.items}
+              onOpen={replayEntry}
+              onRemove={history.remove}
+              onClear={history.clear}
+            />
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function HistoryPanel({
+  items,
+  onOpen,
+  onRemove,
+  onClear,
+}: {
+  items: DeedHistoryEntry[];
+  onOpen: (e: DeedHistoryEntry) => void;
+  onRemove: (id: string) => void;
+  onClear: () => void;
+}) {
+  if (items.length === 0) {
+    return (
+      <div className="glass rounded-2xl p-4 text-xs text-muted-foreground">
+        <div className="inline-flex items-center gap-2 uppercase tracking-widest text-[10px] text-accent">
+          <History className="h-3.5 w-3.5" /> History
+        </div>
+        <p className="mt-2">Your title deed searches and uploads will appear here.</p>
+      </div>
+    );
+  }
+  return (
+    <div className="glass rounded-2xl p-3">
+      <div className="flex items-center justify-between mb-2">
+        <div className="inline-flex items-center gap-2 uppercase tracking-widest text-[10px] text-accent">
+          <History className="h-3.5 w-3.5" /> History · {items.length}
+        </div>
+        <button
+          onClick={onClear}
+          className="text-[10px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+        >
+          <Trash2 className="h-3 w-3" /> Clear
+        </button>
+      </div>
+      <ul className="space-y-1.5 max-h-72 overflow-auto pr-1">
+        {items.map((e) => (
+          <li
+            key={e.id}
+            className="rounded-xl border border-white/5 bg-black/20 px-3 py-2 text-xs"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <button
+                onClick={() => onOpen(e)}
+                className="flex-1 min-w-0 text-left"
+                disabled={e.mode !== "query"}
+                title={e.mode === "query" ? "Re-run this search" : "Uploaded document"}
+              >
+                <div className="text-foreground truncate">{e.label}</div>
+                <div className="text-[10px] text-muted-foreground mt-0.5">
+                  {new Date(e.createdAt).toLocaleString()}
+                  {e.fields?.confidence != null && (
+                    <span className="ml-2 text-accent">· {e.fields.confidence}%</span>
+                  )}
+                  {e.fields?.county && <span className="ml-2">· {e.fields.county}</span>}
+                </div>
+              </button>
+              <div className="flex items-center gap-1 shrink-0">
+                {e.location && (
+                  <Link
+                    to="/report"
+                    search={{
+                      lat: e.location.lat,
+                      lng: e.location.lng,
+                      address: e.location.address,
+                      ref:
+                        e.fields?.titleNumber ||
+                        e.fields?.lrNumber ||
+                        e.fields?.parcelNumber ||
+                        e.queryValue ||
+                        "",
+                    }}
+                    target="_blank"
+                    rel="noopener"
+                    className="glass rounded-full p-1.5 hover:text-accent"
+                    title="Open report"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                  </Link>
+                )}
+                <button
+                  onClick={() => onRemove(e.id)}
+                  className="glass rounded-full p-1.5 hover:text-red-400"
+                  title="Remove"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
