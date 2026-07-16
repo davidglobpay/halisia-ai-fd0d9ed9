@@ -1,6 +1,6 @@
 /// <reference types="google.maps" />
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
-import { AlertTriangle, Loader2, RefreshCw } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
 import { loadGoogleMaps, resetGoogleMapsLoader } from "@/lib/google-maps-loader";
 
 const MapFallback = lazy(() => import("./map-fallback.internal"));
