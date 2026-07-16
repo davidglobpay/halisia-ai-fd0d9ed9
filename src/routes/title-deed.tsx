@@ -149,8 +149,7 @@ function TitleDeedPage() {
       lng: String(loc.lng),
       address: loc.address,
     });
-    const ref =
-      fields?.titleNumber || fields?.lrNumber || fields?.parcelNumber || queryValue || "";
+    const ref = fields?.titleNumber || fields?.lrNumber || fields?.parcelNumber || queryValue || "";
     if (ref) params.set("ref", ref);
     return `${window.location.origin}/report?${params.toString()}`;
   }, [loc, fields, queryValue]);
@@ -782,10 +781,7 @@ function HistoryPanel({
       </div>
       <ul className="space-y-1.5 max-h-72 overflow-auto pr-1">
         {items.map((e) => (
-          <li
-            key={e.id}
-            className="rounded-xl border border-white/5 bg-black/20 px-3 py-2 text-xs"
-          >
+          <li key={e.id} className="rounded-xl border border-white/5 bg-black/20 px-3 py-2 text-xs">
             <div className="flex items-start justify-between gap-2">
               <button
                 onClick={() => onOpen(e)}

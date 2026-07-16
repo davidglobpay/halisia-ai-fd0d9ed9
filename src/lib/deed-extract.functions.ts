@@ -26,12 +26,51 @@ export type DeedFields = {
 };
 
 const KENYAN_COUNTIES = [
-  "Nairobi","Mombasa","Kisumu","Kiambu","Nakuru","Machakos","Kajiado","Uasin Gishu",
-  "Nyeri","Meru","Kilifi","Kwale","Kakamega","Bungoma","Kericho","Bomet","Trans Nzoia",
-  "Nandi","Laikipia","Nyandarua","Muranga","Embu","Kirinyaga","Tharaka Nithi","Isiolo",
-  "Marsabit","Turkana","West Pokot","Baringo","Samburu","Narok","Migori","Homa Bay",
-  "Siaya","Busia","Vihiga","Elgeyo Marakwet","Taita Taveta","Tana River","Lamu",
-  "Garissa","Wajir","Mandera","Kitui","Makueni",
+  "Nairobi",
+  "Mombasa",
+  "Kisumu",
+  "Kiambu",
+  "Nakuru",
+  "Machakos",
+  "Kajiado",
+  "Uasin Gishu",
+  "Nyeri",
+  "Meru",
+  "Kilifi",
+  "Kwale",
+  "Kakamega",
+  "Bungoma",
+  "Kericho",
+  "Bomet",
+  "Trans Nzoia",
+  "Nandi",
+  "Laikipia",
+  "Nyandarua",
+  "Muranga",
+  "Embu",
+  "Kirinyaga",
+  "Tharaka Nithi",
+  "Isiolo",
+  "Marsabit",
+  "Turkana",
+  "West Pokot",
+  "Baringo",
+  "Samburu",
+  "Narok",
+  "Migori",
+  "Homa Bay",
+  "Siaya",
+  "Busia",
+  "Vihiga",
+  "Elgeyo Marakwet",
+  "Taita Taveta",
+  "Tana River",
+  "Lamu",
+  "Garissa",
+  "Wajir",
+  "Mandera",
+  "Kitui",
+  "Makueni",
 ];
 
 function scoreField(value: string | null, patterns: RegExp[]): number {
@@ -139,9 +178,7 @@ function computeFieldConfidence(
   };
 }
 
-function enrich(
-  base: Omit<DeedFields, "fieldConfidence" | "validationSteps">,
-): DeedFields {
+function enrich(base: Omit<DeedFields, "fieldConfidence" | "validationSteps">): DeedFields {
   const fieldConfidence = computeFieldConfidence(base);
   const { steps, overall } = computeValidation(base);
   const blended = Math.round(base.confidence * 0.5 + overall * 0.5);

@@ -23,7 +23,8 @@ export const Route = createFileRoute("/report")({
       { title: "Shared Land Report — HALISIA AI" },
       {
         name: "description",
-        content: "Shareable HALISIA AI land intelligence dossier — view-only report for a specific location.",
+        content:
+          "Shareable HALISIA AI land intelligence dossier — view-only report for a specific location.",
       },
       { property: "og:title", content: "Shared Land Report — HALISIA AI" },
       {
@@ -111,7 +112,11 @@ function ReportPage() {
               onClick={copy}
               className="glass rounded-full px-4 py-2 text-xs inline-flex items-center gap-2"
             >
-              {copied ? <Check className="h-3.5 w-3.5 text-accent" /> : <Share2 className="h-3.5 w-3.5" />}
+              {copied ? (
+                <Check className="h-3.5 w-3.5 text-accent" />
+              ) : (
+                <Share2 className="h-3.5 w-3.5" />
+              )}
               {copied ? "Copied" : "Copy link"}
             </button>
             <button
@@ -146,8 +151,8 @@ function ReportPage() {
         </div>
 
         <p className="mt-6 text-[11px] text-muted-foreground">
-          View-only shareable report. Data is recomputed on demand from public geodata and
-          HALISIA models. Ownership status must be confirmed via authorized registries.
+          View-only shareable report. Data is recomputed on demand from public geodata and HALISIA
+          models. Ownership status must be confirmed via authorized registries.
         </p>
       </div>
     </div>

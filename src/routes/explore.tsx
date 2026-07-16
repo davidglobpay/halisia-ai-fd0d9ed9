@@ -324,15 +324,7 @@ function Explore() {
   );
 }
 
-function ShareLinkButton({
-  lat,
-  lng,
-  address,
-}: {
-  lat: number;
-  lng: number;
-  address: string;
-}) {
+function ShareLinkButton({ lat, lng, address }: { lat: number; lng: number; address: string }) {
   const [copied, setCopied] = useState(false);
   const copy = async () => {
     const url = `${window.location.origin}/report?lat=${lat}&lng=${lng}&address=${encodeURIComponent(address)}`;
