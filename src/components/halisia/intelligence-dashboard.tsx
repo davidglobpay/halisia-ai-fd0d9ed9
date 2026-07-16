@@ -35,6 +35,7 @@ import { HeatmapMap } from "@/components/halisia/heatmap-map";
 import { TimelinePanel } from "@/components/halisia/timeline-panel";
 import { MapillaryView } from "@/components/halisia/mapillary-view";
 import { NotificationsBell } from "@/components/halisia/notifications-bell";
+import { MapsDiagnostics } from "@/components/halisia/maps-diagnostics";
 
 type TabId =
   | "overview"
@@ -276,7 +277,12 @@ export function IntelligenceDashboard({
         )}
         {tab === "timeline" && <TimelinePanel lat={lat} lng={lng} />}
         {tab === "street" && <MapillaryView lat={lat} lng={lng} address={address} />}
-        {tab === "evidence" && <EvidenceTab intel={intelQ.data} />}
+        {tab === "evidence" && (
+          <div className="space-y-3">
+            <MapsDiagnostics lat={lat} lng={lng} />
+            <EvidenceTab intel={intelQ.data} />
+          </div>
+        )}
         {tab === "ai" && (
           <AITab narrative={narrativeQ.data} loading={narrativeQ.isLoading || intelQ.isLoading} />
         )}
