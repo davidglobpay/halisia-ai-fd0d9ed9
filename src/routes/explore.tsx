@@ -31,6 +31,7 @@ import {
   Check,
   FileDown,
   Loader2,
+  Share2,
 } from "lucide-react";
 
 const searchSchema = z.object({ q: z.string().optional() });
