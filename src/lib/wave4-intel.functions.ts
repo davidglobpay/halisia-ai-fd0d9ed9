@@ -73,8 +73,16 @@ const UA =
 
 // Overpass query — nearby facilities in a 3 km radius.
 const OVERPASS_CATEGORIES: Array<{ key: string; label: string; filter: string }> = [
-  { key: "hospitals", label: "Healthcare", filter: '["amenity"~"hospital|clinic|doctors|pharmacy"]' },
-  { key: "schools", label: "Education", filter: '["amenity"~"school|kindergarten|college|university"]' },
+  {
+    key: "hospitals",
+    label: "Healthcare",
+    filter: '["amenity"~"hospital|clinic|doctors|pharmacy"]',
+  },
+  {
+    key: "schools",
+    label: "Education",
+    filter: '["amenity"~"school|kindergarten|college|university"]',
+  },
   { key: "police", label: "Police", filter: '["amenity"="police"]' },
   { key: "fire", label: "Fire stations", filter: '["amenity"="fire_station"]' },
   { key: "banks", label: "Banks / ATM", filter: '["amenity"~"bank|atm"]' },
@@ -91,9 +99,7 @@ function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: num
   const dLng = ((b.lng - a.lng) * Math.PI) / 180;
   const s =
     Math.sin(dLat / 2) ** 2 +
-    Math.cos((a.lat * Math.PI) / 180) *
-      Math.cos((b.lat * Math.PI) / 180) *
-      Math.sin(dLng / 2) ** 2;
+    Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
 }
 
@@ -185,8 +191,15 @@ function extractFacilities(
     if (lat == null || lon == null) continue;
     const tags = el.tags ?? {};
     let key: string | null = null;
-    if (tags.amenity === "hospital" || tags.amenity === "clinic" || tags.amenity === "doctors" || tags.amenity === "pharmacy") key = "hospitals";
-    else if (["school", "kindergarten", "college", "university"].includes(tags.amenity ?? "")) key = "schools";
+    if (
+      tags.amenity === "hospital" ||
+      tags.amenity === "clinic" ||
+      tags.amenity === "doctors" ||
+      tags.amenity === "pharmacy"
+    )
+      key = "hospitals";
+    else if (["school", "kindergarten", "college", "university"].includes(tags.amenity ?? ""))
+      key = "schools";
     else if (tags.amenity === "police") key = "police";
     else if (tags.amenity === "fire_station") key = "fire";
     else if (tags.amenity === "bank" || tags.amenity === "atm") key = "banks";
@@ -216,9 +229,7 @@ function score(facilities: Record<string, Wave4Facility[]>, climate: Wave4Intel[
   const count = (k: string) => facilities[k]?.length ?? 0;
   const clip = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
 
-  const accessibility = clip(
-    count("transit") * 6 + count("fuel") * 4 + count("markets") * 5 + 25,
-  );
+  const accessibility = clip(count("transit") * 6 + count("fuel") * 4 + count("markets") * 5 + 25);
   const infrastructure = clip(
     count("hospitals") * 5 +
       count("schools") * 4 +
@@ -242,7 +253,9 @@ function score(facilities: Record<string, Wave4Facility[]>, climate: Wave4Intel[
   const development = clip(
     (accessibility + infrastructure) / 2 + Math.min(20, count("worship") + count("markets") * 2),
   );
-  const investment = clip(accessibility * 0.35 + infrastructure * 0.35 + environment * 0.15 + development * 0.15);
+  const investment = clip(
+    accessibility * 0.35 + infrastructure * 0.35 + environment * 0.15 + development * 0.15,
+  );
   return { accessibility, infrastructure, environment, development, investment };
 }
 
@@ -280,8 +293,16 @@ export const getWave4Intel = createServerFn({ method: "POST" })
       climate,
       scores,
       sources: [
-        { label: "OpenStreetMap Nominatim (admin lookup)", url: "https://nominatim.openstreetmap.org", used: !!nom },
-        { label: "OpenStreetMap Overpass (facilities)", url: "https://overpass-api.de", used: !!ovp },
+        {
+          label: "OpenStreetMap Nominatim (admin lookup)",
+          url: "https://nominatim.openstreetmap.org",
+          used: !!nom,
+        },
+        {
+          label: "OpenStreetMap Overpass (facilities)",
+          url: "https://overpass-api.de",
+          used: !!ovp,
+        },
         { label: "Open-Meteo Climate Archive", url: "https://open-meteo.com", used: !!cli },
         { label: "Kenya Open Data Portal", url: "https://opendata.go.ke", used: false },
         { label: "Kenya National Bureau of Statistics", url: "https://knbs.or.ke", used: false },
@@ -290,7 +311,11 @@ export const getWave4Intel = createServerFn({ method: "POST" })
         { label: "Kenya Wildlife Service", url: "https://kws.go.ke", used: false },
         { label: "Water Resources Authority", url: "https://wra.go.ke", used: false },
         { label: "NEMA", url: "https://nema.go.ke", used: false },
-        { label: "Sentinel-2 / Landsat / OpenTopography", url: "https://scihub.copernicus.eu", used: false },
+        {
+          label: "Sentinel-2 / Landsat / OpenTopography",
+          url: "https://scihub.copernicus.eu",
+          used: false,
+        },
       ],
       generatedAt: new Date().toISOString(),
     };

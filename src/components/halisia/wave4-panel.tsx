@@ -133,9 +133,7 @@ function AdminTab({ data }: { data: Wave4Intel }) {
         />
         <ClimateTile
           label="Mean temp"
-          value={
-            data.climate.meanTempC != null ? `${data.climate.meanTempC.toFixed(1)} °C` : "—"
-          }
+          value={data.climate.meanTempC != null ? `${data.climate.meanTempC.toFixed(1)} °C` : "—"}
           sub={
             data.climate.tempMinC != null && data.climate.tempMaxC != null
               ? `${data.climate.tempMinC.toFixed(0)}–${data.climate.tempMaxC.toFixed(0)} °C range`
@@ -178,8 +176,7 @@ function PublicTab({ data }: { data: Wave4Intel }) {
   if (!entries.length) {
     return (
       <div className="glass rounded-2xl p-4 text-xs text-muted-foreground">
-        No public facilities returned by Overpass within 3&nbsp;km — try a more urban search
-        point.
+        No public facilities returned by Overpass within 3&nbsp;km — try a more urban search point.
       </div>
     );
   }
@@ -188,9 +185,7 @@ function PublicTab({ data }: { data: Wave4Intel }) {
       {entries.map(([key, list]) => (
         <div key={key} className="glass rounded-2xl p-3">
           <div className="flex items-center justify-between mb-2">
-            <div className="text-xs font-medium">
-              {OVERPASS_CATEGORY_LABELS[key] ?? key}
-            </div>
+            <div className="text-xs font-medium">{OVERPASS_CATEGORY_LABELS[key] ?? key}</div>
             <div className="text-[10px] text-muted-foreground">{list.length}</div>
           </div>
           <ul className="space-y-1.5">
@@ -258,9 +253,9 @@ function InvestTab({ data }: { data: Wave4Intel }) {
         ))}
       </div>
       <div className="text-[11px] text-muted-foreground px-1 leading-relaxed">
-        Composite = 0.35·access + 0.35·infra + 0.15·environment + 0.15·development. Derived from
-        OSM facility density (3&nbsp;km) and Open-Meteo climate normals. AI-generated
-        interpretation, not a valuation.
+        Composite = 0.35·access + 0.35·infra + 0.15·environment + 0.15·development. Derived from OSM
+        facility density (3&nbsp;km) and Open-Meteo climate normals. AI-generated interpretation,
+        not a valuation.
       </div>
     </div>
   );
@@ -302,8 +297,8 @@ function SourcesTab({ data }: { data: Wave4Intel }) {
       </ul>
       <p className="text-[10px] text-muted-foreground leading-relaxed">
         Live sources feed this dashboard on every search. Planned sources are wired through the
-        modular connector layer and can be enabled without a redesign, in line with the Kenya
-        Data Protection Act and applicable public-data terms.
+        modular connector layer and can be enabled without a redesign, in line with the Kenya Data
+        Protection Act and applicable public-data terms.
       </p>
     </div>
   );
