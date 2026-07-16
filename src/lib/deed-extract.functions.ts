@@ -28,10 +28,14 @@ function heuristicExtract(text: string): DeedFields {
     parcelNumber: pick(/parcel\s*(?:no\.?|number)[:\s]*([A-Z0-9\/\-\.]+)/i),
     registry: pick(/registry[:\s]*([A-Za-z\s]{3,40})/i),
     county: pick(/county[:\s]*([A-Za-z\s\-']{3,40})/i),
-    registeredArea: pick(/(?:area|hectares?|acres?)[:\s]*([0-9\.,]+\s*(?:ha|hectares?|acres?|m2|sqm)?)/i),
+    registeredArea: pick(
+      /(?:area|hectares?|acres?)[:\s]*([0-9\.,]+\s*(?:ha|hectares?|acres?|m2|sqm)?)/i,
+    ),
     surveyNumber: pick(/survey\s*(?:plan|no\.?|number)[:\s]*([A-Z0-9\/\-\.]+)/i),
     leaseTerm: pick(/(?:lease\s*term|term\s*of\s*years)[:\s]*([0-9]+\s*years?)/i),
-    registrationDate: pick(/(?:registered|date)[:\s]*([0-9]{1,2}[\/\-\.][0-9]{1,2}[\/\-\.][0-9]{2,4})/i),
+    registrationDate: pick(
+      /(?:registered|date)[:\s]*([0-9]{1,2}[\/\-\.][0-9]{1,2}[\/\-\.][0-9]{2,4})/i,
+    ),
     registeredOwner: null,
     locationHint: null,
     confidence: 40,

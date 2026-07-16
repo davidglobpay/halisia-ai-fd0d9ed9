@@ -121,7 +121,8 @@ function TitleDeedPage() {
         text = await runOcr(file);
       }
       setOcrText(text);
-      if (!text || text.length < 20) throw new Error("OCR returned too little text. Try a clearer image.");
+      if (!text || text.length < 20)
+        throw new Error("OCR returned too little text. Try a clearer image.");
 
       setStage("extract");
       setProgressMsg("AI extracting structured fields…");
@@ -204,7 +205,9 @@ function TitleDeedPage() {
               key={m}
               onClick={() => setMode(m)}
               className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm transition ${
-                mode === m ? "bg-white/15 text-foreground" : "text-muted-foreground hover:text-foreground"
+                mode === m
+                  ? "bg-white/15 text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               {m === "query" ? <ScanSearch className="h-4 w-4" /> : <FileUp className="h-4 w-4" />}
@@ -261,7 +264,11 @@ function TitleDeedPage() {
                     disabled={!queryValue.trim() || busy}
                     className="rounded-2xl px-4 py-3 text-sm bg-gradient-to-r from-primary to-accent text-primary-foreground font-medium inline-flex items-center gap-2 disabled:opacity-60"
                   >
-                    {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ScanSearch className="h-4 w-4" />}
+                    {busy ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ScanSearch className="h-4 w-4" />
+                    )}
                     Analyze
                   </button>
                 </div>
@@ -349,10 +356,7 @@ function TitleDeedPage() {
                       )}
                       Extract & analyze
                     </button>
-                    <button
-                      onClick={reset}
-                      className="rounded-2xl px-4 py-3 text-sm glass"
-                    >
+                    <button onClick={reset} className="rounded-2xl px-4 py-3 text-sm glass">
                       Reset
                     </button>
                   </div>
@@ -438,9 +442,8 @@ function TitleDeedPage() {
                 <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-3 text-[11px] text-muted-foreground inline-flex items-start gap-2">
                   <ShieldAlert className="h-4 w-4 mt-0.5 shrink-0 text-amber-glow" />
                   <div>
-                    Ownership and encumbrance status cannot be verified without authorized
-                    Ministry of Lands / Ardhisasa integration. Treat all extracted data as
-                    informational.
+                    Ownership and encumbrance status cannot be verified without authorized Ministry
+                    of Lands / Ardhisasa integration. Treat all extracted data as informational.
                   </div>
                 </div>
               </div>
