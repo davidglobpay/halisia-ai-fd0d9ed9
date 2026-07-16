@@ -19,7 +19,13 @@ const SCORES = [
   { key: 10, label: "Construction readiness", note: "Soil & survey data limited" },
 ];
 
-export async function generateLocationDossier(opts: { lat: number; lng: number; address: string }) {
+export async function generateLocationDossier(opts: { lat: number; lng: number; address: string }): Promise<{
+  ok: true;
+  mapsRequested: number;
+  mapsSucceeded: number;
+  mapsFailed: number;
+  lastError: { error: string; status?: number } | null;
+}> {
   const { lat, lng, address } = opts;
 
   // Fetch evidence maps in parallel — never let a static-map failure block the PDF.
@@ -29,11 +35,20 @@ export async function generateLocationDossier(opts: { lat: number; lng: number; 
     fetchStaticMapCached({ lat, lng, layer: "hybrid", zoom: 16 }),
     fetchStaticMapCached({ lat, lng, layer: "satellite", zoom: 17 }),
   ]);
+  let mapsFailed = 0;
+  let lastError: { error: string; status?: number } | null = null;
   const pick = (i: number): { dataUrl: string | null } => {
     const s = settled[i];
-    if (s.status !== "fulfilled") return { dataUrl: null };
-    const v = s.value as { ok?: boolean; dataUrl?: string };
-    return { dataUrl: v.ok && v.dataUrl ? v.dataUrl : null };
+    if (s.status !== "fulfilled") {
+      mapsFailed++;
+      lastError = { error: "promise_rejected" };
+      return { dataUrl: null };
+    }
+    const v = s.value as { ok?: boolean; dataUrl?: string; error?: string; status?: number };
+    if (v.ok && v.dataUrl) return { dataUrl: v.dataUrl };
+    mapsFailed++;
+    if (v.error) lastError = { error: v.error, status: v.status };
+    return { dataUrl: null };
   };
   const base = pick(0);
   const terrain = pick(1);
@@ -284,6 +299,13 @@ export async function generateLocationDossier(opts: { lat: number; lng: number; 
       .toLowerCase()
       .slice(0, 50) || "location";
   doc.save(`halisia-dossier-${safe}.pdf`);
+  return {
+    ok: true,
+    mapsRequested: settled.length,
+    mapsSucceeded: settled.length - mapsFailed,
+    mapsFailed,
+    lastError,
+  };
 }
 
 function drawHeader(
