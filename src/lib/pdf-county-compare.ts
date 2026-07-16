@@ -7,7 +7,7 @@ import {
   formatMetric,
   type CountyMetric,
 } from "@/lib/county-metrics";
-import { fetchStaticMap } from "@/lib/static-map.functions";
+import { fetchStaticMapCached } from "@/lib/static-map-cache";
 
 type County = { code: number; name: string; lat: number; lng: number };
 
@@ -108,7 +108,7 @@ export async function generateCountyComparePdf(counties: County[]) {
   // ---- Page 2: Map data evidence ----
   const maps = await Promise.all(
     counties.map((c) =>
-      fetchStaticMap({ data: { lat: c.lat, lng: c.lng, layer: "roadmap-light", zoom: 9 } }).catch(
+      fetchStaticMapCached({ lat: c.lat, lng: c.lng, layer: "roadmap-light", zoom: 9 }).catch(
         () => null,
       ),
     ),

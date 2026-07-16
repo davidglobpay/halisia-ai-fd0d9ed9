@@ -15,6 +15,7 @@ import { SearchBar } from "@/components/halisia/search-bar";
 import { geocodeAddress } from "@/lib/geocode.functions";
 import { reverseGeocode } from "@/lib/reverse-geocode.functions";
 import { generateLocationDossier } from "@/lib/pdf-dossier";
+import { classifyMapError } from "@/lib/static-map-cache";
 import {
   Layers,
   Satellite,
@@ -128,13 +129,19 @@ function Explore() {
         1200,
       );
       const stageTimer2 = window.setTimeout(() => setPdfStage("Compiling PDF…"), 2600);
-      await generateLocationDossier({
+      const result = await generateLocationDossier({
         lat: active.lat,
         lng: active.lng,
         address: active.address,
       });
       window.clearTimeout(stageTimer);
       window.clearTimeout(stageTimer2);
+      if (result.mapsFailed > 0) {
+        const c = classifyMapError(result.lastError);
+        setPdfError(
+          `PDF saved without ${result.mapsFailed}/${result.mapsRequested} map thumbnails. ${c.title}. ${c.hint}`,
+        );
+      }
     } catch (e) {
       console.error(e);
       setPdfError("Couldn't generate the PDF. Please try again.");

@@ -1,4 +1,5 @@
 /// <reference types="google.maps" />
+import { setMapsJsStatus } from "@/lib/static-map-cache";
 
 declare global {
   interface Window {
@@ -55,7 +56,11 @@ export function loadGoogleMaps(): Promise<typeof google> {
   const key = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
   const channel = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID;
 
-  if (!key) return Promise.reject(new Error("Google Maps browser key is missing"));
+  if (!key) {
+    setMapsJsStatus("error", "Google Maps browser key is missing");
+    return Promise.reject(new Error("Google Maps browser key is missing"));
+  }
+  setMapsJsStatus("loading");
 
   mapsPromise = new Promise((resolve, reject) => {
     let settled = false;
@@ -84,6 +89,7 @@ export function loadGoogleMaps(): Promise<typeof google> {
       if (settled) return;
       settled = true;
       mapsPromise = null;
+      setMapsJsStatus("error", "Google Maps timed out while loading");
       reject(new Error("Google Maps timed out while loading"));
     }, 15_000);
 
@@ -117,6 +123,7 @@ export function loadGoogleMaps(): Promise<typeof google> {
     script.onerror = () => {
       window.clearTimeout(timeout);
       mapsPromise = null;
+      setMapsJsStatus("error", "Failed to load Google Maps script");
       reject(new Error("Failed to load Google Maps"));
     };
     script.addEventListener(
@@ -129,5 +136,8 @@ export function loadGoogleMaps(): Promise<typeof google> {
     document.head.appendChild(script);
   });
 
+  mapsPromise
+    .then(() => setMapsJsStatus("ready"))
+    .catch((e) => setMapsJsStatus("error", String(e).slice(0, 200)));
   return mapsPromise;
 }
