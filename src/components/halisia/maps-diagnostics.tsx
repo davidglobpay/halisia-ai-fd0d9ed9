@@ -97,8 +97,7 @@ export function MapsDiagnostics({ lat, lng }: { lat: number; lng: number }) {
         </div>
         {d.jsErrorReason && (
           <div className="col-span-2 text-muted-foreground">
-            Detected reason:{" "}
-            <span className="text-amber-glow font-mono">{d.jsErrorReason}</span>
+            Detected reason: <span className="text-amber-glow font-mono">{d.jsErrorReason}</span>
           </div>
         )}
       </div>
