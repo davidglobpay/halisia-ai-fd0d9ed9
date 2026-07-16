@@ -89,6 +89,17 @@ export function MapsDiagnostics({ lat, lng }: { lat: number; lng: number }) {
         <div className="text-muted-foreground">
           Last error: <span className="text-foreground">{timeAgo(d.lastErrorAt)}</span>
         </div>
+        <div className="text-muted-foreground truncate" title={d.host ?? ""}>
+          Host: <span className="text-foreground font-mono">{d.host ?? "—"}</span>
+        </div>
+        <div className="text-muted-foreground truncate" title={d.referrer ?? ""}>
+          Referrer: <span className="text-foreground font-mono">{d.referrer ?? "—"}</span>
+        </div>
+        {d.jsErrorReason && (
+          <div className="col-span-2 text-muted-foreground">
+            Detected reason: <span className="text-amber-glow font-mono">{d.jsErrorReason}</span>
+          </div>
+        )}
       </div>
 
       {d.jsError ? (

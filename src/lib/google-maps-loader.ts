@@ -5,6 +5,8 @@ declare global {
   interface Window {
     google: typeof google;
     __halisiaGoogleMapsReady?: () => void;
+    gm_authFailure?: () => void;
+    __halisiaMapsAuthFailed?: boolean;
   }
 }
 
@@ -50,6 +52,27 @@ export function resetGoogleMapsLoader() {
 export function loadGoogleMaps(): Promise<typeof google> {
   if (typeof window === "undefined")
     return Promise.reject(new Error("Google Maps needs a browser"));
+
+  // Register the global auth-failure hook Google calls when the key is
+  // rejected (referrer restriction, billing, key disabled). It fires AFTER
+  // the script loads successfully, so we surface it into diagnostics and
+  // let map consumers listen for the `halisia:maps-auth-failed` event to
+  // fall back to Leaflet.
+  if (typeof window !== "undefined" && !window.gm_authFailure) {
+    window.gm_authFailure = () => {
+      window.__halisiaMapsAuthFailed = true;
+      setMapsJsStatus(
+        "error",
+        "Google Maps refused this domain (RefererNotAllowedMapError or key disabled)",
+      );
+      try {
+        window.dispatchEvent(new CustomEvent("halisia:maps-auth-failed"));
+      } catch {
+        /* ignore */
+      }
+    };
+  }
+
   if (window.google?.maps) return ensureGoogleMapsReady();
   if (mapsPromise) return mapsPromise;
 

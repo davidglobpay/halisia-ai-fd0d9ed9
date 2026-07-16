@@ -21,6 +21,17 @@ export type MapDiagnostics = {
   lastError: { error: string; status?: number; detail?: string } | null;
   jsStatus: "loading" | "ready" | "error" | "unknown";
   jsError: string | null;
+  jsErrorReason:
+    | "referrer_not_allowed"
+    | "api_not_activated"
+    | "invalid_key"
+    | "billing"
+    | "network"
+    | "timeout"
+    | "unknown"
+    | null;
+  host: string | null;
+  referrer: string | null;
 };
 
 const state: MapDiagnostics = {
@@ -33,6 +44,14 @@ const state: MapDiagnostics = {
   lastError: null,
   jsStatus: "unknown",
   jsError: null,
+  jsErrorReason: null,
+  host: typeof window !== "undefined" ? window.location.host : null,
+  referrer:
+    typeof document !== "undefined" && document.referrer
+      ? document.referrer
+      : typeof window !== "undefined"
+        ? window.location.origin + "/"
+        : null,
 };
 
 type Listener = (s: MapDiagnostics) => void;
@@ -51,7 +70,27 @@ export function subscribeMapDiagnostics(l: Listener) {
 export function setMapsJsStatus(status: MapDiagnostics["jsStatus"], error: string | null = null) {
   state.jsStatus = status;
   state.jsError = error;
+  if (status === "error") {
+    state.jsErrorReason = inferJsReason(error);
+  } else if (status === "ready") {
+    state.jsErrorReason = null;
+  }
+  if (typeof window !== "undefined") state.host = window.location.host;
   emit();
+}
+
+function inferJsReason(error: string | null): MapDiagnostics["jsErrorReason"] {
+  if (!error) return null;
+  const s = error.toLowerCase();
+  if (s.includes("referer") || s.includes("referrer") || s.includes("refererotallowed"))
+    return "referrer_not_allowed";
+  if (s.includes("apinotactivated") || s.includes("not activated")) return "api_not_activated";
+  if (s.includes("invalidkey") || s.includes("invalid key") || s.includes("invalid_key"))
+    return "invalid_key";
+  if (s.includes("billing")) return "billing";
+  if (s.includes("timed out") || s.includes("timeout")) return "timeout";
+  if (s.includes("failed to load") || s.includes("network")) return "network";
+  return "unknown";
 }
 
 export function getMapDiagnostics(): MapDiagnostics {
