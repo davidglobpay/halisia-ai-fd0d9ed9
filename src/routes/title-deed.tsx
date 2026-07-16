@@ -370,6 +370,25 @@ function TitleDeedPage() {
                     }
                     className="flex-1 rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm focus:outline-none focus:border-accent/60"
                   />
+                  {voice.supported && (
+                    <button
+                      type="button"
+                      onClick={voice.listening ? voice.stop : voice.start}
+                      aria-pressed={voice.listening}
+                      title={voice.listening ? "Stop listening" : "Speak the title deed number"}
+                      className={`rounded-2xl px-3 py-3 text-sm inline-flex items-center justify-center transition ${
+                        voice.listening
+                          ? "bg-accent/20 border border-accent/60 text-foreground animate-pulse"
+                          : "glass border border-white/10 text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {voice.listening ? (
+                        <MicOff className="h-4 w-4" />
+                      ) : (
+                        <Mic className="h-4 w-4" />
+                      )}
+                    </button>
+                  )}
                   <button
                     onClick={processQuery}
                     disabled={!queryValue.trim() || busy}
@@ -383,6 +402,14 @@ function TitleDeedPage() {
                     Analyze
                   </button>
                 </div>
+                {(voice.interim || voice.error) && (
+                  <div className="text-[11px]">
+                    {voice.interim && (
+                      <span className="text-accent">Listening: &ldquo;{voice.interim}&rdquo;…</span>
+                    )}
+                    {voice.error && <span className="text-amber-glow">{voice.error}</span>}
+                  </div>
+                )}
                 <p className="text-[11px] text-muted-foreground">
                   Without an authorized registry integration, we can normalize the reference and
                   attempt a locality lookup. Exact parcel boundaries require official data.
