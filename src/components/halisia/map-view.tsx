@@ -1,7 +1,9 @@
 /// <reference types="google.maps" />
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { AlertTriangle, Loader2, RefreshCw } from "lucide-react";
 import { loadGoogleMaps, resetGoogleMapsLoader } from "@/lib/google-maps-loader";
+
+const MapFallback = lazy(() => import("./map-fallback.internal"));
 
 export type MapTypeId = "roadmap" | "satellite" | "hybrid" | "terrain";
 export type MapTheme = "dark" | "light";
@@ -76,6 +78,16 @@ export function MapView({
   const [mapReady, setMapReady] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
   const [loadAttempt, setLoadAttempt] = useState(0);
+  const [authFailed, setAuthFailed] = useState<boolean>(
+    typeof window !== "undefined" && !!window.__halisiaMapsAuthFailed,
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const on = () => setAuthFailed(true);
+    window.addEventListener("halisia:maps-auth-failed", on);
+    return () => window.removeEventListener("halisia:maps-auth-failed", on);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -192,30 +204,41 @@ export function MapView({
         className={`absolute inset-0 ${theme === "light" ? "bg-[#f5f7fb]" : "bg-[#0a1735]"}`}
       />
       <div className="pointer-events-none absolute inset-0 rounded-[inherit] shadow-[inset_0_0_120px_oklch(0_0_0/0.6)]" />
-      {!mapReady && !mapError && (
+      {(mapError || authFailed) && (
+        <div className="absolute inset-0" data-testid="map-fallback-osm">
+          <Suspense fallback={null}>
+            <MapFallback
+              lat={(marker ?? center).lat}
+              lng={(marker ?? center).lng}
+              label={marker?.label}
+              theme={theme}
+              mapType={mapType}
+            />
+          </Suspense>
+          <div
+            role="status"
+            className="pointer-events-none absolute top-2 left-2 glass rounded-full px-3 py-1 text-[10px] uppercase tracking-widest text-amber-glow"
+          >
+            OSM fallback · Google Maps unavailable
+          </div>
+          <button
+            onClick={() => {
+              resetGoogleMapsLoader();
+              setMapError(null);
+              setAuthFailed(false);
+              if (typeof window !== "undefined") window.__halisiaMapsAuthFailed = false;
+              setLoadAttempt((n) => n + 1);
+            }}
+            className="absolute top-2 right-2 glass rounded-full px-3 py-1 text-[11px] hover:bg-white/10 inline-flex items-center gap-1"
+          >
+            <RefreshCw className="h-3 w-3" /> Retry Google
+          </button>
+        </div>
+      )}
+      {!mapReady && !mapError && !authFailed && (
         <div className="absolute inset-0 grid place-items-center text-muted-foreground text-sm">
           <div className="inline-flex items-center gap-2 glass rounded-full px-4 py-2">
             <Loader2 className="h-4 w-4 animate-spin text-accent" /> Opening map…
-          </div>
-        </div>
-      )}
-      {mapError && (
-        <div
-          role="alert"
-          className="absolute inset-0 grid place-items-center bg-[#0a1735]/95 p-6 text-center"
-        >
-          <div>
-            <AlertTriangle className="mx-auto h-6 w-6 text-amber-glow" />
-            <div className="mt-3 text-sm text-foreground">{mapError}</div>
-            <button
-              onClick={() => {
-                resetGoogleMapsLoader();
-                setLoadAttempt((n) => n + 1);
-              }}
-              className="mt-4 inline-flex items-center gap-2 glass rounded-full px-4 py-2 text-xs hover:bg-white/10"
-            >
-              <RefreshCw className="h-3.5 w-3.5" /> Retry map
-            </button>
           </div>
         </div>
       )}
