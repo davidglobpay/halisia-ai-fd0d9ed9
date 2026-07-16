@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   FileUp,
   Loader2,
@@ -11,6 +11,12 @@ import {
   X,
   Check,
   MapPin,
+  Mic,
+  MicOff,
+  History,
+  Share2,
+  Trash2,
+  ExternalLink,
 } from "lucide-react";
 import { Navbar } from "@/components/halisia/navbar";
 import { MapView } from "@/components/halisia/map-view";
@@ -18,6 +24,9 @@ import { IntelligenceDashboard } from "@/components/halisia/intelligence-dashboa
 import { extractDeedFields, type DeedFields } from "@/lib/deed-extract.functions";
 import { geocodeAddress } from "@/lib/geocode.functions";
 import { generateLocationDossier } from "@/lib/pdf-dossier";
+import { useDeedHistory, type DeedHistoryEntry } from "@/hooks/use-deed-history";
+import { useVoiceInput } from "@/hooks/use-voice-input";
+import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/title-deed")({
   head: () => ({
