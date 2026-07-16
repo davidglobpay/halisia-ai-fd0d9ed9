@@ -64,6 +64,107 @@ function TitleDeedPage() {
   const [error, setError] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [copiedShare, setCopiedShare] = useState(false);
+  const history = useDeedHistory();
+
+  const processQueryValue = useCallback(
+    async (value: string) => {
+      const q = value.trim();
+      if (!q) return;
+      setError(null);
+      setStage("extract");
+      setProgressMsg("Interpreting reference…");
+      try {
+        const label =
+          queryType === "title"
+            ? "Title Number"
+            : queryType === "lr"
+              ? "L.R. Number"
+              : queryType === "parcel"
+                ? "Parcel Number"
+                : "Registry";
+        const synthetic = `${label}: ${q}`;
+        const extracted = await extractDeedFields({ data: { text: synthetic } });
+        setFields(extracted);
+        setOcrText(synthetic);
+
+        // Geolocate and capture result for history in one flow
+        setStage("locate");
+        setProgressMsg("Geolocating parcel…");
+        setProgress(0);
+        const parts = [extracted.locationHint, extracted.registry, extracted.county]
+          .filter(Boolean)
+          .join(", ");
+        const geoQuery = parts || extracted.county || extracted.registry || "";
+        let located: { lat: number; lng: number; address: string } | null = null;
+        if (geoQuery) {
+          try {
+            const res = await geocodeAddress({ data: { query: geoQuery } });
+            if (res.ok) {
+              located = { lat: res.lat, lng: res.lng, address: res.address };
+              setLoc(located);
+            }
+          } catch (err) {
+            console.warn("locate failed", err);
+          }
+        }
+        setStage("done");
+        history.add({
+          mode: "query",
+          label: `${label}: ${q}`,
+          queryType,
+          queryValue: q,
+          fields: {
+            titleNumber: extracted.titleNumber,
+            lrNumber: extracted.lrNumber,
+            parcelNumber: extracted.parcelNumber,
+            county: extracted.county,
+            registry: extracted.registry,
+            confidence: extracted.confidence,
+          },
+          location: located ?? undefined,
+        });
+      } catch (e) {
+        console.error(e);
+        setError(e instanceof Error ? e.message : "Search failed");
+        setStage("error");
+      }
+    },
+    [queryType, history],
+  );
+
+  const voice = useVoiceInput({
+    onFinal: (transcript) => {
+      const cleaned = transcript.replace(/[.,!?]$/g, "").trim();
+      setQueryValue(cleaned);
+      setMode("query");
+      setTimeout(() => processQueryValue(cleaned), 50);
+    },
+  });
+
+  const shareUrl = useMemo(() => {
+    if (!loc || typeof window === "undefined") return "";
+    const params = new URLSearchParams({
+      lat: String(loc.lat),
+      lng: String(loc.lng),
+      address: loc.address,
+    });
+    const ref =
+      fields?.titleNumber || fields?.lrNumber || fields?.parcelNumber || queryValue || "";
+    if (ref) params.set("ref", ref);
+    return `${window.location.origin}/report?${params.toString()}`;
+  }, [loc, fields, queryValue]);
+
+  const copyShare = async () => {
+    if (!shareUrl) return;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopiedShare(true);
+      setTimeout(() => setCopiedShare(false), 1600);
+    } catch {
+      /* ignore */
+    }
+  };
 
   const reset = () => {
     setStage("idle");
