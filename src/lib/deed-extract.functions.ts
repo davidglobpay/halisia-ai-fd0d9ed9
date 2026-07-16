@@ -1,7 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 
-export type FieldConfidence = Partial<Record<keyof Omit<DeedFields, "confidence" | "notes" | "fieldConfidence" | "validationSteps">, number>>;
-
 export type ValidationStep = {
   name: string;
   status: "pass" | "warn" | "fail";
