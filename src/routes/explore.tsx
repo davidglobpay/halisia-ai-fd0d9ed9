@@ -312,6 +312,7 @@ function Explore() {
               </div>
             )}
             {pdfError && <div className="mb-2 text-xs text-amber-glow">{pdfError}</div>}
+            <ShareLinkButton lat={active.lat} lng={active.lng} address={active.address} />
             <IntelligenceDashboard lat={active.lat} lng={active.lng} address={active.address} />
           </div>
         </div>
