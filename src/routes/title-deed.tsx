@@ -242,6 +242,19 @@ function TitleDeedPage() {
 
       await locateFrom(extracted);
       setStage("done");
+      history.add({
+        mode: "upload",
+        label: file.name,
+        fileName: file.name,
+        fields: {
+          titleNumber: extracted.titleNumber,
+          lrNumber: extracted.lrNumber,
+          parcelNumber: extracted.parcelNumber,
+          county: extracted.county,
+          registry: extracted.registry,
+          confidence: extracted.confidence,
+        },
+      });
     } catch (e) {
       console.error(e);
       setError(e instanceof Error ? e.message : "Processing failed");
@@ -249,31 +262,14 @@ function TitleDeedPage() {
     }
   };
 
-  const processQuery = async () => {
-    if (!queryValue.trim()) return;
-    setError(null);
-    setStage("extract");
-    setProgressMsg("Interpreting reference…");
-    try {
-      // Synthesize minimal OCR-like text so the AI can normalize + guess a locality.
-      const label =
-        queryType === "title"
-          ? "Title Number"
-          : queryType === "lr"
-            ? "L.R. Number"
-            : queryType === "parcel"
-              ? "Parcel Number"
-              : "Registry";
-      const synthetic = `${label}: ${queryValue.trim()}`;
-      const extracted = await extractDeedFields({ data: { text: synthetic } });
-      setFields(extracted);
-      setOcrText(synthetic);
-      await locateFrom(extracted);
-      setStage("done");
-    } catch (e) {
-      console.error(e);
-      setError(e instanceof Error ? e.message : "Search failed");
-      setStage("error");
+  const processQuery = () => processQueryValue(queryValue);
+
+  const replayEntry = (entry: DeedHistoryEntry) => {
+    if (entry.mode === "query" && entry.queryValue) {
+      setMode("query");
+      if (entry.queryType) setQueryType(entry.queryType);
+      setQueryValue(entry.queryValue);
+      processQueryValue(entry.queryValue);
     }
   };
 
@@ -281,7 +277,12 @@ function TitleDeedPage() {
     if (!loc) return;
     setDownloading(true);
     try {
-      await generateLocationDossier({ lat: loc.lat, lng: loc.lng, address: loc.address });
+      await generateLocationDossier({
+        lat: loc.lat,
+        lng: loc.lng,
+        address: loc.address,
+        shareUrl,
+      });
     } catch (e) {
       console.error(e);
     } finally {
