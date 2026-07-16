@@ -23,6 +23,7 @@ export async function generateLocationDossier(opts: {
   lat: number;
   lng: number;
   address: string;
+  shareUrl?: string;
 }): Promise<{
   ok: true;
   mapsRequested: number;
@@ -30,7 +31,7 @@ export async function generateLocationDossier(opts: {
   mapsFailed: number;
   lastError: { error: string; status?: number } | null;
 }> {
-  const { lat, lng, address } = opts;
+  const { lat, lng, address, shareUrl } = opts;
 
   // Fetch evidence maps in parallel — never let a static-map failure block the PDF.
   const settled = await Promise.allSettled([
@@ -97,6 +98,12 @@ export async function generateLocationDossier(opts: {
     M,
     100,
   );
+
+  if (shareUrl) {
+    doc.setFontSize(9);
+    doc.setTextColor(...accent);
+    doc.textWithLink("Open shareable view →", M, 114, { url: shareUrl });
+  }
 
   // Livability panel
   doc.setFillColor(255, 255, 255);
