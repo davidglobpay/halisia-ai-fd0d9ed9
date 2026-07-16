@@ -538,32 +538,95 @@ function TitleDeedPage() {
                 <div className="grid sm:grid-cols-2 gap-2 text-sm">
                   {(
                     [
-                      ["Title No.", fields.titleNumber],
-                      ["L.R. No.", fields.lrNumber],
-                      ["Parcel No.", fields.parcelNumber],
-                      ["Registry", fields.registry],
-                      ["County", fields.county],
-                      ["Registered area", fields.registeredArea],
-                      ["Survey No.", fields.surveyNumber],
-                      ["Lease term", fields.leaseTerm],
-                      ["Registered date", fields.registrationDate],
-                      ["Registered owner", fields.registeredOwner],
-                      ["Locality hint", fields.locationHint],
+                      ["Title No.", fields.titleNumber, "titleNumber"],
+                      ["L.R. No.", fields.lrNumber, "lrNumber"],
+                      ["Parcel No.", fields.parcelNumber, "parcelNumber"],
+                      ["Registry", fields.registry, "registry"],
+                      ["County", fields.county, "county"],
+                      ["Registered area", fields.registeredArea, "registeredArea"],
+                      ["Survey No.", fields.surveyNumber, "surveyNumber"],
+                      ["Lease term", fields.leaseTerm, "leaseTerm"],
+                      ["Registered date", fields.registrationDate, "registrationDate"],
+                      ["Registered owner", fields.registeredOwner, "registeredOwner"],
+                      ["Locality hint", fields.locationHint, "locationHint"],
                     ] as const
-                  ).map(([label, val]) => (
-                    <div
-                      key={label}
-                      className="rounded-xl border border-white/5 bg-black/20 px-3 py-2"
-                    >
-                      <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                        {label}
+                  ).map(([label, val, key]) => {
+                    const score = fields.fieldConfidence?.[key] ?? 0;
+                    const tone =
+                      score >= 75
+                        ? "text-accent"
+                        : score >= 45
+                          ? "text-amber-glow"
+                          : "text-muted-foreground";
+                    const barTone =
+                      score >= 75
+                        ? "from-primary to-accent"
+                        : score >= 45
+                          ? "from-amber-glow to-amber-glow"
+                          : "from-white/20 to-white/10";
+                    return (
+                      <div
+                        key={label}
+                        className="rounded-xl border border-white/5 bg-black/20 px-3 py-2"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                            {label}
+                          </div>
+                          {val && (
+                            <div className={`text-[10px] tabular-nums ${tone}`}>{score}%</div>
+                          )}
+                        </div>
+                        <div className={val ? "text-foreground" : "text-muted-foreground/60"}>
+                          {val ?? "—"}
+                        </div>
+                        {val && (
+                          <div className="mt-1.5 h-1 rounded-full bg-white/5 overflow-hidden">
+                            <div
+                              className={`h-full bg-gradient-to-r ${barTone} transition-all`}
+                              style={{ width: `${score}%` }}
+                            />
+                          </div>
+                        )}
                       </div>
-                      <div className={val ? "text-foreground" : "text-muted-foreground/60"}>
-                        {val ?? "—"}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
+
+                {fields.validationSteps?.length > 0 && (
+                  <div className="mt-5">
+                    <h4 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2">
+                      Validation steps
+                    </h4>
+                    <div className="space-y-1.5">
+                      {fields.validationSteps.map((s) => {
+                        const dot =
+                          s.status === "pass"
+                            ? "bg-accent"
+                            : s.status === "warn"
+                              ? "bg-amber-glow"
+                              : "bg-red-400";
+                        return (
+                          <div
+                            key={s.name}
+                            className="rounded-xl border border-white/5 bg-black/20 px-3 py-2 text-xs flex items-start gap-3"
+                          >
+                            <span className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${dot}`} />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="font-medium text-foreground">{s.name}</div>
+                                <div className="text-[10px] tabular-nums text-muted-foreground">
+                                  {s.score}%
+                                </div>
+                              </div>
+                              <div className="text-muted-foreground mt-0.5">{s.detail}</div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
                 {fields.notes && (
                   <p className="mt-3 text-[11px] text-muted-foreground">Notes: {fields.notes}</p>
                 )}
