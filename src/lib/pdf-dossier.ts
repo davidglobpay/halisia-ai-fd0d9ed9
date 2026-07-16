@@ -1,5 +1,5 @@
 import jsPDF from "jspdf";
-import { fetchStaticMap } from "@/lib/static-map.functions";
+import { fetchStaticMapCached } from "@/lib/static-map-cache";
 
 function hash(lat: number, lng: number, salt: number) {
   const x = Math.sin(lat * 12.9898 + lng * 78.233 + salt) * 43758.5453;
@@ -24,10 +24,10 @@ export async function generateLocationDossier(opts: { lat: number; lng: number; 
 
   // Fetch evidence maps in parallel — never let a static-map failure block the PDF.
   const settled = await Promise.allSettled([
-    fetchStaticMap({ data: { lat, lng, layer: "roadmap-light", zoom: 15 } }),
-    fetchStaticMap({ data: { lat, lng, layer: "terrain", zoom: 13 } }),
-    fetchStaticMap({ data: { lat, lng, layer: "hybrid", zoom: 16 } }),
-    fetchStaticMap({ data: { lat, lng, layer: "satellite", zoom: 17 } }),
+    fetchStaticMapCached({ lat, lng, layer: "roadmap-light", zoom: 15 }),
+    fetchStaticMapCached({ lat, lng, layer: "terrain", zoom: 13 }),
+    fetchStaticMapCached({ lat, lng, layer: "hybrid", zoom: 16 }),
+    fetchStaticMapCached({ lat, lng, layer: "satellite", zoom: 17 }),
   ]);
   const pick = (i: number): { dataUrl: string | null } => {
     const s = settled[i];
