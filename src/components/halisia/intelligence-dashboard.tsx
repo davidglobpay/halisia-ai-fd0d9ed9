@@ -25,6 +25,7 @@ import {
   Flame,
   History,
   Camera,
+  Database,
 } from "lucide-react";
 import { getLocationIntel, type LocationIntel } from "@/lib/location-intel.functions";
 import { generateNarrative, type NarrativeOutput } from "@/lib/ai-narrative.functions";
@@ -36,6 +37,7 @@ import { TimelinePanel } from "@/components/halisia/timeline-panel";
 import { MapillaryView } from "@/components/halisia/mapillary-view";
 import { NotificationsBell } from "@/components/halisia/notifications-bell";
 import { MapsDiagnostics } from "@/components/halisia/maps-diagnostics";
+import { Wave4Panel } from "@/components/halisia/wave4-panel";
 
 type TabId =
   | "overview"
@@ -48,14 +50,16 @@ type TabId =
   | "timeline"
   | "street"
   | "evidence"
+  | "wave4"
   | "ai";
 
-type WaveId = "core" | "wave1" | "wave2" | "wave3";
+type WaveId = "core" | "wave1" | "wave2" | "wave3" | "wave4";
 const WAVE_META: Record<WaveId, { label: string; hint: string }> = {
   core: { label: "Core", hint: "Base intelligence" },
   wave1: { label: "Wave 1", hint: "GIS · Weather · Charts" },
   wave2: { label: "Wave 2", hint: "3D · Heatmap · Timeline" },
   wave3: { label: "Wave 3", hint: "Street · Alerts" },
+  wave4: { label: "Wave 4", hint: "Open public data · Kenya" },
 };
 const TABS: Array<{ id: TabId; label: string; icon: React.ElementType; wave: WaveId }> = [
   { id: "overview", label: "Overview", icon: Activity, wave: "core" },
@@ -69,6 +73,7 @@ const TABS: Array<{ id: TabId; label: string; icon: React.ElementType; wave: Wav
   { id: "heatmap", label: "Heatmap", icon: Flame, wave: "wave2" },
   { id: "timeline", label: "Timeline", icon: History, wave: "wave2" },
   { id: "street", label: "Street", icon: Camera, wave: "wave3" },
+  { id: "wave4", label: "Public data", icon: Database, wave: "wave4" },
 ];
 
 function aqiTone(aqi: number | null | undefined) {
