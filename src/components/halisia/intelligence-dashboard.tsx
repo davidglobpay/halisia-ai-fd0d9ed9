@@ -282,6 +282,7 @@ export function IntelligenceDashboard({
         )}
         {tab === "timeline" && <TimelinePanel lat={lat} lng={lng} />}
         {tab === "street" && <MapillaryView lat={lat} lng={lng} address={address} />}
+        {tab === "wave4" && <Wave4Panel lat={lat} lng={lng} />}
         {tab === "evidence" && (
           <div className="space-y-3">
             <MapsDiagnostics lat={lat} lng={lng} />
