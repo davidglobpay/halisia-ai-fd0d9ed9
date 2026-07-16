@@ -58,22 +58,35 @@ export const fetchStaticMap = createServerFn({ method: "POST" })
 
     const url = `https://connector-gateway.lovable.dev/google_maps/maps/api/staticmap?${params.toString()}${styleParts ? `&${styleParts}` : ""}`;
 
-    let res: Response;
-    try {
-      res = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${lovable}`,
-          "X-Connection-Api-Key": mapsKey,
-        },
-      });
-    } catch (e) {
-      console.error("Static map network error", e);
-      return { ok: false as const, error: "network_error" };
+    // Retry with exponential backoff on transient failures (network / 5xx / 429).
+    // 4xx (403 referrer/API restrictions, 400 bad request) are not retried.
+    let res: Response | null = null;
+    let lastErr: string | null = null;
+    const attempts = 3;
+    for (let i = 0; i < attempts; i++) {
+      try {
+        res = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${lovable}`,
+            "X-Connection-Api-Key": mapsKey,
+          },
+        });
+        if (res.ok) break;
+        const retryable = res.status >= 500 || res.status === 429;
+        const body = await res.text().catch(() => "");
+        lastErr = `status_${res.status}`;
+        console.error("Static map failed", res.status, body.slice(0, 200));
+        if (!retryable) {
+          return { ok: false as const, error: lastErr, status: res.status, detail: body.slice(0, 200) };
+        }
+      } catch (e) {
+        lastErr = "network_error";
+        console.error("Static map network error", e);
+      }
+      if (i < attempts - 1) await new Promise((r) => setTimeout(r, 250 * Math.pow(2, i)));
     }
-    if (!res.ok) {
-      const body = await res.text().catch(() => "");
-      console.error("Static map failed", res.status, body.slice(0, 200));
-      return { ok: false as const, error: `status_${res.status}` };
+    if (!res || !res.ok) {
+      return { ok: false as const, error: lastErr ?? "unknown_error", status: res?.status };
     }
     const buf = new Uint8Array(await res.arrayBuffer());
     let binary = "";
