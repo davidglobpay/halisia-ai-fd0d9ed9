@@ -15,12 +15,12 @@ jobs:
         with:
           bun-version: latest
       - run: bun install --frozen-lockfile
-      - name: Prettier check
+      - name: Formatting drift (prettier --check)
         run: bunx prettier --check .
+      - name: Lint (eslint, max-warnings=0)
+        run: bunx eslint . --max-warnings=0
       - name: Typecheck
         run: bun run typecheck
-      - name: Lint (max-warnings=0)
-        run: bunx eslint . --max-warnings=0
       - name: Vite build (development)
         run: bunx vite build --mode development
       - name: Vite build (production)
