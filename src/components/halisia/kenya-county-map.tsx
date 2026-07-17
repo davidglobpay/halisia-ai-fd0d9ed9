@@ -12,6 +12,7 @@ import {
 } from "@/lib/county-metrics";
 import { generateCountyComparePdf } from "@/lib/pdf-county-compare";
 import { KENYA_COAT_OF_ARMS } from "@/lib/kenya-county-facts";
+import { dataConfidencePct } from "@/lib/county-profile";
 import { Link } from "@tanstack/react-router";
 import {
   Activity,
@@ -650,31 +651,26 @@ export function KenyaCountyMap() {
             const hover = hoverCode === c.code;
             const m = countyMetrics(c.code);
             const v = m[metric];
+            const confPct = dataConfidencePct(c.code);
             return (
-              <div
+              <Link
                 key={c.code}
+                to="/county/$code"
+                params={{ code: String(c.code) }}
                 ref={(el) => {
                   cardRefs.current[c.code] = el;
                 }}
                 role="listitem"
-                tabIndex={0}
-                aria-label={`${c.name} — ${METRIC_LABELS[metric]} ${formatMetric(metric, v)}. ${
-                  sel ? "Selected for compare. " : ""
-                }Press Enter or Space to ${sel ? "remove from" : "add to"} comparison.`}
-                aria-pressed={sel}
+                aria-label={`Open ${c.name} County profile. ${METRIC_LABELS[metric]} ${formatMetric(
+                  metric,
+                  v,
+                )}. Data confidence ${confPct} percent.`}
                 data-testid={`county-card-${c.code}`}
                 onMouseEnter={() => setHoverCode(c.code)}
                 onMouseLeave={() => setHoverCode(null)}
                 onFocus={() => setHoverCode(c.code)}
                 onBlur={() => setHoverCode(null)}
-                onClick={() => toggleSelect(c.code)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    toggleSelect(c.code);
-                  }
-                }}
-                className={`rounded-2xl p-3 transition cursor-pointer outline-none border ${
+                className={`block rounded-2xl p-3 transition cursor-pointer outline-none border ${
                   sel
                     ? "bg-accent/10 border-accent/50"
                     : hover
@@ -688,12 +684,35 @@ export function KenyaCountyMap() {
                       src={KENYA_COAT_OF_ARMS}
                       alt=""
                       aria-hidden="true"
+                      referrerPolicy="no-referrer"
                       className="h-6 w-6 rounded bg-white/10 p-0.5"
                       loading="lazy"
                     />
                     <div className="text-sm font-semibold">{c.name}</div>
                   </div>
-                  {sel && <Check className="h-3.5 w-3.5 text-accent" />}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleSelect(c.code);
+                    }}
+                    aria-pressed={sel}
+                    aria-label={`${sel ? "Remove" : "Add"} ${c.name} ${sel ? "from" : "to"} comparison`}
+                    className={`text-[10px] rounded-full px-2 py-0.5 border transition ${
+                      sel
+                        ? "bg-accent/20 border-accent/50 text-accent"
+                        : "border-white/15 text-muted-foreground hover:text-foreground hover:bg-white/10"
+                    }`}
+                  >
+                    {sel ? (
+                      <span className="inline-flex items-center gap-1">
+                        <Check className="h-3 w-3" /> Compare
+                      </span>
+                    ) : (
+                      "Compare"
+                    )}
+                  </button>
                 </div>
                 <div className="mt-2 flex items-baseline gap-1.5">
                   <span className="text-xl font-semibold text-gradient">
@@ -708,18 +727,35 @@ export function KenyaCountyMap() {
                 <div className="mt-1 text-[10px] text-muted-foreground">
                   {METRIC_LABELS[metric]}
                 </div>
-                <Link
-                  to="/county/$code"
-                  params={{ code: String(c.code) }}
-                  onClick={(e) => e.stopPropagation()}
-                  onKeyDown={(e) => e.stopPropagation()}
-                  aria-label={`Open full ${c.name} County profile`}
+                {/* Data Confidence Score */}
+                <div
+                  className="mt-3 rounded-xl bg-white/[0.04] border border-white/10 px-2.5 py-2"
+                  aria-label={`Data confidence ${confPct} percent`}
+                >
+                  <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-muted-foreground">
+                    <span>Data confidence</span>
+                    <span className="text-foreground font-semibold">{confPct}%</span>
+                  </div>
+                  <div className="mt-1 h-1 rounded-full bg-white/10 overflow-hidden">
+                    <div
+                      className={`h-full ${
+                        confPct >= 80
+                          ? "bg-emerald-400"
+                          : confPct >= 60
+                            ? "bg-accent"
+                            : "bg-amber-glow"
+                      }`}
+                      style={{ width: `${confPct}%` }}
+                    />
+                  </div>
+                </div>
+                <div
                   data-testid={`county-open-${c.code}`}
-                  className="mt-3 inline-flex items-center gap-1 text-[11px] font-medium text-accent hover:text-foreground transition"
+                  className="mt-3 inline-flex items-center gap-1 text-[11px] font-medium text-accent"
                 >
                   Open county profile <ArrowRight className="h-3 w-3" />
-                </Link>
-              </div>
+                </div>
+              </Link>
             );
           })}
         </div>
