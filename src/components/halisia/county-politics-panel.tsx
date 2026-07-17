@@ -333,3 +333,114 @@ function IssueList({
     </div>
   );
 }
+
+function PublicOpinionSection({ opinion }: { opinion: PublicOpinion }) {
+  const dims: Array<{ key: keyof PublicOpinion["scores"]; label: string }> = [
+    { key: "Governance", label: "Governance" },
+    { key: "ServiceDelivery", label: "Service delivery" },
+    { key: "Security", label: "Security" },
+    { key: "Economy", label: "Economy" },
+  ];
+  const bandFor = (n: number) =>
+    n >= 70 ? "Positive" : n >= 55 ? "Moderate" : n >= 40 ? "Mixed" : "Concern";
+  return (
+    <div>
+      <SubHead icon={BarChart3} label="Public Opinion — Composite Research Index" />
+      <div className="mt-3 rounded-2xl border border-amber-glow/30 bg-amber-glow/5 p-3 text-[11px] text-muted-foreground flex gap-2">
+        <ShieldAlert className="h-4 w-4 text-amber-glow shrink-0 mt-0.5" />
+        <div>
+          <span className="text-foreground font-medium">Research aggregate — not a poll.</span>{" "}
+          Values are a directional composite index built from publicly released turnout, CIDP/OAG
+          issue density, and third-party public-opinion priors. Verify sentiment claims with the
+          primary sources listed below before publishing.
+        </div>
+      </div>
+      <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-3">
+        {dims.map((d) => {
+          const v = opinion.scores[d.key];
+          return (
+            <div key={d.key} className="rounded-2xl border border-white/10 bg-white/5 p-3">
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                {d.label}
+              </div>
+              <div className="mt-1 text-2xl font-semibold tabular-nums">{v}</div>
+              <div className="mt-1 text-[10px] text-muted-foreground">{bandFor(v)} · index /100</div>
+              <div className="mt-2 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                <div className="h-full bg-accent" style={{ width: `${v}%` }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="mt-2 text-[11px] text-muted-foreground">
+        Overall composite: <span className="text-foreground tabular-nums">{opinion.overall}/100</span>
+        {" · "}
+        {opinion.method}
+      </div>
+
+      {/* Correlation vs turnout — disclaimer-safe */}
+      <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-3">
+        <div className="text-[11px] uppercase tracking-widest text-muted-foreground">
+          Opinion index vs voter turnout (historical)
+        </div>
+        <div className="mt-2 space-y-2">
+          {opinion.correlation.map((row) => (
+            <div key={row.year} className="grid grid-cols-[3rem_1fr_1fr] items-center gap-2">
+              <div className="text-[11px] tabular-nums text-muted-foreground">{row.year}</div>
+              <div>
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                  Turnout
+                </div>
+                <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                  <div
+                    className="h-full bg-cyan-glow"
+                    style={{ width: `${row.turnoutPct ?? 0}%` }}
+                  />
+                </div>
+                <div className="text-[10px] text-muted-foreground tabular-nums">
+                  {row.turnoutPct != null ? `${row.turnoutPct}%` : "—"}
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                  Opinion index
+                </div>
+                <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                  <div className="h-full bg-accent" style={{ width: `${row.opinionIndex}%` }} />
+                </div>
+                <div className="text-[10px] text-muted-foreground tabular-nums">
+                  {row.opinionIndex}/100
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-2 text-[10px] text-muted-foreground">
+          Correlation shown for context only. Higher turnout does not causally imply higher
+          approval; both signals share underlying civic engagement drivers.
+        </div>
+      </div>
+
+      {/* Citations */}
+      <div className="mt-4">
+        <div className="text-[11px] uppercase tracking-widest text-muted-foreground">
+          Source-backed citations
+        </div>
+        <ul className="mt-2 flex flex-wrap gap-2">
+          {opinion.citations.map((c) => (
+            <li key={c.url}>
+              <a
+                href={c.url}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="inline-flex items-center gap-1 rounded-full bg-white/5 border border-white/10 px-2.5 py-1 text-[11px] hover:border-accent/40 hover:text-accent"
+              >
+                {c.label} <ExternalLink className="h-3 w-3" />
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
