@@ -34,8 +34,8 @@ test.describe("Waves 1-4 across multiple Kenya locations", () => {
       await expect(page.locator(".leaflet-container").first()).toBeVisible({ timeout: 15_000 });
 
       // Wave 3 · Street
-      await page.getByTestId("tab-street").click();
-      await expect(page.getByTestId("tab-street")).toHaveAttribute("aria-selected", /true/i);
+      await page.getByTestId("tab-geotech").click();
+      await expect(page.getByTestId("tab-geotech")).toHaveAttribute("aria-selected", /true/i);
 
       // Wave 4 · Public data + investment scoring
       await page.getByTestId("tab-wave4").click();
