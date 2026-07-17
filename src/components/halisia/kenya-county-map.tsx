@@ -12,6 +12,7 @@ import {
 } from "@/lib/county-metrics";
 import { generateCountyComparePdf } from "@/lib/pdf-county-compare";
 import { KENYA_COAT_OF_ARMS } from "@/lib/kenya-county-facts";
+import { COUNTY_LOGOS } from "@/lib/county-logos";
 import { dataConfidencePct } from "@/lib/county-profile";
 import { Link } from "@tanstack/react-router";
 import {
@@ -681,11 +682,10 @@ export function KenyaCountyMap() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <img
-                      src={KENYA_COAT_OF_ARMS}
-                      alt=""
-                      aria-hidden="true"
+                      src={COUNTY_LOGOS[c.code] ?? KENYA_COAT_OF_ARMS}
+                      alt={`${c.name} County official emblem`}
                       referrerPolicy="no-referrer"
-                      className="h-6 w-6 rounded bg-white/10 p-0.5"
+                      className="h-8 w-8 rounded-full bg-white object-contain p-0.5 ring-1 ring-white/20"
                       loading="lazy"
                     />
                     <div className="text-sm font-semibold">{c.name}</div>
