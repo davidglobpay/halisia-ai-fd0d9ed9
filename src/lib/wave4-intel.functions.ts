@@ -61,8 +61,24 @@ export type Wave4Intel = {
     development: number;
     investment: number;
   };
+  breakdown: {
+    accessibility: ScoreExplain;
+    infrastructure: ScoreExplain;
+    environment: ScoreExplain;
+    development: ScoreExplain;
+    investment: ScoreExplain;
+  };
+  distanceBuckets: Record<string, { close: number; near: number; far: number }>;
   sources: Array<{ label: string; url: string; used: boolean }>;
   generatedAt: string;
+};
+
+export type ScoreExplain = {
+  score: number;
+  formula: string;
+  factors: Array<{ label: string; value: number; weight: string }>;
+  confidence: "low" | "medium" | "high";
+  note: string;
 };
 
 const cache = new Map<string, { at: number; value: Wave4Intel }>();
@@ -256,20 +272,101 @@ function score(facilities: Record<string, Wave4Facility[]>, climate: Wave4Intel[
   const investment = clip(
     accessibility * 0.35 + infrastructure * 0.35 + environment * 0.15 + development * 0.15,
   );
-  return { accessibility, infrastructure, environment, development, investment };
+  const dataSignal = count("hospitals") + count("schools") + count("transit") + count("markets");
+  const confidence: ScoreExplain["confidence"] =
+    dataSignal >= 15 ? "high" : dataSignal >= 6 ? "medium" : "low";
+
+  const breakdown = {
+    accessibility: {
+      score: accessibility,
+      formula: "25 + transit·6 + fuel·4 + markets·5",
+      factors: [
+        { label: "Transit stops (3 km)", value: count("transit"), weight: "×6" },
+        { label: "Fuel stations", value: count("fuel"), weight: "×4" },
+        { label: "Marketplaces", value: count("markets"), weight: "×5" },
+      ],
+      confidence,
+      note: "Higher when there are many transit stops and market anchors within 3 km.",
+    },
+    infrastructure: {
+      score: infrastructure,
+      formula: "20 + hospitals·5 + schools·4 + banks·4 + police·6 + fire·6 + gov·3",
+      factors: [
+        { label: "Healthcare", value: count("hospitals"), weight: "×5" },
+        { label: "Schools", value: count("schools"), weight: "×4" },
+        { label: "Banks / ATM", value: count("banks"), weight: "×4" },
+        { label: "Police", value: count("police"), weight: "×6" },
+        { label: "Fire stations", value: count("fire"), weight: "×6" },
+        { label: "Government offices", value: count("government"), weight: "×3" },
+      ],
+      confidence,
+      note: "Weights emergency services higher because they're rarer but critical.",
+    },
+    environment: {
+      score: environment,
+      formula: "55 + climate suitability (temp + rainfall bands)",
+      factors: [
+        { label: "Mean temp (°C)", value: climate.meanTempC ?? 0, weight: "17–26 ideal" },
+        { label: "Rainfall (mm/yr)", value: climate.annualRainfallMm ?? 0, weight: "600–1500 ideal" },
+      ],
+      confidence: climate.meanTempC != null && climate.annualRainfallMm != null ? "high" : "low",
+      note: "Open-Meteo 2010–2020 climate normals (EC-Earth3P-HR downscaled).",
+    },
+    development: {
+      score: development,
+      formula: "(access + infra) / 2 + min(20, worship + markets·2)",
+      factors: [
+        { label: "Places of worship", value: count("worship"), weight: "×1" },
+        { label: "Marketplaces", value: count("markets"), weight: "×2" },
+      ],
+      confidence,
+      note: "Community anchors correlate with settled, buildable neighbourhoods.",
+    },
+    investment: {
+      score: investment,
+      formula: "0.35·access + 0.35·infra + 0.15·env + 0.15·dev",
+      factors: [
+        { label: "Accessibility", value: accessibility, weight: "×0.35" },
+        { label: "Infrastructure", value: infrastructure, weight: "×0.35" },
+        { label: "Environment", value: environment, weight: "×0.15" },
+        { label: "Development", value: development, weight: "×0.15" },
+      ],
+      confidence,
+      note: "Composite view — not a valuation.",
+    },
+  };
+  return { scores: { accessibility, infrastructure, environment, development, investment }, breakdown };
+}
+
+function distanceBuckets(facilities: Record<string, Wave4Facility[]>) {
+  const out: Record<string, { close: number; near: number; far: number }> = {};
+  for (const [key, list] of Object.entries(facilities)) {
+    let close = 0,
+      near = 0,
+      far = 0;
+    for (const f of list) {
+      if (f.distanceKm <= 0.5) close++;
+      else if (f.distanceKm <= 1.5) near++;
+      else far++;
+    }
+    out[key] = { close, near, far };
+  }
+  return out;
 }
 
 export const getWave4Intel = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => {
-    const v = input as { lat?: number; lng?: number };
+    const v = input as { lat?: number; lng?: number; refresh?: boolean };
     if (typeof v?.lat !== "number" || typeof v?.lng !== "number")
       throw new Error("lat/lng required");
-    return { lat: v.lat, lng: v.lng };
+    return { lat: v.lat, lng: v.lng, refresh: !!v.refresh };
   })
   .handler(async ({ data }): Promise<Wave4Intel> => {
     const key = `${data.lat.toFixed(3)},${data.lng.toFixed(3)}`;
-    const hit = cache.get(key);
-    if (hit && Date.now() - hit.at < TTL) return hit.value;
+    if (!data.refresh) {
+      const hit = cache.get(key);
+      if (hit && Date.now() - hit.at < TTL) return hit.value;
+    }
 
     const [nom, ovp, cli] = await Promise.all([
       fetchNominatim(data.lat, data.lng),
@@ -285,13 +382,16 @@ export const getWave4Intel = createServerFn({ method: "POST" })
       tempMinC: cli?.tempMinC ?? null,
       tempMaxC: cli?.tempMaxC ?? null,
     };
-    const scores = score(facilities, climate);
+    const { scores, breakdown } = score(facilities, climate);
+    const bucketMap = distanceBuckets(facilities);
 
     const value: Wave4Intel = {
       admin,
       facilities,
       climate,
       scores,
+      breakdown,
+      distanceBuckets: bucketMap,
       sources: [
         {
           label: "OpenStreetMap Nominatim (admin lookup)",
