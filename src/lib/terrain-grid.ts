@@ -7,6 +7,7 @@
  */
 
 import { startTerrainTimer } from "@/lib/terrain-telemetry";
+import { recordTerrainEvent } from "@/lib/terrain-telemetry";
 
 export type ElevationGrid = {
   n: number;
@@ -17,6 +18,20 @@ export type ElevationGrid = {
   max: number;
 };
 
+/**
+ * In-memory TTL cache for elevation grids. Repeated Wave 2 refreshes at the
+ * same coordinate reuse valid data instead of re-fetching Open-Topo-Data,
+ * while still emitting telemetry so reliability dashboards see the hit.
+ */
+const GRID_TTL_MS = 10 * 60 * 1000;
+const gridCache = new Map<string, { at: number; grid: ElevationGrid }>();
+const cacheKey = (lat: number, lng: number, n: number, stepDeg: number, layer: string) =>
+  `${layer}|${lat.toFixed(4)}|${lng.toFixed(4)}|${n}|${stepDeg}`;
+
+export function clearTerrainGridCache() {
+  gridCache.clear();
+}
+
 export async function fetchElevationGrid(
   lat: number,
   lng: number,
@@ -25,6 +40,22 @@ export async function fetchElevationGrid(
   signal?: AbortSignal,
   layer: "contour-grid" | "slope-grid" | "pdf-terrain" = "contour-grid",
 ): Promise<ElevationGrid> {
+  const key = cacheKey(lat, lng, n, stepDeg, layer);
+  const hit = gridCache.get(key);
+  if (hit && Date.now() - hit.at < GRID_TTL_MS) {
+    recordTerrainEvent({
+      layer,
+      kind: "success",
+      ms: 0,
+      meta: {
+        cached: true,
+        ageMs: Date.now() - hit.at,
+        minM: Math.round(hit.grid.min),
+        maxM: Math.round(hit.grid.max),
+      },
+    });
+    return hit.grid;
+  }
   const timer = startTerrainTimer(layer, { lat, lng, n, stepDeg });
   try {
     const pts: string[] = [];
@@ -57,6 +88,7 @@ export async function fetchElevationGrid(
       max: Math.max(...flat),
     };
     timer.success({ minM: Math.round(grid.min), maxM: Math.round(grid.max) });
+    gridCache.set(key, { at: Date.now(), grid });
     return grid;
   } catch (e) {
     if ((e as Error)?.name !== "AbortError") {
