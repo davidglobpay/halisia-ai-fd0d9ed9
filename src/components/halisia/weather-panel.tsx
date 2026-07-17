@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import ReactECharts from "echarts-for-react";
 import { Cloud, Droplets, Loader2, Sun, Thermometer, Wind } from "lucide-react";
 import { fetchOpenMeteo, wmoDescription, type OpenMeteoResponse } from "@/lib/weather";
+import { Terrain3D } from "./terrain-3d";
 
 export function WeatherPanel({ lat, lng }: { lat: number; lng: number }) {
   const q = useQuery<OpenMeteoResponse>({
@@ -107,6 +108,7 @@ export function WeatherPanel({ lat, lng }: { lat: number; lng: number }) {
 
   return (
     <div className="space-y-3" data-testid="weather-panel">
+      <Terrain3D lat={lat} lng={lng} />
       <div className="glass-strong rounded-2xl p-4 relative overflow-hidden">
         <div className="absolute -top-16 -right-10 h-40 w-40 rounded-full blur-3xl opacity-40 bg-gradient-to-br from-cyan-glow to-primary" />
         <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
