@@ -24,7 +24,7 @@ import {
   Globe2,
   Flame,
   History,
-  Camera,
+  HardHat,
   Database,
 } from "lucide-react";
 import { getLocationIntel, type LocationIntel } from "@/lib/location-intel.functions";
@@ -34,7 +34,7 @@ import { LeafletLayersMap } from "@/components/halisia/leaflet-layers-map";
 import { CesiumGlobe } from "@/components/halisia/cesium-globe";
 import { HeatmapMap } from "@/components/halisia/heatmap-map";
 import { TimelinePanel } from "@/components/halisia/timeline-panel";
-import { MapillaryView } from "@/components/halisia/mapillary-view";
+import { GeotechPanel } from "@/components/halisia/geotech-panel";
 import { NotificationsBell } from "@/components/halisia/notifications-bell";
 import { MapsDiagnostics } from "@/components/halisia/maps-diagnostics";
 import { Wave4Panel } from "@/components/halisia/wave4-panel";
@@ -50,7 +50,7 @@ type TabId =
   | "globe"
   | "terrain3d"
   | "timeline"
-  | "street"
+  | "geotech"
   | "evidence"
   | "wave4"
   | "ai";
@@ -60,7 +60,7 @@ const WAVE_META: Record<WaveId, { label: string; hint: string }> = {
   core: { label: "Core", hint: "Base intelligence" },
   wave1: { label: "Wave 1", hint: "GIS · Weather · Charts" },
   wave2: { label: "Wave 2", hint: "3D · Heatmap · Timeline" },
-  wave3: { label: "Wave 3", hint: "Street · Alerts" },
+  wave3: { label: "Wave 3", hint: "AI Geotechnical" },
   wave4: { label: "Wave 4", hint: "Open public data · Kenya" },
 };
 const TABS: Array<{ id: TabId; label: string; icon: React.ElementType; wave: WaveId }> = [
@@ -75,7 +75,7 @@ const TABS: Array<{ id: TabId; label: string; icon: React.ElementType; wave: Wav
   { id: "terrain3d", label: "Terrain 3D", icon: Mountain, wave: "wave2" },
   { id: "heatmap", label: "Heatmap", icon: Flame, wave: "wave2" },
   { id: "timeline", label: "Timeline", icon: History, wave: "wave2" },
-  { id: "street", label: "Street", icon: Camera, wave: "wave3" },
+  { id: "geotech", label: "Geotech", icon: HardHat, wave: "wave3" },
   { id: "wave4", label: "Public data", icon: Database, wave: "wave4" },
 ];
 
@@ -294,7 +294,7 @@ export function IntelligenceDashboard({
           </div>
         )}
         {tab === "timeline" && <TimelinePanel lat={lat} lng={lng} />}
-        {tab === "street" && <MapillaryView lat={lat} lng={lng} address={address} />}
+        {tab === "geotech" && <GeotechPanel lat={lat} lng={lng} address={address} />}
         {tab === "wave4" && <Wave4Panel lat={lat} lng={lng} />}
         {tab === "evidence" && (
           <div className="space-y-3">
