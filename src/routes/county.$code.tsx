@@ -18,12 +18,14 @@ import {
   Camera,
   BookOpen,
   Info,
+  Vote,
 } from "lucide-react";
 import { Navbar } from "@/components/halisia/navbar";
 import countiesData from "@/data/kenya-counties.json";
 import { buildCountyProfile, COUNTY_DATA_SOURCES } from "@/lib/county-profile";
 import { KENYA_COAT_OF_ARMS } from "@/lib/kenya-county-facts";
 import { METRIC_LABELS, formatMetric, type CountyMetric } from "@/lib/county-metrics";
+import { CountyPoliticsPanel } from "@/components/halisia/county-politics-panel";
 
 type Feature = { properties: { code: number; name: string; lat: number; lng: number } };
 const FEATURES = (countiesData as { features: Feature[] }).features;
@@ -100,6 +102,7 @@ const SECTION_NAV = [
   { id: "sec-overview", label: "Overview" },
   { id: "sec-economic", label: "Economic" },
   { id: "sec-political", label: "Political" },
+  { id: "sec-political-intel", label: "Political Intel" },
   { id: "sec-social", label: "Social" },
   { id: "sec-cultural", label: "Cultural" },
   { id: "sec-security", label: "Security" },
@@ -314,6 +317,11 @@ function CountyPage() {
               Governors development framework.
             </Definition>
           </div>
+        </Section>
+
+        {/* 3b. POLITICAL INTELLIGENCE */}
+        <Section id="sec-political-intel" title="3b · Political Intelligence Dashboard" icon={Vote}>
+          <CountyPoliticsPanel code={facts.code} />
         </Section>
 
         {/* 4. SOCIAL */}
