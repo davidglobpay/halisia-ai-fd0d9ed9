@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import { fetchStaticMapCached } from "@/lib/static-map-cache";
+import { getWave4Intel, type Wave4Intel } from "@/lib/wave4-intel.functions";
 
 function hash(lat: number, lng: number, salt: number) {
   const x = Math.sin(lat * 12.9898 + lng * 78.233 + salt) * 43758.5453;
@@ -58,6 +59,12 @@ export async function generateLocationDossier(opts: {
   const base = pick(0);
   const terrain = pick(1);
   const hybrid = pick(2);
+  let wave4: Wave4Intel | null = null;
+  try {
+    wave4 = await getWave4Intel({ data: { lat, lng } });
+  } catch {
+    wave4 = null;
+  }
   const sat = pick(3);
 
   const doc = new jsPDF({ unit: "pt", format: "a4" });
@@ -303,6 +310,100 @@ export async function generateLocationDossier(opts: {
   doc.text(recs.join("\n"), M + 20, 270, { lineHeightFactor: 1.5 });
 
   drawFooter(doc, W, H, M, muted);
+
+  // ---------- Page 5: Wave 4 · Public open-data intelligence ----------
+  if (wave4) {
+    doc.addPage();
+    doc.setFillColor(...bg);
+    doc.rect(0, 0, W, H, "F");
+    drawHeader(doc, W, M, "Wave 4 · Public open-data intelligence", ink, muted);
+
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(M, 110, W - M * 2, 90, 10, 10, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(...ink);
+    doc.text("Administrative profile", M + 16, 132);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(...muted);
+    const rows: Array<[string, string]> = [
+      ["County", wave4.admin.county ?? "—"],
+      ["Constituency", wave4.admin.constituency ?? "—"],
+      ["Ward", wave4.admin.ward ?? "—"],
+      ["Town", wave4.admin.town ?? "—"],
+    ];
+    rows.forEach(([k, v], i) => {
+      const col = i % 2;
+      const row = Math.floor(i / 2);
+      doc.text(`${k}: ${v}`, M + 16 + col * (W / 2 - M), 152 + row * 18);
+    });
+
+    // Score infographics — horizontal bars
+    const scoreLabels: Array<[string, number]> = [
+      ["Accessibility", wave4.scores.accessibility],
+      ["Infrastructure", wave4.scores.infrastructure],
+      ["Environment", wave4.scores.environment],
+      ["Development", wave4.scores.development],
+      ["Investment (composite)", wave4.scores.investment],
+    ];
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(M, 220, W - M * 2, 170, 10, 10, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(...ink);
+    doc.text("Investment scores", M + 16, 242);
+    scoreLabels.forEach(([label, v], i) => {
+      const y = 258 + i * 24;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(...ink);
+      doc.text(label, M + 16, y);
+      doc.setTextColor(...muted);
+      doc.text(`${v}/100`, W - M - 40, y, { align: "right" });
+      doc.setFillColor(235, 240, 248);
+      doc.roundedRect(M + 130, y - 8, W - M * 2 - 190, 8, 4, 4, "F");
+      doc.setFillColor(...accent);
+      doc.roundedRect(M + 130, y - 8, ((W - M * 2 - 190) * v) / 100, 8, 4, 4, "F");
+    });
+
+    // Facility mix — top 6 categories
+    const facEntries = Object.entries(wave4.facilities)
+      .map(([k, list]) => [k, list.length] as [string, number])
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6);
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(M, 410, W - M * 2, 170, 10, 10, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(...ink);
+    doc.text("Nearby public facilities (3 km)", M + 16, 432);
+    const maxCount = Math.max(1, ...facEntries.map(([, n]) => n));
+    facEntries.forEach(([k, n], i) => {
+      const y = 450 + i * 20;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(...ink);
+      doc.text(k, M + 16, y);
+      doc.setTextColor(...muted);
+      doc.text(String(n), W - M - 30, y, { align: "right" });
+      doc.setFillColor(235, 240, 248);
+      doc.roundedRect(M + 130, y - 8, W - M * 2 - 180, 8, 4, 4, "F");
+      doc.setFillColor(...accent);
+      doc.roundedRect(M + 130, y - 8, ((W - M * 2 - 180) * n) / maxCount, 8, 4, 4, "F");
+    });
+
+    doc.setFontSize(8);
+    doc.setTextColor(...muted);
+    doc.text(
+      `Sources: OpenStreetMap (Nominatim + Overpass) · Open-Meteo climate archive · generated ${new Date(
+        wave4.generatedAt,
+      ).toLocaleString()}`,
+      M,
+      H - 55,
+    );
+    drawFooter(doc, W, H, M, muted);
+  }
 
   const safe =
     address

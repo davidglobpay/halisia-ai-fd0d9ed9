@@ -7,7 +7,7 @@ const MapFallback = lazy(() => import("./map-fallback.internal"));
 
 export type MapTypeId = "roadmap" | "satellite" | "hybrid" | "terrain";
 export type MapTheme = "dark" | "light";
-export type OverlayId = "traffic" | "transit" | "bicycling";
+export type OverlayId = "traffic" | "transit" | "bicycling" | "slope" | "drainage";
 
 const HALISIA_STYLE: google.maps.MapTypeStyle[] = [
   { elementType: "geometry", stylers: [{ color: "#0a1735" }] },
@@ -75,6 +75,7 @@ export function MapView({
       Record<OverlayId, google.maps.MVCObject & { setMap: (m: google.maps.Map | null) => void }>
     >
   >({});
+  const imageOverlayRefs = useRef<Partial<Record<OverlayId, google.maps.ImageMapType>>>({});
   const [mapReady, setMapReady] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
   const [loadAttempt, setLoadAttempt] = useState(0);
@@ -175,6 +176,40 @@ export function MapView({
     ensure("traffic", () => new g.maps.TrafficLayer());
     ensure("transit", () => new g.maps.TransitLayer());
     ensure("bicycling", () => new g.maps.BicyclingLayer());
+    const ensureImage = (id: OverlayId, make: () => google.maps.ImageMapType) => {
+      const has = imageOverlayRefs.current[id];
+      if (wanted.has(id) && !has) {
+        const layer = make();
+        m.overlayMapTypes.push(layer);
+        imageOverlayRefs.current[id] = layer;
+      } else if (!wanted.has(id) && has) {
+        const idx = m.overlayMapTypes.getArray().indexOf(has);
+        if (idx >= 0) m.overlayMapTypes.removeAt(idx);
+        delete imageOverlayRefs.current[id];
+      }
+    };
+    ensureImage(
+      "slope",
+      () =>
+        new g.maps.ImageMapType({
+          name: "Slope",
+          tileSize: new g.maps.Size(256, 256),
+          opacity: 0.55,
+          getTileUrl: (c, z) =>
+            `https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/${z}/${c.y}/${c.x}`,
+        }),
+    );
+    ensureImage(
+      "drainage",
+      () =>
+        new g.maps.ImageMapType({
+          name: "Drainage",
+          tileSize: new g.maps.Size(256, 256),
+          opacity: 0.9,
+          getTileUrl: (c, z) =>
+            `https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Hydro_Reference_Overlay/MapServer/tile/${z}/${c.y}/${c.x}`,
+        }),
+    );
   }, [mapReady, overlays]);
 
   useEffect(() => {

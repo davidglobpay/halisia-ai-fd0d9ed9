@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Loader2,
   MapPin,
@@ -10,12 +10,16 @@ import {
   ExternalLink,
   CloudRain,
   Thermometer,
+  RefreshCw,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { useState } from "react";
 import {
   getWave4Intel,
   OVERPASS_CATEGORY_LABELS,
   type Wave4Intel,
+  type ScoreExplain,
 } from "@/lib/wave4-intel.functions";
 
 type SubTab = "admin" | "public" | "invest" | "sources";
@@ -29,11 +33,22 @@ const SUB_TABS: Array<{ id: SubTab; label: string; icon: React.ElementType }> = 
 
 export function Wave4Panel({ lat, lng }: { lat: number; lng: number }) {
   const [sub, setSub] = useState<SubTab>("admin");
+  const qc = useQueryClient();
   const q = useQuery<Wave4Intel>({
     queryKey: ["wave4", lat.toFixed(3), lng.toFixed(3)],
     queryFn: () => getWave4Intel({ data: { lat, lng } }),
     staleTime: 15 * 60 * 1000,
   });
+  const [refreshing, setRefreshing] = useState(false);
+  const doRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const fresh = await getWave4Intel({ data: { lat, lng, refresh: true } });
+      qc.setQueryData(["wave4", lat.toFixed(3), lng.toFixed(3)], fresh);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   return (
     <section className="space-y-3" data-testid="wave4-panel">
@@ -42,9 +57,21 @@ export function Wave4Panel({ lat, lng }: { lat: number; lng: number }) {
           <span className="text-[9px] uppercase tracking-[0.18em] text-amber-glow font-semibold">
             Wave 4
           </span>
-          <span className="text-[9px] uppercase tracking-widest text-muted-foreground">
-            Open public data · Kenya
-          </span>
+          <div className="flex items-center gap-2">
+            {q.data && (
+              <span className="text-[9px] uppercase tracking-widest text-muted-foreground">
+                Updated {new Date(q.data.generatedAt).toLocaleTimeString()}
+              </span>
+            )}
+            <button
+              onClick={doRefresh}
+              disabled={refreshing}
+              data-testid="wave4-refresh"
+              className="inline-flex items-center gap-1 rounded-full glass px-2 py-0.5 text-[10px] hover:bg-white/10 disabled:opacity-50"
+            >
+              <RefreshCw className={`h-3 w-3 ${refreshing ? "animate-spin" : ""}`} /> Refresh
+            </button>
+          </div>
         </div>
         <div className="flex items-center gap-1">
           {SUB_TABS.map((t) => {
@@ -210,12 +237,13 @@ function PublicTab({ data }: { data: Wave4Intel }) {
 /* ---------- Invest ---------- */
 
 function InvestTab({ data }: { data: Wave4Intel }) {
-  const items: Array<[string, number]> = [
-    ["Accessibility", data.scores.accessibility],
-    ["Infrastructure", data.scores.infrastructure],
-    ["Environment", data.scores.environment],
-    ["Development potential", data.scores.development],
+  const items: Array<[string, keyof Wave4Intel["breakdown"]]> = [
+    ["Accessibility", "accessibility"],
+    ["Infrastructure", "infrastructure"],
+    ["Environment", "environment"],
+    ["Development potential", "development"],
   ];
+  const [openKey, setOpenKey] = useState<string | null>(null);
   return (
     <div className="space-y-3">
       <div className="glass rounded-2xl p-4">
@@ -235,28 +263,104 @@ function InvestTab({ data }: { data: Wave4Intel }) {
             style={{ width: `${data.scores.investment}%` }}
           />
         </div>
+        <ScoreDrill
+          label="How this score is built"
+          explain={data.breakdown.investment}
+          defaultOpen
+        />
       </div>
       <div className="grid grid-cols-2 gap-2">
-        {items.map(([label, v]) => (
-          <div key={label} className="glass rounded-2xl p-3">
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-              {label}
+        {items.map(([label, key]) => {
+          const explain = data.breakdown[key];
+          const open = openKey === key;
+          return (
+            <div key={label} className="glass rounded-2xl p-3">
+              <button
+                onClick={() => setOpenKey(open ? null : key)}
+                className="w-full text-left"
+                data-testid={`wave4-drill-${key}`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    {label}
+                  </div>
+                  {open ? (
+                    <ChevronUp className="h-3 w-3 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="mt-1 text-2xl font-semibold">{explain.score}</div>
+                <div className="mt-1.5 h-1.5 rounded-full bg-white/5 overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-primary to-accent"
+                    style={{ width: `${explain.score}%` }}
+                  />
+                </div>
+              </button>
+              {open && <ScoreDrill label="Breakdown" explain={explain} />}
             </div>
-            <div className="mt-1 text-2xl font-semibold">{v}</div>
-            <div className="mt-1.5 h-1.5 rounded-full bg-white/5 overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-primary to-accent"
-                style={{ width: `${v}%` }}
-              />
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       <div className="text-[11px] text-muted-foreground px-1 leading-relaxed">
         Composite = 0.35·access + 0.35·infra + 0.15·environment + 0.15·development. Derived from OSM
         facility density (3&nbsp;km) and Open-Meteo climate normals. AI-generated interpretation,
         not a valuation.
       </div>
+    </div>
+  );
+}
+
+function ScoreDrill({
+  label,
+  explain,
+  defaultOpen = false,
+}: {
+  label: string;
+  explain: ScoreExplain;
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="mt-3 rounded-xl border border-white/5 bg-black/20 p-2.5">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center justify-between text-[11px] uppercase tracking-widest text-muted-foreground hover:text-foreground"
+      >
+        <span>{label}</span>
+        {open ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+      </button>
+      {open && (
+        <div className="mt-2 space-y-1.5">
+          <div className="text-[10px] font-mono text-cyan-glow">{explain.formula}</div>
+          <ul className="space-y-1">
+            {explain.factors.map((f) => (
+              <li key={f.label} className="flex items-center justify-between text-[11px]">
+                <span className="text-muted-foreground">{f.label}</span>
+                <span className="tabular-nums">
+                  {typeof f.value === "number" ? Math.round(f.value * 10) / 10 : f.value}{" "}
+                  <span className="text-[10px] text-muted-foreground">{f.weight}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+          <div className="flex items-center justify-between pt-1 text-[10px]">
+            <span className="text-muted-foreground">{explain.note}</span>
+            <span
+              className={
+                explain.confidence === "high"
+                  ? "text-emerald-glow"
+                  : explain.confidence === "medium"
+                    ? "text-amber-glow"
+                    : "text-muted-foreground"
+              }
+            >
+              confidence: {explain.confidence}
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
