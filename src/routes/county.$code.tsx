@@ -94,6 +94,27 @@ function CountyError() {
   );
 }
 
+const SECTION_NAV = [
+  { id: "sec-summary", label: "AI Summary" },
+  { id: "sec-dashboard", label: "Dashboard" },
+  { id: "sec-overview", label: "Overview" },
+  { id: "sec-economic", label: "Economic" },
+  { id: "sec-political", label: "Political" },
+  { id: "sec-social", label: "Social" },
+  { id: "sec-cultural", label: "Cultural" },
+  { id: "sec-security", label: "Security" },
+  { id: "sec-infra", label: "Infrastructure" },
+  { id: "sec-health", label: "Health" },
+  { id: "sec-education", label: "Education" },
+  { id: "sec-environment", label: "Environment" },
+  { id: "sec-land", label: "Land" },
+  { id: "sec-housing", label: "Housing" },
+  { id: "sec-investment", label: "Investment" },
+  { id: "sec-recs", label: "Recommendations" },
+  { id: "sec-references", label: "References" },
+  { id: "sec-media", label: "Media" },
+];
+
 function CountyPage() {
   const { profile } = Route.useLoaderData();
   const { facts, latLng, scores, metrics, density } = profile;
@@ -128,13 +149,14 @@ function CountyPage() {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#0a1735] via-[#0a1735]/40 to-transparent" />
             <div className="absolute inset-0 p-6 md:p-8 flex items-end">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 w-full">
                 <img
                   src={KENYA_COAT_OF_ARMS}
                   alt="Kenya coat of arms"
+                  referrerPolicy="no-referrer"
                   className="h-16 w-16 md:h-20 md:w-20 drop-shadow-glow bg-white/10 rounded-xl p-1.5"
                 />
-                <div>
+                <div className="flex-1">
                   <div className="text-xs uppercase tracking-[0.25em] text-accent">
                     County {String(facts.code).padStart(3, "0")} · {facts.region}
                   </div>
@@ -145,6 +167,7 @@ function CountyPage() {
                     HQ: {facts.headquarters} · {latLng.lat.toFixed(3)}°, {latLng.lng.toFixed(3)}°
                   </div>
                 </div>
+                <HeroConfidenceBadge pct={profile.confidencePct} />
               </div>
             </div>
           </div>
@@ -158,8 +181,29 @@ function CountyPage() {
           </div>
         </header>
 
+        {/* STICKY IN-PAGE NAV */}
+        <nav
+          aria-label="County profile sections"
+          className="sticky top-16 z-20 mt-6 -mx-2 px-2"
+        >
+          <div className="glass-strong rounded-full border border-white/10 px-2 py-2 overflow-x-auto no-scrollbar">
+            <ul className="flex items-center gap-1 whitespace-nowrap">
+              {SECTION_NAV.map((s) => (
+                <li key={s.id}>
+                  <a
+                    href={`#${s.id}`}
+                    className="inline-flex items-center rounded-full px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-white/10 transition"
+                  >
+                    {s.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </nav>
+
         {/* AI SUMMARY */}
-        <Section title="AI Executive Summary" icon={Sparkles}>
+        <Section id="sec-summary" title="AI Executive Summary" icon={Sparkles}>
           <p className="text-base md:text-lg leading-relaxed text-foreground/90">
             {profile.aiSummary}
           </p>
@@ -173,7 +217,7 @@ function CountyPage() {
         </Section>
 
         {/* 14. DASHBOARD SCORES */}
-        <Section title="County Dashboard" icon={TrendingUp}>
+        <Section id="sec-dashboard" title="County Dashboard" icon={TrendingUp}>
           <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             <ScoreTile label="Economic" value={scores.economic} />
             <ScoreTile label="Infrastructure" value={scores.infrastructure} />
@@ -191,7 +235,7 @@ function CountyPage() {
         </Section>
 
         {/* 1. OVERVIEW */}
-        <Section title="1 · County Overview" icon={Building2}>
+        <Section id="sec-overview" title="1 · County Overview" icon={Building2}>
           <div className="grid md:grid-cols-2 gap-6">
             <Definition label="Administrative Structure">
               {facts.constituencies} constituencies · {facts.wards} wards · headquartered at{" "}
@@ -222,7 +266,7 @@ function CountyPage() {
         </Section>
 
         {/* 2. ECONOMIC */}
-        <Section title="2 · Economic Analysis" icon={TrendingUp}>
+        <Section id="sec-economic" title="2 · Economic Analysis" icon={TrendingUp}>
           <div className="grid md:grid-cols-2 gap-6">
             <div>
               <div className="text-xs uppercase tracking-widest text-accent">Main activities</div>
@@ -255,7 +299,7 @@ function CountyPage() {
         </Section>
 
         {/* 3. POLITICAL */}
-        <Section title="3 · Political & Governance" icon={Landmark}>
+        <Section id="sec-political" title="3 · Political & Governance" icon={Landmark}>
           <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-3">
             <Definition label="Governor">{facts.governor}</Definition>
             <Definition label="Senator">{facts.senator}</Definition>
@@ -276,7 +320,7 @@ function CountyPage() {
         </Section>
 
         {/* 4. SOCIAL */}
-        <Section title="4 · Social Analysis" icon={Users}>
+        <Section id="sec-social" title="4 · Social Analysis" icon={Users}>
           <div className="grid md:grid-cols-3 gap-3">
             <MiniScore label="Community wellbeing" value={scores.habitability} />
             <MiniScore label="Social development" value={scores.education} />
@@ -292,7 +336,7 @@ function CountyPage() {
         </Section>
 
         {/* 5. CULTURAL */}
-        <Section title="5 · Cultural Analysis" icon={BookOpen}>
+        <Section id="sec-cultural" title="5 · Cultural Analysis" icon={BookOpen}>
           <p className="text-sm text-muted-foreground">
             Home to communities with deep cultural heritage. Notable assets include{" "}
             {facts.landmarks.slice(0, 3).join(", ")}. Traditional livelihoods overlap the county's
@@ -301,7 +345,7 @@ function CountyPage() {
         </Section>
 
         {/* 6. SECURITY */}
-        <Section title="6 · Security Analysis" icon={ShieldCheck}>
+        <Section id="sec-security" title="6 · Security Analysis" icon={ShieldCheck}>
           <div className="grid md:grid-cols-3 gap-3">
             <MiniScore label="Public safety" value={scores.security} />
             <MiniScore
@@ -313,7 +357,7 @@ function CountyPage() {
         </Section>
 
         {/* 7. INFRASTRUCTURE */}
-        <Section title="7 · Infrastructure Analysis" icon={Wrench}>
+        <Section id="sec-infra" title="7 · Infrastructure Analysis" icon={Wrench}>
           <div className="grid md:grid-cols-3 gap-3">
             <MiniScore label="Accessibility" value={scores.infrastructure} />
             <MiniScore
@@ -335,7 +379,7 @@ function CountyPage() {
         </Section>
 
         {/* 8. HEALTH */}
-        <Section title="8 · Healthcare Analysis" icon={Stethoscope}>
+        <Section id="sec-health" title="8 · Healthcare Analysis" icon={Stethoscope}>
           <MiniScore label="Healthcare accessibility" value={scores.healthcare} />
           <p className="mt-3 text-sm text-muted-foreground">
             Tiered from Level 5/6 referral facilities through county hospitals, health centres and
@@ -344,7 +388,7 @@ function CountyPage() {
         </Section>
 
         {/* 9. EDUCATION */}
-        <Section title="9 · Education Analysis" icon={GraduationCap}>
+        <Section id="sec-education" title="9 · Education Analysis" icon={GraduationCap}>
           <MiniScore label="Education accessibility" value={scores.education} />
           <p className="mt-3 text-sm text-muted-foreground">
             Universities, TVETs and colleges alongside secondary and primary schools per the KICD
@@ -353,7 +397,7 @@ function CountyPage() {
         </Section>
 
         {/* 10. ENVIRONMENT */}
-        <Section title="10 · Environmental Analysis" icon={Leaf}>
+        <Section id="sec-environment" title="10 · Environmental Analysis" icon={Leaf}>
           <div className="grid md:grid-cols-3 gap-3">
             <MiniScore label="Environmental sustainability" value={scores.environment} />
             <MiniScore
@@ -369,7 +413,7 @@ function CountyPage() {
         </Section>
 
         {/* 11. LAND */}
-        <Section title="11 · Land &amp; Development" icon={Trees}>
+        <Section id="sec-land" title="11 · Land &amp; Development" icon={Trees}>
           <div className="grid md:grid-cols-2 gap-3">
             <MiniScore label="Development potential" value={scores.developmentReadiness} />
             <MiniScore label="Land suitability" value={metrics.livability} />
@@ -377,7 +421,7 @@ function CountyPage() {
         </Section>
 
         {/* 12. HOUSING */}
-        <Section title="12 · Housing &amp; Habitability" icon={Home}>
+        <Section id="sec-housing" title="12 · Housing &amp; Habitability" icon={Home}>
           <div className="grid md:grid-cols-3 gap-3">
             <MiniScore label="Habitability" value={scores.habitability} />
             <MiniScore
@@ -392,7 +436,7 @@ function CountyPage() {
         </Section>
 
         {/* 13. INVESTMENT */}
-        <Section title="13 · Investment Analysis" icon={Sparkles}>
+        <Section id="sec-investment" title="13 · Investment Analysis" icon={Sparkles}>
           <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-3">
             <MiniScore label="Investment attractiveness" value={scores.investment} />
             <MiniScore
@@ -412,7 +456,7 @@ function CountyPage() {
         </Section>
 
         {/* 15. RECOMMENDATIONS */}
-        <Section title="Strategic Recommendations" icon={Sparkles}>
+        <Section id="sec-recs" title="Strategic Recommendations" icon={Sparkles}>
           <ol className="list-decimal pl-5 space-y-2 text-sm text-muted-foreground">
             {profile.recommendations.map((r: string) => (
               <li key={r}>{r}</li>
@@ -425,7 +469,7 @@ function CountyPage() {
         </Section>
 
         {/* 16. REFERENCES */}
-        <Section title="16 · References &amp; Evidence" icon={Info}>
+        <Section id="sec-references" title="16 · References &amp; Evidence" icon={Info}>
           <ul className="grid md:grid-cols-2 gap-2 text-sm">
             {COUNTY_DATA_SOURCES.map((s) => (
               <li
@@ -454,7 +498,7 @@ function CountyPage() {
         </Section>
 
         {/* 17. MEDIA */}
-        <Section title="17 · Photo &amp; Media Evidence Library" icon={Camera}>
+        <Section id="sec-media" title="17 · Photo &amp; Media Evidence Library" icon={Camera}>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {[
               "Administrative buildings",
