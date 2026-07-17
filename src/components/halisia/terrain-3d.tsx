@@ -9,6 +9,7 @@ import {
   type ElevationGrid,
   type IsoLayout,
 } from "@/lib/terrain-grid";
+import { recordTerrainEvent, startTerrainTimer } from "@/lib/terrain-telemetry";
 
 /**
  * 3D terrain preview — Wave 1 & Wave 2.
@@ -39,10 +40,16 @@ export function Terrain3D({
     const ctrl = new AbortController();
     setGrid(null);
     setErr(null);
-    fetchElevationGrid(lat, lng, 9, 0.02, ctrl.signal)
+    const layer = nonce === 0 ? "contour-grid" : "refresh";
+    fetchElevationGrid(lat, lng, 9, 0.02, ctrl.signal, "contour-grid")
       .then(setGrid)
       .catch((e: unknown) => {
         if ((e as Error).name === "AbortError") return;
+        recordTerrainEvent({
+          layer,
+          kind: "error",
+          error: (e as Error).message,
+        });
         setErr((e as Error).message);
       });
     return () => ctrl.abort();
@@ -56,9 +63,20 @@ export function Terrain3D({
     const dpr = window.devicePixelRatio || 1;
     c.width = c.clientWidth * dpr;
     c.height = c.clientHeight * dpr;
-    layoutRef.current = drawIsometricTerrain(ctx, grid, c.width, c.height, {
-      highlight: hover,
+    const timer = startTerrainTimer("render", {
+      w: c.width,
+      h: c.height,
+      cells: grid.n * grid.n,
     });
+    try {
+      layoutRef.current = drawIsometricTerrain(ctx, grid, c.width, c.height, {
+        highlight: hover,
+      });
+      timer.success();
+    } catch (e) {
+      timer.error(e);
+      setErr((e as Error).message);
+    }
   }, [grid, hover]);
 
   const stats = useMemo(() => (grid ? gridStats(grid) : null), [grid]);
@@ -97,7 +115,10 @@ export function Terrain3D({
             </div>
           )}
           <button
-            onClick={() => setNonce((n) => n + 1)}
+            onClick={() => {
+              recordTerrainEvent({ layer: "refresh", kind: "start" });
+              setNonce((n) => n + 1);
+            }}
             className="inline-flex items-center gap-1 rounded-full glass px-2 py-0.5 text-[10px] hover:bg-white/10"
             data-testid="terrain-3d-refresh"
             title="Resample elevation grid"
