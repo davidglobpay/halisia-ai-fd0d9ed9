@@ -77,6 +77,7 @@ function Explore() {
   const [downloading, setDownloading] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
   const [pdfStage, setPdfStage] = useState<string>("");
+  const [pdfPct, setPdfPct] = useState<number>(0);
   const [geoStage, setGeoStage] = useState<string>("");
 
   const toggleOverlay = (id: OverlayId) =>
@@ -124,14 +125,9 @@ function Explore() {
   const downloadDossier = async () => {
     setDownloading(true);
     setPdfError(null);
-    setPdfStage("Fetching evidence maps…");
+    setPdfStage("Starting…");
+    setPdfPct(0);
     try {
-      // Micro-stage updates so users see progress rather than a spinner freeze.
-      const stageTimer = window.setTimeout(
-        () => setPdfStage("Rendering intelligence pages…"),
-        1200,
-      );
-      const stageTimer2 = window.setTimeout(() => setPdfStage("Compiling PDF…"), 2600);
       const result = await generateLocationDossier({
         lat: active.lat,
         lng: active.lng,
@@ -140,9 +136,11 @@ function Explore() {
           typeof window !== "undefined"
             ? `${window.location.origin}/report?lat=${active.lat}&lng=${active.lng}&address=${encodeURIComponent(active.address)}`
             : undefined,
+        onProgress: (pct, stage) => {
+          setPdfPct(pct);
+          setPdfStage(stage);
+        },
       });
-      window.clearTimeout(stageTimer);
-      window.clearTimeout(stageTimer2);
       if (result.mapsFailed > 0) {
         const c = classifyMapError(result.lastError);
         setPdfError(
@@ -155,6 +153,7 @@ function Explore() {
     } finally {
       setDownloading(false);
       setPdfStage("");
+      setPdfPct(0);
     }
   };
 
@@ -303,7 +302,9 @@ function Explore() {
               {downloading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  {pdfStage || "Building dossier…"}
+                  <span data-testid="download-dossier-progress">
+                    {pdfStage || "Building dossier…"} · {pdfPct}%
+                  </span>
                 </>
               ) : (
                 <>
@@ -312,8 +313,18 @@ function Explore() {
               )}
             </button>
             {downloading && (
-              <div className="mb-2 h-1 w-full rounded-full bg-white/5 overflow-hidden">
-                <div className="h-full w-1/3 bg-gradient-to-r from-primary to-accent animate-[pulse_1.4s_ease-in-out_infinite]" />
+              <div
+                className="mb-2 h-1 w-full rounded-full bg-white/5 overflow-hidden"
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={pdfPct}
+                data-testid="download-dossier-bar"
+              >
+                <div
+                  className="h-full bg-gradient-to-r from-primary to-accent transition-all"
+                  style={{ width: `${pdfPct}%` }}
+                />
               </div>
             )}
             {pdfError && <div className="mb-2 text-xs text-amber-glow">{pdfError}</div>}
