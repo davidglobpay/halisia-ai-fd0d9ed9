@@ -38,6 +38,7 @@ import { MapillaryView } from "@/components/halisia/mapillary-view";
 import { NotificationsBell } from "@/components/halisia/notifications-bell";
 import { MapsDiagnostics } from "@/components/halisia/maps-diagnostics";
 import { Wave4Panel } from "@/components/halisia/wave4-panel";
+import { Terrain3D } from "@/components/halisia/terrain-3d";
 
 type TabId =
   | "overview"
@@ -47,6 +48,7 @@ type TabId =
   | "layers"
   | "heatmap"
   | "globe"
+  | "terrain3d"
   | "timeline"
   | "street"
   | "evidence"
@@ -70,6 +72,7 @@ const TABS: Array<{ id: TabId; label: string; icon: React.ElementType; wave: Wav
   { id: "weather", label: "Weather", icon: CloudSun, wave: "wave1" },
   { id: "layers", label: "GIS", icon: LayersIcon, wave: "wave1" },
   { id: "globe", label: "Globe", icon: Globe2, wave: "wave2" },
+  { id: "terrain3d", label: "Terrain 3D", icon: Mountain, wave: "wave2" },
   { id: "heatmap", label: "Heatmap", icon: Flame, wave: "wave2" },
   { id: "timeline", label: "Timeline", icon: History, wave: "wave2" },
   { id: "street", label: "Street", icon: Camera, wave: "wave3" },
@@ -277,6 +280,16 @@ export function IntelligenceDashboard({
             <div className="text-[11px] text-muted-foreground px-1">
               True 3D globe rendered with CesiumJS. Drag to orbit, scroll to zoom, right-click to
               tilt.
+            </div>
+          </div>
+        )}
+        {tab === "terrain3d" && (
+          <div className="space-y-2">
+            <Terrain3D lat={lat} lng={lng} height="h-72" variant="expanded" />
+            <div className="text-[11px] text-muted-foreground px-1">
+              Isometric 3D slope &amp; contour projection over a 9×9 elevation grid (~18 km²)
+              sampled from Open-Topo-Data ASTER 30m. Hover any tile to inspect its elevation and
+              precise coordinates; use Refresh to re-sample.
             </div>
           </div>
         )}
