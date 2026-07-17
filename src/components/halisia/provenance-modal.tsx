@@ -1,4 +1,4 @@
-import { X, ExternalLink, ShieldCheck } from "lucide-react";
+import { X, ExternalLink, ShieldCheck, Download } from "lucide-react";
 import type { ScoreExplain } from "@/lib/wave4-intel.functions";
 
 /**
@@ -38,6 +38,68 @@ export function ProvenanceModal({
     medium: "text-amber-glow",
     low: "text-muted-foreground",
   };
+
+  const slug =
+    title
+      .replace(/[^a-z0-9]+/gi, "-")
+      .toLowerCase()
+      .replace(/^-+|-+$/g, "") || "provenance";
+
+  const buildPayload = () => ({
+    title,
+    score: explain.score,
+    formula: explain.formula,
+    confidence: explain.confidence,
+    confidenceWording: confidenceCopy[explain.confidence],
+    note: explain.note,
+    factors: explain.factors.map((f) => ({
+      label: f.label,
+      value: f.value,
+      weight: f.weight,
+    })),
+    sources: sources.map((s) => ({
+      label: s.label,
+      url: s.url,
+      status: s.used ? "live" : "planned",
+    })),
+    exportedAt: new Date().toISOString(),
+  });
+
+  const download = (blob: Blob, ext: string) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `halisia-provenance-${slug}.${ext}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  const exportJson = () => {
+    download(new Blob([JSON.stringify(buildPayload(), null, 2)], { type: "application/json" }), "json");
+  };
+
+  const exportCsv = () => {
+    const p = buildPayload();
+    const esc = (v: unknown) => {
+      const s = v == null ? "" : String(v);
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const rows: string[] = [];
+    rows.push("section,key,value,weight,confidence");
+    rows.push(`score,${esc(p.title)},${esc(p.score)},,${esc(p.confidence)}`);
+    rows.push(`formula,${esc(p.title)},${esc(p.formula)},,`);
+    rows.push(`confidence,${esc(p.title)},${esc(p.confidenceWording)},,${esc(p.confidence)}`);
+    for (const f of p.factors) {
+      rows.push(`factor,${esc(f.label)},${esc(f.value)},${esc(f.weight)},`);
+    }
+    for (const s of p.sources) {
+      rows.push(`source,${esc(s.label)},${esc(s.url)},,${esc(s.status)}`);
+    }
+    download(new Blob([rows.join("\n")], { type: "text/csv" }), "csv");
+  };
+
   return (
     <div
       className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur p-3"
@@ -58,14 +120,32 @@ export function ProvenanceModal({
             </div>
             <div className="text-sm font-semibold">{title}</div>
           </div>
-          <button
-            onClick={onClose}
-            className="rounded-full hover:bg-white/10 p-1.5"
-            aria-label="Close provenance"
-            data-testid="provenance-close"
-          >
-            <X className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={exportJson}
+              className="inline-flex items-center gap-1 rounded-full glass px-2 py-1 text-[10px] hover:bg-white/10"
+              data-testid="provenance-export-json"
+              title="Download provenance as JSON"
+            >
+              <Download className="h-3 w-3 text-accent" /> JSON
+            </button>
+            <button
+              onClick={exportCsv}
+              className="inline-flex items-center gap-1 rounded-full glass px-2 py-1 text-[10px] hover:bg-white/10"
+              data-testid="provenance-export-csv"
+              title="Download provenance as CSV"
+            >
+              <Download className="h-3 w-3 text-accent" /> CSV
+            </button>
+            <button
+              onClick={onClose}
+              className="rounded-full hover:bg-white/10 p-1.5"
+              aria-label="Close provenance"
+              data-testid="provenance-close"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
         <div className="p-4 space-y-3 max-h-[70vh] overflow-y-auto">
