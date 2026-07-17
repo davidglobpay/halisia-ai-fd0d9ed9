@@ -127,16 +127,27 @@ export function KenyaCountyMap() {
   const [hydrated, setHydrated] = useState(false);
 
   // Hydrate ?compare=… from URL after mount so SSR markup matches the client.
+  // Falls back to persistent localStorage selection when the URL is empty.
   useEffect(() => {
     setHydrated(true);
-    const raw = new URLSearchParams(window.location.search).get("compare");
-    if (!raw) return;
-    const initial = raw
-      .split(",")
-      .map((n) => parseInt(n, 10))
-      .filter((n) => Number.isFinite(n) && COUNTIES.some((c) => c.code === n))
-      .slice(0, 4);
-    if (initial.length) setSelected(initial);
+    const parse = (raw: string | null) =>
+      (raw ?? "")
+        .split(",")
+        .map((n) => parseInt(n, 10))
+        .filter((n) => Number.isFinite(n) && COUNTIES.some((c) => c.code === n))
+        .slice(0, 4);
+    const fromUrl = parse(new URLSearchParams(window.location.search).get("compare"));
+    if (fromUrl.length) {
+      setSelected(fromUrl);
+      return;
+    }
+    try {
+      const stored = window.localStorage.getItem("halisia.compare.v1");
+      const fromStorage = parse(stored);
+      if (fromStorage.length) setSelected(fromStorage);
+    } catch {
+      /* ignore storage errors */
+    }
   }, []);
   const [downloading, setDownloading] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
@@ -158,6 +169,13 @@ export function KenyaCountyMap() {
     if (selected.length) url.searchParams.set("compare", selected.join(","));
     else url.searchParams.delete("compare");
     window.history.replaceState({}, "", url.toString());
+    try {
+      if (selected.length)
+        window.localStorage.setItem("halisia.compare.v1", selected.join(","));
+      else window.localStorage.removeItem("halisia.compare.v1");
+    } catch {
+      /* ignore quota errors */
+    }
   }, [selected, hydrated]);
 
   // Values for the current metric (used to normalise ramp).
