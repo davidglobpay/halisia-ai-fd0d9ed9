@@ -182,10 +182,7 @@ function CountyPage() {
         </header>
 
         {/* STICKY IN-PAGE NAV */}
-        <nav
-          aria-label="County profile sections"
-          className="sticky top-16 z-20 mt-6 -mx-2 px-2"
-        >
+        <nav aria-label="County profile sections" className="sticky top-16 z-20 mt-6 -mx-2 px-2">
           <div className="glass-strong rounded-full border border-white/10 px-2 py-2 overflow-x-auto no-scrollbar">
             <ul className="flex items-center gap-1 whitespace-nowrap">
               {SECTION_NAV.map((s) => (
@@ -587,7 +584,9 @@ function HeroConfidenceBadge({ pct }: { pct: number }) {
         Data confidence
       </div>
       <div className="mt-1 flex items-baseline gap-1">
-        <span className={`text-3xl font-semibold bg-gradient-to-br ${tone} bg-clip-text text-transparent`}>
+        <span
+          className={`text-3xl font-semibold bg-gradient-to-br ${tone} bg-clip-text text-transparent`}
+        >
           {pct}
         </span>
         <span className="text-xs text-muted-foreground">%</span>
