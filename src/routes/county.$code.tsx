@@ -41,10 +41,7 @@ export const Route = createFileRoute("/county/$code")({
   head: ({ loaderData }) => {
     if (!loaderData) {
       return {
-        meta: [
-          { title: "County profile — HALISIA AI" },
-          { name: "robots", content: "noindex" },
-        ],
+        meta: [{ title: "County profile — HALISIA AI" }, { name: "robots", content: "noindex" }],
       };
     }
     const p = loaderData.profile;
@@ -157,11 +154,7 @@ function CountyPage() {
             <ProfileFact label="Area" value={`${facts.areaKm2.toLocaleString()} km²`} />
             <ProfileFact label="Constituencies" value={String(facts.constituencies)} />
             <ProfileFact label="Wards" value={String(facts.wards)} />
-            <ProfileFact
-              label="Overall score"
-              value={`${scores.overall}/100`}
-              accent
-            />
+            <ProfileFact label="Overall score" value={`${scores.overall}/100`} accent />
           </div>
         </header>
 
@@ -206,8 +199,8 @@ function CountyPage() {
               under the Constitution of Kenya, 2010.
             </Definition>
             <Definition label="Geographic Characteristics">
-              Located in the {facts.region} region, covering {facts.areaKm2.toLocaleString()} km² with
-              a population density of ~{density.toLocaleString()} people/km².
+              Located in the {facts.region} region, covering {facts.areaKm2.toLocaleString()} km²
+              with a population density of ~{density.toLocaleString()} people/km².
             </Definition>
             <Definition label="Major Urban Centres">
               {[facts.headquarters, ...facts.landmarks.slice(0, 2)].join(", ")}.
@@ -235,10 +228,7 @@ function CountyPage() {
               <div className="text-xs uppercase tracking-widest text-accent">Main activities</div>
               <div className="mt-2 flex flex-wrap gap-2">
                 {facts.economy.map((e: string) => (
-                  <span
-                    key={e}
-                    className="rounded-full glass px-3 py-1 text-xs"
-                  >
+                  <span key={e} className="rounded-full glass px-3 py-1 text-xs">
                     {e}
                   </span>
                 ))}
@@ -278,8 +268,9 @@ function CountyPage() {
               addition, ECDE and digital transformation.
             </Definition>
             <Definition label="Flagship projects">
-              County flagship projects prioritise {profile.prioritySectors.slice(0, 2).join(" and ")}
-              , informed by the Council of Governors development framework.
+              County flagship projects prioritise{" "}
+              {profile.prioritySectors.slice(0, 2).join(" and ")}, informed by the Council of
+              Governors development framework.
             </Definition>
           </div>
         </Section>
@@ -289,7 +280,10 @@ function CountyPage() {
           <div className="grid md:grid-cols-3 gap-3">
             <MiniScore label="Community wellbeing" value={scores.habitability} />
             <MiniScore label="Social development" value={scores.education} />
-            <MiniScore label="Human development" value={Math.round((scores.education + scores.healthcare) / 2)} />
+            <MiniScore
+              label="Human development"
+              value={Math.round((scores.education + scores.healthcare) / 2)}
+            />
           </div>
           <p className="mt-4 text-sm text-muted-foreground">
             Urbanisation is concentrated around {facts.headquarters}, with a youth-heavy demographic
@@ -310,7 +304,10 @@ function CountyPage() {
         <Section title="6 · Security Analysis" icon={ShieldCheck}>
           <div className="grid md:grid-cols-3 gap-3">
             <MiniScore label="Public safety" value={scores.security} />
-            <MiniScore label="Disaster preparedness" value={Math.round((scores.security + scores.governance) / 2)} />
+            <MiniScore
+              label="Disaster preparedness"
+              value={Math.round((scores.security + scores.governance) / 2)}
+            />
             <MiniScore label="Environmental risk" value={100 - scores.environment} invert />
           </div>
         </Section>
@@ -319,13 +316,16 @@ function CountyPage() {
         <Section title="7 · Infrastructure Analysis" icon={Wrench}>
           <div className="grid md:grid-cols-3 gap-3">
             <MiniScore label="Accessibility" value={scores.infrastructure} />
-            <MiniScore label="Connectivity" value={Math.round((scores.infrastructure + scores.investment) / 2)} />
+            <MiniScore
+              label="Connectivity"
+              value={Math.round((scores.infrastructure + scores.investment) / 2)}
+            />
             <MiniScore label="Infrastructure development" value={scores.developmentReadiness} />
           </div>
           <div className="mt-4 grid md:grid-cols-2 gap-4 text-sm text-muted-foreground">
             <Definition label="Transport">
-              National &amp; county roads network with feeder links to key markets; regional airstrips
-              where present; SGR/MGR access from adjacent counties.
+              National &amp; county roads network with feeder links to key markets; regional
+              airstrips where present; SGR/MGR access from adjacent counties.
             </Definition>
             <Definition label="Utilities">
               Kenya Power grid coverage, county water schemes and Safaricom/Airtel 4G footprint;
@@ -356,7 +356,10 @@ function CountyPage() {
         <Section title="10 · Environmental Analysis" icon={Leaf}>
           <div className="grid md:grid-cols-3 gap-3">
             <MiniScore label="Environmental sustainability" value={scores.environment} />
-            <MiniScore label="Climate resilience" value={Math.round((scores.environment + scores.security) / 2)} />
+            <MiniScore
+              label="Climate resilience"
+              value={Math.round((scores.environment + scores.security) / 2)}
+            />
             <MiniScore label="Water reliability" value={metrics.water} />
           </div>
           <p className="mt-3 text-sm text-muted-foreground">
@@ -377,8 +380,14 @@ function CountyPage() {
         <Section title="12 · Housing &amp; Habitability" icon={Home}>
           <div className="grid md:grid-cols-3 gap-3">
             <MiniScore label="Habitability" value={scores.habitability} />
-            <MiniScore label="Quality of life" value={Math.round((scores.habitability + scores.education) / 2)} />
-            <MiniScore label="Family friendliness" value={Math.round((scores.habitability + scores.security) / 2)} />
+            <MiniScore
+              label="Quality of life"
+              value={Math.round((scores.habitability + scores.education) / 2)}
+            />
+            <MiniScore
+              label="Family friendliness"
+              value={Math.round((scores.habitability + scores.security) / 2)}
+            />
           </div>
         </Section>
 
@@ -386,9 +395,19 @@ function CountyPage() {
         <Section title="13 · Investment Analysis" icon={Sparkles}>
           <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-3">
             <MiniScore label="Investment attractiveness" value={scores.investment} />
-            <MiniScore label="Return potential" value={Math.round((scores.investment + scores.economic) / 2)} />
-            <MiniScore label="Growth potential" value={Math.round((scores.economic + scores.developmentReadiness) / 2)} />
-            <MiniScore label="Risk rating" value={100 - Math.round((scores.security + scores.environment) / 2)} invert />
+            <MiniScore
+              label="Return potential"
+              value={Math.round((scores.investment + scores.economic) / 2)}
+            />
+            <MiniScore
+              label="Growth potential"
+              value={Math.round((scores.economic + scores.developmentReadiness) / 2)}
+            />
+            <MiniScore
+              label="Risk rating"
+              value={100 - Math.round((scores.security + scores.environment) / 2)}
+              invert
+            />
           </div>
         </Section>
 
@@ -409,7 +428,10 @@ function CountyPage() {
         <Section title="16 · References &amp; Evidence" icon={Info}>
           <ul className="grid md:grid-cols-2 gap-2 text-sm">
             {COUNTY_DATA_SOURCES.map((s) => (
-              <li key={s.url} className="glass rounded-2xl p-3 flex items-start justify-between gap-3">
+              <li
+                key={s.url}
+                className="glass rounded-2xl p-3 flex items-start justify-between gap-3"
+              >
                 <div>
                   <a
                     href={s.url}
@@ -471,15 +493,7 @@ function CountyPage() {
 
 // ---------- Small presentational helpers ----------
 
-function ProfileFact({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: string;
-  accent?: boolean;
-}) {
+function ProfileFact({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
     <div className="bg-[#0a1735] px-4 py-3">
       <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
@@ -508,13 +522,7 @@ function Section({
   );
 }
 
-function Definition({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
+function Definition({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
       <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
@@ -543,9 +551,7 @@ function ScoreTile({ label, value, accent }: { label: string; value: number; acc
   return (
     <div
       className={`rounded-2xl p-4 border ${
-        accent
-          ? "bg-accent/10 border-accent/40"
-          : "bg-white/5 border-white/10"
+        accent ? "bg-accent/10 border-accent/40" : "bg-white/5 border-white/10"
       }`}
     >
       <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
@@ -569,15 +575,7 @@ function ConfidenceBar({ pct }: { pct: number }) {
   );
 }
 
-function ListCard({
-  title,
-  items,
-  tone,
-}: {
-  title: string;
-  items: string[];
-  tone: "ok" | "warn";
-}) {
+function ListCard({ title, items, tone }: { title: string; items: string[]; tone: "ok" | "warn" }) {
   return (
     <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
       <div
