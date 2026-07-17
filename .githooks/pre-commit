@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+# Auto-format staged files with prettier so eslint/prettier drift never blocks the build.
+set -e
+
+STAGED=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(ts|tsx|js|jsx|json|md|css|html|yml|yaml)$' || true)
+if [ -z "$STAGED" ]; then
+  exit 0
+fi
+
+echo "$STAGED" | xargs bunx prettier --write
+echo "$STAGED" | xargs bunx eslint --fix --no-error-on-unmatched-pattern || true
+echo "$STAGED" | xargs git add
