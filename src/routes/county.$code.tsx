@@ -319,6 +319,15 @@ function CountyPage() {
           </div>
         </Section>
 
+        {/* 3b. POLITICAL INTELLIGENCE */}
+        <Section
+          id="sec-political-intel"
+          title="3b · Political Intelligence Dashboard"
+          icon={Vote}
+        >
+          <CountyPoliticsPanel code={facts.code} />
+        </Section>
+
         {/* 4. SOCIAL */}
         <Section id="sec-social" title="4 · Social Analysis" icon={Users}>
           <div className="grid md:grid-cols-3 gap-3">
