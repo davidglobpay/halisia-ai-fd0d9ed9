@@ -155,10 +155,10 @@ function CountyPage() {
             <div className="absolute inset-0 p-6 md:p-8 flex items-end">
               <div className="flex items-center gap-4 w-full">
                 <img
-                  src={KENYA_COAT_OF_ARMS}
-                  alt="Kenya coat of arms"
+                  src={COUNTY_LOGOS[facts.code] ?? KENYA_COAT_OF_ARMS}
+                  alt={`${facts.name} County official emblem`}
                   referrerPolicy="no-referrer"
-                  className="h-16 w-16 md:h-20 md:w-20 drop-shadow-glow bg-white/10 rounded-xl p-1.5"
+                  className="h-16 w-16 md:h-20 md:w-20 drop-shadow-glow bg-white rounded-xl p-1.5 object-contain ring-1 ring-white/20"
                 />
                 <div className="flex-1">
                   <div className="text-xs uppercase tracking-[0.25em] text-accent">
