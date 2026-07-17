@@ -128,8 +128,7 @@ async function fetchSoil(lat: number, lng: number, signal?: AbortSignal): Promis
     factors[L.name] = L.unit_measure?.d_factor ?? 1;
     for (const d of L.depths ?? []) {
       const v = d.values?.mean;
-      byProp[L.name][d.label] =
-        v == null ? null : v / (L.unit_measure?.d_factor || 1);
+      byProp[L.name][d.label] = v == null ? null : v / (L.unit_measure?.d_factor || 1);
     }
   }
   const out: SoilLayer[] = [];
@@ -163,10 +162,9 @@ async function fetchElevGrid(lat: number, lng: number, signal?: AbortSignal) {
       pts.push(
         `${(lat + (y - (n - 1) / 2) * step).toFixed(5)},${(lng + (x - (n - 1) / 2) * step).toFixed(5)}`,
       );
-  const res = await fetch(
-    `https://api.opentopodata.org/v1/aster30m?locations=${pts.join("|")}`,
-    { signal },
-  );
+  const res = await fetch(`https://api.opentopodata.org/v1/aster30m?locations=${pts.join("|")}`, {
+    signal,
+  });
   if (!res.ok) throw new Error(`opentopodata ${res.status}`);
   const j = (await res.json()) as { results?: Array<{ elevation: number | null }> };
   const flat = (j.results ?? []).map((r) => r.elevation ?? 0);
@@ -176,12 +174,7 @@ async function fetchElevGrid(lat: number, lng: number, signal?: AbortSignal) {
   return { grid: g, n, step };
 }
 
-function terrainAnalysis(
-  g: number[][],
-  n: number,
-  step: number,
-  lat: number,
-): TerrainMetrics {
+function terrainAnalysis(g: number[][], n: number, step: number, lat: number): TerrainMetrics {
   const mid = (n - 1) >> 1;
   const elev = g[mid][mid];
   let mn = Infinity,
@@ -328,8 +321,7 @@ function groundwater(
   rainMm: number | null,
 ): GeotechIntel["groundwater"] {
   const clay = soil[0]?.clayPct ?? 0;
-  const wet =
-    terrain.landform === "valley" || (rainMm != null && rainMm > 1200) || clay > 35;
+  const wet = terrain.landform === "valley" || (rainMm != null && rainMm > 1200) || clay > 35;
   const shallow: "Low" | "Moderate" | "High" =
     terrain.landform === "valley" ? "High" : wet ? "Moderate" : "Low";
   const seasonal: "Low" | "Moderate" | "High" =

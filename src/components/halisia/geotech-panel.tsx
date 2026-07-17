@@ -19,15 +19,7 @@ import { downloadGeotechPdf } from "@/lib/geotech-pdf";
  * Wave 3 · AI Geotechnical Intelligence Module.
  * Preliminary subsurface assessment from free public datasets.
  */
-export function GeotechPanel({
-  lat,
-  lng,
-  address,
-}: {
-  lat: number;
-  lng: number;
-  address: string;
-}) {
+export function GeotechPanel({ lat, lng, address }: { lat: number; lng: number; address: string }) {
   const q = useQuery<GeotechIntel>({
     queryKey: ["geotech", lat.toFixed(4), lng.toFixed(4)],
     queryFn: () => getGeotechIntel({ data: { lat, lng } }),
@@ -189,7 +181,11 @@ function TerrainSection({ g }: { g: GeotechIntel }) {
 }
 
 function eroseTone(l: "Low" | "Moderate" | "High") {
-  return l === "High" ? "text-destructive" : l === "Moderate" ? "text-amber-glow" : "text-emerald-glow";
+  return l === "High"
+    ? "text-destructive"
+    : l === "Moderate"
+      ? "text-amber-glow"
+      : "text-emerald-glow";
 }
 
 function TerrainProfile({ g }: { g: GeotechIntel }) {
@@ -248,7 +244,9 @@ function SoilSection({ layers }: { layers: SoilLayer[] }) {
   if (!layers.length)
     return (
       <Card title="Soil profile" icon={LayersIcon}>
-        <div className="text-xs text-muted-foreground">SoilGrids returned no data for this point.</div>
+        <div className="text-xs text-muted-foreground">
+          SoilGrids returned no data for this point.
+        </div>
       </Card>
     );
   return (
@@ -300,7 +298,11 @@ function SubsurfaceCrossSection({ g }: { g: GeotechIntel }) {
   const layers = g.soilLayers;
   const total = 6; // metres depicted
   return (
-    <Card title="Estimated subsurface" icon={LayersIcon} hint={`Bedrock ${g.bedrock.minM}-${g.bedrock.maxM} m`}>
+    <Card
+      title="Estimated subsurface"
+      icon={LayersIcon}
+      hint={`Bedrock ${g.bedrock.minM}-${g.bedrock.maxM} m`}
+    >
       <div className="flex gap-3">
         <div className="w-24 flex flex-col rounded-xl overflow-hidden border border-white/5">
           {layers.map((L, i) => (
@@ -321,8 +323,9 @@ function SubsurfaceCrossSection({ g }: { g: GeotechIntel }) {
           </div>
         </div>
         <div className="flex-1 text-[11px] text-muted-foreground leading-relaxed">
-          Estimated stratigraphy over the first {total} m: surface {layers[0]?.texture.toLowerCase() ?? "cover"},
-          transitioning to residual soils, with competent rock expected at{" "}
+          Estimated stratigraphy over the first {total} m: surface{" "}
+          {layers[0]?.texture.toLowerCase() ?? "cover"}, transitioning to residual soils, with
+          competent rock expected at{" "}
           <b className="text-foreground">
             {g.bedrock.minM}–{g.bedrock.maxM} m
           </b>{" "}
@@ -342,7 +345,11 @@ function layerColour(L: SoilLayer): string {
 
 function GeologySection({ g }: { g: GeotechIntel }) {
   return (
-    <Card title="Geological interpretation" icon={ShieldCheck} hint={`AI · ${g.geology.confidence}`}>
+    <Card
+      title="Geological interpretation"
+      icon={ShieldCheck}
+      hint={`AI · ${g.geology.confidence}`}
+    >
       <div className="text-sm font-semibold">{g.geology.dominant}</div>
       <div className="text-[11px] text-muted-foreground uppercase tracking-widest mt-0.5">
         Setting: {g.geology.setting}
@@ -434,7 +441,12 @@ function SourcesSection({ sources }: { sources: GeotechIntel["sources"] }) {
               className={`h-1.5 w-1.5 rounded-full ${s.used ? "bg-emerald-glow" : "bg-white/25"}`}
             />
             <span className="flex-1">{s.label}</span>
-            <a href={s.url} target="_blank" rel="noreferrer" className="text-cyan-glow hover:underline">
+            <a
+              href={s.url}
+              target="_blank"
+              rel="noreferrer"
+              className="text-cyan-glow hover:underline"
+            >
               open
             </a>
           </li>

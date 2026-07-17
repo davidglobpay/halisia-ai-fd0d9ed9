@@ -88,11 +88,12 @@ export async function downloadGeotechPdf(g: GeotechIntel, address: string) {
   section("Data sources");
   for (const s of g.sources) line(`${s.used ? "•" : "◦"} ${s.label} — ${s.url}`);
 
-  const slug = address
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 40) || "site";
+  const slug =
+    address
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 40) || "site";
   const ts = new Date().toISOString().slice(0, 10).replace(/-/g, "");
   doc.save(`halisia-geotech-${slug}-${ts}.pdf`);
 }
