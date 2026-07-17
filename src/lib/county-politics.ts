@@ -82,7 +82,7 @@ export type Leader = {
 export type ElectionCycle = {
   year: 2013 | 2017 | 2022;
   governor: string | null;
-  party: PartyCode;
+  party: PartyCode | string; // legacy parties (TNA, URP, UDF, APK) appear in 2013/2017 history
   votePct: number | null; // winner share, when publicly gazetted
   turnoutPct: number | null;
 };
@@ -235,45 +235,45 @@ const TURNOUT_2013 = 86;
 
 // Which coalition/party historically won the gubernatorial seat in each
 // county — 2013/2017 based on IEBC gazette notices at party level.
-const HISTORY_PARTY: Record<number, { y2013: PartyCode; y2017: PartyCode }> = {
+const HISTORY_PARTY: Record<number, { y2013: string; y2017: string }> = {
   1: { y2013: "ODM", y2017: "ODM" },
   2: { y2013: "ODM", y2017: "ODM" },
   3: { y2013: "ODM", y2017: "ODM" },
   4: { y2013: "ODM", y2017: "Jubilee" },
   5: { y2013: "KANU", y2017: "Jubilee" },
-  6: { y2013: "TNA", y2017: "ODM" } as any,
-  7: { y2013: "URP", y2017: "Jubilee" } as any,
-  8: { y2013: "URP", y2017: "Jubilee" } as any,
-  9: { y2013: "URP", y2017: "Jubilee" } as any,
-  10: { y2013: "URP", y2017: "Jubilee" } as any,
-  11: { y2013: "URP", y2017: "Jubilee" } as any,
-  12: { y2013: "APK" as any, y2017: "Jubilee" },
-  13: { y2013: "APK" as any, y2017: "Jubilee" },
-  14: { y2013: "APK" as any, y2017: "Jubilee" },
+  6: { y2013: "TNA", y2017: "ODM" },
+  7: { y2013: "URP", y2017: "Jubilee" },
+  8: { y2013: "URP", y2017: "Jubilee" },
+  9: { y2013: "URP", y2017: "Jubilee" },
+  10: { y2013: "URP", y2017: "Jubilee" },
+  11: { y2013: "URP", y2017: "Jubilee" },
+  12: { y2013: "APK", y2017: "Jubilee" },
+  13: { y2013: "APK", y2017: "Jubilee" },
+  14: { y2013: "APK", y2017: "Jubilee" },
   15: { y2013: "Wiper", y2017: "Wiper" },
   16: { y2013: "Wiper", y2017: "Wiper" },
   17: { y2013: "Wiper", y2017: "Wiper" },
   18: { y2013: "Jubilee", y2017: "Jubilee" },
-  19: { y2013: "TNA" as any, y2017: "Jubilee" },
-  20: { y2013: "TNA" as any, y2017: "Jubilee" },
-  21: { y2013: "TNA" as any, y2017: "Jubilee" },
-  22: { y2013: "TNA" as any, y2017: "Jubilee" },
+  19: { y2013: "TNA", y2017: "Jubilee" },
+  20: { y2013: "TNA", y2017: "Jubilee" },
+  21: { y2013: "TNA", y2017: "Jubilee" },
+  22: { y2013: "TNA", y2017: "Jubilee" },
   23: { y2013: "ODM", y2017: "ODM" },
   24: { y2013: "KANU", y2017: "Jubilee" },
-  25: { y2013: "URP", y2017: "Jubilee" } as any,
+  25: { y2013: "URP", y2017: "Jubilee" },
   26: { y2013: "Ford-Kenya", y2017: "Jubilee" },
-  27: { y2013: "URP", y2017: "Jubilee" } as any,
-  28: { y2013: "URP", y2017: "Jubilee" } as any,
-  29: { y2013: "URP", y2017: "Jubilee" } as any,
-  30: { y2013: "URP", y2017: "Jubilee" } as any,
-  31: { y2013: "TNA" as any, y2017: "Jubilee" },
-  32: { y2013: "TNA" as any, y2017: "Jubilee" },
-  33: { y2013: "URP", y2017: "Jubilee" } as any,
+  27: { y2013: "URP", y2017: "Jubilee" },
+  28: { y2013: "URP", y2017: "Jubilee" },
+  29: { y2013: "URP", y2017: "Jubilee" },
+  30: { y2013: "URP", y2017: "Jubilee" },
+  31: { y2013: "TNA", y2017: "Jubilee" },
+  32: { y2013: "TNA", y2017: "Jubilee" },
+  33: { y2013: "URP", y2017: "Jubilee" },
   34: { y2013: "ODM", y2017: "Jubilee" },
-  35: { y2013: "URP", y2017: "Jubilee" } as any,
-  36: { y2013: "URP", y2017: "Jubilee" } as any,
+  35: { y2013: "URP", y2017: "Jubilee" },
+  36: { y2013: "URP", y2017: "Jubilee" },
   37: { y2013: "ODM", y2017: "ODM" },
-  38: { y2013: "UDF" as any, y2017: "ODM" },
+  38: { y2013: "UDF", y2017: "ODM" },
   39: { y2013: "Ford-Kenya", y2017: "Ford-Kenya" },
   40: { y2013: "ODM", y2017: "ODM" },
   41: { y2013: "ODM", y2017: "ODM" },
@@ -282,7 +282,7 @@ const HISTORY_PARTY: Record<number, { y2013: PartyCode; y2017: PartyCode }> = {
   44: { y2013: "ODM", y2017: "ODM" },
   45: { y2013: "ODM", y2017: "Jubilee" },
   46: { y2013: "ODM", y2017: "Jubilee" },
-  47: { y2013: "TNA" as any, y2017: "Jubilee" },
+  47: { y2013: "TNA", y2017: "Jubilee" },
 };
 
 // Regional issue archetypes drawn from published CIDPs and Auditor-General
@@ -392,14 +392,14 @@ export function getCountyPolitics(code: number): CountyPolitics | null {
     {
       year: 2013,
       governor: null,
-      party: (hist?.y2013 ?? "Unknown") as PartyCode,
+      party: hist?.y2013 ?? "Unknown",
       votePct: null,
       turnoutPct: TURNOUT_2013,
     },
     {
       year: 2017,
       governor: null,
-      party: (hist?.y2017 ?? "Unknown") as PartyCode,
+      party: hist?.y2017 ?? "Unknown",
       votePct: null,
       turnoutPct: TURNOUT_2017,
     },
@@ -425,7 +425,7 @@ export function getCountyPolitics(code: number): CountyPolitics | null {
     { year: 2027, label: "Next scheduled general election", kind: "milestone" },
   ];
 
-  const summary = `Publicly available records show ${facts.name} County is currently led by Governor ${facts.governor} (${govParty}) and Senator ${facts.senator} (${senParty}), with the executive aligned to the ${coalition} coalition. Recurring themes in the county's published CIDP and Auditor-General reports include ${keyIssues.slice(0, 3).join(", ").toLowerCase()}. Historical gubernatorial contests in ${facts.name} have alternated between ${(hist?.y2013 as string | undefined) ?? "unrecorded"} (2013) and ${(hist?.y2017 as string | undefined) ?? "unrecorded"} (2017). Voter turnout in the 2022 gubernatorial race is estimated at ${turnout22 ?? "—"}%. This is a summary of public information only, not a prediction or endorsement.`;
+  const summary = `Publicly available records show ${facts.name} County is currently led by Governor ${facts.governor} (${govParty}) and Senator ${facts.senator} (${senParty}), with the executive aligned to the ${coalition} coalition. Recurring themes in the county's published CIDP and Auditor-General reports include ${keyIssues.slice(0, 3).join(", ").toLowerCase()}. Historical gubernatorial contests in ${facts.name} have alternated between ${hist?.y2013 ?? "unrecorded"} (2013) and ${hist?.y2017 ?? "unrecorded"} (2017). Voter turnout in the 2022 gubernatorial race is estimated at ${turnout22 ?? "—"}%. This is a summary of public information only, not a prediction or endorsement.`;
 
   return {
     code,
