@@ -547,22 +547,55 @@ function ProfileFact({ label, value, accent }: { label: string; value: string; a
 }
 
 function Section({
+  id,
   title,
   icon: Icon,
   children,
 }: {
+  id?: string;
   title: string;
   icon: React.ComponentType<{ className?: string }>;
   children: React.ReactNode;
 }) {
   return (
-    <section className="mt-10 glass rounded-3xl p-5 md:p-7 border border-white/5">
+    <section
+      id={id}
+      className="mt-10 glass rounded-3xl p-5 md:p-7 border border-white/5 scroll-mt-32"
+    >
       <div className="flex items-center gap-2 text-accent text-xs uppercase tracking-[0.25em]">
         <Icon className="h-4 w-4" />
         <span>{title}</span>
       </div>
       <div className="mt-4">{children}</div>
     </section>
+  );
+}
+
+function HeroConfidenceBadge({ pct }: { pct: number }) {
+  const tone =
+    pct >= 80
+      ? "from-emerald-400/80 to-accent"
+      : pct >= 60
+        ? "from-accent to-cyan-glow"
+        : "from-amber-glow to-amber-500";
+  return (
+    <div
+      className="hidden md:flex flex-col items-center justify-center rounded-2xl bg-white/10 backdrop-blur border border-white/15 px-4 py-3 shrink-0"
+      aria-label={`Data confidence ${pct} percent`}
+    >
+      <div className="text-[9px] uppercase tracking-widest text-muted-foreground">
+        Data confidence
+      </div>
+      <div className="mt-1 flex items-baseline gap-1">
+        <span className={`text-3xl font-semibold bg-gradient-to-br ${tone} bg-clip-text text-transparent`}>
+          {pct}
+        </span>
+        <span className="text-xs text-muted-foreground">%</span>
+      </div>
+      <div className="mt-1 h-1 w-16 rounded-full bg-white/10 overflow-hidden">
+        <div className={`h-full bg-gradient-to-r ${tone}`} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
   );
 }
 
