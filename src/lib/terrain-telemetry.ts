@@ -50,8 +50,7 @@ export function startTerrainTimer(
   layer: TerrainTelemetryEvent["layer"],
   meta?: Record<string, unknown>,
 ) {
-  const t0 =
-    typeof performance !== "undefined" && performance.now ? performance.now() : Date.now();
+  const t0 = typeof performance !== "undefined" && performance.now ? performance.now() : Date.now();
   recordTerrainEvent({ layer, kind: "start", meta });
   return {
     success: (extra?: Record<string, unknown>) =>
@@ -59,9 +58,8 @@ export function startTerrainTimer(
         layer,
         kind: "success",
         ms: Math.round(
-          (typeof performance !== "undefined" && performance.now
-            ? performance.now()
-            : Date.now()) - t0,
+          (typeof performance !== "undefined" && performance.now ? performance.now() : Date.now()) -
+            t0,
         ),
         meta: { ...(meta ?? {}), ...(extra ?? {}) },
       }),
@@ -70,9 +68,8 @@ export function startTerrainTimer(
         layer,
         kind: "error",
         ms: Math.round(
-          (typeof performance !== "undefined" && performance.now
-            ? performance.now()
-            : Date.now()) - t0,
+          (typeof performance !== "undefined" && performance.now ? performance.now() : Date.now()) -
+            t0,
         ),
         status,
         error: error instanceof Error ? error.message : String(error),

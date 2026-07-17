@@ -16,10 +16,7 @@ test("Download PDF dossier triggers a PDF download with the address in the filen
 
   // Progress UI should surface a percentage and a stage label.
   await expect(page.getByTestId("download-dossier-progress")).toContainText(/%/);
-  await expect(page.getByTestId("download-dossier-bar")).toHaveAttribute(
-    "aria-valuenow",
-    /\d+/,
-  );
+  await expect(page.getByTestId("download-dossier-bar")).toHaveAttribute("aria-valuenow", /\d+/);
 
   const download = await downloadPromise;
   const suggested = download.suggestedFilename();

@@ -77,7 +77,10 @@ export function ProvenanceModal({
   };
 
   const exportJson = () => {
-    download(new Blob([JSON.stringify(buildPayload(), null, 2)], { type: "application/json" }), "json");
+    download(
+      new Blob([JSON.stringify(buildPayload(), null, 2)], { type: "application/json" }),
+      "json",
+    );
   };
 
   const exportCsv = () => {

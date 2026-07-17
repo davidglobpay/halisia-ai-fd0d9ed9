@@ -23,7 +23,9 @@ test("Wave 2 terrain — hover elevation, slope/relief stats, legend and refresh
   const box = await canvas.boundingBox();
   if (!box) throw new Error("terrain canvas has no bounding box");
   await canvas.hover({ position: { x: box.width * 0.5, y: box.height * 0.55 } });
-  await expect(terrain.locator("text=/\\-?\\d+(?:\\.\\d+)?,\\s*\\-?\\d+(?:\\.\\d+)?/").first()).toBeVisible({
+  await expect(
+    terrain.locator("text=/\\-?\\d+(?:\\.\\d+)?,\\s*\\-?\\d+(?:\\.\\d+)?/").first(),
+  ).toBeVisible({
     timeout: 10_000,
   });
   await expect(terrain.locator("text=/^\\s*-?\\d+\\s*m\\s*$/").first()).toBeVisible();
@@ -41,7 +43,9 @@ test("Wave 2 terrain — hover elevation, slope/relief stats, legend and refresh
   // Refresh should re-sample: telemetry must record a fresh event and stats
   // must remain valid afterwards.
   const beforeCount = await page.evaluate(
-    () => (window as unknown as { __halisiaTerrainTelemetry?: unknown[] }).__halisiaTerrainTelemetry?.length ?? 0,
+    () =>
+      (window as unknown as { __halisiaTerrainTelemetry?: unknown[] }).__halisiaTerrainTelemetry
+        ?.length ?? 0,
   );
   await terrain.getByTestId("terrain-3d-refresh").click();
   await expect
@@ -61,9 +65,11 @@ test("Wave 2 terrain — hover elevation, slope/relief stats, legend and refresh
   const successCount = await page.evaluate(
     () =>
       (
-        (window as unknown as {
-          __halisiaTerrainTelemetry?: Array<{ kind: string; layer: string }>;
-        }).__halisiaTerrainTelemetry ?? []
+        (
+          window as unknown as {
+            __halisiaTerrainTelemetry?: Array<{ kind: string; layer: string }>;
+          }
+        ).__halisiaTerrainTelemetry ?? []
       ).filter((e) => e.kind === "success" && e.layer !== "render").length,
   );
   expect(successCount).toBeGreaterThan(0);
