@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, Mountain, RefreshCw } from "lucide-react";
+import { Download, Loader2, Mountain, RefreshCw } from "lucide-react";
 import {
   cellLatLng,
   drawIsometricTerrain,
@@ -9,7 +9,11 @@ import {
   type ElevationGrid,
   type IsoLayout,
 } from "@/lib/terrain-grid";
-import { recordTerrainEvent, startTerrainTimer } from "@/lib/terrain-telemetry";
+import {
+  getTerrainTelemetry,
+  recordTerrainEvent,
+  startTerrainTimer,
+} from "@/lib/terrain-telemetry";
 
 /**
  * 3D terrain preview — Wave 1 & Wave 2.
@@ -100,6 +104,24 @@ export function Terrain3D({
     setHover(cell);
   };
 
+  const downloadTelemetry = () => {
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      lat,
+      lng,
+      events: getTerrainTelemetry(),
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `halisia-terrain-telemetry-${Date.now()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
   return (
     <div className="glass rounded-2xl p-3 space-y-2" data-testid="terrain-3d">
       <div className="flex items-center justify-between">
@@ -113,6 +135,14 @@ export function Terrain3D({
               {stats.minM}–{stats.maxM} m · Δ {stats.reliefM} m · ~{stats.slopePct}% slope
             </div>
           )}
+          <button
+            onClick={downloadTelemetry}
+            className="inline-flex items-center gap-1 rounded-full glass px-2 py-0.5 text-[10px] hover:bg-white/10"
+            data-testid="terrain-3d-telemetry"
+            title="Download terrain telemetry (dev)"
+          >
+            <Download className="h-3 w-3" /> Telemetry
+          </button>
           <button
             onClick={() => {
               recordTerrainEvent({ layer: "refresh", kind: "start" });
