@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, X as XIcon } from "lucide-react";
 import { KENYA_COUNTY_FACTS, KENYA_COAT_OF_ARMS } from "@/lib/kenya-county-facts";
 import { COUNTY_LOGOS } from "@/lib/county-logos";
-import { dataConfidencePct, getCountyProfile } from "@/lib/county-profile";
+import { dataConfidencePct } from "@/lib/county-profile";
 import { getCountyPolitics } from "@/lib/county-politics";
 
 export const Route = createFileRoute("/compare")({
@@ -140,9 +140,8 @@ function EmptyState() {
 function CompareCard({ code, onRemove }: { code: number; onRemove: () => void }) {
   const facts = KENYA_COUNTY_FACTS[code];
   if (!facts) return null;
-  const profile = getCountyProfile(code);
   const politics = getCountyPolitics(code);
-  const confidence = profile ? profile.confidencePct : dataConfidencePct(code);
+  const confidence = dataConfidencePct(code);
   return (
     <div className="relative rounded-2xl border border-white/10 bg-white/5 p-4">
       <button
