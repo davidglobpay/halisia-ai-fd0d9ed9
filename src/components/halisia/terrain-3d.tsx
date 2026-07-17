@@ -40,13 +40,12 @@ export function Terrain3D({
     const ctrl = new AbortController();
     setGrid(null);
     setErr(null);
-    const layer = nonce === 0 ? "contour-grid" : "refresh";
     fetchElevationGrid(lat, lng, 9, 0.02, ctrl.signal, "contour-grid")
       .then(setGrid)
       .catch((e: unknown) => {
         if ((e as Error).name === "AbortError") return;
         recordTerrainEvent({
-          layer,
+          layer: nonce === 0 ? "contour-grid" : "refresh",
           kind: "error",
           error: (e as Error).message,
         });
