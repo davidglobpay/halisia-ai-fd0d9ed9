@@ -1,6 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Activity,
   Building2,
@@ -35,6 +35,7 @@ import { CesiumGlobe } from "@/components/halisia/cesium-globe";
 import { HeatmapMap } from "@/components/halisia/heatmap-map";
 import { TimelinePanel } from "@/components/halisia/timeline-panel";
 import { GeotechPanel } from "@/components/halisia/geotech-panel";
+import { getGeotechIntel } from "@/lib/geotech.functions";
 import { NotificationsBell } from "@/components/halisia/notifications-bell";
 import { MapsDiagnostics } from "@/components/halisia/maps-diagnostics";
 import { Wave4Panel } from "@/components/halisia/wave4-panel";
@@ -102,6 +103,18 @@ export function IntelligenceDashboard({
   address: string;
 }) {
   const [tab, setTab] = useState<TabId>("overview");
+  const queryClient = useQueryClient();
+
+  // Wave 3 auto-launch: prefetch AI Geotechnical Intelligence as soon as
+  // a new location is resolved (search, map pin, GPS, or LR-number flow),
+  // so opening the tab shows results instantly.
+  useEffect(() => {
+    queryClient.prefetchQuery({
+      queryKey: ["geotech", lat.toFixed(4), lng.toFixed(4)],
+      queryFn: () => getGeotechIntel({ data: { lat, lng } }),
+      staleTime: 15 * 60 * 1000,
+    });
+  }, [queryClient, lat, lng]);
 
   const intelQ = useQuery<LocationIntel>({
     queryKey: ["intel", lat.toFixed(4), lng.toFixed(4)],
