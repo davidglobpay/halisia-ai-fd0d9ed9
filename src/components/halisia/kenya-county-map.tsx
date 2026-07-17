@@ -147,7 +147,7 @@ export function KenyaCountyMap() {
   const mapEl = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const dataLayerRef = useRef<google.maps.Data | null>(null);
-  const cardRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const cardRefs = useRef<Record<number, HTMLElement | null>>({});
 
   // Sync ?compare=… in URL without triggering a router re-render.
   useEffect(() => {
