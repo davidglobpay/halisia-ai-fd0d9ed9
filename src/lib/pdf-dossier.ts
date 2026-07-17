@@ -1,6 +1,12 @@
 import jsPDF from "jspdf";
 import { fetchStaticMapCached } from "@/lib/static-map-cache";
 import { getWave4Intel, type Wave4Intel } from "@/lib/wave4-intel.functions";
+import {
+  drawIsometricTerrain,
+  fetchElevationGrid,
+  gridStats,
+  type ElevationGrid,
+} from "@/lib/terrain-grid";
 
 function hash(lat: number, lng: number, salt: number) {
   const x = Math.sin(lat * 12.9898 + lng * 78.233 + salt) * 43758.5453;
@@ -66,6 +72,15 @@ export async function generateLocationDossier(opts: {
     wave4 = null;
   }
   const sat = pick(3);
+
+  // Wave 2 · Isometric terrain grid (rendered off-screen to a PNG the PDF embeds).
+  let terrain: ElevationGrid | null = null;
+  try {
+    terrain = await fetchElevationGrid(lat, lng, 9, 0.02);
+  } catch {
+    terrain = null;
+  }
+  const terrainImg = terrain ? renderTerrainToPngDataUrl(terrain, 900, 520) : null;
 
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const W = doc.internal.pageSize.getWidth();
@@ -310,6 +325,86 @@ export async function generateLocationDossier(opts: {
   doc.text(recs.join("\n"), M + 20, 270, { lineHeightFactor: 1.5 });
 
   drawFooter(doc, W, H, M, muted);
+
+  // ---------- Wave 1 & 2 · Climate + isometric terrain ----------
+  if (wave4 || terrain) {
+    doc.addPage();
+    doc.setFillColor(...bg);
+    doc.rect(0, 0, W, H, "F");
+    drawHeader(doc, W, M, "Waves 1 & 2 · Climate normals + 3D terrain", ink, muted);
+
+    // Climate tiles (from Wave 4 Open-Meteo aggregation).
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(M, 110, W - M * 2, 90, 10, 10, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(...ink);
+    doc.text("Climate normals (Open-Meteo, 2010–2020)", M + 16, 132);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(...muted);
+    const climateRows: Array<[string, string]> = wave4
+      ? [
+          [
+            "Mean temperature",
+            wave4.climate.meanTempC != null
+              ? `${wave4.climate.meanTempC.toFixed(1)} °C`
+              : "—",
+          ],
+          [
+            "Temperature range",
+            wave4.climate.tempMinC != null && wave4.climate.tempMaxC != null
+              ? `${wave4.climate.tempMinC.toFixed(0)} – ${wave4.climate.tempMaxC.toFixed(0)} °C`
+              : "—",
+          ],
+          [
+            "Annual rainfall",
+            wave4.climate.annualRainfallMm != null
+              ? `${Math.round(wave4.climate.annualRainfallMm)} mm/yr`
+              : "—",
+          ],
+          ["Sample coverage", "~11 years of daily archive · EC-Earth3P-HR"],
+        ]
+      : [["Climate data", "Unavailable — Open-Meteo did not return a series."]];
+    climateRows.forEach(([k, v], i) => {
+      const col = i % 2;
+      const row = Math.floor(i / 2);
+      doc.text(`${k}: ${v}`, M + 16 + col * (W / 2 - M), 152 + row * 18);
+    });
+
+    // Terrain infographic
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(M, 220, W - M * 2, H - 260 - 40, 10, 10, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(...ink);
+    doc.text("Isometric topographic projection (ASTER 30 m)", M + 16, 242);
+    if (terrainImg && terrain) {
+      const s = gridStats(terrain);
+      doc.addImage(terrainImg, "PNG", M + 16, 254, W - M * 2 - 32, 260);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(...muted);
+      const stats = `Elevation ${s.minM}–${s.maxM} m · relief Δ ${s.reliefM} m · sampled span ~${s.spanKm} km · overall grade ~${s.slopePct}%`;
+      doc.text(stats, M + 16, 534);
+      doc.text(
+        "Colour ramp: green (low) → amber → white (high). Cyan pin marks the search point.",
+        M + 16,
+        548,
+      );
+    } else {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(...muted);
+      doc.text(
+        "Terrain grid unavailable — Open-Topo-Data returned no series for this coordinate.",
+        M + 20,
+        280,
+      );
+    }
+
+    drawFooter(doc, W, H, M, muted);
+  }
 
   // ---------- Page 5: Wave 4 · Public open-data intelligence ----------
   if (wave4) {
