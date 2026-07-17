@@ -246,9 +246,9 @@ function InvestTab({ data }: { data: Wave4Intel }) {
     ["Development potential", "development"],
   ];
   const [openKey, setOpenKey] = useState<string | null>(null);
-  const [prov, setProv] = useState<
-    { key: keyof Wave4Intel["breakdown"]; label: string } | null
-  >(null);
+  const [prov, setProv] = useState<{ key: keyof Wave4Intel["breakdown"]; label: string } | null>(
+    null,
+  );
   return (
     <div className="space-y-3">
       <div className="glass rounded-2xl p-4">
@@ -279,9 +279,7 @@ function InvestTab({ data }: { data: Wave4Intel }) {
           label="How this score is built"
           explain={data.breakdown.investment}
           defaultOpen
-          onProvenance={() =>
-            setProv({ key: "investment", label: "Investment (composite)" })
-          }
+          onProvenance={() => setProv({ key: "investment", label: "Investment (composite)" })}
         />
       </div>
       <div className="grid grid-cols-2 gap-2">

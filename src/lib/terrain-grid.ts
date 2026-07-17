@@ -30,10 +30,9 @@ export async function fetchElevationGrid(
       pts.push(`${plat.toFixed(5)},${plng.toFixed(5)}`);
     }
   }
-  const res = await fetch(
-    `https://api.opentopodata.org/v1/aster30m?locations=${pts.join("|")}`,
-    { signal },
-  );
+  const res = await fetch(`https://api.opentopodata.org/v1/aster30m?locations=${pts.join("|")}`, {
+    signal,
+  });
   if (!res.ok) throw new Error(`opentopodata ${res.status}`);
   const j = (await res.json()) as { results?: Array<{ elevation: number | null }> };
   const flat = (j.results ?? []).map((r) => r.elevation ?? 0);

@@ -347,9 +347,7 @@ export async function generateLocationDossier(opts: {
       ? [
           [
             "Mean temperature",
-            wave4.climate.meanTempC != null
-              ? `${wave4.climate.meanTempC.toFixed(1)} °C`
-              : "—",
+            wave4.climate.meanTempC != null ? `${wave4.climate.meanTempC.toFixed(1)} °C` : "—",
           ],
           [
             "Temperature range",
@@ -544,11 +542,7 @@ function drawFooter(doc: jsPDF, W: number, H: number, M: number, muted: [number,
   doc.text("halisia.ai", W - M - 40, H - 30);
 }
 
-function renderTerrainToPngDataUrl(
-  grid: ElevationGrid,
-  w: number,
-  h: number,
-): string | null {
+function renderTerrainToPngDataUrl(grid: ElevationGrid, w: number, h: number): string | null {
   if (typeof document === "undefined") return null;
   const canvas = document.createElement("canvas");
   canvas.width = w;

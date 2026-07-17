@@ -70,9 +70,7 @@ export function ProvenanceModal({
 
         <div className="p-4 space-y-3 max-h-[70vh] overflow-y-auto">
           <div className="rounded-xl border border-white/10 bg-black/30 p-3">
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-              Score
-            </div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Score</div>
             <div className="mt-1 flex items-end gap-2">
               <div className="text-3xl font-semibold">{explain.score}</div>
               <div className="text-xs text-muted-foreground pb-1">/ 100</div>
