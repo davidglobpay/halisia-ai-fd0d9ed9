@@ -8,6 +8,7 @@
 
 import { startTerrainTimer } from "@/lib/terrain-telemetry";
 import { recordTerrainEvent } from "@/lib/terrain-telemetry";
+import { getElevationSamples } from "@/lib/elevation.functions";
 
 export type ElevationGrid = {
   n: number;
@@ -58,24 +59,18 @@ export async function fetchElevationGrid(
   }
   const timer = startTerrainTimer(layer, { lat, lng, n, stepDeg });
   try {
-    const pts: string[] = [];
+    const locations: Array<{ lat: number; lng: number }> = [];
     for (let y = 0; y < n; y++) {
       for (let x = 0; x < n; x++) {
         const plat = lat + (y - (n - 1) / 2) * stepDeg;
         const plng = lng + (x - (n - 1) / 2) * stepDeg;
-        pts.push(`${plat.toFixed(5)},${plng.toFixed(5)}`);
+        locations.push({ lat: plat, lng: plng });
       }
     }
-    const res = await fetch(`https://api.opentopodata.org/v1/aster30m?locations=${pts.join("|")}`, {
+    const { elevations: flat } = await getElevationSamples({
+      data: { locations },
       signal,
     });
-    if (!res.ok) {
-      const err = new Error(`opentopodata ${res.status}`);
-      (err as Error & { status?: number }).status = res.status;
-      throw err;
-    }
-    const j = (await res.json()) as { results?: Array<{ elevation: number | null }> };
-    const flat = (j.results ?? []).map((r) => r.elevation ?? 0);
     if (flat.length !== n * n) throw new Error("incomplete elevation grid");
     const values: number[][] = [];
     for (let y = 0; y < n; y++) values.push(flat.slice(y * n, (y + 1) * n));
