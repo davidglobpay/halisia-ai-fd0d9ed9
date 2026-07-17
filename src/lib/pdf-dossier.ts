@@ -543,3 +543,18 @@ function drawFooter(doc: jsPDF, W: number, H: number, M: number, muted: [number,
   );
   doc.text("halisia.ai", W - M - 40, H - 30);
 }
+
+function renderTerrainToPngDataUrl(
+  grid: ElevationGrid,
+  w: number,
+  h: number,
+): string | null {
+  if (typeof document === "undefined") return null;
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  drawIsometricTerrain(ctx, grid, w, h, { background: "#ffffff" });
+  return canvas.toDataURL("image/png");
+}
