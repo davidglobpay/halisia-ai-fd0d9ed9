@@ -118,8 +118,12 @@ export function buildCountyProfile(
     "Renewable energy micro-grids",
   ];
   const risks = [
-    metrics.growth < 3 ? "Slower structural growth than peer counties" : "Overheating urban land prices",
-    scores.security < 70 ? "Localised security incidents to monitor" : "Climate-driven flood/drought exposure",
+    metrics.growth < 3
+      ? "Slower structural growth than peer counties"
+      : "Overheating urban land prices",
+    scores.security < 70
+      ? "Localised security incidents to monitor"
+      : "Climate-driven flood/drought exposure",
     "Fiscal transfer volatility from national government",
   ];
   const prioritySectors = [
@@ -210,11 +214,31 @@ function weakSignal(s: DashboardScores) {
 
 // Public data sources referenced across the profile.
 export const COUNTY_DATA_SOURCES = [
-  { label: "KNBS 2019 Kenya Population & Housing Census", url: "https://www.knbs.or.ke/", verified: "2019-11-04" },
-  { label: "IEBC Constituency & Ward Register", url: "https://www.iebc.or.ke/", verified: "2022-08-09" },
-  { label: "Council of Governors — County Profiles", url: "https://cog.go.ke/", verified: "recent" },
-  { label: "KenInvest Investment Opportunities", url: "https://www.invest.go.ke/", verified: "recent" },
-  { label: "OpenStreetMap Kenya", url: "https://www.openstreetmap.org/relation/192798", verified: "live" },
+  {
+    label: "KNBS 2019 Kenya Population & Housing Census",
+    url: "https://www.knbs.or.ke/",
+    verified: "2019-11-04",
+  },
+  {
+    label: "IEBC Constituency & Ward Register",
+    url: "https://www.iebc.or.ke/",
+    verified: "2022-08-09",
+  },
+  {
+    label: "Council of Governors — County Profiles",
+    url: "https://cog.go.ke/",
+    verified: "recent",
+  },
+  {
+    label: "KenInvest Investment Opportunities",
+    url: "https://www.invest.go.ke/",
+    verified: "recent",
+  },
+  {
+    label: "OpenStreetMap Kenya",
+    url: "https://www.openstreetmap.org/relation/192798",
+    verified: "live",
+  },
   { label: "Kenya Meteorological Department", url: "https://meteo.go.ke/", verified: "live" },
   { label: "WASREB Water Reliability Reports", url: "https://wasreb.go.ke/", verified: "annual" },
   { label: "Kenya Tourism Board", url: "https://ktb.go.ke/", verified: "recent" },
