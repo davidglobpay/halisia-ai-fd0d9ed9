@@ -39,15 +39,13 @@ export async function fetchElevationGrid(
     signal,
   });
   if (!res.ok) {
-    timer.error(`opentopodata ${res.status}`, res.status);
-    throw new Error(`opentopodata ${res.status}`);
+    const err = new Error(`opentopodata ${res.status}`);
+    (err as Error & { status?: number }).status = res.status;
+    throw err;
   }
   const j = (await res.json()) as { results?: Array<{ elevation: number | null }> };
   const flat = (j.results ?? []).map((r) => r.elevation ?? 0);
-  if (flat.length !== n * n) {
-    timer.error("incomplete elevation grid");
-    throw new Error("incomplete elevation grid");
-  }
+  if (flat.length !== n * n) throw new Error("incomplete elevation grid");
   const values: number[][] = [];
   for (let y = 0; y < n; y++) values.push(flat.slice(y * n, (y + 1) * n));
   const grid: ElevationGrid = {
@@ -61,7 +59,10 @@ export async function fetchElevationGrid(
   timer.success({ minM: Math.round(grid.min), maxM: Math.round(grid.max) });
   return grid;
   } catch (e) {
-    if ((e as Error)?.name !== "AbortError") timer.error(e);
+    if ((e as Error)?.name !== "AbortError") {
+      const status = (e as Error & { status?: number }).status;
+      timer.error(e, status);
+    }
     throw e;
   }
 }
