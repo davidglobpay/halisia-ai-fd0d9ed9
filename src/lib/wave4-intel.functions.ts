@@ -307,9 +307,15 @@ function score(facilities: Record<string, Wave4Facility[]>, climate: Wave4Intel[
       formula: "55 + climate suitability (temp + rainfall bands)",
       factors: [
         { label: "Mean temp (°C)", value: climate.meanTempC ?? 0, weight: "17–26 ideal" },
-        { label: "Rainfall (mm/yr)", value: climate.annualRainfallMm ?? 0, weight: "600–1500 ideal" },
+        {
+          label: "Rainfall (mm/yr)",
+          value: climate.annualRainfallMm ?? 0,
+          weight: "600–1500 ideal",
+        },
       ],
-      confidence: (climate.meanTempC != null && climate.annualRainfallMm != null ? "high" : "low") as ScoreExplain["confidence"],
+      confidence: (climate.meanTempC != null && climate.annualRainfallMm != null
+        ? "high"
+        : "low") as ScoreExplain["confidence"],
       note: "Open-Meteo 2010–2020 climate normals (EC-Earth3P-HR downscaled).",
     },
     development: {
@@ -335,7 +341,10 @@ function score(facilities: Record<string, Wave4Facility[]>, climate: Wave4Intel[
       note: "Composite view — not a valuation.",
     },
   };
-  return { scores: { accessibility, infrastructure, environment, development, investment }, breakdown };
+  return {
+    scores: { accessibility, infrastructure, environment, development, investment },
+    breakdown,
+  };
 }
 
 function distanceBuckets(facilities: Record<string, Wave4Facility[]>) {

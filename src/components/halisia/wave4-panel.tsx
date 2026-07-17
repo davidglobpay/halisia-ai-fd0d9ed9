@@ -263,7 +263,11 @@ function InvestTab({ data }: { data: Wave4Intel }) {
             style={{ width: `${data.scores.investment}%` }}
           />
         </div>
-        <ScoreDrill label="How this score is built" explain={data.breakdown.investment} defaultOpen />
+        <ScoreDrill
+          label="How this score is built"
+          explain={data.breakdown.investment}
+          defaultOpen
+        />
       </div>
       <div className="grid grid-cols-2 gap-2">
         {items.map(([label, key]) => {

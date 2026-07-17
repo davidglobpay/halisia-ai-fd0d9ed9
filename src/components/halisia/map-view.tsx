@@ -176,10 +176,7 @@ export function MapView({
     ensure("traffic", () => new g.maps.TrafficLayer());
     ensure("transit", () => new g.maps.TransitLayer());
     ensure("bicycling", () => new g.maps.BicyclingLayer());
-    const ensureImage = (
-      id: OverlayId,
-      make: () => google.maps.ImageMapType,
-    ) => {
+    const ensureImage = (id: OverlayId, make: () => google.maps.ImageMapType) => {
       const has = imageOverlayRefs.current[id];
       if (wanted.has(id) && !has) {
         const layer = make();

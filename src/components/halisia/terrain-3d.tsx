@@ -109,7 +109,13 @@ export function Terrain3D({ lat, lng }: { lat: number; lng: number }) {
     // Pin over centre
     ctx.fillStyle = "#62E9FF";
     ctx.beginPath();
-    ctx.arc(cx, cy + tileH * 0.5 - ((grid[(N - 1) / 2][(N - 1) / 2] - min) / range) * maxLift, 6, 0, Math.PI * 2);
+    ctx.arc(
+      cx,
+      cy + tileH * 0.5 - ((grid[(N - 1) / 2][(N - 1) / 2] - min) / range) * maxLift,
+      6,
+      0,
+      Math.PI * 2,
+    );
     ctx.fill();
   }, [grid]);
 

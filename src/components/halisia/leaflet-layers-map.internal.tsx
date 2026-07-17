@@ -125,7 +125,10 @@ export default function LeafletLayersMap({
           </LayersControl.Overlay>
           {overlays && (
             <>
-              <LayersControl.Overlay name={`Wave 4 · County boundary (${overlays.boundaries.county.length})`} checked>
+              <LayersControl.Overlay
+                name={`Wave 4 · County boundary (${overlays.boundaries.county.length})`}
+                checked
+              >
                 <LayerGroup>
                   {overlays.boundaries.county.map((r, i) => (
                     <Polygon
@@ -138,20 +141,30 @@ export default function LeafletLayersMap({
                   ))}
                 </LayerGroup>
               </LayersControl.Overlay>
-              <LayersControl.Overlay name={`Wave 4 · Ward boundary (${overlays.boundaries.ward.length})`}>
+              <LayersControl.Overlay
+                name={`Wave 4 · Ward boundary (${overlays.boundaries.ward.length})`}
+              >
                 <LayerGroup>
                   {overlays.boundaries.ward.map((r, i) => (
                     <Polygon
                       key={`w${i}`}
                       positions={r.coords}
-                      pathOptions={{ color: "#22d3ee", weight: 1.2, dashArray: "4 3", fillOpacity: 0.02 }}
+                      pathOptions={{
+                        color: "#22d3ee",
+                        weight: 1.2,
+                        dashArray: "4 3",
+                        fillOpacity: 0.02,
+                      }}
                     >
                       <Tooltip sticky>Ward · {r.name}</Tooltip>
                     </Polygon>
                   ))}
                 </LayerGroup>
               </LayersControl.Overlay>
-              <LayersControl.Overlay name={`Wave 4 · Drainage lines (${overlays.drainage.length})`} checked>
+              <LayersControl.Overlay
+                name={`Wave 4 · Drainage lines (${overlays.drainage.length})`}
+                checked
+              >
                 <LayerGroup>
                   {overlays.drainage.map((r, i) => (
                     <Polyline
@@ -164,7 +177,10 @@ export default function LeafletLayersMap({
                   ))}
                 </LayerGroup>
               </LayersControl.Overlay>
-              <LayersControl.Overlay name={`Wave 4 · Public facilities (${overlays.facilities.length})`} checked>
+              <LayersControl.Overlay
+                name={`Wave 4 · Public facilities (${overlays.facilities.length})`}
+                checked
+              >
                 <LayerGroup>
                   {overlays.facilities.map((f) => (
                     <CircleMarker
@@ -217,10 +233,22 @@ export default function LeafletLayersMap({
       </MapContainer>
       <div className="pointer-events-none absolute bottom-2 right-2 glass rounded-xl px-3 py-2 text-[10px] text-foreground/90 space-y-1">
         <div className="uppercase tracking-widest text-muted-foreground">Legend</div>
-        <div className="flex items-center gap-2"><span className="h-0.5 w-4 bg-[#f59e0b]" />County boundary</div>
-        <div className="flex items-center gap-2"><span className="h-0.5 w-4 bg-[#22d3ee]" />Ward boundary</div>
-        <div className="flex items-center gap-2"><span className="h-0.5 w-4 bg-[#38bdf8]" />Drainage / river</div>
-        <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-emerald-400" />Facility</div>
+        <div className="flex items-center gap-2">
+          <span className="h-0.5 w-4 bg-[#f59e0b]" />
+          County boundary
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="h-0.5 w-4 bg-[#22d3ee]" />
+          Ward boundary
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="h-0.5 w-4 bg-[#38bdf8]" />
+          Drainage / river
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="h-2 w-2 rounded-full bg-emerald-400" />
+          Facility
+        </div>
       </div>
     </div>
   );
