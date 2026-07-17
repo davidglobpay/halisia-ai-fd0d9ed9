@@ -7,7 +7,7 @@ const MapFallback = lazy(() => import("./map-fallback.internal"));
 
 export type MapTypeId = "roadmap" | "satellite" | "hybrid" | "terrain";
 export type MapTheme = "dark" | "light";
-export type OverlayId = "traffic" | "transit" | "bicycling";
+export type OverlayId = "traffic" | "transit" | "bicycling" | "slope" | "drainage";
 
 const HALISIA_STYLE: google.maps.MapTypeStyle[] = [
   { elementType: "geometry", stylers: [{ color: "#0a1735" }] },
@@ -175,6 +175,32 @@ export function MapView({
     ensure("traffic", () => new g.maps.TrafficLayer());
     ensure("transit", () => new g.maps.TransitLayer());
     ensure("bicycling", () => new g.maps.BicyclingLayer());
+    ensure(
+      "slope",
+      () =>
+        new g.maps.ImageMapType({
+          name: "Slope",
+          tileSize: new g.maps.Size(256, 256),
+          opacity: 0.55,
+          getTileUrl: (c: google.maps.Point, z: number) =>
+            `https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/${z}/${c.y}/${c.x}`,
+        }) as unknown as google.maps.MVCObject & {
+          setMap: (m: google.maps.Map | null) => void;
+        },
+    );
+    ensure(
+      "drainage",
+      () =>
+        new g.maps.ImageMapType({
+          name: "Drainage",
+          tileSize: new g.maps.Size(256, 256),
+          opacity: 0.9,
+          getTileUrl: (c: google.maps.Point, z: number) =>
+            `https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Hydro_Reference_Overlay/MapServer/tile/${z}/${c.y}/${c.x}`,
+        }) as unknown as google.maps.MVCObject & {
+          setMap: (m: google.maps.Map | null) => void;
+        },
+    );
   }, [mapReady, overlays]);
 
   useEffect(() => {
