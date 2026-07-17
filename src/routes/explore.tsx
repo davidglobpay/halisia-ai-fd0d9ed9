@@ -302,12 +302,12 @@ function Explore() {
               {downloading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                <span
-                  data-testid="download-dossier-progress"
-                  role="status"
-                  aria-live="polite"
-                  aria-atomic="true"
-                >
+                  <span
+                    data-testid="download-dossier-progress"
+                    role="status"
+                    aria-live="polite"
+                    aria-atomic="true"
+                  >
                     {pdfStage || "Building dossier…"} · {pdfPct}%
                   </span>
                 </>
