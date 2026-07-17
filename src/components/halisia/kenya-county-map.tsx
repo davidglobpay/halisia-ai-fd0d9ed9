@@ -679,17 +679,13 @@ export function KenyaCountyMap() {
                       : "bg-white/5 border-white/10 hover:bg-white/10"
                 } focus-visible:ring-2 focus-visible:ring-accent`}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <img
-                      src={COUNTY_LOGOS[c.code] ?? KENYA_COAT_OF_ARMS}
-                      alt={`${c.name} County official emblem`}
-                      referrerPolicy="no-referrer"
-                      className="h-8 w-8 rounded-full bg-white object-contain p-0.5 ring-1 ring-white/20"
-                      loading="lazy"
-                    />
-                    <div className="text-sm font-semibold">{c.name}</div>
-                  </div>
+                <div className="relative flex flex-col items-center text-center pt-1">
+                  <span
+                    aria-hidden="true"
+                    className="absolute left-0 top-0 inline-flex h-6 w-6 items-center justify-center rounded-full bg-foreground text-background text-[11px] font-bold shadow"
+                  >
+                    {c.code}
+                  </span>
                   <button
                     type="button"
                     onClick={(e) => {
@@ -699,7 +695,7 @@ export function KenyaCountyMap() {
                     }}
                     aria-pressed={sel}
                     aria-label={`${sel ? "Remove" : "Add"} ${c.name} ${sel ? "from" : "to"} comparison`}
-                    className={`text-[10px] rounded-full px-2 py-0.5 border transition ${
+                    className={`absolute right-0 top-0 text-[10px] rounded-full px-2 py-0.5 border transition ${
                       sel
                         ? "bg-accent/20 border-accent/50 text-accent"
                         : "border-white/15 text-muted-foreground hover:text-foreground hover:bg-white/10"
@@ -713,8 +709,18 @@ export function KenyaCountyMap() {
                       "Compare"
                     )}
                   </button>
+                  <img
+                    src={COUNTY_LOGOS[c.code] ?? KENYA_COAT_OF_ARMS}
+                    alt={`${c.name} County official emblem`}
+                    referrerPolicy="no-referrer"
+                    className="mt-1 h-20 w-20 rounded-full bg-white object-contain p-1.5 ring-1 ring-white/20 shadow-md"
+                    loading="lazy"
+                  />
+                  <div className="mt-2 text-sm font-bold tracking-wide uppercase">
+                    {c.name}
+                  </div>
                 </div>
-                <div className="mt-2 flex items-baseline gap-1.5">
+                <div className="mt-3 flex items-baseline justify-center gap-1.5">
                   <span className="text-xl font-semibold text-gradient">
                     {formatMetric(metric, v)}
                   </span>
@@ -724,7 +730,7 @@ export function KenyaCountyMap() {
                     countyName={c.name}
                   />
                 </div>
-                <div className="mt-1 text-[10px] text-muted-foreground">
+                <div className="mt-1 text-center text-[10px] text-muted-foreground">
                   {METRIC_LABELS[metric]}
                 </div>
                 {/* Data Confidence Score */}
