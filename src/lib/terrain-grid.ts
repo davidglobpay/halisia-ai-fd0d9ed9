@@ -6,6 +6,8 @@
  * the printable infographic page.
  */
 
+import { startTerrainTimer } from "@/lib/terrain-telemetry";
+
 export type ElevationGrid = {
   n: number;
   stepDeg: number;
@@ -21,7 +23,10 @@ export async function fetchElevationGrid(
   n = 9,
   stepDeg = 0.02,
   signal?: AbortSignal,
+  layer: "contour-grid" | "slope-grid" | "pdf-terrain" = "contour-grid",
 ): Promise<ElevationGrid> {
+  const timer = startTerrainTimer(layer, { lat, lng, n, stepDeg });
+  try {
   const pts: string[] = [];
   for (let y = 0; y < n; y++) {
     for (let x = 0; x < n; x++) {
@@ -33,13 +38,19 @@ export async function fetchElevationGrid(
   const res = await fetch(`https://api.opentopodata.org/v1/aster30m?locations=${pts.join("|")}`, {
     signal,
   });
-  if (!res.ok) throw new Error(`opentopodata ${res.status}`);
+  if (!res.ok) {
+    timer.error(`opentopodata ${res.status}`, res.status);
+    throw new Error(`opentopodata ${res.status}`);
+  }
   const j = (await res.json()) as { results?: Array<{ elevation: number | null }> };
   const flat = (j.results ?? []).map((r) => r.elevation ?? 0);
-  if (flat.length !== n * n) throw new Error("incomplete elevation grid");
+  if (flat.length !== n * n) {
+    timer.error("incomplete elevation grid");
+    throw new Error("incomplete elevation grid");
+  }
   const values: number[][] = [];
   for (let y = 0; y < n; y++) values.push(flat.slice(y * n, (y + 1) * n));
-  return {
+  const grid: ElevationGrid = {
     n,
     stepDeg,
     origin: { lat, lng },
@@ -47,6 +58,12 @@ export async function fetchElevationGrid(
     min: Math.min(...flat),
     max: Math.max(...flat),
   };
+  timer.success({ minM: Math.round(grid.min), maxM: Math.round(grid.max) });
+  return grid;
+  } catch (e) {
+    if ((e as Error)?.name !== "AbortError") timer.error(e);
+    throw e;
+  }
 }
 
 export function shadeElevation(t: number): string {
