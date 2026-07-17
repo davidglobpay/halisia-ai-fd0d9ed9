@@ -153,26 +153,29 @@ function CountyPage() {
               loading="lazy"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#0a1735] via-[#0a1735]/40 to-transparent" />
-            <div className="absolute inset-0 p-6 md:p-8 flex items-end">
-              <div className="flex items-center gap-4 w-full">
-                <img
-                  src={COUNTY_LOGOS[facts.code] ?? KENYA_COAT_OF_ARMS}
-                  alt={`${facts.name} County official emblem`}
-                  referrerPolicy="no-referrer"
-                  className="h-16 w-16 md:h-20 md:w-20 drop-shadow-glow bg-white rounded-xl p-1.5 object-contain ring-1 ring-white/20"
-                />
-                <div className="flex-1">
-                  <div className="text-xs uppercase tracking-[0.25em] text-accent">
-                    County {String(facts.code).padStart(3, "0")} · {facts.region}
-                  </div>
-                  <h1 className="mt-1 text-3xl md:text-5xl font-semibold tracking-tight">
-                    {facts.name} County
-                  </h1>
-                  <div className="mt-1 text-sm text-muted-foreground">
-                    HQ: {facts.headquarters} · {latLng.lat.toFixed(3)}°, {latLng.lng.toFixed(3)}°
-                  </div>
-                </div>
-                <HeroConfidenceBadge pct={profile.confidencePct} />
+            <div className="absolute top-4 left-4">
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-xs font-bold text-white ring-1 ring-white/20 shadow-md">
+                {String(facts.code).padStart(2, "0")}
+              </span>
+            </div>
+            <div className="absolute top-4 right-4">
+              <HeroConfidenceBadge pct={profile.confidencePct} />
+            </div>
+            <div className="absolute inset-0 p-6 md:p-8 flex flex-col items-center justify-end text-center">
+              <img
+                src={COUNTY_LOGOS[facts.code] ?? KENYA_COAT_OF_ARMS}
+                alt={`${facts.name} County official emblem`}
+                referrerPolicy="no-referrer"
+                className="h-24 w-24 md:h-28 md:w-28 rounded-full bg-white object-contain p-2 ring-1 ring-white/20 shadow-lg"
+              />
+              <div className="mt-3 text-[11px] uppercase tracking-[0.3em] text-accent">
+                County {String(facts.code).padStart(3, "0")} · {facts.region}
+              </div>
+              <h1 className="mt-1 text-3xl md:text-5xl font-bold tracking-wide uppercase">
+                {facts.name}
+              </h1>
+              <div className="mt-1 text-sm text-muted-foreground">
+                HQ: {facts.headquarters} · {latLng.lat.toFixed(3)}°, {latLng.lng.toFixed(3)}°
               </div>
             </div>
           </div>
