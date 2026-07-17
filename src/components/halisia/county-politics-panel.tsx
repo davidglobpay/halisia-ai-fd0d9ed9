@@ -17,6 +17,7 @@ import {
   type CountyPolitics,
   type ElectionCycle,
   type Leader,
+  type PublicOpinion,
 } from "@/lib/county-politics";
 
 export function CountyPoliticsPanel({ code }: { code: number }) {
@@ -92,6 +93,9 @@ export function CountyPoliticsPanel({ code }: { code: number }) {
           ))}
         </ol>
       </div>
+
+      {/* Public opinion (composite index, disclaimer-safe) */}
+      <PublicOpinionSection opinion={politics.publicOpinion} />
 
       {/* AI summary */}
       <div className="rounded-2xl border border-accent/30 bg-accent/5 p-4">
