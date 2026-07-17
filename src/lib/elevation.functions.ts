@@ -19,12 +19,8 @@ export const getElevationSamples = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data }) => {
-    const pts = data.locations
-      .map((p) => `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`)
-      .join("|");
-    const res = await fetch(
-      `https://api.opentopodata.org/v1/aster30m?locations=${pts}`,
-    );
+    const pts = data.locations.map((p) => `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`).join("|");
+    const res = await fetch(`https://api.opentopodata.org/v1/aster30m?locations=${pts}`);
     if (!res.ok) {
       const err = new Error(`opentopodata ${res.status}`);
       (err as Error & { status?: number }).status = res.status;
