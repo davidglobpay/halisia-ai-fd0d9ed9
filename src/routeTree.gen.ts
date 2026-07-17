@@ -13,6 +13,7 @@ import { Route as TitleDeedRouteImport } from './routes/title-deed'
 import { Route as ReportRouteImport } from './routes/report'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CountyCodeRouteImport } from './routes/county.$code'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 
 const TitleDeedRoute = TitleDeedRouteImport.update({
@@ -35,6 +36,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CountyCodeRoute = CountyCodeRouteImport.update({
+  id: '/county/$code',
+  path: '/county/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
   path: '/api/chat',
@@ -47,6 +53,7 @@ export interface FileRoutesByFullPath {
   '/report': typeof ReportRoute
   '/title-deed': typeof TitleDeedRoute
   '/api/chat': typeof ApiChatRoute
+  '/county/$code': typeof CountyCodeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByTo {
   '/report': typeof ReportRoute
   '/title-deed': typeof TitleDeedRoute
   '/api/chat': typeof ApiChatRoute
+  '/county/$code': typeof CountyCodeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,13 +70,33 @@ export interface FileRoutesById {
   '/report': typeof ReportRoute
   '/title-deed': typeof TitleDeedRoute
   '/api/chat': typeof ApiChatRoute
+  '/county/$code': typeof CountyCodeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/explore' | '/report' | '/title-deed' | '/api/chat'
+  fullPaths:
+    | '/'
+    | '/explore'
+    | '/report'
+    | '/title-deed'
+    | '/api/chat'
+    | '/county/$code'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/explore' | '/report' | '/title-deed' | '/api/chat'
-  id: '__root__' | '/' | '/explore' | '/report' | '/title-deed' | '/api/chat'
+  to:
+    | '/'
+    | '/explore'
+    | '/report'
+    | '/title-deed'
+    | '/api/chat'
+    | '/county/$code'
+  id:
+    | '__root__'
+    | '/'
+    | '/explore'
+    | '/report'
+    | '/title-deed'
+    | '/api/chat'
+    | '/county/$code'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -77,6 +105,7 @@ export interface RootRouteChildren {
   ReportRoute: typeof ReportRoute
   TitleDeedRoute: typeof TitleDeedRoute
   ApiChatRoute: typeof ApiChatRoute
+  CountyCodeRoute: typeof CountyCodeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -109,6 +138,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/county/$code': {
+      id: '/county/$code'
+      path: '/county/$code'
+      fullPath: '/county/$code'
+      preLoaderRoute: typeof CountyCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/chat': {
       id: '/api/chat'
       path: '/api/chat'
@@ -125,6 +161,7 @@ const rootRouteChildren: RootRouteChildren = {
   ReportRoute: ReportRoute,
   TitleDeedRoute: TitleDeedRoute,
   ApiChatRoute: ApiChatRoute,
+  CountyCodeRoute: CountyCodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
