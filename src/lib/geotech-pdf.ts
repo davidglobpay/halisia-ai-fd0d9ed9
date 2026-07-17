@@ -64,12 +64,7 @@ export async function downloadGeotechPdf(g: GeotechIntel, address: string) {
     doc.text(parts, x, y);
     return parts.length * (size + 2);
   };
-  const chip = (
-    x: number,
-    y: number,
-    label: string,
-    color: [number, number, number],
-  ) => {
+  const chip = (x: number, y: number, label: string, color: [number, number, number]) => {
     const w = doc.getTextWidth(label) + 14;
     setFill(color);
     doc.roundedRect(x, y - 9, w, 13, 6, 6, "F");
@@ -108,18 +103,19 @@ export async function downloadGeotechPdf(g: GeotechIntel, address: string) {
   setText(C.dim);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
-  doc.text(
-    `Coordinates ${g.lat.toFixed(5)}, ${g.lng.toFixed(5)}`,
-    40,
-    132,
-  );
+  doc.text(`Coordinates ${g.lat.toFixed(5)}, ${g.lng.toFixed(5)}`, 40, 132);
 
   // Confidence gauge (right side, top)
-  const gx = W - 170, gy = 70, gw = 130, gh = 90;
+  const gx = W - 170,
+    gy = 70,
+    gw = 130,
+    gh = 90;
   panel(gx, gy, gw, gh, 10);
   heading(gx + 12, gy + 20, "AI Confidence");
   const pct = Math.max(0, Math.min(100, g.confidence));
-  const barX = gx + 12, barY = gy + 40, barW = gw - 24;
+  const barX = gx + 12,
+    barY = gy + 40,
+    barW = gw - 24;
   setFill([30, 42, 76]);
   doc.roundedRect(barX, barY, barW, 10, 5, 5, "F");
   setFill(pct >= 66 ? C.good : pct >= 40 ? C.warn : C.bad);
@@ -134,7 +130,8 @@ export async function downloadGeotechPdf(g: GeotechIntel, address: string) {
   doc.text("/100  · public data blend", gx + 40, gy + 78);
 
   // Disclaimer callout
-  const dy = 160, dh = 66;
+  const dy = 160,
+    dh = 66;
   setFill([46, 32, 12]);
   setDraw(C.warn);
   doc.setLineWidth(0.8);
@@ -156,7 +153,9 @@ export async function downloadGeotechPdf(g: GeotechIntel, address: string) {
     [`${g.bedrock.minM}–${g.bedrock.maxM} m`, "Bedrock depth", C.warn],
     [`${g.groundwater.annualRainMm ?? "—"} mm`, "Annual rain", C.good],
   ];
-  const ty = 244, tw = (W - 80 - 3 * 10) / 4, th = 66;
+  const ty = 244,
+    tw = (W - 80 - 3 * 10) / 4,
+    th = 66;
   tiles.forEach((t, i) => {
     const x = 40 + i * (tw + 10);
     panel(x, ty, tw, th, 10);
@@ -171,7 +170,10 @@ export async function downloadGeotechPdf(g: GeotechIntel, address: string) {
   });
 
   // ── Terrain transect (SVG-style path drawn in vector) ─────────────
-  const px = 40, py = 328, pw = W - 80, ph = 130;
+  const px = 40,
+    py = 328,
+    pw = W - 80,
+    ph = 130;
   panel(px, py, pw, ph, 10);
   heading(px + 14, py + 20, "Terrain profile (synthetic transect)");
   setText(C.dim);
@@ -185,7 +187,10 @@ export async function downloadGeotechPdf(g: GeotechIntel, address: string) {
 
   // Draw a synthetic profile from elevation ± relief with deterministic seed
   const pts: [number, number][] = [];
-  const gxl = px + 20, gyt = py + 48, gxw = pw - 40, gyh = ph - 62;
+  const gxl = px + 20,
+    gyt = py + 48,
+    gxw = pw - 40,
+    gyh = ph - 62;
   const seed = (g.lat * 1000 + g.lng * 1000) | 0;
   const rand = (i: number) => {
     const s = Math.sin(seed + i * 7.31) * 43758.5453;
@@ -237,7 +242,8 @@ export async function downloadGeotechPdf(g: GeotechIntel, address: string) {
   doc.text("Source: FAO SoilGrids v2.0 (250m) · derived interpretation", 40, 56);
 
   // Soil layers stacked bars
-  const sy = 80, slh = 34;
+  const sy = 80,
+    slh = 34;
   g.soilLayers.forEach((L, i) => {
     const y = sy + i * (slh + 8);
     panel(40, y, W - 80, slh, 8);
@@ -254,7 +260,10 @@ export async function downloadGeotechPdf(g: GeotechIntel, address: string) {
       y + 26,
     );
     // Stacked bar
-    const bx = W - 40 - 220, bw2 = 220, bh = 12, by = y + 11;
+    const bx = W - 40 - 220,
+      bw2 = 220,
+      bh = 12,
+      by = y + 11;
     const total = Math.max(1, L.clayPct + L.siltPct + L.sandPct);
     let cx = bx;
     const seg = (pct: number, col: [number, number, number]) => {
@@ -271,11 +280,7 @@ export async function downloadGeotechPdf(g: GeotechIntel, address: string) {
     doc.rect(bx, by, bw2, bh, "S");
     setText(C.dim);
     doc.setFontSize(7);
-    doc.text(
-      `C ${L.clayPct}% · S ${L.siltPct}% · Sa ${L.sandPct}%`,
-      bx,
-      by + bh + 9,
-    );
+    doc.text(`C ${L.clayPct}% · S ${L.siltPct}% · Sa ${L.sandPct}%`, bx, by + bh + 9);
   });
 
   // Legend
@@ -296,7 +301,8 @@ export async function downloadGeotechPdf(g: GeotechIntel, address: string) {
   lx += legendItem(lx, "Sand", C.sand);
 
   // Geology + bedrock cards
-  const gcy = ly + 24, gch = 130;
+  const gcy = ly + 24,
+    gch = 130;
   const gcw = (W - 80 - 10) / 2;
   panel(40, gcy, gcw, gch);
   heading(52, gcy + 20, "Geological interpretation");
@@ -305,13 +311,20 @@ export async function downloadGeotechPdf(g: GeotechIntel, address: string) {
   doc.setFontSize(11);
   doc.text(g.geology.dominant, 52, gcy + 40);
   chip(52, gcy + 58, g.geology.setting, C.accent);
-  chip(52 + doc.getTextWidth(g.geology.setting) + 22, gcy + 58, `Confidence ${g.geology.confidence}`, levelColor(g.geology.confidence));
+  chip(
+    52 + doc.getTextWidth(g.geology.setting) + 22,
+    gcy + 58,
+    `Confidence ${g.geology.confidence}`,
+    levelColor(g.geology.confidence),
+  );
   body(52, gcy + 82, g.geology.note, gcw - 24, 8.5);
 
   panel(50 + gcw, gcy, gcw, gch);
   heading(62 + gcw, gcy + 20, "Estimated bedrock");
   // Bedrock depth gauge
-  const dxg = 62 + gcw, dyg = gcy + 40, dwg = gcw - 24;
+  const dxg = 62 + gcw,
+    dyg = gcy + 40,
+    dwg = gcw - 24;
   setText(C.text);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(22);
@@ -321,7 +334,8 @@ export async function downloadGeotechPdf(g: GeotechIntel, address: string) {
   doc.setFontSize(8);
   doc.text("estimated depth to competent rock", dxg, dyg + 24);
   // Vertical scale
-  const scaleTop = dyg + 34, scaleH = 50;
+  const scaleTop = dyg + 34,
+    scaleH = 50;
   setFill([30, 42, 76]);
   doc.roundedRect(dxg, scaleTop, dwg, scaleH, 4, 4, "F");
   const maxScale = 30;
@@ -333,7 +347,12 @@ export async function downloadGeotechPdf(g: GeotechIntel, address: string) {
   doc.setFontSize(7);
   doc.text("0m", dxg, scaleTop + scaleH + 10);
   doc.text(`${maxScale}m`, dxg + dwg - 10, scaleTop + scaleH + 10);
-  chip(dxg, scaleTop + scaleH + 24, `Excavation: ${g.bedrock.excavation}`, levelColor(g.bedrock.excavation));
+  chip(
+    dxg,
+    scaleTop + scaleH + 24,
+    `Excavation: ${g.bedrock.excavation}`,
+    levelColor(g.bedrock.excavation),
+  );
 
   // ── PAGE 3 — GROUNDWATER, FOUNDATIONS, RISK, SOURCES ──────────────
   doc.addPage();
@@ -343,7 +362,8 @@ export async function downloadGeotechPdf(g: GeotechIntel, address: string) {
   heading(40, 40, "Groundwater · Foundations · Risk", 16);
 
   // Groundwater
-  const wy = 68, wh = 90;
+  const wy = 68,
+    wh = 90;
   panel(40, wy, W - 80, wh);
   heading(52, wy + 20, "Groundwater indicators");
   const gwRow = (x: number, label: string, val: string, col: [number, number, number]) => {
@@ -354,8 +374,18 @@ export async function downloadGeotechPdf(g: GeotechIntel, address: string) {
     chip(x, wy + 58, val, col);
   };
   const cellW = (W - 80 - 24) / 3;
-  gwRow(52, "Shallow groundwater", g.groundwater.shallowLikelihood, levelColor(g.groundwater.shallowLikelihood));
-  gwRow(52 + cellW, "Seasonal waterlogging", g.groundwater.seasonalWaterlogging, levelColor(g.groundwater.seasonalWaterlogging));
+  gwRow(
+    52,
+    "Shallow groundwater",
+    g.groundwater.shallowLikelihood,
+    levelColor(g.groundwater.shallowLikelihood),
+  );
+  gwRow(
+    52 + cellW,
+    "Seasonal waterlogging",
+    g.groundwater.seasonalWaterlogging,
+    levelColor(g.groundwater.seasonalWaterlogging),
+  );
   gwRow(
     52 + cellW * 2,
     "Nearest water",
@@ -367,7 +397,8 @@ export async function downloadGeotechPdf(g: GeotechIntel, address: string) {
   const fy = wy + wh + 16;
   heading(40, fy, "Foundation suitability", 12);
   const fCards = g.foundations;
-  const fyy = fy + 10, fh2 = 90;
+  const fyy = fy + 10,
+    fh2 = 90;
   const fcw = (W - 80 - 3 * 10) / 4;
   fCards.forEach((f, i) => {
     const x = 40 + i * (fcw + 10);
