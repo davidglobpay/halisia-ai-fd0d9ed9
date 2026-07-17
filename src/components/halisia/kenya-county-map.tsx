@@ -11,6 +11,8 @@ import {
   type CountyMetric,
 } from "@/lib/county-metrics";
 import { generateCountyComparePdf } from "@/lib/pdf-county-compare";
+import { KENYA_COAT_OF_ARMS } from "@/lib/kenya-county-facts";
+import { Link } from "@tanstack/react-router";
 import {
   Activity,
   Droplets,
@@ -24,6 +26,7 @@ import {
   RefreshCw,
   Link as LinkIcon,
   Info,
+  ArrowRight,
 } from "lucide-react";
 
 type County = { code: number; name: string; lat: number; lng: number };
