@@ -716,9 +716,7 @@ export function KenyaCountyMap() {
                     className="mt-1 h-20 w-20 rounded-full bg-white object-contain p-1.5 ring-1 ring-white/20 shadow-md"
                     loading="lazy"
                   />
-                  <div className="mt-2 text-sm font-bold tracking-wide uppercase">
-                    {c.name}
-                  </div>
+                  <div className="mt-2 text-sm font-bold tracking-wide uppercase">{c.name}</div>
                 </div>
                 <div className="mt-3 flex items-baseline justify-center gap-1.5">
                   <span className="text-xl font-semibold text-gradient">
