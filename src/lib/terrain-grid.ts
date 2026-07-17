@@ -69,8 +69,9 @@ export async function fetchElevationGrid(
     }
     const { elevations: flat } = await getElevationSamples({
       data: { locations },
-      ...(signal ? { signal } : {}),
     });
+    // signal is intentionally not forwarded — server fn transport ignores it.
+    void signal;
     if (flat.length !== n * n) throw new Error("incomplete elevation grid");
     const values: number[][] = [];
     for (let y = 0; y < n; y++) values.push(flat.slice(y * n, (y + 1) * n));
