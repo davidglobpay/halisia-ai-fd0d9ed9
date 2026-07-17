@@ -7,6 +7,7 @@ import {
   gridStats,
   type ElevationGrid,
 } from "@/lib/terrain-grid";
+import { startTerrainTimer, recordTerrainEvent } from "@/lib/terrain-telemetry";
 
 function hash(lat: number, lng: number, salt: number) {
   const x = Math.sin(lat * 12.9898 + lng * 78.233 + salt) * 43758.5453;
@@ -31,14 +32,24 @@ export async function generateLocationDossier(opts: {
   lng: number;
   address: string;
   shareUrl?: string;
+  onProgress?: (pct: number, stage: string) => void;
 }): Promise<{
   ok: true;
   mapsRequested: number;
   mapsSucceeded: number;
   mapsFailed: number;
   lastError: { error: string; status?: number } | null;
+  filename: string;
 }> {
-  const { lat, lng, address, shareUrl } = opts;
+  const { lat, lng, address, shareUrl, onProgress } = opts;
+  const progress = (pct: number, stage: string) => {
+    try {
+      onProgress?.(Math.max(0, Math.min(100, Math.round(pct))), stage);
+    } catch {
+      /* ignore progress callback errors */
+    }
+  };
+  progress(2, "Fetching evidence maps…");
 
   // Fetch evidence maps in parallel — never let a static-map failure block the PDF.
   const settled = await Promise.allSettled([
@@ -65,6 +76,7 @@ export async function generateLocationDossier(opts: {
   const base = pick(0);
   const terrain = pick(1);
   const hybrid = pick(2);
+  progress(35, "Aggregating Wave 4 open data…");
   let wave4: Wave4Intel | null = null;
   try {
     wave4 = await getWave4Intel({ data: { lat, lng } });
@@ -74,13 +86,16 @@ export async function generateLocationDossier(opts: {
   const sat = pick(3);
 
   // Wave 2 · Isometric terrain grid (rendered off-screen to a PNG the PDF embeds).
+  progress(55, "Sampling ASTER elevation grid…");
   let terrainGrid: ElevationGrid | null = null;
   try {
-    terrainGrid = await fetchElevationGrid(lat, lng, 9, 0.02);
+    terrainGrid = await fetchElevationGrid(lat, lng, 9, 0.02, undefined, "pdf-terrain");
   } catch {
     terrainGrid = null;
   }
+  progress(70, "Rendering isometric terrain projection…");
   const terrainImg = terrainGrid ? renderTerrainToPngDataUrl(terrainGrid, 900, 520) : null;
+  progress(78, "Composing dossier pages…");
 
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const W = doc.internal.pageSize.getWidth();
@@ -503,13 +518,21 @@ export async function generateLocationDossier(opts: {
       .replace(/[^a-z0-9]+/gi, "-")
       .toLowerCase()
       .slice(0, 50) || "location";
-  doc.save(`halisia-dossier-${safe}.pdf`);
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
+  const coord = `${lat.toFixed(4)}_${lng.toFixed(4)}`.replace(/-/g, "s");
+  const filename = `halisia-dossier-${safe}-${coord}-${stamp}.pdf`;
+  progress(96, "Saving PDF…");
+  doc.save(filename);
+  progress(100, "Done");
   return {
     ok: true,
     mapsRequested: settled.length,
     mapsSucceeded: settled.length - mapsFailed,
     mapsFailed,
     lastError,
+    filename,
   };
 }
 
@@ -544,11 +567,23 @@ function drawFooter(doc: jsPDF, W: number, H: number, M: number, muted: [number,
 
 function renderTerrainToPngDataUrl(grid: ElevationGrid, w: number, h: number): string | null {
   if (typeof document === "undefined") return null;
+  const timer = startTerrainTimer("pdf-terrain", { w, h });
   const canvas = document.createElement("canvas");
   canvas.width = w;
   canvas.height = h;
   const ctx = canvas.getContext("2d");
-  if (!ctx) return null;
-  drawIsometricTerrain(ctx, grid, w, h, { background: "#ffffff" });
-  return canvas.toDataURL("image/png");
+  if (!ctx) {
+    timer.error("no 2d context");
+    recordTerrainEvent({ layer: "render", kind: "error", error: "pdf: no 2d context" });
+    return null;
+  }
+  try {
+    drawIsometricTerrain(ctx, grid, w, h, { background: "#ffffff" });
+    const url = canvas.toDataURL("image/png");
+    timer.success({ bytes: url.length });
+    return url;
+  } catch (e) {
+    timer.error(e);
+    return null;
+  }
 }
