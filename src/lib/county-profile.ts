@@ -1,6 +1,17 @@
 import { KENYA_COUNTY_FACTS, type CountyFacts } from "@/lib/kenya-county-facts";
 import { countyMetrics, confidence, type CountyMetric } from "@/lib/county-metrics";
 
+// Lightweight helper — reused on county tiles so we don't build the full
+// profile just to show a Data Confidence badge.
+export function dataConfidencePct(code: number): number {
+  const metrics: CountyMetric[] = ["livability", "population", "growth", "water"];
+  const total = metrics.reduce((acc, m) => {
+    const c = confidence(code, m);
+    return acc + (c === "high" ? 90 : c === "med" ? 70 : 45);
+  }, 0);
+  return Math.round(total / metrics.length);
+}
+
 // Deterministic 0..1 pseudo-random per (code,salt) — same as county-metrics
 // hash pattern so scores stay stable across renders.
 function h(seed: number, salt: number) {
