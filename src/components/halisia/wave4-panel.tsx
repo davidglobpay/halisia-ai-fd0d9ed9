@@ -13,6 +13,7 @@ import {
   RefreshCw,
   ChevronDown,
   ChevronUp,
+  Info,
 } from "lucide-react";
 import { useState } from "react";
 import {
@@ -21,6 +22,7 @@ import {
   type Wave4Intel,
   type ScoreExplain,
 } from "@/lib/wave4-intel.functions";
+import { ProvenanceModal } from "@/components/halisia/provenance-modal";
 
 type SubTab = "admin" | "public" | "invest" | "sources";
 
@@ -244,12 +246,22 @@ function InvestTab({ data }: { data: Wave4Intel }) {
     ["Development potential", "development"],
   ];
   const [openKey, setOpenKey] = useState<string | null>(null);
+  const [prov, setProv] = useState<{ key: keyof Wave4Intel["breakdown"]; label: string } | null>(
+    null,
+  );
   return (
     <div className="space-y-3">
       <div className="glass rounded-2xl p-4">
         <div className="flex items-center gap-2">
           <Gauge className="h-4 w-4 text-emerald-glow" />
           <div className="text-sm font-medium">Investment score</div>
+          <button
+            onClick={() => setProv({ key: "investment", label: "Investment (composite)" })}
+            className="ml-auto inline-flex items-center gap-1 rounded-full glass px-2 py-0.5 text-[10px] hover:bg-white/10"
+            data-testid="wave4-provenance-investment"
+          >
+            <Info className="h-3 w-3" /> Provenance
+          </button>
         </div>
         <div className="mt-2 flex items-end gap-3">
           <div className="text-4xl font-semibold tracking-tight text-emerald-glow">
@@ -267,6 +279,7 @@ function InvestTab({ data }: { data: Wave4Intel }) {
           label="How this score is built"
           explain={data.breakdown.investment}
           defaultOpen
+          onProvenance={() => setProv({ key: "investment", label: "Investment (composite)" })}
         />
       </div>
       <div className="grid grid-cols-2 gap-2">
@@ -298,7 +311,13 @@ function InvestTab({ data }: { data: Wave4Intel }) {
                   />
                 </div>
               </button>
-              {open && <ScoreDrill label="Breakdown" explain={explain} />}
+              {open && (
+                <ScoreDrill
+                  label="Breakdown"
+                  explain={explain}
+                  onProvenance={() => setProv({ key, label })}
+                />
+              )}
             </div>
           );
         })}
@@ -308,6 +327,14 @@ function InvestTab({ data }: { data: Wave4Intel }) {
         facility density (3&nbsp;km) and Open-Meteo climate normals. AI-generated interpretation,
         not a valuation.
       </div>
+      <ProvenanceModal
+        open={!!prov}
+        onClose={() => setProv(null)}
+        title={prov ? `${prov.label} · how it was computed` : ""}
+        explain={prov ? data.breakdown[prov.key] : data.breakdown.investment}
+        sources={data.sources}
+        contextNote="HALISIA is not an official land registry. Wave 4 aggregates free, public open datasets — verify authoritative records with the Ministry of Lands / Ardhisasa / county GIS."
+      />
     </div>
   );
 }
@@ -316,10 +343,12 @@ function ScoreDrill({
   label,
   explain,
   defaultOpen = false,
+  onProvenance,
 }: {
   label: string;
   explain: ScoreExplain;
   defaultOpen?: boolean;
+  onProvenance?: () => void;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
@@ -359,6 +388,15 @@ function ScoreDrill({
               confidence: {explain.confidence}
             </span>
           </div>
+          {onProvenance && (
+            <button
+              onClick={onProvenance}
+              className="mt-1 inline-flex items-center gap-1 rounded-full glass px-2 py-0.5 text-[10px] hover:bg-white/10"
+              data-testid="wave4-open-provenance"
+            >
+              <Info className="h-3 w-3 text-accent" /> View dataset provenance
+            </button>
+          )}
         </div>
       )}
     </div>
