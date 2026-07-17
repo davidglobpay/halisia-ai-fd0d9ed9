@@ -233,7 +233,7 @@ function CountyPage() {
             <div>
               <div className="text-xs uppercase tracking-widest text-accent">Main activities</div>
               <div className="mt-2 flex flex-wrap gap-2">
-                {facts.economy.map((e) => (
+                {facts.economy.map((e: string) => (
                   <span
                     key={e}
                     className="rounded-full glass px-3 py-1 text-xs"
@@ -246,7 +246,7 @@ function CountyPage() {
                 Priority investment sectors
               </div>
               <ul className="mt-2 list-disc pl-5 text-sm text-muted-foreground space-y-1">
-                {profile.prioritySectors.map((s) => (
+                {profile.prioritySectors.map((s: string) => (
                   <li key={s}>{s}</li>
                 ))}
               </ul>
@@ -394,7 +394,7 @@ function CountyPage() {
         {/* 15. RECOMMENDATIONS */}
         <Section title="Strategic Recommendations" icon={Sparkles}>
           <ol className="list-decimal pl-5 space-y-2 text-sm text-muted-foreground">
-            {profile.recommendations.map((r) => (
+            {profile.recommendations.map((r: string) => (
               <li key={r}>{r}</li>
             ))}
           </ol>
