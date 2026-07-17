@@ -364,7 +364,9 @@ function PublicOpinionSection({ opinion }: { opinion: PublicOpinion }) {
                 {d.label}
               </div>
               <div className="mt-1 text-2xl font-semibold tabular-nums">{v}</div>
-              <div className="mt-1 text-[10px] text-muted-foreground">{bandFor(v)} · index /100</div>
+              <div className="mt-1 text-[10px] text-muted-foreground">
+                {bandFor(v)} · index /100
+              </div>
               <div className="mt-2 h-1.5 rounded-full bg-white/10 overflow-hidden">
                 <div className="h-full bg-accent" style={{ width: `${v}%` }} />
               </div>
@@ -373,7 +375,8 @@ function PublicOpinionSection({ opinion }: { opinion: PublicOpinion }) {
         })}
       </div>
       <div className="mt-2 text-[11px] text-muted-foreground">
-        Overall composite: <span className="text-foreground tabular-nums">{opinion.overall}/100</span>
+        Overall composite:{" "}
+        <span className="text-foreground tabular-nums">{opinion.overall}/100</span>
         {" · "}
         {opinion.method}
       </div>

@@ -239,7 +239,9 @@ function SummaryTable({ codes }: { codes: number[] }) {
                   <td className="px-3 py-2 text-right tabular-nums">
                     {f.areaKm2.toLocaleString()}
                   </td>
-                  <td className="px-3 py-2 text-right tabular-nums">{dataConfidencePct(f.code)}%</td>
+                  <td className="px-3 py-2 text-right tabular-nums">
+                    {dataConfidencePct(f.code)}%
+                  </td>
                   <td className="px-3 py-2 text-right tabular-nums">
                     {pol ? `${pol.publicOpinion.overall}/100` : "—"}
                   </td>

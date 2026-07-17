@@ -170,8 +170,7 @@ export function KenyaCountyMap() {
     else url.searchParams.delete("compare");
     window.history.replaceState({}, "", url.toString());
     try {
-      if (selected.length)
-        window.localStorage.setItem("halisia.compare.v1", selected.join(","));
+      if (selected.length) window.localStorage.setItem("halisia.compare.v1", selected.join(","));
       else window.localStorage.removeItem("halisia.compare.v1");
     } catch {
       /* ignore quota errors */
