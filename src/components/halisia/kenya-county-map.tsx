@@ -683,7 +683,16 @@ export function KenyaCountyMap() {
                 } focus-visible:ring-2 focus-visible:ring-accent`}
               >
                 <div className="flex items-center justify-between">
-                  <div className="text-sm font-semibold">{c.name}</div>
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={KENYA_COAT_OF_ARMS}
+                      alt=""
+                      aria-hidden="true"
+                      className="h-6 w-6 rounded bg-white/10 p-0.5"
+                      loading="lazy"
+                    />
+                    <div className="text-sm font-semibold">{c.name}</div>
+                  </div>
                   {sel && <Check className="h-3.5 w-3.5 text-accent" />}
                 </div>
                 <div className="mt-2 flex items-baseline gap-1.5">
@@ -699,6 +708,17 @@ export function KenyaCountyMap() {
                 <div className="mt-1 text-[10px] text-muted-foreground">
                   {METRIC_LABELS[metric]}
                 </div>
+                <Link
+                  to="/county/$code"
+                  params={{ code: String(c.code) }}
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
+                  aria-label={`Open full ${c.name} County profile`}
+                  data-testid={`county-open-${c.code}`}
+                  className="mt-3 inline-flex items-center gap-1 text-[11px] font-medium text-accent hover:text-foreground transition"
+                >
+                  Open county profile <ArrowRight className="h-3 w-3" />
+                </Link>
               </div>
             );
           })}
