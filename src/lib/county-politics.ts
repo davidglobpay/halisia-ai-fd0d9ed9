@@ -603,6 +603,12 @@ export function getCountyPolitics(code: number): CountyPolitics | null {
     timeline,
     aiSummary: summary,
     needsVerification: govParty === "Unknown" || senParty === "Unknown",
+    publicOpinion: computePublicOpinion({
+      code,
+      history,
+      keyIssues,
+      needsVerification: govParty === "Unknown" || senParty === "Unknown",
+    }),
   };
 }
 
