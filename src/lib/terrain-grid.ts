@@ -69,7 +69,7 @@ export async function fetchElevationGrid(
     }
     const { elevations: flat } = await getElevationSamples({
       data: { locations },
-      signal,
+      ...(signal ? { signal } : {}),
     });
     if (flat.length !== n * n) throw new Error("incomplete elevation grid");
     const values: number[][] = [];
