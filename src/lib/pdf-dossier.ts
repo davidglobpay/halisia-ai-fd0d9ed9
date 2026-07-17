@@ -74,13 +74,13 @@ export async function generateLocationDossier(opts: {
   const sat = pick(3);
 
   // Wave 2 · Isometric terrain grid (rendered off-screen to a PNG the PDF embeds).
-  let terrain: ElevationGrid | null = null;
+  let terrainGrid: ElevationGrid | null = null;
   try {
-    terrain = await fetchElevationGrid(lat, lng, 9, 0.02);
+    terrainGrid = await fetchElevationGrid(lat, lng, 9, 0.02);
   } catch {
-    terrain = null;
+    terrainGrid = null;
   }
-  const terrainImg = terrain ? renderTerrainToPngDataUrl(terrain, 900, 520) : null;
+  const terrainImg = terrainGrid ? renderTerrainToPngDataUrl(terrainGrid, 900, 520) : null;
 
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const W = doc.internal.pageSize.getWidth();
@@ -327,7 +327,7 @@ export async function generateLocationDossier(opts: {
   drawFooter(doc, W, H, M, muted);
 
   // ---------- Wave 1 & 2 · Climate + isometric terrain ----------
-  if (wave4 || terrain) {
+  if (wave4 || terrainGrid) {
     doc.addPage();
     doc.setFillColor(...bg);
     doc.rect(0, 0, W, H, "F");
@@ -379,8 +379,8 @@ export async function generateLocationDossier(opts: {
     doc.setFontSize(11);
     doc.setTextColor(...ink);
     doc.text("Isometric topographic projection (ASTER 30 m)", M + 16, 242);
-    if (terrainImg && terrain) {
-      const s = gridStats(terrain);
+    if (terrainImg && terrainGrid) {
+      const s = gridStats(terrainGrid);
       doc.addImage(terrainImg, "PNG", M + 16, 254, W - M * 2 - 32, 260);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
