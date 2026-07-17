@@ -222,11 +222,52 @@ const SENATOR_PARTY_2022: Record<number, PartyCode> = {
 // numbers here are rounded approximations of publicly released IEBC
 // figures and should be treated as directional.
 const TURNOUT_2022: Record<number, number> = {
-  1: 44, 2: 61, 3: 64, 4: 66, 5: 66, 6: 71, 7: 55, 8: 61, 9: 63, 10: 68,
-  11: 66, 12: 70, 13: 74, 14: 76, 15: 70, 16: 62, 17: 74, 18: 78, 19: 78,
-  20: 79, 21: 76, 22: 66, 23: 61, 24: 66, 25: 67, 26: 68, 27: 73, 28: 79,
-  29: 78, 30: 73, 31: 71, 32: 71, 33: 66, 34: 62, 35: 79, 36: 79, 37: 66,
-  38: 71, 39: 66, 40: 65, 41: 68, 42: 65, 43: 66, 44: 65, 45: 74, 46: 76,
+  1: 44,
+  2: 61,
+  3: 64,
+  4: 66,
+  5: 66,
+  6: 71,
+  7: 55,
+  8: 61,
+  9: 63,
+  10: 68,
+  11: 66,
+  12: 70,
+  13: 74,
+  14: 76,
+  15: 70,
+  16: 62,
+  17: 74,
+  18: 78,
+  19: 78,
+  20: 79,
+  21: 76,
+  22: 66,
+  23: 61,
+  24: 66,
+  25: 67,
+  26: 68,
+  27: 73,
+  28: 79,
+  29: 78,
+  30: 73,
+  31: 71,
+  32: 71,
+  33: 66,
+  34: 62,
+  35: 79,
+  36: 79,
+  37: 66,
+  38: 71,
+  39: 66,
+  40: 65,
+  41: 68,
+  42: 65,
+  43: 66,
+  44: 65,
+  45: 74,
+  46: 76,
   47: 55,
 };
 
@@ -349,10 +390,20 @@ const REGION_ISSUES: Record<string, string[]> = {
 
 const REGION_PRIORITIES: Record<string, string[]> = {
   Coast: ["Blue economy & fisheries", "Tourism value chains", "Water & sanitation", "Youth TVET"],
-  "North Eastern": ["Drought resilience", "Livestock value chains", "Health outreach", "Education access"],
+  "North Eastern": [
+    "Drought resilience",
+    "Livestock value chains",
+    "Health outreach",
+    "Education access",
+  ],
   Eastern: ["Irrigation", "Value addition", "County road network", "ECDE & TVET"],
   Central: ["Coffee/tea reforms", "Affordable housing", "Youth enterprise", "County ICT"],
-  "Rift Valley": ["Farm mechanisation", "Water storage", "Feeder roads", "Health facility upgrades"],
+  "Rift Valley": [
+    "Farm mechanisation",
+    "Water storage",
+    "Feeder roads",
+    "Health facility upgrades",
+  ],
   Western: ["Sugar reforms", "Youth enterprise", "Universal healthcare", "Cross-border trade"],
   Nyanza: ["Fisheries value chains", "Flood infrastructure", "Universal healthcare", "SME finance"],
   Nairobi: ["Public transport", "Affordable housing", "Waste & drainage", "Digital services"],
@@ -417,10 +468,26 @@ export function getCountyPolitics(code: number): CountyPolitics | null {
   const priorities = REGION_PRIORITIES[region] ?? [];
 
   const timeline: PoliticalMilestone[] = [
-    { year: 2010, label: "Constitution of Kenya promulgated — devolution framework", kind: "policy" },
-    { year: 2013, label: `First gubernatorial election (${hist?.y2013 ?? "party record: verify with IEBC"})`, kind: "election" },
-    { year: 2017, label: `Second general election (${hist?.y2017 ?? "party record: verify with IEBC"})`, kind: "election" },
-    { year: 2022, label: `Governor ${facts.governor} elected on ${govParty === "Unknown" ? "party record: verify with IEBC" : govParty}`, kind: "election" },
+    {
+      year: 2010,
+      label: "Constitution of Kenya promulgated — devolution framework",
+      kind: "policy",
+    },
+    {
+      year: 2013,
+      label: `First gubernatorial election (${hist?.y2013 ?? "party record: verify with IEBC"})`,
+      kind: "election",
+    },
+    {
+      year: 2017,
+      label: `Second general election (${hist?.y2017 ?? "party record: verify with IEBC"})`,
+      kind: "election",
+    },
+    {
+      year: 2022,
+      label: `Governor ${facts.governor} elected on ${govParty === "Unknown" ? "party record: verify with IEBC" : govParty}`,
+      kind: "election",
+    },
     { year: 2023, label: "CIDP III (2023–2027) tabled at the County Assembly", kind: "policy" },
     { year: 2027, label: "Next scheduled general election", kind: "milestone" },
   ];
@@ -438,7 +505,13 @@ export function getCountyPolitics(code: number): CountyPolitics | null {
         since: 2022,
       },
       deputyGovernor: null,
-      senator: { role: "Senator", name: facts.senator, party: senParty, term: "2022–2027", since: 2022 },
+      senator: {
+        role: "Senator",
+        name: facts.senator,
+        party: senParty,
+        term: "2022–2027",
+        since: 2022,
+      },
       womanRep: null,
     },
     coalition,
@@ -453,9 +526,18 @@ export function getCountyPolitics(code: number): CountyPolitics | null {
 }
 
 export const POLITICS_SOURCES: Array<{ label: string; url: string }> = [
-  { label: "IEBC — official election results & candidate register", url: "https://www.iebc.or.ke/" },
-  { label: "Parliament of Kenya — National Assembly members", url: "http://www.parliament.go.ke/the-national-assembly/mps" },
-  { label: "Senate of Kenya — sitting senators", url: "http://www.parliament.go.ke/the-senate/senators" },
+  {
+    label: "IEBC — official election results & candidate register",
+    url: "https://www.iebc.or.ke/",
+  },
+  {
+    label: "Parliament of Kenya — National Assembly members",
+    url: "http://www.parliament.go.ke/the-national-assembly/mps",
+  },
+  {
+    label: "Senate of Kenya — sitting senators",
+    url: "http://www.parliament.go.ke/the-senate/senators",
+  },
   { label: "Council of Governors", url: "https://www.cog.go.ke/" },
   { label: "Kenya Gazette", url: "http://kenyalaw.org/kenya_gazette/" },
   { label: "Office of the Auditor-General — county reports", url: "https://www.oagkenya.go.ke/" },

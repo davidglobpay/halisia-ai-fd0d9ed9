@@ -58,15 +58,23 @@ export function CountyPoliticsPanel({ code }: { code: number }) {
         <SubHead icon={Flag} label="Party Landscape — 2022 Gubernatorial (approximate)" />
         <PartyBar landscape={politics.partyLandscape} />
         <p className="mt-2 text-[11px] text-muted-foreground">
-          Share values are directional buckets summarising publicly released IEBC results, not
-          exact tallies. See the IEBC results portal for the official percentages.
+          Share values are directional buckets summarising publicly released IEBC results, not exact
+          tallies. See the IEBC results portal for the official percentages.
         </p>
       </div>
 
       {/* Key issues + priorities */}
       <div className="grid md:grid-cols-2 gap-3">
-        <IssueList title="Frequently discussed public issues" items={politics.keyIssues} tone="warn" />
-        <IssueList title="Public development priorities" items={politics.developmentPriorities} tone="ok" />
+        <IssueList
+          title="Frequently discussed public issues"
+          items={politics.keyIssues}
+          tone="warn"
+        />
+        <IssueList
+          title="Public development priorities"
+          items={politics.developmentPriorities}
+          tone="ok"
+        />
       </div>
 
       {/* Timeline */}
@@ -133,10 +141,12 @@ function Disclaimer({ needsVerification }: { needsVerification: boolean }) {
     <div className="rounded-2xl border border-amber-glow/30 bg-amber-glow/5 p-3 text-[11px] text-muted-foreground flex gap-2">
       <ShieldAlert className="h-4 w-4 text-amber-glow shrink-0 mt-0.5" />
       <div>
-        <span className="text-foreground font-medium">Research tool — not a prediction platform.</span>{" "}
-        This dashboard aggregates publicly available information from the IEBC, Parliament of
-        Kenya, Council of Governors and county CIDPs. It does not infer private political
-        preferences, generate polling estimates, or forecast election outcomes.
+        <span className="text-foreground font-medium">
+          Research tool — not a prediction platform.
+        </span>{" "}
+        This dashboard aggregates publicly available information from the IEBC, Parliament of Kenya,
+        Council of Governors and county CIDPs. It does not infer private political preferences,
+        generate polling estimates, or forecast election outcomes.
         {needsVerification && (
           <>
             {" "}
@@ -154,10 +164,14 @@ function LeaderCard({ leader }: { leader: Leader }) {
   const color = PARTY_COLORS[leader.party as keyof typeof PARTY_COLORS] ?? PARTY_COLORS.Unknown;
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-      <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{leader.role}</div>
+      <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+        {leader.role}
+      </div>
       <div className="mt-1 text-base font-semibold">{leader.name}</div>
-      <div className="mt-2 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px]"
-        style={{ background: `${color}22`, color, border: `1px solid ${color}55` }}>
+      <div
+        className="mt-2 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px]"
+        style={{ background: `${color}22`, color, border: `1px solid ${color}55` }}
+      >
         <span className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />
         {leader.party}
       </div>
@@ -170,11 +184,7 @@ function LeaderCard({ leader }: { leader: Leader }) {
 
 function CoalitionCard({ coalition }: { coalition: string }) {
   const color =
-    coalition === "Kenya Kwanza"
-      ? "#f6c94a"
-      : coalition === "Azimio"
-        ? "#ff8a3d"
-        : "#94a3b8";
+    coalition === "Kenya Kwanza" ? "#f6c94a" : coalition === "Azimio" ? "#ff8a3d" : "#94a3b8";
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
       <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
@@ -235,16 +245,16 @@ function TurnoutChart({ history }: { history: ElectionCycle[] }) {
         {xs.map((x, i) => (
           <g key={i}>
             <circle cx={x} cy={ys[i]} r={3} className="fill-accent" />
-            <text x={x} y={h - 2} textAnchor="middle" className="fill-muted-foreground" fontSize={9}>
-              {history[i].year}
-            </text>
             <text
               x={x}
-              y={ys[i] - 6}
+              y={h - 2}
               textAnchor="middle"
-              className="fill-foreground"
+              className="fill-muted-foreground"
               fontSize={9}
             >
+              {history[i].year}
+            </text>
+            <text x={x} y={ys[i] - 6} textAnchor="middle" className="fill-foreground" fontSize={9}>
               {history[i].turnoutPct != null ? `${history[i].turnoutPct}%` : "—"}
             </text>
           </g>
@@ -257,11 +267,7 @@ function TurnoutChart({ history }: { history: ElectionCycle[] }) {
   );
 }
 
-function PartyBar({
-  landscape,
-}: {
-  landscape: Array<{ party: string; sharePct: number }>;
-}) {
+function PartyBar({ landscape }: { landscape: Array<{ party: string; sharePct: number }> }) {
   return (
     <div className="mt-3 rounded-2xl border border-white/10 bg-white/5 p-3">
       <div className="flex h-3 w-full overflow-hidden rounded-full border border-white/10">

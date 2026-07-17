@@ -320,11 +320,7 @@ function CountyPage() {
         </Section>
 
         {/* 3b. POLITICAL INTELLIGENCE */}
-        <Section
-          id="sec-political-intel"
-          title="3b · Political Intelligence Dashboard"
-          icon={Vote}
-        >
+        <Section id="sec-political-intel" title="3b · Political Intelligence Dashboard" icon={Vote}>
           <CountyPoliticsPanel code={facts.code} />
         </Section>
 
