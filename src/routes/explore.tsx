@@ -32,6 +32,8 @@ import {
   FileDown,
   Loader2,
   Share2,
+  Waves,
+  TrendingUp,
 } from "lucide-react";
 
 const searchSchema = z.object({ q: z.string().optional() });
@@ -242,6 +244,8 @@ function Explore() {
                         { id: "traffic" as const, icon: TrafficCone, label: "Traffic" },
                         { id: "transit" as const, icon: Bus, label: "Transit" },
                         { id: "bicycling" as const, icon: Bike, label: "Bicycling" },
+                        { id: "slope" as const, icon: TrendingUp, label: "Slope / hillshade" },
+                        { id: "drainage" as const, icon: Waves, label: "Drainage / rivers" },
                       ].map((l) => {
                         const on = overlays.includes(l.id);
                         return (
@@ -257,7 +261,7 @@ function Explore() {
                         );
                       })}
                       <div className="mt-1 border-t border-white/10 pt-2 px-3 pb-1 text-[10px] text-muted-foreground">
-                        Slope / flood / drainage overlays coming next.
+                        Slope uses Esri World Hillshade · Drainage uses Esri Hydro Reference.
                       </div>
                     </div>
                   )}
