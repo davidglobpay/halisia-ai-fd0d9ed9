@@ -18,11 +18,12 @@ import {
   Quote,
   Star,
 } from "lucide-react";
-import { Kenya3DMap } from "@/components/halisia/kenya-3d-map";
 import { KenyaCountyMap } from "@/components/halisia/kenya-county-map";
 import { Navbar } from "@/components/halisia/navbar";
 import { SearchBar } from "@/components/halisia/search-bar";
 import { AIOrb } from "@/components/halisia/ai-orb";
+import { HeroVideoCarousel } from "@/components/halisia/hero-video-carousel";
+import halisiaLogo from "@/assets/halisia-logo.png.asset.json";
 
 export const Route = createFileRoute("/")({
   validateSearch: (s) => z.object({ compare: fallback(z.string(), "").default("") }).parse(s),
@@ -35,44 +36,50 @@ function Landing() {
     <div className="min-h-screen">
       <Navbar />
 
-      {/* HERO */}
-      <section className="relative pt-32 md:pt-40 pb-20 md:pb-32 overflow-hidden">
-        <div className="mx-auto max-w-7xl px-4 grid lg:grid-cols-[1.05fr_1fr] gap-12 items-center">
+      {/* HERO — cinematic video carousel */}
+      <section className="relative pt-20 md:pt-24 overflow-hidden">
+        <HeroVideoCarousel>
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7 }}
+            transition={{ duration: 0.9, ease: "easeOut" }}
+            className="max-w-2xl"
           >
-            <div className="inline-flex items-center gap-2 glass rounded-full pl-1 pr-3 py-1 text-xs text-muted-foreground mb-6">
+            <div className="inline-flex items-center gap-2 glass rounded-full pl-1 pr-3 py-1 text-xs text-white/80 mb-5 backdrop-blur-xl">
+              <img
+                src={halisiaLogo.url}
+                alt="HALISIA"
+                className="h-6 w-6 rounded-full ring-1 ring-white/20"
+              />
               <span className="px-2 py-0.5 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground font-medium">
                 Kenya · Beta
               </span>
-              Land intelligence, not listings.
+              <span className="hidden sm:inline">Land intelligence, not listings.</span>
             </div>
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-semibold leading-[1.02] tracking-tight">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-semibold leading-[1.02] tracking-tight text-white [text-shadow:0_2px_30px_oklch(0.14_0.05_260/0.7)]">
               <span className="text-gradient">Understand a place</span>
               <br />
               before you commit.
             </h1>
-            <p className="mt-6 text-lg text-muted-foreground max-w-xl leading-relaxed">
-              HALISIA turns any location into trusted, human-centered intelligence — infrastructure,
-              environmental risk, community context and investment signals, with confidence you can
-              weigh.
+            <p className="mt-5 text-base md:text-lg text-white/85 max-w-xl leading-relaxed [text-shadow:0_1px_16px_oklch(0.14_0.05_260/0.8)]">
+              HALISIA turns any location into trusted, human-centered intelligence —
+              infrastructure, environmental risk, community context and investment signals, with
+              confidence you can weigh.
             </p>
 
-            <div className="mt-8 max-w-xl">
+            <div className="mt-6 max-w-xl">
               <SearchBar
                 size="lg"
                 placeholder="Try “Karen, Nairobi” or “Diani beach”"
                 onSearch={(q) => navigate({ to: "/explore", search: { q } })}
               />
-              <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+              <div className="mt-3 hidden sm:flex flex-wrap gap-2 text-xs text-white/80">
                 <span className="mr-1">Popular:</span>
                 {["Kilimani", "Kiambu Road", "Nyali", "Naivasha", "Ruiru"].map((t) => (
                   <button
                     key={t}
                     onClick={() => navigate({ to: "/explore", search: { q: t } })}
-                    className="glass rounded-full px-3 py-1 hover:text-foreground transition"
+                    className="glass rounded-full px-3 py-1 hover:text-white transition"
                   >
                     {t}
                   </button>
@@ -80,7 +87,7 @@ function Landing() {
               </div>
             </div>
 
-            <div className="mt-10 flex items-center gap-6 text-xs text-muted-foreground">
+            <div className="mt-6 hidden md:flex items-center gap-6 text-xs text-white/75">
               <div className="flex items-center gap-2">
                 <BadgeCheck className="h-4 w-4 text-accent" /> Confidence-scored
               </div>
@@ -92,60 +99,7 @@ function Landing() {
               </div>
             </div>
           </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1.2, ease: "easeOut" }}
-            className="relative"
-          >
-            <Kenya3DMap
-              onSelect={({ lat, lng }) =>
-                navigate({
-                  to: "/explore",
-                  search: { q: `${lat.toFixed(5)}, ${lng.toFixed(5)}` },
-                })
-              }
-            />
-            {/* Floating callouts */}
-            <motion.div
-              className="hidden md:block absolute top-6 -left-4 glass rounded-2xl p-3 max-w-[200px] animate-float"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.8 }}
-            >
-              <div className="text-[10px] uppercase tracking-widest text-accent">Nairobi</div>
-              <div className="text-sm mt-0.5">
-                Livable score <span className="font-semibold">82</span>
-              </div>
-              <div className="text-[11px] text-muted-foreground">High infra · Medium flood</div>
-            </motion.div>
-            <motion.div
-              className="hidden md:block absolute bottom-8 -right-2 glass rounded-2xl p-3 max-w-[220px] animate-float"
-              style={{ animationDelay: "1.5s" }}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 1.1 }}
-            >
-              <div className="text-[10px] uppercase tracking-widest text-cyan-glow">Mombasa</div>
-              <div className="text-sm mt-0.5">
-                Investment trend <span className="font-semibold">+11% YoY</span>
-              </div>
-              <div className="text-[11px] text-muted-foreground">Confidence: Medium</div>
-            </motion.div>
-          </motion.div>
-        </div>
-
-        {/* subtle grid glow behind */}
-        <div
-          className="pointer-events-none absolute inset-0 -z-10 opacity-40"
-          style={{
-            backgroundImage:
-              "linear-gradient(oklch(1 0 0 / 0.05) 1px, transparent 1px), linear-gradient(90deg, oklch(1 0 0 / 0.05) 1px, transparent 1px)",
-            backgroundSize: "60px 60px",
-            maskImage: "radial-gradient(ellipse at center, black 30%, transparent 75%)",
-          }}
-        />
+        </HeroVideoCarousel>
       </section>
 
       {/* COUNTY INTELLIGENCE MAP */}
