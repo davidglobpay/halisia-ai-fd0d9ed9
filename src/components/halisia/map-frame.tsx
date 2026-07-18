@@ -1,0 +1,56 @@
+import { useRouter } from "@tanstack/react-router";
+import { ArrowLeft } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
+
+/**
+ * Standard responsive wrapper for every map in the app.
+ *
+ * Mobile-first: renders at a phone-friendly portrait aspect (default 3/4) so
+ * maps fit any phone screen without user adjustments. On tablets and desktops
+ * it opens up to 16/9. Callers can override with `mobileAspect` / `desktopAspect`.
+ *
+ * Also renders an optional glassy back button ("Back") that pops router history
+ * so viewers can quickly return from a map view to the previous location.
+ */
+export function MapFrame({
+  children,
+  showBack = true,
+  backLabel = "Back",
+  mobileAspect = "aspect-[3/4]",
+  desktopAspect = "md:aspect-[16/9]",
+  className = "",
+}: {
+  children: ReactNode;
+  showBack?: boolean;
+  backLabel?: string;
+  mobileAspect?: string;
+  desktopAspect?: string;
+  className?: string;
+}) {
+  const router = useRouter();
+  const [canGoBack, setCanGoBack] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setCanGoBack(window.history.length > 1);
+  }, []);
+
+  return (
+    <div
+      className={`relative w-full ${mobileAspect} ${desktopAspect} md:min-h-[420px] rounded-2xl overflow-hidden border border-white/10 bg-[#050d24] ${className}`}
+    >
+      {children}
+      {showBack && canGoBack && (
+        <button
+          type="button"
+          onClick={() => router.history.back()}
+          className="absolute top-3 left-3 z-[401] inline-flex items-center gap-1.5 rounded-full glass-strong border border-white/15 px-3 py-1.5 text-xs font-medium text-foreground shadow-lg hover:bg-white/10 transition"
+          aria-label="Go back to previous view"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          {backLabel}
+        </button>
+      )}
+    </div>
+  );
+}
