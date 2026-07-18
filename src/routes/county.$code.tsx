@@ -162,11 +162,11 @@ function CountyPage() {
               <HeroConfidenceBadge pct={profile.confidencePct} />
             </div>
             <div className="absolute inset-0 p-6 md:p-8 flex flex-col items-center justify-end text-center">
-              <img
-                src={COUNTY_LOGOS[facts.code] ?? KENYA_COAT_OF_ARMS}
-                alt={`${facts.name} County official emblem`}
-                referrerPolicy="no-referrer"
-                className="h-24 w-24 md:h-28 md:w-28 rounded-full bg-white object-contain p-2 ring-1 ring-white/20 shadow-lg"
+              <CountyEmblem
+                code={facts.code}
+                name={facts.name}
+                size={128}
+                priority
               />
               <div className="mt-3 text-[11px] uppercase tracking-[0.3em] text-accent">
                 County {String(facts.code).padStart(3, "0")} · {facts.region}
