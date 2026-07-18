@@ -656,4 +656,3 @@ function ListCard({ title, items, tone }: { title: string; items: string[]; tone
     </div>
   );
 }
-
