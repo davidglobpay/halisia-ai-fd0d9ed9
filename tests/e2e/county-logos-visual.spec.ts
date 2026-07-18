@@ -94,10 +94,9 @@ test.describe("Recropped county emblems render uncropped and centered", () => {
       // center drifts more than OFFCENTER_TOLERANCE from the geometric center.
       const { dx, dy, filled } = await measureOffCenter(img);
       expect(filled, `${name} rendered non-empty pixels`).toBeGreaterThan(50);
-      expect(
-        Math.abs(dx),
-        `${name} horizontal off-center dx=${dx.toFixed(3)}`,
-      ).toBeLessThanOrEqual(OFFCENTER_TOLERANCE);
+      expect(Math.abs(dx), `${name} horizontal off-center dx=${dx.toFixed(3)}`).toBeLessThanOrEqual(
+        OFFCENTER_TOLERANCE,
+      );
       expect(Math.abs(dy), `${name} vertical off-center dy=${dy.toFixed(3)}`).toBeLessThanOrEqual(
         OFFCENTER_TOLERANCE,
       );
