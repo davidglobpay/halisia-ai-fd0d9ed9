@@ -13,6 +13,7 @@ import {
 import { generateCountyComparePdf } from "@/lib/pdf-county-compare";
 import { CountyEmblem } from "@/components/halisia/county-emblem";
 import { dataConfidencePct } from "@/lib/county-profile";
+import { MapFrame } from "@/components/halisia/map-frame";
 import { Link } from "@tanstack/react-router";
 import {
   Activity,
@@ -477,17 +478,24 @@ export function KenyaCountyMap() {
         <div className="mt-8 grid lg:grid-cols-[1.4fr_1fr] gap-4">
           {/* MAP */}
           <div className="glass-strong rounded-3xl p-2 relative">
-            <div
-              ref={mapEl}
-              data-testid="county-map"
-              className="rounded-[22px] h-[560px] bg-[#0a1735]"
-              role="application"
-              aria-label="Interactive map of Kenya counties"
-            />
+            <MapFrame
+              showBack={false}
+              mobileAspect="aspect-[3/4]"
+              desktopAspect="md:aspect-[16/10] lg:aspect-[4/3]"
+              className="rounded-[22px]"
+            >
+              <div
+                ref={mapEl}
+                data-testid="county-map"
+                className="absolute inset-0 bg-[#0a1735]"
+                role="application"
+                aria-label="Interactive map of Kenya counties"
+              />
+            </MapFrame>
             {mapError && (
               <div
                 role="alert"
-                className="absolute inset-2 rounded-[22px] bg-[#0a1735]/95 flex items-center justify-center p-6 text-center"
+                className="absolute inset-2 rounded-[22px] bg-[#0a1735]/95 flex items-center justify-center p-6 text-center z-[500]"
               >
                 <div>
                   <AlertTriangle className="h-6 w-6 text-amber-glow mx-auto" />
