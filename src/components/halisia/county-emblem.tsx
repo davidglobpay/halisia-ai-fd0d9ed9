@@ -16,13 +16,7 @@ interface Props {
  * fallback, then a text initial as a last resort. Accessible: real alt
  * text, focus-visible ring when wrapped in an interactive element.
  */
-export function CountyEmblem({
-  code,
-  name,
-  size = 96,
-  priority = false,
-  className = "",
-}: Props) {
+export function CountyEmblem({ code, name, size = 96, priority = false, className = "" }: Props) {
   const primary = COUNTY_LOGOS[code];
   const [src, setSrc] = useState<string | undefined>(primary ?? KENYA_COAT_OF_ARMS);
   const [failed, setFailed] = useState(false);
@@ -50,11 +44,9 @@ export function CountyEmblem({
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 rounded-full"
         style={{
-          background:
-            "conic-gradient(from 220deg, #f5d67a, #b8860b, #fff4c2, #a97900, #f5d67a)",
+          background: "conic-gradient(from 220deg, #f5d67a, #b8860b, #fff4c2, #a97900, #f5d67a)",
           padding: 2,
-          WebkitMask:
-            "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
+          WebkitMask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
           WebkitMaskComposite: "xor",
           maskComposite: "exclude",
         }}

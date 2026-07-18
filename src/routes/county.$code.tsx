@@ -161,12 +161,7 @@ function CountyPage() {
               <HeroConfidenceBadge pct={profile.confidencePct} />
             </div>
             <div className="absolute inset-0 p-6 md:p-8 flex flex-col items-center justify-end text-center">
-              <CountyEmblem
-                code={facts.code}
-                name={facts.name}
-                size={128}
-                priority
-              />
+              <CountyEmblem code={facts.code} name={facts.name} size={128} priority />
               <div className="mt-3 text-[11px] uppercase tracking-[0.3em] text-accent">
                 County {String(facts.code).padStart(3, "0")} · {facts.region}
               </div>
