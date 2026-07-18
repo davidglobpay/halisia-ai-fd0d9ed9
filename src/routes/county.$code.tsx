@@ -73,7 +73,7 @@ function CountyNotFound() {
         </p>
         <Link
           to="/"
-          search={{}}
+          search={{ compare: "" }}
           className="mt-6 inline-flex items-center gap-2 glass rounded-full px-4 py-2 text-sm"
         >
           <ArrowLeft className="h-4 w-4" /> Back to counties
