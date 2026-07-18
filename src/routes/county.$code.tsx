@@ -1,5 +1,4 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useMemo } from "react";
 import {
   ArrowLeft,
   Building2,
@@ -15,7 +14,6 @@ import {
   Wrench,
   Sparkles,
   Trees,
-  Camera,
   BookOpen,
   Info,
   Vote,
@@ -24,8 +22,8 @@ import { Navbar } from "@/components/halisia/navbar";
 import countiesData from "@/data/kenya-counties.json";
 import { buildCountyProfile, COUNTY_DATA_SOURCES } from "@/lib/county-profile";
 import { CountyEmblem } from "@/components/halisia/county-emblem";
-import { METRIC_LABELS, formatMetric, type CountyMetric } from "@/lib/county-metrics";
 import { CountyPoliticsPanel } from "@/components/halisia/county-politics-panel";
+import { LeafletLayersMap } from "@/components/halisia/leaflet-layers-map";
 
 type Feature = { properties: { code: number; name: string; lat: number; lng: number } };
 const FEATURES = (countiesData as { features: Feature[] }).features;
@@ -100,6 +98,7 @@ function CountyError() {
 const SECTION_NAV = [
   { id: "sec-summary", label: "AI Summary" },
   { id: "sec-dashboard", label: "Dashboard" },
+  { id: "sec-map", label: "Location & Map" },
   { id: "sec-overview", label: "Overview" },
   { id: "sec-economic", label: "Economic" },
   { id: "sec-political", label: "Political" },
@@ -116,18 +115,11 @@ const SECTION_NAV = [
   { id: "sec-investment", label: "Investment" },
   { id: "sec-recs", label: "Recommendations" },
   { id: "sec-references", label: "References" },
-  { id: "sec-media", label: "Media" },
 ];
 
 function CountyPage() {
   const { profile } = Route.useLoaderData();
   const { facts, latLng, scores, metrics, density } = profile;
-
-  const staticMapSrc = useMemo(() => {
-    // Public OSM static-map tile (no key) — good enough for a hero header thumb.
-    // We keep it in-view for a print-friendly, always-available preview.
-    return `https://staticmap.openstreetmap.de/staticmap.php?center=${latLng.lat},${latLng.lng}&zoom=8&size=1200x360&maptype=mapnik&markers=${latLng.lat},${latLng.lng},red-pushpin`;
-  }, [latLng]);
 
   return (
     <div className="min-h-screen">
@@ -144,14 +136,15 @@ function CountyPage() {
 
         {/* HERO */}
         <header className="mt-6 glass-strong rounded-3xl overflow-hidden border border-white/10">
-          <div className="relative h-56 md:h-72 bg-[#0a1735]">
-            <img
-              src={staticMapSrc}
-              alt={`Map of ${facts.name} County centred at ${latLng.lat.toFixed(2)}°, ${latLng.lng.toFixed(2)}°`}
-              className="absolute inset-0 h-full w-full object-cover opacity-70"
-              loading="lazy"
+          <div className="relative h-56 md:h-72 bg-gradient-to-br from-[#0a1735] via-[#0f1f4d] to-[#0a1735] overflow-hidden">
+            <div
+              aria-hidden
+              className="absolute inset-0 opacity-30"
+              style={{
+                backgroundImage:
+                  "radial-gradient(circle at 20% 30%, rgba(0,229,255,0.25), transparent 45%), radial-gradient(circle at 80% 70%, rgba(255,193,7,0.18), transparent 45%)",
+              }}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0a1735] via-[#0a1735]/40 to-transparent" />
             <div className="absolute top-4 left-4">
               <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-xs font-bold text-white ring-1 ring-white/20 shadow-md">
                 {String(facts.code).padStart(2, "0")}
