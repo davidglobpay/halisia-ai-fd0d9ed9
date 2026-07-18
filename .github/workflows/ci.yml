@@ -41,3 +41,24 @@ jobs:
         run: bunx playwright test
         env:
           CI: "1"
+      - name: Upload Playwright report (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+          retention-days: 14
+          if-no-files-found: ignore
+      - name: Upload county-logo snapshot diffs (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: county-logo-snapshot-diffs
+          path: |
+            test-results/**/*-diff.png
+            test-results/**/*-actual.png
+            tests/e2e/**/__snapshots__/**
+          retention-days: 14
+          if-no-files-found: ignore
