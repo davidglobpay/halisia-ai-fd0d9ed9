@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { COUNTY_LOGOS } from "@/lib/county-logos";
 import { KENYA_COAT_OF_ARMS } from "@/lib/kenya-county-facts";
 import { reportLovableError } from "@/lib/lovable-error-reporting";
@@ -12,22 +12,76 @@ interface Props {
 }
 
 /**
- * Circular county emblem placeholder with a subtle 3D lift and outer
- * golden glow. Handles broken assets with a clean Kenya Coat of Arms
- * fallback, then a text initial as a last resort. Accessible: real alt
- * text, focus-visible ring when wrapped in an interactive element.
+ * Deterministic placeholder rendered when a county has no logo asset or all
+ * fallbacks fail. Consistent sizing with real emblems so grid layout never
+ * shifts, and accessible via aria-label.
+ */
+export function EmblemPlaceholder({
+  name,
+  size = 96,
+  label,
+}: {
+  name: string;
+  size?: number;
+  label?: string;
+}) {
+  return (
+    <span
+      role="img"
+      aria-label={label ?? `${name} County emblem placeholder`}
+      className="flex h-full w-full items-center justify-center bg-gradient-to-br from-amber-100 to-amber-300 font-black text-amber-900"
+      style={{ fontSize: Math.round(size * 0.42) }}
+    >
+      {name.charAt(0).toUpperCase()}
+    </span>
+  );
+}
+
+/**
+ * Square county emblem with 3D lift and outer golden glow. Handles broken
+ * assets with a Kenya Coat of Arms fallback, then a deterministic text
+ * placeholder. Uses IntersectionObserver to defer image fetch until the tile
+ * is within 400px of the viewport (smoother mobile scroll than native lazy),
+ * and reports load failures with county code + asset URL so we can measure
+ * fallback frequency.
  */
 export function CountyEmblem({ code, name, size = 96, priority = false, className = "" }: Props) {
   const primary = COUNTY_LOGOS[code];
   const [src, setSrc] = useState<string | undefined>(primary ?? KENYA_COAT_OF_ARMS);
   const [failed, setFailed] = useState(false);
+  const [visible, setVisible] = useState(priority);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (visible) return;
+    const el = rootRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") {
+      setVisible(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            setVisible(true);
+            io.disconnect();
+            break;
+          }
+        }
+      },
+      { rootMargin: "400px 0px", threshold: 0.01 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [visible]);
 
   const dim = { width: size, height: size };
-  const innerPad = Math.max(6, Math.round(size * 0.09));
+  const innerPad = Math.max(4, Math.round(size * 0.06));
   const radius = Math.max(10, Math.round(size * 0.18));
 
   return (
     <div
+      ref={rootRef}
       className={`county-emblem group relative shrink-0 ${className}`}
       style={dim}
       aria-hidden={false}
@@ -63,7 +117,7 @@ export function CountyEmblem({ code, name, size = 96, priority = false, classNam
             "0 10px 24px -8px rgba(0,0,0,0.55), inset 0 2px 4px rgba(255,255,255,0.85), inset 0 -6px 14px rgba(0,0,0,0.18)",
         }}
       >
-        {!failed && src ? (
+        {!failed && src && visible ? (
           <img
             src={src}
             alt={`${name} County official emblem`}
@@ -90,15 +144,13 @@ export function CountyEmblem({ code, name, size = 96, priority = false, classNam
             className="h-full w-full object-contain"
             style={{ padding: innerPad }}
           />
-        ) : (
+        ) : !failed && src ? (
           <span
-            role="img"
-            aria-label={`${name} County emblem placeholder`}
-            className="flex h-full w-full items-center justify-center bg-gradient-to-br from-amber-100 to-amber-300 font-black text-amber-900"
-            style={{ fontSize: Math.round(size * 0.42) }}
-          >
-            {name.charAt(0).toUpperCase()}
-          </span>
+            aria-hidden="true"
+            className="h-full w-full animate-pulse bg-gradient-to-br from-amber-50 to-amber-100"
+          />
+        ) : (
+          <EmblemPlaceholder name={name} size={size} />
         )}
       </div>
     </div>
