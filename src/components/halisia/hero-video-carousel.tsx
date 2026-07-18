@@ -1,50 +1,124 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import hero1 from "@/assets/hero/hero1.mp4.asset.json";
 import hero2 from "@/assets/hero/hero2.mp4.asset.json";
+import hero1Poster from "@/assets/hero/hero1-poster.jpg.asset.json";
+import hero2Poster from "@/assets/hero/hero2-poster.jpg.asset.json";
 
 const CLIPS = [
   {
     src: hero1.url,
+    poster: hero1Poster.url,
     caption: "Every parcel, translated into signal.",
   },
   {
     src: hero2.url,
+    poster: hero2Poster.url,
     caption: "See the land before you walk it.",
   },
 ];
 
+function usePrefersReducedMotion() {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const on = () => setReduced(mq.matches);
+    on();
+    mq.addEventListener?.("change", on);
+    return () => mq.removeEventListener?.("change", on);
+  }, []);
+  return reduced;
+}
+
 export function HeroVideoCarousel({ children }: { children?: React.ReactNode }) {
   const [i, setI] = useState(0);
   const videoRefs = useRef<Array<HTMLVideoElement | null>>([]);
+  const regionRef = useRef<HTMLDivElement>(null);
+  const reducedMotion = usePrefersReducedMotion();
 
+  const go = useCallback((next: number) => {
+    setI(((next % CLIPS.length) + CLIPS.length) % CLIPS.length);
+  }, []);
+  const next = useCallback(() => go(i + 1), [go, i]);
+  const prev = useCallback(() => go(i - 1), [go, i]);
+
+  // Video playback / auto-advance. Skipped when the user prefers reduced motion —
+  // the poster image stays as a static hero instead.
   useEffect(() => {
+    if (reducedMotion) return;
     const el = videoRefs.current[i];
     if (!el) return;
     el.currentTime = 0;
     el.play().catch(() => {});
     const onEnd = () => setI((n) => (n + 1) % CLIPS.length);
     el.addEventListener("ended", onEnd);
-    // Safety auto-advance in case `ended` never fires (some mobile browsers loop silently)
     const t = window.setTimeout(() => setI((n) => (n + 1) % CLIPS.length), 12000);
     return () => {
       el.removeEventListener("ended", onEnd);
       window.clearTimeout(t);
     };
-  }, [i]);
+  }, [i, reducedMotion]);
+
+  // Keyboard nav: ←/→ to step through clips when the carousel has focus.
+  const onKey = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowRight") {
+      e.preventDefault();
+      next();
+    } else if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      prev();
+    }
+  };
+
+  // Touch swipe support.
+  const touch = useRef<{ x: number; y: number } | null>(null);
+  const onTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    touch.current = { x: t.clientX, y: t.clientY };
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const start = touch.current;
+    touch.current = null;
+    if (!start) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      dx < 0 ? next() : prev();
+    }
+  };
 
   return (
-    <div className="relative w-full overflow-hidden aspect-[3/4] sm:aspect-[16/10] md:aspect-[21/9] max-h-[92vh]">
+    <div
+      ref={regionRef}
+      role="region"
+      aria-roledescription="carousel"
+      aria-label="HALISIA cinematic hero"
+      tabIndex={0}
+      onKeyDown={onKey}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+      className="relative w-full overflow-hidden aspect-[3/4] sm:aspect-[16/10] md:aspect-[21/9] max-h-[92vh] outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+    >
       {CLIPS.map((clip, idx) => (
         <video
           key={clip.src}
           ref={(el) => {
             videoRefs.current[idx] = el;
           }}
-          src={clip.src}
+          src={reducedMotion ? undefined : clip.src}
+          poster={clip.poster}
           muted
           playsInline
-          preload={idx === 0 ? "auto" : "metadata"}
+          // eslint-disable-next-line react/no-unknown-property
+          disablePictureInPicture
+          controls={false}
+          preload={idx === 0 ? "auto" : "none"}
+          loading={idx === 0 ? undefined : ("lazy" as never)}
+          aria-hidden={i === idx ? undefined : true}
+          aria-roledescription="slide"
+          aria-label={`${clip.caption} (${idx + 1} of ${CLIPS.length})`}
           className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-[1200ms] ease-out ${
             i === idx ? "opacity-100" : "opacity-0"
           }`}
@@ -79,27 +153,34 @@ export function HeroVideoCarousel({ children }: { children?: React.ReactNode }) 
       </div>
 
       {/* Caption + dots */}
-      <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-2">
+      <div
+        className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-2"
+        role="group"
+        aria-label="Carousel controls"
+      >
         <AnimatePresence mode="wait">
           <motion.div
             key={CLIPS[i].caption}
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: reducedMotion ? 0 : 0.5 }}
             className="glass rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-white/80"
+            aria-live="polite"
           >
             {CLIPS[i].caption}
           </motion.div>
         </AnimatePresence>
-        <div className="flex gap-1.5">
-          {CLIPS.map((_, idx) => (
+        <div className="flex gap-1.5" role="tablist" aria-label="Choose hero clip">
+          {CLIPS.map((clip, idx) => (
             <button
               key={idx}
               type="button"
-              aria-label={`Show clip ${idx + 1}`}
-              onClick={() => setI(idx)}
-              className={`h-1.5 rounded-full transition-all ${
+              role="tab"
+              aria-selected={i === idx}
+              aria-label={`Show clip ${idx + 1}: ${clip.caption}`}
+              onClick={() => go(idx)}
+              className={`h-2 rounded-full transition-all outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-transparent ${
                 i === idx ? "w-8 bg-white" : "w-3 bg-white/40 hover:bg-white/70"
               }`}
             />
