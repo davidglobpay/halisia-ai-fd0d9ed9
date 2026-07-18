@@ -23,7 +23,6 @@ import {
 import { Navbar } from "@/components/halisia/navbar";
 import countiesData from "@/data/kenya-counties.json";
 import { buildCountyProfile, COUNTY_DATA_SOURCES } from "@/lib/county-profile";
-import { KENYA_COAT_OF_ARMS } from "@/lib/kenya-county-facts";
 import { CountyEmblem } from "@/components/halisia/county-emblem";
 import { METRIC_LABELS, formatMetric, type CountyMetric } from "@/lib/county-metrics";
 import { CountyPoliticsPanel } from "@/components/halisia/county-politics-panel";
