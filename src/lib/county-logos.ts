@@ -25,8 +25,6 @@ import c28 from "@/assets/county-logos/28-elgeyo-marakwet.png.asset.json";
 import c29 from "@/assets/county-logos/29-nandi.png.asset.json";
 import c30 from "@/assets/county-logos/30-baringo.png.asset.json";
 import c32 from "@/assets/county-logos/32-nakuru.png.asset.json";
-import c33 from "@/assets/county-logos/33-narok.png.asset.json";
-import c34 from "@/assets/county-logos/34-kajiado.png.asset.json";
 import c35 from "@/assets/county-logos/35-kericho.png.asset.json";
 import c36 from "@/assets/county-logos/36-bomet.png.asset.json";
 import c38 from "@/assets/county-logos/38-vihiga.png.asset.json";
@@ -42,6 +40,8 @@ import local15 from "@/assets/county-logos/15-kitui.png";
 import local17 from "@/assets/county-logos/17-makueni.png";
 import local18 from "@/assets/county-logos/18-nyandarua.png";
 import local31 from "@/assets/county-logos/31-laikipia.png";
+import local33 from "@/assets/county-logos/33-narok.png";
+import local34 from "@/assets/county-logos/34-kajiado.png";
 import local37 from "@/assets/county-logos/37-kakamega.png";
 import local41 from "@/assets/county-logos/41-siaya.png";
 import local42 from "@/assets/county-logos/42-kisumu.png";
@@ -84,8 +84,8 @@ export const COUNTY_LOGOS: Record<number, string> = {
   30: c30.url,
   31: local31,
   32: c32.url,
-  33: c33.url,
-  34: c34.url,
+  33: local33,
+  34: local34,
   35: c35.url,
   36: c36.url,
   37: local37,

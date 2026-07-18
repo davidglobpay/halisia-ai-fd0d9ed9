@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TitleDeedRouteImport } from './routes/title-deed'
 import { Route as ReportRouteImport } from './routes/report'
+import { Route as LogoQaRouteImport } from './routes/logo-qa'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as IndexRouteImport } from './routes/index'
@@ -25,6 +26,11 @@ const TitleDeedRoute = TitleDeedRouteImport.update({
 const ReportRoute = ReportRouteImport.update({
   id: '/report',
   path: '/report',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LogoQaRoute = LogoQaRouteImport.update({
+  id: '/logo-qa',
+  path: '/logo-qa',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExploreRoute = ExploreRouteImport.update({
@@ -57,6 +63,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/compare': typeof CompareRoute
   '/explore': typeof ExploreRoute
+  '/logo-qa': typeof LogoQaRoute
   '/report': typeof ReportRoute
   '/title-deed': typeof TitleDeedRoute
   '/api/chat': typeof ApiChatRoute
@@ -66,6 +73,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/compare': typeof CompareRoute
   '/explore': typeof ExploreRoute
+  '/logo-qa': typeof LogoQaRoute
   '/report': typeof ReportRoute
   '/title-deed': typeof TitleDeedRoute
   '/api/chat': typeof ApiChatRoute
@@ -76,6 +84,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/compare': typeof CompareRoute
   '/explore': typeof ExploreRoute
+  '/logo-qa': typeof LogoQaRoute
   '/report': typeof ReportRoute
   '/title-deed': typeof TitleDeedRoute
   '/api/chat': typeof ApiChatRoute
@@ -87,6 +96,7 @@ export interface FileRouteTypes {
     | '/'
     | '/compare'
     | '/explore'
+    | '/logo-qa'
     | '/report'
     | '/title-deed'
     | '/api/chat'
@@ -96,6 +106,7 @@ export interface FileRouteTypes {
     | '/'
     | '/compare'
     | '/explore'
+    | '/logo-qa'
     | '/report'
     | '/title-deed'
     | '/api/chat'
@@ -105,6 +116,7 @@ export interface FileRouteTypes {
     | '/'
     | '/compare'
     | '/explore'
+    | '/logo-qa'
     | '/report'
     | '/title-deed'
     | '/api/chat'
@@ -115,6 +127,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CompareRoute: typeof CompareRoute
   ExploreRoute: typeof ExploreRoute
+  LogoQaRoute: typeof LogoQaRoute
   ReportRoute: typeof ReportRoute
   TitleDeedRoute: typeof TitleDeedRoute
   ApiChatRoute: typeof ApiChatRoute
@@ -135,6 +148,13 @@ declare module '@tanstack/react-router' {
       path: '/report'
       fullPath: '/report'
       preLoaderRoute: typeof ReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/logo-qa': {
+      id: '/logo-qa'
+      path: '/logo-qa'
+      fullPath: '/logo-qa'
+      preLoaderRoute: typeof LogoQaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/explore': {
@@ -179,6 +199,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CompareRoute: CompareRoute,
   ExploreRoute: ExploreRoute,
+  LogoQaRoute: LogoQaRoute,
   ReportRoute: ReportRoute,
   TitleDeedRoute: TitleDeedRoute,
   ApiChatRoute: ApiChatRoute,
