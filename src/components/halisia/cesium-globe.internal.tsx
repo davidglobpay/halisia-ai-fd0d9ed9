@@ -96,7 +96,7 @@ export default function CesiumGlobe({
   }, [lat, lng, label]);
 
   return (
-    <div className="relative h-[420px] rounded-2xl overflow-hidden border border-white/10 bg-[#050d24]">
+    <div className="absolute inset-0">
       <div ref={el} className="absolute inset-0" />
       {!ready && !error && (
         <div className="absolute inset-0 grid place-items-center text-xs text-muted-foreground">
