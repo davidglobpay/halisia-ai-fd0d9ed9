@@ -115,7 +115,6 @@ export function HeroVideoCarousel({ children }: { children?: React.ReactNode }) 
           disablePictureInPicture
           controls={false}
           preload={idx === 0 ? "auto" : "none"}
-          loading={idx === 0 ? undefined : ("lazy" as never)}
           aria-hidden={i === idx ? undefined : true}
           aria-roledescription="slide"
           aria-label={`${clip.caption} (${idx + 1} of ${CLIPS.length})`}
