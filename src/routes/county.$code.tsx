@@ -226,6 +226,31 @@ function CountyPage() {
           </div>
         </Section>
 
+        {/* LOCATION & INTERACTIVE MAP */}
+        <Section id="sec-map" title="Location & Interactive Map" icon={MapPin}>
+          <div className="grid md:grid-cols-[1fr_2fr] gap-4">
+            <div className="space-y-3">
+              <Definition label="Headquarters">{facts.headquarters}</Definition>
+              <Definition label="Region">{facts.region}</Definition>
+              <Definition label="Coordinates">
+                {latLng.lat.toFixed(4)}°, {latLng.lng.toFixed(4)}°
+              </Definition>
+              <Definition label="Area">
+                {facts.areaKm2.toLocaleString()} km² · density {density.toLocaleString()}/km²
+              </Definition>
+              <p className="text-xs text-muted-foreground">
+                Interactive OpenStreetMap view. Use layer controls to switch between street,
+                satellite, and terrain basemaps.
+              </p>
+            </div>
+            <LeafletLayersMap
+              lat={latLng.lat}
+              lng={latLng.lng}
+              label={`${facts.name} County · ${facts.headquarters}`}
+            />
+          </div>
+        </Section>
+
         {/* 1. OVERVIEW */}
         <Section id="sec-overview" title="1 · County Overview" icon={Building2}>
           <div className="grid md:grid-cols-2 gap-6">
@@ -246,15 +271,6 @@ function CountyPage() {
               wider {facts.region} region.
             </Definition>
           </div>
-          <PhotoEvidenceRow
-            items={[
-              `${facts.headquarters} headquarters`,
-              `${facts.name} skyline / aerial`,
-              `${facts.name} county map`,
-              facts.landmarks[0] ?? `${facts.name} landmark`,
-              "Administrative offices",
-            ]}
-          />
         </Section>
 
         {/* 2. ECONOMIC */}
@@ -285,9 +301,6 @@ function CountyPage() {
               <MiniScore label="Employment" value={scores.economic - 4} />
             </div>
           </div>
-          <PhotoEvidenceRow
-            items={["CBD", "Markets", "Industrial areas", "Farms", "Business centres"]}
-          />
         </Section>
 
         {/* 3. POLITICAL */}
@@ -492,35 +505,6 @@ function CountyPage() {
             permissioned imagery is used; verify with a licensed professional before commercial
             decisions.
           </p>
-        </Section>
-
-        {/* 17. MEDIA */}
-        <Section id="sec-media" title="17 · Photo &amp; Media Evidence Library" icon={Camera}>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {[
-              "Administrative buildings",
-              "Aerial / satellite",
-              "Road network",
-              "Healthcare facilities",
-              "Educational institutions",
-              "Markets",
-              "Industrial areas",
-              "Tourist attractions",
-              "Cultural sites",
-              "Environmental features",
-              "Housing developments",
-              "Utility infrastructure",
-            ].map((label) => (
-              <div
-                key={label}
-                className="aspect-[4/3] glass rounded-2xl p-3 flex flex-col justify-end text-xs text-muted-foreground border border-white/5"
-              >
-                <Camera className="h-4 w-4 text-accent mb-2" />
-                <div className="font-medium text-foreground">{label}</div>
-                <div>Pending verified upload</div>
-              </div>
-            ))}
-          </div>
         </Section>
 
         <div className="mt-10 text-center text-xs text-muted-foreground">
