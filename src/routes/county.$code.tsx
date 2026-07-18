@@ -657,22 +657,3 @@ function ListCard({ title, items, tone }: { title: string; items: string[]; tone
   );
 }
 
-function PhotoEvidenceRow({ items }: { items: string[] }) {
-  return (
-    <div className="mt-6">
-      <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-        Required photo evidence
-      </div>
-      <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 text-xs">
-        {items.map((it) => (
-          <div
-            key={it}
-            className="rounded-xl border border-dashed border-white/15 px-2.5 py-3 text-muted-foreground bg-white/[0.02]"
-          >
-            {it}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
