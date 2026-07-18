@@ -11,8 +11,6 @@ import {
   type CountyMetric,
 } from "@/lib/county-metrics";
 import { generateCountyComparePdf } from "@/lib/pdf-county-compare";
-import { KENYA_COAT_OF_ARMS } from "@/lib/kenya-county-facts";
-import { COUNTY_LOGOS } from "@/lib/county-logos";
 import { CountyEmblem } from "@/components/halisia/county-emblem";
 import { dataConfidencePct } from "@/lib/county-profile";
 import { Link } from "@tanstack/react-router";
