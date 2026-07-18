@@ -57,9 +57,7 @@ export function Navbar() {
                 to={l.to}
                 {...(l.to === "/" ? { search: { compare: "" } } : {})}
                 className={`px-3 py-1.5 rounded-full transition ${
-                  active
-                    ? "bg-white/10 text-foreground"
-                    : "hover:text-foreground hover:bg-white/5"
+                  active ? "bg-white/10 text-foreground" : "hover:text-foreground hover:bg-white/5"
                 }`}
               >
                 {l.label}
