@@ -46,6 +46,24 @@ import c45 from "@/assets/county-logos/45-kisii.png.asset.json";
 import c46 from "@/assets/county-logos/46-nyamira.png.asset.json";
 import c47 from "@/assets/county-logos/47-nairobi-city.png.asset.json";
 
+// Locally re-cropped emblems (override CDN asset URLs). These 13 counties
+// had off-center or cropped logos in the original CDN assets; the PNGs at
+// these paths were re-cropped from the official Council of Governors poster
+// and are bundled via Vite so they always match the file on disk.
+import local14 from "@/assets/county-logos/14-embu.png";
+import local15 from "@/assets/county-logos/15-kitui.png";
+import local17 from "@/assets/county-logos/17-makueni.png";
+import local18 from "@/assets/county-logos/18-nyandarua.png";
+import local31 from "@/assets/county-logos/31-laikipia.png";
+import local37 from "@/assets/county-logos/37-kakamega.png";
+import local41 from "@/assets/county-logos/41-siaya.png";
+import local42 from "@/assets/county-logos/42-kisumu.png";
+import local43 from "@/assets/county-logos/43-homa-bay.png";
+import local44 from "@/assets/county-logos/44-migori.png";
+import local45 from "@/assets/county-logos/45-kisii.png";
+import local46 from "@/assets/county-logos/46-nyamira.png";
+import local47 from "@/assets/county-logos/47-nairobi-city.png";
+
 export const COUNTY_LOGOS: Record<number, string> = {
   1: c01.url,
   2: c02.url,
@@ -60,11 +78,11 @@ export const COUNTY_LOGOS: Record<number, string> = {
   11: c11.url,
   12: c12.url,
   13: c13.url,
-  14: c14.url,
-  15: c15.url,
+  14: local14,
+  15: local15,
   16: c16.url,
-  17: c17.url,
-  18: c18.url,
+  17: local17,
+  18: local18,
   19: c19.url,
   20: c20.url,
   21: c21.url,
@@ -77,21 +95,21 @@ export const COUNTY_LOGOS: Record<number, string> = {
   28: c28.url,
   29: c29.url,
   30: c30.url,
-  31: c31.url,
+  31: local31,
   32: c32.url,
   33: c33.url,
   34: c34.url,
   35: c35.url,
   36: c36.url,
-  37: c37.url,
+  37: local37,
   38: c38.url,
   39: c39.url,
   40: c40.url,
-  41: c41.url,
-  42: c42.url,
-  43: c43.url,
-  44: c44.url,
-  45: c45.url,
-  46: c46.url,
-  47: c47.url,
+  41: local41,
+  42: local42,
+  43: local43,
+  44: local44,
+  45: local45,
+  46: local46,
+  47: local47,
 };
