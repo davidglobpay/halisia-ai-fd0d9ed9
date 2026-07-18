@@ -11,8 +11,7 @@ import {
   type CountyMetric,
 } from "@/lib/county-metrics";
 import { generateCountyComparePdf } from "@/lib/pdf-county-compare";
-import { KENYA_COAT_OF_ARMS } from "@/lib/kenya-county-facts";
-import { COUNTY_LOGOS } from "@/lib/county-logos";
+import { CountyEmblem } from "@/components/halisia/county-emblem";
 import { dataConfidencePct } from "@/lib/county-profile";
 import { Link } from "@tanstack/react-router";
 import {
@@ -726,13 +725,7 @@ export function KenyaCountyMap() {
                       "Compare"
                     )}
                   </button>
-                  <img
-                    src={COUNTY_LOGOS[c.code] ?? KENYA_COAT_OF_ARMS}
-                    alt={`${c.name} County official emblem`}
-                    referrerPolicy="no-referrer"
-                    className="mt-1 h-20 w-20 rounded-full bg-white object-contain p-1.5 ring-1 ring-white/20 shadow-md"
-                    loading="lazy"
-                  />
+                  <CountyEmblem code={c.code} name={c.name} size={96} className="mt-2" />
                   <div className="mt-2 text-sm font-bold tracking-wide uppercase">{c.name}</div>
                 </div>
                 <div className="mt-3 flex items-baseline justify-center gap-1.5">
