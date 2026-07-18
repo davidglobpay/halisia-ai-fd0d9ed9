@@ -35,9 +35,7 @@ test.describe("Recropped county emblems render uncropped and centered", () => {
       await expect(img, `${name} img rendered`).toBeVisible();
       // The <img> must have actually loaded (naturalWidth > 0). If the
       // primary asset 404s or the crop is empty, this fails.
-      const naturalWidth = await img.evaluate(
-        (el) => (el as HTMLImageElement).naturalWidth,
-      );
+      const naturalWidth = await img.evaluate((el) => (el as HTMLImageElement).naturalWidth);
       expect(naturalWidth, `${name} natural width`).toBeGreaterThan(0);
       // Snapshot the tile so any centering regression fails review.
       await expect(card).toHaveScreenshot(`tile-${code}-${name}.png`, {
@@ -46,9 +44,7 @@ test.describe("Recropped county emblems render uncropped and centered", () => {
     }
   });
 
-  test("county detail hero shows uncropped emblem for each recropped county", async ({
-    page,
-  }) => {
+  test("county detail hero shows uncropped emblem for each recropped county", async ({ page }) => {
     for (const { code, name } of RECROPPED) {
       await page.goto(`/county/${code}`);
       // The hero renders a priority CountyEmblem inside the h1 area.
@@ -56,9 +52,7 @@ test.describe("Recropped county emblems render uncropped and centered", () => {
       await expect(heading, `${name} heading`).toBeVisible({ timeout: 20_000 });
       const img = page.locator(`img[alt*="${name}"]`).first();
       await expect(img, `${name} hero emblem`).toBeVisible();
-      const naturalWidth = await img.evaluate(
-        (el) => (el as HTMLImageElement).naturalWidth,
-      );
+      const naturalWidth = await img.evaluate((el) => (el as HTMLImageElement).naturalWidth);
       expect(naturalWidth, `${name} hero natural width`).toBeGreaterThan(0);
     }
   });
