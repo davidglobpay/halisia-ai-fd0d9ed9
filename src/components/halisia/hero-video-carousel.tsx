@@ -85,7 +85,8 @@ export function HeroVideoCarousel({ children }: { children?: React.ReactNode }) 
     const dx = t.clientX - start.x;
     const dy = t.clientY - start.y;
     if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-      dx < 0 ? next() : prev();
+      if (dx < 0) next();
+      else prev();
     }
   };
 
@@ -111,7 +112,6 @@ export function HeroVideoCarousel({ children }: { children?: React.ReactNode }) 
           poster={clip.poster}
           muted
           playsInline
-          // eslint-disable-next-line react/no-unknown-property
           disablePictureInPicture
           controls={false}
           preload={idx === 0 ? "auto" : "none"}
