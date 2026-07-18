@@ -78,6 +78,8 @@ function LogoQAPage() {
                 step={8}
                 value={size}
                 onChange={(e) => setSize(Number(e.target.value))}
+                aria-label="Emblem size in pixels"
+                data-testid="qa-size"
               />
               <span className="w-8 text-right tabular-nums">{size}</span>
             </label>
@@ -88,6 +90,7 @@ function LogoQAPage() {
               onChange={(e) => setFilter(e.target.value)}
               className="rounded-md border border-white/20 bg-black/40 px-2 py-1 text-white placeholder:text-white/40"
               data-testid="qa-filter"
+              aria-label="Filter counties by code or name"
             />
           </div>
         </header>
