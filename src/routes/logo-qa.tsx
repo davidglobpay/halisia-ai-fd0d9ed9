@@ -17,11 +17,13 @@ function LogoQAPage() {
 
   const counties = useMemo(
     () =>
-      Object.values(KENYA_COUNTY_FACTS).sort((a, b) => a.code - b.code).filter((c) => {
-        if (!filter.trim()) return true;
-        const q = filter.trim().toLowerCase();
-        return c.name.toLowerCase().includes(q) || String(c.code) === q;
-      }),
+      Object.values(KENYA_COUNTY_FACTS)
+        .sort((a, b) => a.code - b.code)
+        .filter((c) => {
+          if (!filter.trim()) return true;
+          const q = filter.trim().toLowerCase();
+          return c.name.toLowerCase().includes(q) || String(c.code) === q;
+        }),
     [filter],
   );
 
@@ -35,8 +37,8 @@ function LogoQAPage() {
             </div>
             <h1 className="text-2xl font-bold">County emblem QA</h1>
             <p className="mt-1 max-w-2xl text-sm text-white/70">
-              Toggle overlay guides to verify centering and safe-area padding for
-              every county emblem. Filter by county code or name to spot-check.
+              Toggle overlay guides to verify centering and safe-area padding for every county
+              emblem. Filter by county code or name to spot-check.
             </p>
           </div>
           <div className="ml-auto flex flex-wrap items-center gap-3 text-xs">
@@ -76,6 +78,8 @@ function LogoQAPage() {
                 step={8}
                 value={size}
                 onChange={(e) => setSize(Number(e.target.value))}
+                aria-label="Emblem size in pixels"
+                data-testid="qa-size"
               />
               <span className="w-8 text-right tabular-nums">{size}</span>
             </label>
@@ -86,6 +90,7 @@ function LogoQAPage() {
               onChange={(e) => setFilter(e.target.value)}
               className="rounded-md border border-white/20 bg-black/40 px-2 py-1 text-white placeholder:text-white/40"
               data-testid="qa-filter"
+              aria-label="Filter counties by code or name"
             />
           </div>
         </header>
