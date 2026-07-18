@@ -43,37 +43,51 @@ function Landing() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.9, ease: "easeOut" }}
-            className="max-w-2xl"
+            className="mx-auto flex max-w-3xl flex-col items-center text-center"
           >
-            <div className="inline-flex items-center gap-2 glass rounded-full pl-1 pr-3 py-1 text-xs text-white/80 mb-5 backdrop-blur-xl">
+            {/* Centered logo with outer glow, transparent background */}
+            <div className="relative mb-6 flex items-center justify-center">
+              <div
+                aria-hidden="true"
+                className="absolute inset-0 -z-10 blur-3xl opacity-80"
+                style={{
+                  background:
+                    "radial-gradient(closest-side, oklch(0.75 0.16 210 / 0.55), oklch(0.55 0.18 260 / 0.35) 60%, transparent 75%)",
+                }}
+              />
               <img
                 src={halisiaLogo.url}
                 alt="HALISIA"
-                className="h-6 w-6 rounded-full ring-1 ring-white/20"
+                width={168}
+                height={168}
+                decoding="async"
+                fetchPriority="high"
+                className="h-24 w-24 sm:h-32 sm:w-32 md:h-40 md:w-40 object-contain drop-shadow-[0_0_28px_oklch(0.75_0.16_210/0.7)]"
               />
-              <span className="px-2 py-0.5 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground font-medium">
-                Kenya · Beta
-              </span>
-              <span className="hidden sm:inline">Land intelligence, not listings.</span>
+            </div>
+            <div className="mb-4 inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.32em] text-white/75">
+              <span className="h-px w-8 bg-white/30" />
+              Kenya · Beta · Land Intelligence
+              <span className="h-px w-8 bg-white/30" />
             </div>
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-semibold leading-[1.02] tracking-tight text-white [text-shadow:0_2px_30px_oklch(0.14_0.05_260/0.7)]">
               <span className="text-gradient">Understand a place</span>
               <br />
               before you commit.
             </h1>
-            <p className="mt-5 text-base md:text-lg text-white/85 max-w-xl leading-relaxed [text-shadow:0_1px_16px_oklch(0.14_0.05_260/0.8)]">
+            <p className="mx-auto mt-5 max-w-xl text-base md:text-lg text-white/85 leading-relaxed [text-shadow:0_1px_16px_oklch(0.14_0.05_260/0.8)]">
               HALISIA turns any location into trusted, human-centered intelligence — infrastructure,
               environmental risk, community context and investment signals, with confidence you can
               weigh.
             </p>
 
-            <div className="mt-6 max-w-xl">
+            <div className="mx-auto mt-6 w-full max-w-xl">
               <SearchBar
                 size="lg"
                 placeholder="Try “Karen, Nairobi” or “Diani beach”"
                 onSearch={(q) => navigate({ to: "/explore", search: { q } })}
               />
-              <div className="mt-3 hidden sm:flex flex-wrap gap-2 text-xs text-white/80">
+              <div className="mt-3 hidden sm:flex flex-wrap justify-center gap-2 text-xs text-white/80">
                 <span className="mr-1">Popular:</span>
                 {["Kilimani", "Kiambu Road", "Nyali", "Naivasha", "Ruiru"].map((t) => (
                   <button
@@ -87,7 +101,7 @@ function Landing() {
               </div>
             </div>
 
-            <div className="mt-6 hidden md:flex items-center gap-6 text-xs text-white/75">
+            <div className="mt-6 hidden md:flex items-center justify-center gap-6 text-xs text-white/75">
               <div className="flex items-center gap-2">
                 <BadgeCheck className="h-4 w-4 text-accent" /> Confidence-scored
               </div>
