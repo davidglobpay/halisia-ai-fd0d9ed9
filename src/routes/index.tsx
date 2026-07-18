@@ -62,9 +62,9 @@ function Landing() {
               before you commit.
             </h1>
             <p className="mt-5 text-base md:text-lg text-white/85 max-w-xl leading-relaxed [text-shadow:0_1px_16px_oklch(0.14_0.05_260/0.8)]">
-              HALISIA turns any location into trusted, human-centered intelligence —
-              infrastructure, environmental risk, community context and investment signals, with
-              confidence you can weigh.
+              HALISIA turns any location into trusted, human-centered intelligence — infrastructure,
+              environmental risk, community context and investment signals, with confidence you can
+              weigh.
             </p>
 
             <div className="mt-6 max-w-xl">
