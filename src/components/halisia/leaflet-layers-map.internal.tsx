@@ -89,7 +89,7 @@ export default function LeafletLayersMap({
   }, [lat, lng]);
 
   return (
-    <div className="relative h-[420px] rounded-2xl overflow-hidden border border-white/10">
+    <div className="absolute inset-0">
       <MapContainer
         center={[lat, lng]}
         zoom={13}
