@@ -428,12 +428,7 @@ export const getGeotechIntel = createServerFn({ method: "POST" })
         const grid: number[][] = Array.from({ length: n }, () => Array(n).fill(1000));
         return { grid, n, step };
       })();
-    const terrain = terrainAnalysis(
-      effectiveGrid.grid,
-      effectiveGrid.n,
-      effectiveGrid.step,
-      lat,
-    );
+    const terrain = terrainAnalysis(effectiveGrid.grid, effectiveGrid.n, effectiveGrid.step, lat);
     // apply slope-informed drainage back onto soil layers
     for (const l of soil) l.drainage = drainageFromTexture(l.texture, terrain.slopePct);
     const geology = interpretGeology(terrain, soil, terrain.elevationM);
