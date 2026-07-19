@@ -54,9 +54,7 @@ export function MapFrame({
           {backLabel}
         </button>
       )}
-      {onLocateMe && (
-        <MyLocationButton onLocate={onLocateMe} className="absolute top-3 right-3" />
-      )}
+      {onLocateMe && <MyLocationButton onLocate={onLocateMe} className="absolute top-3 right-3" />}
     </div>
   );
 }

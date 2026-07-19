@@ -206,9 +206,7 @@ function Explore() {
             {/* Overlay controls */}
             <div className="pointer-events-none absolute inset-0 p-4 flex flex-col justify-between">
               <div className="pointer-events-auto flex flex-wrap items-start gap-2 self-start">
-                <MyLocationButton
-                  onLocate={({ lat, lng }) => void inspectPoint(lat, lng)}
-                />
+                <MyLocationButton onLocate={({ lat, lng }) => void inspectPoint(lat, lng)} />
                 <div className="flex items-center gap-1 glass rounded-full p-1">
                   {[
                     { id: "roadmap" as const, icon: MapPinned, label: "Map" },
