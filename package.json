@@ -16,6 +16,9 @@
     "prepare": "git config core.hooksPath .githooks || true",
     "format": "prettier --write .",
     "test:e2e": "playwright test"
+    ,
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
