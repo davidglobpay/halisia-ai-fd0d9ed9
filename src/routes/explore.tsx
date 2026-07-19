@@ -136,34 +136,37 @@ function Explore() {
     else setLoc({ lat, lng, address: `${lat.toFixed(5)}, ${lng.toFixed(5)}` });
   };
 
-  const runSearch = useCallback(async (query: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      // Detect "lat,lng" coordinate queries (from My Location or manual input)
-      const coord = query.match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/);
-      if (coord) {
-        const lat = parseFloat(coord[1]);
-        const lng = parseFloat(coord[2]);
-        if (Math.abs(lat) <= 90 && Math.abs(lng) <= 180) {
-          setLoading(false);
-          await inspectPoint(lat, lng);
-          return;
+  const runSearch = useCallback(
+    async (query: string) => {
+      setLoading(true);
+      setError(null);
+      try {
+        // Detect "lat,lng" coordinate queries (from My Location or manual input)
+        const coord = query.match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/);
+        if (coord) {
+          const lat = parseFloat(coord[1]);
+          const lng = parseFloat(coord[2]);
+          if (Math.abs(lat) <= 90 && Math.abs(lng) <= 180) {
+            setLoading(false);
+            await inspectPoint(lat, lng);
+            return;
+          }
         }
+        const res = await geocodeAddress({ data: { query } });
+        if (!res.ok) {
+          setError(`Couldn't find “${query}” in Kenya. Try a nearby town or road.`);
+        } else {
+          setLoc({ lat: res.lat, lng: res.lng, address: res.address });
+        }
+      } catch (e) {
+        console.error(e);
+        setError("Search failed. Please try again.");
+      } finally {
+        setLoading(false);
       }
-      const res = await geocodeAddress({ data: { query } });
-      if (!res.ok) {
-        setError(`Couldn't find “${query}” in Kenya. Try a nearby town or road.`);
-      } else {
-        setLoc({ lat: res.lat, lng: res.lng, address: res.address });
-      }
-    } catch (e) {
-      console.error(e);
-      setError("Search failed. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  }, [inspectPoint]);
+    },
+    [inspectPoint],
+  );
 
   useEffect(() => {
     const next = q?.trim();
