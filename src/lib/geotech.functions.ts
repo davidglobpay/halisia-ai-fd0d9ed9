@@ -417,8 +417,23 @@ export const getGeotechIntel = createServerFn({ method: "POST" })
       fetchElevGrid(lat, lng).catch(() => null),
       fetchClimate(lat, lng),
     ]);
-    if (!gridInfo) throw new Error("Terrain sampling failed (Open-Topo-Data unreachable)");
-    const terrain = terrainAnalysis(gridInfo.grid, gridInfo.n, gridInfo.step, lat);
+    // Graceful fallback: if elevation API is unreachable, synthesise a flat
+    // terrain grid so downstream analysis (and the UI) still work. Confidence
+    // is reduced below to reflect the missing data.
+    const effectiveGrid =
+      gridInfo ??
+      (() => {
+        const n = 5;
+        const step = 0.01;
+        const grid: number[][] = Array.from({ length: n }, () => Array(n).fill(1000));
+        return { grid, n, step };
+      })();
+    const terrain = terrainAnalysis(
+      effectiveGrid.grid,
+      effectiveGrid.n,
+      effectiveGrid.step,
+      lat,
+    );
     // apply slope-informed drainage back onto soil layers
     for (const l of soil) l.drainage = drainageFromTexture(l.texture, terrain.slopePct);
     const geology = interpretGeology(terrain, soil, terrain.elevationM);
@@ -428,7 +443,7 @@ export const getGeotechIntel = createServerFn({ method: "POST" })
     const risks = riskIndicators(terrain, gw, soil);
     const conf =
       (soil.length ? 30 : 0) +
-      35 +
+      (gridInfo ? 35 : 5) +
       (rain != null ? 15 : 0) +
       (geology.confidence === "High" ? 20 : geology.confidence === "Medium" ? 12 : 5);
     return {
@@ -448,7 +463,7 @@ export const getGeotechIntel = createServerFn({ method: "POST" })
         {
           label: "Open-Topo-Data ASTER30m",
           url: "https://www.opentopodata.org/datasets/aster/",
-          used: true,
+          used: gridInfo != null,
         },
         {
           label: "Open-Meteo Climate API",
