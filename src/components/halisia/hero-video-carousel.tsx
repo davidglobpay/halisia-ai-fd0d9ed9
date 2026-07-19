@@ -39,6 +39,9 @@ export function HeroVideoCarousel({ children }: { children?: React.ReactNode }) 
   const reducedMotion = usePrefersReducedMotion();
   const [paused, setPaused] = useState(false);
   const [muted, setMuted] = useState(true);
+  // True when the browser blocked autoplay — surfaces a large Play CTA
+  // so the hero stays interactive and keyboard-friendly.
+  const [autoplayBlocked, setAutoplayBlocked] = useState(false);
 
   const go = useCallback((next: number) => {
     setI(((next % CLIPS.length) + CLIPS.length) % CLIPS.length);
@@ -53,7 +56,10 @@ export function HeroVideoCarousel({ children }: { children?: React.ReactNode }) 
     const el = videoRefs.current[i];
     if (!el) return;
     el.currentTime = 0;
-    el.play().catch(() => {});
+    el.play().then(
+      () => setAutoplayBlocked(false),
+      () => setAutoplayBlocked(true),
+    );
     const onEnd = () => setI((n) => (n + 1) % CLIPS.length);
     el.addEventListener("ended", onEnd);
     const t = window.setTimeout(() => setI((n) => (n + 1) % CLIPS.length), 12000);
@@ -70,7 +76,11 @@ export function HeroVideoCarousel({ children }: { children?: React.ReactNode }) 
     if (!el) return;
     el.muted = muted;
     if (paused) el.pause();
-    else if (!reducedMotion) el.play().catch(() => {});
+    else if (!reducedMotion)
+      el.play().then(
+        () => setAutoplayBlocked(false),
+        () => setAutoplayBlocked(true),
+      );
   }, [paused, muted, i, reducedMotion]);
 
   // Keyboard nav: ←/→ to step through clips when the carousel has focus.
@@ -164,6 +174,28 @@ export function HeroVideoCarousel({ children }: { children?: React.ReactNode }) 
       <div className="absolute inset-0 flex flex-col justify-end sm:justify-center">
         <div className="mx-auto w-full max-w-7xl px-4 pb-10 sm:pb-0">{children}</div>
       </div>
+
+      {/* Autoplay-blocked fallback — the browser refused to autoplay.
+          Show a prominent, accessible Play CTA so the carousel stays usable. */}
+      {autoplayBlocked && !reducedMotion && (
+        <button
+          type="button"
+          onClick={() => {
+            setPaused(false);
+            const el = videoRefs.current[i];
+            el?.play().then(
+              () => setAutoplayBlocked(false),
+              () => setAutoplayBlocked(true),
+            );
+          }}
+          aria-label="Play hero video"
+          data-testid="hero-autoplay-cta"
+          className="absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 inline-flex items-center gap-2 rounded-full glass-strong border border-white/20 px-5 py-3 text-sm font-medium text-white shadow-2xl hover:bg-white/10 transition outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        >
+          <Play className="h-4 w-4" />
+          Tap to play
+        </button>
+      )}
 
       {/* Caption + dots */}
       <div
