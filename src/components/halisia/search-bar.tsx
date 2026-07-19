@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Search, Loader2, LocateFixed, MapPin } from "lucide-react";
 import { useMyLocation } from "@/hooks/use-my-location";
 
@@ -18,7 +18,9 @@ export function SearchBar({
   const [q, setQ] = useState("");
   const [showManual, setShowManual] = useState(false);
   const [manual, setManual] = useState("");
+  const [hydrated, setHydrated] = useState(false);
   const { request, simulate, loading: locating, error: locError } = useMyLocation();
+  useEffect(() => setHydrated(true), []);
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (q.trim()) onSearch(q.trim());
@@ -64,8 +66,8 @@ export function SearchBar({
         <button
           type="button"
           onClick={useMe}
-          disabled={locating}
-          title="Use my current location"
+          disabled={!hydrated || locating}
+          title={hydrated ? "Use my current location" : "Loading location controls…"}
           aria-label="Use my current location"
           data-testid="search-my-location"
           className={`${size === "lg" ? "h-11 px-4 text-xs" : "h-9 px-3 text-[11px]"} shrink-0 inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 text-foreground hover:bg-white/10 disabled:opacity-60 transition`}
