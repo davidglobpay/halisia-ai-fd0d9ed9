@@ -17,10 +17,7 @@ import appBgPoster from "../assets/bg/app-bg-poster.jpg.asset.json";
 
 function AppBackground() {
   return (
-    <div
-      aria-hidden="true"
-      className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
-    >
+    <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
       <video
         src={appBg.url}
         poster={appBgPoster.url}
@@ -41,8 +38,7 @@ function AppBackground() {
       <div
         className="absolute inset-0 mix-blend-color"
         style={{
-          background:
-            "linear-gradient(160deg, #071E3D 0%, #0B4F8A 55%, #00C2E8 100%)",
+          background: "linear-gradient(160deg, #071E3D 0%, #0B4F8A 55%, #00C2E8 100%)",
         }}
       />
       {/* Darkening vignette so foreground UI stays readable */}
