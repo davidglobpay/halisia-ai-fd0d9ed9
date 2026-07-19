@@ -173,10 +173,9 @@ async function fetchElevGrid(lat: number, lng: number, signal?: AbortSignal) {
 
   // Provider 1: Open-Topo-Data ASTER30m (primary)
   const tryOpenTopo = async (): Promise<number[]> => {
-    const res = await fetch(
-      `https://api.opentopodata.org/v1/aster30m?locations=${pts.join("|")}`,
-      { signal },
-    );
+    const res = await fetch(`https://api.opentopodata.org/v1/aster30m?locations=${pts.join("|")}`, {
+      signal,
+    });
     if (!res.ok) throw new Error(`opentopodata ${res.status}`);
     const j = (await res.json()) as { results?: Array<{ elevation: number | null }> };
     const flat = (j.results ?? []).map((r) => r.elevation ?? 0);
