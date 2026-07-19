@@ -17,6 +17,7 @@ test.describe("Hero video carousel", () => {
     await expect(mute).toHaveAttribute("aria-label", /unmute/i);
 
     // Toggle pause -> label flips to Play.
+    await page.waitForLoadState("networkidle");
     await playPause.click();
     await expect(playPause).toHaveAttribute("aria-label", /play/i);
     await expect(playPause).toHaveAttribute("aria-pressed", "true");
@@ -39,6 +40,21 @@ test.describe("Hero video carousel", () => {
   }) => {
     // Deny geolocation so the SearchBar surfaces the manual entry fallback.
     await context.clearPermissions();
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "geolocation", {
+        configurable: true,
+        value: {
+          getCurrentPosition: (_success: PositionCallback, error: PositionErrorCallback) =>
+            error({
+              code: 1,
+              message: "User denied Geolocation",
+              PERMISSION_DENIED: 1,
+            } as GeolocationPositionError),
+          watchPosition: () => 1,
+          clearWatch: () => {},
+        },
+      });
+    });
     await page.goto("/");
     await page.getByTestId("search-my-location").click();
     const manual = page.getByLabel(/enter latitude and longitude/i);

@@ -1,9 +1,30 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Geolocation denied fallback", () => {
-  test.beforeEach(async ({ context }) => {
-    // Explicitly deny geolocation so the SearchBar's fallback surfaces.
+  test.beforeEach(async ({ page, context }) => {
     await context.clearPermissions();
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "geolocation", {
+        configurable: true,
+        value: {
+          getCurrentPosition: (_success: PositionCallback, error: PositionErrorCallback) =>
+            error({
+              code: 1,
+              message: "User denied Geolocation",
+              PERMISSION_DENIED: 1,
+            } as GeolocationPositionError),
+          watchPosition: (_success: PositionCallback, error: PositionErrorCallback) => {
+            error({
+              code: 1,
+              message: "User denied Geolocation",
+              PERMISSION_DENIED: 1,
+            } as GeolocationPositionError);
+            return 7;
+          },
+          clearWatch: () => {},
+        },
+      });
+    });
   });
 
   test("landing page exposes manual lat,lng search when My Location is denied", async ({
