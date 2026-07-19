@@ -87,6 +87,7 @@ export function MapView({
   const [tileError, setTileError] = useState(false);
   const [tileRetryKey, setTileRetryKey] = useState(0);
   const [authFailed, setAuthFailed] = useState(false);
+  const hasPositionClass = /\b(absolute|relative|fixed|sticky)\b/.test(className);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -112,7 +113,6 @@ export function MapView({
           zoomControl: true,
           gestureHandling: "greedy",
           backgroundColor: theme === "light" ? "#f5f7fb" : "#0a1735",
-          tilt: 45,
         });
         setMapReady(true);
       })
@@ -260,7 +260,7 @@ export function MapView({
         if (!markerDraggable) return;
         onMarkerDrag?.({ lat: center.lat + 0.001, lng: center.lng + 0.001 });
       }}
-      className={`relative overflow-hidden ${className}`}
+      className={`${hasPositionClass ? "" : "relative"} h-full w-full overflow-hidden ${className}`}
     >
       <div
         ref={el}
