@@ -40,6 +40,7 @@ export function MapFrame({
 
   return (
     <div
+      data-testid="map-frame"
       className={`relative w-full ${mobileAspect} ${desktopAspect} md:min-h-[420px] rounded-2xl overflow-hidden border border-white/10 bg-[#050d24] ${className}`}
     >
       {children}
@@ -47,6 +48,7 @@ export function MapFrame({
         <button
           type="button"
           onClick={() => router.history.back()}
+          data-testid="map-back-button"
           className="absolute top-3 left-3 z-[401] inline-flex items-center gap-1.5 rounded-full glass-strong border border-white/15 px-3 py-1.5 text-xs font-medium text-foreground shadow-lg hover:bg-white/10 transition"
           aria-label="Go back to previous view"
         >

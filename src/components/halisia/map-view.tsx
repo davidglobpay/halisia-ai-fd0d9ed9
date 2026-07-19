@@ -1,6 +1,6 @@
 /// <reference types="google.maps" />
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
-import { Loader2, RefreshCw } from "lucide-react";
+import { AlertTriangle, Loader2, RefreshCw } from "lucide-react";
 import { loadGoogleMaps, resetGoogleMapsLoader } from "@/lib/google-maps-loader";
 
 const MapFallback = lazy(() => import("./map-fallback.internal"));
@@ -56,6 +56,8 @@ export function MapView({
   theme = "dark",
   overlays = [],
   onMapClick,
+  markerDraggable = false,
+  onMarkerDrag,
 }: {
   center?: MapLocation;
   zoom?: number;
@@ -65,10 +67,13 @@ export function MapView({
   theme?: MapTheme;
   overlays?: OverlayId[];
   onMapClick?: (loc: { lat: number; lng: number }) => void;
+  markerDraggable?: boolean;
+  onMarkerDrag?: (loc: { lat: number; lng: number }) => void;
 }) {
   const el = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const markerRef = useRef<google.maps.Marker | null>(null);
+  const markerDragListenerRef = useRef<google.maps.MapsEventListener | null>(null);
   const clickListenerRef = useRef<google.maps.MapsEventListener | null>(null);
   const overlayRefs = useRef<
     Partial<
@@ -79,6 +84,8 @@ export function MapView({
   const [mapReady, setMapReady] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
   const [loadAttempt, setLoadAttempt] = useState(0);
+  const [tileError, setTileError] = useState(false);
+  const [tileRetryKey, setTileRetryKey] = useState(0);
   const [authFailed, setAuthFailed] = useState<boolean>(
     typeof window !== "undefined" && !!window.__halisiaMapsAuthFailed,
   );
@@ -117,6 +124,7 @@ export function MapView({
     return () => {
       cancelled = true;
       clickListenerRef.current?.remove();
+      markerDragListenerRef.current?.remove();
       markerRef.current?.setMap(null);
       Object.values(overlayRefs.current).forEach((layer) => layer?.setMap(null));
       overlayRefs.current = {};
@@ -215,11 +223,14 @@ export function MapView({
   useEffect(() => {
     if (!mapReady || !mapRef.current || !window.google?.maps) return;
     markerRef.current?.setMap(null);
+    markerDragListenerRef.current?.remove();
+    markerDragListenerRef.current = null;
     if (marker) {
       markerRef.current = new window.google.maps.Marker({
         position: marker,
         map: mapRef.current,
         title: marker.label,
+        draggable: markerDraggable,
         icon: {
           path: window.google.maps.SymbolPath.CIRCLE,
           scale: 10,
@@ -229,11 +240,18 @@ export function MapView({
           strokeWeight: 3,
         },
       });
+      if (markerDraggable && onMarkerDrag) {
+        markerDragListenerRef.current = markerRef.current.addListener("dragend", () => {
+          const next = markerRef.current?.getPosition();
+          if (!next) return;
+          onMarkerDrag({ lat: next.lat(), lng: next.lng() });
+        });
+      }
     }
-  }, [mapReady, marker?.lat, marker?.lng, marker?.label]);
+  }, [mapReady, marker?.lat, marker?.lng, marker?.label, markerDraggable, onMarkerDrag]);
 
   return (
-    <div className={`relative overflow-hidden ${className}`}>
+    <div data-testid="map-view" className={`relative overflow-hidden ${className}`}>
       <div
         ref={el}
         className={`absolute inset-0 ${theme === "light" ? "bg-[#f5f7fb]" : "bg-[#0a1735]"}`}
@@ -248,6 +266,11 @@ export function MapView({
               label={marker?.label}
               theme={theme}
               mapType={mapType}
+              draggable={markerDraggable}
+              tileRetryKey={tileRetryKey}
+              onMarkerDrag={onMarkerDrag}
+              onMapClick={onMapClick}
+              onTileError={() => setTileError(true)}
             />
           </Suspense>
           <div
@@ -268,6 +291,29 @@ export function MapView({
           >
             <RefreshCw className="h-3 w-3" /> Retry Google
           </button>
+          {tileError && (
+            <div
+              role="alert"
+              data-testid="map-tile-fallback"
+              className="pointer-events-none absolute bottom-2 right-2 z-[500] max-w-[260px] rounded-2xl glass-strong border border-amber-glow/30 p-3 text-xs shadow-2xl"
+            >
+              <div className="flex items-start gap-2 text-amber-glow">
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <span>Some map tiles failed to load. Pan/zoom still works.</span>
+              </div>
+              <button
+                type="button"
+                data-testid="retry-map-tiles"
+                onClick={() => {
+                  setTileError(false);
+                  setTileRetryKey((n) => n + 1);
+                }}
+                className="pointer-events-auto mt-2 inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1 text-[11px] text-foreground hover:bg-white/15"
+              >
+                <RefreshCw className="h-3 w-3" /> Retry map tiles
+              </button>
+            </div>
+          )}
         </div>
       )}
       {!mapReady && !mapError && !authFailed && (
