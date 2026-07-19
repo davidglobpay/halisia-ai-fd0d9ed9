@@ -68,7 +68,8 @@ describe("useMyLocation", () => {
     // Jitter: ~11m north (0.0001 deg lat ≈ 11.1m) — below 50m
     act(() => watchCb?.(fakePosition(-1.29199, 36.8219)));
     expect(updates).toHaveLength(2);
-    const jump = Math.hypot(updates[1].lat - updates[0].lat, updates[1].lng - updates[0].lng) * 111_320;
+    const jump =
+      Math.hypot(updates[1].lat - updates[0].lat, updates[1].lng - updates[0].lng) * 111_320;
     // Smoothing (0.35 factor) keeps the applied jump strictly smaller than the raw jitter
     expect(jump).toBeLessThan(11);
     expect(jump).toBeGreaterThan(0);
@@ -82,8 +83,9 @@ describe("useMyLocation", () => {
     });
     act(() => watchCb?.(fakePosition(-1.2921, 36.8219)));
     // 200m jump north
-    act(() => watchCb?.(fakePosition(-1.29030, 36.8219)));
-    const applied = Math.hypot(updates[1].lat - updates[0].lat, updates[1].lng - updates[0].lng) * 111_320;
+    act(() => watchCb?.(fakePosition(-1.2903, 36.8219)));
+    const applied =
+      Math.hypot(updates[1].lat - updates[0].lat, updates[1].lng - updates[0].lng) * 111_320;
     expect(applied).toBeGreaterThan(150);
   });
 
