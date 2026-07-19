@@ -19,12 +19,45 @@ export function MapsDiagnostics({ lat, lng }: { lat: number; lng: number }) {
   const [d, setD] = useState<MapDiagnostics | null>(null);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
+  const [hydrated, setHydrated] = useState(false);
+  const [geoPerm, setGeoPerm] = useState<string>("unknown");
+  const [tileProvider, setTileProvider] = useState<string>("detecting…");
 
   useEffect(() => {
     const unsub = subscribeMapDiagnostics(setD);
     return () => {
       unsub();
     };
+  }, []);
+
+  useEffect(() => {
+    setHydrated(true);
+    // Tile provider detection
+    const detect = () => {
+      if (typeof window === "undefined") return;
+      const w = window as unknown as {
+        google?: { maps?: unknown };
+        __halisiaMapsAuthFailed?: boolean;
+      };
+      if (w.__halisiaMapsAuthFailed) setTileProvider("OpenStreetMap (Leaflet fallback)");
+      else if (w.google?.maps) setTileProvider("Google Maps");
+      else setTileProvider("Loading…");
+    };
+    detect();
+    const id = window.setInterval(detect, 1500);
+    // Geolocation permission state
+    if (typeof navigator !== "undefined" && "permissions" in navigator) {
+      navigator.permissions
+        .query({ name: "geolocation" as PermissionName })
+        .then((s) => {
+          setGeoPerm(s.state);
+          s.onchange = () => setGeoPerm(s.state);
+        })
+        .catch(() => setGeoPerm("unavailable"));
+    } else {
+      setGeoPerm("unsupported");
+    }
+    return () => window.clearInterval(id);
   }, []);
 
   if (!d) return null;
@@ -77,6 +110,29 @@ export function MapsDiagnostics({ lat, lng }: { lat: number; lng: number }) {
         <div className={`flex items-center gap-2 ${jsBadge.color}`}>
           <JsIcon className="h-4 w-4" aria-hidden="true" />
           <span>{jsBadge.label}</span>
+        </div>
+        <div className="text-muted-foreground">
+          Hydration:{" "}
+          <span className={hydrated ? "text-emerald-glow" : "text-amber-glow"}>
+            {hydrated ? "ready" : "pending"}
+          </span>
+        </div>
+        <div className="text-muted-foreground truncate">
+          Tile provider: <span className="text-foreground font-mono">{tileProvider}</span>
+        </div>
+        <div className="text-muted-foreground">
+          Geolocation:{" "}
+          <span
+            className={
+              geoPerm === "granted"
+                ? "text-emerald-glow"
+                : geoPerm === "denied"
+                  ? "text-destructive"
+                  : "text-amber-glow"
+            }
+          >
+            {geoPerm}
+          </span>
         </div>
         <div className="flex items-center gap-2 text-muted-foreground">
           <span className="font-mono">

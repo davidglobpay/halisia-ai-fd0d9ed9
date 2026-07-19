@@ -54,49 +54,65 @@
   --color-cyan-glow: var(--cyan-glow);
   --color-emerald-glow: var(--emerald-glow);
   --color-amber-glow: var(--amber-glow);
-  --font-display: "Space Grotesk", "SF Pro Display", ui-sans-serif, system-ui, sans-serif;
+  --color-flamingo: var(--flamingo);
+  --color-earth: var(--earth);
+  --color-cream: var(--cream);
+  --font-display: "Space Grotesk", "Sora", "SF Pro Display", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
 :root {
-  /* HALISIA is dark by default */
-  --radius: 1.25rem;
-  --background: oklch(0.14 0.05 265);
+  /* HALISIA — Kenya-inspired palette (dark by default).
+   * Background: Mount Kenya Midnight #071E3D
+   * Panel:      Indian Ocean Blue    #0B4F8A
+   * Accent:     Lake Turkana Cyan    #00C2E8
+   * Premium:    Savannah Gold        #D4A017
+   * Success:    Forest Green         #1E7A3B
+   * Land:       Rift Valley Earth    #8B5E3C
+   * Cream:      Acacia Cream         #F6F3EB
+   * Alert:      Flamingo Pink        #F26B8A
+   */
+  --radius: 1.375rem; /* 22px */
+  --background: oklch(0.22 0.08 255); /* #071E3D */
   --foreground: oklch(0.97 0.01 240);
-  --card: oklch(0.19 0.05 265 / 0.55);
+  --card: oklch(0.28 0.09 252 / 0.65);
   --card-foreground: oklch(0.97 0.01 240);
-  --popover: oklch(0.18 0.05 265);
+  --popover: oklch(0.25 0.08 253);
   --popover-foreground: oklch(0.97 0.01 240);
-  --primary: oklch(0.68 0.19 249);
-  --primary-foreground: oklch(0.12 0.05 265);
-  --secondary: oklch(0.24 0.05 265);
+  --primary: oklch(0.77 0.14 220); /* Lake Turkana Cyan #00C2E8 */
+  --primary-foreground: oklch(0.16 0.06 258);
+  --secondary: oklch(0.44 0.13 250); /* Indian Ocean Blue #0B4F8A */
   --secondary-foreground: oklch(0.97 0.01 240);
-  --muted: oklch(0.24 0.04 265);
-  --muted-foreground: oklch(0.72 0.03 250);
-  --accent: oklch(0.85 0.16 210);
-  --accent-foreground: oklch(0.12 0.05 265);
-  --destructive: oklch(0.65 0.24 25);
+  --muted: oklch(0.3 0.07 254);
+  --muted-foreground: oklch(0.78 0.03 235);
+  --accent: oklch(0.77 0.14 220); /* cyan = primary interactive */
+  --accent-foreground: oklch(0.16 0.06 258);
+  --destructive: oklch(0.55 0.19 22); /* #C62828 */
   --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.98 0.02 240 / 0.12);
-  --input: oklch(0.98 0.02 240 / 0.08);
-  --ring: oklch(0.68 0.19 249);
-  --electric: oklch(0.68 0.19 249); /* #2D8CFF */
-  --cyan-glow: oklch(0.87 0.14 208); /* #62E9FF */
-  --emerald-glow: oklch(0.78 0.18 165); /* #18E39A */
-  --amber-glow: oklch(0.83 0.15 82); /* #FFC857 */
+  --border: oklch(1 0 0 / 0.08);
+  --input: oklch(1 0 0 / 0.06);
+  --ring: oklch(0.77 0.14 220);
+  --electric: oklch(0.77 0.14 220);
+  --cyan-glow: oklch(0.77 0.14 220); /* Lake Turkana Cyan */
+  --emerald-glow: oklch(0.55 0.14 148); /* Forest Green #1E7A3B */
+  --amber-glow: oklch(0.75 0.14 82); /* Savannah Gold #D4A017 */
+  --flamingo: oklch(0.74 0.14 12); /* Flamingo Pink #F26B8A */
+  --earth: oklch(0.5 0.08 55); /* Rift Valley Earth #8B5E3C */
+  --cream: oklch(0.96 0.02 90); /* Acacia Cream #F6F3EB */
   --chart-1: oklch(0.68 0.19 249);
-  --chart-2: oklch(0.87 0.14 208);
-  --chart-3: oklch(0.78 0.18 165);
-  --chart-4: oklch(0.83 0.15 82);
-  --chart-5: oklch(0.65 0.24 25);
-  --sidebar: oklch(0.16 0.05 265);
+  --chart-2: oklch(0.77 0.14 220);
+  --chart-3: oklch(0.55 0.14 148);
+  --chart-4: oklch(0.75 0.14 82);
+  --chart-5: oklch(0.55 0.19 22);
+  --sidebar: oklch(0.24 0.08 255);
   --sidebar-foreground: oklch(0.97 0.01 240);
-  --sidebar-primary: oklch(0.68 0.19 249);
-  --sidebar-primary-foreground: oklch(0.12 0.05 265);
-  --sidebar-accent: oklch(0.24 0.05 265);
+  --sidebar-primary: oklch(0.77 0.14 220);
+  --sidebar-primary-foreground: oklch(0.16 0.06 258);
+  --sidebar-accent: oklch(0.3 0.07 254);
   --sidebar-accent-foreground: oklch(0.97 0.01 240);
   --sidebar-border: oklch(0.98 0.02 240 / 0.1);
-  --sidebar-ring: oklch(0.68 0.19 249);
+  --sidebar-ring: oklch(0.77 0.14 220);
 }
 
 .dark {
@@ -113,9 +129,9 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
     background-image:
-      radial-gradient(1200px 800px at 15% -10%, oklch(0.32 0.14 260 / 0.55), transparent 60%),
-      radial-gradient(900px 700px at 110% 20%, oklch(0.35 0.16 210 / 0.35), transparent 60%),
-      radial-gradient(1000px 900px at 50% 120%, oklch(0.28 0.12 275 / 0.5), transparent 60%);
+      radial-gradient(1200px 800px at 15% -10%, oklch(0.44 0.13 250 / 0.55), transparent 60%),
+      radial-gradient(900px 700px at 110% 20%, oklch(0.6 0.14 215 / 0.35), transparent 60%),
+      radial-gradient(1000px 900px at 50% 120%, oklch(0.28 0.1 258 / 0.55), transparent 60%);
     background-attachment: fixed;
     -webkit-font-smoothing: antialiased;
   }
@@ -130,36 +146,38 @@
 }
 
 @utility glass {
-  background: linear-gradient(135deg, oklch(1 0 0 / 0.08) 0%, oklch(1 0 0 / 0.03) 100%);
-  backdrop-filter: blur(28px) saturate(140%);
-  border: 1px solid oklch(1 0 0 / 0.12);
+  background: rgba(10, 25, 55, 0.65);
+  backdrop-filter: blur(24px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
   box-shadow:
-    0 1px 0 0 oklch(1 0 0 / 0.08) inset,
-    0 30px 60px -20px oklch(0 0 0 / 0.55);
+    0 1px 0 0 rgba(255, 255, 255, 0.06) inset,
+    0 20px 50px rgba(0, 0, 0, 0.35);
 }
 
 @utility glass-strong {
-  background: linear-gradient(135deg, oklch(1 0 0 / 0.12) 0%, oklch(1 0 0 / 0.05) 100%);
-  backdrop-filter: blur(40px) saturate(160%);
-  border: 1px solid oklch(1 0 0 / 0.16);
+  background: rgba(7, 30, 61, 0.78);
+  backdrop-filter: blur(32px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 22px;
   box-shadow:
-    0 1px 0 0 oklch(1 0 0 / 0.12) inset,
-    0 40px 80px -20px oklch(0 0 0 / 0.6);
+    0 1px 0 0 rgba(255, 255, 255, 0.1) inset,
+    0 30px 80px rgba(0, 0, 0, 0.5);
 }
 
 @utility glow-ring {
   box-shadow:
-    0 0 0 1px oklch(0.68 0.19 249 / 0.4),
-    0 0 40px oklch(0.68 0.19 249 / 0.35),
-    0 0 80px oklch(0.87 0.14 208 / 0.15);
+    0 0 0 1px oklch(0.77 0.14 220 / 0.5),
+    0 0 40px oklch(0.77 0.14 220 / 0.4),
+    0 0 80px oklch(0.77 0.14 220 / 0.2);
 }
 
 @utility text-gradient {
   background: linear-gradient(
     135deg,
     oklch(0.97 0.01 240) 0%,
-    oklch(0.87 0.14 208) 60%,
-    oklch(0.68 0.19 249) 100%
+    oklch(0.77 0.14 220) 55%,
+    oklch(0.44 0.13 250) 100%
   );
   -webkit-background-clip: text;
   background-clip: text;

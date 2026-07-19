@@ -1,5 +1,5 @@
 import { useRouter } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, RotateCw } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { MyLocationButton } from "./my-location-button";
 
@@ -21,6 +21,7 @@ export function MapFrame({
   desktopAspect = "md:aspect-[16/9]",
   className = "",
   onLocateMe,
+  onReload,
 }: {
   children: ReactNode;
   showBack?: boolean;
@@ -29,9 +30,11 @@ export function MapFrame({
   desktopAspect?: string;
   className?: string;
   onLocateMe?: (loc: { lat: number; lng: number; accuracy?: number }) => void;
+  onReload?: () => void;
 }) {
   const router = useRouter();
   const [canGoBack, setCanGoBack] = useState(false);
+  const [reloading, setReloading] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -57,6 +60,28 @@ export function MapFrame({
         </button>
       )}
       {onLocateMe && <MyLocationButton onLocate={onLocateMe} className="absolute top-3 right-3" />}
+      {onReload && (
+        <button
+          type="button"
+          onClick={async () => {
+            setReloading(true);
+            try {
+              await onReload();
+            } finally {
+              setTimeout(() => setReloading(false), 600);
+            }
+          }}
+          data-testid="map-reload-button"
+          className={`absolute z-[401] inline-flex items-center gap-1.5 rounded-full glass-strong border border-white/15 px-3 py-1.5 text-xs font-medium text-foreground shadow-lg hover:bg-white/10 transition ${
+            onLocateMe ? "top-14 right-3" : "top-3 right-3"
+          }`}
+          aria-label="Reload map tiles"
+          title="Reload map"
+        >
+          <RotateCw className={`h-3.5 w-3.5 text-accent ${reloading ? "animate-spin" : ""}`} />
+          Reload
+        </button>
+      )}
     </div>
   );
 }
