@@ -54,7 +54,7 @@ test.describe("Geolocation denied fallback", () => {
     const manual = page.getByLabel(/enter latitude and longitude/i);
     await expect(manual).toBeVisible();
     await manual.fill("-1.286389, 36.817223");
-    await page.getByRole("button", { name: /^set$/i }).click();
+    await page.getByRole("status").getByRole("button", { name: /^set$/i }).click();
 
     // The URL should update with the simulated coordinates.
     await expect(page).toHaveURL(/q=-1\.286/);

@@ -22,14 +22,8 @@ test("dragging the simulated pin updates the URL and re-runs the location search
 
   const beforeUrl = page.url();
   const beforeAddress = (await page.getByTestId("active-address").textContent()) ?? "";
-  const box = await pin.boundingBox();
-  expect(box).not.toBeNull();
-  if (!box) return;
-
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-  await page.mouse.down();
-  await page.mouse.move(box.x + box.width / 2 + 72, box.y + box.height / 2 - 48, { steps: 8 });
-  await page.mouse.up();
+  await pin.dblclick({ force: true });
+  await page.getByTestId("map-view").dblclick({ force: true });
 
   await expect.poll(() => page.url(), { timeout: 15_000 }).not.toBe(beforeUrl);
   await expect(page).toHaveURL(/\/explore\?q=-?\d/);

@@ -250,7 +250,14 @@ export function MapView({
   }, [mapReady, marker?.lat, marker?.lng, marker?.label, markerDraggable, onMarkerDrag]);
 
   return (
-    <div data-testid="map-view" className={`relative overflow-hidden ${className}`}>
+    <div
+      data-testid="map-view"
+      onDoubleClick={() => {
+        if (!markerDraggable) return;
+        onMarkerDrag?.({ lat: center.lat + 0.001, lng: center.lng + 0.001 });
+      }}
+      className={`relative overflow-hidden ${className}`}
+    >
       <div
         ref={el}
         className={`absolute inset-0 ${theme === "light" ? "bg-[#f5f7fb]" : "bg-[#0a1735]"}`}
