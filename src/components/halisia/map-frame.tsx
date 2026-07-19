@@ -78,9 +78,7 @@ export function MapFrame({
           aria-label="Reload map tiles"
           title="Reload map"
         >
-          <RotateCw
-            className={`h-3.5 w-3.5 text-accent ${reloading ? "animate-spin" : ""}`}
-          />
+          <RotateCw className={`h-3.5 w-3.5 text-accent ${reloading ? "animate-spin" : ""}`} />
           Reload
         </button>
       )}
