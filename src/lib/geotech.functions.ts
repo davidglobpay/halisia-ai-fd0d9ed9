@@ -162,13 +162,50 @@ async function fetchElevGrid(lat: number, lng: number, signal?: AbortSignal) {
       pts.push(
         `${(lat + (y - (n - 1) / 2) * step).toFixed(5)},${(lng + (x - (n - 1) / 2) * step).toFixed(5)}`,
       );
-  const res = await fetch(`https://api.opentopodata.org/v1/aster30m?locations=${pts.join("|")}`, {
-    signal,
-  });
-  if (!res.ok) throw new Error(`opentopodata ${res.status}`);
-  const j = (await res.json()) as { results?: Array<{ elevation: number | null }> };
-  const flat = (j.results ?? []).map((r) => r.elevation ?? 0);
-  if (flat.length !== n * n) throw new Error("bad elevation grid");
+  // Coordinate arrays for both providers
+  const lats: number[] = [];
+  const lngs: number[] = [];
+  for (let y = 0; y < n; y++)
+    for (let x = 0; x < n; x++) {
+      lats.push(lat + (y - (n - 1) / 2) * step);
+      lngs.push(lng + (x - (n - 1) / 2) * step);
+    }
+
+  // Provider 1: Open-Topo-Data ASTER30m (primary)
+  const tryOpenTopo = async (): Promise<number[]> => {
+    const res = await fetch(`https://api.opentopodata.org/v1/aster30m?locations=${pts.join("|")}`, {
+      signal,
+    });
+    if (!res.ok) throw new Error(`opentopodata ${res.status}`);
+    const j = (await res.json()) as { results?: Array<{ elevation: number | null }> };
+    const flat = (j.results ?? []).map((r) => r.elevation ?? 0);
+    if (flat.length !== n * n) throw new Error("bad elevation grid");
+    return flat;
+  };
+
+  // Provider 2: Open-Meteo Elevation API (fallback, different infrastructure)
+  const tryOpenMeteo = async (): Promise<number[]> => {
+    const res = await fetch(
+      `https://api.open-meteo.com/v1/elevation?latitude=${lats.join(",")}&longitude=${lngs.join(",")}`,
+      { signal },
+    );
+    if (!res.ok) throw new Error(`open-meteo ${res.status}`);
+    const j = (await res.json()) as { elevation?: number[] };
+    const flat = j.elevation ?? [];
+    if (flat.length !== n * n) throw new Error("bad elevation grid");
+    return flat;
+  };
+
+  let flat: number[];
+  try {
+    flat = await tryOpenTopo();
+  } catch (primaryErr) {
+    try {
+      flat = await tryOpenMeteo();
+    } catch {
+      throw primaryErr;
+    }
+  }
   const g: number[][] = [];
   for (let y = 0; y < n; y++) g.push(flat.slice(y * n, (y + 1) * n));
   return { grid: g, n, step };

@@ -7,7 +7,7 @@
     "dev": "vite dev",
     "build": "vite build",
     "typecheck": "tsgo --noEmit",
-    "build:dev": "bun run typecheck && bun run lint && vite build --mode development",
+    "build:dev": "bun run fix && bun run typecheck && bun run lint && vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
     "lint:fix": "prettier --write . && eslint . --fix",
