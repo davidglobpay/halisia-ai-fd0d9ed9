@@ -36,5 +36,13 @@ test.describe("Geolocation denied fallback", () => {
 
     // Manual fallback stays available for another attempt (still usable).
     await expect(page.getByTestId("search-my-location").first()).toBeVisible();
+
+    // The simulation controls should remain usable after permission denial.
+    await page.getByTestId("simulation-toggle").click();
+    await expect(page.getByTestId("simulation-toggle")).toHaveAttribute("aria-pressed", "true");
+    await page.getByLabel(/simulated latitude and longitude/i).fill("-1.300000, 36.820000");
+    await page.getByTestId("set-simulated-location").click();
+    await expect(page).toHaveURL(/q=-1\.300000%2C36\.820000|q=-1\.300000,36\.820000/);
+    await expect(page.getByTestId("active-address")).toContainText(/-1\.30000|My live location/i);
   });
 });
