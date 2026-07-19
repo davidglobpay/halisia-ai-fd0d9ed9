@@ -28,7 +28,9 @@ export function MyLocationButton({
       onClick={go}
       disabled={!hydrated || loading}
       aria-label="Center map on my current location"
-      title={!hydrated ? "Loading location controls…" : (error ?? "Center map on my current location")}
+      title={
+        !hydrated ? "Loading location controls…" : (error ?? "Center map on my current location")
+      }
       data-testid="map-my-location"
       className={`z-[401] inline-flex items-center gap-1.5 rounded-full glass-strong border border-white/15 px-3 py-1.5 text-xs font-medium text-foreground shadow-lg hover:bg-white/10 transition disabled:opacity-60 ${className}`}
     >
