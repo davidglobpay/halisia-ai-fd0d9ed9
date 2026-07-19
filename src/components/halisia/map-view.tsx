@@ -86,12 +86,11 @@ export function MapView({
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [tileError, setTileError] = useState(false);
   const [tileRetryKey, setTileRetryKey] = useState(0);
-  const [authFailed, setAuthFailed] = useState<boolean>(
-    typeof window !== "undefined" && !!window.__halisiaMapsAuthFailed,
-  );
+  const [authFailed, setAuthFailed] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (window.__halisiaMapsAuthFailed) setAuthFailed(true);
     const on = () => setAuthFailed(true);
     window.addEventListener("halisia:maps-auth-failed", on);
     return () => window.removeEventListener("halisia:maps-auth-failed", on);
