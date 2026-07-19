@@ -123,8 +123,9 @@ export function HeroVideoCarousel({ children }: { children?: React.ReactNode }) 
           }}
           src={reducedMotion ? undefined : clip.src}
           poster={clip.poster}
-          muted
+          muted={muted}
           playsInline
+          loop={CLIPS.length === 1}
           disablePictureInPicture
           controls={false}
           preload={idx === 0 ? "auto" : "none"}
