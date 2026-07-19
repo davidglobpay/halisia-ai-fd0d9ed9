@@ -509,13 +509,44 @@ export function KenyaCountyMap() {
               desktopAspect="md:aspect-[16/10] lg:aspect-[4/3]"
               className="rounded-[22px]"
             >
-              <div
-                ref={mapEl}
-                data-testid="county-map"
-                className="absolute inset-0 bg-[#0a1735]"
-                role="application"
-                aria-label="Interactive map of Kenya counties"
-              />
+              {useLeafletFallback ? (
+                <div
+                  data-testid="county-map"
+                  data-fallback="leaflet"
+                  className="absolute inset-0 bg-[#0a1735]"
+                  role="application"
+                  aria-label="Interactive map of Kenya counties (OpenStreetMap fallback)"
+                >
+                  <ClientOnly>
+                    <Suspense fallback={null}>
+                      <KenyaCountyLeaflet
+                        metric={metric}
+                        selected={selected}
+                        hoverCode={hoverCode}
+                        onHover={setHoverCode}
+                        onToggle={(code) => {
+                          toggleSelect(code);
+                          const el = cardRefs.current[code];
+                          if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+                        }}
+                      />
+                    </Suspense>
+                  </ClientOnly>
+                </div>
+              ) : (
+                <div
+                  ref={mapEl}
+                  data-testid="county-map"
+                  className="absolute inset-0 bg-[#0a1735]"
+                  role="application"
+                  aria-label="Interactive map of Kenya counties"
+                />
+              )}
+              {useLeafletFallback && (
+                <div className="pointer-events-none absolute right-3 top-3 z-[500] glass rounded-full px-2.5 py-1 text-[10px] uppercase tracking-widest text-white/70">
+                  OSM fallback
+                </div>
+              )}
             </MapFrame>
             {mapError && (
               <div
