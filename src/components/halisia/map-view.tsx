@@ -253,6 +253,10 @@ export function MapView({
     <div
       data-testid="map-view"
       onDoubleClick={() => {
+        if (typeof window === "undefined") return;
+        if (!(window as Window & { __halisiaEnableTestDrag?: boolean }).__halisiaEnableTestDrag) {
+          return;
+        }
         if (!markerDraggable) return;
         onMarkerDrag?.({ lat: center.lat + 0.001, lng: center.lng + 0.001 });
       }}

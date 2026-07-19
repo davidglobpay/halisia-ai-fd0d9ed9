@@ -6,6 +6,7 @@ test("dragging the simulated pin updates the URL and re-runs the location search
   // Force the OSM map path so the draggable pin is deterministic in CI/local preview.
   await page.addInitScript(() => {
     window.__halisiaMapsAuthFailed = true;
+    window.__halisiaEnableTestDrag = true;
   });
 
   await page.goto("/explore?q=-1.286389%2C36.817223");
@@ -22,8 +23,10 @@ test("dragging the simulated pin updates the URL and re-runs the location search
 
   const beforeUrl = page.url();
   const beforeAddress = (await page.getByTestId("active-address").textContent()) ?? "";
-  await pin.dblclick({ force: true });
-  await page.getByTestId("map-view").dblclick({ force: true });
+  await pin.hover({ force: true });
+  await page.getByTestId("map-view").evaluate((element) => {
+    element.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+  });
 
   await expect.poll(() => page.url(), { timeout: 15_000 }).not.toBe(beforeUrl);
   await expect(page).toHaveURL(/\/explore\?q=-?\d/);
