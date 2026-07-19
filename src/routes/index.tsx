@@ -71,22 +71,42 @@ function Landing() {
               <span className="h-px w-8 bg-white/30" />
             </div>
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-semibold leading-[1.02] tracking-tight text-white [text-shadow:0_2px_30px_oklch(0.14_0.05_260/0.7)]">
-              <span className="text-gradient">Understand a place</span>
+              <span className="text-gradient">Understand Every</span>
               <br />
-              before you commit.
+              County.
             </h1>
             <p className="mx-auto mt-5 max-w-xl text-base md:text-lg text-white/85 leading-relaxed [text-shadow:0_1px_16px_oklch(0.14_0.05_260/0.8)]">
-              HALISIA turns any location into trusted, human-centered intelligence — infrastructure,
-              environmental risk, community context and investment signals, with confidence you can
-              weigh.
+              Land. People. Infrastructure. Risk. Opportunity.
+              <br className="hidden sm:inline" /> Powered by Artificial Intelligence.
             </p>
 
             <div className="mx-auto mt-6 w-full max-w-xl">
               <SearchBar
                 size="lg"
-                placeholder="Try “Karen, Nairobi” or “Diani beach”"
+                placeholder="Search a county, town, parcel, LR number, ward, or coordinates…"
                 onSearch={(q) => navigate({ to: "/explore", search: { q } })}
               />
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                <Link
+                  to="/"
+                  hash="counties"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[oklch(0.77_0.14_220)] to-[oklch(0.44_0.13_250)] text-primary-foreground px-4 py-2 text-xs font-semibold shadow-[0_10px_30px_-10px_oklch(0.77_0.14_220/0.7)] hover:scale-[1.03] transition"
+                >
+                  Explore Counties <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+                <Link
+                  to="/explore"
+                  className="inline-flex items-center gap-1.5 rounded-full glass border border-white/20 px-4 py-2 text-xs font-medium text-white hover:bg-white/10 transition"
+                >
+                  View Intelligence Dashboard
+                </Link>
+                <a
+                  href="#how"
+                  className="inline-flex items-center gap-1.5 rounded-full glass border border-white/20 px-4 py-2 text-xs font-medium text-white hover:bg-white/10 transition"
+                >
+                  Watch Demo
+                </a>
+              </div>
               <div className="mt-3 hidden sm:flex flex-wrap justify-center gap-2 text-xs text-white/80">
                 <span className="mr-1">Popular:</span>
                 {["Kilimani", "Kiambu Road", "Nyali", "Naivasha", "Ruiru"].map((t) => (
