@@ -102,6 +102,17 @@ function Explore() {
     setLoading(true);
     setError(null);
     try {
+      // Detect "lat,lng" coordinate queries (from My Location or manual input)
+      const coord = query.match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/);
+      if (coord) {
+        const lat = parseFloat(coord[1]);
+        const lng = parseFloat(coord[2]);
+        if (Math.abs(lat) <= 90 && Math.abs(lng) <= 180) {
+          setLoading(false);
+          await inspectPoint(lat, lng);
+          return;
+        }
+      }
       const res = await geocodeAddress({ data: { query } });
       if (!res.ok) {
         setError(`Couldn't find “${query}” in Kenya. Try a nearby town or road.`);
