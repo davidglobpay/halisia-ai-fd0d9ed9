@@ -1,6 +1,7 @@
 import { useRouter } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
+import { MyLocationButton } from "./my-location-button";
 
 /**
  * Standard responsive wrapper for every map in the app.
@@ -19,6 +20,7 @@ export function MapFrame({
   mobileAspect = "aspect-[3/4]",
   desktopAspect = "md:aspect-[16/9]",
   className = "",
+  onLocateMe,
 }: {
   children: ReactNode;
   showBack?: boolean;
@@ -26,6 +28,7 @@ export function MapFrame({
   mobileAspect?: string;
   desktopAspect?: string;
   className?: string;
+  onLocateMe?: (loc: { lat: number; lng: number; accuracy?: number }) => void;
 }) {
   const router = useRouter();
   const [canGoBack, setCanGoBack] = useState(false);
@@ -50,6 +53,9 @@ export function MapFrame({
           <ArrowLeft className="h-3.5 w-3.5" />
           {backLabel}
         </button>
+      )}
+      {onLocateMe && (
+        <MyLocationButton onLocate={onLocateMe} className="absolute top-3 right-3" />
       )}
     </div>
   );
