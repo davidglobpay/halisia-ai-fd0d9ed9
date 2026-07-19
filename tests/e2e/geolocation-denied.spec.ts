@@ -46,6 +46,9 @@ test.describe("Geolocation denied fallback", () => {
 
   test("simulated pin remains usable inside /explore after denied permission", async ({ page }) => {
     await page.goto("/explore");
+    await expect(page.getByTestId("explore-page")).toHaveAttribute("data-hydrated", "true", {
+      timeout: 15_000,
+    });
     // Trigger My Location -> denied -> manual fallback appears.
     await page.getByTestId("search-my-location").first().click();
     const manual = page.getByLabel(/enter latitude and longitude/i);

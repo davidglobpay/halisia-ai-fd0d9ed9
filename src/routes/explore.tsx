@@ -100,12 +100,17 @@ function Explore() {
   const [simulationEnabled, setSimulationEnabled] = useState(false);
   const [simInput, setSimInput] = useState(formatCoordQuery(DEFAULT.lat, DEFAULT.lng));
   const [simError, setSimError] = useState<string | null>(null);
+  const [clientReady, setClientReady] = useState(false);
   const handledQueryRef = useRef<string | null>(null);
   const stopWatchRef = useRef<(() => void) | null>(null);
   const { watch, simulate, watching, simulated, error: liveLocationError } = useMyLocation();
 
   const toggleOverlay = (id: OverlayId) =>
     setOverlays((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+
+  useEffect(() => {
+    setClientReady(true);
+  }, []);
 
   const inspectPoint = useCallback(async (lat: number, lng: number) => {
     setLoc({ lat, lng, address: `${lat.toFixed(5)}, ${lng.toFixed(5)}` });
@@ -256,7 +261,7 @@ function Explore() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen" data-testid="explore-page" data-hydrated={clientReady}>
       <Navbar />
       <div className="pt-24 pb-10 mx-auto max-w-[1400px] px-4">
         <div className="max-w-3xl">

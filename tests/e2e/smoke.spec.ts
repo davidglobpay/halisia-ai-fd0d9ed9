@@ -12,8 +12,11 @@ test.describe("HALISIA core journey", () => {
 
     await page.getByRole("link", { name: /explore/i }).click();
     await expect(page).toHaveURL(/\/explore/);
+    await expect(page.getByTestId("explore-page")).toHaveAttribute("data-hydrated", "true", {
+      timeout: 15_000,
+    });
 
-    await expect(page.getByTestId("map-view")).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByTestId("map-frame")).toBeVisible({ timeout: 20_000 });
     await expect(page.getByTestId("active-address")).toBeVisible();
     await page.getByTestId("simulation-toggle").click();
     await page.getByLabel(/simulated latitude and longitude/i).fill("-1.292100,36.821900");
