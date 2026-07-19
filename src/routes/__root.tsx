@@ -12,6 +12,44 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import halisiaLogo from "../assets/halisia-logo.png.asset.json";
+import appBg from "../assets/bg/app-bg.mp4.asset.json";
+import appBgPoster from "../assets/bg/app-bg-poster.jpg.asset.json";
+
+function AppBackground() {
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-background"
+    >
+      <video
+        src={appBg.url}
+        poster={appBgPoster.url}
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        disablePictureInPicture
+        className="absolute inset-0 h-full w-full object-cover opacity-40 motion-reduce:hidden"
+      />
+      {/* Poster fallback for reduced motion */}
+      <div
+        className="absolute inset-0 hidden bg-cover bg-center opacity-40 motion-reduce:block"
+        style={{ backgroundImage: `url(${appBgPoster.url})` }}
+      />
+      {/* Palette blend into Ocean Intelligence gradient */}
+      <div
+        className="absolute inset-0 mix-blend-color"
+        style={{
+          background:
+            "linear-gradient(160deg, #071E3D 0%, #0B4F8A 55%, #00C2E8 100%)",
+        }}
+      />
+      {/* Darkening vignette so foreground UI stays readable */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(7,30,61,0.55)_0%,rgba(7,30,61,0.85)_60%,rgba(7,30,61,0.96)_100%)]" />
+    </div>
+  );
+}
 
 function NotFoundComponent() {
   return (
@@ -146,6 +184,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <AppBackground />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
     </QueryClientProvider>
