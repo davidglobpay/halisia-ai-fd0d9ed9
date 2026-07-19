@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { AIOrb } from "@/components/halisia/ai-orb";
 import { IntelligenceDashboard } from "@/components/halisia/intelligence-dashboard";
@@ -107,7 +107,7 @@ function Explore() {
   const toggleOverlay = (id: OverlayId) =>
     setOverlays((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
-  const inspectPoint = async (lat: number, lng: number) => {
+  const inspectPoint = useCallback(async (lat: number, lng: number) => {
     setLoc({ lat, lng, address: `${lat.toFixed(5)}, ${lng.toFixed(5)}` });
     setLoading(true);
     setGeoStage("Reverse-geocoding pin…");
@@ -120,7 +120,7 @@ function Explore() {
       setLoading(false);
       setGeoStage("");
     }
-  };
+  }, []);
 
   const stopLiveTracking = () => {
     stopWatchRef.current?.();
@@ -136,7 +136,7 @@ function Explore() {
     else setLoc({ lat, lng, address: `${lat.toFixed(5)}, ${lng.toFixed(5)}` });
   };
 
-  const runSearch = async (query: string) => {
+  const runSearch = useCallback(async (query: string) => {
     setLoading(true);
     setError(null);
     try {
@@ -163,7 +163,7 @@ function Explore() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [inspectPoint]);
 
   useEffect(() => {
     const next = q?.trim();
@@ -173,7 +173,7 @@ function Explore() {
       return;
     }
     void runSearch(next);
-  }, [q]);
+  }, [q, runSearch]);
 
   useEffect(() => () => stopLiveTracking(), []);
 

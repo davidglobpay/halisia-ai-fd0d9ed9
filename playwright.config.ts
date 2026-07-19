@@ -1,4 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
+import { existsSync } from "node:fs";
+
+const bundledChromium = "/chromium-1194/chrome-linux/chrome";
+const executablePath = existsSync(bundledChromium) ? bundledChromium : undefined;
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -10,6 +14,7 @@ export default defineConfig({
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:8080",
     viewport: { width: 1280, height: 900 },
     trace: "retain-on-failure",
+    launchOptions: executablePath ? { executablePath } : undefined,
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: process.env.PLAYWRIGHT_BASE_URL
