@@ -220,3 +220,16 @@
 @utility animate-pulse-glow {
   animation: pulse-glow 2.6s ease-in-out infinite;
 }
+
+/*
+ * A11y — ensure every keyboard-focusable element has a visible ring by
+ * default. Component-level focus-visible utilities still win because they
+ * are applied via Tailwind class order.
+ */
+@layer base {
+  :where(a, button, [role="button"], input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid #00c2e8;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}

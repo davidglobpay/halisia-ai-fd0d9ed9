@@ -15,6 +15,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import halisiaLogo from "../assets/halisia-logo.png.asset.json";
 import appBg from "../assets/bg/app-bg.mp4.asset.json";
 import appBgPoster from "../assets/bg/app-bg-poster.jpg.asset.json";
+import { PerfMonitor } from "../components/halisia/perf-monitor";
 
 function AppBackground() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -276,6 +277,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AppBackground />
+      <PerfMonitor />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
     </QueryClientProvider>
