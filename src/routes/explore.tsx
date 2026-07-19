@@ -102,13 +102,7 @@ function Explore() {
   const [simError, setSimError] = useState<string | null>(null);
   const handledQueryRef = useRef<string | null>(null);
   const stopWatchRef = useRef<(() => void) | null>(null);
-  const {
-    watch,
-    simulate,
-    watching,
-    simulated,
-    error: liveLocationError,
-  } = useMyLocation();
+  const { watch, simulate, watching, simulated, error: liveLocationError } = useMyLocation();
 
   const toggleOverlay = (id: OverlayId) =>
     setOverlays((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -331,7 +325,8 @@ function Explore() {
             </button>
             {(simError || liveLocationError || simulationEnabled || simulated || watching) && (
               <div className="sm:col-span-4 text-[11px] text-muted-foreground" role="status">
-                {simError || liveLocationError ||
+                {simError ||
+                  liveLocationError ||
                   (watching
                     ? "Live location tracking is updating the intelligence point."
                     : simulationEnabled || simulated

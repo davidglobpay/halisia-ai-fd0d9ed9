@@ -32,6 +32,8 @@ describe("MapFrame", () => {
     await waitFor(() => expect(screen.getByTestId("map-back-button")).toBeVisible());
     expect(screen.getByTestId("map-my-location")).toBeVisible();
     expect(screen.getByRole("button", { name: /go back to previous view/i })).toBeVisible();
-    expect(screen.getByRole("button", { name: /center map on my current location/i })).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: /center map on my current location/i }),
+    ).toBeVisible();
   });
 });

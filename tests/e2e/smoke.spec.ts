@@ -29,12 +29,15 @@ test.describe("HALISIA core journey", () => {
     await expect(page.getByRole("button", { name: /download pdf/i })).toBeVisible();
   });
 
-  test("failed fallback tiles show retry UI without hiding pan and zoom controls", async ({ page }) => {
+  test("failed fallback tiles show retry UI without hiding pan and zoom controls", async ({
+    page,
+  }) => {
     await page.addInitScript(() => {
       window.__halisiaMapsAuthFailed = true;
     });
-    await page.route(/basemaps\.cartocdn\.com|tile\.opentopomap\.org|server\.arcgisonline\.com/, (route) =>
-      route.abort(),
+    await page.route(
+      /basemaps\.cartocdn\.com|tile\.opentopomap\.org|server\.arcgisonline\.com/,
+      (route) => route.abort(),
     );
 
     await page.goto("/explore?q=-1.286389%2C36.817223");
