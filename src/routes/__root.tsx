@@ -109,8 +109,8 @@ function AppBackground() {
     const el = layerRef.current;
     if (!el) return;
     let tx = 0,
-      ty = 0,
-      cur = { x: 0, y: 0 };
+      ty = 0;
+    const cur = { x: 0, y: 0 };
     let raf = 0;
     const tick = () => {
       cur.x += (tx - cur.x) * 0.06;
