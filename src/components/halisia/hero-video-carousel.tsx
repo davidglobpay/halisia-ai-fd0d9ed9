@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Pause, Play, Volume2, VolumeX } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import hero1 from "@/assets/hero/hero1.mp4.asset.json";
 import hero2 from "@/assets/hero/hero2.mp4.asset.json";
@@ -36,6 +37,8 @@ export function HeroVideoCarousel({ children }: { children?: React.ReactNode }) 
   const videoRefs = useRef<Array<HTMLVideoElement | null>>([]);
   const regionRef = useRef<HTMLDivElement>(null);
   const reducedMotion = usePrefersReducedMotion();
+  const [paused, setPaused] = useState(false);
+  const [muted, setMuted] = useState(true);
 
   const go = useCallback((next: number) => {
     setI(((next % CLIPS.length) + CLIPS.length) % CLIPS.length);
@@ -46,7 +49,7 @@ export function HeroVideoCarousel({ children }: { children?: React.ReactNode }) 
   // Video playback / auto-advance. Skipped when the user prefers reduced motion —
   // the poster image stays as a static hero instead.
   useEffect(() => {
-    if (reducedMotion) return;
+    if (reducedMotion || paused) return;
     const el = videoRefs.current[i];
     if (!el) return;
     el.currentTime = 0;
@@ -58,7 +61,17 @@ export function HeroVideoCarousel({ children }: { children?: React.ReactNode }) 
       el.removeEventListener("ended", onEnd);
       window.clearTimeout(t);
     };
-  }, [i, reducedMotion]);
+  }, [i, reducedMotion, paused]);
+
+  // Reflect play/pause + mute onto the current video element imperatively so
+  // the browser <video> stays in sync with our React state.
+  useEffect(() => {
+    const el = videoRefs.current[i];
+    if (!el) return;
+    el.muted = muted;
+    if (paused) el.pause();
+    else if (!reducedMotion) el.play().catch(() => {});
+  }, [paused, muted, i, reducedMotion]);
 
   // Keyboard nav: ←/→ to step through clips when the carousel has focus.
   const onKey = (e: React.KeyboardEvent) => {
@@ -185,6 +198,30 @@ export function HeroVideoCarousel({ children }: { children?: React.ReactNode }) 
             />
           ))}
         </div>
+      </div>
+
+      {/* Playback controls (top-right) */}
+      <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={() => setPaused((p) => !p)}
+          aria-label={paused ? "Play hero video" : "Pause hero video"}
+          aria-pressed={paused}
+          data-testid="hero-playpause"
+          className="glass-strong border border-white/15 h-9 w-9 rounded-full inline-flex items-center justify-center text-white/90 hover:bg-white/10 transition outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        >
+          {paused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+        </button>
+        <button
+          type="button"
+          onClick={() => setMuted((m) => !m)}
+          aria-label={muted ? "Unmute hero video" : "Mute hero video"}
+          aria-pressed={!muted}
+          data-testid="hero-mute"
+          className="glass-strong border border-white/15 h-9 w-9 rounded-full inline-flex items-center justify-center text-white/90 hover:bg-white/10 transition outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        >
+          {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+        </button>
       </div>
     </div>
   );
