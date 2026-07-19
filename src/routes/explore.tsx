@@ -170,6 +170,10 @@ function Explore() {
               navigate({ to: "/explore", search: { q: query } });
               void runSearch(query);
             }}
+            onUseMyLocation={({ lat, lng }) => {
+              navigate({ to: "/explore", search: { q: `${lat.toFixed(6)},${lng.toFixed(6)}` } });
+              void inspectPoint(lat, lng);
+            }}
           />
           {error && <div className="mt-3 text-sm text-amber-glow">{error}</div>}
         </div>
