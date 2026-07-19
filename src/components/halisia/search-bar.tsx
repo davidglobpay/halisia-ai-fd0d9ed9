@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Loader2, LocateFixed } from "lucide-react";
+import { Search, Loader2, LocateFixed, MapPin } from "lucide-react";
 import { useMyLocation } from "@/hooks/use-my-location";
 
 export function SearchBar({
@@ -16,16 +16,33 @@ export function SearchBar({
   onUseMyLocation?: (loc: { lat: number; lng: number }) => void;
 }) {
   const [q, setQ] = useState("");
-  const { request, loading: locating, error: locError } = useMyLocation();
+  const [showManual, setShowManual] = useState(false);
+  const [manual, setManual] = useState("");
+  const { request, simulate, loading: locating, error: locError } = useMyLocation();
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (q.trim()) onSearch(q.trim());
   };
   const useMe = async () => {
     const v = await request();
-    if (!v) return;
+    if (!v) {
+      // Permission denied / unsupported — surface the manual entry fallback so
+      // "My location" stays useful.
+      setShowManual(true);
+      return;
+    }
     if (onUseMyLocation) onUseMyLocation({ lat: v.lat, lng: v.lng });
     else onSearch(`${v.lat.toFixed(6)},${v.lng.toFixed(6)}`);
+  };
+  const submitManual = (e: React.FormEvent) => {
+    e.preventDefault();
+    const m = manual.trim().match(/^(-?\d+(?:\.\d+)?)\s*[, ]\s*(-?\d+(?:\.\d+)?)$/);
+    if (!m) return;
+    const lat = parseFloat(m[1]);
+    const lng = parseFloat(m[2]);
+    simulate({ lat, lng });
+    if (onUseMyLocation) onUseMyLocation({ lat, lng });
+    else onSearch(`${lat.toFixed(6)},${lng.toFixed(6)}`);
   };
   return (
     <div className="w-full">
@@ -69,8 +86,37 @@ export function SearchBar({
         Analyze
       </button>
     </form>
-    {locError && (
-      <div className="mt-2 text-[11px] text-amber-glow px-3" role="status">{locError}</div>
+    {(locError || showManual) && (
+      <div className="mt-2 px-3" role="status" aria-live="polite">
+        {locError && (
+          <div className="text-[11px] text-amber-glow mb-1.5">
+            {locError} You can still enter coordinates manually below.
+          </div>
+        )}
+        <form
+          onSubmit={submitManual}
+          className="glass rounded-full flex items-center gap-2 px-2 py-1"
+        >
+          <MapPin className="h-3.5 w-3.5 text-accent shrink-0 ml-1" aria-hidden="true" />
+          <label htmlFor="manual-latlng" className="sr-only">
+            Enter latitude and longitude
+          </label>
+          <input
+            id="manual-latlng"
+            value={manual}
+            onChange={(e) => setManual(e.target.value)}
+            placeholder="lat, lng — e.g. -1.2921, 36.8219"
+            inputMode="decimal"
+            className="flex-1 bg-transparent outline-none text-[11px] placeholder:text-muted-foreground"
+          />
+          <button
+            type="submit"
+            className="rounded-full bg-white/10 hover:bg-white/20 text-[11px] px-3 py-1"
+          >
+            Set
+          </button>
+        </form>
+      </div>
     )}
     </div>
   );
