@@ -41,6 +41,7 @@ test.describe("Hero video carousel", () => {
     // Deny geolocation so the SearchBar surfaces the manual entry fallback.
     await context.clearPermissions();
     await page.addInitScript(() => {
+      window.__halisiaForceGeolocationDenied = true;
       Object.defineProperty(navigator, "geolocation", {
         configurable: true,
         value: {

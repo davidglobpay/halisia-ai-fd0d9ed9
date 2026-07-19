@@ -4,6 +4,7 @@ test.describe("Geolocation denied fallback", () => {
   test.beforeEach(async ({ page, context }) => {
     await context.clearPermissions();
     await page.addInitScript(() => {
+      window.__halisiaForceGeolocationDenied = true;
       Object.defineProperty(navigator, "geolocation", {
         configurable: true,
         value: {

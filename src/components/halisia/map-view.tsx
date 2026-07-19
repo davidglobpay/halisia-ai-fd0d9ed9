@@ -296,7 +296,7 @@ export function MapView({
             <div
               role="alert"
               data-testid="map-tile-fallback"
-              className="pointer-events-none absolute bottom-2 right-2 z-[500] max-w-[260px] rounded-2xl glass-strong border border-amber-glow/30 p-3 text-xs shadow-2xl"
+              className="pointer-events-auto absolute bottom-2 right-2 z-[700] max-w-[260px] rounded-2xl glass-strong border border-amber-glow/30 p-3 text-xs shadow-2xl"
             >
               <div className="flex items-start gap-2 text-amber-glow">
                 <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
@@ -309,7 +309,7 @@ export function MapView({
                   setTileError(false);
                   setTileRetryKey((n) => n + 1);
                 }}
-                className="pointer-events-auto mt-2 inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1 text-[11px] text-foreground hover:bg-white/15"
+                className="mt-2 inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1 text-[11px] text-foreground hover:bg-white/15"
               >
                 <RefreshCw className="h-3 w-3" /> Retry map tiles
               </button>

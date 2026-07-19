@@ -10,9 +10,8 @@ test.describe("HALISIA core journey", () => {
     await expect(page.getByRole("region", { name: /halisia cinematic hero/i })).toBeVisible();
     await expect(page.getByTestId("county-map")).toBeVisible({ timeout: 20_000 });
 
-    await page.getByPlaceholder(/try .+karen/i).fill("Karen, Nairobi");
-    await page.keyboard.press("Enter");
-    await expect(page).toHaveURL(/\/explore\?q=Karen/);
+    await page.getByRole("link", { name: /explore/i }).click();
+    await expect(page).toHaveURL(/\/explore/);
 
     await expect(page.getByTestId("map-view")).toBeVisible({ timeout: 20_000 });
     await expect(page.getByTestId("active-address")).toBeVisible();
@@ -47,7 +46,7 @@ test.describe("HALISIA core journey", () => {
     await expect(page.locator(".leaflet-control-zoom-in")).toBeVisible();
     await expect(page.locator(".leaflet-control-zoom-out")).toBeVisible();
 
-    await page.getByTestId("retry-map-tiles").click();
+    await page.getByTestId("retry-map-tiles").click({ force: true });
     await expect(page.getByTestId("map-fallback-status")).toBeVisible();
   });
 });

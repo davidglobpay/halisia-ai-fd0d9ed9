@@ -2,6 +2,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 export type MyLocation = { lat: number; lng: number; accuracy?: number };
 
+declare global {
+  interface Window {
+    __halisiaForceGeolocationDenied?: boolean;
+  }
+}
+
 export function useMyLocation() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -11,6 +17,10 @@ export function useMyLocation() {
   const watchId = useRef<number | null>(null);
 
   const request = useCallback(async (): Promise<MyLocation | null> => {
+    if (typeof window !== "undefined" && window.__halisiaForceGeolocationDenied) {
+      setError("User denied Geolocation");
+      return null;
+    }
     if (typeof window === "undefined" || !("geolocation" in navigator)) {
       setError("Geolocation is not supported by this device");
       return null;
@@ -43,6 +53,11 @@ export function useMyLocation() {
   // Real-time tracking with a smoothed update (averaged with previous value)
   // to avoid jitter from noisy GPS accuracy fluctuations.
   const watch = useCallback((onUpdate?: (v: MyLocation) => void) => {
+    if (typeof window !== "undefined" && window.__halisiaForceGeolocationDenied) {
+      setError("User denied Geolocation");
+      setWatching(false);
+      return () => {};
+    }
     if (typeof window === "undefined" || !("geolocation" in navigator)) {
       setError("Geolocation is not supported by this device");
       return () => {};
