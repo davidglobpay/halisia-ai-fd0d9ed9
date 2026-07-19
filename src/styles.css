@@ -125,15 +125,14 @@
   }
 
   body {
-    background-color: var(--color-background);
+    background-color: transparent;
     color: var(--color-foreground);
     font-family: var(--font-sans);
-    background-image:
-      radial-gradient(1200px 800px at 15% -10%, oklch(0.44 0.13 250 / 0.55), transparent 60%),
-      radial-gradient(900px 700px at 110% 20%, oklch(0.6 0.14 215 / 0.35), transparent 60%),
-      radial-gradient(1000px 900px at 50% 120%, oklch(0.28 0.1 258 / 0.55), transparent 60%);
-    background-attachment: fixed;
     -webkit-font-smoothing: antialiased;
+  }
+
+  html {
+    background-color: var(--color-background);
   }
 
   h1,
