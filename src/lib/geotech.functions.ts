@@ -463,7 +463,7 @@ export const getGeotechIntel = createServerFn({ method: "POST" })
         {
           label: "Open-Topo-Data ASTER30m",
           url: "https://www.opentopodata.org/datasets/aster/",
-          used: true,
+          used: gridInfo != null,
         },
         {
           label: "Open-Meteo Climate API",
