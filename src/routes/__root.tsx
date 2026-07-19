@@ -7,7 +7,8 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Pause, Play } from "lucide-react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -16,34 +17,131 @@ import appBg from "../assets/bg/app-bg.mp4.asset.json";
 import appBgPoster from "../assets/bg/app-bg-poster.jpg.asset.json";
 
 function AppBackground() {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  // User-controlled + auto (reduced-motion, battery saver, saveData, hidden tab).
+  const [userPaused, setUserPaused] = useState<boolean | null>(null);
+  const [autoPaused, setAutoPaused] = useState(false);
+
+  // Detect reduced-motion, low-power / save-data conditions, and tab visibility.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    // Read persisted preference
+    try {
+      const stored = window.localStorage.getItem("halisia:bg-video");
+      if (stored === "off") setUserPaused(true);
+      else if (stored === "on") setUserPaused(false);
+    } catch {
+      /* ignore */
+    }
+
+    const compute = async () => {
+      let paused = mql.matches || document.hidden;
+      // Save-Data (Data Saver / metered) — Network Information API
+      const conn = (
+        navigator as Navigator & {
+          connection?: { saveData?: boolean; effectiveType?: string };
+        }
+      ).connection;
+      if (conn?.saveData) paused = true;
+      if (conn?.effectiveType && /2g/.test(conn.effectiveType)) paused = true;
+      // Battery API — low battery + not charging = low power
+      try {
+        const getBattery = (
+          navigator as Navigator & {
+            getBattery?: () => Promise<{ level: number; charging: boolean }>;
+          }
+        ).getBattery;
+        if (getBattery) {
+          const b = await getBattery.call(navigator);
+          if (b.level < 0.2 && !b.charging) paused = true;
+        }
+      } catch {
+        /* ignore */
+      }
+      setAutoPaused(paused);
+    };
+    void compute();
+
+    const onVis = () => void compute();
+    const onMotion = () => void compute();
+    document.addEventListener("visibilitychange", onVis);
+    mql.addEventListener?.("change", onMotion);
+    return () => {
+      document.removeEventListener("visibilitychange", onVis);
+      mql.removeEventListener?.("change", onMotion);
+    };
+  }, []);
+
+  // Apply pause state to <video>
+  const shouldPlay = userPaused === true ? false : userPaused === false ? true : !autoPaused;
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (shouldPlay) {
+      v.play().catch(() => {
+        /* autoplay blocked — poster remains visible */
+      });
+    } else {
+      v.pause();
+    }
+  }, [shouldPlay]);
+
+  const toggle = () => {
+    const next = !shouldPlay;
+    setUserPaused(!next);
+    try {
+      window.localStorage.setItem("halisia:bg-video", next ? "on" : "off");
+    } catch {
+      /* ignore */
+    }
+  };
+
   return (
-    <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-      <video
-        src={appBg.url}
-        poster={appBgPoster.url}
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="auto"
-        disablePictureInPicture
-        className="absolute inset-0 h-full w-full object-cover opacity-40 motion-reduce:hidden"
-      />
-      {/* Poster fallback for reduced motion */}
+    <>
       <div
-        className="absolute inset-0 hidden bg-cover bg-center opacity-40 motion-reduce:block"
-        style={{ backgroundImage: `url(${appBgPoster.url})` }}
-      />
-      {/* Palette blend into Ocean Intelligence gradient */}
-      <div
-        className="absolute inset-0 mix-blend-color"
-        style={{
-          background: "linear-gradient(160deg, #071E3D 0%, #0B4F8A 55%, #00C2E8 100%)",
-        }}
-      />
-      {/* Darkening vignette so foreground UI stays readable */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(7,30,61,0.55)_0%,rgba(7,30,61,0.85)_60%,rgba(7,30,61,0.96)_100%)]" />
-    </div>
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
+      >
+        <video
+          ref={videoRef}
+          src={appBg.url}
+          poster={appBgPoster.url}
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          disablePictureInPicture
+          className={`absolute inset-0 h-full w-full object-cover opacity-40 transition-opacity ${shouldPlay ? "" : "hidden"}`}
+        />
+        {/* Poster fallback (reduced motion, low power, user-paused, autoplay blocked) */}
+        <div
+          className={`absolute inset-0 bg-cover bg-center opacity-40 ${shouldPlay ? "hidden" : ""}`}
+          style={{ backgroundImage: `url(${appBgPoster.url})` }}
+        />
+        {/* Palette blend into Ocean Intelligence gradient */}
+        <div
+          className="absolute inset-0 mix-blend-color"
+          style={{
+            background: "linear-gradient(160deg, #071E3D 0%, #0B4F8A 55%, #00C2E8 100%)",
+          }}
+        />
+        {/* Darkening vignette so foreground UI stays readable */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(7,30,61,0.55)_0%,rgba(7,30,61,0.85)_60%,rgba(7,30,61,0.96)_100%)]" />
+      </div>
+      {/* Accessible pause/play toggle for background video */}
+      <button
+        type="button"
+        onClick={toggle}
+        aria-label={shouldPlay ? "Pause background video" : "Play background video"}
+        aria-pressed={!shouldPlay}
+        title={shouldPlay ? "Pause background" : "Play background"}
+        className="fixed bottom-3 left-3 z-50 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/40 text-white/80 shadow-lg backdrop-blur transition hover:bg-black/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00C2E8]"
+      >
+        {shouldPlay ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+      </button>
+    </>
   );
 }
 
