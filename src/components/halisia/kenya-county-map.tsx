@@ -1,5 +1,6 @@
 /// <reference types="google.maps" />
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, lazy, Suspense } from "react";
+import { ClientOnly } from "@tanstack/react-router";
 import countiesData from "@/data/kenya-counties.json";
 import { loadGoogleMaps, resetGoogleMapsLoader } from "@/lib/google-maps-loader";
 import {
@@ -14,6 +15,7 @@ import { generateCountyComparePdf } from "@/lib/pdf-county-compare";
 import { CountyEmblem } from "@/components/halisia/county-emblem";
 import { dataConfidencePct } from "@/lib/county-profile";
 import { MapFrame } from "@/components/halisia/map-frame";
+const KenyaCountyLeaflet = lazy(() => import("./kenya-county-leaflet.internal"));
 import { Link } from "@tanstack/react-router";
 import {
   Activity,
@@ -152,6 +154,10 @@ export function KenyaCountyMap() {
   const [downloading, setDownloading] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
   const [mapError, setMapError] = useState<string | null>(null);
+  // Automatic fallback to a Leaflet/OSM map when Google Maps refuses the
+  // domain (RefererNotAllowedMapError, key disabled) or the loader throws.
+  // Keeps the "realistic map on mobile with full nav tools" always present.
+  const [useLeafletFallback, setUseLeafletFallback] = useState(false);
   const [mapReady, setMapReady] = useState(false);
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [copied, setCopied] = useState(false);
@@ -198,12 +204,17 @@ export function KenyaCountyMap() {
   // Init map + polygons
   useEffect(() => {
     let cancelled = false;
+    if (useLeafletFallback) return;
     setMapReady(false);
     setMapError(null);
     loadGoogleMaps()
       .then((g: typeof google) => {
         if (cancelled || !mapEl.current) return;
         setMapError(null);
+        if (typeof window !== "undefined" && window.__halisiaMapsAuthFailed) {
+          setUseLeafletFallback(true);
+          return;
+        }
         const map = new g.maps.Map(mapEl.current, {
           center: { lat: 0.5, lng: 37.9 },
           zoom: 6,
@@ -246,7 +257,10 @@ export function KenyaCountyMap() {
       })
       .catch((err: unknown) => {
         console.error(err);
-        if (!cancelled) setMapError("Couldn't load Google Maps. Check your connection and retry.");
+        if (!cancelled) {
+          // Silent fallback to Leaflet so mobile visitors always see a map.
+          setUseLeafletFallback(true);
+        }
       });
     return () => {
       cancelled = true;
@@ -254,7 +268,18 @@ export function KenyaCountyMap() {
       dataLayerRef.current = null;
       mapRef.current = null;
     };
-  }, [loadAttempt]);
+  }, [loadAttempt, useLeafletFallback]);
+
+  // React to gm_authFailure, which fires AFTER the Google Maps script loads
+  // and the domain is rejected. Google injects its own "Oops" overlay into
+  // the map container, so we swap to Leaflet the moment that happens.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.__halisiaMapsAuthFailed) setUseLeafletFallback(true);
+    const onFail = () => setUseLeafletFallback(true);
+    window.addEventListener("halisia:maps-auth-failed", onFail);
+    return () => window.removeEventListener("halisia:maps-auth-failed", onFail);
+  }, []);
 
   // Re-style whenever metric / hover / selection changes.
   useEffect(() => {
