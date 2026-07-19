@@ -12,6 +12,7 @@ import {
 } from "@/components/halisia/map-view";
 import { Navbar } from "@/components/halisia/navbar";
 import { SearchBar } from "@/components/halisia/search-bar";
+import { MyLocationButton } from "@/components/halisia/my-location-button";
 import { geocodeAddress } from "@/lib/geocode.functions";
 import { reverseGeocode } from "@/lib/reverse-geocode.functions";
 import { generateLocationDossier } from "@/lib/pdf-dossier";
@@ -102,6 +103,17 @@ function Explore() {
     setLoading(true);
     setError(null);
     try {
+      // Detect "lat,lng" coordinate queries (from My Location or manual input)
+      const coord = query.match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/);
+      if (coord) {
+        const lat = parseFloat(coord[1]);
+        const lng = parseFloat(coord[2]);
+        if (Math.abs(lat) <= 90 && Math.abs(lng) <= 180) {
+          setLoading(false);
+          await inspectPoint(lat, lng);
+          return;
+        }
+      }
       const res = await geocodeAddress({ data: { query } });
       if (!res.ok) {
         setError(`Couldn't find “${query}” in Kenya. Try a nearby town or road.`);
@@ -170,6 +182,10 @@ function Explore() {
               navigate({ to: "/explore", search: { q: query } });
               void runSearch(query);
             }}
+            onUseMyLocation={({ lat, lng }) => {
+              navigate({ to: "/explore", search: { q: `${lat.toFixed(6)},${lng.toFixed(6)}` } });
+              void inspectPoint(lat, lng);
+            }}
           />
           {error && <div className="mt-3 text-sm text-amber-glow">{error}</div>}
         </div>
@@ -190,6 +206,9 @@ function Explore() {
             {/* Overlay controls */}
             <div className="pointer-events-none absolute inset-0 p-4 flex flex-col justify-between">
               <div className="pointer-events-auto flex flex-wrap items-start gap-2 self-start">
+                <MyLocationButton
+                  onLocate={({ lat, lng }) => void inspectPoint(lat, lng)}
+                />
                 <div className="flex items-center gap-1 glass rounded-full p-1">
                   {[
                     { id: "roadmap" as const, icon: MapPinned, label: "Map" },
