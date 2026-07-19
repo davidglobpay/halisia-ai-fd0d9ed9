@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { AIOrb } from "@/components/halisia/ai-orb";
 import { IntelligenceDashboard } from "@/components/halisia/intelligence-dashboard";
@@ -12,7 +12,8 @@ import {
 } from "@/components/halisia/map-view";
 import { Navbar } from "@/components/halisia/navbar";
 import { SearchBar } from "@/components/halisia/search-bar";
-import { MyLocationButton } from "@/components/halisia/my-location-button";
+import { MapFrame } from "@/components/halisia/map-frame";
+import { useMyLocation } from "@/hooks/use-my-location";
 import { geocodeAddress } from "@/lib/geocode.functions";
 import { reverseGeocode } from "@/lib/reverse-geocode.functions";
 import { generateLocationDossier } from "@/lib/pdf-dossier";
@@ -35,6 +36,8 @@ import {
   Share2,
   Waves,
   TrendingUp,
+  LocateFixed,
+  MousePointer2,
 } from "lucide-react";
 
 const searchSchema = z.object({ q: z.string().optional() });
@@ -65,6 +68,20 @@ const DEFAULT: MapLocation & { address: string } = {
   address: "Nairobi, Kenya",
 };
 
+function formatCoordQuery(lat: number, lng: number) {
+  return `${lat.toFixed(6)},${lng.toFixed(6)}`;
+}
+
+function parseCoordQuery(value: string) {
+  const match = value.trim().match(/^(-?\d+(?:\.\d+)?)\s*[, ]\s*(-?\d+(?:\.\d+)?)$/);
+  if (!match) return null;
+  const lat = Number(match[1]);
+  const lng = Number(match[2]);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  if (Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
+  return { lat, lng };
+}
+
 function Explore() {
   const { q } = Route.useSearch();
   const navigate = useNavigate();
@@ -80,11 +97,22 @@ function Explore() {
   const [pdfStage, setPdfStage] = useState<string>("");
   const [pdfPct, setPdfPct] = useState<number>(0);
   const [geoStage, setGeoStage] = useState<string>("");
+  const [simulationEnabled, setSimulationEnabled] = useState(false);
+  const [simInput, setSimInput] = useState(formatCoordQuery(DEFAULT.lat, DEFAULT.lng));
+  const [simError, setSimError] = useState<string | null>(null);
+  const [clientReady, setClientReady] = useState(false);
+  const handledQueryRef = useRef<string | null>(null);
+  const stopWatchRef = useRef<(() => void) | null>(null);
+  const { watch, simulate, watching, simulated, error: liveLocationError } = useMyLocation();
 
   const toggleOverlay = (id: OverlayId) =>
     setOverlays((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
-  const inspectPoint = async (lat: number, lng: number) => {
+  useEffect(() => {
+    setClientReady(true);
+  }, []);
+
+  const inspectPoint = useCallback(async (lat: number, lng: number) => {
     setLoc({ lat, lng, address: `${lat.toFixed(5)}, ${lng.toFixed(5)}` });
     setLoading(true);
     setGeoStage("Reverse-geocoding pin…");
@@ -97,42 +125,105 @@ function Explore() {
       setLoading(false);
       setGeoStage("");
     }
+  }, []);
+
+  const stopLiveTracking = () => {
+    stopWatchRef.current?.();
+    stopWatchRef.current = null;
   };
 
-  const runSearch = async (query: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      // Detect "lat,lng" coordinate queries (from My Location or manual input)
-      const coord = query.match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/);
-      if (coord) {
-        const lat = parseFloat(coord[1]);
-        const lng = parseFloat(coord[2]);
-        if (Math.abs(lat) <= 90 && Math.abs(lng) <= 180) {
-          setLoading(false);
-          await inspectPoint(lat, lng);
-          return;
-        }
-      }
-      const res = await geocodeAddress({ data: { query } });
-      if (!res.ok) {
-        setError(`Couldn't find “${query}” in Kenya. Try a nearby town or road.`);
-      } else {
-        setLoc({ lat: res.lat, lng: res.lng, address: res.address });
-      }
-    } catch (e) {
-      console.error(e);
-      setError("Search failed. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+  const selectCoordinates = async (lat: number, lng: number, reverse = true) => {
+    const query = formatCoordQuery(lat, lng);
+    handledQueryRef.current = query;
+    setSimInput(query);
+    navigate({ to: "/explore", search: { q: query }, replace: true });
+    if (reverse) await inspectPoint(lat, lng);
+    else setLoc({ lat, lng, address: `${lat.toFixed(5)}, ${lng.toFixed(5)}` });
   };
+
+  const runSearch = useCallback(
+    async (query: string) => {
+      setLoading(true);
+      setError(null);
+      try {
+        // Detect "lat,lng" coordinate queries (from My Location or manual input)
+        const coord = query.match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/);
+        if (coord) {
+          const lat = parseFloat(coord[1]);
+          const lng = parseFloat(coord[2]);
+          if (Math.abs(lat) <= 90 && Math.abs(lng) <= 180) {
+            setLoading(false);
+            await inspectPoint(lat, lng);
+            return;
+          }
+        }
+        const res = await geocodeAddress({ data: { query } });
+        if (!res.ok) {
+          setError(`Couldn't find “${query}” in Kenya. Try a nearby town or road.`);
+        } else {
+          setLoc({ lat: res.lat, lng: res.lng, address: res.address });
+        }
+      } catch (e) {
+        console.error(e);
+        setError("Search failed. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [inspectPoint],
+  );
 
   useEffect(() => {
-    if (q && q.trim()) void runSearch(q);
-  }, [q]);
+    const next = q?.trim();
+    if (!next) return;
+    if (handledQueryRef.current === next) {
+      handledQueryRef.current = null;
+      return;
+    }
+    void runSearch(next);
+  }, [q, runSearch]);
+
+  useEffect(() => () => stopLiveTracking(), []);
 
   const active = loc ?? DEFAULT;
+
+  const applySimulatedInput = () => {
+    const parsed = parseCoordQuery(simInput);
+    if (!parsed) {
+      setSimError("Enter valid latitude and longitude, for example -1.292100,36.821900.");
+      return;
+    }
+    setSimError(null);
+    stopLiveTracking();
+    setSimulationEnabled(true);
+    simulate(parsed);
+    void selectCoordinates(parsed.lat, parsed.lng);
+  };
+
+  const startLiveTracking = () => {
+    setSimError(null);
+    setSimulationEnabled(false);
+    stopLiveTracking();
+    const stop = watch((next) => {
+      const query = formatCoordQuery(next.lat, next.lng);
+      handledQueryRef.current = query;
+      setSimInput(query);
+      navigate({ to: "/explore", search: { q: query }, replace: true });
+      setLoc({
+        lat: next.lat,
+        lng: next.lng,
+        address: `My live location${next.accuracy ? ` · ±${Math.round(next.accuracy)} m` : ""}`,
+      });
+    });
+    stopWatchRef.current = stop;
+  };
+
+  const handleMarkerDrag = ({ lat, lng }: { lat: number; lng: number }) => {
+    stopLiveTracking();
+    setSimulationEnabled(true);
+    simulate({ lat, lng });
+    void selectCoordinates(lat, lng);
+  };
 
   const downloadDossier = async () => {
     setDownloading(true);
@@ -170,7 +261,7 @@ function Explore() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen" data-testid="explore-page" data-hydrated={clientReady}>
       <Navbar />
       <div className="pt-24 pb-10 mx-auto max-w-[1400px] px-4">
         <div className="max-w-3xl">
@@ -179,34 +270,107 @@ function Explore() {
             loading={loading}
             placeholder="Search a town, road, plot number, coordinates…"
             onSearch={(query) => {
-              navigate({ to: "/explore", search: { q: query } });
-              void runSearch(query);
+              const next = query.trim();
+              navigate({ to: "/explore", search: { q: next } });
+              if (next === q?.trim()) void runSearch(next);
             }}
             onUseMyLocation={({ lat, lng }) => {
-              navigate({ to: "/explore", search: { q: `${lat.toFixed(6)},${lng.toFixed(6)}` } });
-              void inspectPoint(lat, lng);
+              void selectCoordinates(lat, lng);
             }}
           />
+          <div
+            data-testid="sim-location-panel"
+            className="mt-3 grid gap-2 rounded-2xl border border-white/10 bg-white/[0.04] p-3 sm:grid-cols-[auto_1fr_auto_auto] sm:items-center"
+          >
+            <button
+              type="button"
+              data-testid="simulation-toggle"
+              aria-pressed={simulationEnabled}
+              onClick={() => {
+                const next = !simulationEnabled;
+                setSimulationEnabled(next);
+                if (next) {
+                  stopLiveTracking();
+                  setSimInput(formatCoordQuery(active.lat, active.lng));
+                  simulate({ lat: active.lat, lng: active.lng });
+                }
+              }}
+              className={`inline-flex items-center justify-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium transition ${
+                simulationEnabled
+                  ? "bg-accent/20 text-accent"
+                  : "glass text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <MousePointer2 className="h-3.5 w-3.5" /> Simulated pin
+            </button>
+            <label className="min-w-0">
+              <span className="sr-only">Simulated latitude and longitude</span>
+              <input
+                value={simInput}
+                onChange={(event) => setSimInput(event.target.value)}
+                inputMode="decimal"
+                aria-label="Simulated latitude and longitude"
+                className="h-10 w-full rounded-full border border-white/10 bg-black/15 px-3 text-xs outline-none placeholder:text-muted-foreground focus:border-accent"
+                placeholder="-1.292100,36.821900"
+              />
+            </label>
+            <button
+              type="button"
+              data-testid="set-simulated-location"
+              onClick={applySimulatedInput}
+              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-full bg-white/10 px-3 text-xs font-medium hover:bg-white/15"
+            >
+              <MapPinned className="h-3.5 w-3.5 text-accent" /> Set
+            </button>
+            <button
+              type="button"
+              data-testid="start-live-location"
+              onClick={watching ? stopLiveTracking : startLiveTracking}
+              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-full glass px-3 text-xs font-medium hover:bg-white/10"
+            >
+              <LocateFixed className="h-3.5 w-3.5 text-accent" />
+              {watching ? "Stop live" : "Live GPS"}
+            </button>
+            {(simError || liveLocationError || simulationEnabled || simulated || watching) && (
+              <div className="sm:col-span-4 text-[11px] text-muted-foreground" role="status">
+                {simError ||
+                  liveLocationError ||
+                  (watching
+                    ? "Live location tracking is updating the intelligence point."
+                    : simulationEnabled || simulated
+                      ? "Drag the cyan pin or type coordinates to preview location dynamics."
+                      : "")}
+              </div>
+            )}
+          </div>
           {error && <div className="mt-3 text-sm text-amber-glow">{error}</div>}
         </div>
 
         <div className="mt-6 grid lg:grid-cols-[1fr_420px] gap-4">
           {/* MAP */}
           <div className="glass-strong rounded-3xl p-2 relative">
-            <MapView
-              center={{ lat: active.lat, lng: active.lng }}
-              marker={{ lat: active.lat, lng: active.lng, label: active.address }}
-              zoom={14}
-              mapType={mapType}
-              theme={theme}
-              overlays={overlays}
-              onMapClick={({ lat, lng }) => void inspectPoint(lat, lng)}
-              className="rounded-[22px] h-[70vh] min-h-[520px]"
-            />
+            <MapFrame
+              mobileAspect="aspect-[3/4]"
+              desktopAspect="md:aspect-[16/10] lg:aspect-[4/3]"
+              className="rounded-[22px]"
+              onLocateMe={({ lat, lng }) => void selectCoordinates(lat, lng)}
+            >
+              <MapView
+                center={{ lat: active.lat, lng: active.lng }}
+                marker={{ lat: active.lat, lng: active.lng, label: active.address }}
+                zoom={14}
+                mapType={mapType}
+                theme={theme}
+                overlays={overlays}
+                onMapClick={({ lat, lng }) => void selectCoordinates(lat, lng)}
+                markerDraggable={simulationEnabled}
+                onMarkerDrag={handleMarkerDrag}
+                className="absolute inset-0 rounded-[22px]"
+              />
+            </MapFrame>
             {/* Overlay controls */}
             <div className="pointer-events-none absolute inset-0 p-4 flex flex-col justify-between">
               <div className="pointer-events-auto flex flex-wrap items-start gap-2 self-start">
-                <MyLocationButton onLocate={({ lat, lng }) => void inspectPoint(lat, lng)} />
                 <div className="flex items-center gap-1 glass rounded-full p-1">
                   {[
                     { id: "roadmap" as const, icon: MapPinned, label: "Map" },

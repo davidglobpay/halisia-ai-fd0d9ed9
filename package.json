@@ -15,8 +15,7 @@
     "format:check": "prettier --check .",
     "prepare": "git config core.hooksPath .githooks || true",
     "format": "prettier --write .",
-    "test:e2e": "playwright test"
-    ,
+    "test:e2e": "playwright test",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest"
   },
@@ -90,6 +89,7 @@
   "devDependencies": {
     "@eslint/js": "^9.32.0",
     "@lovable.dev/vite-tanstack-config": "2.7.6",
+    "@playwright/test": "^1.61.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/google.maps": "^3.65.2",
