@@ -5,8 +5,15 @@ import hero1 from "@/assets/hero/hero1.mp4.asset.json";
 import hero2 from "@/assets/hero/hero2.mp4.asset.json";
 import hero1Poster from "@/assets/hero/hero1-poster.jpg.asset.json";
 import hero2Poster from "@/assets/hero/hero2-poster.jpg.asset.json";
+import coolacloy from "@/assets/hero/coolacloy.mp4.asset.json";
+import coolacloyPoster from "@/assets/hero/coolacloy-poster.jpg.asset.json";
 
 const CLIPS = [
+  {
+    src: coolacloy.url,
+    poster: coolacloyPoster.url,
+    caption: "Kenya, rendered in intelligence.",
+  },
   {
     src: hero1.url,
     poster: hero1Poster.url,
@@ -153,11 +160,11 @@ export function HeroVideoCarousel({ children }: { children?: React.ReactNode }) 
         className="absolute inset-0 mix-blend-color"
         style={{
           background:
-            "linear-gradient(135deg, oklch(0.32 0.14 260 / 0.55), oklch(0.55 0.18 220 / 0.35) 55%, oklch(0.75 0.16 190 / 0.45))",
+            "linear-gradient(160deg, #071E3D 0%, #0B4F8A 55%, #00C2E8 100%)",
         }}
       />
       {/* Depth vignette + bottom fade into the page */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_35%,oklch(0.14_0.05_260/0.55)_75%,oklch(0.10_0.04_260/0.95)_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(7,30,61,0.6)_75%,rgba(7,30,61,0.95)_100%)]" />
       <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-background" />
       {/* Subtle scanline / grid for tech texture */}
       <div
