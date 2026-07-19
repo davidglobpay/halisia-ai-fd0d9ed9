@@ -159,8 +159,7 @@ export function HeroVideoCarousel({ children }: { children?: React.ReactNode }) 
       <div
         className="absolute inset-0 mix-blend-color"
         style={{
-          background:
-            "linear-gradient(160deg, #071E3D 0%, #0B4F8A 55%, #00C2E8 100%)",
+          background: "linear-gradient(160deg, #071E3D 0%, #0B4F8A 55%, #00C2E8 100%)",
         }}
       />
       {/* Depth vignette + bottom fade into the page */}
