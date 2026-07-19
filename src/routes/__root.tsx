@@ -14,11 +14,15 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import halisiaLogo from "../assets/halisia-logo.png.asset.json";
 import appBg from "../assets/bg/app-bg.mp4.asset.json";
+import appBg2 from "../assets/bg/app-bg-2.mp4.asset.json";
 import appBgPoster from "../assets/bg/app-bg-poster.jpg.asset.json";
 import { PerfMonitor } from "../components/halisia/perf-monitor";
 
 function AppBackground() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const videoRef2 = useRef<HTMLVideoElement | null>(null);
+  const layerRef = useRef<HTMLDivElement | null>(null);
+  const [activeClip, setActiveClip] = useState(0);
   // User-controlled + auto (reduced-motion, battery saver, saveData, hidden tab).
   const [userPaused, setUserPaused] = useState<boolean | null>(null);
   const [autoPaused, setAutoPaused] = useState(false);
@@ -78,15 +82,62 @@ function AppBackground() {
   // Apply pause state to <video>
   const shouldPlay = userPaused === true ? false : userPaused === false ? true : !autoPaused;
   useEffect(() => {
-    const v = videoRef.current;
-    if (!v) return;
-    if (shouldPlay) {
-      v.play().catch(() => {
-        /* autoplay blocked — poster remains visible */
-      });
-    } else {
-      v.pause();
-    }
+    const vids = [videoRef.current, videoRef2.current];
+    vids.forEach((v) => {
+      if (!v) return;
+      if (shouldPlay) {
+        v.play().catch(() => {
+          /* autoplay blocked — poster remains visible */
+        });
+      } else {
+        v.pause();
+      }
+    });
+  }, [shouldPlay]);
+
+  // Cross-fade between the two background clips every 18s for a living feel.
+  useEffect(() => {
+    if (!shouldPlay) return;
+    const t = window.setInterval(() => setActiveClip((n) => (n + 1) % 2), 18000);
+    return () => window.clearInterval(t);
+  }, [shouldPlay]);
+
+  // Motion-sensitive parallax: subtle drift + zoom in response to pointer
+  // and device orientation. Skipped when reduced motion / paused.
+  useEffect(() => {
+    if (!shouldPlay) return;
+    const el = layerRef.current;
+    if (!el) return;
+    let tx = 0,
+      ty = 0,
+      cur = { x: 0, y: 0 };
+    let raf = 0;
+    const tick = () => {
+      cur.x += (tx - cur.x) * 0.06;
+      cur.y += (ty - cur.y) * 0.06;
+      el.style.transform = `scale(1.08) translate3d(${cur.x.toFixed(2)}px, ${cur.y.toFixed(2)}px, 0)`;
+      raf = window.requestAnimationFrame(tick);
+    };
+    raf = window.requestAnimationFrame(tick);
+    const onMove = (e: PointerEvent) => {
+      const nx = (e.clientX / window.innerWidth - 0.5) * 2;
+      const ny = (e.clientY / window.innerHeight - 0.5) * 2;
+      tx = -nx * 24;
+      ty = -ny * 24;
+    };
+    const onOrient = (e: DeviceOrientationEvent) => {
+      const g = e.gamma ?? 0; // left/right
+      const b = e.beta ?? 0; // front/back
+      tx = Math.max(-30, Math.min(30, -g * 0.6));
+      ty = Math.max(-30, Math.min(30, -(b - 45) * 0.4));
+    };
+    window.addEventListener("pointermove", onMove, { passive: true });
+    window.addEventListener("deviceorientation", onOrient);
+    return () => {
+      window.cancelAnimationFrame(raf);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("deviceorientation", onOrient);
+    };
   }, [shouldPlay]);
 
   const toggle = () => {
@@ -102,31 +153,39 @@ function AppBackground() {
   return (
     <>
       <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-        <video
-          ref={videoRef}
-          src={appBg.url}
-          poster={appBgPoster.url}
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          disablePictureInPicture
-          className={`absolute inset-0 h-full w-full object-cover opacity-40 transition-opacity ${shouldPlay ? "" : "hidden"}`}
-        />
+        <div ref={layerRef} className="absolute inset-0 will-change-transform">
+          <video
+            ref={videoRef}
+            src={appBg.url}
+            poster={appBgPoster.url}
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            disablePictureInPicture
+            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-[1600ms] ${shouldPlay ? (activeClip === 0 ? "opacity-70" : "opacity-0") : "hidden"}`}
+          />
+          <video
+            ref={videoRef2}
+            src={appBg2.url}
+            poster={appBgPoster.url}
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            disablePictureInPicture
+            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-[1600ms] ${shouldPlay ? (activeClip === 1 ? "opacity-70" : "opacity-0") : "hidden"}`}
+          />
+        </div>
         {/* Poster fallback (reduced motion, low power, user-paused, autoplay blocked) */}
         <div
-          className={`absolute inset-0 bg-cover bg-center opacity-40 ${shouldPlay ? "hidden" : ""}`}
+          className={`absolute inset-0 bg-cover bg-center opacity-60 ${shouldPlay ? "hidden" : ""}`}
           style={{ backgroundImage: `url(${appBgPoster.url})` }}
         />
-        {/* Palette blend into Ocean Intelligence gradient */}
-        <div
-          className="absolute inset-0 mix-blend-color"
-          style={{
-            background: "linear-gradient(160deg, #071E3D 0%, #0B4F8A 55%, #00C2E8 100%)",
-          }}
-        />
-        {/* Darkening vignette so foreground UI stays readable */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(7,30,61,0.55)_0%,rgba(7,30,61,0.85)_60%,rgba(7,30,61,0.96)_100%)]" />
+        {/* Cinematic readability layer — dark vignette + gentle Halisia tint at edges
+            only, so the original footage color stays vibrant in the center. */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(7,30,61,0.15)_0%,rgba(7,30,61,0.55)_55%,rgba(7,30,61,0.9)_100%)]" />
+        <div className="pointer-events-none absolute inset-0 mix-blend-overlay opacity-40 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),transparent_30%,transparent_70%,rgba(0,0,0,0.5))]" />
       </div>
       {/* Accessible pause/play toggle for background video */}
       <button

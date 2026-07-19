@@ -155,15 +155,11 @@ export function HeroVideoCarousel({ children }: { children?: React.ReactNode }) 
         />
       ))}
 
-      {/* Cinematic color blend into the Halisia palette */}
-      <div
-        className="absolute inset-0 mix-blend-color"
-        style={{
-          background: "linear-gradient(160deg, #071E3D 0%, #0B4F8A 55%, #00C2E8 100%)",
-        }}
-      />
-      {/* Depth vignette + bottom fade into the page */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(7,30,61,0.6)_75%,rgba(7,30,61,0.95)_100%)]" />
+      {/* Cinematic depth vignette — preserves the original video color while
+          giving the hero a Hollywood-style falloff toward the frame edges. */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(0,0,0,0.35)_78%,rgba(7,30,61,0.85)_100%)]" />
+      {/* Subtle cinematic contrast lift without recoloring the footage. */}
+      <div className="pointer-events-none absolute inset-0 mix-blend-overlay opacity-30 bg-[linear-gradient(180deg,rgba(255,255,255,0.15),transparent_25%,transparent_75%,rgba(0,0,0,0.35))]" />
       <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-background" />
       {/* Subtle scanline / grid for tech texture */}
       <div
