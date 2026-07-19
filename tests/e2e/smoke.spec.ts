@@ -11,7 +11,7 @@ test.describe("HALISIA core journey", () => {
     await expect(page.getByTestId("county-map")).toBeVisible({ timeout: 20_000 });
 
     await page.getByPlaceholder(/try .+karen/i).fill("Karen, Nairobi");
-    await page.getByRole("button", { name: /^analyze$/i }).click();
+    await page.keyboard.press("Enter");
     await expect(page).toHaveURL(/\/explore\?q=Karen/);
 
     await expect(page.getByTestId("map-view")).toBeVisible({ timeout: 20_000 });
@@ -41,13 +41,13 @@ test.describe("HALISIA core journey", () => {
     );
 
     await page.goto("/explore?q=-1.286389%2C36.817223");
-    await expect(page.getByTestId("map-fallback-osm")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId("map-fallback-status")).toBeVisible({ timeout: 15_000 });
     await expect(page.getByTestId("map-tile-fallback")).toBeVisible({ timeout: 15_000 });
     await expect(page.getByTestId("retry-map-tiles")).toBeVisible();
     await expect(page.locator(".leaflet-control-zoom-in")).toBeVisible();
     await expect(page.locator(".leaflet-control-zoom-out")).toBeVisible();
 
     await page.getByTestId("retry-map-tiles").click();
-    await expect(page.getByTestId("map-fallback-osm")).toBeVisible();
+    await expect(page.getByTestId("map-fallback-status")).toBeVisible();
   });
 });

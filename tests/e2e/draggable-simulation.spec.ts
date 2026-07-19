@@ -10,7 +10,7 @@ test("dragging the simulated pin updates the URL and re-runs the location search
 
   await page.goto("/explore?q=-1.286389%2C36.817223");
   await page.getByTestId("simulation-toggle").click();
-  await expect(page.getByTestId("map-fallback-osm")).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByTestId("map-fallback-status")).toBeVisible({ timeout: 15_000 });
   await expect(page.getByTestId("simulation-toggle")).toHaveAttribute("aria-pressed", "true");
 
   const pin = page.getByTestId("simulated-map-pin");

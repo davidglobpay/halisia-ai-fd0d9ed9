@@ -274,6 +274,7 @@ export function MapView({
             />
           </Suspense>
           <div
+            data-testid="map-fallback-status"
             role="status"
             className="pointer-events-none absolute top-2 left-2 glass rounded-full px-3 py-1 text-[10px] uppercase tracking-widest text-amber-glow"
           >
