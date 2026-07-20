@@ -5,8 +5,10 @@ import { reportLovableError } from "../../lib/lovable-error-reporting";
 /**
  * Lightweight runtime perf monitor.
  * Tracks rolling FPS via requestAnimationFrame and network latency via
- * PerformanceObserver 'resource' entries. Surfaces a degraded-mode notice
- * (dismissable) when FPS < 30 or median network latency > 1500ms sustained.
+ * PerformanceObserver 'resource' entries. When FPS < 30 or median network
+ * latency > 1500ms is sustained, the app enters "degraded mode" silently —
+ * the state is reported to Lovable error telemetry and reflected on the
+ * developer stats popover, but no user-facing toast is rendered.
  *
  * Zero-cost when the user prefers reduced motion or is on a hidden tab.
  */
@@ -14,7 +16,6 @@ export function PerfMonitor() {
   const [fps, setFps] = useState(60);
   const [latency, setLatency] = useState(0);
   const [degraded, setDegraded] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -76,42 +77,17 @@ export function PerfMonitor() {
 
   return (
     <>
-      {degraded && !dismissed && (
-        <div
-          role="status"
-          aria-live="polite"
-          className="fixed bottom-16 left-3 z-50 max-w-xs rounded-lg border border-amber-400/40 bg-black/70 px-3 py-2 text-xs text-amber-100 shadow-xl backdrop-blur"
-        >
-          <div className="flex items-start gap-2">
-            <Activity aria-hidden className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-            <div className="flex-1">
-              <div className="font-medium">Degraded mode</div>
-              <div className="opacity-80">
-                {fps < 30 ? `Rendering at ~${fps}fps. ` : ""}
-                {latency > 1500 ? `Network ~${latency}ms. ` : ""}
-                Some animations may pause.
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setDismissed(true)}
-              aria-label="Dismiss degraded-mode notice"
-              className="rounded p-0.5 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00C2E8]"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          </div>
-        </div>
-      )}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label={open ? "Hide performance stats" : "Show performance stats"}
         aria-expanded={open}
         title="Performance"
+        data-degraded={degraded ? "true" : "false"}
         className="fixed bottom-3 right-3 z-50 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/40 text-white/80 shadow-lg backdrop-blur transition hover:bg-black/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00C2E8]"
       >
         <Activity className="h-4 w-4" />
+        {open && <X className="sr-only" />}
       </button>
       {open && (
         <div
