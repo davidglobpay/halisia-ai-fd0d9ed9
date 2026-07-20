@@ -337,10 +337,55 @@ function Landing() {
         </div>
       </section>
 
-      <footer className="py-10 border-t border-white/5">
-        <div className="mx-auto max-w-7xl px-4 flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
-          <div>© {new Date().getFullYear()} HALISIA AI · Land Intelligence Platform</div>
-          <div>Built for Kenya. Designed for anywhere.</div>
+      <footer className="relative mt-10 border-t border-white/5 overflow-hidden">
+        {/* Ambient brand glow */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 opacity-60"
+          style={{
+            background:
+              "radial-gradient(60% 90% at 50% 100%, oklch(0.55 0.16 220 / 0.28), transparent 70%)",
+          }}
+        />
+        <div className="relative mx-auto max-w-7xl px-4 py-14">
+          <div className="flex flex-col items-center text-center gap-4">
+            <div className="relative">
+              <div
+                aria-hidden="true"
+                className="absolute inset-0 -z-10 blur-2xl opacity-70"
+                style={{
+                  background:
+                    "radial-gradient(closest-side, oklch(0.75 0.16 210 / 0.55), transparent 70%)",
+                }}
+              />
+              <img
+                src={halisiaLogo.url}
+                alt="HALISIA — Land Intelligence"
+                width={72}
+                height={72}
+                loading="lazy"
+                decoding="async"
+                className="h-16 w-16 object-contain drop-shadow-[0_0_18px_oklch(0.75_0.16_210/0.6)]"
+              />
+            </div>
+            <div className="text-sm font-semibold tracking-[0.32em] text-white/90">
+              H A L I S I A
+            </div>
+            <div className="text-[11px] uppercase tracking-[0.28em] text-accent">
+              Land · Intelligence · Platform
+            </div>
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
+              <Link to="/explore" className="hover:text-white transition">Explore</Link>
+              <Link to="/compare" search={{ codes: "" }} className="hover:text-white transition">Compare</Link>
+              <Link to="/title-deed" className="hover:text-white transition">Title deed</Link>
+              <a href="#intelligence" className="hover:text-white transition">Intelligence</a>
+              <a href="#how" className="hover:text-white transition">How it works</a>
+            </div>
+            <div className="mt-6 flex flex-col md:flex-row items-center justify-between gap-2 text-[11px] text-muted-foreground w-full">
+              <div>© {new Date().getFullYear()} HALISIA AI · Land Intelligence Platform</div>
+              <div>Built for Kenya. Designed for anywhere.</div>
+            </div>
+          </div>
         </div>
       </footer>
 
