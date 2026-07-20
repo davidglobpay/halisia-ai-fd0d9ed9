@@ -278,7 +278,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: "HALISIA AI — Land Intelligence Platform" },
       {
         property: "og:description",
-        content: "Turn any location into trusted, human-centered intelligence.",
+        content: "AI-powered land intelligence for Kenya. Understand any place before you buy, build, or invest — with maps, community signals, and confidence-scored insights.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -287,13 +287,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       { name: "apple-mobile-web-app-title", content: "HALISIA AI" },
+      { name: "twitter:title", content: "HALISIA AI — Land Intelligence Platform" },
+      { name: "twitter:description", content: "AI-powered land intelligence for Kenya. Understand any place before you buy, build, or invest — with maps, community signals, and confidence-scored insights." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/36722db2-818f-46ea-b8b4-5869b9578916/id-preview-82150c43--df72d311-6218-49be-b3b6-e5ca8b551b5b.lovable.app-1784499886923.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/36722db2-818f-46ea-b8b4-5869b9578916/id-preview-82150c43--df72d311-6218-49be-b3b6-e5ca8b551b5b.lovable.app-1784499886923.png" },
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: halisiaLogo.url, type: "image/png" },
+      { rel: "icon", href: "/__l5e/assets-v1/eaf782f4-aa1d-41af-b976-26132704ef49/halisia-logo.png", type: "image/png" },
       { rel: "apple-touch-icon", href: halisiaLogo.url },
       { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
