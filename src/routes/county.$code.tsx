@@ -24,6 +24,7 @@ import { buildCountyProfile, COUNTY_DATA_SOURCES } from "@/lib/county-profile";
 import { CountyEmblem } from "@/components/halisia/county-emblem";
 import { CountyPoliticsPanel } from "@/components/halisia/county-politics-panel";
 import { LeafletLayersMap } from "@/components/halisia/leaflet-layers-map";
+import { CountyEvidenceStrip } from "@/components/halisia/county-evidence-strip";
 
 type Feature = { properties: { code: number; name: string; lat: number; lng: number } };
 const FEATURES = (countiesData as { features: Feature[] }).features;
@@ -480,6 +481,16 @@ function CountyPage() {
 
         {/* 16. REFERENCES */}
         <Section id="sec-references" title="16 · References &amp; Evidence" icon={Info}>
+          <div className="mb-4">
+            <div className="mb-2 text-xs uppercase tracking-widest text-muted-foreground">
+              Image evidence — auto-generated map panels (OSM/Esri fallback ensures no blank tiles)
+            </div>
+            <CountyEvidenceStrip
+              lat={latLng.lat}
+              lng={latLng.lng}
+              countyName={facts.name}
+            />
+          </div>
           <ul className="grid md:grid-cols-2 gap-2 text-sm">
             {COUNTY_DATA_SOURCES.map((s) => (
               <li
