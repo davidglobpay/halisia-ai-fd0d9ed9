@@ -1,4 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { useState } from "react";
 import {
   ArrowLeft,
   Building2,
@@ -17,6 +18,8 @@ import {
   BookOpen,
   Info,
   Vote,
+  Download,
+  Loader2,
 } from "lucide-react";
 import { Navbar } from "@/components/halisia/navbar";
 import countiesData from "@/data/kenya-counties.json";
@@ -25,6 +28,7 @@ import { CountyEmblem } from "@/components/halisia/county-emblem";
 import { CountyPoliticsPanel } from "@/components/halisia/county-politics-panel";
 import { LeafletLayersMap } from "@/components/halisia/leaflet-layers-map";
 import { CountyEvidenceStrip } from "@/components/halisia/county-evidence-strip";
+import { generateCountyProfilePdf } from "@/lib/pdf-county-profile";
 
 type Feature = { properties: { code: number; name: string; lat: number; lng: number } };
 const FEATURES = (countiesData as { features: Feature[] }).features;
@@ -121,19 +125,79 @@ const SECTION_NAV = [
 function CountyPage() {
   const { profile } = Route.useLoaderData();
   const { facts, latLng, scores, metrics, density } = profile;
+  const [pdf, setPdf] = useState<{ pct: number; stage: string; busy: boolean; error: string | null }>(
+    { pct: 0, stage: "", busy: false, error: null },
+  );
+
+  const handleDownload = async () => {
+    setPdf({ pct: 0, stage: "Preparing", busy: true, error: null });
+    try {
+      await generateCountyProfilePdf(profile, (pct, stage) =>
+        setPdf({ pct, stage, busy: pct < 100, error: null }),
+      );
+    } catch (e) {
+      setPdf({ pct: 0, stage: "", busy: false, error: (e as Error).message ?? "Failed" });
+    }
+  };
 
   return (
     <div className="min-h-screen">
       <Navbar />
       <div className="mx-auto max-w-6xl px-4 pt-24 pb-16">
-        <Link
-          to="/"
-          hash="counties"
-          search={{ compare: "" }}
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" /> All counties
-        </Link>
+        <div className="flex items-center justify-between gap-3">
+          <Link
+            to="/"
+            hash="counties"
+            search={{ compare: "" }}
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" /> All counties
+          </Link>
+          <div className="flex items-center gap-3">
+            {pdf.busy && (
+              <div
+                data-testid="county-pdf-progress"
+                role="status"
+                aria-live="polite"
+                className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground"
+              >
+                <div
+                  className="h-1.5 w-32 overflow-hidden rounded-full bg-white/10"
+                  role="progressbar"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={pdf.pct}
+                >
+                  <div className="h-full bg-accent transition-all" style={{ width: `${pdf.pct}%` }} />
+                </div>
+                <span>{pdf.stage} · {pdf.pct}%</span>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={handleDownload}
+              disabled={pdf.busy}
+              data-testid="download-county-pdf"
+              aria-label={`Download ${facts.name} county PDF report`}
+              className="inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-medium text-[#071E3D] shadow-lg shadow-accent/20 transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {pdf.busy ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
+              {pdf.busy ? "Generating…" : "Download PDF report"}
+            </button>
+          </div>
+        </div>
+        {pdf.error && (
+          <div
+            role="alert"
+            className="mt-3 rounded-lg border border-amber-400/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-100"
+          >
+            Couldn't generate PDF: {pdf.error}
+          </div>
+        )}
 
         {/* HERO */}
         <header className="mt-6 glass-strong rounded-3xl overflow-hidden border border-white/10">
