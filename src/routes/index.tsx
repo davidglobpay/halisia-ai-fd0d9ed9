@@ -45,24 +45,45 @@ function Landing() {
             transition={{ duration: 0.9, ease: "easeOut" }}
             className="mx-auto flex max-w-3xl flex-col items-center text-center"
           >
-            {/* Centered logo with outer glow, transparent background */}
-            <div className="relative mb-6 flex items-center justify-center">
+            {/* Cinematic 3D hero logo — layered halo, chromatic aberration
+                shadows, and a slow parallax tilt for depth. */}
+            <div className="relative mb-6 flex items-center justify-center [perspective:1200px]">
+              {/* Outer halo */}
               <div
                 aria-hidden="true"
-                className="absolute inset-0 -z-10 blur-3xl opacity-80"
+                className="absolute inset-0 -z-10 blur-3xl opacity-90 animate-pulse"
                 style={{
                   background:
-                    "radial-gradient(closest-side, oklch(0.75 0.16 210 / 0.55), oklch(0.55 0.18 260 / 0.35) 60%, transparent 75%)",
+                    "radial-gradient(closest-side, oklch(0.78 0.17 210 / 0.65), oklch(0.55 0.18 260 / 0.35) 55%, transparent 75%)",
+                }}
+              />
+              {/* Rotating conic aura */}
+              <div
+                aria-hidden="true"
+                className="absolute inset-0 -z-10 blur-2xl opacity-40 animate-[spin_18s_linear_infinite]"
+                style={{
+                  background:
+                    "conic-gradient(from 0deg, oklch(0.78 0.16 210 / 0.6), oklch(0.72 0.19 45 / 0.35), oklch(0.55 0.18 260 / 0.55), oklch(0.78 0.16 210 / 0.6))",
+                  borderRadius: "50%",
                 }}
               />
               <img
                 src={halisiaLogo.url}
                 alt="HALISIA"
-                width={168}
-                height={168}
+                width={200}
+                height={200}
                 decoding="async"
                 fetchPriority="high"
-                className="h-24 w-24 sm:h-32 sm:w-32 md:h-40 md:w-40 object-contain drop-shadow-[0_0_28px_oklch(0.75_0.16_210/0.7)]"
+                className="relative h-28 w-28 sm:h-36 sm:w-36 md:h-44 md:w-44 object-contain [transform:rotateX(6deg)] drop-shadow-[0_10px_28px_oklch(0.15_0.05_260/0.75)] [filter:drop-shadow(0_0_18px_oklch(0.78_0.17_210/0.55))_drop-shadow(0_0_36px_oklch(0.55_0.18_260/0.35))]"
+              />
+              {/* Specular highlight sweep */}
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 mix-blend-overlay opacity-40 rounded-full"
+                style={{
+                  background:
+                    "linear-gradient(120deg, transparent 40%, rgba(255,255,255,0.35) 50%, transparent 60%)",
+                }}
               />
             </div>
             <div className="mb-4 inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.32em] text-white/75">
@@ -337,10 +358,55 @@ function Landing() {
         </div>
       </section>
 
-      <footer className="py-10 border-t border-white/5">
-        <div className="mx-auto max-w-7xl px-4 flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
-          <div>© {new Date().getFullYear()} HALISIA AI · Land Intelligence Platform</div>
-          <div>Built for Kenya. Designed for anywhere.</div>
+      <footer className="relative mt-10 border-t border-white/5 overflow-hidden">
+        {/* Ambient brand glow */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 opacity-60"
+          style={{
+            background:
+              "radial-gradient(60% 90% at 50% 100%, oklch(0.55 0.16 220 / 0.28), transparent 70%)",
+          }}
+        />
+        <div className="relative mx-auto max-w-7xl px-4 py-14">
+          <div className="flex flex-col items-center text-center gap-4">
+            <div className="relative">
+              <div
+                aria-hidden="true"
+                className="absolute inset-0 -z-10 blur-2xl opacity-70"
+                style={{
+                  background:
+                    "radial-gradient(closest-side, oklch(0.75 0.16 210 / 0.55), transparent 70%)",
+                }}
+              />
+              <img
+                src={halisiaLogo.url}
+                alt="HALISIA — Land Intelligence"
+                width={72}
+                height={72}
+                loading="lazy"
+                decoding="async"
+                className="h-16 w-16 object-contain drop-shadow-[0_0_18px_oklch(0.75_0.16_210/0.6)]"
+              />
+            </div>
+            <div className="text-sm font-semibold tracking-[0.32em] text-white/90">
+              H A L I S I A
+            </div>
+            <div className="text-[11px] uppercase tracking-[0.28em] text-accent">
+              Land · Intelligence · Platform
+            </div>
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
+              <Link to="/explore" className="hover:text-white transition">Explore</Link>
+              <Link to="/compare" search={{ codes: "" }} className="hover:text-white transition">Compare</Link>
+              <Link to="/title-deed" className="hover:text-white transition">Title deed</Link>
+              <a href="#intelligence" className="hover:text-white transition">Intelligence</a>
+              <a href="#how" className="hover:text-white transition">How it works</a>
+            </div>
+            <div className="mt-6 flex flex-col md:flex-row items-center justify-between gap-2 text-[11px] text-muted-foreground w-full">
+              <div>© {new Date().getFullYear()} HALISIA AI · Land Intelligence Platform</div>
+              <div>Built for Kenya. Designed for anywhere.</div>
+            </div>
+          </div>
         </div>
       </footer>
 

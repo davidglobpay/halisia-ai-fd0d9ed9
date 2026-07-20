@@ -233,3 +233,11 @@
     border-radius: 4px;
   }
 }
+
+@keyframes bg-drift {
+  0% { transform: scale(1.06) translate3d(0, 0, 0); }
+  100% { transform: scale(1.12) translate3d(-1.5%, -1%, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-\[bg-drift_60s_ease-in-out_infinite_alternate\] { animation: none !important; }
+}
