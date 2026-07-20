@@ -14,23 +14,21 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import halisiaLogo from "../assets/halisia-logo.png.asset.json";
 import appBg from "../assets/bg/app-bg.mp4.asset.json";
-import appBg2 from "../assets/bg/app-bg-2.mp4.asset.json";
 import appBgPoster from "../assets/bg/app-bg-poster.jpg.asset.json";
 import { PerfMonitor } from "../components/halisia/perf-monitor";
 
 function AppBackground() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const videoRef2 = useRef<HTMLVideoElement | null>(null);
-  const layerRef = useRef<HTMLDivElement | null>(null);
-  const [activeClip, setActiveClip] = useState(0);
   // User-controlled + auto (reduced-motion, battery saver, saveData, hidden tab).
   const [userPaused, setUserPaused] = useState<boolean | null>(null);
   const [autoPaused, setAutoPaused] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   // Detect reduced-motion, low-power / save-data conditions, and tab visibility.
   useEffect(() => {
     if (typeof window === "undefined") return;
     const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const smallScreen = window.matchMedia("(max-width: 768px)");
 
     // Read persisted preference
     try {
@@ -43,6 +41,9 @@ function AppBackground() {
 
     const compute = async () => {
       let paused = mql.matches || document.hidden;
+      // Skip video entirely on small screens by default — poster is enough
+      // and avoids double-decoding a 3MB clip on constrained devices.
+      if (smallScreen.matches) paused = true;
       // Save-Data (Data Saver / metered) — Network Information API
       const conn = (
         navigator as Navigator & {
@@ -50,7 +51,8 @@ function AppBackground() {
         }
       ).connection;
       if (conn?.saveData) paused = true;
-      if (conn?.effectiveType && /2g/.test(conn.effectiveType)) paused = true;
+      if (conn?.effectiveType && /(^|\W)(2g|3g|slow-2g)($|\W)/.test(conn.effectiveType))
+        paused = true;
       // Battery API — low battery + not charging = low power
       try {
         const getBattery = (
@@ -60,7 +62,7 @@ function AppBackground() {
         ).getBattery;
         if (getBattery) {
           const b = await getBattery.call(navigator);
-          if (b.level < 0.2 && !b.charging) paused = true;
+          if (b.level < 0.3 && !b.charging) paused = true;
         }
       } catch {
         /* ignore */
@@ -68,6 +70,12 @@ function AppBackground() {
       setAutoPaused(paused);
     };
     void compute();
+    // Defer mount of the <video> element itself until the browser is idle to
+    // eliminate render-blocking video-decoder work during navigation.
+    const idle =
+      (window as Window & { requestIdleCallback?: (cb: () => void) => number }).requestIdleCallback ??
+      ((cb: () => void) => window.setTimeout(cb, 600));
+    idle(() => setMounted(true));
 
     const onVis = () => void compute();
     const onMotion = () => void compute();
@@ -82,63 +90,11 @@ function AppBackground() {
   // Apply pause state to <video>
   const shouldPlay = userPaused === true ? false : userPaused === false ? true : !autoPaused;
   useEffect(() => {
-    const vids = [videoRef.current, videoRef2.current];
-    vids.forEach((v) => {
-      if (!v) return;
-      if (shouldPlay) {
-        v.play().catch(() => {
-          /* autoplay blocked — poster remains visible */
-        });
-      } else {
-        v.pause();
-      }
-    });
-  }, [shouldPlay]);
-
-  // Cross-fade between the two background clips every 18s for a living feel.
-  useEffect(() => {
-    if (!shouldPlay) return;
-    const t = window.setInterval(() => setActiveClip((n) => (n + 1) % 2), 18000);
-    return () => window.clearInterval(t);
-  }, [shouldPlay]);
-
-  // Motion-sensitive parallax: subtle drift + zoom in response to pointer
-  // and device orientation. Skipped when reduced motion / paused.
-  useEffect(() => {
-    if (!shouldPlay) return;
-    const el = layerRef.current;
-    if (!el) return;
-    let tx = 0,
-      ty = 0;
-    const cur = { x: 0, y: 0 };
-    let raf = 0;
-    const tick = () => {
-      cur.x += (tx - cur.x) * 0.06;
-      cur.y += (ty - cur.y) * 0.06;
-      el.style.transform = `scale(1.08) translate3d(${cur.x.toFixed(2)}px, ${cur.y.toFixed(2)}px, 0)`;
-      raf = window.requestAnimationFrame(tick);
-    };
-    raf = window.requestAnimationFrame(tick);
-    const onMove = (e: PointerEvent) => {
-      const nx = (e.clientX / window.innerWidth - 0.5) * 2;
-      const ny = (e.clientY / window.innerHeight - 0.5) * 2;
-      tx = -nx * 24;
-      ty = -ny * 24;
-    };
-    const onOrient = (e: DeviceOrientationEvent) => {
-      const g = e.gamma ?? 0; // left/right
-      const b = e.beta ?? 0; // front/back
-      tx = Math.max(-30, Math.min(30, -g * 0.6));
-      ty = Math.max(-30, Math.min(30, -(b - 45) * 0.4));
-    };
-    window.addEventListener("pointermove", onMove, { passive: true });
-    window.addEventListener("deviceorientation", onOrient);
-    return () => {
-      window.cancelAnimationFrame(raf);
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("deviceorientation", onOrient);
-    };
-  }, [shouldPlay]);
+    const v = videoRef.current;
+    if (!v) return;
+    if (shouldPlay) v.play().catch(() => {});
+    else v.pause();
+  }, [shouldPlay, mounted]);
 
   const toggle = () => {
     const next = !shouldPlay;
@@ -153,7 +109,14 @@ function AppBackground() {
   return (
     <>
       <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-        <div ref={layerRef} className="absolute inset-0 will-change-transform">
+        {/* Poster is always visible underneath — guarantees a background even
+            before / instead of video decode. Uses a gentle CSS-only Ken-Burns
+            drift so there's no per-frame JS work. */}
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-70 animate-[bg-drift_60s_ease-in-out_infinite_alternate]"
+          style={{ backgroundImage: `url(${appBgPoster.url})` }}
+        />
+        {mounted && shouldPlay && (
           <video
             ref={videoRef}
             src={appBg.url}
@@ -161,27 +124,11 @@ function AppBackground() {
             muted
             loop
             playsInline
-            preload="metadata"
+            preload="none"
             disablePictureInPicture
-            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-[1600ms] ${shouldPlay ? (activeClip === 0 ? "opacity-70" : "opacity-0") : "hidden"}`}
+            className="absolute inset-0 h-full w-full object-cover opacity-60"
           />
-          <video
-            ref={videoRef2}
-            src={appBg2.url}
-            poster={appBgPoster.url}
-            muted
-            loop
-            playsInline
-            preload="metadata"
-            disablePictureInPicture
-            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-[1600ms] ${shouldPlay ? (activeClip === 1 ? "opacity-70" : "opacity-0") : "hidden"}`}
-          />
-        </div>
-        {/* Poster fallback (reduced motion, low power, user-paused, autoplay blocked) */}
-        <div
-          className={`absolute inset-0 bg-cover bg-center opacity-60 ${shouldPlay ? "hidden" : ""}`}
-          style={{ backgroundImage: `url(${appBgPoster.url})` }}
-        />
+        )}
         {/* Cinematic readability layer — dark vignette + gentle Halisia tint at edges
             only, so the original footage color stays vibrant in the center. */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(7,30,61,0.15)_0%,rgba(7,30,61,0.55)_55%,rgba(7,30,61,0.9)_100%)]" />
