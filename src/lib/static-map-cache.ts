@@ -1,4 +1,5 @@
 import { fetchStaticMap } from "@/lib/static-map.functions";
+import { fetchStaticMapOSM } from "@/lib/static-map-osm";
 
 type Layer = "roadmap-light" | "terrain" | "satellite" | "hybrid";
 type FetchArgs = { lat: number; lng: number; layer: Layer; zoom: number };
@@ -158,14 +159,38 @@ export async function fetchStaticMapCached(args: FetchArgs): Promise<Result> {
         MEM.set(k, raw);
         writeSession(k, raw);
         state.lastSuccessAt = Date.now();
-      } else {
-        state.failures++;
-        state.lastErrorAt = Date.now();
-        state.lastError = { error: raw.error, status: raw.status, detail: raw.detail };
+        emit();
+        return raw;
       }
+      // Google failed — try browser-side OSM/Esri tile stitcher so PDFs
+      // and thumbnails always have map imagery.
+      const fb = await fetchStaticMapOSM(args);
+      if (fb.ok) {
+        const fbResult: Result = { ok: true, dataUrl: fb.dataUrl };
+        MEM.set(k, fbResult);
+        writeSession(k, fbResult);
+        state.lastSuccessAt = Date.now();
+        // Still surface the underlying Google error for diagnostics.
+        state.lastError = { error: raw.error, status: raw.status, detail: raw.detail };
+        emit();
+        return fbResult;
+      }
+      state.failures++;
+      state.lastErrorAt = Date.now();
+      state.lastError = { error: raw.error, status: raw.status, detail: raw.detail };
       emit();
       return raw;
     } catch (e) {
+      // Network / server-function failure — still try the OSM fallback.
+      const fb = await fetchStaticMapOSM(args).catch(() => null);
+      if (fb && fb.ok) {
+        const fbResult: Result = { ok: true, dataUrl: fb.dataUrl };
+        MEM.set(k, fbResult);
+        writeSession(k, fbResult);
+        state.lastSuccessAt = Date.now();
+        emit();
+        return fbResult;
+      }
       const err = { error: "client_exception", detail: String(e).slice(0, 200) };
       state.failures++;
       state.lastErrorAt = Date.now();
