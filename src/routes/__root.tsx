@@ -244,7 +244,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: "/__l5e/assets-v1/eaf782f4-aa1d-41af-b976-26132704ef49/halisia-logo.png", type: "image/png" },
+      { rel: "icon", href: "/__l5e/assets-v1/df3c3df2-f292-4207-8044-70216128e1b8/halisia-logo.png", type: "image/png" },
       { rel: "apple-touch-icon", href: halisiaLogo.url },
       { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },

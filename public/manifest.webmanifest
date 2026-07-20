@@ -11,13 +11,13 @@
   "categories": ["productivity", "utilities", "business"],
   "icons": [
     {
-      "src": "/__l5e/assets-v1/eaf782f4-aa1d-41af-b976-26132704ef49/halisia-logo.png",
+      "src": "/__l5e/assets-v1/df3c3df2-f292-4207-8044-70216128e1b8/halisia-logo.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/__l5e/assets-v1/eaf782f4-aa1d-41af-b976-26132704ef49/halisia-logo.png",
+      "src": "/__l5e/assets-v1/df3c3df2-f292-4207-8044-70216128e1b8/halisia-logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
