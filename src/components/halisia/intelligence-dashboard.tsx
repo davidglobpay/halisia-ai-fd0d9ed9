@@ -831,35 +831,6 @@ function ScoreCard({ title, score, note }: { title: string; score: number; note:
   );
 }
 
-function ThreeList({
-  title,
-  icon: Icon,
-  tone,
-  items,
-}: {
-  title: string;
-  icon: React.ElementType;
-  tone: string;
-  items: string[];
-}) {
-  if (!items?.length) return null;
-  return (
-    <div className="glass rounded-2xl p-4">
-      <div className={`flex items-center gap-2 text-xs font-medium ${tone}`}>
-        <Icon className="h-3.5 w-3.5" /> {title}
-      </div>
-      <ul className="mt-2 space-y-1.5">
-        {items.map((x, i) => (
-          <li key={i} className="flex items-start gap-2 text-sm text-foreground/90">
-            <span className={`mt-2 h-1 w-1 rounded-full ${tone.replace("text-", "bg-")}`} />
-            <span className="flex-1">{x}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
 function SkeletonGrid({ n }: { n: number }) {
   return (
     <div className="grid grid-cols-2 gap-2.5">
