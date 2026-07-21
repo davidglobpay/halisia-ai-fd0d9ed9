@@ -122,6 +122,7 @@ export function IntelligenceDashboard({
     queryFn: () => getLocationIntel({ data: { lat, lng } }),
     staleTime: 5 * 60 * 1000,
   });
+  const devMode = useDevMode();
 
   const counts = intelQ.data
     ? {
@@ -312,7 +313,7 @@ export function IntelligenceDashboard({
         {tab === "wave4" && <Wave4Panel lat={lat} lng={lng} />}
         {tab === "evidence" && (
           <div className="space-y-3">
-            <MapsDiagnostics lat={lat} lng={lng} />
+            {devMode && <MapsDiagnostics lat={lat} lng={lng} />}
             <EvidenceTab intel={intelQ.data} />
           </div>
         )}
