@@ -220,7 +220,9 @@ Rules:
           5,
         ),
         investmentAdvice: asStrArr((parsed as { investmentAdvice?: unknown }).investmentAdvice, 5),
-        familySuitability: asScoreNote((parsed as { familySuitability?: unknown }).familySuitability),
+        familySuitability: asScoreNote(
+          (parsed as { familySuitability?: unknown }).familySuitability,
+        ),
         businessSuitability: asScoreNote(
           (parsed as { businessSuitability?: unknown }).businessSuitability,
         ),
