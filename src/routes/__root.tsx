@@ -7,147 +7,12 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Pause, Play } from "lucide-react";
+import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import halisiaLogo from "../assets/halisia-logo.png.asset.json";
-import appBg from "../assets/bg/app-bg.mp4.asset.json";
-import appBgPoster from "../assets/bg/app-bg-poster.jpg.asset.json";
 import { PerfMonitor } from "../components/halisia/perf-monitor";
-
-function AppBackground() {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  // User-controlled + auto (reduced-motion, battery saver, saveData, hidden tab).
-  const [userPaused, setUserPaused] = useState<boolean | null>(null);
-  const [autoPaused, setAutoPaused] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  // Detect reduced-motion, low-power / save-data conditions, and tab visibility.
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const smallScreen = window.matchMedia("(max-width: 768px)");
-
-    // Read persisted preference
-    try {
-      const stored = window.localStorage.getItem("halisia:bg-video");
-      if (stored === "off") setUserPaused(true);
-      else if (stored === "on") setUserPaused(false);
-    } catch {
-      /* ignore */
-    }
-
-    const compute = async () => {
-      let paused = mql.matches || document.hidden;
-      // Skip video entirely on small screens by default — poster is enough
-      // and avoids double-decoding a 3MB clip on constrained devices.
-      if (smallScreen.matches) paused = true;
-      // Save-Data (Data Saver / metered) — Network Information API
-      const conn = (
-        navigator as Navigator & {
-          connection?: { saveData?: boolean; effectiveType?: string };
-        }
-      ).connection;
-      if (conn?.saveData) paused = true;
-      if (conn?.effectiveType && /(^|\W)(2g|3g|slow-2g)($|\W)/.test(conn.effectiveType))
-        paused = true;
-      // Battery API — low battery + not charging = low power
-      try {
-        const getBattery = (
-          navigator as Navigator & {
-            getBattery?: () => Promise<{ level: number; charging: boolean }>;
-          }
-        ).getBattery;
-        if (getBattery) {
-          const b = await getBattery.call(navigator);
-          if (b.level < 0.3 && !b.charging) paused = true;
-        }
-      } catch {
-        /* ignore */
-      }
-      setAutoPaused(paused);
-    };
-    void compute();
-    // Defer mount of the <video> element itself until the browser is idle to
-    // eliminate render-blocking video-decoder work during navigation.
-    const idle =
-      (window as Window & { requestIdleCallback?: (cb: () => void) => number }).requestIdleCallback ??
-      ((cb: () => void) => window.setTimeout(cb, 600));
-    idle(() => setMounted(true));
-
-    const onVis = () => void compute();
-    const onMotion = () => void compute();
-    document.addEventListener("visibilitychange", onVis);
-    mql.addEventListener?.("change", onMotion);
-    return () => {
-      document.removeEventListener("visibilitychange", onVis);
-      mql.removeEventListener?.("change", onMotion);
-    };
-  }, []);
-
-  // Apply pause state to <video>
-  const shouldPlay = userPaused === true ? false : userPaused === false ? true : !autoPaused;
-  useEffect(() => {
-    const v = videoRef.current;
-    if (!v) return;
-    if (shouldPlay) v.play().catch(() => {});
-    else v.pause();
-  }, [shouldPlay, mounted]);
-
-  const toggle = () => {
-    const next = !shouldPlay;
-    setUserPaused(!next);
-    try {
-      window.localStorage.setItem("halisia:bg-video", next ? "on" : "off");
-    } catch {
-      /* ignore */
-    }
-  };
-
-  return (
-    <>
-      <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-        {/* Poster is always visible underneath — guarantees a background even
-            before / instead of video decode. Uses a gentle CSS-only Ken-Burns
-            drift so there's no per-frame JS work. */}
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-70 animate-[bg-drift_60s_ease-in-out_infinite_alternate]"
-          style={{ backgroundImage: `url(${appBgPoster.url})` }}
-        />
-        {mounted && shouldPlay && (
-          <video
-            ref={videoRef}
-            src={appBg.url}
-            poster={appBgPoster.url}
-            muted
-            loop
-            playsInline
-            preload="none"
-            disablePictureInPicture
-            className="absolute inset-0 h-full w-full object-cover opacity-60"
-          />
-        )}
-        {/* Cinematic readability layer — dark vignette + gentle Halisia tint at edges
-            only, so the original footage color stays vibrant in the center. */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(7,30,61,0.15)_0%,rgba(7,30,61,0.55)_55%,rgba(7,30,61,0.9)_100%)]" />
-        <div className="pointer-events-none absolute inset-0 mix-blend-overlay opacity-40 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),transparent_30%,transparent_70%,rgba(0,0,0,0.5))]" />
-      </div>
-      {/* Accessible pause/play toggle for background video */}
-      <button
-        type="button"
-        onClick={toggle}
-        aria-label={shouldPlay ? "Pause background video" : "Play background video"}
-        aria-pressed={!shouldPlay}
-        title={shouldPlay ? "Pause background" : "Play background"}
-        className="fixed bottom-3 left-3 z-50 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/40 text-white/80 shadow-lg backdrop-blur transition hover:bg-black/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00C2E8]"
-      >
-        {shouldPlay ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-      </button>
-    </>
-  );
-}
 
 function NotFoundComponent() {
   return (
@@ -286,7 +151,6 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AppBackground />
       <PerfMonitor />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
