@@ -111,6 +111,7 @@ function Landing() {
                 <Link
                   to="/"
                   hash="counties"
+                  search={{ compare: "" }}
                   className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[oklch(0.77_0.14_220)] to-[oklch(0.44_0.13_250)] text-primary-foreground px-4 py-2 text-xs font-semibold shadow-[0_10px_30px_-10px_oklch(0.77_0.14_220/0.7)] hover:scale-[1.03] transition"
                 >
                   Explore Counties <ArrowRight className="h-3.5 w-3.5" />
