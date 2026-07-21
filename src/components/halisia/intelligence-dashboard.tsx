@@ -40,6 +40,7 @@ import { NotificationsBell } from "@/components/halisia/notifications-bell";
 import { MapsDiagnostics } from "@/components/halisia/maps-diagnostics";
 import { Wave4Panel } from "@/components/halisia/wave4-panel";
 import { Terrain3D } from "@/components/halisia/terrain-3d";
+import { useDevMode } from "@/hooks/use-dev-mode";
 
 type TabId =
   | "overview"
