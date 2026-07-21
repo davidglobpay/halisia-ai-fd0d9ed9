@@ -599,44 +599,234 @@ function AITab({ narrative, loading }: { narrative?: NarrativeOutput; loading: b
         HALISIA AI is analysing this location…
       </div>
     );
+
+  const updated = new Date(narrative.lastUpdated || Date.now());
+  const updatedLabel = updated.toLocaleString(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+
   return (
     <div className="space-y-3">
+      {/* Executive summary header */}
       <div className="glass-strong rounded-2xl p-4 relative overflow-hidden">
         <div className="absolute -bottom-16 -left-10 h-40 w-40 rounded-full blur-3xl opacity-30 bg-accent" />
-        <div className="text-[10px] uppercase tracking-widest text-accent">HALISIA AI reading</div>
+        <div className="flex items-center gap-2">
+          <div className="text-[10px] uppercase tracking-widest text-accent">
+            HALISIA AI · Executive summary
+          </div>
+          <span className="ml-auto text-[10px] text-muted-foreground">Updated {updatedLabel}</span>
+        </div>
         <div className="mt-1 text-base font-semibold tracking-tight">{narrative.headline}</div>
-        <div className="mt-2 space-y-2">
-          {narrative.paragraphs.map((p, i) => (
-            <p key={i} className="text-sm leading-relaxed text-foreground/90">
-              {p}
-            </p>
-          ))}
+        {narrative.overview && (
+          <p className="mt-2 text-sm leading-relaxed text-foreground/90">{narrative.overview}</p>
+        )}
+
+        {/* Confidence bar */}
+        <div className="mt-3">
+          <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-muted-foreground">
+            <span>Confidence</span>
+            <span className="text-foreground/80">
+              {narrative.confidencePct}% · {narrative.confidence}
+            </span>
+          </div>
+          <div className="mt-1 h-1.5 rounded-full bg-white/10 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-cyan-glow to-emerald-glow transition-all"
+              style={{ width: `${narrative.confidencePct}%` }}
+            />
+          </div>
         </div>
       </div>
 
-      <ThreeList
-        title="Strengths"
-        icon={CheckCircle2}
-        tone="text-emerald-glow"
-        items={narrative.strengths}
-      />
-      <ThreeList
-        title="Watch-outs"
-        icon={ShieldAlert}
-        tone="text-amber-glow"
-        items={narrative.watchouts}
-      />
-      <ThreeList
-        title="Verify next"
-        icon={ArrowRight}
-        tone="text-cyan-glow"
-        items={narrative.nextSteps}
-      />
+      {/* Key findings */}
+      {narrative.keyFindings.length > 0 && (
+        <SectionCard title="Key findings" icon={Sparkles} tone="text-accent">
+          <ul className="space-y-1.5">
+            {narrative.keyFindings.map((f, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-foreground/90">
+                <span className="mt-2 h-1 w-1 rounded-full bg-accent" />
+                <span className="flex-1">{f}</span>
+              </li>
+            ))}
+          </ul>
+        </SectionCard>
+      )}
+
+      {/* Strengths & Weaknesses with WHY */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <WhyList
+          title="Strengths"
+          icon={CheckCircle2}
+          tone="text-emerald-glow"
+          items={narrative.strengths}
+        />
+        <WhyList
+          title="Weaknesses"
+          icon={ShieldAlert}
+          tone="text-amber-glow"
+          items={narrative.weaknesses}
+        />
+      </div>
+
+      {/* Suitability scores */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <ScoreCard
+          title="Family suitability"
+          score={narrative.familySuitability.score}
+          note={narrative.familySuitability.note}
+        />
+        <ScoreCard
+          title="Business suitability"
+          score={narrative.businessSuitability.score}
+          note={narrative.businessSuitability.note}
+        />
+      </div>
+
+      {/* Advice columns */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <SectionCard title="Recommendations" icon={ArrowRight} tone="text-cyan-glow">
+          <BulletList items={narrative.recommendations} tone="bg-cyan-glow" />
+        </SectionCard>
+        <SectionCard title="Construction advice" icon={HardHat} tone="text-amber-glow">
+          <BulletList items={narrative.constructionAdvice} tone="bg-amber-glow" />
+        </SectionCard>
+        <SectionCard title="Investment advice" icon={Landmark} tone="text-emerald-glow">
+          <BulletList items={narrative.investmentAdvice} tone="bg-emerald-glow" />
+        </SectionCard>
+      </div>
+
+      {/* Environmental notes + Future outlook */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <SectionCard title="Environmental notes" icon={Leaf} tone="text-emerald-glow">
+          <BulletList items={narrative.environmentalNotes} tone="bg-emerald-glow" />
+        </SectionCard>
+        <SectionCard title="Future outlook" icon={Activity} tone="text-cyan-glow">
+          <p className="text-sm leading-relaxed text-foreground/90">
+            {narrative.futureOutlook || "—"}
+          </p>
+        </SectionCard>
+      </div>
+
+      {/* Watch-outs & Verify-next kept for backward-compat */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <SectionCard title="Watch-outs" icon={ShieldAlert} tone="text-amber-glow">
+          <BulletList items={narrative.watchouts} tone="bg-amber-glow" />
+        </SectionCard>
+        <SectionCard title="Verify next" icon={ArrowRight} tone="text-cyan-glow">
+          <BulletList items={narrative.nextSteps} tone="bg-cyan-glow" />
+        </SectionCard>
+      </div>
+
+      {/* Data sources */}
+      {narrative.dataSources.length > 0 && (
+        <SectionCard title="Data sources used" icon={Database} tone="text-muted-foreground">
+          <div className="flex flex-wrap gap-1.5">
+            {narrative.dataSources.map((s, i) => (
+              <span
+                key={i}
+                className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-foreground/80"
+              >
+                {s}
+              </span>
+            ))}
+          </div>
+        </SectionCard>
+      )}
 
       <div className="text-[11px] text-muted-foreground px-1">
         AI narrative is informational, not legal advice. Always verify title, survey, and zoning
         with a licensed professional.
       </div>
+    </div>
+  );
+}
+
+function SectionCard({
+  title,
+  icon: Icon,
+  tone,
+  children,
+}: {
+  title: string;
+  icon: React.ElementType;
+  tone: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="glass rounded-2xl p-4">
+      <div className={`flex items-center gap-2 text-xs font-medium ${tone}`}>
+        <Icon className="h-3.5 w-3.5" /> {title}
+      </div>
+      <div className="mt-2">{children}</div>
+    </div>
+  );
+}
+
+function BulletList({ items, tone }: { items: string[]; tone: string }) {
+  if (!items?.length)
+    return <div className="text-[11px] text-muted-foreground">No items provided.</div>;
+  return (
+    <ul className="space-y-1.5">
+      {items.map((x, i) => (
+        <li key={i} className="flex items-start gap-2 text-sm text-foreground/90">
+          <span className={`mt-2 h-1 w-1 rounded-full ${tone}`} />
+          <span className="flex-1">{x}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function WhyList({
+  title,
+  icon: Icon,
+  tone,
+  items,
+}: {
+  title: string;
+  icon: React.ElementType;
+  tone: string;
+  items: { point: string; why: string }[];
+}) {
+  if (!items?.length) return null;
+  return (
+    <div className="glass rounded-2xl p-4">
+      <div className={`flex items-center gap-2 text-xs font-medium ${tone}`}>
+        <Icon className="h-3.5 w-3.5" /> {title}
+      </div>
+      <ul className="mt-2 space-y-2.5">
+        {items.map((x, i) => (
+          <li key={i} className="text-sm text-foreground/90">
+            <div className="font-medium leading-snug">{x.point}</div>
+            {x.why && (
+              <div className="mt-0.5 text-[12px] leading-snug text-muted-foreground">
+                <span className="text-foreground/70">Why: </span>
+                {x.why}
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function ScoreCard({ title, score, note }: { title: string; score: number; note: string }) {
+  const pct = Math.max(0, Math.min(100, score));
+  return (
+    <div className="glass rounded-2xl p-4">
+      <div className="flex items-center justify-between">
+        <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{title}</div>
+        <div className="text-lg font-semibold tracking-tight">{pct}</div>
+      </div>
+      <div className="mt-2 h-1.5 rounded-full bg-white/10 overflow-hidden">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-accent to-emerald-glow transition-all"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      {note && <div className="mt-2 text-[12px] text-muted-foreground leading-snug">{note}</div>}
     </div>
   );
 }
