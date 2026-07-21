@@ -92,7 +92,11 @@ export async function generateCountyProfilePdf(
   } else {
     doc.setTextColor(...MUTED);
     doc.setFontSize(10);
-    doc.text("Basemap unavailable — see evidence page for stitched OSM/Esri tiles.", M + 12, mapY + mapH / 2);
+    doc.text(
+      "Basemap unavailable — see evidence page for stitched OSM/Esri tiles.",
+      M + 12,
+      mapY + mapH / 2,
+    );
   }
   doc.setDrawColor(...ACCENT);
   doc.setLineWidth(1);
@@ -233,7 +237,8 @@ export async function generateCountyProfilePdf(
     const barW = sw - 110;
     doc.setFillColor(240, 244, 250);
     doc.roundedRect(barX, yy + 28, barW, 8, 4, 4, "F");
-    const tone = r[1] >= 75 ? ACCENT : r[1] >= 55 ? GOLD : ([230, 90, 90] as [number, number, number]);
+    const tone =
+      r[1] >= 75 ? ACCENT : r[1] >= 55 ? GOLD : ([230, 90, 90] as [number, number, number]);
     doc.setFillColor(...tone);
     doc.roundedRect(barX, yy + 28, (barW * Math.max(0, Math.min(100, r[1]))) / 100, 8, 4, 4, "F");
   });
@@ -434,7 +439,10 @@ export async function generateCountyProfilePdf(
 
   // ---------- Save ----------
   onProgress(98, "Writing PDF");
-  const slug = facts.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const slug = facts.name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
   const d = new Date();
   const stamp =
     `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}` +

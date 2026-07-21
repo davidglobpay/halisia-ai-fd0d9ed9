@@ -2,7 +2,11 @@ import { useCallback, useEffect, useState } from "react";
 import { Loader2, RefreshCw, ImageOff } from "lucide-react";
 import { fetchStaticMapCached } from "@/lib/static-map-cache";
 
-type Tile = { label: string; layer: "roadmap-light" | "terrain" | "satellite" | "hybrid"; zoom: number };
+type Tile = {
+  label: string;
+  layer: "roadmap-light" | "terrain" | "satellite" | "hybrid";
+  zoom: number;
+};
 
 const TILES: Tile[] = [
   { label: "Street map", layer: "roadmap-light", zoom: 11 },
@@ -91,7 +95,10 @@ export function CountyEvidenceStrip({
                     className="absolute inset-0 animate-pulse bg-gradient-to-br from-[#0e2451] via-[#0a1735] to-[#132a63]"
                   />
                   <div className="absolute inset-0 flex items-center justify-center text-[11px] text-white/70">
-                    <Loader2 aria-hidden className="mr-1.5 h-3.5 w-3.5 animate-spin text-[#00C2E8]" />
+                    <Loader2
+                      aria-hidden
+                      className="mr-1.5 h-3.5 w-3.5 animate-spin text-[#00C2E8]"
+                    />
                     Stitching tiles…
                   </div>
                 </>

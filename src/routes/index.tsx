@@ -397,11 +397,21 @@ function Landing() {
               Land · Intelligence · Platform
             </div>
             <div className="mt-2 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
-              <Link to="/explore" className="hover:text-white transition">Explore</Link>
-              <Link to="/compare" search={{ codes: "" }} className="hover:text-white transition">Compare</Link>
-              <Link to="/title-deed" className="hover:text-white transition">Title deed</Link>
-              <a href="#intelligence" className="hover:text-white transition">Intelligence</a>
-              <a href="#how" className="hover:text-white transition">How it works</a>
+              <Link to="/explore" className="hover:text-white transition">
+                Explore
+              </Link>
+              <Link to="/compare" search={{ codes: "" }} className="hover:text-white transition">
+                Compare
+              </Link>
+              <Link to="/title-deed" className="hover:text-white transition">
+                Title deed
+              </Link>
+              <a href="#intelligence" className="hover:text-white transition">
+                Intelligence
+              </a>
+              <a href="#how" className="hover:text-white transition">
+                How it works
+              </a>
             </div>
             <div className="mt-6 flex flex-col md:flex-row items-center justify-between gap-2 text-[11px] text-muted-foreground w-full">
               <div>© {new Date().getFullYear()} HALISIA AI · Land Intelligence Platform</div>

@@ -8,9 +8,7 @@ import { readFileSync } from "node:fs";
  * is non-trivially large proves the OSM/Esri fallback ran when Google Static
  * Maps is blocked (the tile stitcher still produces a real PNG data URL).
  */
-test("PDF dossier embeds non-empty map images in cover and evidence sections", async ({
-  page,
-}) => {
+test("PDF dossier embeds non-empty map images in cover and evidence sections", async ({ page }) => {
   await page.goto("/explore?q=Kilimani");
 
   await expect(page.getByTestId("active-address")).toContainText(/Kilimani|Nairobi/i, {
@@ -30,7 +28,10 @@ test("PDF dossier embeds non-empty map images in cover and evidence sections", a
 
   // Count image XObjects — jsPDF writes `/Subtype /Image` for each embedded raster.
   const imageObjectCount = (raw.match(/\/Subtype\s*\/Image/g) ?? []).length;
-  expect(imageObjectCount, "PDF must embed at least 2 image XObjects (cover + evidence)").toBeGreaterThanOrEqual(2);
+  expect(
+    imageObjectCount,
+    "PDF must embed at least 2 image XObjects (cover + evidence)",
+  ).toBeGreaterThanOrEqual(2);
 
   // Each embedded image stream must be non-empty. Parse `/Length N` for image objects.
   const streamLengths: number[] = [];

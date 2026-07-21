@@ -125,9 +125,12 @@ const SECTION_NAV = [
 function CountyPage() {
   const { profile } = Route.useLoaderData();
   const { facts, latLng, scores, metrics, density } = profile;
-  const [pdf, setPdf] = useState<{ pct: number; stage: string; busy: boolean; error: string | null }>(
-    { pct: 0, stage: "", busy: false, error: null },
-  );
+  const [pdf, setPdf] = useState<{
+    pct: number;
+    stage: string;
+    busy: boolean;
+    error: string | null;
+  }>({ pct: 0, stage: "", busy: false, error: null });
 
   const handleDownload = async () => {
     setPdf({ pct: 0, stage: "Preparing", busy: true, error: null });
@@ -168,9 +171,14 @@ function CountyPage() {
                   aria-valuemax={100}
                   aria-valuenow={pdf.pct}
                 >
-                  <div className="h-full bg-accent transition-all" style={{ width: `${pdf.pct}%` }} />
+                  <div
+                    className="h-full bg-accent transition-all"
+                    style={{ width: `${pdf.pct}%` }}
+                  />
                 </div>
-                <span>{pdf.stage} · {pdf.pct}%</span>
+                <span>
+                  {pdf.stage} · {pdf.pct}%
+                </span>
               </div>
             )}
             <button
@@ -549,11 +557,7 @@ function CountyPage() {
             <div className="mb-2 text-xs uppercase tracking-widest text-muted-foreground">
               Image evidence — auto-generated map panels (OSM/Esri fallback ensures no blank tiles)
             </div>
-            <CountyEvidenceStrip
-              lat={latLng.lat}
-              lng={latLng.lng}
-              countyName={facts.name}
-            />
+            <CountyEvidenceStrip lat={latLng.lat} lng={latLng.lng} countyName={facts.name} />
           </div>
           <ul className="grid md:grid-cols-2 gap-2 text-sm">
             {COUNTY_DATA_SOURCES.map((s) => (
