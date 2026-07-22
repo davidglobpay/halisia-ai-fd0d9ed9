@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TitleDeedRouteImport } from './routes/title-deed'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ReportRouteImport } from './routes/report'
 import { Route as LogoQaRouteImport } from './routes/logo-qa'
 import { Route as ExploreRouteImport } from './routes/explore'
@@ -23,6 +24,11 @@ import { Route as ApiChatRouteImport } from './routes/api/chat'
 const TitleDeedRoute = TitleDeedRouteImport.update({
   id: '/title-deed',
   path: '/title-deed',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ReportRoute = ReportRouteImport.update({
@@ -79,6 +85,7 @@ export interface FileRoutesByFullPath {
   '/explore': typeof ExploreRoute
   '/logo-qa': typeof LogoQaRoute
   '/report': typeof ReportRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/title-deed': typeof TitleDeedRoute
   '/api/chat': typeof ApiChatRoute
   '/county/$code': typeof CountyCodeRoute
@@ -91,6 +98,7 @@ export interface FileRoutesByTo {
   '/explore': typeof ExploreRoute
   '/logo-qa': typeof LogoQaRoute
   '/report': typeof ReportRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/title-deed': typeof TitleDeedRoute
   '/api/chat': typeof ApiChatRoute
   '/county/$code': typeof CountyCodeRoute
@@ -104,6 +112,7 @@ export interface FileRoutesById {
   '/explore': typeof ExploreRoute
   '/logo-qa': typeof LogoQaRoute
   '/report': typeof ReportRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/title-deed': typeof TitleDeedRoute
   '/api/chat': typeof ApiChatRoute
   '/county/$code': typeof CountyCodeRoute
@@ -118,6 +127,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/logo-qa'
     | '/report'
+    | '/reset-password'
     | '/title-deed'
     | '/api/chat'
     | '/county/$code'
@@ -130,6 +140,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/logo-qa'
     | '/report'
+    | '/reset-password'
     | '/title-deed'
     | '/api/chat'
     | '/county/$code'
@@ -142,6 +153,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/logo-qa'
     | '/report'
+    | '/reset-password'
     | '/title-deed'
     | '/api/chat'
     | '/county/$code'
@@ -155,6 +167,7 @@ export interface RootRouteChildren {
   ExploreRoute: typeof ExploreRoute
   LogoQaRoute: typeof LogoQaRoute
   ReportRoute: typeof ReportRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   TitleDeedRoute: typeof TitleDeedRoute
   ApiChatRoute: typeof ApiChatRoute
   CountyCodeRoute: typeof CountyCodeRoute
@@ -167,6 +180,13 @@ declare module '@tanstack/react-router' {
       path: '/title-deed'
       fullPath: '/title-deed'
       preLoaderRoute: typeof TitleDeedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/report': {
@@ -243,6 +263,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExploreRoute: ExploreRoute,
   LogoQaRoute: LogoQaRoute,
   ReportRoute: ReportRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   TitleDeedRoute: TitleDeedRoute,
   ApiChatRoute: ApiChatRoute,
   CountyCodeRoute: CountyCodeRoute,
