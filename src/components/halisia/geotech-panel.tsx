@@ -535,7 +535,7 @@ function suitTone(s: string) {
   return "text-destructive";
 }
 
-function RiskSection({ g }: { g: GeotechIntel }) {
+export function RiskSection({ g }: { g: GeotechIntel }) {
   const [open, setOpen] = useState<string | null>(g.risks[0]?.label ?? null);
   const gwScore = groundwaterScore(g);
   return (
