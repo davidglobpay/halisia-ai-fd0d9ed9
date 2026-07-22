@@ -1,53 +1,62 @@
-This request is large. I'll ship it in four focused waves so each one is verifiable before the next. All work stays inside existing routes; no new business-logic backends beyond the interactive layers already fed by `geotech.functions.ts`, `location-intel.functions.ts`, and `wave4-overlays.functions.ts`.
+# Scope
 
-## Wave A — Interactive Soil Profile & Foundation Comparison
+Two items in the request are already shipped in earlier turns and will be left as-is:
+- Mobile perf throttled tests (`tests/e2e/mobile-perf-throttled.spec.ts`)
+- Persisted soil layers + map tool (`use-persisted-state.ts`, wired into geotech panel and Leaflet toolbar)
 
-File: `src/components/halisia/geotech-panel.tsx` (+ small helpers in `src/lib/geotech-derive.ts`)
+This plan focuses on the three new deliverables, all built on top of existing surfaces without redesigning them.
 
-- Layer toggles (Clay / Sand / Silt / Organic / Bulk density) with a legend swatch bar; toggling filters the SVG cross-section and the data table.
-- Derived metrics per depth: **bearing capacity** (kPa band from texture + bulk density), **shrink–swell potential** (from clay % + organic %), **rock depth** (from existing bedrock estimate), **groundwater probability** (from existing gw block). Rendered as an inline "Subsurface indicators" strip with tooltips explaining each formula.
-- Foundation suitability comparison: replace the flat list with 4 side-by-side cards (Strip / Pad / Raft / Pile). Each card shows suitability chip, best-use blurb, and a 3-bar mini-score (Load capacity / Cost / Site fit) so users can compare at a glance.
+## 1. AI Executive Summary — Simple / Professional / Technical
 
-## Wave B — Map Overlays & Tools
+File: `src/components/halisia/hero-summary.tsx` (extend) + small addition in `src/lib/ai-narrative.functions.ts` if fields missing.
 
-Files: `src/components/halisia/leaflet-layers-map.internal.tsx` (+ new `src/lib/map-tools.ts`)
+- Add a segmented control (Simple · Professional · Technical) using existing glass-pill styling, persisted via `usePersistedState("halisia:aiView", "professional")`.
+- New `ExecutiveSummary` block below the hero rings with sections:
+  - **Overview** — 2-3 sentence AI read
+  - **Strengths** — bullet list from `narrative.strengths`
+  - **Weaknesses** — bullets from `narrative.weaknesses`
+  - **Recommended Actions** — bullets from `narrative.recommendations`
+  - **Warnings** — bullets from geotech risks + narrative.risks
+  - **Confidence** — % badge with tooltip explaining data completeness
+  - **Sources Used** — chips: OSM, Open-Meteo, SoilGrids, KNBS, IEBC, Google (only those actually queried)
+- View-mode filtering:
+  - Simple: Overview + top 3 strengths/weaknesses, plain-language phrasing, no numbers
+  - Professional (default): full sections with key metrics inline
+  - Technical: full sections + raw scores, formulas, unit annotations, expandable "How this was calculated" per section
 
-- Toolbar (top-right, glassy) with: **Heatmap toggle** (already have `HeatmapMap` — reuse the density source), **Property boundaries** (OSM `way[boundary]` via existing overlay function), **Distance tool**, **Area tool**, **Elevation profile**, **Draw polygon/line**, **Export GeoJSON**.
-- Distance/area use `leaflet` polyline/polygon with live tooltip (Haversine + shoelace on lat/lng).
-- Elevation profile: sample 40 points along the drawn line via `terrain-grid.ts` (already cached), render inline sparkline with min/max/gain/loss.
-- Export button downloads the drawn features as `.geojson`.
-- All tools are additive; the existing tile-provider switcher stays untouched.
+## 2. Sliding Sidebar Shell
 
-## Wave C — Construction Risks with Mitigation & Cost Impact
+New: `src/components/halisia/side-panel.tsx` — a right-side sheet (uses shadcn `Sheet` if available, else custom slide-over) that mounts children without unmounting the map.
 
-Files: `src/lib/geotech.functions.ts` (extend `RiskIndicator`), `src/components/halisia/geotech-panel.tsx`, `src/components/halisia/intelligence-dashboard.tsx` (risks tab surface).
+- Props: `open`, `onOpenChange`, `title`, `width` (`sm | md | lg`), `children`
+- Focus trap, ESC to close, backdrop click closes, `role="dialog"` `aria-modal="true"`
+- Route (`/explore`) grows a right-edge rail of icon buttons: Search, Property Intel, Construction, Environment, Amenities, Reports. Clicking opens the panel with the corresponding section extracted from `IntelligenceDashboard` tabs — the map stays visible on the left.
+- On mobile (<768px) the panel becomes a bottom sheet ~85vh.
 
-- Add `mitigation: string` and `costImpact: { band: "Low"|"Moderate"|"High"|"Severe"; rangeKESPerSqm: [number, number]; note: string }` to each risk item.
-- Deterministic rule table (e.g. expansive clay → "Ground beam + non-expansive backfill", KES 3,500–6,500/m²).
-- Render as expandable risk cards: severity chip, one-line summary, "What to do" list, cost-impact bar with KES/m² band.
+## 3. Intelligent Floating Search
 
-## Wave D — Amenities Caching & Graceful Fallbacks
+Extend: `src/components/halisia/search-bar.tsx` → add `SearchAutocomplete` wrapper, and mount a `FloatingSearch` at app root that stays pinned bottom-center on mobile, top-center on desktop, always accessible.
 
-Files: `src/lib/location-intel.functions.ts`, `src/components/halisia/place-card.tsx`.
+- Recent searches: `usePersistedState("halisia:recentSearches", [])` — last 8, click to re-run
+- Saved searches: `usePersistedState("halisia:savedSearches", [])` — star icon on any recent item
+- Suggestions:
+  - 47 counties from `kenya-counties.json`
+  - Common areas (Kilimani, Karen, Westlands, Runda, etc. — small static list)
+  - Coordinate parser hint when input matches lat,lng
+  - Natural-language pass-through: if query contains keywords (`near`, `best`, `cheap`, `safe`, `flood`, etc.) it flows through to existing search handler unchanged — the natural-language routing already happens server-side in `location-intel`
+- Dropdown groups: Suggestions · Recent · Saved · Natural-language hint
+- Keyboard nav: ↑/↓ to move, Enter to select, Esc to close; ARIA combobox pattern
 
-- In-memory LRU (module-scope Map, 15-min TTL) for `getPlaceDetails`, place photos, and route-matrix results, keyed by place id + origin.
-- Per-request `Promise.allSettled` on Routes / Details / Photos so a single provider failure never blanks the card.
-- Skeleton + `role="status"` while loading; on error, show "Live data unavailable — cached snapshot" and keep static fields (name, address, rating baseline) visible.
-- Retry button on the card that re-triggers only the failed sub-fetch.
+## Technical Details
 
-## Wave E — End-to-End Verification
+- All new components colocated under `src/components/halisia/`
+- No route restructuring; `FloatingSearch` mounts in `__root.tsx` conditionally (hidden on `/report` viewer)
+- No new dependencies; reuse `lucide-react`, existing `Sheet` from shadcn (`src/components/ui/sheet.tsx` — verify exists, else build lightweight custom)
+- Persist keys namespaced under `halisia:*`
+- Typecheck must pass; add a smoke Playwright test opening the side panel and asserting map remains in DOM
 
-File: new `tests/e2e/amenities-and-maps.spec.ts` + extend `wave2-terrain.spec.ts`.
+## Out of Scope
 
-- Amenities (desktop 1280×800 and mobile 390×844 projects already in `playwright.config.ts`): assert first `PlaceCard` shows a distance in km/m, a driving-time badge, an open/closed pill; expand → photos strip has ≥1 `<img>` with non-empty `src`, reviews list renders or shows the graceful fallback message.
-- Map tools: activate distance tool → click twice → tooltip reads `/\d+(\.\d+)?\s?(m|km)/`; activate area tool → close polygon → tooltip reads `/\d+(\.\d+)?\s?(m²|ha)/`; click Export → download `.geojson` filename check.
-- Geotech: toggle a layer off → the corresponding legend swatch dims and its column disappears from the table; foundation cards render 4 items.
-
-## Technical notes (skip if non-technical)
-
-- No new deps required — Leaflet already ships with `L.Polyline`/`L.Polygon` helpers; sparkline is a lightweight inline SVG.
-- Cache lives on the server-function module (per-worker), acceptable for a 15-min window; no persistence needed.
-- Cost bands are indicative KES ranges based on published EAK/NCA rate-of-works references; each card carries a "planning-only" caveat consistent with the existing geotech disclaimer.
-- Total: ~6 file edits + 2 new files + 1 new spec. Estimated ~1200 LOC net add.
-
-Ready to build A → E in order once you approve.
+- Redesigning existing dashboard tabs (side panel reuses their content)
+- Server-side NL query parsing (client hint only; server already handles free text)
+- New data sources
