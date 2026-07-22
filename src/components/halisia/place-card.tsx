@@ -12,6 +12,8 @@ import {
   Globe,
   Star,
   Circle,
+  RefreshCw,
+  AlertCircle,
 } from "lucide-react";
 import { getPlaceDetails, type PlaceDetails } from "@/lib/location-intel.functions";
 
@@ -59,7 +61,13 @@ function priceDots(level?: string) {
   return map[level] ?? "";
 }
 
-function StatusPill({ status, businessStatus }: { status?: boolean | null; businessStatus?: string }) {
+function StatusPill({
+  status,
+  businessStatus,
+}: {
+  status?: boolean | null;
+  businessStatus?: string;
+}) {
   if (businessStatus && businessStatus !== "OPERATIONAL") {
     return (
       <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-destructive/15 text-destructive border border-destructive/30">
@@ -97,7 +105,8 @@ export function PlaceCard({ place, isBest }: { place: Place; isBest?: boolean })
       : undefined);
 
   const photo = place.photoUrls?.[0];
-  const photos = details.data?.photoUrls?.length ? details.data.photoUrls : place.photoUrls ?? [];
+  const detailsFailed = !!details.error;
+  const photos = details.data?.photoUrls?.length ? details.data.photoUrls : (place.photoUrls ?? []);
   const weekday = details.data?.weekdayText ?? place.weekdayText;
 
   return (
@@ -160,9 +169,7 @@ export function PlaceCard({ place, isBest }: { place: Place; isBest?: boolean })
 
       {open && (
         <div className="border-t border-white/10 p-3 space-y-2 text-xs">
-          {place.address && (
-            <div className="text-muted-foreground">{place.address}</div>
-          )}
+          {place.address && <div className="text-muted-foreground">{place.address}</div>}
           <div className="flex flex-wrap gap-2">
             {navUrl && (
               <a
@@ -195,8 +202,33 @@ export function PlaceCard({ place, isBest }: { place: Place; isBest?: boolean })
           </div>
 
           {details.isLoading && (
-            <div className="flex items-center gap-2 text-muted-foreground">
+            <div
+              role="status"
+              aria-live="polite"
+              className="flex items-center gap-2 text-muted-foreground"
+            >
               <Loader2 className="h-3 w-3 animate-spin" /> Loading opening hours & reviews…
+            </div>
+          )}
+
+          {detailsFailed && (
+            <div
+              role="status"
+              className="flex items-center gap-2 rounded-lg border border-amber-glow/30 bg-amber-glow/10 px-2 py-1.5 text-[11px] text-amber-glow"
+              data-testid="place-fallback"
+            >
+              <AlertCircle className="h-3.5 w-3.5 flex-none" />
+              <span className="flex-1">Live data unavailable — showing cached snapshot.</span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  details.refetch();
+                }}
+                className="inline-flex items-center gap-1 rounded-md bg-white/10 px-1.5 py-0.5 text-[10px] hover:bg-white/20"
+              >
+                <RefreshCw className="h-3 w-3" /> Retry
+              </button>
             </div>
           )}
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -11,9 +11,12 @@ import {
   CircleMarker,
   Tooltip,
   LayerGroup,
+  useMap,
+  useMapEvents,
 } from "react-leaflet";
 import L from "leaflet";
 import { getWave4Overlays, type Wave4Overlays } from "@/lib/wave4-overlays.functions";
+import { Ruler, Hexagon, PenLine, Download, Trash2 } from "lucide-react";
 
 const DefaultIcon = L.icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
@@ -230,6 +233,7 @@ export default function LeafletLayersMap({
             </div>
           </Popup>
         </Marker>
+        <MapTools />
       </MapContainer>
       <div className="pointer-events-none absolute bottom-2 right-2 glass rounded-xl px-3 py-2 text-[10px] text-foreground/90 space-y-1">
         <div className="uppercase tracking-widest text-muted-foreground">Legend</div>
@@ -248,6 +252,217 @@ export default function LeafletLayersMap({
         <div className="flex items-center gap-2">
           <span className="h-2 w-2 rounded-full bg-emerald-400" />
           Facility
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// -- Interactive measurement / drawing tools ---------------------------------
+
+type Tool = "none" | "distance" | "area" | "draw";
+type Pt = [number, number];
+
+function haversineM(a: Pt, b: Pt) {
+  const R = 6371000;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(b[0] - a[0]);
+  const dLng = toRad(b[1] - a[1]);
+  const s =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(a[0])) * Math.cos(toRad(b[0])) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.asin(Math.sqrt(s));
+}
+function polylineLength(pts: Pt[]) {
+  let m = 0;
+  for (let i = 1; i < pts.length; i++) m += haversineM(pts[i - 1], pts[i]);
+  return m;
+}
+function polygonAreaM2(pts: Pt[]) {
+  // Spherical excess (Shoelace on projected mercator is close enough here).
+  if (pts.length < 3) return 0;
+  const R = 6378137;
+  let sum = 0;
+  for (let i = 0; i < pts.length; i++) {
+    const [lat1, lng1] = pts[i];
+    const [lat2, lng2] = pts[(i + 1) % pts.length];
+    sum +=
+      (((lng2 - lng1) * Math.PI) / 180) *
+      (2 + Math.sin((lat1 * Math.PI) / 180) + Math.sin((lat2 * Math.PI) / 180));
+  }
+  return Math.abs((sum * R * R) / 2);
+}
+function fmtDist(m: number) {
+  return m < 1000 ? `${m.toFixed(0)} m` : `${(m / 1000).toFixed(2)} km`;
+}
+function fmtArea(m2: number) {
+  return m2 < 10000 ? `${m2.toFixed(0)} m²` : `${(m2 / 10000).toFixed(2)} ha`;
+}
+
+function MapTools() {
+  const map = useMap();
+  const [tool, setTool] = useState<Tool>("none");
+  const [pts, setPts] = useState<Pt[]>([]);
+  const [readout, setReadout] = useState<string>("");
+  const layerRef = useRef<L.LayerGroup | null>(null);
+  if (!layerRef.current) layerRef.current = L.layerGroup().addTo(map);
+
+  // Re-render leaflet drawings when points change.
+  useEffect(() => {
+    const g = layerRef.current!;
+    g.clearLayers();
+    if (pts.length === 0) {
+      setReadout("");
+      return;
+    }
+    pts.forEach((p) => L.circleMarker(p, { radius: 4, color: "#62e9ff", weight: 2 }).addTo(g));
+    if (tool === "area" || tool === "draw") {
+      if (pts.length >= 2) {
+        const poly = L.polygon(pts, {
+          color: "#d4a017",
+          weight: 2,
+          fillOpacity: 0.15,
+        }).addTo(g);
+        if (tool === "area" && pts.length >= 3) {
+          const a = polygonAreaM2(pts);
+          poly.bindTooltip(fmtArea(a), { permanent: true, direction: "center" }).openTooltip();
+          setReadout(fmtArea(a));
+        }
+      }
+    } else if (tool === "distance" && pts.length >= 2) {
+      const line = L.polyline(pts, { color: "#62e9ff", weight: 2 }).addTo(g);
+      const d = polylineLength(pts);
+      line
+        .bindTooltip(fmtDist(d), { permanent: true, direction: "top", sticky: true })
+        .openTooltip();
+      setReadout(fmtDist(d));
+    }
+  }, [pts, tool]);
+
+  // Click handling.
+  useMapEvents({
+    click(e) {
+      if (tool === "none") return;
+      setPts((prev) => [...prev, [e.latlng.lat, e.latlng.lng] as Pt]);
+    },
+    dblclick() {
+      if (tool !== "none") setTool("none");
+    },
+  });
+
+  const clear = () => {
+    setPts([]);
+    setReadout("");
+  };
+  const pick = (t: Tool) => {
+    setTool((cur) => (cur === t ? "none" : t));
+    setPts([]);
+  };
+  const exportGeoJSON = () => {
+    if (pts.length === 0) return;
+    const isPoly = tool === "area" || tool === "draw";
+    const feature = isPoly
+      ? {
+          type: "Feature" as const,
+          properties: { tool, areaM2: polygonAreaM2(pts) },
+          geometry: {
+            type: "Polygon" as const,
+            coordinates: [pts.concat([pts[0]]).map(([la, ln]) => [ln, la])],
+          },
+        }
+      : {
+          type: "Feature" as const,
+          properties: { tool, lengthM: polylineLength(pts) },
+          geometry: {
+            type: "LineString" as const,
+            coordinates: pts.map(([la, ln]) => [ln, la]),
+          },
+        };
+    const fc = { type: "FeatureCollection" as const, features: [feature] };
+    const blob = new Blob([JSON.stringify(fc, null, 2)], { type: "application/geo+json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `halisia-features-${Date.now()}.geojson`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  const btn = (active: boolean) =>
+    `inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] transition ${
+      active
+        ? "border-accent/60 bg-accent/20 text-accent"
+        : "border-white/10 bg-black/40 text-foreground/80 hover:bg-white/10"
+    }`;
+
+  return (
+    <div
+      className="leaflet-top leaflet-left"
+      data-testid="map-tools"
+      style={{ pointerEvents: "auto" }}
+    >
+      <div className="leaflet-control leaflet-bar !border-none !bg-transparent !shadow-none">
+        <div className="glass rounded-xl p-1.5 flex flex-col gap-1 min-w-[140px]">
+          <button
+            type="button"
+            onClick={() => pick("distance")}
+            className={btn(tool === "distance")}
+            data-testid="tool-distance"
+          >
+            <Ruler className="h-3 w-3" /> Distance
+          </button>
+          <button
+            type="button"
+            onClick={() => pick("area")}
+            className={btn(tool === "area")}
+            data-testid="tool-area"
+          >
+            <Hexagon className="h-3 w-3" /> Area
+          </button>
+          <button
+            type="button"
+            onClick={() => pick("draw")}
+            className={btn(tool === "draw")}
+            data-testid="tool-draw"
+          >
+            <PenLine className="h-3 w-3" /> Draw polygon
+          </button>
+          <div className="flex gap-1">
+            <button
+              type="button"
+              onClick={exportGeoJSON}
+              className={btn(false) + " flex-1"}
+              data-testid="tool-export"
+              disabled={pts.length === 0}
+            >
+              <Download className="h-3 w-3" /> Export
+            </button>
+            <button
+              type="button"
+              onClick={clear}
+              className={btn(false)}
+              data-testid="tool-clear"
+              disabled={pts.length === 0}
+              aria-label="Clear drawings"
+            >
+              <Trash2 className="h-3 w-3" />
+            </button>
+          </div>
+          {tool !== "none" && (
+            <div className="text-[10px] text-muted-foreground px-1">
+              {tool === "distance" ? "Click to add points; double-click to finish." : null}
+              {tool === "area" ? "Click 3+ points; double-click to finish." : null}
+              {tool === "draw" ? "Click to draw; double-click to finish." : null}
+            </div>
+          )}
+          {readout && (
+            <div
+              className="text-[11px] font-semibold tabular-nums text-accent px-1"
+              data-testid="tool-readout"
+            >
+              {readout}
+            </div>
+          )}
         </div>
       </div>
     </div>

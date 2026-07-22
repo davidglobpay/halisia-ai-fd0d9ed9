@@ -43,6 +43,12 @@ export type RiskIndicator = {
   label: string;
   level: "Low" | "Moderate" | "High";
   note: string;
+  mitigation: string[];
+  costImpact: {
+    band: "Low" | "Moderate" | "High" | "Severe";
+    rangeKESPerSqm: [number, number];
+    note: string;
+  };
 };
 
 export type GeotechIntel = {
@@ -414,35 +420,126 @@ function riskIndicators(
   soil: SoilLayer[],
 ): RiskIndicator[] {
   const swell = (soil[0]?.clayPct ?? 0) > 35;
+  const slopeLevel: "Low" | "Moderate" | "High" =
+    terrain.slopePct > 15 ? "High" : terrain.slopePct > 7 ? "Moderate" : "Low";
+  const settleLevel: "Low" | "Moderate" | "High" = swell
+    ? "High"
+    : soil[0]?.sandPct != null && soil[0].sandPct > 60
+      ? "Low"
+      : "Moderate";
+  const drainLevel: "Low" | "Moderate" | "High" =
+    gw.seasonalWaterlogging === "High"
+      ? "High"
+      : gw.seasonalWaterlogging === "Moderate"
+        ? "Moderate"
+        : "Low";
   return [
     {
       label: "Slope stability",
-      level: terrain.slopePct > 15 ? "High" : terrain.slopePct > 7 ? "Moderate" : "Low",
+      level: slopeLevel,
       note: `Local slope ~${terrain.slopePct}% (${terrain.landform}).`,
+      mitigation:
+        slopeLevel === "High"
+          ? [
+              "Commission slope-stability analysis by a licensed geotechnical engineer.",
+              "Terrace or bench cut/fill; avoid cutting toe of slope.",
+              "Install gabion or reinforced-earth retaining structures where needed.",
+              "Design surface drains diverting stormwater away from cut faces.",
+            ]
+          : slopeLevel === "Moderate"
+            ? [
+                "Grade platform level; cap fills at ≤2 m unless engineered.",
+                "Vegetate slopes >1:3 for erosion cover.",
+                "Include cut-off drains upslope of the building line.",
+              ]
+            : ["Standard site clearance and compaction acceptable."],
+      costImpact: costBand(slopeLevel, [1500, 3500], [4500, 9000], [9500, 22000]),
     },
     {
       label: "Erosion",
       level: terrain.erosionRisk,
       note: "Derived from slope and terrain roughness.",
+      mitigation:
+        terrain.erosionRisk === "High"
+          ? [
+              "Silt fences and sediment traps during construction.",
+              "Rip-rap or grass-crete channels for concentrated flow.",
+              "Permanent vegetation cover post-works within 30 days.",
+            ]
+          : terrain.erosionRisk === "Moderate"
+            ? [
+                "Temporary mulch/geotextile on exposed cut faces.",
+                "Direct roof runoff to soakaways or perimeter swales.",
+              ]
+            : ["Routine site housekeeping is sufficient."],
+      costImpact: costBand(terrain.erosionRisk, [800, 2000], [2500, 5500], [6000, 14000]),
     },
     {
       label: "Settlement",
-      level: swell ? "High" : soil[0]?.sandPct != null && soil[0].sandPct > 60 ? "Low" : "Moderate",
+      level: settleLevel,
       note: swell
         ? "Expansive clays imply swell/shrink and differential settlement."
         : "Typical residual/loam profile — monitor during long rains.",
+      mitigation:
+        settleLevel === "High"
+          ? [
+              "Excavate active clay zone (≥1.2 m) and replace with non-expansive engineered fill.",
+              "Adopt stiffened raft or ground-beam foundation with movement joints.",
+              "Keep moisture regime constant: perimeter apron ≥1 m, no trees within 1×tree-height.",
+            ]
+          : settleLevel === "Moderate"
+            ? [
+                "Verify allowable bearing pressure with plate-load or DCP tests.",
+                "Reinforce strip footings; provide construction joints at ≥6 m intervals.",
+              ]
+            : ["Standard shallow footings acceptable subject to on-site verification."],
+      costImpact: costBand(settleLevel, [1200, 2800], [3500, 6500], [8500, 18000]),
     },
     {
       label: "Drainage",
-      level:
-        gw.seasonalWaterlogging === "High"
-          ? "High"
-          : gw.seasonalWaterlogging === "Moderate"
-            ? "Moderate"
-            : "Low",
+      level: drainLevel,
       note: `Seasonal waterlogging ${gw.seasonalWaterlogging.toLowerCase()}; shallow groundwater ${gw.shallowLikelihood.toLowerCase()}.`,
+      mitigation:
+        drainLevel === "High"
+          ? [
+              "Raise finished floor level ≥600 mm above 1-in-25-year flood line.",
+              "Sub-surface French drains around foundation perimeter.",
+              "Waterproof tanking for any basement or lift pit.",
+            ]
+          : drainLevel === "Moderate"
+            ? [
+                "DPC/DPM at plinth; graded surrounds sloping away from building.",
+                "Storm drainage sized for local 1-in-10-year event.",
+              ]
+            : ["Conventional surface drainage adequate."],
+      costImpact: costBand(drainLevel, [700, 1800], [2500, 5000], [6500, 15000]),
     },
   ];
+}
+
+function costBand(
+  level: "Low" | "Moderate" | "High",
+  low: [number, number],
+  mod: [number, number],
+  high: [number, number],
+): RiskIndicator["costImpact"] {
+  if (level === "High")
+    return {
+      band: "High",
+      rangeKESPerSqm: high,
+      note: "Indicative uplift on gross floor area for mitigation works; planning-only.",
+    };
+  if (level === "Moderate")
+    return {
+      band: "Moderate",
+      rangeKESPerSqm: mod,
+      note: "Indicative uplift on gross floor area for mitigation works; planning-only.",
+    };
+  return {
+    band: "Low",
+    rangeKESPerSqm: low,
+    note: "Nominal allowance for standard good-practice works.",
+  };
 }
 
 export const getGeotechIntel = createServerFn({ method: "POST" })

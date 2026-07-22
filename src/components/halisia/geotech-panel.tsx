@@ -11,9 +11,21 @@ import {
   ShieldAlert,
   ShieldCheck,
   Waves,
+  Wrench,
+  Coins,
 } from "lucide-react";
 import { getGeotechIntel, type GeotechIntel, type SoilLayer } from "@/lib/geotech.functions";
 import { downloadGeotechPdf } from "@/lib/geotech-pdf";
+import {
+  SOIL_LAYER_KEYS,
+  SOIL_LAYER_META,
+  type SoilLayerKey,
+  layerValue,
+  bearingCapacityKpa,
+  shrinkSwellScore,
+  groundwaterScore,
+  foundationScore,
+} from "@/lib/geotech-derive";
 
 /**
  * Wave 3 · AI Geotechnical Intelligence Module.
@@ -241,6 +253,14 @@ function TerrainProfile({ g }: { g: GeotechIntel }) {
 }
 
 function SoilSection({ layers }: { layers: SoilLayer[] }) {
+  const [active, setActive] = useState<Record<SoilLayerKey, boolean>>({
+    clay: true,
+    sand: true,
+    silt: true,
+    organic: false,
+    density: false,
+  });
+  const toggle = (k: SoilLayerKey) => setActive((a) => ({ ...a, [k]: !a[k] }));
   if (!layers.length)
     return (
       <Card title="Soil profile" icon={LayersIcon}>
@@ -250,7 +270,38 @@ function SoilSection({ layers }: { layers: SoilLayer[] }) {
       </Card>
     );
   return (
-    <Card title="Soil profile" icon={LayersIcon} hint="ISRIC SoilGrids v2.0">
+    <Card title="Interactive soil profile" icon={LayersIcon} hint="ISRIC SoilGrids v2.0">
+      <div
+        className="flex flex-wrap gap-1.5 mb-2"
+        role="group"
+        aria-label="Soil layer toggles"
+        data-testid="soil-layer-toggles"
+      >
+        {SOIL_LAYER_KEYS.map((k) => {
+          const meta = SOIL_LAYER_META[k];
+          const on = active[k];
+          return (
+            <button
+              key={k}
+              type="button"
+              onClick={() => toggle(k)}
+              aria-pressed={on}
+              data-testid={`soil-toggle-${k}`}
+              className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] uppercase tracking-widest border transition ${
+                on
+                  ? "border-white/20 bg-white/10 text-foreground"
+                  : "border-white/5 bg-white/[0.02] text-muted-foreground opacity-60"
+              }`}
+            >
+              <span
+                className="h-2 w-2 rounded-full"
+                style={{ background: meta.color, opacity: on ? 1 : 0.35 }}
+              />
+              {meta.label}
+            </button>
+          );
+        })}
+      </div>
       <div className="space-y-2">
         {layers.map((L) => (
           <div key={L.depth} className="rounded-xl bg-black/30 border border-white/5 px-3 py-2">
@@ -263,34 +314,80 @@ function SoilSection({ layers }: { layers: SoilLayer[] }) {
                 drainage: {L.drainage}
               </span>
             </div>
-            <div className="mt-2 h-2 rounded-full overflow-hidden flex">
-              <div
-                className="bg-amber-glow/80"
-                style={{ width: `${L.clayPct}%` }}
-                title={`Clay ${L.clayPct}%`}
-              />
-              <div
-                className="bg-primary/70"
-                style={{ width: `${L.siltPct}%` }}
-                title={`Silt ${L.siltPct}%`}
-              />
-              <div
-                className="bg-cyan-glow/80"
-                style={{ width: `${L.sandPct}%` }}
-                title={`Sand ${L.sandPct}%`}
-              />
-            </div>
-            <div className="mt-1 flex justify-between text-[10px] text-muted-foreground tabular-nums">
-              <span>Clay {L.clayPct}%</span>
-              <span>Silt {L.siltPct}%</span>
-              <span>Sand {L.sandPct}%</span>
-              <span>Org {L.organicPct}%</span>
-              {L.bulkDensity != null && <span>ρ {L.bulkDensity} g/cm³</span>}
+            {(active.clay || active.silt || active.sand) && (
+              <div className="mt-2 h-2 rounded-full overflow-hidden flex bg-white/5">
+                {active.clay && (
+                  <div
+                    style={{ width: `${L.clayPct}%`, background: SOIL_LAYER_META.clay.color }}
+                    title={`Clay ${L.clayPct}%`}
+                  />
+                )}
+                {active.silt && (
+                  <div
+                    style={{ width: `${L.siltPct}%`, background: SOIL_LAYER_META.silt.color }}
+                    title={`Silt ${L.siltPct}%`}
+                  />
+                )}
+                {active.sand && (
+                  <div
+                    style={{ width: `${L.sandPct}%`, background: SOIL_LAYER_META.sand.color }}
+                    title={`Sand ${L.sandPct}%`}
+                  />
+                )}
+              </div>
+            )}
+            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground tabular-nums">
+              {SOIL_LAYER_KEYS.filter((k) => active[k]).map((k) => {
+                const v = layerValue(L, k);
+                if (v == null) return null;
+                const meta = SOIL_LAYER_META[k];
+                return (
+                  <span key={k} data-testid={`soil-cell-${L.depth}-${k}`}>
+                    <span style={{ color: meta.color }}>■</span> {meta.label} {v}
+                    {meta.unit}
+                  </span>
+                );
+              })}
             </div>
           </div>
         ))}
       </div>
+      <SubsurfaceIndicators layers={layers} />
     </Card>
+  );
+}
+
+function SubsurfaceIndicators({ layers }: { layers: SoilLayer[] }) {
+  const top = layers[0];
+  if (!top) return null;
+  const bear = bearingCapacityKpa(top);
+  const ss = shrinkSwellScore(top);
+  return (
+    <div className="mt-3 grid grid-cols-2 gap-2" data-testid="subsurface-indicators">
+      <div className="rounded-xl bg-black/25 border border-white/5 px-3 py-2" title={bear.note}>
+        <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+          Bearing capacity
+        </div>
+        <div className="text-sm font-semibold tabular-nums mt-0.5">
+          {bear.low}–{bear.high} kPa
+        </div>
+      </div>
+      <div className="rounded-xl bg-black/25 border border-white/5 px-3 py-2">
+        <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+          Shrink–swell
+        </div>
+        <div className="text-sm font-semibold mt-0.5">
+          <span
+            className={eroseTone(
+              ss.band === "Severe" ? "High" : (ss.band as "Low" | "Moderate" | "High"),
+            )}
+          >
+            {ss.band}
+          </span>{" "}
+          <span className="text-muted-foreground text-[10px] tabular-nums">({ss.score}/100)</span>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -378,24 +475,57 @@ function GroundwaterSection({ g }: { g: GeotechIntel }) {
 
 function FoundationSection({ g }: { g: GeotechIntel }) {
   return (
-    <Card title="Foundation suitability" icon={Building2} hint="Guidance only">
-      <div className="grid grid-cols-2 gap-2">
-        {g.foundations.map((f) => (
-          <div key={f.type} className="rounded-xl bg-black/30 border border-white/5 px-3 py-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">{f.type}</span>
-              <span className={`text-[10px] uppercase tracking-widest ${suitTone(f.suitability)}`}>
-                {f.suitability}
-              </span>
+    <Card title="Foundation comparison" icon={Building2} hint="Guidance only">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2" data-testid="foundation-comparison">
+        {g.foundations.map((f) => {
+          const s = foundationScore(f, g);
+          return (
+            <div
+              key={f.type}
+              className="rounded-xl bg-black/30 border border-white/5 px-3 py-2.5 flex flex-col"
+              data-testid={`foundation-card-${f.type.toLowerCase()}`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold">{f.type}</span>
+                <span
+                  className={`text-[10px] uppercase tracking-widest ${suitTone(f.suitability)}`}
+                >
+                  {f.suitability}
+                </span>
+              </div>
+              <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed line-clamp-3">
+                {f.note}
+              </p>
+              <div className="mt-2 space-y-1">
+                <MiniBar label="Load" value={s.loadCapacity} tone="#62e9ff" />
+                <MiniBar label="Cost" value={s.costEfficiency} tone="#22c55e" />
+                <MiniBar label="Fit" value={s.siteFit} tone="#d4a017" />
+              </div>
+              <div className="mt-2 text-[10px] text-muted-foreground tabular-nums">
+                {s.costLabel}
+              </div>
             </div>
-            <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed">{f.note}</p>
-          </div>
-        ))}
+          );
+        })}
       </div>
       <p className="mt-2 text-[10px] text-muted-foreground">
         Final foundation design requires a professional site-specific geotechnical investigation.
       </p>
     </Card>
+  );
+}
+
+function MiniBar({ label, value, tone }: { label: string; value: number; tone: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-[9px] uppercase tracking-widest text-muted-foreground w-8">
+        {label}
+      </span>
+      <div className="flex-1 h-1.5 rounded-full bg-white/5 overflow-hidden">
+        <div className="h-full rounded-full" style={{ width: `${value}%`, background: tone }} />
+      </div>
+      <span className="text-[10px] tabular-nums text-muted-foreground w-6 text-right">{value}</span>
+    </div>
   );
 }
 
@@ -407,22 +537,82 @@ function suitTone(s: string) {
 }
 
 function RiskSection({ g }: { g: GeotechIntel }) {
+  const [open, setOpen] = useState<string | null>(g.risks[0]?.label ?? null);
+  const gwScore = groundwaterScore(g);
   return (
-    <Card title="Construction risk indicators" icon={ShieldAlert}>
-      <div className="grid grid-cols-2 gap-2">
-        {g.risks.map((r) => (
-          <div key={r.label} className="rounded-xl bg-black/30 border border-white/5 px-3 py-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">{r.label}</span>
-              <span
-                className={`text-[10px] uppercase tracking-widest ${eroseTone(r.level as "Low" | "Moderate" | "High")}`}
+    <Card
+      title="Construction risks · mitigation & cost impact"
+      icon={ShieldAlert}
+      hint={`Groundwater ${gwScore}/100`}
+    >
+      <div className="space-y-2" data-testid="risk-cards">
+        {g.risks.map((r) => {
+          const isOpen = open === r.label;
+          const band = r.costImpact.band;
+          const bandTone =
+            band === "Severe" || band === "High"
+              ? "text-destructive"
+              : band === "Moderate"
+                ? "text-amber-glow"
+                : "text-emerald-glow";
+          const bandWidth =
+            band === "Severe" ? 100 : band === "High" ? 75 : band === "Moderate" ? 50 : 25;
+          return (
+            <div
+              key={r.label}
+              className="rounded-xl bg-black/30 border border-white/5 overflow-hidden"
+              data-testid={`risk-card-${r.label.toLowerCase().replace(/\s+/g, "-")}`}
+            >
+              <button
+                type="button"
+                onClick={() => setOpen(isOpen ? null : r.label)}
+                aria-expanded={isOpen}
+                className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/[0.03]"
               >
-                {r.level}
-              </span>
+                <span className="text-sm font-medium flex-1">{r.label}</span>
+                <span className={`text-[10px] uppercase tracking-widest ${eroseTone(r.level)}`}>
+                  {r.level}
+                </span>
+                <span
+                  className={`text-[10px] uppercase tracking-widest ${bandTone} ml-1`}
+                  title={r.costImpact.note}
+                >
+                  {band} cost
+                </span>
+              </button>
+              {isOpen && (
+                <div className="border-t border-white/5 px-3 py-2 space-y-2">
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">{r.note}</p>
+                  <div>
+                    <div className="text-[10px] uppercase tracking-widest text-muted-foreground flex items-center gap-1 mb-1">
+                      <Wrench className="h-3 w-3 text-accent" /> What to do
+                    </div>
+                    <ul className="list-disc list-inside space-y-0.5 text-[11px] text-foreground/85">
+                      {r.mitigation.map((m, i) => (
+                        <li key={i}>{m}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <div className="text-[10px] uppercase tracking-widest text-muted-foreground flex items-center gap-1 mb-1">
+                      <Coins className="h-3 w-3 text-amber-glow" /> Estimated cost impact
+                    </div>
+                    <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-emerald-glow via-amber-glow to-destructive"
+                        style={{ width: `${bandWidth}%` }}
+                      />
+                    </div>
+                    <div className="mt-1 text-[10px] text-muted-foreground tabular-nums">
+                      KES {r.costImpact.rangeKESPerSqm[0].toLocaleString()}–
+                      {r.costImpact.rangeKESPerSqm[1].toLocaleString()} / m² · {r.costImpact.note}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-            <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed">{r.note}</p>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </Card>
   );
