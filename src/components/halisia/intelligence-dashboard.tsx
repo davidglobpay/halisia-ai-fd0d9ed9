@@ -267,11 +267,23 @@ export function IntelligenceDashboard({
         className="space-y-3"
       >
         {tab === "overview" && (
-          <OverviewTab intel={intelQ.data} loading={intelQ.isLoading} narrative={narrativeQ.data} />
+          <>
+            <OverviewTab
+              intel={intelQ.data}
+              loading={intelQ.isLoading}
+              narrative={narrativeQ.data}
+            />
+            <GeotechRisksInline lat={lat} lng={lng} />
+          </>
         )}
         {tab === "weather" && <WeatherPanel lat={lat} lng={lng} />}
         {tab === "environment" && <EnvironmentTab intel={intelQ.data} loading={intelQ.isLoading} />}
-        {tab === "amenities" && <AmenitiesTab intel={intelQ.data} loading={intelQ.isLoading} />}
+        {tab === "amenities" && (
+          <>
+            <AmenitiesTab intel={intelQ.data} loading={intelQ.isLoading} />
+            <GeotechRisksInline lat={lat} lng={lng} />
+          </>
+        )}
         {tab === "layers" && (
           <div className="space-y-2">
             <LeafletLayersMap lat={lat} lng={lng} label={address} />
