@@ -61,7 +61,13 @@ function priceDots(level?: string) {
   return map[level] ?? "";
 }
 
-function StatusPill({ status, businessStatus }: { status?: boolean | null; businessStatus?: string }) {
+function StatusPill({
+  status,
+  businessStatus,
+}: {
+  status?: boolean | null;
+  businessStatus?: string;
+}) {
   if (businessStatus && businessStatus !== "OPERATIONAL") {
     return (
       <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-destructive/15 text-destructive border border-destructive/30">
@@ -100,7 +106,7 @@ export function PlaceCard({ place, isBest }: { place: Place; isBest?: boolean })
 
   const photo = place.photoUrls?.[0];
   const detailsFailed = !!details.error;
-  const photos = details.data?.photoUrls?.length ? details.data.photoUrls : place.photoUrls ?? [];
+  const photos = details.data?.photoUrls?.length ? details.data.photoUrls : (place.photoUrls ?? []);
   const weekday = details.data?.weekdayText ?? place.weekdayText;
 
   return (
@@ -163,9 +169,7 @@ export function PlaceCard({ place, isBest }: { place: Place; isBest?: boolean })
 
       {open && (
         <div className="border-t border-white/10 p-3 space-y-2 text-xs">
-          {place.address && (
-            <div className="text-muted-foreground">{place.address}</div>
-          )}
+          {place.address && <div className="text-muted-foreground">{place.address}</div>}
           <div className="flex flex-wrap gap-2">
             {navUrl && (
               <a
@@ -214,9 +218,7 @@ export function PlaceCard({ place, isBest }: { place: Place; isBest?: boolean })
               data-testid="place-fallback"
             >
               <AlertCircle className="h-3.5 w-3.5 flex-none" />
-              <span className="flex-1">
-                Live data unavailable — showing cached snapshot.
-              </span>
+              <span className="flex-1">Live data unavailable — showing cached snapshot.</span>
               <button
                 type="button"
                 onClick={(e) => {

@@ -287,7 +287,7 @@ function polygonAreaM2(pts: Pt[]) {
     const [lat1, lng1] = pts[i];
     const [lat2, lng2] = pts[(i + 1) % pts.length];
     sum +=
-      ((lng2 - lng1) * Math.PI) / 180 *
+      (((lng2 - lng1) * Math.PI) / 180) *
       (2 + Math.sin((lat1 * Math.PI) / 180) + Math.sin((lat2 * Math.PI) / 180));
   }
   return Math.abs((sum * R * R) / 2);

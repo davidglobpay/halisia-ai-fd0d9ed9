@@ -21,7 +21,10 @@ export function bearingCapacityKpa(L: SoilLayer): { low: number; high: number; n
 }
 
 /** Shrink–swell potential score 0–100 from clay % and organic matter. */
-export function shrinkSwellScore(L: SoilLayer): { score: number; band: "Low" | "Moderate" | "High" | "Severe" } {
+export function shrinkSwellScore(L: SoilLayer): {
+  score: number;
+  band: "Low" | "Moderate" | "High" | "Severe";
+} {
   const s = Math.max(0, Math.min(100, L.clayPct * 1.8 - L.organicPct * 4));
   const band: "Low" | "Moderate" | "High" | "Severe" =
     s >= 75 ? "Severe" : s >= 55 ? "High" : s >= 30 ? "Moderate" : "Low";
@@ -31,7 +34,9 @@ export function shrinkSwellScore(L: SoilLayer): { score: number; band: "Low" | "
 /** Groundwater probability (0–100) — combines shallow + seasonal levels. */
 export function groundwaterScore(g: GeotechIntel): number {
   const map = { Low: 15, Moderate: 55, High: 90 } as const;
-  return Math.round((map[g.groundwater.shallowLikelihood] + map[g.groundwater.seasonalWaterlogging]) / 2);
+  return Math.round(
+    (map[g.groundwater.shallowLikelihood] + map[g.groundwater.seasonalWaterlogging]) / 2,
+  );
 }
 
 export type FoundationScore = {
@@ -81,13 +86,14 @@ export function foundationScore(f: Foundation, g: GeotechIntel): FoundationScore
 
 export const SOIL_LAYER_KEYS = ["clay", "sand", "silt", "organic", "density"] as const;
 export type SoilLayerKey = (typeof SOIL_LAYER_KEYS)[number];
-export const SOIL_LAYER_META: Record<SoilLayerKey, { label: string; color: string; unit: string }> = {
-  clay: { label: "Clay", color: "#d4a017", unit: "%" },
-  sand: { label: "Sand", color: "#62e9ff", unit: "%" },
-  silt: { label: "Silt", color: "#7aa2ff", unit: "%" },
-  organic: { label: "Organic", color: "#22c55e", unit: "%" },
-  density: { label: "Bulk ρ", color: "#f97316", unit: "g/cm³" },
-};
+export const SOIL_LAYER_META: Record<SoilLayerKey, { label: string; color: string; unit: string }> =
+  {
+    clay: { label: "Clay", color: "#d4a017", unit: "%" },
+    sand: { label: "Sand", color: "#62e9ff", unit: "%" },
+    silt: { label: "Silt", color: "#7aa2ff", unit: "%" },
+    organic: { label: "Organic", color: "#22c55e", unit: "%" },
+    density: { label: "Bulk ρ", color: "#f97316", unit: "g/cm³" },
+  };
 
 export function layerValue(L: SoilLayer, key: SoilLayerKey): number | null {
   switch (key) {

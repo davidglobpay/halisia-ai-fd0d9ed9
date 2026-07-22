@@ -179,7 +179,10 @@ async function fetchNearby(
     return (j.places ?? []).map((p) => {
       const loc = p.location ? { lat: p.location.latitude, lng: p.location.longitude } : undefined;
       const oh = p.currentOpeningHours ?? p.regularOpeningHours;
-      const photoRefs = (p.photos ?? []).map((x) => x.name).filter(Boolean).slice(0, 4);
+      const photoRefs = (p.photos ?? [])
+        .map((x) => x.name)
+        .filter(Boolean)
+        .slice(0, 4);
       return {
         id: p.id,
         name: p.displayName?.text ?? "Unknown",
@@ -216,63 +219,66 @@ async function fetchRouteMatrix(
     .join(";")}`;
   try {
     return await memo(key, async () => {
-    const res = await callGateway(`/routes/distanceMatrix/v2:computeRouteMatrix`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Goog-FieldMask": "originIndex,destinationIndex,duration,distanceMeters,condition",
-      },
-      body: JSON.stringify({
-        origins: [
-          {
-            waypoint: { location: { latLng: { latitude: origin.lat, longitude: origin.lng } } },
-          },
-        ],
-        destinations: destinations.map((d) => ({
-          waypoint: { location: { latLng: { latitude: d.lat, longitude: d.lng } } },
-        })),
-        travelMode: mode,
-        ...(mode === "DRIVE" ? { routingPreference: "TRAFFIC_AWARE" } : {}),
-      }),
-    });
-    if (!res.ok) return destinations.map(() => ({ minutes: null, km: null }));
-    const text = await res.text();
-    // Response is a JSON array (or NDJSON). Parse defensively.
-    let items: Array<{
-      destinationIndex?: number;
-      duration?: string;
-      distanceMeters?: number;
-      condition?: string;
-    }> = [];
-    try {
-      const parsed = JSON.parse(text);
-      items = Array.isArray(parsed) ? parsed : [parsed];
-    } catch {
-      items = text
-        .split("\n")
-        .map((l) => l.trim())
-        .filter(Boolean)
-        .map((l) => {
-          try {
-            return JSON.parse(l);
-          } catch {
-            return null;
-          }
-        })
-        .filter(Boolean) as typeof items;
-    }
-    const out = destinations.map(() => ({ minutes: null as number | null, km: null as number | null }));
-    for (const it of items) {
-      const idx = it.destinationIndex ?? 0;
-      if (idx < 0 || idx >= out.length) continue;
-      if (it.condition && it.condition !== "ROUTE_EXISTS") continue;
-      const secs = it.duration ? parseInt(String(it.duration).replace(/s$/, ""), 10) : NaN;
-      out[idx] = {
-        minutes: Number.isFinite(secs) ? Math.round(secs / 60) : null,
-        km: typeof it.distanceMeters === "number" ? it.distanceMeters / 1000 : null,
-      };
-    }
-    return out;
+      const res = await callGateway(`/routes/distanceMatrix/v2:computeRouteMatrix`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-FieldMask": "originIndex,destinationIndex,duration,distanceMeters,condition",
+        },
+        body: JSON.stringify({
+          origins: [
+            {
+              waypoint: { location: { latLng: { latitude: origin.lat, longitude: origin.lng } } },
+            },
+          ],
+          destinations: destinations.map((d) => ({
+            waypoint: { location: { latLng: { latitude: d.lat, longitude: d.lng } } },
+          })),
+          travelMode: mode,
+          ...(mode === "DRIVE" ? { routingPreference: "TRAFFIC_AWARE" } : {}),
+        }),
+      });
+      if (!res.ok) return destinations.map(() => ({ minutes: null, km: null }));
+      const text = await res.text();
+      // Response is a JSON array (or NDJSON). Parse defensively.
+      let items: Array<{
+        destinationIndex?: number;
+        duration?: string;
+        distanceMeters?: number;
+        condition?: string;
+      }> = [];
+      try {
+        const parsed = JSON.parse(text);
+        items = Array.isArray(parsed) ? parsed : [parsed];
+      } catch {
+        items = text
+          .split("\n")
+          .map((l) => l.trim())
+          .filter(Boolean)
+          .map((l) => {
+            try {
+              return JSON.parse(l);
+            } catch {
+              return null;
+            }
+          })
+          .filter(Boolean) as typeof items;
+      }
+      const out = destinations.map(() => ({
+        minutes: null as number | null,
+        km: null as number | null,
+      }));
+      for (const it of items) {
+        const idx = it.destinationIndex ?? 0;
+        if (idx < 0 || idx >= out.length) continue;
+        if (it.condition && it.condition !== "ROUTE_EXISTS") continue;
+        const secs = it.duration ? parseInt(String(it.duration).replace(/s$/, ""), 10) : NaN;
+        out[idx] = {
+          minutes: Number.isFinite(secs) ? Math.round(secs / 60) : null,
+          km: typeof it.distanceMeters === "number" ? it.distanceMeters / 1000 : null,
+        };
+      }
+      return out;
     });
   } catch {
     return destinations.map(() => ({ minutes: null, km: null }));
@@ -302,17 +308,23 @@ export const getLocationIntel = createServerFn({ method: "POST" })
 
     // Compute walking + driving times for all destinations in two matrix calls.
     const all = [...schools, ...hospitals, ...groceries, ...transit, ...restaurants, ...banks];
-    const dests = all
-      .map((p, i) => ({ p, i, loc: p.location }))
-      .filter((x) => !!x.loc) as Array<{
+    const dests = all.map((p, i) => ({ p, i, loc: p.location })).filter((x) => !!x.loc) as Array<{
       p: PlaceLite;
       i: number;
       loc: { lat: number; lng: number };
     }>;
     if (dests.length) {
       const [drive, walk] = await Promise.all([
-        fetchRouteMatrix(data, dests.map((d) => d.loc), "DRIVE"),
-        fetchRouteMatrix(data, dests.map((d) => d.loc), "WALK"),
+        fetchRouteMatrix(
+          data,
+          dests.map((d) => d.loc),
+          "DRIVE",
+        ),
+        fetchRouteMatrix(
+          data,
+          dests.map((d) => d.loc),
+          "WALK",
+        ),
       ]);
       dests.forEach((d, k) => {
         d.p.driveMin = drive[k]?.minutes ?? null;
@@ -326,7 +338,8 @@ export const getLocationIntel = createServerFn({ method: "POST" })
     if (browserKey) {
       for (const p of all) {
         p.photoUrls = (p.photoRefs ?? []).map(
-          (name) => `https://places.googleapis.com/v1/${name}/media?maxWidthPx=640&key=${browserKey}`,
+          (name) =>
+            `https://places.googleapis.com/v1/${name}/media?maxWidthPx=640&key=${browserKey}`,
         );
       }
     }
@@ -388,58 +401,58 @@ export const getPlaceDetails = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<PlaceDetails> => {
     const browserKey = process.env.GOOGLE_MAPS_BROWSER_KEY;
     return memo(`pd|${data.id}|${browserKey ? "b" : "n"}`, async () => {
-    const res = await callGateway(`/places/v1/${data.id}`, {
-      method: "GET",
-      headers: {
-        "X-Goog-FieldMask":
-          "id,displayName,formattedAddress,rating,userRatingCount,nationalPhoneNumber,internationalPhoneNumber,websiteUri,googleMapsUri,regularOpeningHours,currentOpeningHours,photos,reviews",
-      },
-    });
-    if (!res.ok) throw new Error(`Places details ${res.status}`);
-    const p = (await res.json()) as {
-      id: string;
-      displayName?: { text: string };
-      formattedAddress?: string;
-      rating?: number;
-      userRatingCount?: number;
-      nationalPhoneNumber?: string;
-      internationalPhoneNumber?: string;
-      websiteUri?: string;
-      googleMapsUri?: string;
-      regularOpeningHours?: { openNow?: boolean; weekdayDescriptions?: string[] };
-      currentOpeningHours?: { openNow?: boolean; weekdayDescriptions?: string[] };
-      photos?: Array<{ name: string }>;
-      reviews?: Array<{
-        authorAttribution?: { displayName?: string };
+      const res = await callGateway(`/places/v1/${data.id}`, {
+        method: "GET",
+        headers: {
+          "X-Goog-FieldMask":
+            "id,displayName,formattedAddress,rating,userRatingCount,nationalPhoneNumber,internationalPhoneNumber,websiteUri,googleMapsUri,regularOpeningHours,currentOpeningHours,photos,reviews",
+        },
+      });
+      if (!res.ok) throw new Error(`Places details ${res.status}`);
+      const p = (await res.json()) as {
+        id: string;
+        displayName?: { text: string };
+        formattedAddress?: string;
         rating?: number;
-        text?: { text?: string };
-        relativePublishTimeDescription?: string;
-      }>;
-    };
-    const oh = p.currentOpeningHours ?? p.regularOpeningHours;
-    const photoRefs = (p.photos ?? []).map((x) => x.name).slice(0, 6);
-    return {
-      id: p.id,
-      name: p.displayName?.text,
-      rating: p.rating,
-      userRatingCount: p.userRatingCount,
-      address: p.formattedAddress,
-      phone: p.nationalPhoneNumber ?? p.internationalPhoneNumber,
-      website: p.websiteUri,
-      mapsUri: p.googleMapsUri,
-      openNow: oh?.openNow ?? null,
-      weekdayText: oh?.weekdayDescriptions,
-      photoUrls: browserKey
-        ? photoRefs.map(
-            (n) => `https://places.googleapis.com/v1/${n}/media?maxWidthPx=800&key=${browserKey}`,
-          )
-        : [],
-      reviews: (p.reviews ?? []).slice(0, 5).map((r) => ({
-        author: r.authorAttribution?.displayName,
-        rating: r.rating,
-        text: r.text?.text,
-        relativeTime: r.relativePublishTimeDescription,
-      })),
-    };
+        userRatingCount?: number;
+        nationalPhoneNumber?: string;
+        internationalPhoneNumber?: string;
+        websiteUri?: string;
+        googleMapsUri?: string;
+        regularOpeningHours?: { openNow?: boolean; weekdayDescriptions?: string[] };
+        currentOpeningHours?: { openNow?: boolean; weekdayDescriptions?: string[] };
+        photos?: Array<{ name: string }>;
+        reviews?: Array<{
+          authorAttribution?: { displayName?: string };
+          rating?: number;
+          text?: { text?: string };
+          relativePublishTimeDescription?: string;
+        }>;
+      };
+      const oh = p.currentOpeningHours ?? p.regularOpeningHours;
+      const photoRefs = (p.photos ?? []).map((x) => x.name).slice(0, 6);
+      return {
+        id: p.id,
+        name: p.displayName?.text,
+        rating: p.rating,
+        userRatingCount: p.userRatingCount,
+        address: p.formattedAddress,
+        phone: p.nationalPhoneNumber ?? p.internationalPhoneNumber,
+        website: p.websiteUri,
+        mapsUri: p.googleMapsUri,
+        openNow: oh?.openNow ?? null,
+        weekdayText: oh?.weekdayDescriptions,
+        photoUrls: browserKey
+          ? photoRefs.map(
+              (n) => `https://places.googleapis.com/v1/${n}/media?maxWidthPx=800&key=${browserKey}`,
+            )
+          : [],
+        reviews: (p.reviews ?? []).slice(0, 5).map((r) => ({
+          author: r.authorAttribution?.displayName,
+          rating: r.rating,
+          text: r.text?.text,
+          relativeTime: r.relativePublishTimeDescription,
+        })),
+      };
     });
   });

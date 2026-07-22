@@ -364,10 +364,7 @@ function SubsurfaceIndicators({ layers }: { layers: SoilLayer[] }) {
   const ss = shrinkSwellScore(top);
   return (
     <div className="mt-3 grid grid-cols-2 gap-2" data-testid="subsurface-indicators">
-      <div
-        className="rounded-xl bg-black/25 border border-white/5 px-3 py-2"
-        title={bear.note}
-      >
+      <div className="rounded-xl bg-black/25 border border-white/5 px-3 py-2" title={bear.note}>
         <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
           Bearing capacity
         </div>
@@ -380,7 +377,11 @@ function SubsurfaceIndicators({ layers }: { layers: SoilLayer[] }) {
           Shrink–swell
         </div>
         <div className="text-sm font-semibold mt-0.5">
-          <span className={eroseTone(ss.band === "Severe" ? "High" : (ss.band as "Low" | "Moderate" | "High"))}>
+          <span
+            className={eroseTone(
+              ss.band === "Severe" ? "High" : (ss.band as "Low" | "Moderate" | "High"),
+            )}
+          >
             {ss.band}
           </span>{" "}
           <span className="text-muted-foreground text-[10px] tabular-nums">({ss.score}/100)</span>
@@ -475,10 +476,7 @@ function GroundwaterSection({ g }: { g: GeotechIntel }) {
 function FoundationSection({ g }: { g: GeotechIntel }) {
   return (
     <Card title="Foundation comparison" icon={Building2} hint="Guidance only">
-      <div
-        className="grid grid-cols-2 lg:grid-cols-4 gap-2"
-        data-testid="foundation-comparison"
-      >
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2" data-testid="foundation-comparison">
         {g.foundations.map((f) => {
           const s = foundationScore(f, g);
           return (
@@ -572,9 +570,7 @@ function RiskSection({ g }: { g: GeotechIntel }) {
                 className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/[0.03]"
               >
                 <span className="text-sm font-medium flex-1">{r.label}</span>
-                <span
-                  className={`text-[10px] uppercase tracking-widest ${eroseTone(r.level)}`}
-                >
+                <span className={`text-[10px] uppercase tracking-widest ${eroseTone(r.level)}`}>
                   {r.level}
                 </span>
                 <span
@@ -609,8 +605,7 @@ function RiskSection({ g }: { g: GeotechIntel }) {
                     </div>
                     <div className="mt-1 text-[10px] text-muted-foreground tabular-nums">
                       KES {r.costImpact.rangeKESPerSqm[0].toLocaleString()}–
-                      {r.costImpact.rangeKESPerSqm[1].toLocaleString()} / m² ·{" "}
-                      {r.costImpact.note}
+                      {r.costImpact.rangeKESPerSqm[1].toLocaleString()} / m² · {r.costImpact.note}
                     </div>
                   </div>
                 </div>

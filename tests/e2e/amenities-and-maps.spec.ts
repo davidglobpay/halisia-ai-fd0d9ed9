@@ -11,9 +11,15 @@ test("Nearby Amenities — first place card shows distance, drive time, status p
   await expect(dash).toBeVisible({ timeout: 30_000 });
 
   // First place card
-  const card = page.locator("li").filter({ has: page.locator("[data-testid=\"place-card\"]") }).first();
+  const card = page
+    .locator("li")
+    .filter({ has: page.locator('[data-testid="place-card"]') })
+    .first();
   // Fallback: any li containing a Navigate button badge
-  const anyCard = page.locator("li").filter({ hasText: /min|km/ }).first();
+  const anyCard = page
+    .locator("li")
+    .filter({ hasText: /min|km/ })
+    .first();
   const target = (await card.count()) ? card : anyCard;
   await expect(target).toBeVisible({ timeout: 30_000 });
   await expect(target).toContainText(/\d+(\.\d+)?\s?(m|km)/);
@@ -30,7 +36,9 @@ test("Geotech — soil layer toggles hide/show cells and foundation cards render
   const panel = page.getByTestId("geotech-panel");
   await expect(panel).toBeVisible({ timeout: 45_000 });
 
-  const foundations = panel.getByTestId("foundation-comparison").locator("[data-testid^=foundation-card-]");
+  const foundations = panel
+    .getByTestId("foundation-comparison")
+    .locator("[data-testid^=foundation-card-]");
   await expect(foundations).toHaveCount(4);
 
   const clayToggle = panel.getByTestId("soil-toggle-clay");
