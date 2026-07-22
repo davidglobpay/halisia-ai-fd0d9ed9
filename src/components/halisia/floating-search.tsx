@@ -189,7 +189,7 @@ export function FloatingSearch() {
     navigate({ to: "/explore", search: { q: trimmed } });
   };
 
-  const useMyLoc = async () => {
+  const handleUseMyLocation = async () => {
     const v = await request();
     if (v) commit(`${v.lat.toFixed(6)},${v.lng.toFixed(6)}`);
   };
@@ -335,7 +335,7 @@ export function FloatingSearch() {
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              void useMyLoc();
+              void handleUseMyLocation();
             }}
             disabled={locating}
             aria-label="Use my location"
