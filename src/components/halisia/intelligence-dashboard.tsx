@@ -42,6 +42,7 @@ import { Wave4Panel } from "@/components/halisia/wave4-panel";
 import { Terrain3D } from "@/components/halisia/terrain-3d";
 import { useDevMode } from "@/hooks/use-dev-mode";
 import { PlaceCard } from "@/components/halisia/place-card";
+import { GeotechRisksInline } from "@/components/halisia/geotech-risks-inline";
 
 type TabId =
   | "overview"
