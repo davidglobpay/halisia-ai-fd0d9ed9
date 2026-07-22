@@ -42,6 +42,7 @@ import { Wave4Panel } from "@/components/halisia/wave4-panel";
 import { Terrain3D } from "@/components/halisia/terrain-3d";
 import { useDevMode } from "@/hooks/use-dev-mode";
 import { PlaceCard } from "@/components/halisia/place-card";
+import { GeotechRisksInline } from "@/components/halisia/geotech-risks-inline";
 
 type TabId =
   | "overview"
@@ -266,11 +267,23 @@ export function IntelligenceDashboard({
         className="space-y-3"
       >
         {tab === "overview" && (
-          <OverviewTab intel={intelQ.data} loading={intelQ.isLoading} narrative={narrativeQ.data} />
+          <>
+            <OverviewTab
+              intel={intelQ.data}
+              loading={intelQ.isLoading}
+              narrative={narrativeQ.data}
+            />
+            <GeotechRisksInline lat={lat} lng={lng} />
+          </>
         )}
         {tab === "weather" && <WeatherPanel lat={lat} lng={lng} />}
         {tab === "environment" && <EnvironmentTab intel={intelQ.data} loading={intelQ.isLoading} />}
-        {tab === "amenities" && <AmenitiesTab intel={intelQ.data} loading={intelQ.isLoading} />}
+        {tab === "amenities" && (
+          <>
+            <AmenitiesTab intel={intelQ.data} loading={intelQ.isLoading} />
+            <GeotechRisksInline lat={lat} lng={lng} />
+          </>
+        )}
         {tab === "layers" && (
           <div className="space-y-2">
             <LeafletLayersMap lat={lat} lng={lng} label={address} />

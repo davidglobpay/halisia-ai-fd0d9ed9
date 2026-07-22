@@ -26,6 +26,7 @@ import {
   groundwaterScore,
   foundationScore,
 } from "@/lib/geotech-derive";
+import { usePersistedState } from "@/hooks/use-persisted-state";
 
 /**
  * Wave 3 · AI Geotechnical Intelligence Module.
@@ -253,13 +254,10 @@ function TerrainProfile({ g }: { g: GeotechIntel }) {
 }
 
 function SoilSection({ layers }: { layers: SoilLayer[] }) {
-  const [active, setActive] = useState<Record<SoilLayerKey, boolean>>({
-    clay: true,
-    sand: true,
-    silt: true,
-    organic: false,
-    density: false,
-  });
+  const [active, setActive] = usePersistedState<Record<SoilLayerKey, boolean>>(
+    "halisia:soilLayers",
+    { clay: true, sand: true, silt: true, organic: false, density: false },
+  );
   const toggle = (k: SoilLayerKey) => setActive((a) => ({ ...a, [k]: !a[k] }));
   if (!layers.length)
     return (
@@ -273,7 +271,7 @@ function SoilSection({ layers }: { layers: SoilLayer[] }) {
     <Card title="Interactive soil profile" icon={LayersIcon} hint="ISRIC SoilGrids v2.0">
       <div
         className="flex flex-wrap gap-1.5 mb-2"
-        role="group"
+        role="toolbar"
         aria-label="Soil layer toggles"
         data-testid="soil-layer-toggles"
       >
@@ -286,8 +284,9 @@ function SoilSection({ layers }: { layers: SoilLayer[] }) {
               type="button"
               onClick={() => toggle(k)}
               aria-pressed={on}
+              aria-label={`${meta.label} layer ${on ? "visible" : "hidden"}`}
               data-testid={`soil-toggle-${k}`}
-              className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] uppercase tracking-widest border transition ${
+              className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] uppercase tracking-widest border transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 focus-visible:ring-offset-background ${
                 on
                   ? "border-white/20 bg-white/10 text-foreground"
                   : "border-white/5 bg-white/[0.02] text-muted-foreground opacity-60"
@@ -536,7 +535,7 @@ function suitTone(s: string) {
   return "text-destructive";
 }
 
-function RiskSection({ g }: { g: GeotechIntel }) {
+export function RiskSection({ g }: { g: GeotechIntel }) {
   const [open, setOpen] = useState<string | null>(g.risks[0]?.label ?? null);
   const gwScore = groundwaterScore(g);
   return (

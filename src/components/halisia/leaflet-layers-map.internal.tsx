@@ -17,6 +17,7 @@ import {
 import L from "leaflet";
 import { getWave4Overlays, type Wave4Overlays } from "@/lib/wave4-overlays.functions";
 import { Ruler, Hexagon, PenLine, Download, Trash2 } from "lucide-react";
+import { usePersistedState } from "@/hooks/use-persisted-state";
 
 const DefaultIcon = L.icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
@@ -301,7 +302,7 @@ function fmtArea(m2: number) {
 
 function MapTools() {
   const map = useMap();
-  const [tool, setTool] = useState<Tool>("none");
+  const [tool, setTool] = usePersistedState<Tool>("halisia:mapTool", "none");
   const [pts, setPts] = useState<Pt[]>([]);
   const [readout, setReadout] = useState<string>("");
   const layerRef = useRef<L.LayerGroup | null>(null);
@@ -389,7 +390,7 @@ function MapTools() {
   };
 
   const btn = (active: boolean) =>
-    `inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] transition ${
+    `inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 focus-visible:ring-offset-background ${
       active
         ? "border-accent/60 bg-accent/20 text-accent"
         : "border-white/10 bg-black/40 text-foreground/80 hover:bg-white/10"
@@ -402,12 +403,18 @@ function MapTools() {
       style={{ pointerEvents: "auto" }}
     >
       <div className="leaflet-control leaflet-bar !border-none !bg-transparent !shadow-none">
-        <div className="glass rounded-xl p-1.5 flex flex-col gap-1 min-w-[140px]">
+        <div
+          className="glass rounded-xl p-1.5 flex flex-col gap-1 min-w-[140px]"
+          role="toolbar"
+          aria-label="Map measurement and drawing tools"
+        >
           <button
             type="button"
             onClick={() => pick("distance")}
             className={btn(tool === "distance")}
             data-testid="tool-distance"
+            aria-pressed={tool === "distance"}
+            aria-label="Measure distance"
           >
             <Ruler className="h-3 w-3" /> Distance
           </button>
@@ -416,6 +423,8 @@ function MapTools() {
             onClick={() => pick("area")}
             className={btn(tool === "area")}
             data-testid="tool-area"
+            aria-pressed={tool === "area"}
+            aria-label="Measure area"
           >
             <Hexagon className="h-3 w-3" /> Area
           </button>
@@ -424,6 +433,8 @@ function MapTools() {
             onClick={() => pick("draw")}
             className={btn(tool === "draw")}
             data-testid="tool-draw"
+            aria-pressed={tool === "draw"}
+            aria-label="Draw polygon"
           >
             <PenLine className="h-3 w-3" /> Draw polygon
           </button>
@@ -434,6 +445,7 @@ function MapTools() {
               className={btn(false) + " flex-1"}
               data-testid="tool-export"
               disabled={pts.length === 0}
+              aria-label="Export drawings as GeoJSON"
             >
               <Download className="h-3 w-3" /> Export
             </button>
@@ -449,7 +461,7 @@ function MapTools() {
             </button>
           </div>
           {tool !== "none" && (
-            <div className="text-[10px] text-muted-foreground px-1">
+            <div className="text-[10px] text-muted-foreground px-1" aria-live="polite">
               {tool === "distance" ? "Click to add points; double-click to finish." : null}
               {tool === "area" ? "Click 3+ points; double-click to finish." : null}
               {tool === "draw" ? "Click to draw; double-click to finish." : null}
@@ -459,6 +471,7 @@ function MapTools() {
             <div
               className="text-[11px] font-semibold tabular-nums text-accent px-1"
               data-testid="tool-readout"
+              aria-live="polite"
             >
               {readout}
             </div>
