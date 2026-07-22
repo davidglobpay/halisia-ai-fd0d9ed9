@@ -41,6 +41,7 @@ import { MapsDiagnostics } from "@/components/halisia/maps-diagnostics";
 import { Wave4Panel } from "@/components/halisia/wave4-panel";
 import { Terrain3D } from "@/components/halisia/terrain-3d";
 import { useDevMode } from "@/hooks/use-dev-mode";
+import { PlaceCard } from "@/components/halisia/place-card";
 
 type TabId =
   | "overview"
@@ -503,6 +504,10 @@ function CategoryList({
   items: LocationIntel["categories"]["schools"];
 }) {
   if (!items.length) return null;
+  // Pick the top-rated (min 5 reviews) as the AI recommendation.
+  const bestId = items
+    .filter((p) => (p.userRatingCount ?? 0) >= 5)
+    .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))[0]?.id;
   return (
     <div className="glass rounded-2xl p-3">
       <div className="flex items-center gap-2 mb-2">
@@ -512,16 +517,9 @@ function CategoryList({
         <div className="text-xs font-medium">{title}</div>
         <div className="ml-auto text-[10px] text-muted-foreground">{items.length}</div>
       </div>
-      <ul className="space-y-1.5">
-        {items.slice(0, 5).map((p) => (
-          <li key={p.id} className="flex items-start gap-2 text-xs">
-            <span className="mt-1 h-1 w-1 rounded-full bg-accent" />
-            <span className="flex-1 truncate">{p.name}</span>
-            {p.rating != null && (
-              <span className="text-[10px] text-amber-glow">★ {p.rating.toFixed(1)}</span>
-            )}
-            <span className="text-[10px] text-muted-foreground">{fmtDist(p.distanceKm)}</span>
-          </li>
+      <ul className="space-y-2">
+        {items.slice(0, 6).map((p) => (
+          <PlaceCard key={p.id} place={p} isBest={p.id === bestId} />
         ))}
       </ul>
     </div>
