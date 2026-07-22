@@ -2,6 +2,21 @@ import { createServerFn } from "@tanstack/react-start";
 
 const GATEWAY = "https://connector-gateway.lovable.dev/google_maps";
 
+// -- Module-scope TTL cache (per Worker instance) ----------------------------
+// Keeps details / route-matrix / photo lookups responsive when external
+// providers are slow or intermittently failing. 15-minute TTL is short enough
+// that opening-hours and live "open now" flags stay useful.
+const TTL_MS = 15 * 60 * 1000;
+type CacheEntry<T> = { at: number; value: T };
+const memoCache = new Map<string, CacheEntry<unknown>>();
+async function memo<T>(key: string, factory: () => Promise<T>): Promise<T> {
+  const hit = memoCache.get(key) as CacheEntry<T> | undefined;
+  if (hit && Date.now() - hit.at < TTL_MS) return hit.value;
+  const value = await factory();
+  memoCache.set(key, { at: Date.now(), value });
+  return value;
+}
+
 type PlaceLite = {
   id: string;
   name: string;
@@ -196,7 +211,11 @@ async function fetchRouteMatrix(
   mode: "DRIVE" | "WALK",
 ): Promise<Array<{ minutes: number | null; km: number | null }>> {
   if (!destinations.length) return [];
+  const key = `rm|${mode}|${origin.lat.toFixed(4)},${origin.lng.toFixed(4)}|${destinations
+    .map((d) => `${d.lat.toFixed(4)},${d.lng.toFixed(4)}`)
+    .join(";")}`;
   try {
+    return await memo(key, async () => {
     const res = await callGateway(`/routes/distanceMatrix/v2:computeRouteMatrix`, {
       method: "POST",
       headers: {
@@ -254,6 +273,7 @@ async function fetchRouteMatrix(
       };
     }
     return out;
+    });
   } catch {
     return destinations.map(() => ({ minutes: null, km: null }));
   }
