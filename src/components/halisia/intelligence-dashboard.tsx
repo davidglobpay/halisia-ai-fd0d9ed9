@@ -175,6 +175,9 @@ export function IntelligenceDashboard({
         narrative={narrativeQ.data}
       />
 
+      {/* AI Executive Summary — simple / professional / technical */}
+      <ExecutiveSummary narrative={narrativeQ.data} intel={intelQ.data} />
+
       {/* Header card */}
       <div className="glass-strong rounded-2xl p-4 relative overflow-hidden">
         <div className="absolute -top-16 -right-16 h-40 w-40 rounded-full blur-3xl opacity-40 bg-gradient-to-br from-primary to-accent" />
