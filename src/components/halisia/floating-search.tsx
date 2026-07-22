@@ -269,7 +269,7 @@ export function FloatingSearch() {
       kind: s.kind,
       label: s.label,
       sub: s.sub,
-      onSelect: () => commit(s.query),
+      onSelect: () => commit(s.query, { kind: s.kind, via: "suggestion" }),
     }),
   );
   if (!q.trim()) {
@@ -279,7 +279,7 @@ export function FloatingSearch() {
         kind: "saved",
         label: s,
         sub: "Saved search",
-        onSelect: () => commit(s),
+        onSelect: () => commit(s, { kind: "saved", via: "suggestion" }),
         right: (
           <button
             type="button"
@@ -300,7 +300,7 @@ export function FloatingSearch() {
           kind: "recent",
           label: r,
           sub: "Recent",
-          onSelect: () => commit(r),
+            onSelect: () => commit(r, { kind: "recent", via: "suggestion" }),
           right: (
             <button
               type="button"
