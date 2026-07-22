@@ -126,7 +126,12 @@ export function FloatingSearch() {
 
   // Hide on report/logo-qa/auth routes where a floating overlay would obscure content.
   const hidden =
-    pathname.startsWith("/report") || pathname.startsWith("/logo-qa") || pathname === "/title-deed";
+    pathname.startsWith("/report") ||
+    pathname.startsWith("/logo-qa") ||
+    pathname === "/title-deed" ||
+    pathname.startsWith("/auth") ||
+    pathname.startsWith("/reset-password") ||
+    pathname.startsWith("/saved");
 
   // Probe geolocation permission (Permissions API is optional).
   useEffect(() => {
