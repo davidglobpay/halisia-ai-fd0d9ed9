@@ -253,14 +253,6 @@ function TerrainProfile({ g }: { g: GeotechIntel }) {
 }
 
 function SoilSection({ layers }: { layers: SoilLayer[] }) {
-  if (!layers.length)
-    return (
-      <Card title="Soil profile" icon={LayersIcon}>
-        <div className="text-xs text-muted-foreground">
-          SoilGrids returned no data for this point.
-        </div>
-      </Card>
-    );
   const [active, setActive] = useState<Record<SoilLayerKey, boolean>>({
     clay: true,
     sand: true,
@@ -269,6 +261,14 @@ function SoilSection({ layers }: { layers: SoilLayer[] }) {
     density: false,
   });
   const toggle = (k: SoilLayerKey) => setActive((a) => ({ ...a, [k]: !a[k] }));
+  if (!layers.length)
+    return (
+      <Card title="Soil profile" icon={LayersIcon}>
+        <div className="text-xs text-muted-foreground">
+          SoilGrids returned no data for this point.
+        </div>
+      </Card>
+    );
   return (
     <Card title="Interactive soil profile" icon={LayersIcon} hint="ISRIC SoilGrids v2.0">
       <div
