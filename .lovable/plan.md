@@ -1,63 +1,67 @@
-# Scope
+# HALISIA — Phased Delivery Plan
 
-Two items in the request are already shipped in earlier turns and will be left as-is:
+You picked all four tracks. Honestly: this is 6–10 focused turns of work, not one. Trying it in a single pass will half-break the current app (LIOS, county profiles, PDFs, maps, geotech — all working today). Here's the order I'll ship in, one phase per turn, so each phase leaves the app green.
 
-- Mobile perf throttled tests (`tests/e2e/mobile-perf-throttled.spec.ts`)
-- Persisted soil layers + map tool (`use-persisted-state.ts`, wired into geotech panel and Leaflet toolbar)
+## Phase 1 — Foundation (this turn)
 
-This plan focuses on the three new deliverables, all built on top of existing surfaces without redesigning them.
+1. **Enable Lovable Cloud** (DB + auth + storage). Prereq for everything in Phase 4+.
+2. **Rebrand — Kenyan flag palette + architectural typography.**
+   - Tokens in `src/styles.css`: `--background` deep black `oklch(0.16 0.02 250)`, `--foreground` white, `--primary` emerald `oklch(0.62 0.18 155)`, `--destructive` crimson `oklch(0.58 0.22 25)`, `--accent` metallic gold `oklch(0.78 0.14 85)`. Lighter/darker shades for hover/borders/gradients.
+   - Fonts via `<link>` in `__root.tsx`: **Space Grotesk** (display) + **Inter** (body) + **JetBrains Mono** (data/coords). Register in `@theme`.
+   - Semantic usage rules: green = positive/verified, red = risk/warning, gold = premium/AI/awards, black = surfaces, white = text.
+   - Subtle logo watermark (~4% opacity, blurred, gold glow) on landing + county profile hero sections.
+   - Futuristic textures: topographic contour SVG overlay + faint grid, both as CSS backgrounds behind hero sections.
+3. **Search dialog redesign** (`floating-search.tsx`)
+   - Minimal, single-column layout, gold-accent focus ring.
+   - Ready-made suggestion chips: "Kilimani, Nairobi", "Karen residential plot", "Naivasha lakefront", "Kajiado farmland", "Diani beachfront", "Mombasa CBD".
+   - Recent searches, My Location pill, ⌘K hint — cleaner grouping.
+4. **Pop-up navigation guide** — first-visit tour (localStorage-gated) pointing to: search (⌘K), county tiles, LIOS panel, PDF download, compare, geotech tab. Skippable, "Don't show again".
 
-## 1. AI Executive Summary — Simple / Professional / Technical
+## Phase 2 — Auth + Saved Properties (next turn)
 
-File: `src/components/halisia/hero-summary.tsx` (extend) + small addition in `src/lib/ai-narrative.functions.ts` if fields missing.
+- Managed `_authenticated/` layout, `/auth` page with Google + email/password.
+- `profiles` + `saved_properties` + `favorites` tables with RLS + GRANTs.
+- "Save" button on county profiles and search results; "My Saved" dashboard route.
 
-- Add a segmented control (Simple · Professional · Technical) using existing glass-pill styling, persisted via `usePersistedState("halisia:aiView", "professional")`.
-- New `ExecutiveSummary` block below the hero rings with sections:
-  - **Overview** — 2-3 sentence AI read
-  - **Strengths** — bullet list from `narrative.strengths`
-  - **Weaknesses** — bullets from `narrative.weaknesses`
-  - **Recommended Actions** — bullets from `narrative.recommendations`
-  - **Warnings** — bullets from geotech risks + narrative.risks
-  - **Confidence** — % badge with tooltip explaining data completeness
-  - **Sources Used** — chips: OSM, Open-Meteo, SoilGrids, KNBS, IEBC, Google (only those actually queried)
-- View-mode filtering:
-  - Simple: Overview + top 3 strengths/weaknesses, plain-language phrasing, no numbers
-  - Professional (default): full sections with key metrics inline
-  - Technical: full sections + raw scores, formulas, unit annotations, expandable "How this was calculated" per section
+## Phase 3 — Calculators (one turn)
 
-## 2. Sliding Sidebar Shell
+- `/tools/mortgage` — CBK-rate aware amortisation, KES formatting.
+- `/tools/construction` — BOQ by class (economy/standard/premium) × m² × county multiplier.
+- `/tools/roi` — rental yield + capital appreciation + break-even.
+- Shared inputs, chart.js visualisations, PDF export via existing `pdf-intelligence` scaffold.
 
-New: `src/components/halisia/side-panel.tsx` — a right-side sheet (uses shadcn `Sheet` if available, else custom slide-over) that mounts children without unmounting the map.
+## Phase 4 — Marketplace + Listings (2 turns)
 
-- Props: `open`, `onOpenChange`, `title`, `width` (`sm | md | lg`), `children`
-- Focus trap, ESC to close, backdrop click closes, `role="dialog"` `aria-modal="true"`
-- Route (`/explore`) grows a right-edge rail of icon buttons: Search, Property Intel, Construction, Environment, Amenities, Reports. Clicking opens the panel with the corresponding section extracted from `IntelligenceDashboard` tabs — the map stays visible on the left.
-- On mobile (<768px) the panel becomes a bottom sheet ~85vh.
+- `listings` table (owner, geo, price, media, verification status).
+- Create/edit/delete flows, image upload to Cloud storage, search/filter, favorites, contact seller (in-app message).
+- Verification badge driven by document upload + admin review flag.
 
-## 3. Intelligent Floating Search
+## Phase 5 — Professional Marketplace + Community Contributions (2 turns)
 
-Extend: `src/components/halisia/search-bar.tsx` → add `SearchAutocomplete` wrapper, and mount a `FloatingSearch` at app root that stays pinned bottom-center on mobile, top-center on desktop, always accessible.
+- `professionals` (architects, valuers, surveyors) with portfolio + ratings.
+- AI matching against active LIOS location.
+- Contributor submissions (photo/GPS) → AI moderation server fn → points/rewards ledger.
 
-- Recent searches: `usePersistedState("halisia:recentSearches", [])` — last 8, click to re-run
-- Saved searches: `usePersistedState("halisia:savedSearches", [])` — star icon on any recent item
-- Suggestions:
-  - 47 counties from `kenya-counties.json`
-  - Common areas (Kilimani, Karen, Westlands, Runda, etc. — small static list)
-  - Coordinate parser hint when input matches lat,lng
-  - Natural-language pass-through: if query contains keywords (`near`, `best`, `cheap`, `safe`, `flood`, etc.) it flows through to existing search handler unchanged — the natural-language routing already happens server-side in `location-intel`
-- Dropdown groups: Suggestions · Recent · Saved · Natural-language hint
-- Keyboard nav: ↑/↓ to move, Enter to select, Esc to close; ARIA combobox pattern
+## Phase 6 — Payments + Admin (1 turn, after `recommend_payment_provider`)
 
-## Technical Details
+- Stripe seamless for report unlocks / professional bookings / listing boosts.
+- `/admin` gated by `user_roles` (separate table, `has_role` SECURITY DEFINER — per project rules).
 
-- All new components colocated under `src/components/halisia/`
-- No route restructuring; `FloatingSearch` mounts in `__root.tsx` conditionally (hidden on `/report` viewer)
-- No new dependencies; reuse `lucide-react`, existing `Sheet` from shadcn (`src/components/ui/sheet.tsx` — verify exists, else build lightweight custom)
-- Persist keys namespaced under `halisia:*`
-- Typecheck must pass; add a smoke Playwright test opening the side panel and asserting map remains in DOM
+## Phase 7 — Audit sweep (1 turn)
 
-## Out of Scope
+- Playwright: run full suite, fix regressions.
+- A11y: axe pass, contrast against new palette, keyboard nav on all new dialogs.
+- Perf budget: lazy-load Cesium/Leaflet/Mapillary chunks, image `loading="lazy"`, route-level code split verification.
+- Security: RLS on every new table, input validation (zod) on every server fn, rate-limit public webhook routes.
 
-- Redesigning existing dashboard tabs (side panel reuses their content)
-- Server-side NL query parsing (client hint only; server already handles free text)
-- New data sources
+## What I need from you
+
+**Just say "go" to start Phase 1 now.** If you'd rather I sequence differently (e.g. marketplace before rebrand), tell me the order.
+
+## Technical notes
+
+- Payments provider will be picked by `recommend_payment_provider` in Phase 6, not guessed now.
+- Cesium/Mapillary already lazy-loaded — leave alone.
+- Existing LIOS + county profile + PDF pipeline is not being rewritten, only re-themed.
+- Watermark logo uses existing asset; no new logo work.
+- No background videos (per your prior instruction).

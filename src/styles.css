@@ -6,7 +6,10 @@
 
 /*
  * HALISIA AI — Land Intelligence Platform design system.
- * Deep space blue base, electric blue + cyan accents, glassmorphism surfaces.
+ * Kenyan flag inspired: deep black surfaces, pure white typography,
+ * emerald green (positive/verified), crimson red (risk/alert),
+ * metallic gold accent reserved for premium / AI / awards.
+ * Architectural typography, futuristic glass + topographic textures.
  */
 
 @theme inline {
@@ -57,62 +60,62 @@
   --color-flamingo: var(--flamingo);
   --color-earth: var(--earth);
   --color-cream: var(--cream);
+  --color-gold: var(--amber-glow);
+  --color-emerald: var(--emerald-glow);
+  --color-crimson: var(--destructive);
   --font-display: "Space Grotesk", "Sora", "SF Pro Display", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
 :root {
-  /* HALISIA — Kenya-inspired palette (dark by default).
-   * Background: Mount Kenya Midnight #071E3D
-   * Panel:      Indian Ocean Blue    #0B4F8A
-   * Accent:     Lake Turkana Cyan    #00C2E8
-   * Premium:    Savannah Gold        #D4A017
-   * Success:    Forest Green         #1E7A3B
-   * Land:       Rift Valley Earth    #8B5E3C
-   * Cream:      Acacia Cream         #F6F3EB
-   * Alert:      Flamingo Pink        #F26B8A
+  /* HALISIA — Kenyan flag palette (dark by default).
+   * Deep Black    #05070A  — background, nav, footer, cards
+   * Pure White    #F7F8FA  — typography
+   * Emerald Green #0E7C3A  — positive, verified, primary action
+   * Crimson Red   #C8102E  — warning, risk, environmental alert
+   * Metallic Gold #D4A017  — premium, AI, awards, highlights only
    */
   --radius: 1.375rem; /* 22px */
-  --background: oklch(0.22 0.08 255); /* #071E3D */
-  --foreground: oklch(0.97 0.01 240);
-  --card: oklch(0.28 0.09 252 / 0.65);
-  --card-foreground: oklch(0.97 0.01 240);
-  --popover: oklch(0.25 0.08 253);
-  --popover-foreground: oklch(0.97 0.01 240);
-  --primary: oklch(0.77 0.14 220); /* Lake Turkana Cyan #00C2E8 */
-  --primary-foreground: oklch(0.16 0.06 258);
-  --secondary: oklch(0.44 0.13 250); /* Indian Ocean Blue #0B4F8A */
-  --secondary-foreground: oklch(0.97 0.01 240);
-  --muted: oklch(0.3 0.07 254);
-  --muted-foreground: oklch(0.78 0.03 235);
-  --accent: oklch(0.77 0.14 220); /* cyan = primary interactive */
-  --accent-foreground: oklch(0.16 0.06 258);
-  --destructive: oklch(0.55 0.19 22); /* #C62828 */
-  --destructive-foreground: oklch(0.98 0 0);
+  --background: oklch(0.16 0.005 250); /* Deep black — nav / body */
+  --foreground: oklch(0.97 0.005 240); /* Pure white typography */
+  --card: oklch(0.2 0.008 250 / 0.72);
+  --card-foreground: oklch(0.97 0.005 240);
+  --popover: oklch(0.18 0.008 250);
+  --popover-foreground: oklch(0.97 0.005 240);
+  --primary: oklch(0.6 0.17 148); /* Emerald green — verified / positive */
+  --primary-foreground: oklch(0.98 0.005 240);
+  --secondary: oklch(0.28 0.01 250); /* Slate for surfaces */
+  --secondary-foreground: oklch(0.97 0.005 240);
+  --muted: oklch(0.24 0.008 250);
+  --muted-foreground: oklch(0.72 0.02 240);
+  --accent: oklch(0.78 0.14 85); /* Metallic gold — premium / AI */
+  --accent-foreground: oklch(0.16 0.02 60);
+  --destructive: oklch(0.58 0.22 25); /* Crimson red — risk / alert */
+  --destructive-foreground: oklch(0.98 0.005 240);
   --border: oklch(1 0 0 / 0.08);
   --input: oklch(1 0 0 / 0.06);
-  --ring: oklch(0.77 0.14 220);
-  --electric: oklch(0.77 0.14 220);
-  --cyan-glow: oklch(0.77 0.14 220); /* Lake Turkana Cyan */
-  --emerald-glow: oklch(0.55 0.14 148); /* Forest Green #1E7A3B */
-  --amber-glow: oklch(0.75 0.14 82); /* Savannah Gold #D4A017 */
-  --flamingo: oklch(0.74 0.14 12); /* Flamingo Pink #F26B8A */
-  --earth: oklch(0.5 0.08 55); /* Rift Valley Earth #8B5E3C */
-  --cream: oklch(0.96 0.02 90); /* Acacia Cream #F6F3EB */
-  --chart-1: oklch(0.68 0.19 249);
-  --chart-2: oklch(0.77 0.14 220);
-  --chart-3: oklch(0.55 0.14 148);
-  --chart-4: oklch(0.75 0.14 82);
-  --chart-5: oklch(0.55 0.19 22);
-  --sidebar: oklch(0.24 0.08 255);
-  --sidebar-foreground: oklch(0.97 0.01 240);
-  --sidebar-primary: oklch(0.77 0.14 220);
-  --sidebar-primary-foreground: oklch(0.16 0.06 258);
-  --sidebar-accent: oklch(0.3 0.07 254);
-  --sidebar-accent-foreground: oklch(0.97 0.01 240);
-  --sidebar-border: oklch(0.98 0.02 240 / 0.1);
-  --sidebar-ring: oklch(0.77 0.14 220);
+  --ring: oklch(0.78 0.14 85); /* Gold focus ring */
+  --electric: oklch(0.6 0.17 148); /* legacy alias → emerald */
+  --cyan-glow: oklch(0.6 0.17 148); /* legacy alias → emerald */
+  --emerald-glow: oklch(0.6 0.17 148); /* Emerald green */
+  --amber-glow: oklch(0.78 0.14 85); /* Metallic gold */
+  --flamingo: oklch(0.58 0.22 25); /* Crimson red */
+  --earth: oklch(0.5 0.08 55);
+  --cream: oklch(0.96 0.02 90);
+  --chart-1: oklch(0.6 0.17 148); /* emerald */
+  --chart-2: oklch(0.78 0.14 85); /* gold */
+  --chart-3: oklch(0.58 0.22 25); /* crimson */
+  --chart-4: oklch(0.72 0.02 240); /* neutral */
+  --chart-5: oklch(0.5 0.08 55); /* earth */
+  --sidebar: oklch(0.14 0.005 250);
+  --sidebar-foreground: oklch(0.97 0.005 240);
+  --sidebar-primary: oklch(0.6 0.17 148);
+  --sidebar-primary-foreground: oklch(0.98 0.005 240);
+  --sidebar-accent: oklch(0.22 0.008 250);
+  --sidebar-accent-foreground: oklch(0.97 0.005 240);
+  --sidebar-border: oklch(0.98 0.02 240 / 0.08);
+  --sidebar-ring: oklch(0.78 0.14 85);
 }
 
 .dark {
@@ -145,42 +148,79 @@
 }
 
 @utility glass {
-  background: rgba(10, 25, 55, 0.65);
+  background: rgba(10, 12, 16, 0.66);
   backdrop-filter: blur(24px) saturate(140%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 22px;
   box-shadow:
     0 1px 0 0 rgba(255, 255, 255, 0.06) inset,
-    0 20px 50px rgba(0, 0, 0, 0.35);
+    0 20px 50px rgba(0, 0, 0, 0.45);
 }
 
 @utility glass-strong {
-  background: rgba(7, 30, 61, 0.78);
+  background: rgba(6, 8, 12, 0.82);
   backdrop-filter: blur(32px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 22px;
   box-shadow:
     0 1px 0 0 rgba(255, 255, 255, 0.1) inset,
-    0 30px 80px rgba(0, 0, 0, 0.5);
+    0 30px 80px rgba(0, 0, 0, 0.6);
 }
 
 @utility glow-ring {
   box-shadow:
-    0 0 0 1px oklch(0.77 0.14 220 / 0.5),
-    0 0 40px oklch(0.77 0.14 220 / 0.4),
-    0 0 80px oklch(0.77 0.14 220 / 0.2);
+    0 0 0 1px oklch(0.78 0.14 85 / 0.55),
+    0 0 40px oklch(0.78 0.14 85 / 0.35),
+    0 0 80px oklch(0.78 0.14 85 / 0.18);
 }
 
 @utility text-gradient {
   background: linear-gradient(
     135deg,
-    oklch(0.97 0.01 240) 0%,
-    oklch(0.77 0.14 220) 55%,
-    oklch(0.44 0.13 250) 100%
+    oklch(0.97 0.005 240) 0%,
+    oklch(0.78 0.14 85) 55%,
+    oklch(0.6 0.17 148) 100%
   );
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+
+/*
+ * Futuristic backdrops — subtle topographic contours + technical grid,
+ * layered behind hero sections. Non-interactive, pointer-events: none.
+ */
+@utility topo-backdrop {
+  background-image:
+    radial-gradient(
+      ellipse at 20% 10%,
+      oklch(0.6 0.17 148 / 0.08) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse at 80% 90%,
+      oklch(0.78 0.14 85 / 0.06) 0%,
+      transparent 55%
+    ),
+    linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0.025) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.025) 1px,
+      transparent 1px
+    );
+  background-size:
+    100% 100%,
+    100% 100%,
+    64px 64px,
+    64px 64px;
+}
+
+@utility gold-underline {
+  border-bottom: 1px solid oklch(0.78 0.14 85 / 0.35);
 }
 
 @keyframes float-slow {
@@ -228,7 +268,7 @@
  */
 @layer base {
   :where(a, button, [role="button"], input, select, textarea, summary, [tabindex]):focus-visible {
-    outline: 2px solid #00c2e8;
+    outline: 2px solid #d4a017;
     outline-offset: 2px;
     border-radius: 4px;
   }
