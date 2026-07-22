@@ -29,6 +29,7 @@ import { CountyPoliticsPanel } from "@/components/halisia/county-politics-panel"
 import { LeafletLayersMap } from "@/components/halisia/leaflet-layers-map";
 import { CountyEvidenceStrip } from "@/components/halisia/county-evidence-strip";
 import { generateCountyProfilePdf } from "@/lib/pdf-county-profile";
+import { SaveButton } from "@/components/halisia/save-button";
 
 type Feature = { properties: { code: number; name: string; lat: number; lng: number } };
 const FEATURES = (countiesData as { features: Feature[] }).features;
@@ -196,6 +197,13 @@ function CountyPage() {
               )}
               {pdf.busy ? "Generating…" : "Download PDF report"}
             </button>
+            <SaveButton
+              kind="county"
+              ref_={String(facts.code)}
+              label={`${facts.name} County`}
+              latitude={latLng.lat}
+              longitude={latLng.lng}
+            />
           </div>
         </div>
         {pdf.error && (
