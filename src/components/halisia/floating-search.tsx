@@ -13,11 +13,15 @@ import {
   ShieldAlert,
   RefreshCw,
   AlertCircle,
+  BarChart3,
+  Check,
+  Database,
 } from "lucide-react";
 import { usePersistedState } from "@/hooks/use-persisted-state";
 import { useMyLocation } from "@/hooks/use-my-location";
 import countiesGeo from "@/data/kenya-counties.json";
 import { track } from "@/lib/analytics";
+import { useAnalyticsConsent } from "@/hooks/use-analytics-consent";
 
 const POPULAR_AREAS = [
   "Kilimani",
@@ -98,10 +102,17 @@ export function FloatingSearch() {
   const [active, setActive] = useState(0);
   const [recent, setRecent] = usePersistedState<string[]>("halisia:recentSearches", []);
   const [saved, setSaved] = usePersistedState<string[]>("halisia:savedSearches", []);
-  const { request, loading: locating, error: locError } = useMyLocation();
+  const { request, loading: locating, error: locError, location: myLoc } = useMyLocation();
   const [permission, setPermission] = useState<"unknown" | "prompt" | "granted" | "denied" | "unsupported">("unknown");
+  const [showManual, setShowManual] = useState(false);
+  const [manualLat, setManualLat] = useState("");
+  const [manualLng, setManualLng] = useState("");
+  const [cacheHit, setCacheHit] = useState<{ ageMs: number } | null>(null);
+  const [consent, setConsent] = useAnalyticsConsent();
   const inputRef = useRef<HTMLInputElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+  const listboxId = "floating-search-listbox";
 
   // Hide on report/logo-qa/auth routes where a floating overlay would obscure content.
   const hidden =
@@ -171,6 +182,33 @@ export function FloatingSearch() {
     return list;
   }, [q]);
 
+  // Lightweight client-side cache for suggestion lookups. Even though matching
+  // runs in-memory here, we memoize the last-25 keyed results so future work
+  // that hits an API (Places/geocoder) can reuse this path — and we surface a
+  // "cached" chip so users know when the UI stayed responsive offline.
+  const cacheRef = useRef<Map<string, { at: number; results: Suggestion[] }>>(new Map());
+  useEffect(() => {
+    const key = q.trim().toLowerCase();
+    if (!key) {
+      setCacheHit(null);
+      return;
+    }
+    const hit = cacheRef.current.get(key);
+    if (hit) {
+      const ageMs = Date.now() - hit.at;
+      setCacheHit({ ageMs });
+      track({ name: "search_cache_hit", query: key, ageMs });
+    } else {
+      cacheRef.current.set(key, { at: Date.now(), results: suggestions });
+      // Trim to last 25 entries.
+      if (cacheRef.current.size > 25) {
+        const firstKey = cacheRef.current.keys().next().value;
+        if (firstKey) cacheRef.current.delete(firstKey);
+      }
+      setCacheHit(null);
+    }
+  }, [q, suggestions]);
+
   useEffect(() => {
     setActive(0);
   }, [q, open]);
@@ -232,11 +270,18 @@ export function FloatingSearch() {
     track({ name: "search_geolocation", status: "requested" });
     if (permission === "unsupported") {
       track({ name: "search_geolocation", status: "unavailable" });
+      setShowManual(true);
       return;
     }
     const v = await request();
     if (v) {
       track({ name: "search_geolocation", status: "granted" });
+      // Guard against wildly imprecise fixes (accuracy > 2km): keep the search
+      // open, surface a note, and offer the manual-entry escape hatch.
+      if (typeof v.accuracy === "number" && v.accuracy > 2000) {
+        setShowManual(true);
+        return;
+      }
       commit(`${v.lat.toFixed(6)},${v.lng.toFixed(6)}`, { kind: "coord", via: "geolocation" });
     } else {
       const denied = /denied/i.test(locError ?? "");
@@ -245,7 +290,16 @@ export function FloatingSearch() {
         status: denied ? "denied" : "error",
         message: locError ?? undefined,
       });
+      setShowManual(true);
     }
+  };
+
+  const submitManual = () => {
+    const lat = parseFloat(manualLat);
+    const lng = parseFloat(manualLng);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+    if (Math.abs(lat) > 90 || Math.abs(lng) > 180) return;
+    commit(`${lat.toFixed(6)},${lng.toFixed(6)}`, { kind: "coord", via: "manual" });
   };
 
   const toggleSaved = (item: string, e?: React.MouseEvent) => {
@@ -322,6 +376,12 @@ export function FloatingSearch() {
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setActive((i) => Math.max(0, i - 1));
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      setActive(0);
+    } else if (e.key === "End") {
+      e.preventDefault();
+      setActive(Math.max(0, rows.length - 1));
     } else if (e.key === "Enter") {
       e.preventDefault();
       const target = rows[active];
@@ -329,6 +389,13 @@ export function FloatingSearch() {
       else commit(q);
     }
   };
+
+  // Keep the active option in view for keyboard users.
+  useEffect(() => {
+    if (!open) return;
+    const el = listRef.current?.querySelector<HTMLElement>(`#fs-opt-${active}`);
+    el?.scrollIntoView({ block: "nearest" });
+  }, [active, open, rows.length]);
 
   const iconFor = (kind: string) => {
     if (kind === "county" || kind === "area") return MapPin;
@@ -372,7 +439,8 @@ export function FloatingSearch() {
           }}
           role="combobox"
           aria-expanded={open}
-          aria-owns="floating-search-listbox"
+          aria-owns={listboxId}
+          aria-controls={listboxId}
           aria-haspopup="listbox"
         >
           <Search className="h-4 w-4 text-accent shrink-0" aria-hidden="true" />
@@ -390,7 +458,9 @@ export function FloatingSearch() {
             onKeyDown={onKey}
             placeholder="Search anywhere in Kenya — town, road, coordinates, or ask a question…"
             aria-autocomplete="list"
-            aria-controls="floating-search-listbox"
+            aria-controls={listboxId}
+            aria-activedescendant={open && rows[active] ? `fs-opt-${active}` : undefined}
+            aria-label="Search Kenya by town, road, coordinates, or question"
             className="flex-1 bg-transparent outline-none text-sm placeholder:text-muted-foreground min-w-0"
           />
           {q && (
@@ -439,11 +509,43 @@ export function FloatingSearch() {
 
         {open && (
           <div
-            id="floating-search-listbox"
-            role="listbox"
-            aria-label="Search suggestions"
+            id={`${listboxId}-panel`}
             className="absolute left-0 right-0 sm:top-full sm:mt-2 bottom-full mb-2 sm:bottom-auto sm:mb-0 glass-strong rounded-2xl border border-white/10 overflow-hidden shadow-[0_30px_80px_-30px_rgba(0,0,0,0.7)] max-h-[60vh] overflow-y-auto"
           >
+            {(cacheHit || (myLoc?.accuracy && !locating)) && (
+              <div
+                role="status"
+                aria-live="polite"
+                className="px-3 py-1.5 flex flex-wrap items-center gap-2 text-[11px] border-b border-white/10 bg-white/[0.03] text-muted-foreground"
+              >
+                {cacheHit && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-white/5 border border-white/10 px-2 py-0.5">
+                    <Database className="h-3 w-3 text-accent" aria-hidden="true" />
+                    Cached · {Math.max(1, Math.round(cacheHit.ageMs / 1000))}s old
+                  </span>
+                )}
+                {myLoc?.accuracy && (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-full bg-white/5 border border-white/10 px-2 py-0.5"
+                    title="GPS reported accuracy radius"
+                  >
+                    <BarChart3 className="h-3 w-3 text-accent" aria-hidden="true" />
+                    Location ±{Math.round(myLoc.accuracy)} m
+                    <span
+                      className={
+                        myLoc.accuracy < 50
+                          ? "text-emerald-300"
+                          : myLoc.accuracy < 500
+                            ? "text-amber-200"
+                            : "text-red-300"
+                      }
+                    >
+                      {myLoc.accuracy < 50 ? "high" : myLoc.accuracy < 500 ? "medium" : "low"}
+                    </span>
+                  </span>
+                )}
+              </div>
+            )}
             {geoStatus && (
               <div
                 role="status"
@@ -462,17 +564,61 @@ export function FloatingSearch() {
                 />
                 <span className="flex-1">{geoStatus.text}</span>
                 {(geoStatus.tone === "error" || permission === "denied") && !locating && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void handleUseMyLocation();
+                      }}
+                      className="inline-flex items-center gap-1 rounded-full border border-white/15 px-2 py-0.5 hover:bg-white/10"
+                    >
+                      <RefreshCw className="h-3 w-3" aria-hidden="true" /> Retry
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowManual((s) => !s);
+                      }}
+                      className="inline-flex items-center gap-1 rounded-full border border-white/15 px-2 py-0.5 hover:bg-white/10"
+                    >
+                      Enter manually
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+            {showManual && (
+              <div className="px-3 py-2 border-b border-white/10 bg-white/[0.02]">
+                <div className="text-[11px] text-muted-foreground mb-1.5">
+                  Enter coordinates manually (WGS84 decimal degrees)
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    aria-label="Latitude"
+                    value={manualLat}
+                    onChange={(e) => setManualLat(e.target.value)}
+                    placeholder="-1.2921"
+                    inputMode="decimal"
+                    className="flex-1 min-w-24 bg-white/5 border border-white/10 rounded px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-accent/60"
+                  />
+                  <input
+                    aria-label="Longitude"
+                    value={manualLng}
+                    onChange={(e) => setManualLng(e.target.value)}
+                    placeholder="36.8219"
+                    inputMode="decimal"
+                    className="flex-1 min-w-24 bg-white/5 border border-white/10 rounded px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-accent/60"
+                  />
                   <button
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      void handleUseMyLocation();
-                    }}
-                    className="inline-flex items-center gap-1 rounded-full border border-white/15 px-2 py-0.5 hover:bg-white/10"
+                    onClick={submitManual}
+                    className="h-7 px-3 rounded-full text-[11px] font-medium bg-gradient-to-r from-primary to-accent text-primary-foreground"
                   >
-                    <RefreshCw className="h-3 w-3" aria-hidden="true" /> Retry
+                    Analyze
                   </button>
-                )}
+                </div>
               </div>
             )}
             {rows.length === 0 ? (
@@ -495,15 +641,23 @@ export function FloatingSearch() {
                 )}
               </div>
             ) : (
-              <ul className="py-1.5">
+              <ul
+                ref={listRef}
+                id={listboxId}
+                role="listbox"
+                aria-label="Search suggestions"
+                className="py-1.5"
+              >
                 {rows.map((r, i) => {
                   const Icon = iconFor(r.kind);
                   const isActive = i === active;
                   return (
                     <li
                       key={r.key}
+                      id={`fs-opt-${i}`}
                       role="option"
                       aria-selected={isActive}
+                      aria-label={`${r.label} — ${r.sub}`}
                       onMouseEnter={() => setActive(i)}
                       onClick={r.onSelect}
                       className={`px-3 py-2 flex items-center gap-2.5 cursor-pointer text-sm ${
@@ -530,11 +684,60 @@ export function FloatingSearch() {
                 })}
               </ul>
             )}
-            <div className="border-t border-white/10 px-3 py-1.5 text-[10px] text-muted-foreground flex items-center gap-3">
+            <div className="border-t border-white/10 px-3 py-1.5 text-[10px] text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1">
               <span>
                 ↑ ↓ navigate · <kbd>Enter</kbd> select · <kbd>Esc</kbd> close
               </span>
-              <span className="ml-auto hidden sm:inline">
+              <span className="ml-auto flex items-center gap-2">
+                {consent === "unset" ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    <span>Help us improve?</span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setConsent(true);
+                      }}
+                      className="rounded-full border border-white/15 px-2 py-0.5 hover:bg-white/10 text-foreground"
+                    >
+                      Allow analytics
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setConsent(false);
+                      }}
+                      className="rounded-full border border-white/10 px-2 py-0.5 hover:bg-white/10"
+                    >
+                      No thanks
+                    </button>
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setConsent(consent !== "granted");
+                    }}
+                    aria-pressed={consent === "granted"}
+                    aria-label={
+                      consent === "granted"
+                        ? "Analytics on — click to opt out"
+                        : "Analytics off — click to opt in"
+                    }
+                    className="inline-flex items-center gap-1 rounded-full border border-white/15 px-2 py-0.5 hover:bg-white/10"
+                  >
+                    {consent === "granted" ? (
+                      <Check className="h-3 w-3 text-emerald-300" aria-hidden="true" />
+                    ) : (
+                      <X className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
+                    )}
+                    Analytics {consent === "granted" ? "on" : "off"}
+                  </button>
+                )}
+              </span>
+              <span className="hidden sm:inline">
                 <kbd>⌘K</kbd> from anywhere
               </span>
             </div>
