@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X, Search, Map as MapIcon, FileDown, GitCompareArrows, Layers, Sparkles } from "lucide-react";
 
 const STORAGE_KEY = "halisia:navguide:v1:seen";
@@ -39,6 +39,19 @@ const STEPS = [
 export function NavGuide() {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    returnFocusRef.current = (typeof document !== "undefined" ? (document.activeElement as HTMLElement) : null);
+    // Focus the close button so screen readers announce the dialog and keyboard users can escape immediately.
+    const t = window.setTimeout(() => closeBtnRef.current?.focus(), 40);
+    return () => {
+      window.clearTimeout(t);
+      returnFocusRef.current?.focus?.();
+    };
+  }, [open]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -96,6 +109,7 @@ export function NavGuide() {
           role="dialog"
           aria-modal="true"
           aria-labelledby="navguide-title"
+          aria-describedby="navguide-body"
           className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
           onClick={() => close(false)}
         >
@@ -120,6 +134,7 @@ export function NavGuide() {
               </div>
               <button
                 type="button"
+                ref={closeBtnRef}
                 aria-label="Close tour"
                 onClick={() => close(false)}
                 className="p-1.5 -mr-1 -mt-1 rounded-full hover:bg-white/10"
@@ -128,7 +143,7 @@ export function NavGuide() {
               </button>
             </div>
 
-            <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+            <p id="navguide-body" className="mt-3 text-sm text-muted-foreground leading-relaxed">
               {STEPS[step].body}
             </p>
 
