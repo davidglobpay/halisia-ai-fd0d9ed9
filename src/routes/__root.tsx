@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import halisiaLogo from "../assets/halisia-logo.png.asset.json";
 import { PerfMonitor } from "../components/halisia/perf-monitor";
+import { FloatingSearch } from "../components/halisia/floating-search";
 
 function NotFoundComponent() {
   return (
@@ -171,6 +172,7 @@ function RootComponent() {
       <PerfMonitor />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
+      <FloatingSearch />
     </QueryClientProvider>
   );
 }
