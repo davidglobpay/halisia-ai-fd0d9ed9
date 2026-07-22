@@ -387,6 +387,7 @@ export const getPlaceDetails = createServerFn({ method: "POST" })
   })
   .handler(async ({ data }): Promise<PlaceDetails> => {
     const browserKey = process.env.GOOGLE_MAPS_BROWSER_KEY;
+    return memo(`pd|${data.id}|${browserKey ? "b" : "n"}`, async () => {
     const res = await callGateway(`/places/v1/${data.id}`, {
       method: "GET",
       headers: {
@@ -440,4 +441,5 @@ export const getPlaceDetails = createServerFn({ method: "POST" })
         relativeTime: r.relativePublishTimeDescription,
       })),
     };
+    });
   });
