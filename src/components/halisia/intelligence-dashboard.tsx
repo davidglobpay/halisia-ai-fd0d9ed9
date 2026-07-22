@@ -45,6 +45,7 @@ import { PlaceCard } from "@/components/halisia/place-card";
 import { GeotechRisksInline } from "@/components/halisia/geotech-risks-inline";
 import { HeroSummary } from "@/components/halisia/hero-summary";
 import { ExecutiveSummary } from "@/components/halisia/executive-summary";
+import { LandIntelligenceScore } from "@/components/halisia/land-intelligence-score";
 
 type TabId =
   | "overview"
@@ -177,6 +178,9 @@ export function IntelligenceDashboard({
 
       {/* AI Executive Summary — simple / professional / technical */}
       <ExecutiveSummary narrative={narrativeQ.data} intel={intelQ.data} />
+
+      {/* Unified Land Intelligence Score — 10-module decision engine */}
+      <LandIntelligenceScore narrative={narrativeQ.data} intel={intelQ.data} />
 
       {/* Header card */}
       <div className="glass-strong rounded-2xl p-4 relative overflow-hidden">
