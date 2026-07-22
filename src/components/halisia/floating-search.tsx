@@ -10,10 +10,14 @@ import {
   LocateFixed,
   Loader2,
   StarOff,
+  ShieldAlert,
+  RefreshCw,
+  AlertCircle,
 } from "lucide-react";
 import { usePersistedState } from "@/hooks/use-persisted-state";
 import { useMyLocation } from "@/hooks/use-my-location";
 import countiesGeo from "@/data/kenya-counties.json";
+import { track } from "@/lib/analytics";
 
 const POPULAR_AREAS = [
   "Kilimani",
@@ -94,7 +98,8 @@ export function FloatingSearch() {
   const [active, setActive] = useState(0);
   const [recent, setRecent] = usePersistedState<string[]>("halisia:recentSearches", []);
   const [saved, setSaved] = usePersistedState<string[]>("halisia:savedSearches", []);
-  const { request, loading: locating } = useMyLocation();
+  const { request, loading: locating, error: locError } = useMyLocation();
+  const [permission, setPermission] = useState<"unknown" | "prompt" | "granted" | "denied" | "unsupported">("unknown");
   const inputRef = useRef<HTMLInputElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
 
@@ -103,6 +108,29 @@ export function FloatingSearch() {
     pathname.startsWith("/report") ||
     pathname.startsWith("/logo-qa") ||
     pathname === "/title-deed";
+
+  // Probe geolocation permission (Permissions API is optional).
+  useEffect(() => {
+    if (typeof navigator === "undefined") return;
+    if (!("geolocation" in navigator)) {
+      setPermission("unsupported");
+      return;
+    }
+    const perms = (navigator as Navigator & { permissions?: { query: (d: { name: PermissionName }) => Promise<PermissionStatus> } }).permissions;
+    if (!perms?.query) return;
+    let status: PermissionStatus | null = null;
+    perms
+      .query({ name: "geolocation" as PermissionName })
+      .then((s) => {
+        status = s;
+        setPermission(s.state as typeof permission);
+        s.onchange = () => setPermission(s.state as typeof permission);
+      })
+      .catch(() => {});
+    return () => {
+      if (status) status.onchange = null;
+    };
+  }, []);
 
   const suggestions = useMemo<Suggestion[]>(() => {
     const term = q.trim().toLowerCase();
@@ -168,6 +196,7 @@ export function FloatingSearch() {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         setOpen(true);
+        track({ name: "search_open", source: "shortcut" });
         inputRef.current?.focus();
       }
     };
@@ -177,7 +206,10 @@ export function FloatingSearch() {
 
   if (hidden) return null;
 
-  const commit = (query: string) => {
+  const commit = (
+    query: string,
+    meta: { kind?: string; via?: "geolocation" | "suggestion" | "manual" } = {},
+  ) => {
     const trimmed = query.trim();
     if (!trimmed) return;
     setRecent((prev) => {
@@ -186,12 +218,34 @@ export function FloatingSearch() {
     });
     setOpen(false);
     setQ("");
+    track({
+      name: "search_location_selected",
+      kind: meta.kind ?? "text",
+      query: trimmed,
+      via: meta.via ?? "manual",
+    });
+    track({ name: "report_requested", query: trimmed, source: "floating-search" });
     navigate({ to: "/explore", search: { q: trimmed } });
   };
 
   const handleUseMyLocation = async () => {
+    track({ name: "search_geolocation", status: "requested" });
+    if (permission === "unsupported") {
+      track({ name: "search_geolocation", status: "unavailable" });
+      return;
+    }
     const v = await request();
-    if (v) commit(`${v.lat.toFixed(6)},${v.lng.toFixed(6)}`);
+    if (v) {
+      track({ name: "search_geolocation", status: "granted" });
+      commit(`${v.lat.toFixed(6)},${v.lng.toFixed(6)}`, { kind: "coord", via: "geolocation" });
+    } else {
+      const denied = /denied/i.test(locError ?? "");
+      track({
+        name: "search_geolocation",
+        status: denied ? "denied" : "error",
+        message: locError ?? undefined,
+      });
+    }
   };
 
   const toggleSaved = (item: string, e?: React.MouseEvent) => {
@@ -215,7 +269,7 @@ export function FloatingSearch() {
       kind: s.kind,
       label: s.label,
       sub: s.sub,
-      onSelect: () => commit(s.query),
+      onSelect: () => commit(s.query, { kind: s.kind, via: "suggestion" }),
     }),
   );
   if (!q.trim()) {
@@ -225,7 +279,7 @@ export function FloatingSearch() {
         kind: "saved",
         label: s,
         sub: "Saved search",
-        onSelect: () => commit(s),
+        onSelect: () => commit(s, { kind: "saved", via: "suggestion" }),
         right: (
           <button
             type="button"
@@ -246,7 +300,7 @@ export function FloatingSearch() {
           kind: "recent",
           label: r,
           sub: "Recent",
-          onSelect: () => commit(r),
+            onSelect: () => commit(r, { kind: "recent", via: "suggestion" }),
           right: (
             <button
               type="button"
@@ -284,6 +338,24 @@ export function FloatingSearch() {
     return Clock;
   };
 
+  const geoStatus = locating
+    ? { tone: "info" as const, icon: Loader2, text: "Locating you…", spin: true }
+    : permission === "denied"
+      ? {
+          tone: "warn" as const,
+          icon: ShieldAlert,
+          text: "Location blocked. Enable it in your browser settings, or type an area / coordinates.",
+        }
+      : permission === "unsupported"
+        ? {
+            tone: "warn" as const,
+            icon: AlertCircle,
+            text: "This device can't share location. Type an area or coordinates instead.",
+          }
+        : locError
+          ? { tone: "error" as const, icon: AlertCircle, text: locError }
+          : null;
+
   return (
     <div
       className="fixed z-40 left-1/2 -translate-x-1/2 bottom-4 sm:bottom-auto sm:top-4 w-[min(680px,calc(100vw-1.5rem))]"
@@ -294,6 +366,7 @@ export function FloatingSearch() {
         <div
           className="glass-strong rounded-full flex items-center gap-2 pl-3 pr-1.5 py-1.5 shadow-[0_20px_60px_-25px_rgba(0,0,0,0.6)] focus-within:ring-2 focus-within:ring-accent/60"
           onClick={() => {
+            if (!open) track({ name: "search_open", source: "floating" });
             setOpen(true);
             inputRef.current?.focus();
           }}
@@ -310,7 +383,10 @@ export function FloatingSearch() {
               setQ(e.target.value);
               setOpen(true);
             }}
-            onFocus={() => setOpen(true)}
+            onFocus={() => {
+              if (!open) track({ name: "search_open", source: "floating" });
+              setOpen(true);
+            }}
             onKeyDown={onKey}
             placeholder="Search anywhere in Kenya — town, road, coordinates, or ask a question…"
             aria-autocomplete="list"
@@ -368,10 +444,55 @@ export function FloatingSearch() {
             aria-label="Search suggestions"
             className="absolute left-0 right-0 sm:top-full sm:mt-2 bottom-full mb-2 sm:bottom-auto sm:mb-0 glass-strong rounded-2xl border border-white/10 overflow-hidden shadow-[0_30px_80px_-30px_rgba(0,0,0,0.7)] max-h-[60vh] overflow-y-auto"
           >
+            {geoStatus && (
+              <div
+                role="status"
+                aria-live="polite"
+                className={`px-3 py-2 flex items-center gap-2 text-xs border-b border-white/10 ${
+                  geoStatus.tone === "error"
+                    ? "text-red-300 bg-red-500/10"
+                    : geoStatus.tone === "warn"
+                      ? "text-amber-200 bg-amber-500/10"
+                      : "text-accent bg-white/5"
+                }`}
+              >
+                <geoStatus.icon
+                  className={`h-3.5 w-3.5 shrink-0 ${geoStatus.spin ? "animate-spin" : ""}`}
+                  aria-hidden="true"
+                />
+                <span className="flex-1">{geoStatus.text}</span>
+                {(geoStatus.tone === "error" || permission === "denied") && !locating && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void handleUseMyLocation();
+                    }}
+                    className="inline-flex items-center gap-1 rounded-full border border-white/15 px-2 py-0.5 hover:bg-white/10"
+                  >
+                    <RefreshCw className="h-3 w-3" aria-hidden="true" /> Retry
+                  </button>
+                )}
+              </div>
+            )}
             {rows.length === 0 ? (
-              <div className="p-4 text-sm text-muted-foreground">
-                Try a town, road, plot number, or coordinates like{" "}
-                <code className="text-foreground/80">-1.2921, 36.8219</code>.
+              <div className="p-5 text-sm text-muted-foreground flex flex-col items-center text-center gap-2">
+                <Search className="h-5 w-5 text-accent" aria-hidden="true" />
+                {q.trim() ? (
+                  <>
+                    <div className="text-foreground/90 font-medium">No matches for “{q.trim()}”</div>
+                    <div>Try a county, town, road, or coordinates like <code className="text-foreground/80">-1.2921, 36.8219</code>.</div>
+                    <button
+                      type="button"
+                      onClick={() => commit(q, { via: "manual" })}
+                      className="mt-1 inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-primary to-accent px-3 py-1 text-xs font-medium text-primary-foreground"
+                    >
+                      <Sparkles className="h-3 w-3" aria-hidden="true" /> Analyze anyway
+                    </button>
+                  </>
+                ) : (
+                  <div>Try a town, road, plot number, or coordinates like <code className="text-foreground/80">-1.2921, 36.8219</code>.</div>
+                )}
               </div>
             ) : (
               <ul className="py-1.5">
