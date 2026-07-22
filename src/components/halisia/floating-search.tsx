@@ -47,6 +47,16 @@ const POPULAR_AREAS = [
   "Thika",
 ];
 
+/** Curated search prompts shown when the panel opens with an empty query. */
+const CURATED_PROMPTS: { label: string; query: string; hint: string }[] = [
+  { label: "Kilimani, Nairobi", query: "Kilimani", hint: "Urban residential" },
+  { label: "Karen residential plot", query: "Karen, Nairobi", hint: "Low-density suburb" },
+  { label: "Naivasha lakefront", query: "Naivasha", hint: "Weekend / farm" },
+  { label: "Kajiado farmland", query: "Kajiado", hint: "Agri / ranch" },
+  { label: "Diani beachfront", query: "Diani", hint: "Coastal invest" },
+  { label: "Mombasa CBD", query: "Mombasa", hint: "Coastal city" },
+];
+
 const NL_HINTS = [
   "flood",
   "safe",
@@ -623,10 +633,34 @@ export function FloatingSearch() {
               </div>
             )}
             {rows.length === 0 ? (
+              !q.trim() ? (
+                <div className="p-4">
+                  <div className="text-[11px] uppercase tracking-widest text-[oklch(0.78_0.14_85)] font-medium mb-2.5">
+                    Try one of these
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {CURATED_PROMPTS.map((p) => (
+                      <button
+                        key={p.query}
+                        type="button"
+                        onClick={() => commit(p.query, { kind: "curated", via: "suggestion" })}
+                        className="group inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-foreground hover:border-[oklch(0.78_0.14_85/0.45)] hover:bg-white/[0.06] transition"
+                      >
+                        <MapPin className="h-3 w-3 text-[oklch(0.78_0.14_85)]" aria-hidden="true" />
+                        <span>{p.label}</span>
+                        <span className="text-[10px] text-muted-foreground">· {p.hint}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <div className="mt-3 text-[11px] text-muted-foreground">
+                    Or type a county, town, plot, or coordinates like{" "}
+                    <code className="text-foreground/80">-1.2921, 36.8219</code>.
+                  </div>
+                </div>
+              ) : (
               <div className="p-5 text-sm text-muted-foreground flex flex-col items-center text-center gap-2">
                 <Search className="h-5 w-5 text-accent" aria-hidden="true" />
-                {q.trim() ? (
-                  <>
+                <>
                     <div className="text-foreground/90 font-medium">
                       No matches for “{q.trim()}”
                     </div>
@@ -642,13 +676,8 @@ export function FloatingSearch() {
                       <Sparkles className="h-3 w-3" aria-hidden="true" /> Analyze anyway
                     </button>
                   </>
-                ) : (
-                  <div>
-                    Try a town, road, plot number, or coordinates like{" "}
-                    <code className="text-foreground/80">-1.2921, 36.8219</code>.
-                  </div>
-                )}
               </div>
+              )
             ) : (
               <ul
                 ref={listRef}
