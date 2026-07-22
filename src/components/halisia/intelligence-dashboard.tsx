@@ -44,6 +44,7 @@ import { useDevMode } from "@/hooks/use-dev-mode";
 import { PlaceCard } from "@/components/halisia/place-card";
 import { GeotechRisksInline } from "@/components/halisia/geotech-risks-inline";
 import { HeroSummary } from "@/components/halisia/hero-summary";
+import { ExecutiveSummary } from "@/components/halisia/executive-summary";
 
 type TabId =
   | "overview"
