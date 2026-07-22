@@ -180,7 +180,13 @@ export function IntelligenceDashboard({
       <ExecutiveSummary narrative={narrativeQ.data} intel={intelQ.data} />
 
       {/* Unified Land Intelligence Score — 10-module decision engine */}
-      <LandIntelligenceScore narrative={narrativeQ.data} intel={intelQ.data} />
+      <LandIntelligenceScore
+        narrative={narrativeQ.data}
+        intel={intelQ.data}
+        address={address}
+        lat={lat}
+        lng={lng}
+      />
 
       {/* Header card */}
       <div className="glass-strong rounded-2xl p-4 relative overflow-hidden">

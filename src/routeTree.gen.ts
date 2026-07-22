@@ -13,6 +13,7 @@ import { Route as TitleDeedRouteImport } from './routes/title-deed'
 import { Route as ReportRouteImport } from './routes/report'
 import { Route as LogoQaRouteImport } from './routes/logo-qa'
 import { Route as ExploreRouteImport } from './routes/explore'
+import { Route as CompareLocationsRouteImport } from './routes/compare-locations'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CountyCodeRouteImport } from './routes/county.$code'
@@ -36,6 +37,11 @@ const LogoQaRoute = LogoQaRouteImport.update({
 const ExploreRoute = ExploreRouteImport.update({
   id: '/explore',
   path: '/explore',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompareLocationsRoute = CompareLocationsRouteImport.update({
+  id: '/compare-locations',
+  path: '/compare-locations',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CompareRoute = CompareRouteImport.update({
@@ -62,6 +68,7 @@ const ApiChatRoute = ApiChatRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/compare': typeof CompareRoute
+  '/compare-locations': typeof CompareLocationsRoute
   '/explore': typeof ExploreRoute
   '/logo-qa': typeof LogoQaRoute
   '/report': typeof ReportRoute
@@ -72,6 +79,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/compare': typeof CompareRoute
+  '/compare-locations': typeof CompareLocationsRoute
   '/explore': typeof ExploreRoute
   '/logo-qa': typeof LogoQaRoute
   '/report': typeof ReportRoute
@@ -83,6 +91,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/compare': typeof CompareRoute
+  '/compare-locations': typeof CompareLocationsRoute
   '/explore': typeof ExploreRoute
   '/logo-qa': typeof LogoQaRoute
   '/report': typeof ReportRoute
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/compare'
+    | '/compare-locations'
     | '/explore'
     | '/logo-qa'
     | '/report'
@@ -105,6 +115,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/compare'
+    | '/compare-locations'
     | '/explore'
     | '/logo-qa'
     | '/report'
@@ -115,6 +126,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/compare'
+    | '/compare-locations'
     | '/explore'
     | '/logo-qa'
     | '/report'
@@ -126,6 +138,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CompareRoute: typeof CompareRoute
+  CompareLocationsRoute: typeof CompareLocationsRoute
   ExploreRoute: typeof ExploreRoute
   LogoQaRoute: typeof LogoQaRoute
   ReportRoute: typeof ReportRoute
@@ -164,6 +177,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ExploreRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/compare-locations': {
+      id: '/compare-locations'
+      path: '/compare-locations'
+      fullPath: '/compare-locations'
+      preLoaderRoute: typeof CompareLocationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/compare': {
       id: '/compare'
       path: '/compare'
@@ -198,6 +218,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CompareRoute: CompareRoute,
+  CompareLocationsRoute: CompareLocationsRoute,
   ExploreRoute: ExploreRoute,
   LogoQaRoute: LogoQaRoute,
   ReportRoute: ReportRoute,

@@ -94,8 +94,7 @@ function PointBullets({
   items: { point: string; why: string }[];
   showWhy: boolean;
 }) {
-  if (!items.length)
-    return <div className="text-xs text-muted-foreground">No items surfaced.</div>;
+  if (!items.length) return <div className="text-xs text-muted-foreground">No items surfaced.</div>;
   return (
     <ul className="mt-1 space-y-2 text-sm leading-snug">
       {items.map((it, i) => (
@@ -274,11 +273,7 @@ export function ExecutiveSummary({
           </Section>
         </div>
 
-        <Section
-          title="Recommended actions"
-          icon={ListChecks}
-          detail={`${recs.length} steps`}
-        >
+        <Section title="Recommended actions" icon={ListChecks} detail={`${recs.length} steps`}>
           <Bullets items={recs} />
           {technical && narrative.investmentAdvice.length > 0 && (
             <div className="mt-3">

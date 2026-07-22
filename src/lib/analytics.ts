@@ -6,8 +6,17 @@
  */
 export type HalisiaAnalyticsEvent =
   | { name: "search_open"; source: "floating" | "hero" | "shortcut" }
-  | { name: "search_location_selected"; kind: string; query: string; via: "geolocation" | "suggestion" | "manual" }
-  | { name: "search_geolocation"; status: "requested" | "granted" | "denied" | "unavailable" | "error"; message?: string }
+  | {
+      name: "search_location_selected";
+      kind: string;
+      query: string;
+      via: "geolocation" | "suggestion" | "manual";
+    }
+  | {
+      name: "search_geolocation";
+      status: "requested" | "granted" | "denied" | "unavailable" | "error";
+      message?: string;
+    }
   | { name: "report_requested"; query: string; source: string }
   | { name: "search_cache_hit"; query: string; ageMs: number }
   | { name: "analytics_consent_changed"; granted: boolean };
