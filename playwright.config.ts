@@ -14,9 +14,14 @@ export default defineConfig({
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:8080",
     viewport: { width: 1280, height: 900 },
     trace: "retain-on-failure",
+    screenshot: "only-on-failure",
+    video: "retain-on-failure",
     launchOptions: executablePath ? { executablePath } : undefined,
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    { name: "mobile-chrome", use: { ...devices["Pixel 5"] } },
+  ],
   webServer: process.env.PLAYWRIGHT_BASE_URL
     ? undefined
     : {
