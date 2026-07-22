@@ -66,7 +66,11 @@ function useResolved(raw: string | undefined, labelHint?: string) {
     queryFn: async () => {
       if (!raw) return null;
       const coord = parseCoord(raw);
-      if (coord) return { ...coord, address: labelHint || `${coord.lat.toFixed(5)}, ${coord.lng.toFixed(5)}` };
+      if (coord)
+        return {
+          ...coord,
+          address: labelHint || `${coord.lat.toFixed(5)}, ${coord.lng.toFixed(5)}`,
+        };
       const res = await geocodeAddress({ data: { query: raw } });
       if (!res.ok) throw new Error(`Couldn't find “${raw}”`);
       return { lat: res.lat, lng: res.lng, address: res.address };
@@ -74,7 +78,10 @@ function useResolved(raw: string | undefined, labelHint?: string) {
   });
 }
 
-function useDecision(loc: Resolved | null | undefined, persona: ReturnType<typeof useUserPersona>[0]) {
+function useDecision(
+  loc: Resolved | null | undefined,
+  persona: ReturnType<typeof useUserPersona>[0],
+) {
   const intelQ = useQuery<LocationIntel>({
     queryKey: ["cmp-intel", loc?.lat.toFixed(4), loc?.lng.toFixed(4)],
     enabled: !!loc,
@@ -115,9 +122,7 @@ function useDecision(loc: Resolved | null | undefined, persona: ReturnType<typeo
   });
   const decision: DecisionOutput | null = useMemo(
     () =>
-      loc && intelQ.data
-        ? runIntelligenceEngine(intelQ.data, narrativeQ.data, persona)
-        : null,
+      loc && intelQ.data ? runIntelligenceEngine(intelQ.data, narrativeQ.data, persona) : null,
     [loc, intelQ.data, narrativeQ.data, persona],
   );
   return { decision, loading: intelQ.isLoading || narrativeQ.isLoading };
@@ -238,18 +243,8 @@ function CompareLocationsPage() {
         )}
 
         <div className="mt-6 grid gap-4 lg:grid-cols-2">
-          <LocationColumn
-            label="A"
-            query={aQ}
-            decision={aDec.decision}
-            loading={aDec.loading}
-          />
-          <LocationColumn
-            label="B"
-            query={bQ}
-            decision={bDec.decision}
-            loading={bDec.loading}
-          />
+          <LocationColumn label="A" query={aQ} decision={aDec.decision} loading={aDec.loading} />
+          <LocationColumn label="B" query={bQ} decision={bDec.decision} loading={bDec.loading} />
         </div>
 
         {aDec.decision && bDec.decision && (
@@ -408,15 +403,7 @@ function LocationColumn({
   );
 }
 
-function DeltaTable({
-  a,
-  b,
-  persona,
-}: {
-  a: DecisionOutput;
-  b: DecisionOutput;
-  persona: string;
-}) {
+function DeltaTable({ a, b, persona }: { a: DecisionOutput; b: DecisionOutput; persona: string }) {
   const bMap = new Map(b.modules.map((m) => [m.id, m]));
   type Row = { a: ModuleOutput; b: ModuleOutput; delta: number };
   const rows: Row[] = a.modules

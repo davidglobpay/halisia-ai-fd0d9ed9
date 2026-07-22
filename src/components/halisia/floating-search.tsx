@@ -81,9 +81,7 @@ function parseCoords(v: string) {
 }
 
 type CountyFeature = { properties?: { name?: string; code?: number } };
-const COUNTY_NAMES: string[] = (
-  (countiesGeo as { features?: CountyFeature[] }).features ?? []
-)
+const COUNTY_NAMES: string[] = ((countiesGeo as { features?: CountyFeature[] }).features ?? [])
   .map((f) => f?.properties?.name)
   .filter((n): n is string => typeof n === "string")
   .sort();
@@ -103,7 +101,9 @@ export function FloatingSearch() {
   const [recent, setRecent] = usePersistedState<string[]>("halisia:recentSearches", []);
   const [saved, setSaved] = usePersistedState<string[]>("halisia:savedSearches", []);
   const { request, loading: locating, error: locError, location: myLoc } = useMyLocation();
-  const [permission, setPermission] = useState<"unknown" | "prompt" | "granted" | "denied" | "unsupported">("unknown");
+  const [permission, setPermission] = useState<
+    "unknown" | "prompt" | "granted" | "denied" | "unsupported"
+  >("unknown");
   const [showManual, setShowManual] = useState(false);
   const [manualLat, setManualLat] = useState("");
   const [manualLng, setManualLng] = useState("");
@@ -116,9 +116,7 @@ export function FloatingSearch() {
 
   // Hide on report/logo-qa/auth routes where a floating overlay would obscure content.
   const hidden =
-    pathname.startsWith("/report") ||
-    pathname.startsWith("/logo-qa") ||
-    pathname === "/title-deed";
+    pathname.startsWith("/report") || pathname.startsWith("/logo-qa") || pathname === "/title-deed";
 
   // Probe geolocation permission (Permissions API is optional).
   useEffect(() => {
@@ -127,7 +125,11 @@ export function FloatingSearch() {
       setPermission("unsupported");
       return;
     }
-    const perms = (navigator as Navigator & { permissions?: { query: (d: { name: PermissionName }) => Promise<PermissionStatus> } }).permissions;
+    const perms = (
+      navigator as Navigator & {
+        permissions?: { query: (d: { name: PermissionName }) => Promise<PermissionStatus> };
+      }
+    ).permissions;
     if (!perms?.query) return;
     let status: PermissionStatus | null = null;
     perms
@@ -160,9 +162,7 @@ export function FloatingSearch() {
     if (term) {
       COUNTY_NAMES.filter((n) => n.toLowerCase().includes(term))
         .slice(0, 5)
-        .forEach((n) =>
-          list.push({ kind: "county", label: n, sub: "County · Kenya", query: n }),
-        );
+        .forEach((n) => list.push({ kind: "county", label: n, sub: "County · Kenya", query: n }));
       POPULAR_AREAS.filter((n) => n.toLowerCase().includes(term))
         .slice(0, 5)
         .forEach((n) => list.push({ kind: "area", label: n, sub: "Neighborhood", query: n }));
@@ -362,7 +362,7 @@ export function FloatingSearch() {
           kind: "recent",
           label: r,
           sub: "Recent",
-            onSelect: () => commit(r, { kind: "recent", via: "suggestion" }),
+          onSelect: () => commit(r, { kind: "recent", via: "suggestion" }),
           right: (
             <button
               type="button"
@@ -627,8 +627,13 @@ export function FloatingSearch() {
                 <Search className="h-5 w-5 text-accent" aria-hidden="true" />
                 {q.trim() ? (
                   <>
-                    <div className="text-foreground/90 font-medium">No matches for “{q.trim()}”</div>
-                    <div>Try a county, town, road, or coordinates like <code className="text-foreground/80">-1.2921, 36.8219</code>.</div>
+                    <div className="text-foreground/90 font-medium">
+                      No matches for “{q.trim()}”
+                    </div>
+                    <div>
+                      Try a county, town, road, or coordinates like{" "}
+                      <code className="text-foreground/80">-1.2921, 36.8219</code>.
+                    </div>
                     <button
                       type="button"
                       onClick={() => commit(q, { via: "manual" })}
@@ -638,7 +643,10 @@ export function FloatingSearch() {
                     </button>
                   </>
                 ) : (
-                  <div>Try a town, road, plot number, or coordinates like <code className="text-foreground/80">-1.2921, 36.8219</code>.</div>
+                  <div>
+                    Try a town, road, plot number, or coordinates like{" "}
+                    <code className="text-foreground/80">-1.2921, 36.8219</code>.
+                  </div>
                 )}
               </div>
             ) : (

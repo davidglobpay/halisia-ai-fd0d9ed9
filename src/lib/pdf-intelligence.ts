@@ -250,11 +250,7 @@ export async function generateIntelligencePdf(
     doc.setPage(i);
     doc.setFontSize(8);
     setColor(MUTED);
-    doc.text(
-      `HALISIA.AI  ·  Land Intelligence Report  ·  Page ${i} of ${pages}`,
-      M,
-      H - 20,
-    );
+    doc.text(`HALISIA.AI  ·  Land Intelligence Report  ·  Page ${i} of ${pages}`, M, H - 20);
   }
   doc.setPage(pages);
   setColor(MUTED);

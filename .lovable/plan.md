@@ -1,6 +1,7 @@
 # Scope
 
 Two items in the request are already shipped in earlier turns and will be left as-is:
+
 - Mobile perf throttled tests (`tests/e2e/mobile-perf-throttled.spec.ts`)
 - Persisted soil layers + map tool (`use-persisted-state.ts`, wired into geotech panel and Leaflet toolbar)
 

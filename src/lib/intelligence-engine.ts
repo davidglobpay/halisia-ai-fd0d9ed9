@@ -84,29 +84,64 @@ function trendFrom(score: number, hasGrowthSignal: boolean): ModuleOutput["trend
  */
 const WEIGHTS: Record<Persona, Record<ModuleId, number>> = {
   investor: {
-    investment: 0.22, market: 0.16, futureGrowth: 0.14, infrastructure: 0.12,
-    legal: 0.10, construction: 0.06, environment: 0.06, utilities: 0.06,
-    community: 0.04, safety: 0.04,
+    investment: 0.22,
+    market: 0.16,
+    futureGrowth: 0.14,
+    infrastructure: 0.12,
+    legal: 0.1,
+    construction: 0.06,
+    environment: 0.06,
+    utilities: 0.06,
+    community: 0.04,
+    safety: 0.04,
   },
   "home-buyer": {
-    safety: 0.16, infrastructure: 0.16, utilities: 0.12, environment: 0.12,
-    community: 0.10, construction: 0.08, legal: 0.10, investment: 0.06,
-    market: 0.05, futureGrowth: 0.05,
+    safety: 0.16,
+    infrastructure: 0.16,
+    utilities: 0.12,
+    environment: 0.12,
+    community: 0.1,
+    construction: 0.08,
+    legal: 0.1,
+    investment: 0.06,
+    market: 0.05,
+    futureGrowth: 0.05,
   },
   farmer: {
-    environment: 0.28, utilities: 0.16, infrastructure: 0.12, community: 0.08,
-    construction: 0.08, legal: 0.10, safety: 0.06, market: 0.06,
-    investment: 0.04, futureGrowth: 0.02,
+    environment: 0.28,
+    utilities: 0.16,
+    infrastructure: 0.12,
+    community: 0.08,
+    construction: 0.08,
+    legal: 0.1,
+    safety: 0.06,
+    market: 0.06,
+    investment: 0.04,
+    futureGrowth: 0.02,
   },
   developer: {
-    construction: 0.20, legal: 0.16, infrastructure: 0.14, utilities: 0.12,
-    environment: 0.10, investment: 0.10, market: 0.08, futureGrowth: 0.06,
-    safety: 0.02, community: 0.02,
+    construction: 0.2,
+    legal: 0.16,
+    infrastructure: 0.14,
+    utilities: 0.12,
+    environment: 0.1,
+    investment: 0.1,
+    market: 0.08,
+    futureGrowth: 0.06,
+    safety: 0.02,
+    community: 0.02,
   },
   business: {
-    infrastructure: 0.20, market: 0.18, safety: 0.12, utilities: 0.10,
-    investment: 0.10, futureGrowth: 0.08, community: 0.08, legal: 0.06,
-    environment: 0.04, construction: 0.04,
+    infrastructure: 0.2,
+    market: 0.18,
+    safety: 0.12,
+    utilities: 0.1,
+    investment: 0.1,
+    futureGrowth: 0.08,
+    community: 0.08,
+    legal: 0.06,
+    environment: 0.04,
+    construction: 0.04,
   },
 };
 
@@ -137,29 +172,45 @@ function scoreInvestment(intel?: LocationIntel, narrative?: NarrativeOutput): Mo
   const growth = (narrative?.futureOutlook ?? "").length > 40;
   const score = clamp(base * 0.7 + (growth ? 30 : 20));
   return {
-    id: "investment", label: "Investment",
-    score, grade: grade(score), trend: trendFrom(score, growth),
+    id: "investment",
+    label: "Investment",
+    score,
+    grade: grade(score),
+    trend: trendFrom(score, growth),
     confidencePct: baseConfidence(intel, narrative),
     reasons: [
       `Amenity density index: ${infra} anchor POIs within ~3 km`,
-      narrative?.futureOutlook ? "AI outlook flags positive medium-term trajectory" : "Trajectory uses baseline county trend (no specific projects detected)",
-      c?.banks.length ? `${c.banks.length} bank/ATM presence supports commerce` : "Limited financial infrastructure nearby",
+      narrative?.futureOutlook
+        ? "AI outlook flags positive medium-term trajectory"
+        : "Trajectory uses baseline county trend (no specific projects detected)",
+      c?.banks.length
+        ? `${c.banks.length} bank/ATM presence supports commerce`
+        : "Limited financial infrastructure nearby",
     ],
     sources: ["Google Places", "AI Narrative", "County growth signals"],
-    limitations: ["No transaction-level comps loaded", "Prices are indicative, not appraisal-grade"],
+    limitations: [
+      "No transaction-level comps loaded",
+      "Prices are indicative, not appraisal-grade",
+    ],
     nextStep: "Pull last-12-month comps for the same ward before offering.",
   };
 }
 
 function scoreConstruction(intel?: LocationIntel, narrative?: NarrativeOutput): ModuleOutput {
   const elev = intel?.elevation?.meters ?? null;
-  const buildability = elev == null ? 60 : clamp(elev < 20 ? 42 : elev < 100 ? 62 : elev > 2400 ? 55 : 78);
+  const buildability =
+    elev == null ? 60 : clamp(elev < 20 ? 42 : elev < 100 ? 62 : elev > 2400 ? 55 : 78);
   return {
-    id: "construction", label: "Construction",
-    score: buildability, grade: grade(buildability), trend: "flat",
+    id: "construction",
+    label: "Construction",
+    score: buildability,
+    grade: grade(buildability),
+    trend: "flat",
     confidencePct: clamp(baseConfidence(intel, narrative) - (elev == null ? 15 : 0)),
     reasons: [
-      elev != null ? `Elevation ${elev.toFixed(0)} m — ${elev < 20 ? "coastal/low, watch water table" : elev < 100 ? "low-relief, drainage matters" : "elevated, drainage friendlier"}` : "Elevation unknown — assume conservative foundations",
+      elev != null
+        ? `Elevation ${elev.toFixed(0)} m — ${elev < 20 ? "coastal/low, watch water table" : elev < 100 ? "low-relief, drainage matters" : "elevated, drainage friendlier"}`
+        : "Elevation unknown — assume conservative foundations",
       "Assumed medium-density soil until SPT / SoilGrids resolves parcel",
       "Access, road width and material haulage not yet field-verified",
     ],
@@ -175,8 +226,11 @@ function scoreLegal(intel?: LocationIntel, narrative?: NarrativeOutput): ModuleO
   const banks = intel?.categories?.banks.length ?? 0;
   const score = clamp(45 + banks * 3);
   return {
-    id: "legal", label: "Legal readiness",
-    score, grade: grade(score), trend: "flat",
+    id: "legal",
+    label: "Legal readiness",
+    score,
+    grade: grade(score),
+    trend: "flat",
     confidencePct: 55,
     reasons: [
       "Title, zoning and wayleave cannot be verified from open data",
@@ -196,12 +250,19 @@ function scoreEnvironment(intel?: LocationIntel, narrative?: NarrativeOutput): M
   const air = aqi == null ? 60 : clamp(aqi);
   const score = clamp(air * 0.5 + flood * 0.5);
   return {
-    id: "environment", label: "Environment",
-    score, grade: grade(score), trend: "flat",
+    id: "environment",
+    label: "Environment",
+    score,
+    grade: grade(score),
+    trend: "flat",
     confidencePct: clamp(baseConfidence(intel, narrative) - (aqi == null ? 10 : 0)),
     reasons: [
-      aqi != null ? `Air quality AQI ${aqi} (${intel?.airQuality?.category ?? "moderate"})` : "Air quality not sampled",
-      elev != null ? `Elevation ${elev.toFixed(0)} m — flood exposure ${flood < 45 ? "elevated" : flood < 70 ? "moderate" : "lower"}` : "Flood proxy unavailable",
+      aqi != null
+        ? `Air quality AQI ${aqi} (${intel?.airQuality?.category ?? "moderate"})`
+        : "Air quality not sampled",
+      elev != null
+        ? `Elevation ${elev.toFixed(0)} m — flood exposure ${flood < 45 ? "elevated" : flood < 70 ? "moderate" : "lower"}`
+        : "Flood proxy unavailable",
       "Verify long-rain (Mar–May) behaviour on-site",
     ],
     sources: ["Google Air Quality API", "Open-Topo-Data", "Open-Meteo"],
@@ -213,12 +274,17 @@ function scoreEnvironment(intel?: LocationIntel, narrative?: NarrativeOutput): M
 function scoreInfrastructure(intel?: LocationIntel, narrative?: NarrativeOutput): ModuleOutput {
   const c = intel?.categories;
   const infraCount =
-    (c?.schools.length ?? 0) + (c?.hospitals.length ?? 0) +
-    (c?.groceries.length ?? 0) + (c?.transit.length ?? 0);
+    (c?.schools.length ?? 0) +
+    (c?.hospitals.length ?? 0) +
+    (c?.groceries.length ?? 0) +
+    (c?.transit.length ?? 0);
   const score = clamp(30 + infraCount * 3.5);
   return {
-    id: "infrastructure", label: "Infrastructure",
-    score, grade: grade(score), trend: trendFrom(score, infraCount > 8),
+    id: "infrastructure",
+    label: "Infrastructure",
+    score,
+    grade: grade(score),
+    trend: trendFrom(score, infraCount > 8),
     confidencePct: baseConfidence(intel, narrative),
     reasons: [
       `${c?.schools.length ?? 0} schools · ${c?.hospitals.length ?? 0} health · ${c?.groceries.length ?? 0} shops within ~3 km`,
@@ -236,8 +302,11 @@ function scoreCommunity(_intel?: LocationIntel, narrative?: NarrativeOutput): Mo
   // family-suitability as a light proxy.
   const score = narrative?.familySuitability?.score ?? 55;
   return {
-    id: "community", label: "Community",
-    score, grade: grade(score), trend: "flat",
+    id: "community",
+    label: "Community",
+    score,
+    grade: grade(score),
+    trend: "flat",
     confidencePct: 45,
     reasons: [
       "Community submissions layer not yet populated for this parcel",
@@ -253,8 +322,11 @@ function scoreMarket(_intel?: LocationIntel, narrative?: NarrativeOutput): Modul
   const base = narrative?.businessSuitability?.score ?? 58;
   const score = clamp(base * 0.9 + 5);
   return {
-    id: "market", label: "Market",
-    score, grade: grade(score), trend: trendFrom(score, true),
+    id: "market",
+    label: "Market",
+    score,
+    grade: grade(score),
+    trend: trendFrom(score, true),
     confidencePct: 55,
     reasons: [
       "Demand proxy derived from commercial-amenity density",
@@ -273,13 +345,18 @@ function scoreUtilities(intel?: LocationIntel, narrative?: NarrativeOutput): Mod
     (c?.groceries.length ?? 0) + (c?.banks.length ?? 0) + (c?.restaurants.length ?? 0);
   const score = clamp(35 + density * 2.5);
   return {
-    id: "utilities", label: "Utilities",
-    score, grade: grade(score), trend: "flat",
+    id: "utilities",
+    label: "Utilities",
+    score,
+    grade: grade(score),
+    trend: "flat",
     confidencePct: clamp(baseConfidence(intel, narrative) - 10),
     reasons: [
       "Grid access inferred from commercial density (KPLC coverage not queried)",
       "Water supply not verified — plan a tank + borehole option",
-      density > 6 ? "Commercial cluster nearby implies reliable services" : "Sparse commercial cluster — expect service gaps",
+      density > 6
+        ? "Commercial cluster nearby implies reliable services"
+        : "Sparse commercial cluster — expect service gaps",
     ],
     sources: ["OpenStreetMap", "Google Places"],
     limitations: ["No live KPLC / water-board feed"],
@@ -292,8 +369,11 @@ function scoreSafety(intel?: LocationIntel, _narrative?: NarrativeOutput): Modul
   const anchor = (c?.hospitals.length ?? 0) + (c?.banks.length ?? 0);
   const score = clamp(50 + anchor * 3);
   return {
-    id: "safety", label: "Safety",
-    score, grade: grade(score), trend: "flat",
+    id: "safety",
+    label: "Safety",
+    score,
+    grade: grade(score),
+    trend: "flat",
     confidencePct: 50,
     reasons: [
       "No incident data feed integrated — proxy uses institutional density",
@@ -308,16 +388,20 @@ function scoreSafety(intel?: LocationIntel, _narrative?: NarrativeOutput): Modul
 
 function scoreFutureGrowth(intel?: LocationIntel, narrative?: NarrativeOutput): ModuleOutput {
   const base =
-    ((narrative?.businessSuitability?.score ?? 55) +
-      (narrative?.familySuitability?.score ?? 55)) /
+    ((narrative?.businessSuitability?.score ?? 55) + (narrative?.familySuitability?.score ?? 55)) /
     2;
   const score = clamp(base);
   return {
-    id: "futureGrowth", label: "Future growth",
-    score, grade: grade(score), trend: trendFrom(score, true),
+    id: "futureGrowth",
+    label: "Future growth",
+    score,
+    grade: grade(score),
+    trend: trendFrom(score, true),
     confidencePct: 50,
     reasons: [
-      narrative?.futureOutlook ? narrative.futureOutlook.slice(0, 140) : "Baseline county trajectory assumed",
+      narrative?.futureOutlook
+        ? narrative.futureOutlook.slice(0, 140)
+        : "Baseline county trajectory assumed",
       "Bypass / SGR / county plans not yet cross-referenced at parcel scale",
     ],
     sources: ["AI Narrative", "County CIDPs (external)"],
@@ -347,18 +431,19 @@ export function runIntelligenceEngine(
   ];
 
   const w = WEIGHTS[persona];
-  const overall = clamp(
-    modules.reduce((acc, m) => acc + m.score * (w[m.id] ?? 0.1), 0),
-  );
+  const overall = clamp(modules.reduce((acc, m) => acc + m.score * (w[m.id] ?? 0.1), 0));
   const confidencePct = clamp(
     modules.reduce((acc, m) => acc + m.confidencePct * (w[m.id] ?? 0.1), 0),
   );
 
   const recommendation: DecisionOutput["recommendation"] =
-    overall >= 78 ? "Highly Recommended"
-    : overall >= 62 ? "Recommended"
-    : overall >= 45 ? "Consider with Caution"
-    : "Not Recommended";
+    overall >= 78
+      ? "Highly Recommended"
+      : overall >= 62
+        ? "Recommended"
+        : overall >= 45
+          ? "Consider with Caution"
+          : "Not Recommended";
 
   // Top 4 reasons across the highest-scoring modules for this persona.
   const ranked = [...modules].sort(
@@ -394,11 +479,16 @@ export function runIntelligenceEngine(
 
 export function labelForPersona(p: Persona): string {
   switch (p) {
-    case "investor": return "Investors";
-    case "home-buyer": return "Home buyers";
-    case "farmer": return "Farmers";
-    case "developer": return "Developers";
-    case "business": return "Business owners";
+    case "investor":
+      return "Investors";
+    case "home-buyer":
+      return "Home buyers";
+    case "farmer":
+      return "Farmers";
+    case "developer":
+      return "Developers";
+    case "business":
+      return "Business owners";
   }
 }
 

@@ -39,8 +39,7 @@ function deriveScores(intel?: LocationIntel, narrative?: NarrativeOutput) {
   const utilities = clamp(40 + infraCount * 3 + accessCount * 2);
   const environment = aqi != null ? clamp(aqi) : 55;
   const futureGrowth = clamp(
-    ((narrative?.businessSuitability?.score ?? 60) +
-      (narrative?.familySuitability?.score ?? 60)) /
+    ((narrative?.businessSuitability?.score ?? 60) + (narrative?.familySuitability?.score ?? 60)) /
       2,
   );
   const overall = narrative?.livability ?? clamp((investment + infrastructure + environment) / 3);
@@ -132,9 +131,7 @@ function Gauge({
         />
       </svg>
       <div className="absolute inset-0 grid place-items-center">
-        <span className={`text-sm font-semibold tabular-nums ${tone.text}`}>
-          {Math.round(v)}
-        </span>
+        <span className={`text-sm font-semibold tabular-nums ${tone.text}`}>{Math.round(v)}</span>
       </div>
     </div>
   );

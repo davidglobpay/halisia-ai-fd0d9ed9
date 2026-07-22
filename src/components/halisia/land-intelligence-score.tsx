@@ -28,12 +28,7 @@ import {
 import { useUserPersona } from "@/hooks/use-user-persona";
 import type { LocationIntel } from "@/lib/location-intel.functions";
 import type { NarrativeOutput } from "@/lib/ai-narrative.functions";
-import {
-  getFeedback,
-  setRating,
-  flagIssue,
-  type ModuleFeedback,
-} from "@/lib/feedback-store";
+import { getFeedback, setRating, flagIssue, type ModuleFeedback } from "@/lib/feedback-store";
 import { generateIntelligencePdf } from "@/lib/pdf-intelligence";
 
 function tone(score: number) {
@@ -244,10 +239,7 @@ function ModuleCard({ m, freshness }: { m: ModuleOutput; freshness: string }) {
             <Flag className="h-3 w-3" /> Flag issue
           </button>
           {fb?.flag && !flagOpen && (
-            <span
-              className="text-[10px] text-amber-glow truncate max-w-[60%]"
-              title={fb.flag}
-            >
+            <span className="text-[10px] text-amber-glow truncate max-w-[60%]" title={fb.flag}>
               Flagged: {fb.flag}
             </span>
           )}
@@ -384,7 +376,9 @@ export function LandIntelligenceScore({
           <div className="h-20 w-20 rounded-full grid place-items-center bg-background/90">
             <div className="text-center">
               <div className={`text-2xl font-bold tabular-nums ${t.text}`}>{decision.overall}</div>
-              <div className="text-[10px] text-muted-foreground -mt-0.5">Grade {decision.grade}</div>
+              <div className="text-[10px] text-muted-foreground -mt-0.5">
+                Grade {decision.grade}
+              </div>
             </div>
           </div>
         </div>
@@ -425,11 +419,7 @@ export function LandIntelligenceScore({
         </button>
         <Link
           to="/compare-locations"
-          search={
-            lat != null && lng != null
-              ? { a: `${lat},${lng}`, aLabel: address ?? "" }
-              : {}
-          }
+          search={lat != null && lng != null ? { a: `${lat},${lng}`, aLabel: address ?? "" } : {}}
           data-testid="open-compare-locations"
           className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-foreground/85 hover:border-accent/40"
         >
