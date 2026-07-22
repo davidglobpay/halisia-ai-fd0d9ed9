@@ -242,6 +242,14 @@ export function FloatingSearch() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // Keep the active option in view for keyboard users. Must run before any
+  // early return to keep hook order stable across renders.
+  useEffect(() => {
+    if (!open) return;
+    const el = listRef.current?.querySelector<HTMLElement>(`#fs-opt-${active}`);
+    el?.scrollIntoView({ block: "nearest" });
+  }, [active, open]);
+
   if (hidden) return null;
 
   const commit = (
@@ -389,13 +397,6 @@ export function FloatingSearch() {
       else commit(q);
     }
   };
-
-  // Keep the active option in view for keyboard users.
-  useEffect(() => {
-    if (!open) return;
-    const el = listRef.current?.querySelector<HTMLElement>(`#fs-opt-${active}`);
-    el?.scrollIntoView({ block: "nearest" });
-  }, [active, open, rows.length]);
 
   const iconFor = (kind: string) => {
     if (kind === "county" || kind === "area") return MapPin;
