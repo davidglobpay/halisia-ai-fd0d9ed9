@@ -43,6 +43,7 @@ import { Terrain3D } from "@/components/halisia/terrain-3d";
 import { useDevMode } from "@/hooks/use-dev-mode";
 import { PlaceCard } from "@/components/halisia/place-card";
 import { GeotechRisksInline } from "@/components/halisia/geotech-risks-inline";
+import { HeroSummary } from "@/components/halisia/hero-summary";
 
 type TabId =
   | "overview"
@@ -164,6 +165,15 @@ export function IntelligenceDashboard({
 
   return (
     <div className="space-y-3">
+      {/* Level-1 hero: overall AI score + animated gauge dashboard */}
+      <HeroSummary
+        address={address}
+        lat={lat}
+        lng={lng}
+        intel={intelQ.data}
+        narrative={narrativeQ.data}
+      />
+
       {/* Header card */}
       <div className="glass-strong rounded-2xl p-4 relative overflow-hidden">
         <div className="absolute -top-16 -right-16 h-40 w-40 rounded-full blur-3xl opacity-40 bg-gradient-to-br from-primary to-accent" />
