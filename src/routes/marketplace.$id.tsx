@@ -132,7 +132,7 @@ function ListingDetail() {
             <section className="mt-4 glass rounded-2xl border border-white/10 p-5">
               <h2 className="text-sm font-semibold mb-3">Amenities</h2>
               <ul className="flex flex-wrap gap-2">
-                {p.amenities.map((a) => (
+                {p.amenities.map((a: string) => (
                   <li
                     key={a}
                     className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs"
