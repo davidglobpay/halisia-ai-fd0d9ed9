@@ -20,6 +20,7 @@ import { Route as CompareRouteImport } from './routes/compare'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MarketplaceIndexRouteImport } from './routes/marketplace.index'
 import { Route as CountyCodeRouteImport } from './routes/county.$code'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedSavedRouteImport } from './routes/_authenticated/saved'
@@ -78,6 +79,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MarketplaceIndexRoute = MarketplaceIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => MarketplaceRoute,
+} as any)
 const CountyCodeRoute = CountyCodeRouteImport.update({
   id: '/county/$code',
   path: '/county/$code',
@@ -101,13 +107,14 @@ export interface FileRoutesByFullPath {
   '/compare-locations': typeof CompareLocationsRoute
   '/explore': typeof ExploreRoute
   '/logo-qa': typeof LogoQaRoute
-  '/marketplace': typeof MarketplaceRoute
+  '/marketplace': typeof MarketplaceRouteWithChildren
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/title-deed': typeof TitleDeedRoute
   '/saved': typeof AuthenticatedSavedRoute
   '/api/chat': typeof ApiChatRoute
   '/county/$code': typeof CountyCodeRoute
+  '/marketplace/': typeof MarketplaceIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -116,13 +123,13 @@ export interface FileRoutesByTo {
   '/compare-locations': typeof CompareLocationsRoute
   '/explore': typeof ExploreRoute
   '/logo-qa': typeof LogoQaRoute
-  '/marketplace': typeof MarketplaceRoute
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/title-deed': typeof TitleDeedRoute
   '/saved': typeof AuthenticatedSavedRoute
   '/api/chat': typeof ApiChatRoute
   '/county/$code': typeof CountyCodeRoute
+  '/marketplace': typeof MarketplaceIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -133,13 +140,14 @@ export interface FileRoutesById {
   '/compare-locations': typeof CompareLocationsRoute
   '/explore': typeof ExploreRoute
   '/logo-qa': typeof LogoQaRoute
-  '/marketplace': typeof MarketplaceRoute
+  '/marketplace': typeof MarketplaceRouteWithChildren
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/title-deed': typeof TitleDeedRoute
   '/_authenticated/saved': typeof AuthenticatedSavedRoute
   '/api/chat': typeof ApiChatRoute
   '/county/$code': typeof CountyCodeRoute
+  '/marketplace/': typeof MarketplaceIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -157,6 +165,7 @@ export interface FileRouteTypes {
     | '/saved'
     | '/api/chat'
     | '/county/$code'
+    | '/marketplace/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -165,13 +174,13 @@ export interface FileRouteTypes {
     | '/compare-locations'
     | '/explore'
     | '/logo-qa'
-    | '/marketplace'
     | '/report'
     | '/reset-password'
     | '/title-deed'
     | '/saved'
     | '/api/chat'
     | '/county/$code'
+    | '/marketplace'
   id:
     | '__root__'
     | '/'
@@ -188,6 +197,7 @@ export interface FileRouteTypes {
     | '/_authenticated/saved'
     | '/api/chat'
     | '/county/$code'
+    | '/marketplace/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -198,7 +208,7 @@ export interface RootRouteChildren {
   CompareLocationsRoute: typeof CompareLocationsRoute
   ExploreRoute: typeof ExploreRoute
   LogoQaRoute: typeof LogoQaRoute
-  MarketplaceRoute: typeof MarketplaceRoute
+  MarketplaceRoute: typeof MarketplaceRouteWithChildren
   ReportRoute: typeof ReportRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   TitleDeedRoute: typeof TitleDeedRoute
@@ -285,6 +295,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/marketplace/': {
+      id: '/marketplace/'
+      path: '/'
+      fullPath: '/marketplace/'
+      preLoaderRoute: typeof MarketplaceIndexRouteImport
+      parentRoute: typeof MarketplaceRoute
+    }
     '/county/$code': {
       id: '/county/$code'
       path: '/county/$code'
@@ -320,6 +337,18 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface MarketplaceRouteChildren {
+  MarketplaceIndexRoute: typeof MarketplaceIndexRoute
+}
+
+const MarketplaceRouteChildren: MarketplaceRouteChildren = {
+  MarketplaceIndexRoute: MarketplaceIndexRoute,
+}
+
+const MarketplaceRouteWithChildren = MarketplaceRoute._addFileChildren(
+  MarketplaceRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
@@ -328,7 +357,7 @@ const rootRouteChildren: RootRouteChildren = {
   CompareLocationsRoute: CompareLocationsRoute,
   ExploreRoute: ExploreRoute,
   LogoQaRoute: LogoQaRoute,
-  MarketplaceRoute: MarketplaceRoute,
+  MarketplaceRoute: MarketplaceRouteWithChildren,
   ReportRoute: ReportRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   TitleDeedRoute: TitleDeedRoute,
