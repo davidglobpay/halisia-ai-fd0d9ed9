@@ -1,67 +1,60 @@
-# HALISIA — Phased Delivery Plan
+# Phase 2 — AI Real Estate Operating System
 
-You picked all four tracks. Honestly: this is 6–10 focused turns of work, not one. Trying it in a single pass will half-break the current app (LIOS, county profiles, PDFs, maps, geotech — all working today). Here's the order I'll ship in, one phase per turn, so each phase leaves the app green.
+This is a very large scope. To keep the existing platform stable and shippable, I'll roll it out in vertical slices. Each slice is independently useful, preserves current features, and reuses the existing Land Intelligence Engine, design system (Kenyan palette, glass UI, watermark), auth, and Google Maps / GIS layers.
 
-## Phase 1 — Foundation (this turn)
+I'll implement slices in order and check in with you between them. Nothing gets removed from Sections 1–5.
 
-1. **Enable Lovable Cloud** (DB + auth + storage). Prereq for everything in Phase 4+.
-2. **Rebrand — Kenyan flag palette + architectural typography.**
-   - Tokens in `src/styles.css`: `--background` deep black `oklch(0.16 0.02 250)`, `--foreground` white, `--primary` emerald `oklch(0.62 0.18 155)`, `--destructive` crimson `oklch(0.58 0.22 25)`, `--accent` metallic gold `oklch(0.78 0.14 85)`. Lighter/darker shades for hover/borders/gradients.
-   - Fonts via `<link>` in `__root.tsx`: **Space Grotesk** (display) + **Inter** (body) + **JetBrains Mono** (data/coords). Register in `@theme`.
-   - Semantic usage rules: green = positive/verified, red = risk/warning, gold = premium/AI/awards, black = surfaces, white = text.
-   - Subtle logo watermark (~4% opacity, blurred, gold glow) on landing + county profile hero sections.
-   - Futuristic textures: topographic contour SVG overlay + faint grid, both as CSS backgrounds behind hero sections.
-3. **Search dialog redesign** (`floating-search.tsx`)
-   - Minimal, single-column layout, gold-accent focus ring.
-   - Ready-made suggestion chips: "Kilimani, Nairobi", "Karen residential plot", "Naivasha lakefront", "Kajiado farmland", "Diani beachfront", "Mombasa CBD".
-   - Recent searches, My Location pill, ⌘K hint — cleaner grouping.
-4. **Pop-up navigation guide** — first-visit tour (localStorage-gated) pointing to: search (⌘K), county tiles, LIOS panel, PDF download, compare, geotech tab. Skippable, "Don't show again".
+## Slice 1 — Marketplace foundation (DB + core routes)
+- New Supabase tables (with GRANTs + RLS scoped to `auth.uid()`):
+  - `properties` (kind, category, title, description, price, currency, size, coords, county, status, owner_id, media[], amenities[], ai_score cache, created/updated)
+  - `property_media` (property_id, url, type, position)
+  - `saved_searches` (user_id, query JSON, alert on/off)
+  - `leads` (property_id, buyer_id, seller_id, stage, message, created)
+  - `viewings` (property_id, buyer_id, scheduled_at, status)
+- Reuse existing `saved_items` for favourites.
+- New routes (all under existing navbar, no redesign):
+  - `/marketplace` — grid + filters (type, price, size, county, AI score, rental yield, flood risk)
+  - `/marketplace/$id` — listing detail with inherited Intelligence Engine panel
+  - `/sell/new` — seller upload wizard
+  - `/_authenticated/dashboard` — role-aware dashboard shell
 
-## Phase 2 — Auth + Saved Properties (next turn)
+## Slice 2 — AI Listing Assistant + Concept Studio
+- Server fn `analyze-listing.functions.ts` — takes coords + inputs, runs `runIntelligenceEngine` and Gemini to produce title, description, marketing highlights, buyer profile, price band (labelled *estimate*), suggested developments.
+- `/marketplace/$id` gets an "AI Concept Studio" tab for vacant land: generates conceptual site layout suggestions (text + simple SVG diagram), labelled *conceptual only*.
 
-- Managed `_authenticated/` layout, `/auth` page with Google + email/password.
-- `profiles` + `saved_properties` + `favorites` tables with RLS + GRANTs.
-- "Save" button on county profiles and search results; "My Saved" dashboard route.
+## Slice 3 — Rental marketplace + role dashboards
+- Reuse `properties` with `kind='rental'` and unit sub-rows (`rental_units`).
+- Landlord dashboard: units, occupancy, leads.
+- Buyer/Investor dashboard: saved, compare, alerts, watchlist, downloaded reports.
+- Seller dashboard: listings, views, lead count, AI listing score, suggested improvements.
+- Roles table via `user_roles` + `has_role()` (per user-roles guidance — separate table, enum, security-definer function).
 
-## Phase 3 — Calculators (one turn)
+## Slice 4 — Professionals + Leads + Finance
+- `professionals` table (profile, specialty, coverage, verified, ratings).
+- `/professionals` directory + `/professionals/$id`.
+- Lead management pipeline UI on seller/professional dashboard.
+- Finance Centre `/finance`: mortgage / construction-loan / affordability / ROI / rental-yield / cost-estimator calculators (pure client math + AI narrative tie-in). Bank product cards are static content until a bank partner is connected.
 
-- `/tools/mortgage` — CBK-rate aware amortisation, KES formatting.
-- `/tools/construction` — BOQ by class (economy/standard/premium) × m² × county multiplier.
-- `/tools/roi` — rental yield + capital appreciation + break-even.
-- Shared inputs, chart.js visualisations, PDF export via existing `pdf-intelligence` scaffold.
+## Slice 5 — Search upgrades + AI matching + Payments
+- Natural-language search (Lovable AI) → structured filters on `/marketplace`.
+- Draw-on-map search using existing Leaflet layer.
+- Saved searches → email/in-app alerts (`notifications` table, existing bell).
+- AI matching: server fn recommending properties for a user profile.
+- Payments: run `recommend_payment_provider` first, then enable seamless Stripe or Paddle for listing fees / featured upgrades / pro memberships.
 
-## Phase 4 — Marketplace + Listings (2 turns)
+## Slice 6 — Admin + polish
+- `/admin` (gated to `admin` role) for users, listings, payments, moderation, audit logs.
+- Playwright E2E covering: create listing → AI enrich → save → contact seller → lead appears in dashboard; rental filter; professional booking; finance calculator.
 
-- `listings` table (owner, geo, price, media, verification status).
-- Create/edit/delete flows, image upload to Cloud storage, search/filter, favorites, contact seller (in-app message).
-- Verification badge driven by document upload + admin review flag.
+## Technical notes (for reference)
+- All new server logic via `createServerFn` in `src/lib/*.functions.ts`; no Supabase edge functions.
+- Every new module reads `runIntelligenceEngine(intel, narrative, persona)` for scores — no duplicate scoring logic.
+- AI-generated fields carry confidence % and a "conceptual/estimate" disclaimer.
+- Every new table: `CREATE TABLE` → `GRANT` → `ENABLE RLS` → `CREATE POLICY` in one migration, plus `updated_at` trigger.
+- Media stored in a new `property-media` public storage bucket.
+- Preserves existing routes, palette, watermark, hero, county profiles, intelligence dashboard, PDF exports, saved items, auth.
 
-## Phase 5 — Professional Marketplace + Community Contributions (2 turns)
+## What I'll ship first (once you approve)
+Slice 1 end-to-end: DB migration, `/marketplace`, `/marketplace/$id` reusing `LandIntelligenceScore`, `/sell/new` wizard writing to `properties`, and wiring the new routes into the existing navbar. Then I'll pause for your feedback before Slice 2.
 
-- `professionals` (architects, valuers, surveyors) with portfolio + ratings.
-- AI matching against active LIOS location.
-- Contributor submissions (photo/GPS) → AI moderation server fn → points/rewards ledger.
-
-## Phase 6 — Payments + Admin (1 turn, after `recommend_payment_provider`)
-
-- Stripe seamless for report unlocks / professional bookings / listing boosts.
-- `/admin` gated by `user_roles` (separate table, `has_role` SECURITY DEFINER — per project rules).
-
-## Phase 7 — Audit sweep (1 turn)
-
-- Playwright: run full suite, fix regressions.
-- A11y: axe pass, contrast against new palette, keyboard nav on all new dialogs.
-- Perf budget: lazy-load Cesium/Leaflet/Mapillary chunks, image `loading="lazy"`, route-level code split verification.
-- Security: RLS on every new table, input validation (zod) on every server fn, rate-limit public webhook routes.
-
-## What I need from you
-
-**Just say "go" to start Phase 1 now.** If you'd rather I sequence differently (e.g. marketplace before rebrand), tell me the order.
-
-## Technical notes
-
-- Payments provider will be picked by `recommend_payment_provider` in Phase 6, not guessed now.
-- Cesium/Mapillary already lazy-loaded — leave alone.
-- Existing LIOS + county profile + PDF pipeline is not being rewritten, only re-themed.
-- Watermark logo uses existing asset; no new logo work.
-- No background videos (per your prior instruction).
+Reply "go" (or tell me which slice to prioritise / defer) and I'll start with Slice 1.

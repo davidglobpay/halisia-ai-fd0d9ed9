@@ -245,6 +245,18 @@
   animation: pulse-glow 2.6s ease-in-out infinite;
 }
 
+@utility input {
+  width: 100%;
+  border-radius: 0.75rem;
+  background-color: rgb(255 255 255 / 0.05);
+  border: 1px solid rgb(255 255 255 / 0.1);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  outline: none;
+  color: inherit;
+  transition: border-color 0.15s;
+}
+
 /*
  * A11y — ensure every keyboard-focusable element has a visible ring by
  * default. Component-level focus-visible utilities still win because they

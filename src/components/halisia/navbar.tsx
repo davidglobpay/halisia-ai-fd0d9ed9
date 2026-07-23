@@ -9,6 +9,7 @@ import { useNavigate } from "@tanstack/react-router";
 const LINKS: Array<{ to: string; label: string }> = [
   { to: "/", label: "Home" },
   { to: "/explore", label: "Explore" },
+  { to: "/marketplace", label: "Marketplace" },
   { to: "/title-deed", label: "Title Deed" },
   { to: "/compare", label: "Compare" },
   { to: "/report", label: "Reports" },
