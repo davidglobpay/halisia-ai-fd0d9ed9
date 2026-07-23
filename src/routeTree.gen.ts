@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TitleDeedRouteImport } from './routes/title-deed'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ReportRouteImport } from './routes/report'
+import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as LogoQaRouteImport } from './routes/logo-qa'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as CompareLocationsRouteImport } from './routes/compare-locations'
@@ -36,6 +37,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const ReportRoute = ReportRouteImport.update({
   id: '/report',
   path: '/report',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketplaceRoute = MarketplaceRouteImport.update({
+  id: '/marketplace',
+  path: '/marketplace',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LogoQaRoute = LogoQaRouteImport.update({
@@ -95,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/compare-locations': typeof CompareLocationsRoute
   '/explore': typeof ExploreRoute
   '/logo-qa': typeof LogoQaRoute
+  '/marketplace': typeof MarketplaceRoute
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/title-deed': typeof TitleDeedRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/compare-locations': typeof CompareLocationsRoute
   '/explore': typeof ExploreRoute
   '/logo-qa': typeof LogoQaRoute
+  '/marketplace': typeof MarketplaceRoute
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/title-deed': typeof TitleDeedRoute
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   '/compare-locations': typeof CompareLocationsRoute
   '/explore': typeof ExploreRoute
   '/logo-qa': typeof LogoQaRoute
+  '/marketplace': typeof MarketplaceRoute
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/title-deed': typeof TitleDeedRoute
@@ -141,6 +150,7 @@ export interface FileRouteTypes {
     | '/compare-locations'
     | '/explore'
     | '/logo-qa'
+    | '/marketplace'
     | '/report'
     | '/reset-password'
     | '/title-deed'
@@ -155,6 +165,7 @@ export interface FileRouteTypes {
     | '/compare-locations'
     | '/explore'
     | '/logo-qa'
+    | '/marketplace'
     | '/report'
     | '/reset-password'
     | '/title-deed'
@@ -170,6 +181,7 @@ export interface FileRouteTypes {
     | '/compare-locations'
     | '/explore'
     | '/logo-qa'
+    | '/marketplace'
     | '/report'
     | '/reset-password'
     | '/title-deed'
@@ -186,6 +198,7 @@ export interface RootRouteChildren {
   CompareLocationsRoute: typeof CompareLocationsRoute
   ExploreRoute: typeof ExploreRoute
   LogoQaRoute: typeof LogoQaRoute
+  MarketplaceRoute: typeof MarketplaceRoute
   ReportRoute: typeof ReportRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   TitleDeedRoute: typeof TitleDeedRoute
@@ -214,6 +227,13 @@ declare module '@tanstack/react-router' {
       path: '/report'
       fullPath: '/report'
       preLoaderRoute: typeof ReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketplace': {
+      id: '/marketplace'
+      path: '/marketplace'
+      fullPath: '/marketplace'
+      preLoaderRoute: typeof MarketplaceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/logo-qa': {
@@ -308,6 +328,7 @@ const rootRouteChildren: RootRouteChildren = {
   CompareLocationsRoute: CompareLocationsRoute,
   ExploreRoute: ExploreRoute,
   LogoQaRoute: LogoQaRoute,
+  MarketplaceRoute: MarketplaceRoute,
   ReportRoute: ReportRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   TitleDeedRoute: TitleDeedRoute,
