@@ -4,11 +4,30 @@ import { useState } from "react";
 import { Loader2, Sparkles } from "lucide-react";
 import {
   createProperty,
+  updateProperty,
   PROPERTY_KINDS,
   INTENTS,
   type PropertyKind,
   type ListingIntent,
 } from "@/lib/properties";
+import { generateListingAi } from "@/lib/ai-listing.functions";
+
+const UTILITY_OPTIONS = [
+  "Electricity (KPLC)",
+  "Piped water",
+  "Borehole",
+  "Sewer",
+  "Septic",
+  "Fibre internet",
+  "Street lighting",
+];
+const ACCESS_OPTIONS = [
+  "Tarmac road",
+  "All-weather murram",
+  "Seasonal murram",
+  "Footpath only",
+  "Private access road",
+];
 
 export const Route = createFileRoute("/_authenticated/sell/new")({
   head: () => ({
@@ -40,12 +59,18 @@ function SellNew() {
     longitude: "",
     cover_image: "",
     amenities: "",
+    utilities: [] as string[],
+    access_type: "",
     publish: true,
   });
 
   const m = useMutation({
     mutationFn: async () => {
-      return createProperty({
+      const amenitiesArr = form.amenities
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const row = await createProperty({
         title: form.title.trim(),
         description: form.description.trim() || null,
         kind: form.kind,
@@ -60,17 +85,51 @@ function SellNew() {
         latitude: form.latitude ? Number(form.latitude) : null,
         longitude: form.longitude ? Number(form.longitude) : null,
         cover_image: form.cover_image.trim() || null,
-        amenities: form.amenities
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean),
+        amenities: amenitiesArr,
+        utilities: form.utilities,
       });
+      // Fire AI enrichment and persist to the draft. Non-fatal if it fails.
+      try {
+        const ai = await generateListingAi({
+          data: {
+            title: row.title,
+            description: row.description,
+            kind: row.kind,
+            intent: row.intent,
+            price: row.price,
+            currency: row.currency,
+            size_value: row.size_value,
+            size_unit: row.size_unit,
+            county: row.county,
+            address: row.address,
+            latitude: row.latitude,
+            longitude: row.longitude,
+            amenities: row.amenities,
+            utilities: row.utilities,
+            access_type: form.access_type || null,
+          },
+        });
+        await updateProperty(row.id, {
+          ai_summary: ai as unknown as Record<string, unknown>,
+        });
+      } catch (err) {
+        console.warn("AI enrichment skipped", err);
+      }
+      return row;
     },
     onSuccess: (row) => navigate({ to: "/marketplace/$id", params: { id: row.id } }),
   });
 
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
+
+  const toggleUtility = (u: string) =>
+    set(
+      "utilities",
+      form.utilities.includes(u)
+        ? form.utilities.filter((x) => x !== u)
+        : [...form.utilities, u],
+    );
 
   return (
     <main className="min-h-dvh px-4 sm:px-6 pt-24 pb-16 max-w-3xl mx-auto">
@@ -230,6 +289,44 @@ function SellNew() {
           />
         </Field>
 
+        <Field label="Access" hint="How does one reach the plot?">
+          <select
+            value={form.access_type}
+            onChange={(e) => set("access_type", e.target.value)}
+            className="input"
+          >
+            <option value="">— select —</option>
+            {ACCESS_OPTIONS.map((a) => (
+              <option key={a} value={a}>
+                {a}
+              </option>
+            ))}
+          </select>
+        </Field>
+
+        <Field label="Utilities on-site" hint="Tick everything already available.">
+          <div className="flex flex-wrap gap-2">
+            {UTILITY_OPTIONS.map((u) => {
+              const on = form.utilities.includes(u);
+              return (
+                <button
+                  type="button"
+                  key={u}
+                  onClick={() => toggleUtility(u)}
+                  className={`rounded-full border px-3 py-1 text-xs transition ${
+                    on
+                      ? "border-accent bg-accent/20 text-accent"
+                      : "border-white/10 bg-white/5 text-muted-foreground hover:text-foreground"
+                  }`}
+                  aria-pressed={on}
+                >
+                  {u}
+                </button>
+              );
+            })}
+          </div>
+        </Field>
+
         <Field label="Description">
           <textarea
             rows={5}
@@ -269,8 +366,9 @@ function SellNew() {
           {form.publish ? "Publish listing" : "Save draft"}
         </button>
         <p className="text-[11px] text-muted-foreground">
-          AI-generated fields are estimates. Confirm price and legal details with a licensed
-          professional before transacting.
+          On submit, HALISIA AI drafts your title, marketing highlights, SEO description, price
+          band and (for land) concept layouts — labelled as estimates. Confirm price and legal
+          details with a licensed professional before transacting.
         </p>
       </form>
     </main>
