@@ -64,10 +64,7 @@ export async function removeSavedItem(id: string) {
 }
 
 export async function toggleFavorite(id: string, is_favorite: boolean) {
-  const { error } = await supabase
-    .from("saved_items")
-    .update({ is_favorite })
-    .eq("id", id);
+  const { error } = await supabase.from("saved_items").update({ is_favorite }).eq("id", id);
   if (error) throw error;
 }
 

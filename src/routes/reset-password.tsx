@@ -46,7 +46,10 @@ function ResetPasswordPage() {
       setMsg({ tone: "ok", text: "Password updated. Redirecting…" });
       setTimeout(() => navigate({ to: "/saved" }), 900);
     } catch (err) {
-      setMsg({ tone: "err", text: err instanceof Error ? err.message : "Failed to update password" });
+      setMsg({
+        tone: "err",
+        text: err instanceof Error ? err.message : "Failed to update password",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -55,13 +58,21 @@ function ResetPasswordPage() {
   return (
     <main className="min-h-dvh flex items-center justify-center px-4 py-20">
       <div className="w-full max-w-md">
-        <Link to="/" search={{ compare: "" }} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-6">
+        <Link
+          to="/"
+          search={{ compare: "" }}
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-6"
+        >
           <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Back to HALISIA
         </Link>
         <div className="glass-strong rounded-3xl border border-white/10 p-6 sm:p-8">
-          <h1 className="text-2xl font-display font-semibold text-foreground">Set a new password</h1>
+          <h1 className="text-2xl font-display font-semibold text-foreground">
+            Set a new password
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {ready ? "Enter a new password (min 8 characters)." : "Waiting for reset link to activate…"}
+            {ready
+              ? "Enter a new password (min 8 characters)."
+              : "Waiting for reset link to activate…"}
           </p>
           <form onSubmit={submit} className="mt-6 space-y-3" noValidate>
             <label className="block">
@@ -81,11 +92,19 @@ function ResetPasswordPage() {
               </div>
             </label>
             {msg && (
-              <div role="status" aria-live="polite" className={`rounded-lg px-3 py-2 text-xs ${msg.tone === "ok" ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-200" : "bg-red-500/10 border border-red-500/30 text-red-200"}`}>
+              <div
+                role="status"
+                aria-live="polite"
+                className={`rounded-lg px-3 py-2 text-xs ${msg.tone === "ok" ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-200" : "bg-red-500/10 border border-red-500/30 text-red-200"}`}
+              >
                 {msg.text}
               </div>
             )}
-            <button type="submit" disabled={!ready || submitting} className="w-full h-11 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground font-medium text-sm inline-flex items-center justify-center gap-2 disabled:opacity-60">
+            <button
+              type="submit"
+              disabled={!ready || submitting}
+              className="w-full h-11 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground font-medium text-sm inline-flex items-center justify-center gap-2 disabled:opacity-60"
+            >
               {submitting && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
               Update password
             </button>

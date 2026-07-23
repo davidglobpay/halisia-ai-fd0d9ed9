@@ -1,9 +1,16 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("search panel + nav guide", () => {
-  test("floating search opens, shows curated chips, and Kilimani navigates to /explore", async ({ page, context }) => {
+  test("floating search opens, shows curated chips, and Kilimani navigates to /explore", async ({
+    page,
+    context,
+  }) => {
     await context.addInitScript(() => {
-      try { window.localStorage.setItem("halisia:navguide:v1:seen", String(Date.now())); } catch { /* ignore */ }
+      try {
+        window.localStorage.setItem("halisia:navguide:v1:seen", String(Date.now()));
+      } catch {
+        /* ignore */
+      }
     });
     await page.goto("/");
     const searchbox = page.getByRole("combobox").first();
@@ -16,7 +23,11 @@ test.describe("search panel + nav guide", () => {
 
   test("⌘K / Ctrl+K opens and focuses the search input", async ({ page, context }) => {
     await context.addInitScript(() => {
-      try { window.localStorage.setItem("halisia:navguide:v1:seen", String(Date.now())); } catch { /* ignore */ }
+      try {
+        window.localStorage.setItem("halisia:navguide:v1:seen", String(Date.now()));
+      } catch {
+        /* ignore */
+      }
     });
     await page.goto("/");
     const modifier = process.platform === "darwin" ? "Meta" : "Control";
@@ -34,7 +45,11 @@ test.describe("search panel + nav guide", () => {
 
   test("? key re-opens the guided tour", async ({ page, context }) => {
     await context.addInitScript(() => {
-      try { window.localStorage.setItem("halisia:navguide:v1:seen", String(Date.now())); } catch { /* ignore */ }
+      try {
+        window.localStorage.setItem("halisia:navguide:v1:seen", String(Date.now()));
+      } catch {
+        /* ignore */
+      }
     });
     await page.goto("/");
     await page.keyboard.press("Shift+Slash");

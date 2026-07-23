@@ -166,7 +166,10 @@ export function Navbar() {
             <li className="mt-1 border-t border-white/10 pt-2">
               {!loading && user ? (
                 <>
-                  <Link to="/saved" className="flex items-center gap-2 px-4 py-3 rounded-xl text-[15px] text-muted-foreground hover:bg-white/5 hover:text-foreground">
+                  <Link
+                    to="/saved"
+                    className="flex items-center gap-2 px-4 py-3 rounded-xl text-[15px] text-muted-foreground hover:bg-white/5 hover:text-foreground"
+                  >
                     <Bookmark className="h-4 w-4 text-accent" aria-hidden="true" /> My saved
                   </Link>
                   <button
@@ -175,12 +178,18 @@ export function Navbar() {
                     className="w-full flex items-center gap-2 px-4 py-3 rounded-xl text-[15px] text-muted-foreground hover:bg-white/5 hover:text-foreground text-left"
                   >
                     <LogOut className="h-4 w-4" aria-hidden="true" /> Sign out
-                    <span className="ml-auto text-[10px] text-muted-foreground truncate max-w-[60%]">{user.email}</span>
+                    <span className="ml-auto text-[10px] text-muted-foreground truncate max-w-[60%]">
+                      {user.email}
+                    </span>
                   </button>
                 </>
               ) : !loading ? (
-                <Link to="/auth" className="flex items-center gap-2 px-4 py-3 rounded-xl text-[15px] font-medium text-foreground bg-gradient-to-r from-primary/30 to-accent/30 border border-white/10">
-                  <UserIcon className="h-4 w-4 text-accent" aria-hidden="true" /> Sign in / Create account
+                <Link
+                  to="/auth"
+                  className="flex items-center gap-2 px-4 py-3 rounded-xl text-[15px] font-medium text-foreground bg-gradient-to-r from-primary/30 to-accent/30 border border-white/10"
+                >
+                  <UserIcon className="h-4 w-4 text-accent" aria-hidden="true" /> Sign in / Create
+                  account
                 </Link>
               ) : null}
             </li>

@@ -663,9 +663,9 @@ export function FloatingSearch() {
                   </div>
                 </div>
               ) : (
-              <div className="p-5 text-sm text-muted-foreground flex flex-col items-center text-center gap-2">
-                <Search className="h-5 w-5 text-accent" aria-hidden="true" />
-                <>
+                <div className="p-5 text-sm text-muted-foreground flex flex-col items-center text-center gap-2">
+                  <Search className="h-5 w-5 text-accent" aria-hidden="true" />
+                  <>
                     <div className="text-foreground/90 font-medium">
                       No matches for “{q.trim()}”
                     </div>
@@ -681,7 +681,7 @@ export function FloatingSearch() {
                       <Sparkles className="h-3 w-3" aria-hidden="true" /> Analyze anyway
                     </button>
                   </>
-              </div>
+                </div>
               )
             ) : (
               <ul
