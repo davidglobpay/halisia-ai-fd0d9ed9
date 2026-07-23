@@ -10,9 +10,16 @@ export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
       { title: "Sign in · HALISIA AI" },
-      { name: "description", content: "Sign in or create an account to save Kenya land intelligence, favorites, and reports." },
+      {
+        name: "description",
+        content:
+          "Sign in or create an account to save Kenya land intelligence, favorites, and reports.",
+      },
       { property: "og:title", content: "Sign in · HALISIA AI" },
-      { property: "og:description", content: "Save locations, county profiles, and AI dossiers across sessions." },
+      {
+        property: "og:description",
+        content: "Save locations, county profiles, and AI dossiers across sessions.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -103,7 +110,11 @@ function AuthPage() {
         </Link>
         <div className="glass-strong rounded-3xl border border-white/10 p-6 sm:p-8">
           <h1 className="text-2xl font-display font-semibold text-foreground">
-            {mode === "signin" ? "Sign in" : mode === "signup" ? "Create account" : "Reset password"}
+            {mode === "signin"
+              ? "Sign in"
+              : mode === "signup"
+                ? "Create account"
+                : "Reset password"}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {mode === "signin"
@@ -120,13 +131,17 @@ function AuthPage() {
             className="mt-6 w-full h-11 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-60"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-              <path fill="#EA4335" d="M12 10.2v3.9h5.4c-.24 1.4-1.68 4.1-5.4 4.1a6.2 6.2 0 1 1 0-12.4c1.9 0 3.2.8 3.9 1.5l2.7-2.6C16.9 3 14.7 2 12 2 6.5 2 2 6.5 2 12s4.5 10 10 10c5.8 0 9.6-4 9.6-9.7 0-.7-.1-1.2-.2-1.7H12z" />
+              <path
+                fill="#EA4335"
+                d="M12 10.2v3.9h5.4c-.24 1.4-1.68 4.1-5.4 4.1a6.2 6.2 0 1 1 0-12.4c1.9 0 3.2.8 3.9 1.5l2.7-2.6C16.9 3 14.7 2 12 2 6.5 2 2 6.5 2 12s4.5 10 10 10c5.8 0 9.6-4 9.6-9.7 0-.7-.1-1.2-.2-1.7H12z"
+              />
             </svg>
             Continue with Google
           </button>
 
           <div className="my-5 flex items-center gap-3 text-[10px] uppercase tracking-widest text-muted-foreground">
-            <span className="flex-1 h-px bg-white/10" /> or email <span className="flex-1 h-px bg-white/10" />
+            <span className="flex-1 h-px bg-white/10" /> or email{" "}
+            <span className="flex-1 h-px bg-white/10" />
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-3" noValidate>
@@ -182,22 +197,47 @@ function AuthPage() {
               className="w-full h-11 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground font-medium text-sm inline-flex items-center justify-center gap-2 disabled:opacity-60"
             >
               {submitting && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-              {mode === "signin" ? "Sign in" : mode === "signup" ? "Create account" : "Send reset link"}
+              {mode === "signin"
+                ? "Sign in"
+                : mode === "signup"
+                  ? "Create account"
+                  : "Send reset link"}
             </button>
           </form>
 
           <div className="mt-5 flex flex-wrap justify-between gap-2 text-xs text-muted-foreground">
             {mode !== "signin" ? (
-              <button type="button" onClick={() => { setMode("signin"); setMsg(null); }} className="hover:text-foreground underline underline-offset-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setMode("signin");
+                  setMsg(null);
+                }}
+                className="hover:text-foreground underline underline-offset-4"
+              >
                 Have an account? Sign in
               </button>
             ) : (
-              <button type="button" onClick={() => { setMode("signup"); setMsg(null); }} className="hover:text-foreground underline underline-offset-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setMode("signup");
+                  setMsg(null);
+                }}
+                className="hover:text-foreground underline underline-offset-4"
+              >
                 New here? Create account
               </button>
             )}
             {mode !== "forgot" && (
-              <button type="button" onClick={() => { setMode("forgot"); setMsg(null); }} className="hover:text-foreground underline underline-offset-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setMode("forgot");
+                  setMsg(null);
+                }}
+                className="hover:text-foreground underline underline-offset-4"
+              >
                 Forgot password?
               </button>
             )}

@@ -192,26 +192,10 @@
  */
 @utility topo-backdrop {
   background-image:
-    radial-gradient(
-      ellipse at 20% 10%,
-      oklch(0.6 0.17 148 / 0.08) 0%,
-      transparent 60%
-    ),
-    radial-gradient(
-      ellipse at 80% 90%,
-      oklch(0.78 0.14 85 / 0.06) 0%,
-      transparent 55%
-    ),
-    linear-gradient(
-      to right,
-      rgba(255, 255, 255, 0.025) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      to bottom,
-      rgba(255, 255, 255, 0.025) 1px,
-      transparent 1px
-    );
+    radial-gradient(ellipse at 20% 10%, oklch(0.6 0.17 148 / 0.08) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 90%, oklch(0.78 0.14 85 / 0.06) 0%, transparent 55%),
+    linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
   background-size:
     100% 100%,
     100% 100%,

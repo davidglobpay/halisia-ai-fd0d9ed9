@@ -183,10 +183,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <PerfMonitor />
       {/* Ambient futuristic backdrop — topographic contours + grid, sits behind every route */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none fixed inset-0 -z-10 topo-backdrop"
-      />
+      <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 topo-backdrop" />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
       <FloatingSearch />

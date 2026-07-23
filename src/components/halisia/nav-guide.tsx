@@ -1,5 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { X, Search, Map as MapIcon, FileDown, GitCompareArrows, Layers, Sparkles } from "lucide-react";
+import {
+  X,
+  Search,
+  Map as MapIcon,
+  FileDown,
+  GitCompareArrows,
+  Layers,
+  Sparkles,
+} from "lucide-react";
 
 const STORAGE_KEY = "halisia:navguide:v1:seen";
 
@@ -44,7 +52,8 @@ export function NavGuide() {
 
   useEffect(() => {
     if (!open) return;
-    returnFocusRef.current = (typeof document !== "undefined" ? (document.activeElement as HTMLElement) : null);
+    returnFocusRef.current =
+      typeof document !== "undefined" ? (document.activeElement as HTMLElement) : null;
     // Focus the close button so screen readers announce the dialog and keyboard users can escape immediately.
     const t = window.setTimeout(() => closeBtnRef.current?.focus(), 40);
     return () => {
@@ -101,7 +110,9 @@ export function NavGuide() {
         title="Guided tour (press ?)"
         className="fixed bottom-4 right-4 z-30 h-11 w-11 rounded-full glass-strong border border-[oklch(0.78_0.14_85/0.4)] text-[oklch(0.78_0.14_85)] shadow-[0_0_24px_-8px_oklch(0.78_0.14_85/0.6)] hover:scale-105 transition inline-flex items-center justify-center"
       >
-        <span className="text-lg font-semibold" aria-hidden="true">?</span>
+        <span className="text-lg font-semibold" aria-hidden="true">
+          ?
+        </span>
       </button>
 
       {open && (

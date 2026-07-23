@@ -34,7 +34,14 @@ export function SaveButton({ kind, ref_, label, latitude, longitude, className }
 
   if (authLoading) {
     return (
-      <button disabled aria-label="Loading save state" className={className ?? "h-9 px-3 rounded-full text-xs border border-white/10 inline-flex items-center gap-1.5 opacity-60"}>
+      <button
+        disabled
+        aria-label="Loading save state"
+        className={
+          className ??
+          "h-9 px-3 rounded-full text-xs border border-white/10 inline-flex items-center gap-1.5 opacity-60"
+        }
+      >
         <Loader2 className="h-3.5 w-3.5 animate-spin" />
       </button>
     );
@@ -45,7 +52,10 @@ export function SaveButton({ kind, ref_, label, latitude, longitude, className }
       <Link
         to="/auth"
         aria-label={`Sign in to save ${label}`}
-        className={className ?? "h-9 px-3 rounded-full text-xs border border-white/10 inline-flex items-center gap-1.5 hover:bg-white/5"}
+        className={
+          className ??
+          "h-9 px-3 rounded-full text-xs border border-white/10 inline-flex items-center gap-1.5 hover:bg-white/5"
+        }
       >
         <LogIn className="h-3.5 w-3.5" aria-hidden="true" /> Sign in to save
       </Link>
@@ -74,9 +84,18 @@ export function SaveButton({ kind, ref_, label, latitude, longitude, className }
       disabled={busy}
       aria-pressed={!!savedId}
       aria-label={savedId ? `Remove ${label} from saved` : `Save ${label}`}
-      className={className ?? `h-9 px-3 rounded-full text-xs inline-flex items-center gap-1.5 border transition ${savedId ? "border-accent/50 bg-accent/10 text-accent" : "border-white/10 hover:bg-white/5"}`}
+      className={
+        className ??
+        `h-9 px-3 rounded-full text-xs inline-flex items-center gap-1.5 border transition ${savedId ? "border-accent/50 bg-accent/10 text-accent" : "border-white/10 hover:bg-white/5"}`
+      }
     >
-      {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : savedId ? <BookmarkCheck className="h-3.5 w-3.5" aria-hidden="true" /> : <Bookmark className="h-3.5 w-3.5" aria-hidden="true" />}
+      {busy ? (
+        <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+      ) : savedId ? (
+        <BookmarkCheck className="h-3.5 w-3.5" aria-hidden="true" />
+      ) : (
+        <Bookmark className="h-3.5 w-3.5" aria-hidden="true" />
+      )}
       {savedId ? "Saved" : "Save"}
     </button>
   );
