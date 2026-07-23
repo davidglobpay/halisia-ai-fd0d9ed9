@@ -25,6 +25,7 @@ import { Route as MarketplaceIdRouteImport } from './routes/marketplace.$id'
 import { Route as CountyCodeRouteImport } from './routes/county.$code'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedSavedRouteImport } from './routes/_authenticated/saved'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedSellNewRouteImport } from './routes/_authenticated/sell.new'
 
 const TitleDeedRoute = TitleDeedRouteImport.update({
@@ -106,6 +107,11 @@ const AuthenticatedSavedRoute = AuthenticatedSavedRouteImport.update({
   path: '/saved',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSellNewRoute = AuthenticatedSellNewRouteImport.update({
   id: '/sell/new',
   path: '/sell/new',
@@ -123,6 +129,7 @@ export interface FileRoutesByFullPath {
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/title-deed': typeof TitleDeedRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
   '/saved': typeof AuthenticatedSavedRoute
   '/api/chat': typeof ApiChatRoute
   '/county/$code': typeof CountyCodeRoute
@@ -140,6 +147,7 @@ export interface FileRoutesByTo {
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/title-deed': typeof TitleDeedRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
   '/saved': typeof AuthenticatedSavedRoute
   '/api/chat': typeof ApiChatRoute
   '/county/$code': typeof CountyCodeRoute
@@ -160,6 +168,7 @@ export interface FileRoutesById {
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/title-deed': typeof TitleDeedRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/saved': typeof AuthenticatedSavedRoute
   '/api/chat': typeof ApiChatRoute
   '/county/$code': typeof CountyCodeRoute
@@ -180,6 +189,7 @@ export interface FileRouteTypes {
     | '/report'
     | '/reset-password'
     | '/title-deed'
+    | '/dashboard'
     | '/saved'
     | '/api/chat'
     | '/county/$code'
@@ -197,6 +207,7 @@ export interface FileRouteTypes {
     | '/report'
     | '/reset-password'
     | '/title-deed'
+    | '/dashboard'
     | '/saved'
     | '/api/chat'
     | '/county/$code'
@@ -216,6 +227,7 @@ export interface FileRouteTypes {
     | '/report'
     | '/reset-password'
     | '/title-deed'
+    | '/_authenticated/dashboard'
     | '/_authenticated/saved'
     | '/api/chat'
     | '/county/$code'
@@ -354,6 +366,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSavedRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/sell/new': {
       id: '/_authenticated/sell/new'
       path: '/sell/new'
@@ -365,11 +384,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedSavedRoute: typeof AuthenticatedSavedRoute
   AuthenticatedSellNewRoute: typeof AuthenticatedSellNewRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedSavedRoute: AuthenticatedSavedRoute,
   AuthenticatedSellNewRoute: AuthenticatedSellNewRoute,
 }
