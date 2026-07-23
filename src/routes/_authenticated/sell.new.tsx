@@ -110,7 +110,7 @@ function SellNew() {
           },
         });
         await updateProperty(row.id, {
-          ai_summary: ai as unknown as Record<string, unknown>,
+          ai_summary: ai as unknown as import("@/integrations/supabase/types").Database["public"]["Tables"]["properties"]["Update"]["ai_summary"],
         });
       } catch (err) {
         console.warn("AI enrichment skipped", err);
