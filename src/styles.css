@@ -254,8 +254,6 @@
   font-size: 0.875rem;
   outline: none;
   color: inherit;
-}
-@utility input {
   transition: border-color 0.15s;
 }
 
