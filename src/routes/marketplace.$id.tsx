@@ -1,11 +1,24 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import { MapPin, ArrowLeft, Building2, Loader2, Send, CheckCircle2 } from "lucide-react";
+import {
+  MapPin,
+  ArrowLeft,
+  Building2,
+  Loader2,
+  Send,
+  CheckCircle2,
+  FileDown,
+  Sparkles,
+  Copy,
+  Info,
+} from "lucide-react";
 import { getProperty, createLead, formatPrice } from "@/lib/properties";
 import { LandIntelligenceScore } from "@/components/halisia/land-intelligence-score";
 import { SaveButton } from "@/components/halisia/save-button";
 import { useAuth } from "@/hooks/use-auth";
+import type { ListingAiOutput } from "@/lib/ai-listing.functions";
+import { downloadBrochure, formatPriceEstimate } from "@/lib/listing-brochure";
 
 export const Route = createFileRoute("/marketplace/$id")({
   loader: async ({ params }) => {
@@ -65,6 +78,7 @@ function ListingDetail() {
     initialData: property,
   });
   if (!p) return null;
+  const ai = (p.ai_summary ?? null) as ListingAiOutput | null;
 
   return (
     <main className="min-h-dvh px-4 sm:px-6 pt-24 pb-16 max-w-6xl mx-auto">
@@ -144,7 +158,19 @@ function ListingDetail() {
             </section>
           )}
 
+          {ai && <AiListingBrief p={p} ai={ai} />}
+          {ai && ai.concepts.length > 0 && <ConceptStudio ai={ai} />}
+
           <div className="mt-6">
+            <div className="mb-3">
+              <div className="text-[11px] uppercase tracking-widest text-accent">
+                AI Intelligence Breakdown
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Every module below shows its score, data sources, last-updated time and a
+                recommendation. Expand any card for possible limitations.
+              </p>
+            </div>
             <LandIntelligenceScore
               address={p.address ?? p.title}
               lat={p.latitude ?? undefined}
@@ -158,6 +184,188 @@ function ListingDetail() {
         </aside>
       </div>
     </main>
+  );
+}
+
+function AiListingBrief({
+  p,
+  ai,
+}: {
+  p: import("@/lib/properties").PropertyRow;
+  ai: ListingAiOutput;
+}) {
+  const [copied, setCopied] = useState<string | null>(null);
+  const copy = async (id: string, text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(id);
+      setTimeout(() => setCopied(null), 1500);
+    } catch {
+      /* ignore */
+    }
+  };
+  return (
+    <section
+      data-testid="ai-listing-brief"
+      className="mt-6 glass rounded-2xl border border-white/10 p-5"
+    >
+      <header className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <div className="text-[11px] uppercase tracking-widest text-accent inline-flex items-center gap-1">
+            <Sparkles className="h-3 w-3" /> AI Listing Assistant
+          </div>
+          <h2 className="text-lg font-display font-semibold mt-1">{ai.polishedTitle}</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">{ai.headline}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span
+            className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] tabular-nums"
+            title="Overall AI confidence"
+          >
+            Confidence {ai.confidencePct}%
+          </span>
+          <button
+            type="button"
+            onClick={() => downloadBrochure(p, ai)}
+            data-testid="download-brochure"
+            className="inline-flex items-center gap-1.5 rounded-full bg-white/10 hover:bg-white/15 border border-white/10 px-3 py-1.5 text-xs"
+          >
+            <FileDown className="h-3.5 w-3.5" /> Download brochure
+          </button>
+        </div>
+      </header>
+
+      <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{ai.aiSummary}</p>
+
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <div>
+          <h3 className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
+            Marketing highlights
+          </h3>
+          <ul className="space-y-1.5">
+            {ai.marketingHighlights.map((h) => (
+              <li key={h} className="text-sm flex gap-2">
+                <span className="text-accent">•</span>
+                <span>{h}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <h3 className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
+            Estimated price band
+          </h3>
+          <div className="text-lg font-semibold">{formatPriceEstimate(ai)}</div>
+          <p className="text-[11px] text-muted-foreground mt-1">{ai.priceEstimate.note}</p>
+          <div className="mt-3">
+            <h3 className="text-xs uppercase tracking-widest text-muted-foreground mb-1">
+              SEO description
+            </h3>
+            <p className="text-xs text-muted-foreground">{ai.seoDescription}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <h3 className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
+          Social captions
+        </h3>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {(
+            [
+              ["twitter", "Twitter / X"],
+              ["facebook", "Facebook"],
+              ["whatsapp", "WhatsApp"],
+              ["instagram", "Instagram"],
+            ] as const
+          ).map(([k, label]) => (
+            <div
+              key={k}
+              className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-xs"
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-muted-foreground">{label}</span>
+                <button
+                  type="button"
+                  onClick={() => copy(k, ai.socialCaptions[k])}
+                  className="inline-flex items-center gap-1 text-[10px] text-accent hover:underline"
+                >
+                  <Copy className="h-3 w-3" />
+                  {copied === k ? "Copied" : "Copy"}
+                </button>
+              </div>
+              <p className="whitespace-pre-line text-muted-foreground">
+                {ai.socialCaptions[k]}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-4 rounded-xl border border-amber-400/20 bg-amber-500/5 p-3 text-[11px] text-amber-glow">
+        <div className="flex items-center gap-1.5 font-medium mb-1">
+          <Info className="h-3 w-3" /> Disclaimers
+        </div>
+        <ul className="space-y-1">
+          {ai.disclaimers.map((d) => (
+            <li key={d}>• {d}</li>
+          ))}
+        </ul>
+      </div>
+
+      <p className="mt-3 text-[10px] text-muted-foreground">
+        Generated {new Date(ai.generatedAt).toLocaleString()}
+      </p>
+    </section>
+  );
+}
+
+function ConceptStudio({ ai }: { ai: ListingAiOutput }) {
+  return (
+    <section
+      data-testid="concept-studio"
+      className="mt-6 glass rounded-2xl border border-white/10 p-5"
+    >
+      <header>
+        <div className="text-[11px] uppercase tracking-widest text-accent inline-flex items-center gap-1">
+          <Sparkles className="h-3 w-3" /> Architectural Concept Studio
+        </div>
+        <h2 className="text-lg font-display font-semibold mt-1">
+          Conceptual development options
+        </h2>
+        <p className="text-xs text-muted-foreground mt-1">
+          AI-generated concepts to spark planning conversations —{" "}
+          <span className="text-amber-glow">conceptual only, not architectural approvals.</span>
+        </p>
+      </header>
+      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        {ai.concepts.map((c) => (
+          <article
+            key={c.name}
+            className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold">{c.name}</h3>
+              <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] tabular-nums">
+                {c.confidencePct}%
+              </span>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">{c.description}</p>
+            <div className="mt-2 text-[11px]">
+              <span className="text-muted-foreground">Best for: </span>
+              {c.useCase}
+            </div>
+            <div className="mt-2 text-[11px]">
+              <span className="text-muted-foreground">Site layout: </span>
+              {c.siteLayout}
+            </div>
+            <div className="mt-2 text-[10px] uppercase tracking-widest text-amber-glow">
+              Conceptual only
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
   );
 }
 
