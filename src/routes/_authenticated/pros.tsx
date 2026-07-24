@@ -97,9 +97,14 @@ function ProsPage() {
                 className="glass rounded-2xl border border-white/10 p-4 flex items-center justify-between gap-3"
               >
                 <div className="min-w-0">
-                  <div className="text-sm truncate">{p.summary}</div>
-                  <div className="text-[11px] text-muted-foreground mt-0.5">
-                    KES {p.amount?.toLocaleString?.() ?? "—"} · {p.timeline_days ?? "—"} days ·{" "}
+                  <div className="text-sm truncate">{p.company_name}</div>
+                  {p.message && (
+                    <div className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5">
+                      {p.message}
+                    </div>
+                  )}
+                  <div className="text-[10px] text-muted-foreground mt-0.5">
+                    {p.currency} {p.amount?.toLocaleString?.() ?? "—"} · {p.timeline_days ?? "—"} days ·{" "}
                     {new Date(p.created_at).toLocaleDateString()}
                   </div>
                 </div>
@@ -120,7 +125,8 @@ function BidCard({ r }: { r: BidRequestRow }) {
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const [timeline, setTimeline] = useState("");
-  const [summary, setSummary] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [message, setMessage] = useState("");
   const mut = useMutation({
     mutationFn: () =>
       submitProposal({
@@ -128,13 +134,15 @@ function BidCard({ r }: { r: BidRequestRow }) {
         amount: amount ? Number(amount) : null,
         currency: r.currency,
         timeline_days: timeline ? Number(timeline) : null,
-        summary,
+        company_name: companyName,
+        message,
       }),
     onSuccess: () => {
       setOpen(false);
       setAmount("");
       setTimeline("");
-      setSummary("");
+      setCompanyName("");
+      setMessage("");
       qc.invalidateQueries({ queryKey: ["bids", "my-proposals"] });
     },
   });
@@ -144,8 +152,8 @@ function BidCard({ r }: { r: BidRequestRow }) {
         <div className="min-w-0">
           <div className="text-[11px] uppercase tracking-widest text-accent">{r.category}</div>
           <h3 className="text-sm font-semibold mt-1 truncate">{r.title}</h3>
-          {r.location_label && (
-            <div className="text-[11px] text-muted-foreground mt-0.5">{r.location_label}</div>
+          {r.county && (
+            <div className="text-[11px] text-muted-foreground mt-0.5">{r.county}</div>
           )}
         </div>
         {r.budget_max != null && (
@@ -155,8 +163,11 @@ function BidCard({ r }: { r: BidRequestRow }) {
           </div>
         )}
       </div>
-      {r.description && (
-        <p className="mt-2 text-xs text-muted-foreground line-clamp-3">{r.description}</p>
+      {r.scope && (
+        <p className="mt-2 text-xs text-muted-foreground line-clamp-3">{r.scope}</p>
+      )}
+      {r.timeline && (
+        <p className="mt-1 text-[11px] text-muted-foreground">Timeline: {r.timeline}</p>
       )}
       <div className="mt-3">
         {open ? (
@@ -164,10 +175,17 @@ function BidCard({ r }: { r: BidRequestRow }) {
             className="grid gap-2"
             onSubmit={(e) => {
               e.preventDefault();
-              if (!summary.trim()) return;
+              if (!companyName.trim() || !message.trim()) return;
               mut.mutate();
             }}
           >
+            <input
+              className="input"
+              placeholder="Company / provider name"
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              required
+            />
             <div className="grid grid-cols-2 gap-2">
               <input
                 className="input"
@@ -190,8 +208,8 @@ function BidCard({ r }: { r: BidRequestRow }) {
               className="input"
               placeholder="Short proposal summary…"
               rows={3}
-              value={summary}
-              onChange={(e) => setSummary(e.target.value)}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
               required
             />
             <div className="flex gap-2">
