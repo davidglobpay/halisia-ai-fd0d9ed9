@@ -63,8 +63,13 @@
   --color-gold: var(--amber-glow);
   --color-emerald: var(--emerald-glow);
   --color-crimson: var(--destructive);
-  --font-display: "Space Grotesk", "Sora", "SF Pro Display", ui-sans-serif, system-ui, sans-serif;
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  /* HALISIA typography hierarchy */
+  --font-hero: "Cinzel Decorative", "Playfair Display", ui-serif, Georgia, serif;
+  --font-display: "League Spartan", "Poppins", "SF Pro Display", ui-sans-serif, system-ui, sans-serif;
+  --font-card: "Poppins", "League Spartan", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Open Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-label: "Montserrat", "Open Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-numeric: "Oswald", "League Spartan", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
