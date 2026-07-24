@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   MapPin,
   ArrowLeft,
@@ -9,6 +9,7 @@ import {
   Send,
   CheckCircle2,
   FileDown,
+  FileText,
   Sparkles,
   Copy,
   Info,
@@ -18,7 +19,8 @@ import { LandIntelligenceScore } from "@/components/halisia/land-intelligence-sc
 import { SaveButton } from "@/components/halisia/save-button";
 import { useAuth } from "@/hooks/use-auth";
 import type { ListingAiOutput } from "@/lib/ai-listing.functions";
-import { downloadBrochure, formatPriceEstimate } from "@/lib/listing-brochure";
+import { downloadBrochure, downloadBrochurePDF, formatPriceEstimate } from "@/lib/listing-brochure";
+import { ListingEditor, type ListingAiWithMeta } from "@/components/halisia/listing-editor";
 
 export const Route = createFileRoute("/marketplace/$id")({
   loader: async ({ params }) => {
@@ -77,8 +79,10 @@ function ListingDetail() {
     queryFn: () => getProperty(property.id),
     initialData: property,
   });
+  const { user } = useAuth();
   if (!p) return null;
-  const ai = (p.ai_summary ?? null) as ListingAiOutput | null;
+  const ai = (p.ai_summary ?? null) as ListingAiWithMeta | null;
+  const isOwner = !!user && user.id === p.owner_id;
 
   return (
     <main className="min-h-dvh px-4 sm:px-6 pt-24 pb-16 max-w-6xl mx-auto">
@@ -159,6 +163,7 @@ function ListingDetail() {
           )}
 
           {ai && <AiListingBrief p={p} ai={ai} />}
+          {ai && isOwner && <ListingEditor property={p} ai={ai} />}
           {ai && ai.concepts.length > 0 && <ConceptStudio ai={ai} />}
 
           <div className="mt-6">
@@ -230,7 +235,15 @@ function AiListingBrief({
             data-testid="download-brochure"
             className="inline-flex items-center gap-1.5 rounded-full bg-white/10 hover:bg-white/15 border border-white/10 px-3 py-1.5 text-xs"
           >
-            <FileDown className="h-3.5 w-3.5" /> Download brochure
+            <FileDown className="h-3.5 w-3.5" /> Brochure (.txt)
+          </button>
+          <button
+            type="button"
+            onClick={() => downloadBrochurePDF(p, ai)}
+            data-testid="download-brochure-pdf"
+            className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground px-3 py-1.5 text-xs"
+          >
+            <FileText className="h-3.5 w-3.5" /> Brochure (PDF)
           </button>
         </div>
       </header>
@@ -321,6 +334,9 @@ function AiListingBrief({
 }
 
 function ConceptStudio({ ai }: { ai: ListingAiOutput }) {
+  const [selectedIdx, setSelectedIdx] = useState(0);
+  const selected = ai.concepts[selectedIdx] ?? ai.concepts[0];
+  const zones = useMemo(() => deriveZones(selected?.name ?? "", selected?.siteLayout ?? ""), [selected]);
   return (
     <section
       data-testid="concept-studio"
@@ -338,34 +354,159 @@ function ConceptStudio({ ai }: { ai: ListingAiOutput }) {
           <span className="text-amber-glow">conceptual only, not architectural approvals.</span>
         </p>
       </header>
-      <div className="mt-4 grid gap-3 sm:grid-cols-3">
-        {ai.concepts.map((c) => (
-          <article
-            key={c.name}
-            className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
-          >
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">{c.name}</h3>
-              <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] tabular-nums">
-                {c.confidencePct}%
-              </span>
-            </div>
-            <p className="mt-2 text-xs text-muted-foreground">{c.description}</p>
-            <div className="mt-2 text-[11px]">
-              <span className="text-muted-foreground">Best for: </span>
-              {c.useCase}
-            </div>
-            <div className="mt-2 text-[11px]">
-              <span className="text-muted-foreground">Site layout: </span>
-              {c.siteLayout}
-            </div>
-            <div className="mt-2 text-[10px] uppercase tracking-widest text-amber-glow">
-              Conceptual only
-            </div>
-          </article>
-        ))}
+      <div
+        className="mt-4 grid gap-3 sm:grid-cols-3"
+        role="tablist"
+        aria-label="Concept options"
+      >
+        {ai.concepts.map((c, i) => {
+          const on = i === selectedIdx;
+          return (
+            <button
+              type="button"
+              key={c.name}
+              role="tab"
+              aria-selected={on}
+              data-testid={`concept-card-${i}`}
+              onClick={() => setSelectedIdx(i)}
+              className={`text-left rounded-2xl border p-4 transition ${
+                on
+                  ? "border-accent bg-accent/10 shadow-[0_0_0_1px_rgba(0,194,232,0.35)]"
+                  : "border-white/10 bg-white/[0.03] hover:border-white/20"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold">{c.name}</h3>
+                <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] tabular-nums">
+                  {c.confidencePct}%
+                </span>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground line-clamp-3">{c.description}</p>
+              <div className="mt-2 text-[10px] uppercase tracking-widest text-amber-glow">
+                Conceptual only
+              </div>
+            </button>
+          );
+        })}
       </div>
+      {selected && (
+        <div
+          data-testid="concept-preview"
+          className="mt-4 grid gap-4 sm:grid-cols-[220px_1fr] rounded-2xl border border-white/10 bg-white/[0.03] p-4"
+        >
+          <div>
+            <ConceptSchematic zones={zones} />
+            <div className="mt-2 text-[10px] uppercase tracking-widest text-amber-glow text-center">
+              Illustrative schematic · conceptual only
+            </div>
+          </div>
+          <div className="text-sm">
+            <div className="text-[11px] uppercase tracking-widest text-accent">
+              Selected concept
+            </div>
+            <h3 className="mt-1 font-display text-lg font-semibold">{selected.name}</h3>
+            <p className="mt-1 text-xs text-muted-foreground">{selected.description}</p>
+            <div className="mt-3 text-xs">
+              <span className="text-muted-foreground">Best for: </span>
+              {selected.useCase}
+            </div>
+            <div className="mt-2 text-xs">
+              <span className="text-muted-foreground">Site layout: </span>
+              {selected.siteLayout}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {zones.map((z) => (
+                <span
+                  key={z.key}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px]"
+                >
+                  <span
+                    className="h-2 w-2 rounded-full"
+                    style={{ background: z.color }}
+                    aria-hidden
+                  />
+                  {z.label}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </section>
+  );
+}
+
+type Zone = { key: string; label: string; color: string; x: number; y: number; w: number; h: number };
+
+function deriveZones(name: string, layout: string): Zone[] {
+  const t = `${name} ${layout}`.toLowerCase();
+  const zones: Zone[] = [];
+  const push = (key: string, label: string, color: string, x: number, y: number, w: number, h: number) =>
+    zones.push({ key, label, color, x, y, w, h });
+  // Always: parcel boundary implicit; road on south
+  if (/cottage|homestead|bungalow|house|villa/.test(t)) {
+    push("house", "Main house", "#00c2e8", 20, 25, 60, 38);
+    push("garden", "Garden / lawn", "#3fbf7f", 20, 70, 60, 22);
+    push("drive", "Driveway", "#8a95a8", 82, 25, 14, 60);
+  } else if (/court|rental|studio|units|apartment/.test(t)) {
+    push("u1", "Unit A", "#00c2e8", 15, 20, 30, 25);
+    push("u2", "Unit B", "#00c2e8", 55, 20, 30, 25);
+    push("u3", "Unit C", "#00c2e8", 15, 55, 30, 25);
+    push("u4", "Unit D", "#00c2e8", 55, 55, 30, 25);
+    push("court", "Courtyard", "#d4a017", 45, 43, 10, 14);
+  } else if (/agri|farm|orchard|greenhouse|horticulture/.test(t)) {
+    push("crop", "Crop plots", "#3fbf7f", 12, 20, 55, 55);
+    push("green", "Greenhouse", "#00c2e8", 72, 20, 18, 30);
+    push("cottage", "Cottage", "#d4a017", 72, 55, 18, 20);
+  } else if (/commercial|retail|office|mixed/.test(t)) {
+    push("block", "Commercial block", "#00c2e8", 20, 20, 60, 45);
+    push("park", "Parking", "#8a95a8", 20, 70, 60, 20);
+  } else {
+    push("build", "Structure", "#00c2e8", 25, 25, 50, 40);
+    push("open", "Open space", "#3fbf7f", 25, 70, 50, 20);
+  }
+  push("road", "Access road", "#b0bccd", 0, 92, 100, 6);
+  return zones;
+}
+
+function ConceptSchematic({ zones }: { zones: Zone[] }) {
+  return (
+    <svg
+      viewBox="0 0 100 100"
+      className="w-full h-auto rounded-xl border border-white/10 bg-[radial-gradient(circle_at_30%_20%,rgba(0,194,232,0.15),transparent_60%),linear-gradient(135deg,#0b1e3a,#050b18)]"
+      role="img"
+      aria-label="Conceptual site layout"
+    >
+      <rect x="1" y="1" width="98" height="98" fill="none" stroke="#d4a017" strokeWidth="0.4" strokeDasharray="1.5 1.5" />
+      {zones.map((z) => (
+        <g key={z.key}>
+          <rect
+            x={z.x}
+            y={z.y}
+            width={z.w}
+            height={z.h}
+            fill={z.color}
+            fillOpacity={0.55}
+            stroke={z.color}
+            strokeWidth={0.3}
+            rx={1}
+          />
+          <text
+            x={z.x + z.w / 2}
+            y={z.y + z.h / 2 + 1}
+            textAnchor="middle"
+            fill="#0b1e3a"
+            fontSize="2.6"
+            fontWeight={600}
+          >
+            {z.label}
+          </text>
+        </g>
+      ))}
+      <text x="50" y="99" textAnchor="middle" fill="#cdd8ea" fontSize="2.3">
+        N ↑ · Conceptual only
+      </text>
+    </svg>
   );
 }
 
