@@ -9,6 +9,7 @@ import {
   ChevronDown,
   ChevronUp,
   Wand2,
+  GitCompare,
 } from "lucide-react";
 import { updateProperty, type PropertyRow } from "@/lib/properties";
 import {
@@ -76,6 +77,7 @@ export function ListingEditor({
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [compare, setCompare] = useState<{ a: string; b: string } | null>(null);
   const [draft, setDraft] = useState<ListingAiOutput>(() => stripMeta(ai));
   const [inputs, setInputs] = useState<Partial<ListingAiInput>>(() => ({
     amenities: property.amenities ?? [],
