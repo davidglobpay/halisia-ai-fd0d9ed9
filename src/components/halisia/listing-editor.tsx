@@ -9,6 +9,7 @@ import {
   ChevronDown,
   ChevronUp,
   Wand2,
+  GitCompare,
 } from "lucide-react";
 import { updateProperty, type PropertyRow } from "@/lib/properties";
 import {
@@ -76,6 +77,7 @@ export function ListingEditor({
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [compare, setCompare] = useState<{ a: string; b: string } | null>(null);
   const [draft, setDraft] = useState<ListingAiOutput>(() => stripMeta(ai));
   const [inputs, setInputs] = useState<Partial<ListingAiInput>>(() => ({
     amenities: property.amenities ?? [],
@@ -187,6 +189,23 @@ export function ListingEditor({
     save.isPending || regenAll.isPending || regenConcepts.isPending || restore.isPending;
 
   const history = useMemo(() => ai._history ?? [], [ai]);
+
+  const versionsById = useMemo(() => {
+    const map = new Map<string, ListingAiVersion>();
+    for (const v of history) map.set(v.savedAt, v);
+    return map;
+  }, [history]);
+  const currentSnap: ListingAiVersion = useMemo(
+    () => ({
+      savedAt: "current",
+      label: "Current draft",
+      ai: draft,
+      inputs: { ...inputs, amenities: parseAmenities(amenitiesText) },
+    }),
+    [draft, inputs, amenitiesText],
+  );
+  const getSnap = (id: string): ListingAiVersion | null =>
+    id === "current" ? currentSnap : (versionsById.get(id) ?? null);
 
   return (
     <section
@@ -505,23 +524,153 @@ export function ListingEditor({
                         {v.ai.polishedTitle.slice(0, 60)}
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      disabled={isBusy}
-                      onClick={() => restore.mutate(v)}
-                      className="inline-flex items-center gap-1 rounded-full bg-white/10 hover:bg-white/15 border border-white/10 px-3 py-1 text-[11px] disabled:opacity-60"
-                    >
-                      <RotateCcw className="h-3 w-3" />
-                      Restore
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setCompare({ a: "current", b: v.savedAt })}
+                        data-testid={`compare-${v.savedAt}`}
+                        className="inline-flex items-center gap-1 rounded-full bg-white/10 hover:bg-white/15 border border-white/10 px-3 py-1 text-[11px]"
+                      >
+                        <GitCompare className="h-3 w-3" /> Compare
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isBusy}
+                        onClick={() => restore.mutate(v)}
+                        className="inline-flex items-center gap-1 rounded-full bg-white/10 hover:bg-white/15 border border-white/10 px-3 py-1 text-[11px] disabled:opacity-60"
+                      >
+                        <RotateCcw className="h-3 w-3" />
+                        Restore
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>
+            )}
+            {compare && (
+              <VersionDiff
+                a={getSnap(compare.a)}
+                b={getSnap(compare.b)}
+                versions={[currentSnap, ...history]}
+                onChange={(a, b) => setCompare({ a, b })}
+                onClose={() => setCompare(null)}
+              />
             )}
           </div>
         </div>
       )}
     </section>
+  );
+}
+
+function VersionDiff({
+  a,
+  b,
+  versions,
+  onChange,
+  onClose,
+}: {
+  a: ListingAiVersion | null;
+  b: ListingAiVersion | null;
+  versions: ListingAiVersion[];
+  onChange: (a: string, b: string) => void;
+  onClose: () => void;
+}) {
+  if (!a || !b) return null;
+  const rows: Array<{ label: string; a: string; b: string }> = [
+    { label: "Polished title", a: a.ai.polishedTitle, b: b.ai.polishedTitle },
+    { label: "Headline", a: a.ai.headline, b: b.ai.headline },
+    { label: "AI summary", a: a.ai.aiSummary, b: b.ai.aiSummary },
+    {
+      label: "Marketing highlights",
+      a: a.ai.marketingHighlights.join("\n• "),
+      b: b.ai.marketingHighlights.join("\n• "),
+    },
+    { label: "SEO description", a: a.ai.seoDescription, b: b.ai.seoDescription },
+    { label: "Twitter / X", a: a.ai.socialCaptions.twitter, b: b.ai.socialCaptions.twitter },
+    { label: "Facebook", a: a.ai.socialCaptions.facebook, b: b.ai.socialCaptions.facebook },
+    { label: "WhatsApp", a: a.ai.socialCaptions.whatsapp, b: b.ai.socialCaptions.whatsapp },
+    { label: "Instagram", a: a.ai.socialCaptions.instagram, b: b.ai.socialCaptions.instagram },
+    {
+      label: "Estimated price band",
+      a: `${a.ai.priceEstimate.currency} ${a.ai.priceEstimate.min ?? "—"} – ${a.ai.priceEstimate.max ?? "—"}`,
+      b: `${b.ai.priceEstimate.currency} ${b.ai.priceEstimate.min ?? "—"} – ${b.ai.priceEstimate.max ?? "—"}`,
+    },
+    {
+      label: "Concepts",
+      a: a.ai.concepts.map((c) => `${c.name} (${c.confidencePct}%) — ${c.description}`).join("\n\n"),
+      b: b.ai.concepts.map((c) => `${c.name} (${c.confidencePct}%) — ${c.description}`).join("\n\n"),
+    },
+  ];
+  return (
+    <div
+      data-testid="version-diff"
+      className="mt-4 rounded-2xl border border-white/10 bg-black/30 p-4"
+    >
+      <div className="flex flex-wrap items-center gap-2 text-xs">
+        <span className="font-medium">Side-by-side comparison</span>
+        <select
+          className="input py-1 h-8"
+          value={a.savedAt}
+          onChange={(e) => onChange(e.target.value, b.savedAt)}
+          aria-label="Version A"
+        >
+          {versions.map((v) => (
+            <option key={v.savedAt} value={v.savedAt}>
+              A · {v.label}
+            </option>
+          ))}
+        </select>
+        <span className="text-muted-foreground">vs</span>
+        <select
+          className="input py-1 h-8"
+          value={b.savedAt}
+          onChange={(e) => onChange(a.savedAt, e.target.value)}
+          aria-label="Version B"
+        >
+          {versions.map((v) => (
+            <option key={v.savedAt} value={v.savedAt}>
+              B · {v.label}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          onClick={onClose}
+          className="ml-auto rounded-full border border-white/10 bg-white/5 hover:bg-white/10 px-3 py-1 text-[11px]"
+        >
+          Close
+        </button>
+      </div>
+      <div className="mt-3 grid gap-2">
+        {rows.map((r) => {
+          const changed = r.a.trim() !== r.b.trim();
+          return (
+            <div
+              key={r.label}
+              className={`rounded-xl border p-2 ${
+                changed
+                  ? "border-accent/40 bg-accent/[0.05]"
+                  : "border-white/10 bg-white/[0.02]"
+              }`}
+            >
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1 flex items-center justify-between">
+                <span>{r.label}</span>
+                {changed && <span className="text-accent">changed</span>}
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2 text-xs">
+                <pre className="whitespace-pre-wrap rounded-lg bg-black/40 p-2 text-foreground/85 max-h-40 overflow-auto">
+                  {r.a || "—"}
+                </pre>
+                <pre className="whitespace-pre-wrap rounded-lg bg-black/40 p-2 text-foreground/85 max-h-40 overflow-auto">
+                  {r.b || "—"}
+                </pre>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
