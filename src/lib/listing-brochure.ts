@@ -1,5 +1,6 @@
 import type { PropertyRow } from "@/lib/properties";
 import type { ListingAiOutput } from "@/lib/ai-listing.functions";
+import jsPDF from "jspdf";
 
 function fmtPriceRange(ai: ListingAiOutput): string {
   const { min, max, currency } = ai.priceEstimate;
@@ -89,4 +90,218 @@ export function downloadBrochure(p: PropertyRow, ai: ListingAiOutput) {
 
 export function formatPriceEstimate(ai: ListingAiOutput): string {
   return fmtPriceRange(ai);
+}
+
+// ---------- PDF brochure ----------
+
+const BRAND = { primary: "#0b1e3a", accent: "#00c2e8", gold: "#d4a017", ink: "#0e1526", mute: "#5b6a86" };
+
+function hexToRgb(hex: string): [number, number, number] {
+  const h = hex.replace("#", "");
+  const n = parseInt(h, 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+function setFill(doc: jsPDF, hex: string) {
+  const [r, g, b] = hexToRgb(hex);
+  doc.setFillColor(r, g, b);
+}
+function setText(doc: jsPDF, hex: string) {
+  const [r, g, b] = hexToRgb(hex);
+  doc.setTextColor(r, g, b);
+}
+function setDraw(doc: jsPDF, hex: string) {
+  const [r, g, b] = hexToRgb(hex);
+  doc.setDrawColor(r, g, b);
+}
+
+function slug(s: string) {
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+}
+
+export function downloadBrochurePDF(p: PropertyRow, ai: ListingAiOutput) {
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  const W = doc.internal.pageSize.getWidth();
+  const H = doc.internal.pageSize.getHeight();
+  const M = 40;
+  let y = 0;
+
+  // Cover band
+  setFill(doc, BRAND.primary);
+  doc.rect(0, 0, W, 150, "F");
+  setFill(doc, BRAND.accent);
+  doc.rect(0, 150, W, 4, "F");
+  setText(doc, "#ffffff");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.text("HALISIA AI · LISTING BROCHURE", M, 42);
+  doc.setFontSize(20);
+  const title = doc.splitTextToSize(ai.polishedTitle || p.title, W - M * 2);
+  doc.text(title, M, 70);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  setText(doc, "#cdd8ea");
+  const loc = p.address ?? p.county ?? "Kenya";
+  doc.text(`${p.kind.replace("_", " ")} · ${p.intent} · ${loc}`, M, 118);
+  doc.text(`Generated ${new Date(ai.generatedAt).toLocaleString()}`, M, 134);
+
+  y = 180;
+  setText(doc, BRAND.ink);
+
+  const section = (label: string) => {
+    if (y > H - 90) {
+      doc.addPage();
+      y = M;
+    }
+    setText(doc, BRAND.accent);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.text(label.toUpperCase(), M, y);
+    setDraw(doc, BRAND.accent);
+    doc.setLineWidth(0.6);
+    doc.line(M, y + 4, W - M, y + 4);
+    y += 16;
+    setText(doc, BRAND.ink);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+  };
+  const para = (text: string) => {
+    const lines = doc.splitTextToSize(text, W - M * 2);
+    for (const ln of lines) {
+      if (y > H - 60) {
+        doc.addPage();
+        y = M;
+      }
+      doc.text(ln, M, y);
+      y += 13;
+    }
+  };
+  const bullets = (items: string[]) => {
+    for (const it of items) {
+      const lines = doc.splitTextToSize(it, W - M * 2 - 12);
+      if (y > H - 60) {
+        doc.addPage();
+        y = M;
+      }
+      setFill(doc, BRAND.gold);
+      doc.circle(M + 3, y - 3, 1.6, "F");
+      doc.text(lines[0], M + 12, y);
+      y += 13;
+      for (let i = 1; i < lines.length; i++) {
+        if (y > H - 60) {
+          doc.addPage();
+          y = M;
+        }
+        doc.text(lines[i], M + 12, y);
+        y += 13;
+      }
+    }
+  };
+
+  section("Headline");
+  para(ai.headline);
+  y += 4;
+
+  section("AI summary");
+  para(ai.aiSummary);
+  y += 4;
+
+  section("Key facts");
+  const size = p.size_value != null ? `${p.size_value} ${p.size_unit ?? ""}`.trim() : "—";
+  const facts = [
+    `Size: ${size}`,
+    `Location: ${loc}`,
+    p.latitude != null && p.longitude != null
+      ? `Coordinates: ${p.latitude.toFixed(5)}, ${p.longitude.toFixed(5)}`
+      : "",
+    (p.utilities ?? []).length ? `Utilities: ${(p.utilities ?? []).join(", ")}` : "",
+    (p.amenities ?? []).length ? `Amenities: ${(p.amenities ?? []).join(", ")}` : "",
+  ].filter(Boolean) as string[];
+  bullets(facts);
+  y += 4;
+
+  section("Marketing highlights");
+  bullets(ai.marketingHighlights);
+  y += 4;
+
+  section("Estimated price band");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  para(fmtPriceRange(ai));
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  setText(doc, BRAND.mute);
+  para(ai.priceEstimate.note);
+  setText(doc, BRAND.ink);
+  y += 4;
+
+  section("SEO description");
+  para(ai.seoDescription);
+  y += 4;
+
+  section("Social captions");
+  (
+    [
+      ["Twitter / X", ai.socialCaptions.twitter],
+      ["Facebook", ai.socialCaptions.facebook],
+      ["WhatsApp", ai.socialCaptions.whatsapp],
+      ["Instagram", ai.socialCaptions.instagram],
+    ] as const
+  ).forEach(([label, text]) => {
+    doc.setFont("helvetica", "bold");
+    para(`— ${label}`);
+    doc.setFont("helvetica", "normal");
+    para(text);
+    y += 2;
+  });
+
+  if (ai.concepts.length) {
+    doc.addPage();
+    y = M;
+    section("Conceptual development options (conceptual only)");
+    ai.concepts.forEach((c) => {
+      if (y > H - 120) {
+        doc.addPage();
+        y = M;
+      }
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      para(`${c.name} — confidence ${c.confidencePct}%`);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      para(c.description);
+      setText(doc, BRAND.mute);
+      para(`Best for: ${c.useCase}`);
+      para(`Site layout: ${c.siteLayout}`);
+      setText(doc, BRAND.ink);
+      y += 6;
+    });
+  }
+
+  doc.addPage();
+  y = M;
+  section("Disclaimers");
+  bullets(ai.disclaimers);
+  y += 8;
+  setText(doc, BRAND.mute);
+  doc.setFontSize(9);
+  para(`Overall AI confidence: ${ai.confidencePct}%`);
+
+  // Footer band on every page
+  const pages = doc.getNumberOfPages();
+  for (let i = 1; i <= pages; i++) {
+    doc.setPage(i);
+    setFill(doc, BRAND.primary);
+    doc.rect(0, H - 22, W, 22, "F");
+    setText(doc, "#cdd8ea");
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.text("halisia.ai · AI Land Intelligence", M, H - 8);
+    doc.text(`Page ${i} / ${pages}`, W - M, H - 8, { align: "right" });
+  }
+
+  doc.save(`halisia-brochure-${slug(p.title) || p.id}.pdf`);
 }
