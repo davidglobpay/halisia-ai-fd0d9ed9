@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   MapPin,
   ArrowLeft,
@@ -9,6 +9,7 @@ import {
   Send,
   CheckCircle2,
   FileDown,
+  FileText,
   Sparkles,
   Copy,
   Info,
@@ -18,7 +19,8 @@ import { LandIntelligenceScore } from "@/components/halisia/land-intelligence-sc
 import { SaveButton } from "@/components/halisia/save-button";
 import { useAuth } from "@/hooks/use-auth";
 import type { ListingAiOutput } from "@/lib/ai-listing.functions";
-import { downloadBrochure, formatPriceEstimate } from "@/lib/listing-brochure";
+import { downloadBrochure, downloadBrochurePDF, formatPriceEstimate } from "@/lib/listing-brochure";
+import { ListingEditor, type ListingAiWithMeta } from "@/components/halisia/listing-editor";
 
 export const Route = createFileRoute("/marketplace/$id")({
   loader: async ({ params }) => {
@@ -77,8 +79,10 @@ function ListingDetail() {
     queryFn: () => getProperty(property.id),
     initialData: property,
   });
+  const { user } = useAuth();
   if (!p) return null;
-  const ai = (p.ai_summary ?? null) as ListingAiOutput | null;
+  const ai = (p.ai_summary ?? null) as ListingAiWithMeta | null;
+  const isOwner = !!user && user.id === p.owner_id;
 
   return (
     <main className="min-h-dvh px-4 sm:px-6 pt-24 pb-16 max-w-6xl mx-auto">
@@ -159,6 +163,7 @@ function ListingDetail() {
           )}
 
           {ai && <AiListingBrief p={p} ai={ai} />}
+          {ai && isOwner && <ListingEditor property={p} ai={ai} />}
           {ai && ai.concepts.length > 0 && <ConceptStudio ai={ai} />}
 
           <div className="mt-6">
