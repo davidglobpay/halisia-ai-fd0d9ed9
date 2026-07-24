@@ -1,6 +1,14 @@
 import type { PropertyRow } from "@/lib/properties";
 import type { ListingAiOutput } from "@/lib/ai-listing.functions";
 import jsPDF from "jspdf";
+import {
+  Document,
+  Packer,
+  Paragraph,
+  TextRun,
+  HeadingLevel,
+  AlignmentType,
+} from "docx";
 
 function fmtPriceRange(ai: ListingAiOutput): string {
   const { min, max, currency } = ai.priceEstimate;
@@ -304,4 +312,109 @@ export function downloadBrochurePDF(p: PropertyRow, ai: ListingAiOutput) {
   }
 
   doc.save(`halisia-brochure-${slug(p.title) || p.id}.pdf`);
+}
+
+// ---------- DOCX brochure ----------
+
+function h(text: string, level: (typeof HeadingLevel)[keyof typeof HeadingLevel]) {
+  return new Paragraph({ heading: level, children: [new TextRun({ text, bold: true })] });
+}
+function p(text: string) {
+  return new Paragraph({ children: [new TextRun(text)] });
+}
+function bullet(text: string) {
+  return new Paragraph({ text, bullet: { level: 0 } });
+}
+
+export async function downloadBrochureDOCX(p_: PropertyRow, ai: ListingAiOutput) {
+  const loc = p_.address ?? p_.county ?? "Kenya";
+  const size = p_.size_value != null ? `${p_.size_value} ${p_.size_unit ?? ""}`.trim() : "—";
+
+  const children: Paragraph[] = [];
+  children.push(
+    new Paragraph({
+      alignment: AlignmentType.LEFT,
+      children: [new TextRun({ text: "HALISIA AI · LISTING BROCHURE", bold: true, size: 20 })],
+    }),
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: `Generated ${new Date(ai.generatedAt).toLocaleString()}`,
+          italics: true,
+          color: "5b6a86",
+        }),
+      ],
+    }),
+    h(ai.polishedTitle || p_.title, HeadingLevel.HEADING_1),
+    p(`${p_.kind.replace("_", " ")} · ${p_.intent} · ${loc}`),
+    h("Headline", HeadingLevel.HEADING_2),
+    p(ai.headline),
+    h("AI summary", HeadingLevel.HEADING_2),
+    p(ai.aiSummary),
+    h("Key facts", HeadingLevel.HEADING_2),
+    bullet(`Size: ${size}`),
+    bullet(`Location: ${loc}`),
+  );
+  if (p_.latitude != null && p_.longitude != null)
+    children.push(bullet(`Coordinates: ${p_.latitude.toFixed(5)}, ${p_.longitude.toFixed(5)}`));
+  if ((p_.utilities ?? []).length) children.push(bullet(`Utilities: ${(p_.utilities ?? []).join(", ")}`));
+  if ((p_.amenities ?? []).length) children.push(bullet(`Amenities: ${(p_.amenities ?? []).join(", ")}`));
+
+  children.push(h("Marketing highlights", HeadingLevel.HEADING_2));
+  ai.marketingHighlights.forEach((x) => children.push(bullet(x)));
+
+  children.push(
+    h("Estimated price band", HeadingLevel.HEADING_2),
+    new Paragraph({
+      children: [new TextRun({ text: fmtPriceRange(ai), bold: true, size: 28 })],
+    }),
+    new Paragraph({ children: [new TextRun({ text: ai.priceEstimate.note, italics: true })] }),
+    h("SEO description", HeadingLevel.HEADING_2),
+    p(ai.seoDescription),
+    h("Social captions", HeadingLevel.HEADING_2),
+  );
+  (
+    [
+      ["Twitter / X", ai.socialCaptions.twitter],
+      ["Facebook", ai.socialCaptions.facebook],
+      ["WhatsApp", ai.socialCaptions.whatsapp],
+      ["Instagram", ai.socialCaptions.instagram],
+    ] as const
+  ).forEach(([label, text]) => {
+    children.push(
+      new Paragraph({ children: [new TextRun({ text: `— ${label}`, bold: true })] }),
+      p(text),
+    );
+  });
+
+  if (ai.concepts.length) {
+    children.push(h("Conceptual development options (conceptual only)", HeadingLevel.HEADING_2));
+    ai.concepts.forEach((c) => {
+      children.push(
+        new Paragraph({
+          children: [
+            new TextRun({ text: `${c.name} — confidence ${c.confidencePct}%`, bold: true }),
+          ],
+        }),
+        p(c.description),
+        p(`Best for: ${c.useCase}`),
+        p(`Site layout: ${c.siteLayout}`),
+      );
+    });
+  }
+
+  children.push(h("Disclaimers", HeadingLevel.HEADING_2));
+  ai.disclaimers.forEach((d) => children.push(bullet(d)));
+  children.push(p(`Overall AI confidence: ${ai.confidencePct}%`));
+
+  const docFile = new Document({ sections: [{ children }] });
+  const blob = await Packer.toBlob(docFile);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `halisia-brochure-${slug(p_.title) || p_.id}.docx`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
 }
