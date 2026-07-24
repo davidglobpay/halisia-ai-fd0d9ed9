@@ -306,6 +306,47 @@
   animation: pulse-glow 2.6s ease-in-out infinite;
 }
 
+@utility skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.09) 40%,
+    rgba(212, 160, 23, 0.10) 50%,
+    rgba(255, 255, 255, 0.09) 60%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-shimmer {
+    animation: none !important;
+    background: rgba(255, 255, 255, 0.06);
+  }
+}
+
+/* A11y — skip-link and screen-reader-only helpers */
+@utility sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+@utility focus-ring {
+  outline: 2px solid #d4a017;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(212, 160, 23, 0.25);
+  border-radius: 6px;
+}
+
 @utility input {
   width: 100%;
   border-radius: 0.75rem;
