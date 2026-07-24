@@ -173,13 +173,31 @@ function ModuleCard({ m, freshness }: { m: ModuleOutput; freshness: string }) {
           </div>
           <div className="mt-1 flex flex-wrap gap-1">
             {m.sources.map((s) => (
-              <span
-                key={s}
-                className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 border border-white/10"
-              >
-                {s}
-              </span>
+              (() => {
+                const url = sourceUrl(s);
+                const base =
+                  "text-[10px] px-1.5 py-0.5 rounded bg-white/5 border border-white/10 inline-flex items-center gap-1";
+                return url ? (
+                  <a
+                    key={s}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`${base} hover:border-accent/50 hover:text-accent`}
+                    title={`Open source: ${s}`}
+                  >
+                    {s} ↗
+                  </a>
+                ) : (
+                  <span key={s} className={base}>
+                    {s}
+                  </span>
+                );
+              })()
             ))}
+          </div>
+          <div className="mt-1 text-[10px] text-muted-foreground">
+            Last updated {new Date(freshness).toLocaleString()}
           </div>
         </div>
 
