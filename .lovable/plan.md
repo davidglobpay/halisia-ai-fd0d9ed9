@@ -1,60 +1,61 @@
-# Phase 2 — AI Real Estate Operating System
 
-This is a very large scope. To keep the existing platform stable and shippable, I'll roll it out in vertical slices. Each slice is independently useful, preserves current features, and reuses the existing Land Intelligence Engine, design system (Kenyan palette, glass UI, watermark), auth, and Google Maps / GIS layers.
+## Scope
 
-I'll implement slices in order and check in with you between them. Nothing gets removed from Sections 1–5.
+Three connected additions to the existing marketplace, all scoped to authenticated users and RLS-protected. No redesign, no changes to branding or existing intelligence engine.
 
-## Slice 1 — Marketplace foundation (DB + core routes)
-- New Supabase tables (with GRANTs + RLS scoped to `auth.uid()`):
-  - `properties` (kind, category, title, description, price, currency, size, coords, county, status, owner_id, media[], amenities[], ai_score cache, created/updated)
-  - `property_media` (property_id, url, type, position)
-  - `saved_searches` (user_id, query JSON, alert on/off)
-  - `leads` (property_id, buyer_id, seller_id, stage, message, created)
-  - `viewings` (property_id, buyer_id, scheduled_at, status)
-- Reuse existing `saved_items` for favourites.
-- New routes (all under existing navbar, no redesign):
-  - `/marketplace` — grid + filters (type, price, size, county, AI score, rental yield, flood risk)
-  - `/marketplace/$id` — listing detail with inherited Intelligence Engine panel
-  - `/sell/new` — seller upload wizard
-  - `/_authenticated/dashboard` — role-aware dashboard shell
+## 1. Professional matching — bid requests
 
-## Slice 2 — AI Listing Assistant + Concept Studio
-- Server fn `analyze-listing.functions.ts` — takes coords + inputs, runs `runIntelligenceEngine` and Gemini to produce title, description, marketing highlights, buyer profile, price band (labelled *estimate*), suggested developments.
-- `/marketplace/$id` gets an "AI Concept Studio" tab for vacant land: generates conceptual site layout suggestions (text + simple SVG diagram), labelled *conceptual only*.
+**New tables**
+- `bid_requests` — id, property_id, owner_id, scope (text), category (enum: construction, architecture, surveying, legal, other), budget_min, budget_max, currency, timeline (text), status (enum: open, awarded, closed), created_at, updated_at.
+- `bid_proposals` — id, bid_request_id, provider_id (auth.users), company_name, contact_email, contact_phone, amount, currency, timeline_days, message, status (enum: submitted, shortlisted, accepted, rejected, withdrawn), created_at, updated_at.
 
-## Slice 3 — Rental marketplace + role dashboards
-- Reuse `properties` with `kind='rental'` and unit sub-rows (`rental_units`).
-- Landlord dashboard: units, occupancy, leads.
-- Buyer/Investor dashboard: saved, compare, alerts, watchlist, downloaded reports.
-- Seller dashboard: listings, views, lead count, AI listing score, suggested improvements.
-- Roles table via `user_roles` + `has_role()` (per user-roles guidance — separate table, enum, security-definer function).
+RLS:
+- Owner reads/writes their own `bid_requests`; providers read `open` requests.
+- Providers manage their own `bid_proposals`; owners read proposals on their requests and can update `status`.
 
-## Slice 4 — Professionals + Leads + Finance
-- `professionals` table (profile, specialty, coverage, verified, ratings).
-- `/professionals` directory + `/professionals/$id`.
-- Lead management pipeline UI on seller/professional dashboard.
-- Finance Centre `/finance`: mortgage / construction-loan / affordability / ROI / rental-yield / cost-estimator calculators (pure client math + AI narrative tie-in). Bank product cards are static content until a bank partner is connected.
+**UI**
+- On `marketplace/$id` (owner only): "Request bids from professionals" panel → opens dialog to create a `bid_request`, then lists received proposals with shortlist / accept / reject controls.
+- New `/_authenticated/dashboard` section: "My bid requests" table with proposal counts and status.
+- New public-ish `/_authenticated/pros` route: providers see open requests and submit a proposal.
 
-## Slice 5 — Search upgrades + AI matching + Payments
-- Natural-language search (Lovable AI) → structured filters on `/marketplace`.
-- Draw-on-map search using existing Leaflet layer.
-- Saved searches → email/in-app alerts (`notifications` table, existing bell).
-- AI matching: server fn recommending properties for a user profile.
-- Payments: run `recommend_payment_provider` first, then enable seamless Stripe or Paddle for listing fees / featured upgrades / pro memberships.
+## 2. Financing application tracker
 
-## Slice 6 — Admin + polish
-- `/admin` (gated to `admin` role) for users, listings, payments, moderation, audit logs.
-- Playwright E2E covering: create listing → AI enrich → save → contact seller → lead appears in dashboard; rental filter; professional booking; finance calculator.
+**New table**
+- `financing_applications` — id, applicant_id, property_id (nullable), borrower_name, borrower_email, borrower_phone, monthly_income, employment_status, requested_amount, currency, purpose (enum: purchase, construction, refinance, bridge, other), tenure_months, property_value, property_address, notes, ai_summary (jsonb), status (enum: draft, submitted, under_review, approved, rejected, funded, withdrawn), lender_name, created_at, updated_at.
 
-## Technical notes (for reference)
-- All new server logic via `createServerFn` in `src/lib/*.functions.ts`; no Supabase edge functions.
-- Every new module reads `runIntelligenceEngine(intel, narrative, persona)` for scores — no duplicate scoring logic.
-- AI-generated fields carry confidence % and a "conceptual/estimate" disclaimer.
-- Every new table: `CREATE TABLE` → `GRANT` → `ENABLE RLS` → `CREATE POLICY` in one migration, plus `updated_at` trigger.
-- Media stored in a new `property-media` public storage bucket.
-- Preserves existing routes, palette, watermark, hero, county profiles, intelligence dashboard, PDF exports, saved items, auth.
+RLS: applicant manages their own rows only.
 
-## What I'll ship first (once you approve)
-Slice 1 end-to-end: DB migration, `/marketplace`, `/marketplace/$id` reusing `LandIntelligenceScore`, `/sell/new` wizard writing to `properties`, and wiring the new routes into the existing navbar. Then I'll pause for your feedback before Slice 2.
+**UI**
+- `/_authenticated/financing` — list + create + status kanban-lite (grouped by status), status-change buttons, and a "Generate lender summary" action that calls a new `generateLenderSummary` server fn (Lovable AI, `google/gemini-3.6-flash`) producing a structured JSON brief (loan snapshot, borrower profile, property overview, risk flags, DTI estimate, recommended documents) stored in `ai_summary`. Preview + copy + download as text.
+- Optional link from `marketplace/$id` "Explore financing" CTA that pre-fills property fields.
 
-Reply "go" (or tell me which slice to prioritise / defer) and I'll start with Slice 1.
+## 3. Insurance & risk brief per listing
+
+**New table**
+- `insurance_briefs` — id, property_id (unique), generated_by, ai_output (jsonb: keyRisks[], confidencePct, recommendedCoverage[], questionsForInsurer[], disclaimers[], generatedAt), created_at, updated_at.
+
+RLS: owner of the parent property manages; anyone authenticated can read (matches marketplace visibility).
+
+**UI**
+- `marketplace/$id`: new "Insurance & risk brief" card. Owner sees "Generate / regenerate" button; everyone sees the brief with confidence chips, risk list, recommended coverage, and questions to ask insurers. Downloadable as text.
+
+**Server fn**
+- `generateInsuranceBrief` (Lovable AI, `google/gemini-3.6-flash`) — inputs: property row + existing geotech/wave4 hints if present in `ai_summary`. Outputs structured JSON above with per-risk confidence.
+
+## Technical notes
+
+- All new server logic uses `createServerFn` + `requireSupabaseAuth` in `src/lib/*.functions.ts` (bids, financing, insurance).
+- New client libs: `src/lib/bids.ts`, `src/lib/financing.ts`, `src/lib/insurance.ts` for typed CRUD via the browser client.
+- AI calls reuse the existing Lovable AI gateway helper used by `ai-listing.functions.ts` / `ai-narrative.functions.ts`. Handle 402/429 with a visible toast.
+- All new tables include GRANTs to `authenticated` + `service_role`, RLS enabled, and an `updated_at` trigger via existing `public.set_updated_at()`.
+- Routes: `src/routes/_authenticated/pros.tsx`, `src/routes/_authenticated/financing.tsx`; edits to `src/routes/marketplace.$id.tsx`, `src/routes/_authenticated/dashboard.tsx`, `src/components/halisia/navbar.tsx`.
+- No changes to Kenyan-flag palette, hero, or existing intelligence modules.
+
+## Verification
+
+- Typecheck + lint pass (`bun run fix && bun run typecheck && bun run lint`).
+- Manual smoke: create bid request → submit proposal from a second account → shortlist/accept. Create financing app → generate lender summary → change status. Generate insurance brief on a listing → confirm it renders for a visitor.
+
+## Out of scope (this pass)
+
+- Provider verification workflow, payments/escrow, messaging threads, notifications, actual lender API integrations, and insurer quotes. These can follow as a separate slice once the data models above are in production.

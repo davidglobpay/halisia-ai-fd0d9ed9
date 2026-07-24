@@ -30,6 +30,7 @@ import {
   formatPriceEstimate,
 } from "@/lib/listing-brochure";
 import { ListingEditor, type ListingAiWithMeta } from "@/components/halisia/listing-editor";
+import { ListingServices } from "@/components/halisia/listing-services";
 
 export const Route = createFileRoute("/marketplace/$id")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -245,6 +246,8 @@ function ListingDetail() {
           {ai && <AiListingBrief p={p} ai={ai} />}
           {ai && isOwner && <ListingEditor property={p} ai={ai} />}
           {ai && ai.concepts.length > 0 && <ConceptStudio ai={ai} />}
+
+          <ListingServices property={p} />
 
           <div className="mt-6">
             <div className="mb-3">
