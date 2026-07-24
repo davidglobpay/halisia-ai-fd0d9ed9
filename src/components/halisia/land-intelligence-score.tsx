@@ -60,6 +60,26 @@ function verification(m: ModuleOutput): { label: string; cls: string } {
   return { label: "Unverified", cls: "text-amber-glow border-amber-400/30 bg-amber-500/10" };
 }
 
+const SOURCE_URLS: Record<string, string> = {
+  "Google Places": "https://developers.google.com/maps/documentation/places/web-service/overview",
+  "AI Narrative": "https://halisia.ai/docs/ai-narrative",
+  "County growth signals": "https://www.knbs.or.ke/",
+  "Open-Topo-Data ASTER 30m": "https://www.opentopodata.org/datasets/aster/",
+  "SoilGrids v2.0 (regional)": "https://soilgrids.org/",
+  "Ardhisasa (external)": "https://ardhisasa.lands.go.ke/",
+  "County planning office (external)": "https://cog.go.ke/",
+  "Google Air Quality API": "https://developers.google.com/maps/documentation/air-quality",
+  "Open-Meteo": "https://open-meteo.com/",
+  OpenStreetMap: "https://www.openstreetmap.org/",
+  "OpenStreetMap POIs": "https://wiki.openstreetmap.org/wiki/Points_of_interest",
+  "HALISIA community reports (planned)": "https://halisia.ai/community",
+  "County CIDPs (external)": "https://www.cog.go.ke/downloads/category/106-county-integrated-development-plans-cidps",
+};
+
+function sourceUrl(label: string): string | null {
+  return SOURCE_URLS[label] ?? null;
+}
+
 function ModuleCard({ m, freshness }: { m: ModuleOutput; freshness: string }) {
   const t = tone(m.score);
   const v = verification(m);
