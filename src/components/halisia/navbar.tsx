@@ -13,6 +13,8 @@ const LINKS: Array<{ to: string; label: string }> = [
   { to: "/title-deed", label: "Title Deed" },
   { to: "/compare", label: "Compare" },
   { to: "/report", label: "Reports" },
+  { to: "/_authenticated/pros", label: "Pros" },
+  { to: "/_authenticated/financing", label: "Financing" },
 ];
 
 export function Navbar() {
