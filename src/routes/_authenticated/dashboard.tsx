@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Plus, Building2, Users, TrendingUp, Bookmark } from "lucide-react";
+import { Plus, Building2, Users, TrendingUp, Bookmark, Briefcase, Landmark } from "lucide-react";
 import { listMyProperties, listMyLeadsAsSeller, formatPrice } from "@/lib/properties";
 import { listSavedItems } from "@/lib/saved-items";
 
@@ -40,6 +40,33 @@ function Dashboard() {
           <Plus className="h-3.5 w-3.5" /> New listing
         </Link>
       </header>
+
+      <section className="grid gap-3 sm:grid-cols-2 mb-6">
+        <Link
+          to="/_authenticated/pros"
+          className="glass rounded-2xl border border-white/10 p-4 hover:bg-white/5 transition flex items-center gap-3"
+        >
+          <Briefcase className="h-5 w-5 text-accent" />
+          <div className="min-w-0">
+            <div className="text-sm font-medium">Pro network & bids</div>
+            <div className="text-[11px] text-muted-foreground">
+              Post work, review proposals from construction, architecture & surveying pros.
+            </div>
+          </div>
+        </Link>
+        <Link
+          to="/_authenticated/financing"
+          className="glass rounded-2xl border border-white/10 p-4 hover:bg-white/5 transition flex items-center gap-3"
+        >
+          <Landmark className="h-5 w-5 text-emerald-glow" />
+          <div className="min-w-0">
+            <div className="text-sm font-medium">Financing tracker</div>
+            <div className="text-[11px] text-muted-foreground">
+              Manage loan applications with lender-ready AI summaries.
+            </div>
+          </div>
+        </Link>
+      </section>
 
       <section className="grid gap-4 sm:grid-cols-3 mb-8">
         <Stat icon={<Building2 className="h-4 w-4" />} label="Active listings" value={myListings.length} />
