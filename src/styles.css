@@ -206,7 +206,6 @@
 @utility font-label {
   font-family: var(--font-label);
   letter-spacing: 0.04em;
-  }
 }
 
 @utility glass {
