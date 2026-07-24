@@ -1,5 +1,5 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
   MapPin,
@@ -13,16 +13,28 @@ import {
   Sparkles,
   Copy,
   Info,
+  Eye,
+  EyeOff,
+  Globe,
+  Lock,
 } from "lucide-react";
-import { getProperty, createLead, formatPrice } from "@/lib/properties";
+import { getProperty, createLead, formatPrice, updateProperty } from "@/lib/properties";
 import { LandIntelligenceScore } from "@/components/halisia/land-intelligence-score";
 import { SaveButton } from "@/components/halisia/save-button";
 import { useAuth } from "@/hooks/use-auth";
 import type { ListingAiOutput } from "@/lib/ai-listing.functions";
-import { downloadBrochure, downloadBrochurePDF, formatPriceEstimate } from "@/lib/listing-brochure";
+import {
+  downloadBrochure,
+  downloadBrochurePDF,
+  downloadBrochureDOCX,
+  formatPriceEstimate,
+} from "@/lib/listing-brochure";
 import { ListingEditor, type ListingAiWithMeta } from "@/components/halisia/listing-editor";
 
 export const Route = createFileRoute("/marketplace/$id")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    preview: s.preview === "1" || s.preview === 1 ? ("1" as const) : undefined,
+  }),
   loader: async ({ params }) => {
     const p = await getProperty(params.id);
     if (!p) throw notFound();
@@ -74,6 +86,9 @@ export const Route = createFileRoute("/marketplace/$id")({
 
 function ListingDetail() {
   const { property } = Route.useLoaderData();
+  const search = Route.useSearch();
+  const navigate = useNavigate();
+  const qc = useQueryClient();
   const { data: p } = useQuery({
     queryKey: ["property", property.id],
     queryFn: () => getProperty(property.id),
@@ -82,7 +97,17 @@ function ListingDetail() {
   const { user } = useAuth();
   if (!p) return null;
   const ai = (p.ai_summary ?? null) as ListingAiWithMeta | null;
-  const isOwner = !!user && user.id === p.owner_id;
+  const isRealOwner = !!user && user.id === p.owner_id;
+  const previewing = search.preview === "1";
+  const isOwner = isRealOwner && !previewing;
+
+  const togglePublish = useMutation({
+    mutationFn: async () => {
+      const next = p.status === "published" ? "draft" : "published";
+      return updateProperty(p.id, { status: next });
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["property", p.id] }),
+  });
 
   return (
     <main className="min-h-dvh px-4 sm:px-6 pt-24 pb-16 max-w-6xl mx-auto">
@@ -93,6 +118,62 @@ function ListingDetail() {
       >
         <ArrowLeft className="h-3.5 w-3.5" /> Back to marketplace
       </Link>
+
+      {isRealOwner && (
+        <div
+          data-testid="owner-bar"
+          className="mb-4 glass rounded-2xl border border-white/10 p-3 flex flex-wrap items-center gap-2 text-xs"
+        >
+          <span
+            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 border ${
+              p.status === "published"
+                ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-glow"
+                : "border-amber-400/30 bg-amber-500/10 text-amber-glow"
+            }`}
+          >
+            {p.status === "published" ? <Globe className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
+            {p.status === "published" ? "Published" : "Draft"}
+          </span>
+          <span className="text-muted-foreground">
+            {p.status === "published"
+              ? "Visible on the public marketplace."
+              : "Only you can see this listing."}
+          </span>
+          <div className="ml-auto flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() =>
+                navigate({
+                  to: "/marketplace/$id",
+                  params: { id: p.id },
+                  search: previewing ? {} : { preview: "1" },
+                })
+              }
+              data-testid="toggle-preview"
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 px-3 py-1.5"
+            >
+              {previewing ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+              {previewing ? "Exit preview" : "Preview as visitor"}
+            </button>
+            <button
+              type="button"
+              disabled={togglePublish.isPending}
+              onClick={() => togglePublish.mutate()}
+              data-testid="toggle-publish"
+              className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground px-3 py-1.5 font-medium disabled:opacity-60"
+            >
+              {togglePublish.isPending ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : p.status === "published" ? (
+                <Lock className="h-3.5 w-3.5" />
+              ) : (
+                <Globe className="h-3.5 w-3.5" />
+              )}
+              {p.status === "published" ? "Unpublish" : "Publish now"}
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         <section>
