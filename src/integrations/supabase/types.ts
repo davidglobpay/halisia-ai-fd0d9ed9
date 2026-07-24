@@ -14,6 +14,236 @@ export type Database = {
   }
   public: {
     Tables: {
+      bid_proposals: {
+        Row: {
+          amount: number | null
+          bid_request_id: string
+          company_name: string
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          currency: string
+          id: string
+          message: string | null
+          portfolio_url: string | null
+          provider_id: string
+          status: Database["public"]["Enums"]["bid_proposal_status"]
+          timeline_days: number | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number | null
+          bid_request_id: string
+          company_name: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          message?: string | null
+          portfolio_url?: string | null
+          provider_id: string
+          status?: Database["public"]["Enums"]["bid_proposal_status"]
+          timeline_days?: number | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number | null
+          bid_request_id?: string
+          company_name?: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          message?: string | null
+          portfolio_url?: string | null
+          provider_id?: string
+          status?: Database["public"]["Enums"]["bid_proposal_status"]
+          timeline_days?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bid_proposals_bid_request_id_fkey"
+            columns: ["bid_request_id"]
+            isOneToOne: false
+            referencedRelation: "bid_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bid_requests: {
+        Row: {
+          budget_max: number | null
+          budget_min: number | null
+          category: Database["public"]["Enums"]["bid_category"]
+          county: string | null
+          created_at: string
+          currency: string
+          id: string
+          owner_id: string
+          property_id: string | null
+          scope: string
+          status: Database["public"]["Enums"]["bid_request_status"]
+          timeline: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          budget_max?: number | null
+          budget_min?: number | null
+          category?: Database["public"]["Enums"]["bid_category"]
+          county?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          owner_id: string
+          property_id?: string | null
+          scope: string
+          status?: Database["public"]["Enums"]["bid_request_status"]
+          timeline?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          budget_max?: number | null
+          budget_min?: number | null
+          category?: Database["public"]["Enums"]["bid_category"]
+          county?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          owner_id?: string
+          property_id?: string | null
+          scope?: string
+          status?: Database["public"]["Enums"]["bid_request_status"]
+          timeline?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bid_requests_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financing_applications: {
+        Row: {
+          ai_summary: Json | null
+          applicant_id: string
+          borrower_email: string | null
+          borrower_name: string
+          borrower_phone: string | null
+          created_at: string
+          currency: string
+          employment_status: string | null
+          id: string
+          lender_name: string | null
+          monthly_income: number | null
+          notes: string | null
+          property_address: string | null
+          property_id: string | null
+          property_value: number | null
+          purpose: Database["public"]["Enums"]["financing_purpose"]
+          requested_amount: number
+          status: Database["public"]["Enums"]["financing_status"]
+          tenure_months: number | null
+          updated_at: string
+        }
+        Insert: {
+          ai_summary?: Json | null
+          applicant_id: string
+          borrower_email?: string | null
+          borrower_name: string
+          borrower_phone?: string | null
+          created_at?: string
+          currency?: string
+          employment_status?: string | null
+          id?: string
+          lender_name?: string | null
+          monthly_income?: number | null
+          notes?: string | null
+          property_address?: string | null
+          property_id?: string | null
+          property_value?: number | null
+          purpose?: Database["public"]["Enums"]["financing_purpose"]
+          requested_amount: number
+          status?: Database["public"]["Enums"]["financing_status"]
+          tenure_months?: number | null
+          updated_at?: string
+        }
+        Update: {
+          ai_summary?: Json | null
+          applicant_id?: string
+          borrower_email?: string | null
+          borrower_name?: string
+          borrower_phone?: string | null
+          created_at?: string
+          currency?: string
+          employment_status?: string | null
+          id?: string
+          lender_name?: string | null
+          monthly_income?: number | null
+          notes?: string | null
+          property_address?: string | null
+          property_id?: string | null
+          property_value?: number | null
+          purpose?: Database["public"]["Enums"]["financing_purpose"]
+          requested_amount?: number
+          status?: Database["public"]["Enums"]["financing_status"]
+          tenure_months?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financing_applications_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      insurance_briefs: {
+        Row: {
+          ai_output: Json
+          created_at: string
+          generated_by: string | null
+          id: string
+          property_id: string
+          updated_at: string
+        }
+        Insert: {
+          ai_output: Json
+          created_at?: string
+          generated_by?: string | null
+          id?: string
+          property_id: string
+          updated_at?: string
+        }
+        Update: {
+          ai_output?: Json
+          created_at?: string
+          generated_by?: string | null
+          id?: string
+          property_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_briefs_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: true
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           buyer_id: string
@@ -307,6 +537,36 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      bid_category:
+        | "construction"
+        | "architecture"
+        | "surveying"
+        | "legal"
+        | "engineering"
+        | "landscaping"
+        | "other"
+      bid_proposal_status:
+        | "submitted"
+        | "shortlisted"
+        | "accepted"
+        | "rejected"
+        | "withdrawn"
+      bid_request_status: "open" | "awarded" | "closed"
+      financing_purpose:
+        | "purchase"
+        | "construction"
+        | "refinance"
+        | "bridge"
+        | "equity_release"
+        | "other"
+      financing_status:
+        | "draft"
+        | "submitted"
+        | "under_review"
+        | "approved"
+        | "rejected"
+        | "funded"
+        | "withdrawn"
       lead_stage:
         | "new"
         | "contacted"
@@ -454,6 +714,40 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      bid_category: [
+        "construction",
+        "architecture",
+        "surveying",
+        "legal",
+        "engineering",
+        "landscaping",
+        "other",
+      ],
+      bid_proposal_status: [
+        "submitted",
+        "shortlisted",
+        "accepted",
+        "rejected",
+        "withdrawn",
+      ],
+      bid_request_status: ["open", "awarded", "closed"],
+      financing_purpose: [
+        "purchase",
+        "construction",
+        "refinance",
+        "bridge",
+        "equity_release",
+        "other",
+      ],
+      financing_status: [
+        "draft",
+        "submitted",
+        "under_review",
+        "approved",
+        "rejected",
+        "funded",
+        "withdrawn",
+      ],
       lead_stage: [
         "new",
         "contacted",
