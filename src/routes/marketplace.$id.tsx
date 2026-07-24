@@ -95,19 +95,18 @@ function ListingDetail() {
     initialData: property,
   });
   const { user } = useAuth();
+  const togglePublish = useMutation({
+    mutationFn: async () => {
+      const next = p!.status === "published" ? "draft" : "published";
+      return updateProperty(p!.id, { status: next });
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["property", property.id] }),
+  });
   if (!p) return null;
   const ai = (p.ai_summary ?? null) as ListingAiWithMeta | null;
   const isRealOwner = !!user && user.id === p.owner_id;
   const previewing = search.preview === "1";
   const isOwner = isRealOwner && !previewing;
-
-  const togglePublish = useMutation({
-    mutationFn: async () => {
-      const next = p.status === "published" ? "draft" : "published";
-      return updateProperty(p.id, { status: next });
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["property", p.id] }),
-  });
 
   return (
     <main className="min-h-dvh px-4 sm:px-6 pt-24 pb-16 max-w-6xl mx-auto">
