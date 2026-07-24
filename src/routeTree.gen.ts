@@ -25,6 +25,7 @@ import { Route as MarketplaceIdRouteImport } from './routes/marketplace.$id'
 import { Route as CountyCodeRouteImport } from './routes/county.$code'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedSavedRouteImport } from './routes/_authenticated/saved'
+import { Route as AuthenticatedProsRouteImport } from './routes/_authenticated/pros'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedSellNewRouteImport } from './routes/_authenticated/sell.new'
 
@@ -107,6 +108,11 @@ const AuthenticatedSavedRoute = AuthenticatedSavedRouteImport.update({
   path: '/saved',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedProsRoute = AuthenticatedProsRouteImport.update({
+  id: '/pros',
+  path: '/pros',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -130,6 +136,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/title-deed': typeof TitleDeedRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/pros': typeof AuthenticatedProsRoute
   '/saved': typeof AuthenticatedSavedRoute
   '/api/chat': typeof ApiChatRoute
   '/county/$code': typeof CountyCodeRoute
@@ -148,6 +155,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/title-deed': typeof TitleDeedRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/pros': typeof AuthenticatedProsRoute
   '/saved': typeof AuthenticatedSavedRoute
   '/api/chat': typeof ApiChatRoute
   '/county/$code': typeof CountyCodeRoute
@@ -169,6 +177,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/title-deed': typeof TitleDeedRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/pros': typeof AuthenticatedProsRoute
   '/_authenticated/saved': typeof AuthenticatedSavedRoute
   '/api/chat': typeof ApiChatRoute
   '/county/$code': typeof CountyCodeRoute
@@ -190,6 +199,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/title-deed'
     | '/dashboard'
+    | '/pros'
     | '/saved'
     | '/api/chat'
     | '/county/$code'
@@ -208,6 +218,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/title-deed'
     | '/dashboard'
+    | '/pros'
     | '/saved'
     | '/api/chat'
     | '/county/$code'
@@ -228,6 +239,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/title-deed'
     | '/_authenticated/dashboard'
+    | '/_authenticated/pros'
     | '/_authenticated/saved'
     | '/api/chat'
     | '/county/$code'
@@ -366,6 +378,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSavedRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/pros': {
+      id: '/_authenticated/pros'
+      path: '/pros'
+      fullPath: '/pros'
+      preLoaderRoute: typeof AuthenticatedProsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -385,12 +404,14 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedProsRoute: typeof AuthenticatedProsRoute
   AuthenticatedSavedRoute: typeof AuthenticatedSavedRoute
   AuthenticatedSellNewRoute: typeof AuthenticatedSellNewRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedProsRoute: AuthenticatedProsRoute,
   AuthenticatedSavedRoute: AuthenticatedSavedRoute,
   AuthenticatedSellNewRoute: AuthenticatedSellNewRoute,
 }
