@@ -326,6 +326,14 @@ function AiListingBrief({
           >
             <FileText className="h-3.5 w-3.5" /> Brochure (PDF)
           </button>
+          <button
+            type="button"
+            onClick={() => downloadBrochureDOCX(p, ai)}
+            data-testid="download-brochure-docx"
+            className="inline-flex items-center gap-1.5 rounded-full bg-white/10 hover:bg-white/15 border border-white/10 px-3 py-1.5 text-xs"
+          >
+            <FileDown className="h-3.5 w-3.5" /> Brochure (DOCX)
+          </button>
         </div>
       </header>
 
