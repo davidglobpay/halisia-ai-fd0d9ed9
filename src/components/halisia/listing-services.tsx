@@ -303,10 +303,10 @@ function FinancingCta({ property }: { property: PropertyRow }) {
             >
               Start a financing application
             </Link>
-            {property.price_amount != null && (
+            {property.price != null && (
               <span className="text-[11px] text-muted-foreground self-center">
                 Prefill hint: listing price {property.currency}{" "}
-                {property.price_amount.toLocaleString?.()}
+                {Number(property.price).toLocaleString()}
               </span>
             )}
           </div>
@@ -339,7 +339,7 @@ function InsuranceBriefPanel({ property }: { property: PropertyRow }) {
           size_unit: property.size_unit,
           amenities: property.amenities ?? [],
           utilities: property.utilities ?? [],
-          access_type: property.access_type,
+          access_type: null,
         },
       });
       return upsertInsuranceBrief(property.id, ai);
