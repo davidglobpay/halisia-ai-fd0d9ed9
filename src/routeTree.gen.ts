@@ -26,6 +26,7 @@ import { Route as CountyCodeRouteImport } from './routes/county.$code'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedSavedRouteImport } from './routes/_authenticated/saved'
 import { Route as AuthenticatedProsRouteImport } from './routes/_authenticated/pros'
+import { Route as AuthenticatedFinancingRouteImport } from './routes/_authenticated/financing'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedSellNewRouteImport } from './routes/_authenticated/sell.new'
 
@@ -113,6 +114,11 @@ const AuthenticatedProsRoute = AuthenticatedProsRouteImport.update({
   path: '/pros',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedFinancingRoute = AuthenticatedFinancingRouteImport.update({
+  id: '/financing',
+  path: '/financing',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -136,6 +142,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/title-deed': typeof TitleDeedRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/financing': typeof AuthenticatedFinancingRoute
   '/pros': typeof AuthenticatedProsRoute
   '/saved': typeof AuthenticatedSavedRoute
   '/api/chat': typeof ApiChatRoute
@@ -155,6 +162,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/title-deed': typeof TitleDeedRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/financing': typeof AuthenticatedFinancingRoute
   '/pros': typeof AuthenticatedProsRoute
   '/saved': typeof AuthenticatedSavedRoute
   '/api/chat': typeof ApiChatRoute
@@ -177,6 +185,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/title-deed': typeof TitleDeedRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/financing': typeof AuthenticatedFinancingRoute
   '/_authenticated/pros': typeof AuthenticatedProsRoute
   '/_authenticated/saved': typeof AuthenticatedSavedRoute
   '/api/chat': typeof ApiChatRoute
@@ -199,6 +208,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/title-deed'
     | '/dashboard'
+    | '/financing'
     | '/pros'
     | '/saved'
     | '/api/chat'
@@ -218,6 +228,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/title-deed'
     | '/dashboard'
+    | '/financing'
     | '/pros'
     | '/saved'
     | '/api/chat'
@@ -239,6 +250,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/title-deed'
     | '/_authenticated/dashboard'
+    | '/_authenticated/financing'
     | '/_authenticated/pros'
     | '/_authenticated/saved'
     | '/api/chat'
@@ -385,6 +397,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/financing': {
+      id: '/_authenticated/financing'
+      path: '/financing'
+      fullPath: '/financing'
+      preLoaderRoute: typeof AuthenticatedFinancingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -404,6 +423,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedFinancingRoute: typeof AuthenticatedFinancingRoute
   AuthenticatedProsRoute: typeof AuthenticatedProsRoute
   AuthenticatedSavedRoute: typeof AuthenticatedSavedRoute
   AuthenticatedSellNewRoute: typeof AuthenticatedSellNewRoute
@@ -411,6 +431,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedFinancingRoute: AuthenticatedFinancingRoute,
   AuthenticatedProsRoute: AuthenticatedProsRoute,
   AuthenticatedSavedRoute: AuthenticatedSavedRoute,
   AuthenticatedSellNewRoute: AuthenticatedSellNewRoute,

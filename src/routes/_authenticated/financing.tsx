@@ -25,6 +25,7 @@ import {
   generateLenderSummary,
   type LenderSummaryOutput,
 } from "@/lib/financing-ai.functions";
+import type { Json } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/_authenticated/financing")({
   head: () => ({
@@ -129,7 +130,7 @@ function NewApplicationForm({ onDone }: { onDone: () => void }) {
       return createFinancing({
         ...payload,
         status: "draft",
-        ai_summary: summary as unknown as Record<string, unknown>,
+        ai_summary: summary as unknown as Json,
       });
     },
     onSuccess: () => {
