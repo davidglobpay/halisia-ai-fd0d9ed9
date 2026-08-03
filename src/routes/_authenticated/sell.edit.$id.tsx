@@ -619,17 +619,22 @@ function EditListing() {
         )}
 
         {rental && (
-          <AvailabilityCalendar
-            editable
-            availability={availability}
-            viewings={viewings}
-            fallbackFrom={form.available_from || null}
-            onChange={({ availability: a, viewings: v }) => {
-              setAvailability(a);
-              setViewings(v);
-            }}
-          />
+          <>
+            <AvailabilityCalendar
+              editable
+              availability={availability}
+              viewings={viewings}
+              fallbackFrom={form.available_from || null}
+              onChange={({ availability: a, viewings: v }) => {
+                setAvailability(a);
+                setViewings(v);
+              }}
+            />
+            <ViewingBooking propertyId={id} mode="owner" />
+          </>
         )}
+
+        <VersionHistory propertyId={id} />
 
         {/* Clarifications */}
         <ClarifyStep questions={clarifications} answers={answers} onChange={setAnswers} />
