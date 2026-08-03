@@ -25,6 +25,8 @@ import { SearchBar } from "@/components/halisia/search-bar";
 import { AIOrb } from "@/components/halisia/ai-orb";
 import { DataPipeline } from "@/components/halisia/data-pipeline";
 import halisiaLogo from "@/assets/halisia-logo.png.asset.json";
+import heroIntro from "@/assets/hero/hero-intro.mp4.asset.json";
+import heroIntroPoster from "@/assets/hero/hero-intro-poster.jpg.asset.json";
 
 export const Route = createFileRoute("/")({
   validateSearch: (s) => z.object({ compare: fallback(z.string(), "").default("") }).parse(s),
@@ -44,6 +46,24 @@ function HeroStage({ children }: { children?: ReactNode }) {
   return (
     <div className="relative w-full overflow-hidden aspect-[3/4] sm:aspect-[16/10] md:aspect-[21/9] max-h-[92vh]">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_35%,oklch(0.34_0.09_240)_0%,oklch(0.19_0.06_255)_45%,oklch(0.13_0.04_260)_100%)]" />
+      {/* Cinematic intro film — plays once on landing, then holds its last
+          frame. Muted + playsInline so mobile autoplay is allowed. */}
+      <video
+        aria-hidden="true"
+        className="absolute inset-0 h-full w-full object-cover opacity-70 mix-blend-screen motion-reduce:hidden [filter:contrast(1.08)_saturate(1.15)]"
+        src={heroIntro.url}
+        poster={heroIntroPoster.url}
+        autoPlay
+        muted
+        playsInline
+        preload="metadata"
+      />
+      <img
+        aria-hidden="true"
+        src={heroIntroPoster.url}
+        alt=""
+        className="absolute inset-0 hidden h-full w-full object-cover opacity-60 motion-reduce:block"
+      />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(0,0,0,0.35)_78%,rgba(7,30,61,0.85)_100%)]" />
       <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-background" />
       <div
