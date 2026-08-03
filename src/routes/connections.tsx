@@ -638,6 +638,35 @@ function ProDetail({ pro, onClose }: { pro: ProProfile; onClose: () => void }) {
                 placeholder="Describe the site, the work and your timeline."
                 className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 p-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
               />
+              <div className="mt-2">
+                <label
+                  htmlFor="pro-slot"
+                  className="text-[10px] uppercase tracking-widest text-muted-foreground"
+                >
+                  Request a time window
+                </label>
+                {windows.length === 0 ? (
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    This provider hasn't published availability yet — send the brief and they will
+                    propose a time.
+                  </p>
+                ) : (
+                  <select
+                    id="pro-slot"
+                    data-testid="pro-slot"
+                    value={slot}
+                    onChange={(e) => setSlot(e.target.value)}
+                    className="mt-1 h-9 w-full rounded-xl border border-white/10 bg-white/5 px-2.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+                  >
+                    <option value="">No preference</option>
+                    {windows.map((w) => (
+                      <option key={w.start.toISOString()} value={w.start.toISOString()}>
+                        {w.label}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
               <button
                 type="submit"
                 disabled={contact.isPending}
