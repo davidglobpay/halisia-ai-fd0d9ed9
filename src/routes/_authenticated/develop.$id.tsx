@@ -6,7 +6,7 @@ import { getProperty, updateProperty } from "@/lib/properties";
 import { generateDevelopmentConcept } from "@/lib/development-studio.functions";
 import { CONCEPT_DISCLAIMER, type ConceptOutput } from "@/lib/development-studio";
 import { assessReadiness, READINESS_DISCLAIMER } from "@/lib/investment-readiness";
-import { listMyFinancingApplications } from "@/lib/financing";
+import { listMyFinancing } from "@/lib/financing";
 import type { Json } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/_authenticated/develop/$id")({
@@ -27,7 +27,7 @@ export const Route = createFileRoute("/_authenticated/develop/$id")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: DevelopStudio;
+  component: DevelopStudio,
 });
 
 function DevelopStudio() {
@@ -45,7 +45,7 @@ function DevelopStudio() {
   });
   const finQ = useQuery({
     queryKey: ["my-financing"],
-    queryFn: listMyFinancingApplications,
+    queryFn: listMyFinancing,
   });
 
   const stored = (propQ.data?.development_concept as unknown as ConceptOutput | null) ?? null;
