@@ -26,6 +26,7 @@ import {
   type LenderSummaryOutput,
 } from "@/lib/financing-ai.functions";
 import type { Json } from "@/integrations/supabase/types";
+import { DocumentVault } from "@/components/halisia/document-vault";
 
 export const Route = createFileRoute("/_authenticated/financing")({
   head: () => ({
@@ -341,6 +342,9 @@ function FinancingCard({
       >
         <FileText className="h-3 w-3" /> {open ? "Hide" : "View"} lender-ready summary
       </button>
+      <div className="mt-3">
+        <DocumentVault financingId={f.id} propertyId={f.property_id ?? null} />
+      </div>
       {open && ai && (
         <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-xs space-y-3">
           <div>
