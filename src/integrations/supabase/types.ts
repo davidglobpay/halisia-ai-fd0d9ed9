@@ -299,6 +299,7 @@ export type Database = {
           amenities: string[]
           bathrooms: number | null
           bedrooms: number | null
+          completeness_pct: number
           county: string | null
           cover_image: string | null
           created_at: string
@@ -310,11 +311,14 @@ export type Database = {
           kind: Database["public"]["Enums"]["property_kind"]
           latitude: number | null
           longitude: number | null
+          media_urls: string[]
           owner_id: string
           price: number | null
+          review_state: string
           size_unit: string | null
           size_value: number | null
           status: Database["public"]["Enums"]["property_status"]
+          submitted_at: string | null
           title: string
           updated_at: string
           utilities: string[]
@@ -327,6 +331,7 @@ export type Database = {
           amenities?: string[]
           bathrooms?: number | null
           bedrooms?: number | null
+          completeness_pct?: number
           county?: string | null
           cover_image?: string | null
           created_at?: string
@@ -338,11 +343,14 @@ export type Database = {
           kind: Database["public"]["Enums"]["property_kind"]
           latitude?: number | null
           longitude?: number | null
+          media_urls?: string[]
           owner_id: string
           price?: number | null
+          review_state?: string
           size_unit?: string | null
           size_value?: number | null
           status?: Database["public"]["Enums"]["property_status"]
+          submitted_at?: string | null
           title: string
           updated_at?: string
           utilities?: string[]
@@ -355,6 +363,7 @@ export type Database = {
           amenities?: string[]
           bathrooms?: number | null
           bedrooms?: number | null
+          completeness_pct?: number
           county?: string | null
           cover_image?: string | null
           created_at?: string
@@ -366,11 +375,14 @@ export type Database = {
           kind?: Database["public"]["Enums"]["property_kind"]
           latitude?: number | null
           longitude?: number | null
+          media_urls?: string[]
           owner_id?: string
           price?: number | null
+          review_state?: string
           size_unit?: string | null
           size_value?: number | null
           status?: Database["public"]["Enums"]["property_status"]
+          submitted_at?: string | null
           title?: string
           updated_at?: string
           utilities?: string[]
@@ -412,6 +424,137 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      rental_details: {
+        Row: {
+          accessibility_features: string[]
+          available_from: string | null
+          bathrooms: number | null
+          bedrooms: number | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          currency: string
+          deposit: number | null
+          furnishing: string | null
+          house_rules: string | null
+          monthly_rent: number | null
+          parking_spaces: number | null
+          property_id: string
+          public_transport: string | null
+          security_features: string[]
+          service_charge: number | null
+          updated_at: string
+          utilities_included: string[]
+          viewing_instructions: string | null
+        }
+        Insert: {
+          accessibility_features?: string[]
+          available_from?: string | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          currency?: string
+          deposit?: number | null
+          furnishing?: string | null
+          house_rules?: string | null
+          monthly_rent?: number | null
+          parking_spaces?: number | null
+          property_id: string
+          public_transport?: string | null
+          security_features?: string[]
+          service_charge?: number | null
+          updated_at?: string
+          utilities_included?: string[]
+          viewing_instructions?: string | null
+        }
+        Update: {
+          accessibility_features?: string[]
+          available_from?: string | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          currency?: string
+          deposit?: number | null
+          furnishing?: string | null
+          house_rules?: string | null
+          monthly_rent?: number | null
+          parking_spaces?: number | null
+          property_id?: string
+          public_transport?: string | null
+          security_features?: string[]
+          service_charge?: number | null
+          updated_at?: string
+          utilities_included?: string[]
+          viewing_instructions?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rental_details_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: true
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      renter_preferences: {
+        Row: {
+          accessibility_needed: boolean
+          amenities: string[]
+          bedrooms_min: number | null
+          budget_max: number | null
+          budget_min: number | null
+          commute_preference: string | null
+          counties: string[]
+          created_at: string
+          personalization_enabled: boolean
+          schools_priority: number
+          security_priority: number
+          towns: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          accessibility_needed?: boolean
+          amenities?: string[]
+          bedrooms_min?: number | null
+          budget_max?: number | null
+          budget_min?: number | null
+          commute_preference?: string | null
+          counties?: string[]
+          created_at?: string
+          personalization_enabled?: boolean
+          schools_priority?: number
+          security_priority?: number
+          towns?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          accessibility_needed?: boolean
+          amenities?: string[]
+          bedrooms_min?: number | null
+          budget_max?: number | null
+          budget_min?: number | null
+          commute_preference?: string | null
+          counties?: string[]
+          created_at?: string
+          personalization_enabled?: boolean
+          schools_priority?: number
+          security_priority?: number
+          towns?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       saved_items: {
         Row: {
@@ -534,7 +677,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      listing_save_count: { Args: { p_property_id: string }; Returns: number }
     }
     Enums: {
       bid_category:
