@@ -14,6 +14,7 @@ const LINKS: Array<{ to: string; label: string }> = [
   { to: "/connections", label: "Connections" },
   { to: "/compare", label: "Compare" },
   { to: "/report", label: "Reports" },
+  { to: "/style-guide", label: "Design" },
   { to: "/dashboard", label: "Dashboard" },
 ];
 
