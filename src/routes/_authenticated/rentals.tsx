@@ -322,10 +322,36 @@ function RentalsPage() {
                 })}
               </div>
             </F>
+            <ClarifyStep
+              title="Before we rank"
+              intro="Answer what you can — each answer is applied to your preferences so matches stay explainable."
+              questions={clarifications}
+              answers={answers}
+              onChange={(next) => {
+                setAnswers(next);
+                const cap = next["commute_cap"];
+                if (cap && /\d/.test(cap))
+                  setDraft((d) => ({ ...d, max_commute_minutes: cap.replace(/\D/g, "") }));
+                if (cap === "No limit") setDraft((d) => ({ ...d, max_commute_minutes: "" }));
+                const origin = next["commute_origin"];
+                if (origin === "Use my current location")
+                  void geo.request().then((loc) => {
+                    if (loc)
+                      setDraft((d) => ({
+                        ...d,
+                        commute_origin_lat: String(loc.lat),
+                        commute_origin_lng: String(loc.lng),
+                        commute_origin_label: d.commute_origin_label || "My current location",
+                      }));
+                  });
+                const counties = next["counties"];
+                if (counties && counties !== "Anywhere in Kenya")
+                  setDraft((d) => ({ ...d, counties: d.counties || counties }));
+              }}
+            />
             <button
               type="submit"
               disabled={save.isPending}
-*** placeholder ***
               className="inline-flex w-fit items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-accent px-5 py-2 text-xs font-medium text-primary-foreground disabled:opacity-60"
             >
               {save.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />}
