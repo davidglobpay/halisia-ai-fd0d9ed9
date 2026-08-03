@@ -57,7 +57,7 @@ const MOTION_ROWS = [
 
 function StyleGuidePage() {
   const [tab, setTab] = useState("foundations");
-  const { reduced, setReduced } = useReducedMotionPref();
+  const [reduced, , setReduced] = useReducedMotionPref();
 
   return (
     <div className="min-h-dvh" data-testid="style-guide">
@@ -285,13 +285,14 @@ function StyleGuidePage() {
             <Surface elevation={2} padding="lg">
               <SectionHeading as="h3" title="Status & confidence" />
               <div className="mt-4 flex flex-wrap items-center gap-3">
-                <StatusBadge kind="verified">Verified</StatusBadge>
-                <StatusBadge kind="warning">Needs review</StatusBadge>
-                <StatusBadge kind="risk">High risk</StatusBadge>
-                <StatusBadge kind="info">Modelled</StatusBadge>
+                <StatusBadge kind="verified" />
+                <StatusBadge kind="ai" />
+                <StatusBadge kind="government" />
+                <StatusBadge kind="premium" />
+                <StatusBadge kind="pending" />
               </div>
               <div className="mt-4 max-w-sm">
-                <ConfidenceIndicator value={82} label="Data confidence" />
+                <ConfidenceIndicator pct={82} sources={14} />
               </div>
             </Surface>
           </section>
