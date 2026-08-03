@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 import { fallback } from "@tanstack/zod-adapter";
 import { motion } from "framer-motion";
+import type { ReactNode } from "react";
 import {
   ArrowRight,
   Brain,
@@ -40,7 +41,7 @@ function Landing() {
  * Static hero stage. Replaces the former video carousel — same framing,
  * aspect ratios and foreground layout, just a cinematic gradient backdrop.
  */
-function HeroStage({ children }: { children?: React.ReactNode }) {
+function HeroStage({ children }: { children?: ReactNode }) {
   return (
     <div className="relative w-full overflow-hidden aspect-[3/4] sm:aspect-[16/10] md:aspect-[21/9] max-h-[92vh]">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_35%,oklch(0.34_0.09_240)_0%,oklch(0.19_0.06_255)_45%,oklch(0.13_0.04_260)_100%)]" />
