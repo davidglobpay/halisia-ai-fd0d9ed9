@@ -102,7 +102,8 @@ export const PIPELINE_STAGES: Stage[] = [
       { label: "OpenStreetMap contributors", url: "https://www.openstreetmap.org/copyright" },
       { label: "Overpass API", url: "https://overpass-api.de/" },
     ],
-    caveat: "Rural coverage is thinner than urban coverage, so sparse areas can under-report amenities.",
+    caveat:
+      "Rural coverage is thinner than urban coverage, so sparse areas can under-report amenities.",
   },
   {
     title: "Geoapify",
@@ -118,7 +119,8 @@ export const PIPELINE_STAGES: Stage[] = [
       "Place enrichment adds categorised POIs and isoline reachability around the parcel.",
     ],
     sources: [{ label: "Geoapify Places & Geocoding", url: "https://www.geoapify.com/" }],
-    caveat: "Place categories are generalised globally and may not match Kenyan local naming exactly.",
+    caveat:
+      "Place categories are generalised globally and may not match Kenyan local naming exactly.",
   },
   {
     title: "Open-Meteo",
@@ -134,7 +136,8 @@ export const PIPELINE_STAGES: Stage[] = [
       "Climate normals feed flood, drought and construction-window risk scoring.",
     ],
     sources: [{ label: "Open-Meteo archive & forecast API", url: "https://open-meteo.com/" }],
-    caveat: "Reanalysis grids are coarse; micro-climates in valleys or highlands may differ locally.",
+    caveat:
+      "Reanalysis grids are coarse; micro-climates in valleys or highlands may differ locally.",
   },
   {
     title: "Satellite data",
@@ -174,7 +177,8 @@ export const PIPELINE_STAGES: Stage[] = [
       { label: "Kenya National Bureau of Statistics", url: "https://www.knbs.or.ke/" },
       { label: "IEBC boundary datasets", url: "https://www.iebc.or.ke/" },
     ],
-    caveat: "Official releases lag reality between census cycles, so fast-growing areas can look understated.",
+    caveat:
+      "Official releases lag reality between census cycles, so fast-growing areas can look understated.",
   },
   {
     title: "AI analysis",
@@ -190,7 +194,8 @@ export const PIPELINE_STAGES: Stage[] = [
       "Every claim is bound to the signal it came from for the evidence panel.",
     ],
     sources: [{ label: "HALISIA reasoning layer over the retrieved signals above" }],
-    caveat: "Reasoning inherits the weakest input — thin data in means a hedged, lower-confidence narrative out.",
+    caveat:
+      "Reasoning inherits the weakest input — thin data in means a hedged, lower-confidence narrative out.",
   },
   {
     title: "HALISIA intelligence score",
@@ -221,7 +226,8 @@ export const PIPELINE_STAGES: Stage[] = [
       "Buyers can open any citation, download the PDF dossier or compare locations.",
     ],
     sources: [{ label: "HALISIA marketplace & PDF dossier export" }],
-    caveat: "Displays exactly what the pipeline produced — always read the confidence chips alongside it.",
+    caveat:
+      "Displays exactly what the pipeline produced — always read the confidence chips alongside it.",
   },
 ];
 
@@ -315,15 +321,15 @@ export function DataPipeline() {
       <div className="mx-auto max-w-7xl px-4">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="max-w-2xl">
-          <div className="text-xs uppercase tracking-[0.25em] text-accent">The data pipeline</div>
-          <h2 className="mt-3 text-3xl md:text-5xl font-semibold tracking-tight">
-            Every score is <span className="text-gradient">traceable to a source</span>.
-          </h2>
-          <p className="mt-3 text-sm md:text-base text-muted-foreground leading-relaxed">
-            Nothing in HALISIA is invented. A listing travels through open geospatial, climate,
-            satellite and government datasets before the AI reads it — and each stage stays visible
-            in the final report.
-          </p>
+            <div className="text-xs uppercase tracking-[0.25em] text-accent">The data pipeline</div>
+            <h2 className="mt-3 text-3xl md:text-5xl font-semibold tracking-tight">
+              Every score is <span className="text-gradient">traceable to a source</span>.
+            </h2>
+            <p className="mt-3 text-sm md:text-base text-muted-foreground leading-relaxed">
+              Nothing in HALISIA is invented. A listing travels through open geospatial, climate,
+              satellite and government datasets before the AI reads it — and each stage stays
+              visible in the final report.
+            </p>
           </div>
           <button
             type="button"
