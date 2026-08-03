@@ -99,7 +99,7 @@ function StyleGuidePage() {
           <Surface elevation={3} padding="lg" className="relative overflow-hidden">
             <KenyaMotif variant="shield" />
             <SectionHeading
-              as="h2"
+              as="h1"
               eyebrow="Halisia Design System"
               title="Brand & interface style guide"
               description="One source of truth for colour, type, elevation, controls and motion. Build every new screen from these primitives so the product stays coherent."
