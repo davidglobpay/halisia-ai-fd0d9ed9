@@ -1,13 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { ArrowLeft, Building2, Gauge, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, Building2, Download, Gauge, Loader2, Sparkles } from "lucide-react";
 import { getProperty, updateProperty } from "@/lib/properties";
 import { generateDevelopmentConcept } from "@/lib/development-studio.functions";
 import { CONCEPT_DISCLAIMER, type ConceptOutput } from "@/lib/development-studio";
 import { assessReadiness, READINESS_DISCLAIMER } from "@/lib/investment-readiness";
 import { listMyFinancing } from "@/lib/financing";
 import type { Json } from "@/integrations/supabase/types";
+import { conceptEvidence, readinessEvidence } from "@/lib/evidence";
+import { EvidencePanel } from "@/components/halisia/evidence-panel";
+import { downloadConceptStudy, CONCEPT_STUDY_DISCLAIMER } from "@/lib/pdf-concept-study";
+import { DocumentVault } from "@/components/halisia/document-vault";
 
 export const Route = createFileRoute("/_authenticated/develop/$id")({
   head: () => ({
@@ -88,6 +92,12 @@ function DevelopStudio() {
       hasFinancingApplication: hasApp,
     });
   }, [propQ.data, finQ.data, active, id]);
+
+  const conceptEv = useMemo(
+    () => (propQ.data ? conceptEvidence(propQ.data, active) : null),
+    [propQ.data, active],
+  );
+  const readinessEv = useMemo(() => (readiness ? readinessEvidence(readiness) : null), [readiness]);
 
   if (propQ.isLoading)
     return (
@@ -239,7 +249,29 @@ function DevelopStudio() {
                 ))}
               </ul>
             </div>
+            {conceptEv && <EvidencePanel bundle={conceptEv} testId="concept-evidence" />}
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                data-testid="download-concept-study"
+                onClick={() =>
+                  downloadConceptStudy({
+                    property: p,
+                    concept: active,
+                    evidence: conceptEv!,
+                    readiness,
+                  })
+                }
+                className="inline-flex items-center gap-1.5 rounded-full border border-accent/40 bg-accent/10 px-3 py-1.5 text-[11px] text-accent"
+              >
+                <Download className="h-3.5 w-3.5" aria-hidden="true" /> Download concept study (PDF)
+              </button>
+              <span className="text-[10px] text-muted-foreground">
+                Includes the full evidence appendix and required disclaimer.
+              </span>
+            </div>
             <p className="text-[10px] text-muted-foreground/80">{CONCEPT_DISCLAIMER}</p>
+            <p className="text-[10px] text-muted-foreground/80">{CONCEPT_STUDY_DISCLAIMER}</p>
           </div>
         )}
       </section>
@@ -299,9 +331,22 @@ function DevelopStudio() {
               Request a professional review
             </Link>
           </div>
+          {readinessEv && (
+            <div className="mt-3">
+              <EvidencePanel
+                title="Readiness evidence & citations"
+                bundle={readinessEv}
+                testId="readiness-evidence"
+              />
+            </div>
+          )}
           <p className="mt-3 text-[10px] text-muted-foreground/80">{READINESS_DISCLAIMER}</p>
         </section>
       )}
+
+      <div className="mt-6">
+        <DocumentVault propertyId={id} />
+      </div>
     </main>
   );
 }
