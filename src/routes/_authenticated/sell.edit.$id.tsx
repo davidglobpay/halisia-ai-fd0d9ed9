@@ -10,6 +10,14 @@ import { EMPTY_DRAFT, buildChecklist, completeness, isRental, type WizardDraft }
 import { listingClarifications, answersToNotes, type ClarifyAnswers } from "@/lib/clarify";
 import { ClarifyStep } from "@/components/halisia/clarify-step";
 import { PinPicker } from "@/components/halisia/pin-picker";
+import { AvailabilityCalendar } from "@/components/halisia/availability-calendar";
+import {
+  parseAvailability,
+  parseViewings,
+  toJson,
+  type AvailabilityWindow,
+  type ViewingWindow,
+} from "@/lib/rental-availability";
 
 export const Route = createFileRoute("/_authenticated/sell/edit/$id")({
   head: () => ({
@@ -51,6 +59,8 @@ function EditListing() {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [publish, setPublish] = useState(true);
+  const [availability, setAvailability] = useState<AvailabilityWindow[]>([]);
+  const [viewings, setViewings] = useState<ViewingWindow[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const q = useQuery({
@@ -104,6 +114,8 @@ function EditListing() {
       viewing_instructions: r?.viewing_instructions ?? "",
     });
     setPublish(p.status === "published");
+    setAvailability(parseAvailability(r?.availability_windows));
+    setViewings(parseViewings(r?.viewing_windows));
   }, [q.data]);
 
   const checklist = useMemo(() => buildChecklist(form), [form]);
@@ -216,6 +228,8 @@ function EditListing() {
             contact_phone: form.contact_phone || null,
             contact_email: form.contact_email || null,
             viewing_instructions: form.viewing_instructions || null,
+            availability_windows: toJson(availability),
+            viewing_windows: toJson(viewings),
           });
         } catch (err) {
           console.warn("rental details save failed", err);
@@ -459,6 +473,19 @@ function EditListing() {
               <input value={form.contact_phone} onChange={(e) => set("contact_phone", e.target.value)} className="input" />
             </Field>
           </div>
+        )}
+
+        {rental && (
+          <AvailabilityCalendar
+            editable
+            availability={availability}
+            viewings={viewings}
+            fallbackFrom={form.available_from || null}
+            onChange={({ availability: a, viewings: v }) => {
+              setAvailability(a);
+              setViewings(v);
+            }}
+          />
         )}
 
         {/* Clarifications */}
