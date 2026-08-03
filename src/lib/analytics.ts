@@ -19,6 +19,10 @@ export type HalisiaAnalyticsEvent =
     }
   | { name: "report_requested"; query: string; source: string }
   | { name: "search_cache_hit"; query: string; ageMs: number }
+  | { name: "pipeline_stage_view"; stage: string; index: number }
+  | { name: "pipeline_stage_click"; stage: string; index: number; tone: string }
+  | { name: "pipeline_source_click"; stage: string; url: string }
+  | { name: "pipeline_motion_toggled"; reduced: boolean }
   | { name: "analytics_consent_changed"; granted: boolean };
 
 interface DataLayerWindow extends Window {
