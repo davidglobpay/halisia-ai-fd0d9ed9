@@ -21,8 +21,18 @@ export type HalisiaAnalyticsEvent =
   | { name: "search_cache_hit"; query: string; ageMs: number }
   | { name: "pipeline_stage_view"; stage: string; index: number }
   | { name: "pipeline_stage_click"; stage: string; index: number; tone: string }
+  | { name: "pipeline_modal_open"; stage: string; index: number }
   | { name: "pipeline_source_click"; stage: string; url: string }
   | { name: "pipeline_motion_toggled"; reduced: boolean }
+  | { name: "hero_video_play"; reason: "user" | "auto" }
+  | { name: "hero_video_blocked"; reason: "autoplay_rejected" | "save_data" | "slow_network" }
+  | {
+      name: "pipeline_stage_conversion";
+      stage: string;
+      opens: number;
+      searches: number;
+      conversionRate: number;
+    }
   | { name: "analytics_consent_changed"; granted: boolean };
 
 interface DataLayerWindow extends Window {
@@ -90,4 +100,60 @@ export function track(event: HalisiaAnalyticsEvent) {
   } catch {
     /* analytics must never break the UI */
   }
+}
+
+// ---------------------------------------------------------------------------
+// Pipeline → search funnel attribution
+// ---------------------------------------------------------------------------
+
+const FUNNEL_KEY = "halisia:pipelineFunnel";
+
+type FunnelState = Record<string, { opens: number; searches: number }>;
+
+function readFunnel(): FunnelState {
+  if (typeof window === "undefined") return {};
+  try {
+    return JSON.parse(window.sessionStorage.getItem(FUNNEL_KEY) ?? "{}") as FunnelState;
+  } catch {
+    return {};
+  }
+}
+
+function writeFunnel(state: FunnelState) {
+  try {
+    window.sessionStorage.setItem(FUNNEL_KEY, JSON.stringify(state));
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Record that a pipeline stage modal was opened (a funnel entry point). */
+export function recordStageOpen(stage: string) {
+  if (typeof window === "undefined") return;
+  const state = readFunnel();
+  const entry = state[stage] ?? { opens: 0, searches: 0 };
+  entry.opens += 1;
+  state[stage] = entry;
+  writeFunnel(state);
+}
+
+/**
+ * Record a search submission and attribute it to every pipeline stage the
+ * visitor opened first, emitting a conversion rate per stage.
+ */
+export function recordSearchConversion() {
+  if (typeof window === "undefined") return;
+  const state = readFunnel();
+  for (const [stage, entry] of Object.entries(state)) {
+    if (entry.opens === 0) continue;
+    entry.searches += 1;
+    track({
+      name: "pipeline_stage_conversion",
+      stage,
+      opens: entry.opens,
+      searches: entry.searches,
+      conversionRate: Math.round((entry.searches / entry.opens) * 100),
+    });
+  }
+  writeFunnel(state);
 }
