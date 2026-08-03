@@ -137,6 +137,27 @@ function HeroStage({ children }: { children?: ReactNode }) {
       <div className="absolute inset-0 flex flex-col justify-end sm:justify-center">
         <div className="mx-auto w-full max-w-7xl px-4 pb-10 sm:pb-0">{children}</div>
       </div>
+      <div className="absolute bottom-3 right-3 z-10 flex items-center gap-2">
+        {!playing && (lowBandwidth || reduced) && (
+          <span className="hidden sm:inline rounded-full border border-white/15 bg-black/40 px-2.5 py-1 text-[10px] text-white/70 backdrop-blur">
+            {lowBandwidth ? "Data saver — still frame shown" : "Reduced motion on"}
+          </span>
+        )}
+        <button
+          type="button"
+          onClick={toggle}
+          data-testid="hero-video-toggle"
+          aria-pressed={playing}
+          className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/45 px-3 py-1.5 text-[11px] text-white backdrop-blur transition hover:bg-black/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        >
+          {playing ? (
+            <Pause className="h-3.5 w-3.5" aria-hidden="true" />
+          ) : (
+            <Play className="h-3.5 w-3.5" aria-hidden="true" />
+          )}
+          {playing ? "Pause intro" : "Play intro film"}
+        </button>
+      </div>
     </div>
   );
 }
