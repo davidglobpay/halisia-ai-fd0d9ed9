@@ -148,10 +148,14 @@ export function DataPipeline() {
           </p>
         </div>
 
-        <ol className="mt-12 grid gap-0 sm:grid-cols-2 lg:grid-cols-5" role="list">
+        <ol
+          className="mt-12 grid items-stretch gap-x-4 gap-y-2 sm:grid-cols-2 lg:grid-cols-5"
+          role="list"
+        >
           {PIPELINE_STAGES.map((s, i) => {
             const tone = TONE[s.tone];
             const last = i === PIPELINE_STAGES.length - 1;
+            const rowEnd = (i + 1) % 5 === 0;
             const Wrapper = s.href ? "a" : "div";
             return (
               <li
@@ -194,7 +198,7 @@ export function DataPipeline() {
                     <ChevronDown className="h-4 w-4" />
                   </span>
                 )}
-                {!last && (
+                {!last && !rowEnd && (
                   <span
                     aria-hidden="true"
                     className="pointer-events-none absolute right-0 top-1/2 hidden h-px w-4 -translate-y-1/2 translate-x-full bg-gradient-to-r from-accent/50 to-transparent lg:block"
