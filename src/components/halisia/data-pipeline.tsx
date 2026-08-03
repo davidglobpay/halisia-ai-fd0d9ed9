@@ -249,15 +249,72 @@ const TONE: Record<Stage["tone"], { ring: string; icon: string; chip: string }> 
 };
 
 export function DataPipeline() {
+  const [active, setActive] = useState<Stage | null>(null);
+  const [reduced, setReduced] = useState(false);
+  const seen = useRef<Set<string>>(new Set());
+
+  // Seed from the OS setting, then let the local toggle override it.
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem("halisia:pipelineReducedMotion");
+      if (stored === "1" || stored === "0") {
+        setReduced(stored === "1");
+        return;
+      }
+      setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    } catch {
+      /* storage or matchMedia unavailable */
+    }
+  }, []);
+
+  const toggleReduced = useCallback(() => {
+    setReduced((prev) => {
+      const next = !prev;
+      try {
+        window.localStorage.setItem("halisia:pipelineReducedMotion", next ? "1" : "0");
+      } catch {
+        /* ignore */
+      }
+      track({ name: "pipeline_motion_toggled", reduced: next });
+      return next;
+    });
+  }, []);
+
+  // One view event per stage, the first time it scrolls into view.
+  const observe = useCallback((el: HTMLLIElement | null, stage: Stage, index: number) => {
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    if (seen.current.has(stage.title)) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting && !seen.current.has(stage.title)) {
+            seen.current.add(stage.title);
+            track({ name: "pipeline_stage_view", stage: stage.title, index: index + 1 });
+            io.disconnect();
+          }
+        }
+      },
+      { threshold: 0.4 },
+    );
+    io.observe(el);
+  }, []);
+
+  const openStage = (stage: Stage, index: number) => {
+    track({ name: "pipeline_stage_click", stage: stage.title, index: index + 1, tone: stage.tone });
+    setActive(stage);
+  };
+
   return (
     <section
       id="pipeline"
       data-testid="data-pipeline"
       className="py-20 md:py-28 border-t border-white/5"
       aria-label="How HALISIA turns a listing into intelligence"
+      data-reduced-motion={reduced ? "true" : "false"}
     >
       <div className="mx-auto max-w-7xl px-4">
-        <div className="max-w-2xl">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div className="max-w-2xl">
           <div className="text-xs uppercase tracking-[0.25em] text-accent">The data pipeline</div>
           <h2 className="mt-3 text-3xl md:text-5xl font-semibold tracking-tight">
             Every score is <span className="text-gradient">traceable to a source</span>.
@@ -267,6 +324,16 @@ export function DataPipeline() {
             satellite and government datasets before the AI reads it — and each stage stays visible
             in the final report.
           </p>
+          </div>
+          <button
+            type="button"
+            onClick={toggleReduced}
+            aria-pressed={reduced}
+            className="glass inline-flex min-h-11 items-center gap-2 rounded-full border border-white/10 px-4 text-xs text-muted-foreground transition-colors hover:border-accent/40 hover:text-foreground"
+          >
+            <Sparkle className="h-3.5 w-3.5" aria-hidden="true" />
+            {reduced ? "Animations off" : "Reduce motion"}
+          </button>
         </div>
 
         <ol
@@ -277,18 +344,20 @@ export function DataPipeline() {
             const tone = TONE[s.tone];
             const last = i === PIPELINE_STAGES.length - 1;
             const rowEnd = (i + 1) % 5 === 0;
-            const Wrapper = s.href ? "a" : "div";
             return (
               <li
                 key={s.title}
                 className="relative flex flex-col items-stretch"
                 data-testid="pipeline-stage"
+                ref={(el) => observe(el, s, i)}
               >
-                <Wrapper
-                  {...(s.href
-                    ? { href: s.href, target: "_blank", rel: "noreferrer noopener" }
-                    : {})}
-                  className={`glass block h-full rounded-2xl border ${tone.ring} p-4 transition-colors`}
+                <button
+                  type="button"
+                  onClick={() => openStage(s, i)}
+                  aria-label={`${s.title} — open stage details`}
+                  className={`glass block h-full w-full rounded-2xl border text-left ${tone.ring} p-4 ${
+                    reduced ? "" : "transition-all duration-300 hover:-translate-y-0.5"
+                  } transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent`}
                 >
                   <div className="flex items-center gap-2.5">
                     <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-white/10 bg-white/5">
@@ -304,12 +373,28 @@ export function DataPipeline() {
                   <p className="mt-2.5 text-[12px] leading-relaxed text-muted-foreground">
                     {s.detail}
                   </p>
-                  {s.href && (
-                    <span className="mt-2 inline-block text-[10px] text-accent">
-                      View source dataset →
-                    </span>
-                  )}
-                </Wrapper>
+                  <div className="mt-3">
+                    <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-muted-foreground">
+                      <span>Confidence</span>
+                      <span className="font-semibold tabular-nums">{s.confidence}%</span>
+                    </div>
+                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                      <div
+                        className={`h-full rounded-full ${
+                          s.confidence >= 75
+                            ? "bg-emerald-400"
+                            : s.confidence >= 60
+                              ? "bg-accent"
+                              : "bg-amber-400"
+                        } ${reduced ? "" : "transition-[width] duration-700"}`}
+                        style={{ width: `${s.confidence}%` }}
+                      />
+                    </div>
+                  </div>
+                  <span className="mt-2 inline-block text-[10px] text-accent">
+                    What happens here →
+                  </span>
+                </button>
 
                 {!last && (
                   <span
@@ -335,6 +420,76 @@ export function DataPipeline() {
           not a valuation, survey or legal opinion.
         </p>
       </div>
+
+      <Dialog open={!!active} onOpenChange={(o) => !o && setActive(null)}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+          {active && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <active.icon className={`h-5 w-5 ${TONE[active.tone].icon}`} aria-hidden="true" />
+                  {active.title}
+                </DialogTitle>
+                <DialogDescription>{active.detail}</DialogDescription>
+              </DialogHeader>
+
+              <ConfidenceIndicator
+                pct={active.confidence}
+                freshness={active.freshness}
+                sources={active.sources.length}
+              />
+
+              <div>
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                  What happens in this stage
+                </div>
+                <ul className="mt-2 grid gap-1.5">
+                  {active.what.map((w) => (
+                    <li key={w} className="text-[12px] leading-relaxed text-foreground/85">
+                      • {w}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                  Data sources used
+                </div>
+                <ul className="mt-2 grid gap-1.5">
+                  {active.sources.map((src) => (
+                    <li key={src.label} className="text-[12px]">
+                      {src.url ? (
+                        <a
+                          href={src.url}
+                          target="_blank"
+                          rel="noreferrer noopener"
+                          onClick={() =>
+                            track({
+                              name: "pipeline_source_click",
+                              stage: active.title,
+                              url: src.url!,
+                            })
+                          }
+                          className="inline-flex items-center gap-1 text-accent hover:underline"
+                        >
+                          {src.label} <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                        </a>
+                      ) : (
+                        <span className="text-foreground/85">{src.label}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <p className="rounded-xl border border-amber-400/25 bg-amber-400/10 p-2.5 text-[11px] leading-relaxed text-amber-200">
+                Where it can be uncertain: {active.caveat}
+              </p>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
