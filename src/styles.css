@@ -348,6 +348,10 @@
   &:active {
     transform: translateY(0) scale(0.99);
   }
+  &:focus-visible {
+    outline: 2px solid var(--k-gold);
+    outline-offset: 2px;
+  }
 }
 @utility btn-primary {
   background: linear-gradient(180deg, var(--k-green-2), var(--k-green));
@@ -410,6 +414,10 @@
     box-shadow var(--motion-micro) var(--motion-ease);
   &:hover {
     color: var(--k-white-soft);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--k-gold);
+    outline-offset: 2px;
   }
 }
 @utility tab-item-active {
