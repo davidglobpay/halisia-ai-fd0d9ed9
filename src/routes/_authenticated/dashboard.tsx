@@ -18,7 +18,10 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
       { title: "My dashboard · HALISIA AI" },
-      { name: "description", content: "Manage your listings, leads and saved property intelligence." },
+      {
+        name: "description",
+        content: "Manage your listings, leads and saved property intelligence.",
+      },
     ],
   }),
   component: Dashboard,
@@ -103,9 +106,17 @@ function Dashboard() {
       </section>
 
       <section className="grid gap-4 sm:grid-cols-3 mb-8">
-        <Stat icon={<Building2 className="h-4 w-4" />} label="Active listings" value={myListings.length} />
+        <Stat
+          icon={<Building2 className="h-4 w-4" />}
+          label="Active listings"
+          value={myListings.length}
+        />
         <Stat icon={<Users className="h-4 w-4" />} label="Leads received" value={myLeads.length} />
-        <Stat icon={<Bookmark className="h-4 w-4" />} label="Saved intelligence" value={mySaved.length} />
+        <Stat
+          icon={<Bookmark className="h-4 w-4" />}
+          label="Saved intelligence"
+          value={mySaved.length}
+        />
       </section>
 
       <section className="mb-10">
@@ -143,6 +154,22 @@ function Dashboard() {
                     </span>
                   </div>
                 </Link>
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  <Link
+                    to="/sell/edit/$id"
+                    params={{ id: p.id }}
+                    className="rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] hover:text-accent"
+                  >
+                    Edit &amp; resubmit
+                  </Link>
+                  <Link
+                    to="/develop/$id"
+                    params={{ id: p.id }}
+                    className="rounded-full border border-accent/40 bg-accent/10 px-2.5 py-1 text-[11px] text-accent"
+                  >
+                    Development &amp; finance readiness
+                  </Link>
+                </div>
               </li>
             ))}
           </ul>
@@ -193,15 +220,7 @@ function Dashboard() {
   );
 }
 
-function Stat({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: number;
-}) {
+function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
   return (
     <div className="glass rounded-2xl border border-white/10 p-4">
       <div className="text-[11px] uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">

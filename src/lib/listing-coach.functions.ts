@@ -20,6 +20,8 @@ export type CoachInput = {
   photos?: number;
   hasPin?: boolean;
   missingKeys?: string[];
+  /** Owner answers to the clarification step — treated as confirmed facts. */
+  clarifications?: string[];
 };
 
 export type CoachOutput = {
@@ -114,6 +116,7 @@ DRAFT LISTING:
 - Utilities: ${(data.utilities ?? []).join(", ") || "—"}
 - Amenities: ${(data.amenities ?? []).join(", ") || "—"}
 - Photos uploaded: ${data.photos ?? 0}
+${data.clarifications?.length ? `- Owner clarifications (confirmed facts, use them):\n${data.clarifications.map((c) => "  · " + c).join("\n")}` : ""}
 
 RULES:
 - suggestedTitle: 6-14 words, factual, includes location and size where known.

@@ -1,8 +1,21 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Bookmark, Eye, Flame, Lightbulb, Loader2, MessageSquare, TrendingDown, TrendingUp } from "lucide-react";
+import { useState } from "react";
+import {
+  Bookmark,
+  Download,
+  Eye,
+  FileText,
+  Flame,
+  Lightbulb,
+  Loader2,
+  MessageSquare,
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
 import { listMyProperties, listMyLeadsAsSeller, formatPrice } from "@/lib/properties";
 import { buildInsight, fetchSaveCount, type ListingInsight } from "@/lib/seller-tools";
+import { downloadSellerCsv, downloadSellerPdf } from "@/lib/seller-export";
 
 export const Route = createFileRoute("/_authenticated/seller-tools")({
   head: () => ({
@@ -36,6 +49,22 @@ function SellerTools() {
   });
 
   const rows = insights.data ?? [];
+  const [exportMsg, setExportMsg] = useState<string | null>(null);
+  const [exporting, setExporting] = useState<"csv" | "pdf" | null>(null);
+
+  const runExport = async (kind: "csv" | "pdf") => {
+    if (rows.length === 0) return;
+    setExporting(kind);
+    setExportMsg(null);
+    try {
+      const name = kind === "csv" ? downloadSellerCsv(rows) : downloadSellerPdf(rows);
+      setExportMsg(`Downloaded ${name}`);
+    } catch (e) {
+      setExportMsg((e as Error).message || "Export failed");
+    } finally {
+      setExporting(null);
+    }
+  };
   const totals = rows.reduce(
     (acc, r) => ({
       views: acc.views + r.views,
@@ -57,21 +86,63 @@ function SellerTools() {
         </p>
       </header>
 
+      <section className="mb-4 flex flex-wrap items-center gap-2" aria-label="Export analytics">
+        <button
+          type="button"
+          data-testid="export-csv"
+          onClick={() => void runExport("csv")}
+          disabled={rows.length === 0 || exporting !== null}
+          className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs disabled:opacity-50"
+        >
+          {exporting === "csv" ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+          ) : (
+            <Download className="h-3.5 w-3.5" aria-hidden="true" />
+          )}
+          Export CSV
+        </button>
+        <button
+          type="button"
+          data-testid="export-pdf"
+          onClick={() => void runExport("pdf")}
+          disabled={rows.length === 0 || exporting !== null}
+          className="inline-flex items-center gap-1.5 rounded-full border border-accent/40 bg-accent/10 px-3 py-1.5 text-xs text-accent disabled:opacity-50"
+        >
+          {exporting === "pdf" ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+          ) : (
+            <FileText className="h-3.5 w-3.5" aria-hidden="true" />
+          )}
+          Export PDF report
+        </button>
+        <span aria-live="polite" className="text-[11px] text-muted-foreground">
+          {exportMsg}
+        </span>
+      </section>
+
       <section className="grid gap-3 sm:grid-cols-4 mb-6">
         <Stat icon={<Eye className="h-4 w-4" />} label="Total views" value={totals.views} />
         <Stat icon={<Bookmark className="h-4 w-4" />} label="Saves" value={totals.saves} />
         <Stat icon={<MessageSquare className="h-4 w-4" />} label="Enquiries" value={totals.leads} />
-        <Stat icon={<Flame className="h-4 w-4" />} label="Contact requests" value={totals.contacts} />
+        <Stat
+          icon={<Flame className="h-4 w-4" />}
+          label="Contact requests"
+          value={totals.contacts}
+        />
       </section>
 
       {insights.isLoading ? (
         <div className="glass rounded-2xl border border-white/10 p-6 text-sm text-muted-foreground">
-          <Loader2 className="mr-2 inline h-4 w-4 animate-spin" /> Crunching your listing performance…
+          <Loader2 className="mr-2 inline h-4 w-4 animate-spin" /> Crunching your listing
+          performance…
         </div>
       ) : rows.length === 0 ? (
         <div className="glass rounded-2xl border border-white/10 p-6 text-sm text-muted-foreground">
           No listings yet.{" "}
-          <Link to="/sell/new" className="text-accent hover:underline">Create your first listing</Link>.
+          <Link to="/sell/new" className="text-accent hover:underline">
+            Create your first listing
+          </Link>
+          .
         </div>
       ) : (
         <ul className="grid gap-4">
@@ -158,8 +229,8 @@ function SellerTools() {
               </div>
 
               <p className="mt-2 text-[10px] text-muted-foreground/70">
-                Save rate {r.saveRate}% · Enquiry rate {r.enquiryRate}% of views. You decide when and
-                how to reply — nothing is sent automatically.
+                Save rate {r.saveRate}% · Enquiry rate {r.enquiryRate}% of views. You decide when
+                and how to reply — nothing is sent automatically.
               </p>
             </li>
           ))}

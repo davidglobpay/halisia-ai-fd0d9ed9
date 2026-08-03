@@ -139,8 +139,10 @@ export type Database = {
           borrower_email: string | null
           borrower_name: string
           borrower_phone: string | null
+          consultation_requested_at: string | null
           created_at: string
           currency: string
+          documents: Json
           employment_status: string | null
           id: string
           lender_name: string | null
@@ -150,7 +152,9 @@ export type Database = {
           property_id: string | null
           property_value: number | null
           purpose: Database["public"]["Enums"]["financing_purpose"]
+          readiness: Json | null
           requested_amount: number
+          shared_report_url: string | null
           status: Database["public"]["Enums"]["financing_status"]
           tenure_months: number | null
           updated_at: string
@@ -161,8 +165,10 @@ export type Database = {
           borrower_email?: string | null
           borrower_name: string
           borrower_phone?: string | null
+          consultation_requested_at?: string | null
           created_at?: string
           currency?: string
+          documents?: Json
           employment_status?: string | null
           id?: string
           lender_name?: string | null
@@ -172,7 +178,9 @@ export type Database = {
           property_id?: string | null
           property_value?: number | null
           purpose?: Database["public"]["Enums"]["financing_purpose"]
+          readiness?: Json | null
           requested_amount: number
+          shared_report_url?: string | null
           status?: Database["public"]["Enums"]["financing_status"]
           tenure_months?: number | null
           updated_at?: string
@@ -183,8 +191,10 @@ export type Database = {
           borrower_email?: string | null
           borrower_name?: string
           borrower_phone?: string | null
+          consultation_requested_at?: string | null
           created_at?: string
           currency?: string
+          documents?: Json
           employment_status?: string | null
           id?: string
           lender_name?: string | null
@@ -194,7 +204,9 @@ export type Database = {
           property_id?: string | null
           property_value?: number | null
           purpose?: Database["public"]["Enums"]["financing_purpose"]
+          readiness?: Json | null
           requested_amount?: number
+          shared_report_url?: string | null
           status?: Database["public"]["Enums"]["financing_status"]
           tenure_months?: number | null
           updated_at?: string
@@ -305,9 +317,11 @@ export type Database = {
           created_at: string
           currency: string
           description: string | null
+          development_concept: Json | null
           featured: boolean
           id: string
           intent: Database["public"]["Enums"]["listing_intent"]
+          investment_readiness: Json | null
           kind: Database["public"]["Enums"]["property_kind"]
           latitude: number | null
           longitude: number | null
@@ -337,9 +351,11 @@ export type Database = {
           created_at?: string
           currency?: string
           description?: string | null
+          development_concept?: Json | null
           featured?: boolean
           id?: string
           intent?: Database["public"]["Enums"]["listing_intent"]
+          investment_readiness?: Json | null
           kind: Database["public"]["Enums"]["property_kind"]
           latitude?: number | null
           longitude?: number | null
@@ -369,9 +385,11 @@ export type Database = {
           created_at?: string
           currency?: string
           description?: string | null
+          development_concept?: Json | null
           featured?: boolean
           id?: string
           intent?: Database["public"]["Enums"]["listing_intent"]
+          investment_readiness?: Json | null
           kind?: Database["public"]["Enums"]["property_kind"]
           latitude?: number | null
           longitude?: number | null
@@ -428,6 +446,7 @@ export type Database = {
       rental_details: {
         Row: {
           accessibility_features: string[]
+          availability_windows: Json
           available_from: string | null
           bathrooms: number | null
           bedrooms: number | null
@@ -448,9 +467,11 @@ export type Database = {
           updated_at: string
           utilities_included: string[]
           viewing_instructions: string | null
+          viewing_windows: Json
         }
         Insert: {
           accessibility_features?: string[]
+          availability_windows?: Json
           available_from?: string | null
           bathrooms?: number | null
           bedrooms?: number | null
@@ -471,9 +492,11 @@ export type Database = {
           updated_at?: string
           utilities_included?: string[]
           viewing_instructions?: string | null
+          viewing_windows?: Json
         }
         Update: {
           accessibility_features?: string[]
+          availability_windows?: Json
           available_from?: string | null
           bathrooms?: number | null
           bedrooms?: number | null
@@ -494,6 +517,7 @@ export type Database = {
           updated_at?: string
           utilities_included?: string[]
           viewing_instructions?: string | null
+          viewing_windows?: Json
         }
         Relationships: [
           {
@@ -512,9 +536,13 @@ export type Database = {
           bedrooms_min: number | null
           budget_max: number | null
           budget_min: number | null
+          commute_origin_label: string | null
+          commute_origin_lat: number | null
+          commute_origin_lng: number | null
           commute_preference: string | null
           counties: string[]
           created_at: string
+          max_commute_minutes: number | null
           personalization_enabled: boolean
           schools_priority: number
           security_priority: number
@@ -528,9 +556,13 @@ export type Database = {
           bedrooms_min?: number | null
           budget_max?: number | null
           budget_min?: number | null
+          commute_origin_label?: string | null
+          commute_origin_lat?: number | null
+          commute_origin_lng?: number | null
           commute_preference?: string | null
           counties?: string[]
           created_at?: string
+          max_commute_minutes?: number | null
           personalization_enabled?: boolean
           schools_priority?: number
           security_priority?: number
@@ -544,9 +576,13 @@ export type Database = {
           bedrooms_min?: number | null
           budget_max?: number | null
           budget_min?: number | null
+          commute_origin_label?: string | null
+          commute_origin_lat?: number | null
+          commute_origin_lng?: number | null
           commute_preference?: string | null
           counties?: string[]
           created_at?: string
+          max_commute_minutes?: number | null
           personalization_enabled?: boolean
           schools_priority?: number
           security_priority?: number
