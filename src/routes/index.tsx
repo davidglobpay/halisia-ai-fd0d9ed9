@@ -22,7 +22,6 @@ import { KenyaCountyMap } from "@/components/halisia/kenya-county-map";
 import { Navbar } from "@/components/halisia/navbar";
 import { SearchBar } from "@/components/halisia/search-bar";
 import { AIOrb } from "@/components/halisia/ai-orb";
-import { HeroVideoCarousel } from "@/components/halisia/hero-video-carousel";
 import halisiaLogo from "@/assets/halisia-logo.png.asset.json";
 
 export const Route = createFileRoute("/")({
@@ -36,9 +35,9 @@ function Landing() {
     <div className="min-h-screen">
       <Navbar />
 
-      {/* HERO — cinematic video carousel */}
+      {/* HERO — static cinematic stage (videos removed) */}
       <section className="relative pt-20 md:pt-24 overflow-hidden">
-        <HeroVideoCarousel>
+        <HeroStage>
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
@@ -155,7 +154,7 @@ function Landing() {
               </div>
             </div>
           </motion.div>
-        </HeroVideoCarousel>
+        </HeroStage>
       </section>
 
       {/* COUNTY INTELLIGENCE MAP */}
