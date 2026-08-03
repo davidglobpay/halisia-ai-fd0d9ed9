@@ -24,18 +24,31 @@ export function useReducedMotionPref(): [boolean, () => void, (v: boolean) => vo
 
   useEffect(() => {
     const stored = read();
+    const apply = (v: boolean) => {
+      try {
+        document.documentElement.dataset["reducedMotion"] = v ? "1" : "0";
+      } catch {
+        /* ignore */
+      }
+    };
     if (stored != null) {
       setReduced(stored);
+      apply(stored);
     } else {
       try {
-        setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+        const os = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        setReduced(os);
+        apply(os);
       } catch {
         /* matchMedia unavailable */
       }
     }
     const sync = () => {
       const v = read();
-      if (v != null) setReduced(v);
+      if (v != null) {
+        setReduced(v);
+        apply(v);
+      }
     };
     window.addEventListener(EVENT, sync);
     window.addEventListener("storage", sync);
@@ -47,6 +60,11 @@ export function useReducedMotionPref(): [boolean, () => void, (v: boolean) => vo
 
   const set = useCallback((next: boolean) => {
     setReduced(next);
+    try {
+      document.documentElement.dataset["reducedMotion"] = next ? "1" : "0";
+    } catch {
+      /* ignore */
+    }
     try {
       window.localStorage.setItem(REDUCED_MOTION_KEY, next ? "1" : "0");
     } catch {
