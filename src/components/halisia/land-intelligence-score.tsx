@@ -19,6 +19,7 @@ import {
   ArrowLeftRight,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { formatDate, formatDateTime } from "@/lib/format-datetime";
 import {
   runIntelligenceEngine,
   PERSONAS,
@@ -139,11 +140,8 @@ function ModuleCard({ m, freshness }: { m: ModuleOutput; freshness: string }) {
             <span className="inline-flex items-center gap-1">
               <Database className="h-2.5 w-2.5" /> {m.sources.length} sources
             </span>
-            <span
-              className="inline-flex items-center gap-1"
-              title={new Date(freshness).toLocaleString()}
-            >
-              <Clock className="h-2.5 w-2.5" /> {new Date(freshness).toLocaleDateString()}
+            <span className="inline-flex items-center gap-1" title={formatDateTime(freshness)}>
+              <Clock className="h-2.5 w-2.5" /> {formatDate(freshness)}
             </span>
             <span>· Confidence {m.confidencePct}%</span>
           </div>
@@ -198,7 +196,7 @@ function ModuleCard({ m, freshness }: { m: ModuleOutput; freshness: string }) {
             )}
           </div>
           <div className="mt-1 text-[10px] text-muted-foreground">
-            Last updated {new Date(freshness).toLocaleString()}
+            Last updated {formatDateTime(freshness)}
           </div>
         </div>
 
@@ -465,7 +463,7 @@ export function LandIntelligenceScore({
           <ArrowLeftRight className="h-3.5 w-3.5" /> Compare two locations
         </Link>
         <span className="text-[10px] text-muted-foreground ml-auto">
-          Generated {new Date(decision.freshness).toLocaleString()}
+          Generated {formatDateTime(decision.freshness)}
         </span>
       </div>
       {pdfError && (
@@ -500,8 +498,7 @@ export function LandIntelligenceScore({
 
       <p className="mt-3 text-[10px] text-muted-foreground leading-relaxed">
         Predictions are estimates, not certainties. Verify title, zoning and site conditions with
-        licensed professionals before any transaction. Updated{" "}
-        {new Date(decision.freshness).toLocaleString()}.
+        licensed professionals before any transaction. Updated {formatDateTime(decision.freshness)}.
       </p>
     </section>
   );

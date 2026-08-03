@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TitleDeedRouteImport } from './routes/title-deed'
+import { Route as StyleGuideRouteImport } from './routes/style-guide'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ReportRouteImport } from './routes/report'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
@@ -41,6 +42,11 @@ import { Route as AuthenticatedSellEditIdRouteImport } from './routes/_authentic
 const TitleDeedRoute = TitleDeedRouteImport.update({
   id: '/title-deed',
   path: '/title-deed',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StyleGuideRoute = StyleGuideRouteImport.update({
+  id: '/style-guide',
+  path: '/style-guide',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -191,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/marketplace': typeof MarketplaceRouteWithChildren
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/style-guide': typeof StyleGuideRoute
   '/title-deed': typeof TitleDeedRoute
   '/account': typeof AuthenticatedAccountRoute
   '/contributions': typeof AuthenticatedContributionsRoute
@@ -219,6 +226,7 @@ export interface FileRoutesByTo {
   '/logo-qa': typeof LogoQaRoute
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/style-guide': typeof StyleGuideRoute
   '/title-deed': typeof TitleDeedRoute
   '/account': typeof AuthenticatedAccountRoute
   '/contributions': typeof AuthenticatedContributionsRoute
@@ -250,6 +258,7 @@ export interface FileRoutesById {
   '/marketplace': typeof MarketplaceRouteWithChildren
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/style-guide': typeof StyleGuideRoute
   '/title-deed': typeof TitleDeedRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/contributions': typeof AuthenticatedContributionsRoute
@@ -281,6 +290,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/report'
     | '/reset-password'
+    | '/style-guide'
     | '/title-deed'
     | '/account'
     | '/contributions'
@@ -309,6 +319,7 @@ export interface FileRouteTypes {
     | '/logo-qa'
     | '/report'
     | '/reset-password'
+    | '/style-guide'
     | '/title-deed'
     | '/account'
     | '/contributions'
@@ -339,6 +350,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/report'
     | '/reset-password'
+    | '/style-guide'
     | '/title-deed'
     | '/_authenticated/account'
     | '/_authenticated/contributions'
@@ -370,6 +382,7 @@ export interface RootRouteChildren {
   MarketplaceRoute: typeof MarketplaceRouteWithChildren
   ReportRoute: typeof ReportRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  StyleGuideRoute: typeof StyleGuideRoute
   TitleDeedRoute: typeof TitleDeedRoute
   ApiChatRoute: typeof ApiChatRoute
   CountyCodeRoute: typeof CountyCodeRoute
@@ -382,6 +395,13 @@ declare module '@tanstack/react-router' {
       path: '/title-deed'
       fullPath: '/title-deed'
       preLoaderRoute: typeof TitleDeedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/style-guide': {
+      id: '/style-guide'
+      path: '/style-guide'
+      fullPath: '/style-guide'
+      preLoaderRoute: typeof StyleGuideRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -635,6 +655,7 @@ const rootRouteChildren: RootRouteChildren = {
   MarketplaceRoute: MarketplaceRouteWithChildren,
   ReportRoute: ReportRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  StyleGuideRoute: StyleGuideRoute,
   TitleDeedRoute: TitleDeedRoute,
   ApiChatRoute: ApiChatRoute,
   CountyCodeRoute: CountyCodeRoute,
