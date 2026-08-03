@@ -1,0 +1,204 @@
+/**
+ * CSV + PDF export of seller analytics (lead quality, inquiry trends, views,
+ * saves, contact requests and the suggested actions shown in the UI).
+ */
+import jsPDF from "jspdf";
+import type { ListingInsight } from "@/lib/seller-tools";
+
+function csvCell(v: unknown): string {
+  const s = String(v ?? "");
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+const HEADERS = [
+  "Listing",
+  "County",
+  "Type",
+  "Status",
+  "Completeness %",
+  "Views",
+  "Saves",
+  "Enquiries",
+  "Contact requests",
+  "Lead quality",
+  "Lead quality reason",
+  "Enquiries last 7d",
+  "Enquiries prior 7d",
+  "7-day trend %",
+  "Save rate %",
+  "Enquiry rate %",
+  "Suggested follow-ups",
+  "Suggested improvements",
+];
+
+export function insightsToCsv(rows: ListingInsight[]): string {
+  const lines = [HEADERS.join(",")];
+  for (const r of rows) {
+    lines.push(
+      [
+        r.property.title,
+        r.property.county ?? "",
+        r.property.kind,
+        r.property.status,
+        r.property.completeness_pct,
+        r.views,
+        r.saves,
+        r.leads.length,
+        r.contactRequests,
+        r.quality,
+        r.qualityReason,
+        r.leadsLast7,
+        r.leadsPrev7,
+        r.trendPct,
+        r.saveRate,
+        r.enquiryRate,
+        r.followUps.join(" | "),
+        r.improvements.join(" | "),
+      ]
+        .map(csvCell)
+        .join(","),
+    );
+  }
+  return lines.join("\n");
+}
+
+function download(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+export function downloadSellerCsv(rows: ListingInsight[]): string {
+  const filename = `halisia-seller-analytics-${new Date().toISOString().slice(0, 10)}.csv`;
+  download(new Blob([insightsToCsv(rows)], { type: "text/csv;charset=utf-8" }), filename);
+  return filename;
+}
+
+export function downloadSellerPdf(rows: ListingInsight[]): string {
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  const W = doc.internal.pageSize.getWidth();
+  const H = doc.internal.pageSize.getHeight();
+  const M = 40;
+  let y = M;
+
+  const ensure = (need: number) => {
+    if (y + need > H - M) {
+      doc.addPage();
+      y = M;
+    }
+  };
+
+  doc.setFillColor(7, 30, 61);
+  doc.rect(0, 0, W, 86, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  doc.text("Seller analytics report", M, 46);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(160, 190, 215);
+  doc.text(
+    `HALISIA AI · generated ${new Date().toLocaleString("en-KE")} · ${rows.length} listing(s)`,
+    M,
+    64,
+  );
+  y = 110;
+
+  const totals = rows.reduce(
+    (a, r) => ({
+      views: a.views + r.views,
+      saves: a.saves + r.saves,
+      leads: a.leads + r.leads.length,
+      contacts: a.contacts + r.contactRequests,
+    }),
+    { views: 0, saves: 0, leads: 0, contacts: 0 },
+  );
+
+  doc.setTextColor(22, 30, 46);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text("Portfolio totals", M, y);
+  y += 16;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.text(
+    `Views ${totals.views}   ·   Saves ${totals.saves}   ·   Enquiries ${totals.leads}   ·   Contact requests ${totals.contacts}`,
+    M,
+    y,
+  );
+  y += 24;
+
+  for (const r of rows) {
+    ensure(150);
+    doc.setDrawColor(220, 226, 236);
+    doc.line(M, y, W - M, y);
+    y += 16;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text(doc.splitTextToSize(r.property.title, W - M * 2)[0] ?? "Listing", M, y);
+    y += 14;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(110, 120, 140);
+    doc.text(
+      `${r.property.county ?? "Kenya"} · ${r.property.kind} · ${r.property.status} · ${r.property.completeness_pct}% complete`,
+      M,
+      y,
+    );
+    y += 16;
+    doc.setTextColor(22, 30, 46);
+    doc.text(
+      `Views ${r.views}  |  Saves ${r.saves}  |  Enquiries ${r.leads.length}  |  Contact requests ${r.contactRequests}`,
+      M,
+      y,
+    );
+    y += 13;
+    doc.text(
+      `Lead quality: ${r.quality.toUpperCase()} — ${r.qualityReason}`,
+      M,
+      y,
+    );
+    y += 13;
+    doc.text(
+      `7-day trend ${r.trendPct > 0 ? "+" : ""}${r.trendPct}% (${r.leadsLast7} vs ${r.leadsPrev7}) · save rate ${r.saveRate}% · enquiry rate ${r.enquiryRate}%`,
+      M,
+      y,
+    );
+    y += 16;
+
+    const block = (title: string, items: string[]) => {
+      ensure(30 + items.length * 12);
+      doc.setFont("helvetica", "bold");
+      doc.text(title, M, y);
+      y += 12;
+      doc.setFont("helvetica", "normal");
+      for (const it of items) {
+        const lines = doc.splitTextToSize(`• ${it}`, W - M * 2 - 8) as string[];
+        ensure(lines.length * 11 + 4);
+        doc.text(lines, M + 8, y);
+        y += lines.length * 11;
+      }
+      y += 6;
+    };
+    block("Suggested follow-ups", r.followUps);
+    block("Suggested improvements", r.improvements);
+  }
+
+  ensure(40);
+  doc.setFontSize(8);
+  doc.setTextColor(140, 150, 168);
+  doc.text(
+    "Indicative analytics from listing activity on HALISIA AI. Not a valuation or a guarantee of sale.",
+    M,
+    H - 28,
+  );
+
+  const filename = `halisia-seller-analytics-${new Date().toISOString().slice(0, 10)}.pdf`;
+  doc.save(filename);
+  return filename;
+}

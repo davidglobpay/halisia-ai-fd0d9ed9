@@ -31,6 +31,7 @@ import { Route as AuthenticatedProsRouteImport } from './routes/_authenticated/p
 import { Route as AuthenticatedFinancingRouteImport } from './routes/_authenticated/financing'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedSellNewRouteImport } from './routes/_authenticated/sell.new'
+import { Route as AuthenticatedSellEditIdRouteImport } from './routes/_authenticated/sell.edit.$id'
 
 const TitleDeedRoute = TitleDeedRouteImport.update({
   id: '/title-deed',
@@ -142,6 +143,11 @@ const AuthenticatedSellNewRoute = AuthenticatedSellNewRouteImport.update({
   path: '/sell/new',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSellEditIdRoute = AuthenticatedSellEditIdRouteImport.update({
+  id: '/sell/edit/$id',
+  path: '/sell/edit/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -165,6 +171,7 @@ export interface FileRoutesByFullPath {
   '/marketplace/$id': typeof MarketplaceIdRoute
   '/marketplace/': typeof MarketplaceIndexRoute
   '/sell/new': typeof AuthenticatedSellNewRoute
+  '/sell/edit/$id': typeof AuthenticatedSellEditIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -187,6 +194,7 @@ export interface FileRoutesByTo {
   '/marketplace/$id': typeof MarketplaceIdRoute
   '/marketplace': typeof MarketplaceIndexRoute
   '/sell/new': typeof AuthenticatedSellNewRoute
+  '/sell/edit/$id': typeof AuthenticatedSellEditIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -212,6 +220,7 @@ export interface FileRoutesById {
   '/marketplace/$id': typeof MarketplaceIdRoute
   '/marketplace/': typeof MarketplaceIndexRoute
   '/_authenticated/sell/new': typeof AuthenticatedSellNewRoute
+  '/_authenticated/sell/edit/$id': typeof AuthenticatedSellEditIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -237,6 +246,7 @@ export interface FileRouteTypes {
     | '/marketplace/$id'
     | '/marketplace/'
     | '/sell/new'
+    | '/sell/edit/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -259,6 +269,7 @@ export interface FileRouteTypes {
     | '/marketplace/$id'
     | '/marketplace'
     | '/sell/new'
+    | '/sell/edit/$id'
   id:
     | '__root__'
     | '/'
@@ -283,6 +294,7 @@ export interface FileRouteTypes {
     | '/marketplace/$id'
     | '/marketplace/'
     | '/_authenticated/sell/new'
+    | '/_authenticated/sell/edit/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -457,6 +469,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSellNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/sell/edit/$id': {
+      id: '/_authenticated/sell/edit/$id'
+      path: '/sell/edit/$id'
+      fullPath: '/sell/edit/$id'
+      preLoaderRoute: typeof AuthenticatedSellEditIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -468,6 +487,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSavedRoute: typeof AuthenticatedSavedRoute
   AuthenticatedSellerToolsRoute: typeof AuthenticatedSellerToolsRoute
   AuthenticatedSellNewRoute: typeof AuthenticatedSellNewRoute
+  AuthenticatedSellEditIdRoute: typeof AuthenticatedSellEditIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -478,6 +498,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSavedRoute: AuthenticatedSavedRoute,
   AuthenticatedSellerToolsRoute: AuthenticatedSellerToolsRoute,
   AuthenticatedSellNewRoute: AuthenticatedSellNewRoute,
+  AuthenticatedSellEditIdRoute: AuthenticatedSellEditIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
