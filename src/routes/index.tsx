@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 import { fallback } from "@tanstack/zod-adapter";
 import { motion } from "framer-motion";
-import type { ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   ArrowRight,
   Brain,
@@ -18,12 +18,17 @@ import {
   FileText,
   Quote,
   Star,
+  Play,
+  Pause,
 } from "lucide-react";
 import { KenyaCountyMap } from "@/components/halisia/kenya-county-map";
 import { Navbar } from "@/components/halisia/navbar";
 import { SearchBar } from "@/components/halisia/search-bar";
 import { AIOrb } from "@/components/halisia/ai-orb";
 import { DataPipeline } from "@/components/halisia/data-pipeline";
+import { ScoreDrivers } from "@/components/halisia/score-drivers";
+import { useReducedMotionPref } from "@/hooks/use-reduced-motion-pref";
+import { recordSearchConversion } from "@/lib/analytics";
 import halisiaLogo from "@/assets/halisia-logo.png.asset.json";
 import heroIntro from "@/assets/hero/hero-intro.mp4.asset.json";
 import heroIntroPoster from "@/assets/hero/hero-intro-poster.jpg.asset.json";
@@ -39,31 +44,79 @@ function Landing() {
 }
 
 /**
- * Static hero stage. Replaces the former video carousel — same framing,
- * aspect ratios and foreground layout, just a cinematic gradient backdrop.
+ * Cinematic hero stage. The intro film never auto-plays on first load: the
+ * poster frame is shown instead and the visitor opts in. On save-data,
+ * slow connections, reduced-motion or blocked autoplay we stay on the still.
  */
 function HeroStage({ children }: { children?: ReactNode }) {
+  const [reduced] = useReducedMotionPref();
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [loadVideo, setLoadVideo] = useState(false);
+  const [lowBandwidth, setLowBandwidth] = useState(false);
+
+  useEffect(() => {
+    type Conn = { saveData?: boolean; effectiveType?: string };
+    const c = (navigator as Navigator & { connection?: Conn }).connection;
+    if (c?.saveData || (c?.effectiveType && /(^|-)2g$/.test(c.effectiveType))) {
+      setLowBandwidth(true);
+    }
+  }, []);
+
+  const toggle = useCallback(() => {
+    if (!loadVideo) {
+      setLoadVideo(true);
+      setPlaying(true);
+      return;
+    }
+    const el = videoRef.current;
+    if (!el) return;
+    if (el.paused) {
+      void el.play().then(
+        () => setPlaying(true),
+        () => setPlaying(false),
+      );
+    } else {
+      el.pause();
+      setPlaying(false);
+    }
+  }, [loadVideo]);
+
   return (
     <div className="relative w-full overflow-hidden aspect-[3/4] sm:aspect-[16/10] md:aspect-[21/9] max-h-[92vh]">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_35%,oklch(0.34_0.09_240)_0%,oklch(0.19_0.06_255)_45%,oklch(0.13_0.04_260)_100%)]" />
-      {/* Cinematic intro film — plays once on landing, then holds its last
-          frame. Muted + playsInline so mobile autoplay is allowed. */}
-      <video
-        aria-hidden="true"
-        className="absolute inset-0 h-full w-full object-cover opacity-45 motion-reduce:hidden [filter:contrast(1.06)_saturate(1.12)]"
-        src={heroIntro.url}
-        poster={heroIntroPoster.url}
-        autoPlay
-        muted
-        playsInline
-        preload="metadata"
-      />
+      {/* Static preview frame — always present, and the only visual until the
+          visitor asks for the film. */}
       <img
         aria-hidden="true"
         src={heroIntroPoster.url}
         alt=""
-        className="absolute inset-0 hidden h-full w-full object-cover opacity-40 motion-reduce:block"
+        className={`absolute inset-0 h-full w-full object-cover opacity-40 ${
+          playing ? "hidden" : "block"
+        }`}
       />
+      {loadVideo && (
+        <video
+          ref={videoRef}
+          aria-hidden="true"
+          data-testid="hero-video"
+          className={`absolute inset-0 h-full w-full object-cover opacity-45 [filter:contrast(1.06)_saturate(1.12)] ${
+            playing ? "block" : "hidden"
+          }`}
+          src={heroIntro.url}
+          poster={heroIntroPoster.url}
+          muted
+          playsInline
+          autoPlay
+          preload="none"
+          onPlaying={() => setPlaying(true)}
+          onPause={() => setPlaying(false)}
+          onError={() => {
+            setPlaying(false);
+            setLoadVideo(false);
+          }}
+        />
+      )}
       {/* Legibility scrim so the logo, headline and search bar stay readable. */}
       <div
         aria-hidden="true"
