@@ -111,7 +111,7 @@ function ConfidenceDots({
         : "sparse data; treat as a directional signal only."
   }`;
   return (
-    <span className="inline-flex items-center gap-0.5" title={tip} aria-label={tip}>
+    <span className="inline-flex items-center gap-0.5" role="img" title={tip} aria-label={tip}>
       {[0, 1, 2].map((i) => (
         <span
           key={i}
