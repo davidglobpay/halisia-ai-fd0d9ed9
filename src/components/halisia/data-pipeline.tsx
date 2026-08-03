@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import {
   Brain,
   ChevronDown,
@@ -155,12 +154,8 @@ export function DataPipeline() {
             const last = i === PIPELINE_STAGES.length - 1;
             const Wrapper = s.href ? "a" : "div";
             return (
-              <motion.li
+              <li
                 key={s.title}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-60px" }}
-                transition={{ delay: Math.min(i, 6) * 0.05 }}
                 className="relative flex flex-col items-stretch"
                 data-testid="pipeline-stage"
               >
@@ -205,7 +200,7 @@ export function DataPipeline() {
                     className="pointer-events-none absolute right-0 top-1/2 hidden h-px w-4 -translate-y-1/2 translate-x-full bg-gradient-to-r from-accent/50 to-transparent lg:block"
                   />
                 )}
-              </motion.li>
+              </li>
             );
           })}
         </ol>
