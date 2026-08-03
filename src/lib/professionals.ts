@@ -27,14 +27,14 @@ export type AvailabilitySlot = {
 
 export const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
-export function parseEvidence(p: Pick<ProProfile, "verification_evidence">): VerificationEvidence[] {
+export function parseEvidence(
+  p: Pick<ProProfile, "verification_evidence">,
+): VerificationEvidence[] {
   const raw = p.verification_evidence;
   return Array.isArray(raw) ? (raw as unknown as VerificationEvidence[]) : [];
 }
 
-export function parseAvailability(
-  p: Pick<ProProfile, "availability_slots">,
-): AvailabilitySlot[] {
+export function parseAvailability(p: Pick<ProProfile, "availability_slots">): AvailabilitySlot[] {
   const raw = p.availability_slots;
   return Array.isArray(raw) ? (raw as unknown as AvailabilitySlot[]) : [];
 }
@@ -62,7 +62,8 @@ export function profileReadiness(p: Partial<ProProfile>): { ok: boolean; missing
   if (!p.county?.trim()) missing.push("Base county");
   if (!p.bio?.trim() || p.bio.trim().length < 60) missing.push("Short bio (60+ characters)");
   if (p.years_experience == null) missing.push("Years of experience");
-  if (!p.contact_email?.trim() && !p.contact_phone?.trim()) missing.push("A contact email or phone");
+  if (!p.contact_email?.trim() && !p.contact_phone?.trim())
+    missing.push("A contact email or phone");
   return { ok: missing.length === 0, missing };
 }
 

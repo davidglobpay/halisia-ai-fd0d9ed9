@@ -12,10 +12,7 @@ export function ScoreDrivers() {
   const [reduced] = useReducedMotionPref();
   const [openTip, setOpenTip] = useState<string | null>(null);
 
-  const drivers = useMemo(
-    () => [...PIPELINE_STAGES].sort((a, b) => b.weight - a.weight),
-    [],
-  );
+  const drivers = useMemo(() => [...PIPELINE_STAGES].sort((a, b) => b.weight - a.weight), []);
   const max = drivers[0]?.weight ?? 1;
 
   const band = (pct: number) =>
@@ -112,8 +109,8 @@ export function ScoreDrivers() {
         </ul>
 
         <p className="mt-6 text-[11px] text-muted-foreground/80">
-          Weights are indicative and shift with your persona — a lender, a developer and a renter
-          do not value the same signals equally.
+          Weights are indicative and shift with your persona — a lender, a developer and a renter do
+          not value the same signals equally.
         </p>
       </div>
     </section>
