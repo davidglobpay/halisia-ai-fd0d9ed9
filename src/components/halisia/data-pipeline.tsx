@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Brain,
+  Check,
   ChevronDown,
   CloudSun,
   Landmark,
@@ -23,9 +24,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ConfidenceIndicator } from "@/components/halisia/ds/confidence-indicator";
-import { track } from "@/lib/analytics";
+import { recordStageOpen, track } from "@/lib/analytics";
+import { useReducedMotionPref } from "@/hooks/use-reduced-motion-pref";
 
-type Stage = {
+export type Stage = {
   title: string;
   role: string;
   detail: string;
