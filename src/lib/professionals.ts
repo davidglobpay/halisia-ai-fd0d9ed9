@@ -7,6 +7,65 @@ export type ProProfile = Database["public"]["Tables"]["professional_profiles"]["
 export type ProReview = Database["public"]["Tables"]["professional_reviews"]["Row"];
 export type ProRequest = Database["public"]["Tables"]["professional_requests"]["Row"];
 
+/** Evidence a provider uploads to support their registration claim. */
+export type VerificationEvidence = {
+  label: string;
+  url: string;
+  kind: "registration_certificate" | "practising_licence" | "id_document" | "portfolio" | "other";
+  addedAt: string;
+};
+
+/** A recurring weekly window the provider is available for consultations. */
+export type AvailabilitySlot = {
+  /** 0 = Sunday … 6 = Saturday */
+  day: number;
+  /** "09:00" */
+  start: string;
+  /** "12:30" */
+  end: string;
+};
+
+export const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
+
+export function parseEvidence(p: Pick<ProProfile, "verification_evidence">): VerificationEvidence[] {
+  const raw = p.verification_evidence;
+  return Array.isArray(raw) ? (raw as unknown as VerificationEvidence[]) : [];
+}
+
+export function parseAvailability(
+  p: Pick<ProProfile, "availability_slots">,
+): AvailabilitySlot[] {
+  const raw = p.availability_slots;
+  return Array.isArray(raw) ? (raw as unknown as AvailabilitySlot[]) : [];
+}
+
+/**
+ * Registration details are private until Halisia verifies them, so the
+ * directory never implies a regulator check that has not happened.
+ */
+export function publicRegistration(p: ProProfile): {
+  body: string | null;
+  number: string | null;
+  hidden: boolean;
+} {
+  if (p.verification_status === "verified") {
+    return { body: p.registration_body, number: p.registration_number, hidden: false };
+  }
+  return { body: p.registration_body, number: null, hidden: !!p.registration_number };
+}
+
+/** Fields a profile must carry before it can be published to the directory. */
+export function profileReadiness(p: Partial<ProProfile>): { ok: boolean; missing: string[] } {
+  const missing: string[] = [];
+  if (!p.display_name?.trim()) missing.push("Display name");
+  if (!p.category) missing.push("Category");
+  if (!p.county?.trim()) missing.push("Base county");
+  if (!p.bio?.trim() || p.bio.trim().length < 60) missing.push("Short bio (60+ characters)");
+  if (p.years_experience == null) missing.push("Years of experience");
+  if (!p.contact_email?.trim() && !p.contact_phone?.trim()) missing.push("A contact email or phone");
+  return { ok: missing.length === 0, missing };
+}
+
 export const PRO_CATEGORIES: Array<{ value: ProCategory; label: string; blurb: string }> = [
   { value: "architect", label: "Architect", blurb: "Concept design, drawings and approvals." },
   { value: "engineer", label: "Engineer", blurb: "Structural, civil, electrical and mechanical." },
@@ -121,9 +180,46 @@ export async function saveProProfile(
   if (!userRes?.user) throw new Error("Sign in to manage your service profile");
   // verification_status is never set from the client — only Halisia can verify.
   const { verification_status: _v, verified_at: _va, ...safe } = input;
+  if (safe.published) {
+    const readiness = profileReadiness({ ...input });
+    if (!readiness.ok) {
+      throw new Error(`Complete these before publishing: ${readiness.missing.join(", ")}`);
+    }
+  }
   const { data, error } = await supabase
     .from("professional_profiles")
     .upsert({ ...safe, user_id: userRes.user.id }, { onConflict: "user_id,category" })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Submit registration evidence for review. Only ever moves the profile to
+ * `pending` — a `verified` badge is granted by Halisia, never self-claimed.
+ */
+export async function submitVerification(input: {
+  id: string;
+  evidence: VerificationEvidence[];
+  registration_body?: string | null;
+  registration_number?: string | null;
+  note?: string | null;
+}): Promise<ProProfile> {
+  if (input.evidence.length === 0) {
+    throw new Error("Attach at least one document or link as evidence");
+  }
+  const { data, error } = await supabase
+    .from("professional_profiles")
+    .update({
+      verification_evidence: input.evidence as unknown as never,
+      verification_submitted_at: new Date().toISOString(),
+      verification_note: input.note ?? null,
+      registration_body: input.registration_body ?? null,
+      registration_number: input.registration_number ?? null,
+      verification_status: "pending",
+    })
+    .eq("id", input.id)
     .select()
     .single();
   if (error) throw error;
@@ -167,6 +263,8 @@ export async function requestProfessional(input: {
   contact_email?: string | null;
   contact_phone?: string | null;
   property_id?: string | null;
+  preferred_start?: string | null;
+  preferred_end?: string | null;
 }): Promise<ProRequest> {
   const { data: userRes } = await supabase.auth.getUser();
   if (!userRes?.user) throw new Error("Sign in to send a contact request");
@@ -187,6 +285,62 @@ export async function listRequestsForMe(): Promise<ProRequest[]> {
     .order("created_at", { ascending: false });
   if (error) throw error;
   return data ?? [];
+}
+
+/** Requests I have sent, for the "my inquiries" panel on the dashboard. */
+export async function listMyRequests(): Promise<ProRequest[]> {
+  const { data: userRes } = await supabase.auth.getUser();
+  if (!userRes?.user) return [];
+  const { data, error } = await supabase
+    .from("professional_requests")
+    .select("*")
+    .eq("requester_id", userRes.user.id)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** Provider confirms a consultation window (defaults to the requested one). */
+export async function confirmRequestWindow(input: {
+  id: string;
+  start: string;
+  end: string;
+}): Promise<void> {
+  const { error } = await supabase
+    .from("professional_requests")
+    .update({ confirmed_start: input.start, confirmed_end: input.end, status: "scheduled" })
+    .eq("id", input.id);
+  if (error) throw error;
+}
+
+/**
+ * Turn a provider's weekly availability into concrete bookable windows over
+ * the next `days` days, skipping anything already in the past.
+ */
+export function upcomingWindows(
+  slots: AvailabilitySlot[],
+  days = 14,
+): Array<{ start: Date; end: Date; label: string }> {
+  const out: Array<{ start: Date; end: Date; label: string }> = [];
+  const now = new Date();
+  for (let i = 0; i < days; i++) {
+    const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
+    for (const s of slots.filter((s) => s.day === day.getDay())) {
+      const [sh, sm] = s.start.split(":").map(Number);
+      const [eh, em] = s.end.split(":").map(Number);
+      const start = new Date(day);
+      start.setHours(sh || 0, sm || 0, 0, 0);
+      const end = new Date(day);
+      end.setHours(eh || 0, em || 0, 0, 0);
+      if (end <= now || end <= start) continue;
+      out.push({
+        start,
+        end,
+        label: `${start.toLocaleDateString("en-KE", { weekday: "short", day: "numeric", month: "short" })} · ${s.start}–${s.end}`,
+      });
+    }
+  }
+  return out.sort((a, b) => a.start.getTime() - b.start.getTime()).slice(0, 12);
 }
 
 export async function setRequestStatus(id: string, status: string): Promise<void> {
