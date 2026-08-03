@@ -13,23 +13,23 @@
 
 export const colors = {
   // Kenyan flag palette
-  black: "#05070A",
-  charcoal: "#0D1116",
-  graphite: "#151A21",
-  white: "#F7F8FA",
-  offWhite: "#E9ECF2",
-  emerald: "#0E7C3A", // primary — verified / positive
-  emeraldGlow: "#22C55E",
-  emeraldDeep: "#064023",
-  crimson: "#C8102E", // destructive — risk / alert
-  crimsonGlow: "#F43F5E",
-  crimsonDeep: "#7A0A1C",
+  black: "#050706",
+  charcoal: "#0B0F0D",
+  graphite: "#111614",
+  white: "#FFFFFF",
+  offWhite: "#F7F8F6",
+  emerald: "#008F55", // primary — verified / positive
+  emeraldGlow: "#20D878",
+  emeraldDeep: "#006B3F",
+  crimson: "#E12635", // destructive — risk / alert
+  crimsonGlow: "#FF4A58",
+  crimsonDeep: "#BB1E2D",
   // Accents (use sparingly)
-  gold: "#D4A017",
-  goldSoft: "#E8C560",
-  champagne: "#F1DFA4",
-  silver: "#C7CED6",
-  silverBrushed: "#8B94A0",
+  gold: "#D4AF37",
+  goldSoft: "#F0C75E",
+  champagne: "#FFE59A",
+  silver: "#DCE3E6",
+  silverBrushed: "#AEB7BC",
 } as const;
 
 export const gradients = {
@@ -44,10 +44,10 @@ export const gradients = {
 export const radii = {
   xs: "6px",
   sm: "10px",
-  md: "14px",
-  lg: "18px",
-  xl: "22px", // canonical glass radius
-  "2xl": "28px",
+  md: "12px",
+  lg: "16px",
+  xl: "20px", // canonical glass radius
+  "2xl": "24px",
   pill: "9999px",
 } as const;
 
@@ -81,8 +81,8 @@ export const blur = {
 
 export const motion = {
   fast: "150ms",
-  base: "220ms",
-  slow: "420ms",
+  base: "180ms",
+  slow: "320ms",
   ease: "cubic-bezier(0.22, 1, 0.36, 1)",
 } as const;
 
