@@ -11,7 +11,12 @@ export async function uploadListingPhoto(file: File): Promise<string> {
   if (!file.type.startsWith("image/")) throw new Error("Only image files are supported");
   if (file.size > 8 * 1024 * 1024) throw new Error("Images must be under 8MB");
 
-  const ext = file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+  const ext =
+    file.name
+      .split(".")
+      .pop()
+      ?.toLowerCase()
+      .replace(/[^a-z0-9]/g, "") || "jpg";
   const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
   const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
     cacheControl: "3600",

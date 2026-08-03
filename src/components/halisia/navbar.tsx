@@ -11,10 +11,10 @@ const LINKS: Array<{ to: string; label: string }> = [
   { to: "/explore", label: "Explore" },
   { to: "/marketplace", label: "Marketplace" },
   { to: "/title-deed", label: "Title Deed" },
+  { to: "/connections", label: "Connections" },
   { to: "/compare", label: "Compare" },
   { to: "/report", label: "Reports" },
-  { to: "/_authenticated/pros", label: "Pros" },
-  { to: "/_authenticated/financing", label: "Financing" },
+  { to: "/dashboard", label: "Dashboard" },
 ];
 
 export function Navbar() {

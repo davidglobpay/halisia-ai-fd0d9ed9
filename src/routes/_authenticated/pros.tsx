@@ -104,8 +104,8 @@ function ProsPage() {
                     </div>
                   )}
                   <div className="text-[10px] text-muted-foreground mt-0.5">
-                    {p.currency} {p.amount?.toLocaleString?.() ?? "—"} · {p.timeline_days ?? "—"} days ·{" "}
-                    {new Date(p.created_at).toLocaleDateString()}
+                    {p.currency} {p.amount?.toLocaleString?.() ?? "—"} · {p.timeline_days ?? "—"}{" "}
+                    days · {new Date(p.created_at).toLocaleDateString()}
                   </div>
                 </div>
                 <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-widest">
@@ -152,9 +152,7 @@ function BidCard({ r }: { r: BidRequestRow }) {
         <div className="min-w-0">
           <div className="text-[11px] uppercase tracking-widest text-accent">{r.category}</div>
           <h3 className="text-sm font-semibold mt-1 truncate">{r.title}</h3>
-          {r.county && (
-            <div className="text-[11px] text-muted-foreground mt-0.5">{r.county}</div>
-          )}
+          {r.county && <div className="text-[11px] text-muted-foreground mt-0.5">{r.county}</div>}
         </div>
         {r.budget_max != null && (
           <div className="text-xs text-muted-foreground tabular-nums shrink-0">
@@ -163,9 +161,7 @@ function BidCard({ r }: { r: BidRequestRow }) {
           </div>
         )}
       </div>
-      {r.scope && (
-        <p className="mt-2 text-xs text-muted-foreground line-clamp-3">{r.scope}</p>
-      )}
+      {r.scope && <p className="mt-2 text-xs text-muted-foreground line-clamp-3">{r.scope}</p>}
       {r.timeline && (
         <p className="mt-1 text-[11px] text-muted-foreground">Timeline: {r.timeline}</p>
       )}

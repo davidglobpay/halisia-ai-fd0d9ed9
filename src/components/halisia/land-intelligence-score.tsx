@@ -73,7 +73,8 @@ const SOURCE_URLS: Record<string, string> = {
   OpenStreetMap: "https://www.openstreetmap.org/",
   "OpenStreetMap POIs": "https://wiki.openstreetmap.org/wiki/Points_of_interest",
   "HALISIA community reports (planned)": "https://halisia.ai/community",
-  "County CIDPs (external)": "https://www.cog.go.ke/downloads/category/106-county-integrated-development-plans-cidps",
+  "County CIDPs (external)":
+    "https://www.cog.go.ke/downloads/category/106-county-integrated-development-plans-cidps",
 };
 
 function sourceUrl(label: string): string | null {
@@ -172,7 +173,7 @@ function ModuleCard({ m, freshness }: { m: ModuleOutput; freshness: string }) {
             <ShieldCheck className="h-3 w-3" /> Sources ({m.sources.length})
           </div>
           <div className="mt-1 flex flex-wrap gap-1">
-            {m.sources.map((s) => (
+            {m.sources.map((s) =>
               (() => {
                 const url = sourceUrl(s);
                 const base =
@@ -193,8 +194,8 @@ function ModuleCard({ m, freshness }: { m: ModuleOutput; freshness: string }) {
                     {s}
                   </span>
                 );
-              })()
-            ))}
+              })(),
+            )}
           </div>
           <div className="mt-1 text-[10px] text-muted-foreground">
             Last updated {new Date(freshness).toLocaleString()}

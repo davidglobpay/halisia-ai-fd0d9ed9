@@ -35,7 +35,7 @@ function heuristic(input: LenderSummaryInput): LenderSummaryOutput {
   const dti =
     input.monthly_income && input.monthly_income > 0 && input.tenure_months
       ? Math.round(
-          ((input.requested_amount / input.tenure_months) / Number(input.monthly_income)) * 100,
+          (input.requested_amount / input.tenure_months / Number(input.monthly_income)) * 100,
         )
       : null;
   const ltv =

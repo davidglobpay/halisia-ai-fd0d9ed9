@@ -160,7 +160,8 @@ export function conceptEvidence(p: PropertyRow, concept: ConceptOutput | null): 
     {
       key: "price",
       label: "Asking price",
-      value: p.price != null ? `${p.currency} ${Number(p.price).toLocaleString("en-KE")}` : "Not stated",
+      value:
+        p.price != null ? `${p.currency} ${Number(p.price).toLocaleString("en-KE")}` : "Not stated",
       used: "Sets the land basis in payback and revenue bands.",
       confidence: p.price != null ? "medium" : "low",
       sourceKey: "listing",
@@ -176,7 +177,11 @@ export function conceptEvidence(p: PropertyRow, concept: ConceptOutput | null): 
     {
       key: "model",
       label: "Concept generation",
-      value: concept ? (concept.source === "ai" ? "AI model output" : "Deterministic fallback") : "Not generated",
+      value: concept
+        ? concept.source === "ai"
+          ? "AI model output"
+          : "Deterministic fallback"
+        : "Not generated",
       used: "Options, massing and phasing narratives.",
       confidence: concept?.source === "ai" ? "medium" : "low",
       sourceKey: "platform",
@@ -188,7 +193,19 @@ export function conceptEvidence(p: PropertyRow, concept: ConceptOutput | null): 
 /** Signals behind the investment-readiness assessment. */
 export function readinessEvidence(r: ReadinessResult): EvidenceBundle {
   const sourceFor = (key: string) =>
-    key === "location" ? "osm" : key === "market" ? "platform" : key === "feasibility" ? "openmeteo" : key === "documentation" ? "listing" : key === "concept" ? "platform" : key === "financial" ? "platform" : "platform";
+    key === "location"
+      ? "osm"
+      : key === "market"
+        ? "platform"
+        : key === "feasibility"
+          ? "openmeteo"
+          : key === "documentation"
+            ? "listing"
+            : key === "concept"
+              ? "platform"
+              : key === "financial"
+                ? "platform"
+                : "platform";
   const signals: EvidenceSignal[] = r.factors.map((f) => ({
     key: f.key,
     label: f.label,

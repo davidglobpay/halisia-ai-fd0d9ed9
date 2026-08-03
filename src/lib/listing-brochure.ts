@@ -1,20 +1,14 @@
 import type { PropertyRow } from "@/lib/properties";
 import type { ListingAiOutput } from "@/lib/ai-listing.functions";
 import jsPDF from "jspdf";
-import {
-  Document,
-  Packer,
-  Paragraph,
-  TextRun,
-  HeadingLevel,
-  AlignmentType,
-} from "docx";
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from "docx";
 
 function fmtPriceRange(ai: ListingAiOutput): string {
   const { min, max, currency } = ai.priceEstimate;
   if (min == null && max == null) return "Price on request";
   const nf = new Intl.NumberFormat("en-KE");
-  if (min != null && max != null) return `${currency} ${nf.format(min)} – ${nf.format(max)} (estimate)`;
+  if (min != null && max != null)
+    return `${currency} ${nf.format(min)} – ${nf.format(max)} (estimate)`;
   return `${currency} ${nf.format((min ?? max)!)} (estimate)`;
 }
 
@@ -102,7 +96,13 @@ export function formatPriceEstimate(ai: ListingAiOutput): string {
 
 // ---------- PDF brochure ----------
 
-const BRAND = { primary: "#0b1e3a", accent: "#00c2e8", gold: "#d4a017", ink: "#0e1526", mute: "#5b6a86" };
+const BRAND = {
+  primary: "#0b1e3a",
+  accent: "#00c2e8",
+  gold: "#d4a017",
+  ink: "#0e1526",
+  mute: "#5b6a86",
+};
 
 function hexToRgb(hex: string): [number, number, number] {
   const h = hex.replace("#", "");
@@ -357,8 +357,10 @@ export async function downloadBrochureDOCX(p_: PropertyRow, ai: ListingAiOutput)
   );
   if (p_.latitude != null && p_.longitude != null)
     children.push(bullet(`Coordinates: ${p_.latitude.toFixed(5)}, ${p_.longitude.toFixed(5)}`));
-  if ((p_.utilities ?? []).length) children.push(bullet(`Utilities: ${(p_.utilities ?? []).join(", ")}`));
-  if ((p_.amenities ?? []).length) children.push(bullet(`Amenities: ${(p_.amenities ?? []).join(", ")}`));
+  if ((p_.utilities ?? []).length)
+    children.push(bullet(`Utilities: ${(p_.utilities ?? []).join(", ")}`));
+  if ((p_.amenities ?? []).length)
+    children.push(bullet(`Amenities: ${(p_.amenities ?? []).join(", ")}`));
 
   children.push(h("Marketing highlights", HeadingLevel.HEADING_2));
   ai.marketingHighlights.forEach((x) => children.push(bullet(x)));

@@ -9,7 +9,9 @@ const TONE: Record<Confidence, string> = {
 
 export function ConfidencePill({ level }: { level: Confidence }) {
   return (
-    <span className={`rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-widest ${TONE[level]}`}>
+    <span
+      className={`rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-widest ${TONE[level]}`}
+    >
       {level} confidence
     </span>
   );

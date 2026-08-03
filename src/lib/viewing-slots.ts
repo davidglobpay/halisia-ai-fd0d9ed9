@@ -127,10 +127,7 @@ export async function requestSlot(input: {
   return data;
 }
 
-export async function setRequestStatus(
-  id: string,
-  status: RequestStatus,
-): Promise<ViewingRequest> {
+export async function setRequestStatus(id: string, status: RequestStatus): Promise<ViewingRequest> {
   const { data, error } = await supabase
     .from("viewings")
     .update({ status })

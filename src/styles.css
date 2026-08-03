@@ -65,7 +65,8 @@
   --color-crimson: var(--destructive);
   /* HALISIA typography hierarchy */
   --font-hero: "Cinzel Decorative", "Playfair Display", ui-serif, Georgia, serif;
-  --font-display: "League Spartan", "Poppins", "SF Pro Display", ui-sans-serif, system-ui, sans-serif;
+  --font-display:
+    "League Spartan", "Poppins", "SF Pro Display", ui-sans-serif, system-ui, sans-serif;
   --font-card: "Poppins", "League Spartan", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Open Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-label: "Montserrat", "Open Sans", ui-sans-serif, system-ui, sans-serif;
@@ -313,7 +314,7 @@
     100deg,
     rgba(255, 255, 255, 0.04) 0%,
     rgba(255, 255, 255, 0.09) 40%,
-    rgba(212, 160, 23, 0.10) 50%,
+    rgba(212, 160, 23, 0.1) 50%,
     rgba(255, 255, 255, 0.09) 60%,
     rgba(255, 255, 255, 0.04) 100%
   );

@@ -15,6 +15,7 @@ import { Route as ReportRouteImport } from './routes/report'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as LogoQaRouteImport } from './routes/logo-qa'
 import { Route as ExploreRouteImport } from './routes/explore'
+import { Route as ConnectionsRouteImport } from './routes/connections'
 import { Route as CompareLocationsRouteImport } from './routes/compare-locations'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -28,8 +29,11 @@ import { Route as AuthenticatedSellerToolsRouteImport } from './routes/_authenti
 import { Route as AuthenticatedSavedRouteImport } from './routes/_authenticated/saved'
 import { Route as AuthenticatedRentalsRouteImport } from './routes/_authenticated/rentals'
 import { Route as AuthenticatedProsRouteImport } from './routes/_authenticated/pros'
+import { Route as AuthenticatedProProfileRouteImport } from './routes/_authenticated/pro-profile'
 import { Route as AuthenticatedFinancingRouteImport } from './routes/_authenticated/financing'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedContributionsRouteImport } from './routes/_authenticated/contributions'
+import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedSellNewRouteImport } from './routes/_authenticated/sell.new'
 import { Route as AuthenticatedDevelopIdRouteImport } from './routes/_authenticated/develop.$id'
 import { Route as AuthenticatedSellEditIdRouteImport } from './routes/_authenticated/sell.edit.$id'
@@ -62,6 +66,11 @@ const LogoQaRoute = LogoQaRouteImport.update({
 const ExploreRoute = ExploreRouteImport.update({
   id: '/explore',
   path: '/explore',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConnectionsRoute = ConnectionsRouteImport.update({
+  id: '/connections',
+  path: '/connections',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CompareLocationsRoute = CompareLocationsRouteImport.update({
@@ -129,6 +138,11 @@ const AuthenticatedProsRoute = AuthenticatedProsRouteImport.update({
   path: '/pros',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedProProfileRoute = AuthenticatedProProfileRouteImport.update({
+  id: '/pro-profile',
+  path: '/pro-profile',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedFinancingRoute = AuthenticatedFinancingRouteImport.update({
   id: '/financing',
   path: '/financing',
@@ -137,6 +151,17 @@ const AuthenticatedFinancingRoute = AuthenticatedFinancingRouteImport.update({
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedContributionsRoute =
+  AuthenticatedContributionsRouteImport.update({
+    id: '/contributions',
+    path: '/contributions',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedSellNewRoute = AuthenticatedSellNewRouteImport.update({
@@ -160,14 +185,18 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/compare': typeof CompareRoute
   '/compare-locations': typeof CompareLocationsRoute
+  '/connections': typeof ConnectionsRoute
   '/explore': typeof ExploreRoute
   '/logo-qa': typeof LogoQaRoute
   '/marketplace': typeof MarketplaceRouteWithChildren
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/title-deed': typeof TitleDeedRoute
+  '/account': typeof AuthenticatedAccountRoute
+  '/contributions': typeof AuthenticatedContributionsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/financing': typeof AuthenticatedFinancingRoute
+  '/pro-profile': typeof AuthenticatedProProfileRoute
   '/pros': typeof AuthenticatedProsRoute
   '/rentals': typeof AuthenticatedRentalsRoute
   '/saved': typeof AuthenticatedSavedRoute
@@ -185,13 +214,17 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/compare': typeof CompareRoute
   '/compare-locations': typeof CompareLocationsRoute
+  '/connections': typeof ConnectionsRoute
   '/explore': typeof ExploreRoute
   '/logo-qa': typeof LogoQaRoute
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/title-deed': typeof TitleDeedRoute
+  '/account': typeof AuthenticatedAccountRoute
+  '/contributions': typeof AuthenticatedContributionsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/financing': typeof AuthenticatedFinancingRoute
+  '/pro-profile': typeof AuthenticatedProProfileRoute
   '/pros': typeof AuthenticatedProsRoute
   '/rentals': typeof AuthenticatedRentalsRoute
   '/saved': typeof AuthenticatedSavedRoute
@@ -211,14 +244,18 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/compare': typeof CompareRoute
   '/compare-locations': typeof CompareLocationsRoute
+  '/connections': typeof ConnectionsRoute
   '/explore': typeof ExploreRoute
   '/logo-qa': typeof LogoQaRoute
   '/marketplace': typeof MarketplaceRouteWithChildren
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/title-deed': typeof TitleDeedRoute
+  '/_authenticated/account': typeof AuthenticatedAccountRoute
+  '/_authenticated/contributions': typeof AuthenticatedContributionsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/financing': typeof AuthenticatedFinancingRoute
+  '/_authenticated/pro-profile': typeof AuthenticatedProProfileRoute
   '/_authenticated/pros': typeof AuthenticatedProsRoute
   '/_authenticated/rentals': typeof AuthenticatedRentalsRoute
   '/_authenticated/saved': typeof AuthenticatedSavedRoute
@@ -238,14 +275,18 @@ export interface FileRouteTypes {
     | '/auth'
     | '/compare'
     | '/compare-locations'
+    | '/connections'
     | '/explore'
     | '/logo-qa'
     | '/marketplace'
     | '/report'
     | '/reset-password'
     | '/title-deed'
+    | '/account'
+    | '/contributions'
     | '/dashboard'
     | '/financing'
+    | '/pro-profile'
     | '/pros'
     | '/rentals'
     | '/saved'
@@ -263,13 +304,17 @@ export interface FileRouteTypes {
     | '/auth'
     | '/compare'
     | '/compare-locations'
+    | '/connections'
     | '/explore'
     | '/logo-qa'
     | '/report'
     | '/reset-password'
     | '/title-deed'
+    | '/account'
+    | '/contributions'
     | '/dashboard'
     | '/financing'
+    | '/pro-profile'
     | '/pros'
     | '/rentals'
     | '/saved'
@@ -288,14 +333,18 @@ export interface FileRouteTypes {
     | '/auth'
     | '/compare'
     | '/compare-locations'
+    | '/connections'
     | '/explore'
     | '/logo-qa'
     | '/marketplace'
     | '/report'
     | '/reset-password'
     | '/title-deed'
+    | '/_authenticated/account'
+    | '/_authenticated/contributions'
     | '/_authenticated/dashboard'
     | '/_authenticated/financing'
+    | '/_authenticated/pro-profile'
     | '/_authenticated/pros'
     | '/_authenticated/rentals'
     | '/_authenticated/saved'
@@ -315,6 +364,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   CompareRoute: typeof CompareRoute
   CompareLocationsRoute: typeof CompareLocationsRoute
+  ConnectionsRoute: typeof ConnectionsRoute
   ExploreRoute: typeof ExploreRoute
   LogoQaRoute: typeof LogoQaRoute
   MarketplaceRoute: typeof MarketplaceRouteWithChildren
@@ -367,6 +417,13 @@ declare module '@tanstack/react-router' {
       path: '/explore'
       fullPath: '/explore'
       preLoaderRoute: typeof ExploreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/connections': {
+      id: '/connections'
+      path: '/connections'
+      fullPath: '/connections'
+      preLoaderRoute: typeof ConnectionsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/compare-locations': {
@@ -460,6 +517,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/pro-profile': {
+      id: '/_authenticated/pro-profile'
+      path: '/pro-profile'
+      fullPath: '/pro-profile'
+      preLoaderRoute: typeof AuthenticatedProProfileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/financing': {
       id: '/_authenticated/financing'
       path: '/financing'
@@ -472,6 +536,20 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/contributions': {
+      id: '/_authenticated/contributions'
+      path: '/contributions'
+      fullPath: '/contributions'
+      preLoaderRoute: typeof AuthenticatedContributionsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/account': {
+      id: '/_authenticated/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AuthenticatedAccountRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/sell/new': {
@@ -499,8 +577,11 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
+  AuthenticatedContributionsRoute: typeof AuthenticatedContributionsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFinancingRoute: typeof AuthenticatedFinancingRoute
+  AuthenticatedProProfileRoute: typeof AuthenticatedProProfileRoute
   AuthenticatedProsRoute: typeof AuthenticatedProsRoute
   AuthenticatedRentalsRoute: typeof AuthenticatedRentalsRoute
   AuthenticatedSavedRoute: typeof AuthenticatedSavedRoute
@@ -511,8 +592,11 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAccountRoute: AuthenticatedAccountRoute,
+  AuthenticatedContributionsRoute: AuthenticatedContributionsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFinancingRoute: AuthenticatedFinancingRoute,
+  AuthenticatedProProfileRoute: AuthenticatedProProfileRoute,
   AuthenticatedProsRoute: AuthenticatedProsRoute,
   AuthenticatedRentalsRoute: AuthenticatedRentalsRoute,
   AuthenticatedSavedRoute: AuthenticatedSavedRoute,
@@ -545,6 +629,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   CompareRoute: CompareRoute,
   CompareLocationsRoute: CompareLocationsRoute,
+  ConnectionsRoute: ConnectionsRoute,
   ExploreRoute: ExploreRoute,
   LogoQaRoute: LogoQaRoute,
   MarketplaceRoute: MarketplaceRouteWithChildren,

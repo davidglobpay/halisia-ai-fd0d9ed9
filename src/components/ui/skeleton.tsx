@@ -12,12 +12,7 @@ type SkeletonProps = React.HTMLAttributes<HTMLDivElement> & {
  * blank screens and CLS by reserving the same footprint as the final
  * content. Respects prefers-reduced-motion.
  */
-function Skeleton({
-  className,
-  variant = "line",
-  lines = 3,
-  ...props
-}: SkeletonProps) {
+function Skeleton({ className, variant = "line", lines = 3, ...props }: SkeletonProps) {
   if (variant === "text") {
     return (
       <div
@@ -71,13 +66,7 @@ function SkeletonCard({ className }: { className?: string }) {
   );
 }
 
-function SkeletonGrid({
-  count = 6,
-  className,
-}: {
-  count?: number;
-  className?: string;
-}) {
+function SkeletonGrid({ count = 6, className }: { count?: number; className?: string }) {
   return (
     <div
       className={cn("grid gap-4 sm:grid-cols-2 lg:grid-cols-3", className)}

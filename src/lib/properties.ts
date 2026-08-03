@@ -58,7 +58,9 @@ export async function listMyProperties(): Promise<PropertyRow[]> {
   return data ?? [];
 }
 
-export async function createProperty(input: Omit<PropertyInsert, "owner_id">): Promise<PropertyRow> {
+export async function createProperty(
+  input: Omit<PropertyInsert, "owner_id">,
+): Promise<PropertyRow> {
   const { data: userRes } = await supabase.auth.getUser();
   if (!userRes.user) throw new Error("Sign in to create a listing");
   const { data, error } = await supabase
@@ -70,7 +72,10 @@ export async function createProperty(input: Omit<PropertyInsert, "owner_id">): P
   return data;
 }
 
-export async function updateProperty(id: string, patch: Partial<PropertyInsert>): Promise<PropertyRow> {
+export async function updateProperty(
+  id: string,
+  patch: Partial<PropertyInsert>,
+): Promise<PropertyRow> {
   const { data, error } = await supabase
     .from("properties")
     .update(patch)

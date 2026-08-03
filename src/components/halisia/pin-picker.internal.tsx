@@ -37,7 +37,11 @@ export default function PinPickerInternal({
 }) {
   const center: [number, number] = [lat ?? -1.286389, lng ?? 36.817223];
   return (
-    <MapContainer center={center} zoom={lat != null ? 14 : 6} className="absolute inset-0 h-full w-full">
+    <MapContainer
+      center={center}
+      zoom={lat != null ? 14 : 6}
+      className="absolute inset-0 h-full w-full"
+    >
       <TileLayer
         url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
         attribution="© OpenStreetMap · © CARTO"
