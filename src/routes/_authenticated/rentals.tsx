@@ -377,7 +377,7 @@ function RentalsPage() {
           </div>
         ) : (
           <ul className="grid gap-3">
-            {matches.map(({ listing, score, reasons, gaps }) => {
+            {matches.map(({ listing, score, reasons, gaps, commute }) => {
               const p = listing.property;
               const r = listing.rental;
               return (
@@ -397,6 +397,11 @@ function RentalsPage() {
                       <div className="text-sm font-semibold">{formatRent(r, p.currency)}</div>
                       {on && (
                         <div className="text-[11px] text-accent font-numeric">{score}% match</div>
+                      )}
+                      {on && commute && (
+                        <div className="text-[10px] text-muted-foreground" data-testid="commute-band">
+                          {commute.band.label} · ~{commute.minutes} min by {commute.mode}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -424,6 +429,14 @@ function RentalsPage() {
                       )}
                     </div>
                   )}
+
+                  <div className="mt-3">
+                    <AvailabilityCalendar
+                      availability={parseAvailability(r?.availability_windows)}
+                      viewings={parseViewings(r?.viewing_windows)}
+                      fallbackFrom={r?.available_from ?? null}
+                    />
+                  </div>
 
                   <details className="mt-3 rounded-xl border border-white/10 bg-white/5 p-2.5">
                     <summary className="cursor-pointer text-[11px] text-accent inline-flex items-center gap-1">
