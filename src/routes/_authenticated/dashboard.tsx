@@ -1,6 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Plus, Building2, Users, TrendingUp, Bookmark, Briefcase, Landmark } from "lucide-react";
+import {
+  Plus,
+  Building2,
+  Users,
+  TrendingUp,
+  Bookmark,
+  Briefcase,
+  Landmark,
+  BarChart3,
+  KeyRound,
+} from "lucide-react";
 import { listMyProperties, listMyLeadsAsSeller, formatPrice } from "@/lib/properties";
 import { listSavedItems } from "@/lib/saved-items";
 
@@ -41,7 +51,7 @@ function Dashboard() {
         </Link>
       </header>
 
-      <section className="grid gap-3 sm:grid-cols-2 mb-6">
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 mb-6">
         <Link
           to="/_authenticated/pros"
           className="glass rounded-2xl border border-white/10 p-4 hover:bg-white/5 transition flex items-center gap-3"
@@ -63,6 +73,30 @@ function Dashboard() {
             <div className="text-sm font-medium">Financing tracker</div>
             <div className="text-[11px] text-muted-foreground">
               Manage loan applications with lender-ready AI summaries.
+            </div>
+          </div>
+        </Link>
+        <Link
+          to="/seller-tools"
+          className="glass rounded-2xl border border-white/10 p-4 hover:bg-white/5 transition flex items-center gap-3"
+        >
+          <BarChart3 className="h-5 w-5 text-gold" />
+          <div className="min-w-0">
+            <div className="text-sm font-medium">Seller tools</div>
+            <div className="text-[11px] text-muted-foreground">
+              Lead quality, views, saves, inquiry trends and suggested follow-ups.
+            </div>
+          </div>
+        </Link>
+        <Link
+          to="/rentals"
+          className="glass rounded-2xl border border-white/10 p-4 hover:bg-white/5 transition flex items-center gap-3"
+        >
+          <KeyRound className="h-5 w-5 text-accent" />
+          <div className="min-w-0">
+            <div className="text-sm font-medium">Rentals & renter match</div>
+            <div className="text-[11px] text-muted-foreground">
+              Vacancy details plus consent-based matches you control.
             </div>
           </div>
         </Link>
