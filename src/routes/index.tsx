@@ -236,7 +236,10 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
               <SearchBar
                 size="lg"
                 placeholder="Search a county, town, parcel, LR number, ward, or coordinates…"
-                onSearch={(q) => navigate({ to: "/explore", search: { q } })}
+                onSearch={(q) => {
+                  recordSearchConversion();
+                  navigate({ to: "/explore", search: { q } });
+                }}
               />
               <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
                 <Link
@@ -414,6 +417,7 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
       </section>
 
       <DataPipeline />
+      <ScoreDrivers />
 
       {/* TESTIMONIALS */}
       <section id="voices" className="py-24">
