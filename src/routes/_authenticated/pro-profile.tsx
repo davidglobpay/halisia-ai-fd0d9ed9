@@ -554,12 +554,44 @@ function ProDashboard() {
                       {new Date(l.created_at).toLocaleString()} {l.county ? `· ${l.county}` : ""}
                     </div>
                     <p className="mt-1 text-sm">{l.project_brief}</p>
+                    {l.preferred_start && (
+                      <p className="mt-1 text-[11px] text-accent">
+                        Requested window: {new Date(l.preferred_start).toLocaleString()}
+                        {l.preferred_end
+                          ? ` – ${new Date(l.preferred_end).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}`
+                          : ""}
+                      </p>
+                    )}
+                    {l.confirmed_start && (
+                      <p className="mt-1 inline-flex items-center gap-1 text-[11px] text-emerald-300">
+                        <CalendarCheck className="h-3 w-3" aria-hidden="true" /> Confirmed for{" "}
+                        {new Date(l.confirmed_start).toLocaleString()}
+                      </p>
+                    )}
                   </div>
                   <span className="shrink-0 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-widest">
                     {l.status}
                   </span>
                 </div>
                 <div className="mt-2 flex flex-wrap gap-1.5">
+                  {l.preferred_start && !l.confirmed_start && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        confirmSlot.mutate({
+                          id: l.id,
+                          start: l.preferred_start as string,
+                          end: (l.preferred_end ?? l.preferred_start) as string,
+                        })
+                      }
+                      className="rounded-full border border-accent/40 bg-accent/10 px-2.5 py-1 text-[11px] text-accent"
+                    >
+                      Confirm requested window
+                    </button>
+                  )}
                   {["contacted", "quoted", "won", "declined"].map((s) => (
                     <button
                       key={s}
