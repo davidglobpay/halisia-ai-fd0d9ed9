@@ -4,6 +4,16 @@ import AxeBuilder from "@axe-core/playwright";
 const PAGES = ["/style-guide", "/"];
 
 test.describe("Design system accessibility", () => {
+  test.beforeEach(async ({ context }) => {
+    // Suppress the first-run navigation guide so it cannot trap focus.
+    await context.addInitScript(() => {
+      try {
+        window.localStorage.setItem("halisia:navguide:v1:seen", String(Date.now()));
+      } catch {
+        /* storage disabled */
+      }
+    });
+  });
   for (const path of PAGES) {
     test(`no serious axe violations on ${path}`, async ({ page }) => {
       await page.goto(path);
@@ -32,16 +42,19 @@ test.describe("Design system accessibility", () => {
       .include('[data-testid="style-guide"]')
       .withRules(["color-contrast"])
       .analyze();
-    expect(results.violations, JSON.stringify(results.violations.map((v) => v.nodes.length))).toEqual(
-      [],
-    );
+    expect(
+      results.violations,
+      JSON.stringify(results.violations.map((v) => v.nodes.length)),
+    ).toEqual([]);
   });
 
   test("buttons and tabs expose a visible focus ring", async ({ page }) => {
     await page.goto("/style-guide");
     await page.getByRole("tab", { name: "Controls" }).click();
     const button = page.getByRole("button", { name: "Run analysis" });
-    await button.focus();
+    await button.evaluate((el: HTMLElement) => el.focus());
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("Shift+Tab");
     const style = await button.evaluate((el) => {
       const s = getComputedStyle(el);
       return { width: s.outlineWidth, style: s.outlineStyle, color: s.outlineColor };
@@ -53,6 +66,7 @@ test.describe("Design system accessibility", () => {
   test("segmented tabs support arrow-key roving focus", async ({ page }) => {
     await page.goto("/style-guide");
     const first = page.getByRole("tab", { name: "Foundations" });
+    await first.click();
     await first.focus();
     await page.keyboard.press("ArrowRight");
     await expect(page.getByRole("tab", { name: "Surfaces" })).toHaveAttribute(
