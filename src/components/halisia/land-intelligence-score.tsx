@@ -140,10 +140,7 @@ function ModuleCard({ m, freshness }: { m: ModuleOutput; freshness: string }) {
             <span className="inline-flex items-center gap-1">
               <Database className="h-2.5 w-2.5" /> {m.sources.length} sources
             </span>
-            <span
-              className="inline-flex items-center gap-1"
-              title={formatDateTime(freshness)}
-            >
+            <span className="inline-flex items-center gap-1" title={formatDateTime(freshness)}>
               <Clock className="h-2.5 w-2.5" /> {formatDate(freshness)}
             </span>
             <span>· Confidence {m.confidencePct}%</span>
@@ -501,8 +498,7 @@ export function LandIntelligenceScore({
 
       <p className="mt-3 text-[10px] text-muted-foreground leading-relaxed">
         Predictions are estimates, not certainties. Verify title, zoning and site conditions with
-        licensed professionals before any transaction. Updated{" "}
-        {formatDateTime(decision.freshness)}.
+        licensed professionals before any transaction. Updated {formatDateTime(decision.freshness)}.
       </p>
     </section>
   );

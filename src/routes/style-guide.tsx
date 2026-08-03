@@ -34,25 +34,57 @@ const COLORS: Array<{ name: string; hex: string; use: string; swatch: string }> 
   { name: "Deep Black", hex: "#050706", use: "App background", swatch: "bg-[#050706]" },
   { name: "Panel Black", hex: "#0B0F0D", use: "Glass panels, popovers", swatch: "bg-[#0B0F0D]" },
   { name: "Surface", hex: "#111614", use: "Elevation 1 tiles", swatch: "bg-[#111614]" },
-  { name: "Emerald Green", hex: "#008F55", use: "Verified, positive, primary", swatch: "bg-[#008F55]" },
+  {
+    name: "Emerald Green",
+    hex: "#008F55",
+    use: "Verified, positive, primary",
+    swatch: "bg-[#008F55]",
+  },
   { name: "Crimson Red", hex: "#BB1E2D", use: "Risk, alerts, destructive", swatch: "bg-[#BB1E2D]" },
-  { name: "Metallic Gold", hex: "#D4AF37", use: "Premium & AI moments only", swatch: "bg-[#D4AF37]" },
+  {
+    name: "Metallic Gold",
+    hex: "#D4AF37",
+    use: "Premium & AI moments only",
+    swatch: "bg-[#D4AF37]",
+  },
   { name: "Silver", hex: "#AEB7BC", use: "Secondary text, borders", swatch: "bg-[#AEB7BC]" },
   { name: "Soft White", hex: "#F5F7F8", use: "Primary text", swatch: "bg-[#F5F7F8]" },
 ];
 
 const TYPE_ROWS = [
-  { role: "Display / H1", family: "Space Grotesk", note: "Hero titles. clamp(2.1rem → 4rem), -0.02em." },
-  { role: "Heading / H2–H4", family: "Space Grotesk", note: "Section and panel titles, 600–700 weight." },
+  {
+    role: "Display / H1",
+    family: "Space Grotesk",
+    note: "Hero titles. clamp(2.1rem → 4rem), -0.02em.",
+  },
+  {
+    role: "Heading / H2–H4",
+    family: "Space Grotesk",
+    note: "Section and panel titles, 600–700 weight.",
+  },
   { role: "Body", family: "Inter", note: "Paragraphs and UI copy, 1.7 line-height." },
   { role: "Label / micro", family: "Inter", note: "Uppercase eyebrows, 0.18em tracking." },
-  { role: "Premium report", family: "Cormorant Garamond", note: "PDF dossiers and editorial pull-quotes only." },
+  {
+    role: "Premium report",
+    family: "Cormorant Garamond",
+    note: "PDF dossiers and editorial pull-quotes only.",
+  },
 ];
 
 const MOTION_ROWS = [
-  { name: "Micro", token: "--motion-micro", value: "180ms", use: "Hover, press, tab switch, badge changes" },
+  {
+    name: "Micro",
+    token: "--motion-micro",
+    value: "180ms",
+    use: "Hover, press, tab switch, badge changes",
+  },
   { name: "Panel", token: "--motion-panel", value: "320ms", use: "Sheets, modals, panel rise-in" },
-  { name: "Easing", token: "--motion-ease", value: "cubic-bezier(0.22, 1, 0.36, 1)", use: "All transitions" },
+  {
+    name: "Easing",
+    token: "--motion-ease",
+    value: "cubic-bezier(0.22, 1, 0.36, 1)",
+    use: "All transitions",
+  },
 ];
 
 function StyleGuidePage() {
@@ -142,7 +174,9 @@ function StyleGuidePage() {
                 <p className="text-muted-foreground max-w-prose text-sm">
                   Body copy uses Inter at 1.7 line-height for long-form analysis blocks.
                 </p>
-                <p className="font-editorial text-xl">Premium report headings use Cormorant Garamond.</p>
+                <p className="font-editorial text-xl">
+                  Premium report headings use Cormorant Garamond.
+                </p>
               </div>
             </Surface>
           </section>
