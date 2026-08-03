@@ -24,6 +24,9 @@ import { listingClarifications, answersToNotes, type ClarifyAnswers } from "@/li
 import { ClarifyStep } from "@/components/halisia/clarify-step";
 import { PinPicker } from "@/components/halisia/pin-picker";
 import { AvailabilityCalendar } from "@/components/halisia/availability-calendar";
+import { ViewingBooking } from "@/components/halisia/viewing-booking";
+import { VersionHistory } from "@/components/halisia/version-history";
+import { recordVersion } from "@/lib/listing-versions";
 import {
   parseAvailability,
   parseViewings,
@@ -253,6 +256,17 @@ function EditListing() {
         } catch (err) {
           console.warn("rental details save failed", err);
         }
+      }
+      try {
+        await recordVersion({
+          propertyId: id,
+          title: form.title.trim(),
+          description: form.description.trim(),
+          completenessPct: pct,
+          checklist,
+        });
+      } catch (err) {
+        console.warn("version record failed", err);
       }
       return row;
     },
@@ -605,17 +619,22 @@ function EditListing() {
         )}
 
         {rental && (
-          <AvailabilityCalendar
-            editable
-            availability={availability}
-            viewings={viewings}
-            fallbackFrom={form.available_from || null}
-            onChange={({ availability: a, viewings: v }) => {
-              setAvailability(a);
-              setViewings(v);
-            }}
-          />
+          <>
+            <AvailabilityCalendar
+              editable
+              availability={availability}
+              viewings={viewings}
+              fallbackFrom={form.available_from || null}
+              onChange={({ availability: a, viewings: v }) => {
+                setAvailability(a);
+                setViewings(v);
+              }}
+            />
+            <ViewingBooking propertyId={id} mode="owner" />
+          </>
         )}
+
+        <VersionHistory propertyId={id} />
 
         {/* Clarifications */}
         <ClarifyStep questions={clarifications} answers={answers} onChange={setAnswers} />

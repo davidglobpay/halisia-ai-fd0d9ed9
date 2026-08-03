@@ -1,15 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import {
-  Landmark,
-  Loader2,
-  Plus,
-  ArrowLeft,
-  Sparkles,
-  Trash2,
-  FileText,
-} from "lucide-react";
+import { Landmark, Loader2, Plus, ArrowLeft, Sparkles, Trash2, FileText } from "lucide-react";
 import {
   listMyFinancing,
   createFinancing,
@@ -21,11 +13,9 @@ import {
   type FinancingRow,
   type FinancingStatus,
 } from "@/lib/financing";
-import {
-  generateLenderSummary,
-  type LenderSummaryOutput,
-} from "@/lib/financing-ai.functions";
+import { generateLenderSummary, type LenderSummaryOutput } from "@/lib/financing-ai.functions";
 import type { Json } from "@/integrations/supabase/types";
+import { DocumentVault } from "@/components/halisia/document-vault";
 
 export const Route = createFileRoute("/_authenticated/financing")({
   head: () => ({
@@ -86,7 +76,11 @@ function FinancingPage() {
       ) : (
         <ul className="grid gap-3">
           {(q.data ?? []).map((f) => (
-            <FinancingCard key={f.id} f={f} onOpenListing={(id) => nav({ to: "/marketplace/$id", params: { id } })} />
+            <FinancingCard
+              key={f.id}
+              f={f}
+              onOpenListing={(id) => nav({ to: "/marketplace/$id", params: { id } })}
+            />
           ))}
         </ul>
       )}
@@ -341,10 +335,15 @@ function FinancingCard({
       >
         <FileText className="h-3 w-3" /> {open ? "Hide" : "View"} lender-ready summary
       </button>
+      <div className="mt-3">
+        <DocumentVault financingId={f.id} propertyId={f.property_id ?? null} />
+      </div>
       {open && ai && (
         <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-xs space-y-3">
           <div>
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Headline</div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              Headline
+            </div>
             <div className="text-sm font-medium">{ai.headline}</div>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -406,21 +405,15 @@ function SummaryBlock({ label, text }: { label: string; text: string }) {
     </div>
   );
 }
-function ListBlock({
-  label,
-  items,
-  tone,
-}: {
-  label: string;
-  items: string[];
-  tone?: "warn";
-}) {
+function ListBlock({ label, items, tone }: { label: string; items: string[]; tone?: "warn" }) {
   return (
     <div>
       <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">
         {label}
       </div>
-      <ul className={`space-y-0.5 ${tone === "warn" ? "text-amber-glow" : "text-muted-foreground"}`}>
+      <ul
+        className={`space-y-0.5 ${tone === "warn" ? "text-amber-glow" : "text-muted-foreground"}`}
+      >
         {items.map((i) => (
           <li key={i}>• {i}</li>
         ))}

@@ -303,6 +303,53 @@ export type Database = {
           },
         ]
       }
+      listing_versions: {
+        Row: {
+          changes: Json
+          checklist: Json
+          completeness_pct: number
+          created_at: string
+          description: string | null
+          editor_id: string
+          id: string
+          property_id: string
+          title: string
+          version: number
+        }
+        Insert: {
+          changes?: Json
+          checklist?: Json
+          completeness_pct?: number
+          created_at?: string
+          description?: string | null
+          editor_id: string
+          id?: string
+          property_id: string
+          title: string
+          version?: number
+        }
+        Update: {
+          changes?: Json
+          checklist?: Json
+          completeness_pct?: number
+          created_at?: string
+          description?: string | null
+          editor_id?: string
+          id?: string
+          property_id?: string
+          title?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_versions_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       properties: {
         Row: {
           address: string | null
@@ -664,6 +711,172 @@ export type Database = {
         }
         Relationships: []
       }
+      vault_document_shares: {
+        Row: {
+          created_at: string
+          document_id: string
+          expires_at: string | null
+          id: string
+          last_accessed_at: string | null
+          organisation: string | null
+          owner_id: string
+          party_email: string
+          party_name: string
+          purpose: string | null
+          revoked_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          document_id: string
+          expires_at?: string | null
+          id?: string
+          last_accessed_at?: string | null
+          organisation?: string | null
+          owner_id: string
+          party_email: string
+          party_name: string
+          purpose?: string | null
+          revoked_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          document_id?: string
+          expires_at?: string | null
+          id?: string
+          last_accessed_at?: string | null
+          organisation?: string | null
+          owner_id?: string
+          party_email?: string
+          party_name?: string
+          purpose?: string | null
+          revoked_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_document_shares_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "vault_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vault_documents: {
+        Row: {
+          category: string
+          created_at: string
+          file_name: string | null
+          financing_application_id: string | null
+          id: string
+          label: string
+          mime_type: string | null
+          notes: string | null
+          owner_id: string
+          property_id: string | null
+          size_bytes: number | null
+          status: string
+          storage_path: string | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          file_name?: string | null
+          financing_application_id?: string | null
+          id?: string
+          label: string
+          mime_type?: string | null
+          notes?: string | null
+          owner_id: string
+          property_id?: string | null
+          size_bytes?: number | null
+          status?: string
+          storage_path?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          file_name?: string | null
+          financing_application_id?: string | null
+          id?: string
+          label?: string
+          mime_type?: string | null
+          notes?: string | null
+          owner_id?: string
+          property_id?: string | null
+          size_bytes?: number | null
+          status?: string
+          storage_path?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_documents_financing_application_id_fkey"
+            columns: ["financing_application_id"]
+            isOneToOne: false
+            referencedRelation: "financing_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vault_documents_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      viewing_slots: {
+        Row: {
+          capacity: number
+          created_at: string
+          end_at: string
+          id: string
+          note: string | null
+          owner_id: string
+          property_id: string
+          start_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          capacity?: number
+          created_at?: string
+          end_at: string
+          id?: string
+          note?: string | null
+          owner_id: string
+          property_id: string
+          start_at: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          capacity?: number
+          created_at?: string
+          end_at?: string
+          id?: string
+          note?: string | null
+          owner_id?: string
+          property_id?: string
+          start_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "viewing_slots_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       viewings: {
         Row: {
           buyer_id: string
@@ -673,6 +886,7 @@ export type Database = {
           property_id: string
           scheduled_at: string
           seller_id: string
+          slot_id: string | null
           status: string
           updated_at: string
         }
@@ -684,6 +898,7 @@ export type Database = {
           property_id: string
           scheduled_at: string
           seller_id: string
+          slot_id?: string | null
           status?: string
           updated_at?: string
         }
@@ -695,6 +910,7 @@ export type Database = {
           property_id?: string
           scheduled_at?: string
           seller_id?: string
+          slot_id?: string | null
           status?: string
           updated_at?: string
         }
@@ -704,6 +920,13 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "viewings_slot_id_fkey"
+            columns: ["slot_id"]
+            isOneToOne: false
+            referencedRelation: "viewing_slots"
             referencedColumns: ["id"]
           },
         ]
