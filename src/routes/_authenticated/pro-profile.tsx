@@ -1,19 +1,36 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Briefcase, Loader2, Star } from "lucide-react";
+import {
+  ArrowLeft,
+  Briefcase,
+  CalendarCheck,
+  Loader2,
+  Plus,
+  ShieldCheck,
+  Star,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   PRO_CATEGORIES,
   PRO_CATEGORY_LABELS,
+  WEEKDAYS,
   averageRating,
+  confirmRequestWindow,
   listMyProProfiles,
   listRequestsForMe,
   listReviews,
+  parseAvailability,
+  parseEvidence,
+  profileReadiness,
   saveProProfile,
   setRequestStatus,
+  submitVerification,
   verificationLabel,
+  type AvailabilitySlot,
   type ProCategory,
+  type VerificationEvidence,
 } from "@/lib/professionals";
 
 export const Route = createFileRoute("/_authenticated/pro-profile")({
@@ -61,6 +78,12 @@ function ProDashboard() {
     website: "",
     published: false,
   });
+  const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
+  const [evidence, setEvidence] = useState<VerificationEvidence[]>([]);
+  const [evLabel, setEvLabel] = useState("");
+  const [evUrl, setEvUrl] = useState("");
+  const [evKind, setEvKind] = useState<VerificationEvidence["kind"]>("registration_certificate");
+  const [verifyNote, setVerifyNote] = useState("");
 
   useEffect(() => {
     if (!first) return;
@@ -82,6 +105,9 @@ function ProDashboard() {
       website: first.website ?? "",
       published: first.published,
     });
+    setSlots(parseAvailability(first));
+    setEvidence(parseEvidence(first));
+    setVerifyNote(first.verification_note ?? "");
   }, [first]);
 
   const save = useMutation({
@@ -106,6 +132,7 @@ function ProDashboard() {
         contact_phone: form.contact_phone || null,
         website: form.website || null,
         published: form.published,
+        availability_slots: slots as unknown as never,
       }),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["my-pro-profiles"] });
@@ -120,6 +147,35 @@ function ProDashboard() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const confirmSlot = useMutation({
+    mutationFn: (v: { id: string; start: string; end: string }) => confirmRequestWindow(v),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["pro-requests-mine"] });
+      toast.success("Time window confirmed");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const verify = useMutation({
+    mutationFn: () => {
+      if (!first) throw new Error("Save your profile first");
+      return submitVerification({
+        id: first.id,
+        evidence,
+        registration_body: form.registration_body || null,
+        registration_number: form.registration_number || null,
+        note: verifyNote || null,
+      });
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["my-pro-profiles"] });
+      toast.success("Submitted for verification", {
+        description: "Your registration number stays hidden until Halisia approves it.",
+      });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const reviews = useQuery({
     queryKey: ["pro-reviews", first?.id ?? "none"],
     queryFn: () => (first ? listReviews(first.id) : Promise.resolve([])),
@@ -127,6 +183,15 @@ function ProDashboard() {
   });
   const avg = averageRating(reviews.data ?? []);
   const leads = requests.data ?? [];
+  const readiness = profileReadiness({
+    display_name: form.display_name,
+    category: form.category,
+    county: form.county,
+    bio: form.bio,
+    years_experience: form.years_experience ? Number(form.years_experience) : null,
+    contact_email: form.contact_email,
+    contact_phone: form.contact_phone,
+  });
 
   return (
     <main className="min-h-dvh px-4 sm:px-6 pt-24 pb-16 max-w-5xl mx-auto">
