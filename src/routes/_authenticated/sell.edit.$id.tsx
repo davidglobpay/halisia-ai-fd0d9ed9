@@ -338,7 +338,7 @@ function EditListing() {
           <PinPicker
             lat={form.latitude ? Number(form.latitude) : null}
             lng={form.longitude ? Number(form.longitude) : null}
-            onChange={(lat, lng) =>
+            onPick={(lat, lng) =>
               setForm((f) => ({ ...f, latitude: String(lat), longitude: String(lng) }))
             }
           />
