@@ -167,7 +167,9 @@ export function ViewingBooking({
           </button>
         </form>
       )}
-      {addM.error && <p className="mt-1.5 text-[10px] text-red-300">{(addM.error as Error).message}</p>}
+      {addM.error && (
+        <p className="mt-1.5 text-[10px] text-red-300">{(addM.error as Error).message}</p>
+      )}
 
       {(slotsQ.isLoading || reqQ.isLoading) && (
         <div className="mt-2 flex items-center gap-2 text-[11px] text-muted-foreground">
@@ -299,7 +301,9 @@ export function ViewingBooking({
           );
         })}
       </ul>
-      {bookM.error && <p className="mt-1.5 text-[10px] text-red-300">{(bookM.error as Error).message}</p>}
+      {bookM.error && (
+        <p className="mt-1.5 text-[10px] text-red-300">{(bookM.error as Error).message}</p>
+      )}
     </section>
   );
 }

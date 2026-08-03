@@ -144,7 +144,9 @@ export function DocumentVault({ propertyId = null, financingId = null }: Props) 
           <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> Loading vault…
         </div>
       )}
-      {addM.error && <p className="mt-2 text-[11px] text-red-300">{(addM.error as Error).message}</p>}
+      {addM.error && (
+        <p className="mt-2 text-[11px] text-red-300">{(addM.error as Error).message}</p>
+      )}
 
       <ul className="mt-3 grid gap-2">
         {docs.map((d) => (
@@ -197,7 +199,9 @@ function VaultRow({ doc, onChanged }: { doc: VaultDocument; onChanged: () => voi
           <div className="text-xs font-medium">{doc.label}</div>
           <div className="text-[10px] text-muted-foreground">
             {categoryLabel(doc.category)}
-            {doc.file_name ? ` · ${doc.file_name} · ${formatBytes(doc.size_bytes)}` : " · no file yet"}
+            {doc.file_name
+              ? ` · ${doc.file_name} · ${formatBytes(doc.size_bytes)}`
+              : " · no file yet"}
           </div>
         </div>
         <div className="flex items-center gap-1.5">
@@ -410,7 +414,9 @@ function ShareManager({ documentId }: { documentId: string }) {
                   }
                 >
                   {state}
-                  {s.expires_at ? ` · until ${new Date(s.expires_at).toLocaleDateString("en-KE")}` : ""}
+                  {s.expires_at
+                    ? ` · until ${new Date(s.expires_at).toLocaleDateString("en-KE")}`
+                    : ""}
                 </span>
                 {state === "active" && (
                   <button
