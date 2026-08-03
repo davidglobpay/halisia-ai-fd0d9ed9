@@ -2,22 +2,72 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { z } from "zod";
-import { MapPin, Sparkles, Building2, Plus, Search, Loader2 } from "lucide-react";
+import {
+  MapPin,
+  Sparkles,
+  Building2,
+  Plus,
+  Search,
+  Loader2,
+  LayoutGrid,
+  Rows3,
+  Map as MapIcon,
+  BadgeCheck,
+  Share2,
+  Scale,
+  Flag,
+  SlidersHorizontal,
+  Info,
+} from "lucide-react";
 import {
   listProperties,
-  PROPERTY_KINDS,
   INTENTS,
   formatPrice,
-  type PropertyKind,
   type ListingIntent,
   type PropertyRow,
 } from "@/lib/properties";
+import {
+  CATEGORIES,
+  MARKET_ACTIONS,
+  RAILS,
+  applyFilters,
+  categoriesOf,
+  completeness,
+  intelligenceScore,
+  investmentScore,
+  developmentScore,
+  isNew,
+  railFilter,
+  recommend,
+  verification,
+  type MarketAction,
+  type MarketplaceCategory,
+  type MarketplaceFilters,
+  type Rail,
+} from "@/lib/marketplace";
+import { SaveButton } from "@/components/halisia/save-button";
+import { LeafletLayersMap } from "@/components/halisia/leaflet-layers-map";
 
 const searchSchema = z.object({
-  kind: z.string().optional(),
+  category: z.string().optional(),
+  action: z.string().optional(),
   intent: z.string().optional(),
   county: z.string().optional(),
+  town: z.string().optional(),
   q: z.string().optional(),
+  view: z.string().optional(),
+  rail: z.string().optional(),
+  minPrice: z.coerce.number().optional(),
+  maxPrice: z.coerce.number().optional(),
+  minSize: z.coerce.number().optional(),
+  beds: z.coerce.number().optional(),
+  baths: z.coerce.number().optional(),
+  road: z.coerce.boolean().optional(),
+  verified: z.coerce.boolean().optional(),
+  minScore: z.coerce.number().optional(),
+  minInvest: z.coerce.number().optional(),
+  minDev: z.coerce.number().optional(),
+  minEnv: z.coerce.number().optional(),
 });
 
 export const Route = createFileRoute("/marketplace/")({
@@ -29,26 +79,73 @@ function MarketplaceIndex() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
   const [q, setQ] = useState(search.q ?? "");
+  const [showFilters, setShowFilters] = useState(false);
+  const [compare, setCompare] = useState<string[]>([]);
+  const [whyId, setWhyId] = useState<string | null>(null);
 
-  const filters = useMemo(
+  const view = (search.view as "grid" | "list" | "map") ?? "grid";
+  const rail = (search.rail as Rail) ?? "recommended";
+
+  // Server-side coarse fetch (published only), then rich client-side filtering.
+  const query = useQuery({
+    queryKey: ["marketplace", search.county, search.intent],
+    queryFn: () =>
+      listProperties({
+        intent: (search.intent as ListingIntent | "all") ?? "all",
+        county: search.county || undefined,
+      }),
+  });
+
+  const all = useMemo(() => query.data ?? [], [query.data]);
+
+  const filters: MarketplaceFilters = useMemo(
     () => ({
-      kind: (search.kind as PropertyKind | "all") ?? "all",
+      q: search.q || undefined,
+      category: (search.category as MarketplaceCategory | "all") ?? "all",
+      action: (search.action as MarketAction | "all") ?? "all",
       intent: (search.intent as ListingIntent | "all") ?? "all",
       county: search.county || undefined,
-      q: search.q || undefined,
+      town: search.town || undefined,
+      minPrice: search.minPrice,
+      maxPrice: search.maxPrice,
+      minSize: search.minSize,
+      bedrooms: search.beds,
+      bathrooms: search.baths,
+      roadAccess: search.road || undefined,
+      verified: search.verified || undefined,
+      minScore: search.minScore,
+      minInvestment: search.minInvest,
+      minDevelopment: search.minDev,
+      minEnvironment: search.minEnv,
     }),
     [search],
   );
 
-  const query = useQuery({
-    queryKey: ["marketplace", filters],
-    queryFn: () => listProperties(filters),
-  });
+  const filtered = useMemo(() => applyFilters(all, filters), [all, filters]);
+  const recs = useMemo(
+    () =>
+      recommend(filtered, {
+        county: filters.county,
+        budget: filters.maxPrice,
+        intent: filters.intent,
+        bedrooms: filters.bedrooms,
+      }),
+    [filtered, filters],
+  );
+  const listings = useMemo(
+    () => (rail === "recommended" ? recs.map((r) => r.row) : railFilter(filtered, rail)),
+    [rail, recs, filtered],
+  );
+  const counties = useMemo(
+    () => Array.from(new Set(all.map((p) => p.county).filter(Boolean) as string[])).sort(),
+    [all],
+  );
 
-  const listings = query.data ?? [];
-
-  const setFilter = (patch: Record<string, string | undefined>) =>
+  const setFilter = (patch: Record<string, unknown>) =>
     navigate({ search: { ...search, ...patch } as never, replace: true });
+
+  const toggleCompare = (id: string) =>
+    setCompare((c) => (c.includes(id) ? c.filter((x) => x !== id) : [...c, id].slice(-3)));
 
   return (
     <main className="min-h-dvh px-4 sm:px-6 pt-24 pb-16 max-w-7xl mx-auto">
@@ -57,8 +154,9 @@ function MarketplaceIndex() {
           <div className="text-[11px] uppercase tracking-[0.25em] text-accent">Halisia AI</div>
           <h1 className="text-3xl sm:text-4xl font-display font-semibold mt-1">AI Marketplace</h1>
           <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-            Every listing inherits the Land Intelligence Score — investment, construction,
-            environment, infrastructure and more. AI-generated estimates carry a confidence rating.
+            Buy, sell, rent, lease, invest, develop and connect. Every listing inherits the Land
+            Intelligence Score — investment, construction, environment and infrastructure — with a
+            confidence rating on every AI estimate.
           </p>
         </div>
         <Link
@@ -68,6 +166,27 @@ function MarketplaceIndex() {
           <Plus className="h-3.5 w-3.5" /> List a property
         </Link>
       </header>
+
+      {/* Marketplace actions */}
+      <nav aria-label="Marketplace actions" className="mb-4 flex flex-wrap gap-2">
+        {[{ value: "all", label: "All" }, ...MARKET_ACTIONS].map((a) => {
+          const active = (search.action ?? "all") === a.value;
+          return (
+            <button
+              key={a.value}
+              onClick={() => setFilter({ action: a.value === "all" ? undefined : a.value })}
+              aria-pressed={active}
+              className={`rounded-full px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wide border transition ${
+                active
+                  ? "bg-primary text-primary-foreground border-transparent"
+                  : "glass border-white/10 text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {a.label}
+            </button>
+          );
+        })}
+      </nav>
 
       <form
         role="search"
@@ -82,19 +201,21 @@ function MarketplaceIndex() {
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search title, area, county…"
+            placeholder="Search title, estate, town, county…"
             className="bg-transparent outline-none text-sm w-full"
             aria-label="Search listings"
           />
         </label>
         <select
-          value={filters.kind}
-          onChange={(e) => setFilter({ kind: e.target.value === "all" ? undefined : e.target.value })}
+          value={filters.category}
+          onChange={(e) =>
+            setFilter({ category: e.target.value === "all" ? undefined : e.target.value })
+          }
           className="rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-sm"
-          aria-label="Property type"
+          aria-label="Listing category"
         >
-          <option value="all">All types</option>
-          {PROPERTY_KINDS.map((k) => (
+          <option value="all">All categories</option>
+          {CATEGORIES.map((k) => (
             <option key={k.value} value={k.value}>
               {k.label}
             </option>
@@ -106,10 +227,23 @@ function MarketplaceIndex() {
           className="rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-sm"
           aria-label="Intent"
         >
-          <option value="all">Sale & Rent</option>
+          <option value="all">Sale, rent & lease</option>
           {INTENTS.map((i) => (
             <option key={i.value} value={i.value}>
               {i.label}
+            </option>
+          ))}
+        </select>
+        <select
+          value={filters.county ?? ""}
+          onChange={(e) => setFilter({ county: e.target.value || undefined })}
+          className="rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-sm"
+          aria-label="County"
+        >
+          <option value="">All counties</option>
+          {counties.map((c) => (
+            <option key={c} value={c}>
+              {c}
             </option>
           ))}
         </select>
@@ -119,7 +253,125 @@ function MarketplaceIndex() {
         >
           Apply
         </button>
+        <button
+          type="button"
+          onClick={() => setShowFilters((s) => !s)}
+          aria-expanded={showFilters}
+          className="rounded-xl glass border border-white/10 px-3 py-2 text-sm inline-flex items-center gap-1.5"
+        >
+          <SlidersHorizontal className="h-4 w-4" /> Filters
+        </button>
       </form>
+
+      {showFilters && (
+        <section
+          aria-label="Advanced filters"
+          className="glass rounded-2xl border border-white/10 p-4 mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
+        >
+          <NumField label="Min price (KES)" value={search.minPrice} onChange={(v) => setFilter({ minPrice: v })} />
+          <NumField label="Max price (KES)" value={search.maxPrice} onChange={(v) => setFilter({ maxPrice: v })} />
+          <NumField label="Min land size" value={search.minSize} onChange={(v) => setFilter({ minSize: v })} />
+          <TextField
+            label="Town / estate"
+            value={search.town ?? ""}
+            onChange={(v) => setFilter({ town: v || undefined })}
+          />
+          <NumField label="Min bedrooms" value={search.beds} onChange={(v) => setFilter({ beds: v })} />
+          <NumField label="Min bathrooms" value={search.baths} onChange={(v) => setFilter({ baths: v })} />
+          <NumField
+            label="Min intelligence score"
+            value={search.minScore}
+            onChange={(v) => setFilter({ minScore: v })}
+          />
+          <NumField
+            label="Min investment potential"
+            value={search.minInvest}
+            onChange={(v) => setFilter({ minInvest: v })}
+          />
+          <NumField
+            label="Min development suitability"
+            value={search.minDev}
+            onChange={(v) => setFilter({ minDev: v })}
+          />
+          <NumField
+            label="Min environmental score"
+            value={search.minEnv}
+            onChange={(v) => setFilter({ minEnv: v })}
+          />
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={Boolean(search.road)}
+              onChange={(e) => setFilter({ road: e.target.checked || undefined })}
+            />
+            Road access
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={Boolean(search.verified)}
+              onChange={(e) => setFilter({ verified: e.target.checked || undefined })}
+            />
+            Verified listings only
+          </label>
+        </section>
+      )}
+
+      {/* Rails + view switcher */}
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div role="tablist" aria-label="Listing collections" className="flex flex-wrap gap-2">
+          {RAILS.map((r) => {
+            const active = rail === r.value;
+            return (
+              <button
+                key={r.value}
+                role="tab"
+                aria-selected={active}
+                onClick={() => setFilter({ rail: r.value })}
+                className={`rounded-full px-3 py-1.5 text-xs border transition ${
+                  active
+                    ? "bg-accent/20 border-accent/40 text-accent"
+                    : "glass border-white/10 text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {r.label}
+              </button>
+            );
+          })}
+        </div>
+        <div className="inline-flex rounded-xl glass border border-white/10 p-1" role="group" aria-label="View mode">
+          {[
+            { v: "grid", icon: LayoutGrid, label: "Grid view" },
+            { v: "list", icon: Rows3, label: "List view" },
+            { v: "map", icon: MapIcon, label: "Map view" },
+          ].map(({ v, icon: Icon, label }) => (
+            <button
+              key={v}
+              onClick={() => setFilter({ view: v })}
+              aria-label={label}
+              aria-pressed={view === v}
+              className={`rounded-lg p-2 ${view === v ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+            >
+              <Icon className="h-4 w-4" />
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <p className="mb-4 text-xs text-muted-foreground">
+        {listings.length} listing{listings.length === 1 ? "" : "s"}
+        {rail === "recommended" && " · ranked by your preferences, never by sensitive personal data"}
+      </p>
+
+      {compare.length > 0 && (
+        <div className="glass rounded-xl border border-white/10 p-3 mb-4 flex items-center gap-3 text-xs">
+          <Scale className="h-4 w-4 text-accent" />
+          {compare.length} selected for comparison
+          <button onClick={() => setCompare([])} className="underline">
+            Clear
+          </button>
+        </div>
+      )}
 
       {query.isLoading ? (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -127,22 +379,285 @@ function MarketplaceIndex() {
         </div>
       ) : listings.length === 0 ? (
         <EmptyState />
+      ) : view === "map" ? (
+        <MapView listings={listings} />
+      ) : view === "list" ? (
+        <ul className="grid gap-3">
+          {listings.map((p) => (
+            <ListingRow
+              key={p.id}
+              p={p}
+              compared={compare.includes(p.id)}
+              onCompare={() => toggleCompare(p.id)}
+            />
+          ))}
+        </ul>
       ) : (
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {listings.map((p) => (
-            <ListingCard key={p.id} p={p} />
+            <ListingCard
+              key={p.id}
+              p={p}
+              compared={compare.includes(p.id)}
+              onCompare={() => toggleCompare(p.id)}
+              reasons={recs.find((r) => r.row.id === p.id)?.reasons}
+              showWhy={whyId === p.id}
+              onWhy={() => setWhyId((id) => (id === p.id ? null : p.id))}
+            />
           ))}
         </ul>
       )}
+
+      <section className="mt-10 glass rounded-2xl border border-white/10 p-4 text-xs text-muted-foreground">
+        <h2 className="text-sm font-semibold text-foreground mb-1">Your recommendations, your rules</h2>
+        <p>
+          Recommendations use only the filters and goals you set here plus public listing
+          intelligence. Reset them any time — we never target on sensitive personal information and
+          never contact you without permission.
+        </p>
+        <button
+          onClick={() =>
+            navigate({ search: { view, rail } as never, replace: true })
+          }
+          className="mt-2 rounded-full glass border border-white/10 px-3 py-1.5 text-xs"
+        >
+          Reset recommendations
+        </button>
+      </section>
     </main>
   );
 }
 
-function ListingCard({ p }: { p: PropertyRow }) {
-  const aiScore =
-    p.ai_score && typeof p.ai_score === "object" && "overall" in (p.ai_score as Record<string, unknown>)
-      ? ((p.ai_score as { overall: number }).overall ?? null)
-      : null;
+function NumField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value?: number;
+  onChange: (v: number | undefined) => void;
+}) {
+  return (
+    <label className="text-xs text-muted-foreground grid gap-1">
+      {label}
+      <input
+        type="number"
+        inputMode="numeric"
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value === "" ? undefined : Number(e.target.value))}
+        className="rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-foreground"
+      />
+    </label>
+  );
+}
+
+function TextField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <label className="text-xs text-muted-foreground grid gap-1">
+      {label}
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-foreground"
+      />
+    </label>
+  );
+}
+
+function Badges({ p }: { p: PropertyRow }) {
+  const v = verification(p);
+  const c = completeness(p);
+  const lios = intelligenceScore(p);
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 text-[10px]">
+      <span
+        className={`rounded-full px-2 py-0.5 border ${
+          v === "verified"
+            ? "border-emerald-400/40 text-emerald-300 bg-emerald-400/10"
+            : v === "reviewed"
+              ? "border-amber-400/40 text-amber-300 bg-amber-400/10"
+              : "border-white/15 text-muted-foreground"
+        }`}
+      >
+        {v === "verified" ? "Verified" : v === "reviewed" ? "Reviewed" : "Unverified"}
+      </span>
+      <span className="rounded-full border border-white/15 px-2 py-0.5 text-muted-foreground">
+        {c}% complete
+      </span>
+      {isNew(p) && (
+        <span className="rounded-full border border-accent/40 bg-accent/10 px-2 py-0.5 text-accent">
+          New
+        </span>
+      )}
+      {lios != null && (
+        <span className="rounded-full border border-white/15 px-2 py-0.5 font-mono">
+          LIOS {Math.round(lios)}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function Actions({
+  p,
+  compared,
+  onCompare,
+}: {
+  p: PropertyRow;
+  compared: boolean;
+  onCompare: () => void;
+}) {
+  const share = async () => {
+    const url = `${window.location.origin}/marketplace/${p.id}`;
+    if (navigator.share) await navigator.share({ title: p.title, url }).catch(() => {});
+    else await navigator.clipboard.writeText(url).catch(() => {});
+  };
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-[11px]">
+      <SaveButton kind="property" ref_={p.id} label={p.title} latitude={p.latitude} longitude={p.longitude} />
+      <button
+        onClick={share}
+        className="inline-flex items-center gap-1 rounded-full glass border border-white/10 px-2.5 py-1"
+      >
+        <Share2 className="h-3 w-3" /> Share
+      </button>
+      <button
+        onClick={onCompare}
+        aria-pressed={compared}
+        className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 ${
+          compared ? "border-accent/50 text-accent bg-accent/10" : "glass border-white/10"
+        }`}
+      >
+        <Scale className="h-3 w-3" /> Compare
+      </button>
+      <a
+        href={`mailto:report@halisia.ai?subject=${encodeURIComponent(`Report listing ${p.id}`)}`}
+        className="inline-flex items-center gap-1 rounded-full glass border border-white/10 px-2.5 py-1"
+      >
+        <Flag className="h-3 w-3" /> Report
+      </a>
+    </div>
+  );
+}
+
+function MapView({ listings }: { listings: PropertyRow[] }) {
+  const withGeo = listings.filter((p) => p.latitude != null && p.longitude != null);
+  const first = withGeo[0];
+  return (
+    <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+      {first ? (
+        <LeafletLayersMap
+          lat={Number(first.latitude)}
+          lng={Number(first.longitude)}
+          label={first.title}
+        />
+      ) : (
+        <div className="glass rounded-2xl border border-white/10 p-8 text-sm text-muted-foreground">
+          No listings in this view have map coordinates yet.
+        </div>
+      )}
+      <ul className="grid gap-2 max-h-[70vh] overflow-auto pr-1">
+        {listings.map((p) => (
+          <li key={p.id} className="glass rounded-xl border border-white/10 p-3">
+            <Link to="/marketplace/$id" params={{ id: p.id }} className="text-sm font-medium">
+              {p.title}
+            </Link>
+            <div className="mt-1 text-[11px] text-muted-foreground flex items-center gap-1">
+              <MapPin className="h-3 w-3" /> {p.county ?? "Kenya"} · {formatPrice(p)}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function ListingRow({
+  p,
+  compared,
+  onCompare,
+}: {
+  p: PropertyRow;
+  compared: boolean;
+  onCompare: () => void;
+}) {
+  return (
+    <li className="glass rounded-2xl border border-white/10 p-3 flex flex-col sm:flex-row gap-3">
+      <Link
+        to="/marketplace/$id"
+        params={{ id: p.id }}
+        className="sm:w-52 shrink-0 aspect-[16/10] rounded-xl overflow-hidden bg-gradient-to-br from-primary/30 via-accent/10 to-emerald-500/20 relative"
+      >
+        {p.cover_image ? (
+          <img src={p.cover_image} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+        ) : (
+          <div className="absolute inset-0 grid place-items-center text-muted-foreground/60">
+            <Building2 className="h-8 w-8" />
+          </div>
+        )}
+      </Link>
+      <div className="flex-1 min-w-0">
+        <Link to="/marketplace/$id" params={{ id: p.id }} className="font-medium text-sm">
+          {p.title}
+        </Link>
+        <div className="mt-1 text-[11px] text-muted-foreground flex flex-wrap items-center gap-1">
+          <MapPin className="h-3 w-3" /> {p.address ?? p.county ?? "Kenya"}
+          <span>·</span>
+          <span className="capitalize">{p.kind.replace("_", " ")}</span>
+          <span>·</span>
+          <span className="capitalize">{p.intent}</span>
+          {p.size_value != null && (
+            <>
+              <span>·</span>
+              <span>
+                {p.size_value} {p.size_unit ?? "acres"}
+              </span>
+            </>
+          )}
+          {p.bedrooms != null && (
+            <>
+              <span>·</span>
+              <span>{p.bedrooms} bd</span>
+            </>
+          )}
+        </div>
+        <div className="mt-2">
+          <Badges p={p} />
+        </div>
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+          <div className="text-sm font-semibold">{formatPrice(p)}</div>
+          <Actions p={p} compared={compared} onCompare={onCompare} />
+        </div>
+      </div>
+    </li>
+  );
+}
+
+function ListingCard({
+  p,
+  compared,
+  onCompare,
+  reasons,
+  showWhy,
+  onWhy,
+}: {
+  p: PropertyRow;
+  compared: boolean;
+  onCompare: () => void;
+  reasons?: string[];
+  showWhy?: boolean;
+  onWhy?: () => void;
+}) {
+  const aiScore = intelligenceScore(p);
+  const cats = categoriesOf(p);
   return (
     <li className="glass rounded-2xl border border-white/10 overflow-hidden flex flex-col">
       <Link to="/marketplace/$id" params={{ id: p.id }} className="block">
@@ -166,7 +681,7 @@ function ListingCard({ p }: { p: PropertyRow }) {
           )}
           {aiScore != null && (
             <span className="absolute top-2 right-2 rounded-full bg-black/70 backdrop-blur px-2 py-0.5 text-[11px] font-mono">
-              LIOS {aiScore}
+              LIOS {Math.round(aiScore)}
             </span>
           )}
         </div>
@@ -179,14 +694,56 @@ function ListingCard({ p }: { p: PropertyRow }) {
             <span className="mx-1">·</span>
             <span className="capitalize">{p.kind.replace("_", " ")}</span>
           </div>
-          <div className="mt-3 flex items-center justify-between">
-            <div className="text-sm font-semibold">{formatPrice(p)}</div>
-            <div className="inline-flex items-center gap-1 text-[11px] text-accent">
-              <Sparkles className="h-3 w-3" /> AI verified
-            </div>
-          </div>
         </div>
       </Link>
+      <div className="px-4 pb-4 -mt-1 space-y-2">
+        <Badges p={p} />
+        {cats.length > 0 && (
+          <div className="flex flex-wrap gap-1 text-[10px] text-muted-foreground">
+            {cats.slice(0, 3).map((c) => (
+              <span key={c} className="rounded-full bg-white/5 px-2 py-0.5 capitalize">
+                {c.replace(/_/g, " ")}
+              </span>
+            ))}
+          </div>
+        )}
+        <div className="flex items-center justify-between">
+          <div className="text-sm font-semibold">{formatPrice(p)}</div>
+          <div className="inline-flex items-center gap-1 text-[11px] text-accent">
+            <Sparkles className="h-3 w-3" /> AI scored
+          </div>
+        </div>
+        <div className="text-[11px] text-muted-foreground flex flex-wrap gap-x-3">
+          <span>Investment {investmentScore(p) != null ? Math.round(investmentScore(p)!) : "—"}</span>
+          <span>Development {developmentScore(p) != null ? Math.round(developmentScore(p)!) : "—"}</span>
+        </div>
+        <Actions p={p} compared={compared} onCompare={onCompare} />
+        {reasons?.length ? (
+          <div>
+            <button
+              onClick={onWhy}
+              aria-expanded={Boolean(showWhy)}
+              className="inline-flex items-center gap-1 text-[11px] text-accent underline"
+            >
+              <Info className="h-3 w-3" /> Why am I seeing this?
+            </button>
+            {showWhy && (
+              <ul className="mt-1 list-disc pl-4 text-[11px] text-muted-foreground">
+                {reasons.map((r) => (
+                  <li key={r}>{r}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ) : null}
+        <Link
+          to="/marketplace/$id"
+          params={{ id: p.id }}
+          className="inline-flex items-center gap-1 rounded-full bg-primary/90 text-primary-foreground px-3 py-1.5 text-[11px] font-medium"
+        >
+          <BadgeCheck className="h-3 w-3" /> Contact & full intelligence
+        </Link>
+      </div>
     </li>
   );
 }
