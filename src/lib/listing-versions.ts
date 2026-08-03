@@ -114,7 +114,12 @@ export function diffVersions(
     });
 
   if (out.length === 0)
-    out.push({ field: "title", label: "Resubmitted with no content changes", before: "—", after: "—" });
+    out.push({
+      field: "title",
+      label: "Resubmitted with no content changes",
+      before: "—",
+      after: "—",
+    });
   return out;
 }
 

@@ -56,7 +56,9 @@ function suggestFollowUps(leads: LeadRow[]): string[] {
     out.push(`${stale.length} enquiry(ies) have been sitting in "new" for 2+ days — reply today.`);
   const viewing = leads.filter((l) => l.stage === "viewing");
   if (viewing.length)
-    out.push(`${viewing.length} buyer(s) are at viewing stage — confirm a date and share directions.`);
+    out.push(
+      `${viewing.length} buyer(s) are at viewing stage — confirm a date and share directions.`,
+    );
   const negotiating = leads.filter((l) => l.stage === "negotiation" || l.stage === "offer");
   if (negotiating.length)
     out.push(`${negotiating.length} in negotiation — send your best-and-final terms in writing.`);
@@ -64,11 +66,19 @@ function suggestFollowUps(leads: LeadRow[]): string[] {
   return out;
 }
 
-function suggestImprovements(p: PropertyRow, views: number, saves: number, leads: number): string[] {
+function suggestImprovements(
+  p: PropertyRow,
+  views: number,
+  saves: number,
+  leads: number,
+): string[] {
   const out: string[] = [];
   if (p.latitude == null || p.longitude == null)
-    out.push("Add a map pin — listings with coordinates get a Land Intelligence Score and rank higher.");
-  if ((p.media_urls?.length ?? 0) < 3) out.push("Upload at least three photos, including the access road.");
+    out.push(
+      "Add a map pin — listings with coordinates get a Land Intelligence Score and rank higher.",
+    );
+  if ((p.media_urls?.length ?? 0) < 3)
+    out.push("Upload at least three photos, including the access road.");
   if (!p.cover_image) out.push("Set a cover image so your card stands out in the grid.");
   if (p.price == null) out.push("Add a price — price-on-request listings convert poorly.");
   if (!p.description || p.description.length < 120)
@@ -76,10 +86,13 @@ function suggestImprovements(p: PropertyRow, views: number, saves: number, leads
   if (p.utilities.length === 0) out.push("List utilities on-site (water, KPLC, sewer, fibre).");
   if (p.amenities.length === 0) out.push("Add nearby amenities (schools, hospitals, shopping).");
   if (views >= 40 && leads === 0)
-    out.push("High views but no enquiries — market interest suggests your price may be above comparable listings.");
+    out.push(
+      "High views but no enquiries — market interest suggests your price may be above comparable listings.",
+    );
   if (views >= 25 && saves === 0)
     out.push("Viewers are not saving this listing — refresh the lead photo and title.");
-  if (!out.length) out.push("This listing is well completed. Keep it fresh by updating photos monthly.");
+  if (!out.length)
+    out.push("This listing is well completed. Keep it fresh by updating photos monthly.");
   return out;
 }
 
@@ -96,7 +109,11 @@ export function buildInsight(
     return t <= daysAgo(7) && t > daysAgo(14);
   }).length;
   const trendPct =
-    leadsPrev7 === 0 ? (leadsLast7 > 0 ? 100 : 0) : Math.round(((leadsLast7 - leadsPrev7) / leadsPrev7) * 100);
+    leadsPrev7 === 0
+      ? leadsLast7 > 0
+        ? 100
+        : 0
+      : Math.round(((leadsLast7 - leadsPrev7) / leadsPrev7) * 100);
   const [quality, qualityReason] = qualityFor(views, leads, saves);
   const contactRequests = leads.filter((l) => l.contact_email || l.contact_phone).length;
   return {

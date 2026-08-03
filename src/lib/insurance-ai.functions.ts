@@ -49,13 +49,15 @@ function fallback(input: InsuranceBriefInput): InsuranceAiOutput {
       ? {
           name: "Encroachment & vandalism",
           severity: "moderate" as const,
-          description: "Vacant land is exposed to encroachment, illegal grazing and materials theft.",
+          description:
+            "Vacant land is exposed to encroachment, illegal grazing and materials theft.",
           confidencePct: 60,
         }
       : {
           name: "Fire & structural damage",
           severity: "moderate" as const,
-          description: "Standard peril for built assets; verify wiring, materials and neighbouring risks.",
+          description:
+            "Standard peril for built assets; verify wiring, materials and neighbouring risks.",
           confidencePct: 60,
         },
   ].filter(Boolean) as InsuranceRisk[];
@@ -146,7 +148,9 @@ Rules: Kenyan context (KCB Insurance, Jubilee, CIC, Britam, APA, ICEA), 4-7 risk
           0,
           Math.min(100, Math.round(Number(parsed.overallConfidencePct) || fb.overallConfidencePct)),
         ),
-        disclaimers: strArr(parsed.disclaimers).length ? strArr(parsed.disclaimers) : fb.disclaimers,
+        disclaimers: strArr(parsed.disclaimers).length
+          ? strArr(parsed.disclaimers)
+          : fb.disclaimers,
         generatedAt: new Date().toISOString(),
       };
     } catch (e) {

@@ -53,10 +53,7 @@ function stripMeta(ai: ListingAiWithMeta): ListingAiOutput {
   return rest;
 }
 
-function pushVersion(
-  base: ListingAiWithMeta,
-  label: string,
-): ListingAiVersion[] {
+function pushVersion(base: ListingAiWithMeta, label: string): ListingAiVersion[] {
   const hist = base._history ?? [];
   const snap: ListingAiVersion = {
     savedAt: new Date().toISOString(),
@@ -67,13 +64,7 @@ function pushVersion(
   return [snap, ...hist].slice(0, 12);
 }
 
-export function ListingEditor({
-  property,
-  ai,
-}: {
-  property: PropertyRow;
-  ai: ListingAiWithMeta;
-}) {
+export function ListingEditor({ property, ai }: { property: PropertyRow; ai: ListingAiWithMeta }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -87,9 +78,7 @@ export function ListingEditor({
     size_unit: property.size_unit,
     ...(ai._inputs ?? {}),
   }));
-  const [amenitiesText, setAmenitiesText] = useState(
-    (inputs.amenities ?? []).join(", "),
-  );
+  const [amenitiesText, setAmenitiesText] = useState((inputs.amenities ?? []).join(", "));
 
   const persist = useMutation({
     mutationFn: async (next: ListingAiWithMeta) => {
@@ -218,8 +207,8 @@ export function ListingEditor({
             <Wand2 className="h-3 w-3" /> Owner tools · Edit AI content
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            Refine any AI-drafted field, tweak the inputs and regenerate. Every save keeps a
-            version snapshot you can restore.
+            Refine any AI-drafted field, tweak the inputs and regenerate. Every save keeps a version
+            snapshot you can restore.
           </p>
         </div>
         <button
@@ -367,9 +356,7 @@ export function ListingEditor({
                 <select
                   className="input mt-1"
                   value={inputs.access_type ?? ""}
-                  onChange={(e) =>
-                    setInputs({ ...inputs, access_type: e.target.value || null })
-                  }
+                  onChange={(e) => setInputs({ ...inputs, access_type: e.target.value || null })}
                 >
                   <option value="">— select —</option>
                   {ACCESS_OPTIONS.map((a) => (
@@ -520,8 +507,7 @@ export function ListingEditor({
                     <div>
                       <div className="font-medium">{v.label}</div>
                       <div className="text-[10px] text-muted-foreground">
-                        {new Date(v.savedAt).toLocaleString()} ·{" "}
-                        {v.ai.polishedTitle.slice(0, 60)}
+                        {new Date(v.savedAt).toLocaleString()} · {v.ai.polishedTitle.slice(0, 60)}
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -598,8 +584,12 @@ function VersionDiff({
     },
     {
       label: "Concepts",
-      a: a.ai.concepts.map((c) => `${c.name} (${c.confidencePct}%) — ${c.description}`).join("\n\n"),
-      b: b.ai.concepts.map((c) => `${c.name} (${c.confidencePct}%) — ${c.description}`).join("\n\n"),
+      a: a.ai.concepts
+        .map((c) => `${c.name} (${c.confidencePct}%) — ${c.description}`)
+        .join("\n\n"),
+      b: b.ai.concepts
+        .map((c) => `${c.name} (${c.confidencePct}%) — ${c.description}`)
+        .join("\n\n"),
     },
   ];
   return (
@@ -649,9 +639,7 @@ function VersionDiff({
             <div
               key={r.label}
               className={`rounded-xl border p-2 ${
-                changed
-                  ? "border-accent/40 bg-accent/[0.05]"
-                  : "border-white/10 bg-white/[0.02]"
+                changed ? "border-accent/40 bg-accent/[0.05]" : "border-white/10 bg-white/[0.02]"
               }`}
             >
               <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1 flex items-center justify-between">

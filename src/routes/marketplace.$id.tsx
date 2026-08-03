@@ -131,7 +131,11 @@ function ListingDetail() {
                 : "border-amber-400/30 bg-amber-500/10 text-amber-glow"
             }`}
           >
-            {p.status === "published" ? <Globe className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
+            {p.status === "published" ? (
+              <Globe className="h-3 w-3" />
+            ) : (
+              <Lock className="h-3 w-3" />
+            )}
             {p.status === "published" ? "Published" : "Draft"}
           </span>
           <span className="text-muted-foreground">
@@ -179,7 +183,11 @@ function ListingDetail() {
         <section>
           <div className="rounded-2xl overflow-hidden border border-white/10 aspect-[16/10] bg-gradient-to-br from-primary/30 via-accent/10 to-emerald-500/20 relative">
             {p.cover_image ? (
-              <img src={p.cover_image} alt="" className="absolute inset-0 h-full w-full object-cover" />
+              <img
+                src={p.cover_image}
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover"
+              />
             ) : (
               <div className="absolute inset-0 grid place-items-center text-muted-foreground/60">
                 <Building2 className="h-14 w-14" />
@@ -383,10 +391,7 @@ function AiListingBrief({
               ["instagram", "Instagram"],
             ] as const
           ).map(([k, label]) => (
-            <div
-              key={k}
-              className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-xs"
-            >
+            <div key={k} className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-xs">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-muted-foreground">{label}</span>
                 <button
@@ -398,9 +403,7 @@ function AiListingBrief({
                   {copied === k ? "Copied" : "Copy"}
                 </button>
               </div>
-              <p className="whitespace-pre-line text-muted-foreground">
-                {ai.socialCaptions[k]}
-              </p>
+              <p className="whitespace-pre-line text-muted-foreground">{ai.socialCaptions[k]}</p>
             </div>
           ))}
         </div>
@@ -427,7 +430,10 @@ function AiListingBrief({
 function ConceptStudio({ ai }: { ai: ListingAiOutput }) {
   const [selectedIdx, setSelectedIdx] = useState(0);
   const selected = ai.concepts[selectedIdx] ?? ai.concepts[0];
-  const zones = useMemo(() => deriveZones(selected?.name ?? "", selected?.siteLayout ?? ""), [selected]);
+  const zones = useMemo(
+    () => deriveZones(selected?.name ?? "", selected?.siteLayout ?? ""),
+    [selected],
+  );
   return (
     <section
       data-testid="concept-studio"
@@ -437,19 +443,13 @@ function ConceptStudio({ ai }: { ai: ListingAiOutput }) {
         <div className="text-[11px] uppercase tracking-widest text-accent inline-flex items-center gap-1">
           <Sparkles className="h-3 w-3" /> Architectural Concept Studio
         </div>
-        <h2 className="text-lg font-display font-semibold mt-1">
-          Conceptual development options
-        </h2>
+        <h2 className="text-lg font-display font-semibold mt-1">Conceptual development options</h2>
         <p className="text-xs text-muted-foreground mt-1">
           AI-generated concepts to spark planning conversations —{" "}
           <span className="text-amber-glow">conceptual only, not architectural approvals.</span>
         </p>
       </header>
-      <div
-        className="mt-4 grid gap-3 sm:grid-cols-3"
-        role="tablist"
-        aria-label="Concept options"
-      >
+      <div className="mt-4 grid gap-3 sm:grid-cols-3" role="tablist" aria-label="Concept options">
         {ai.concepts.map((c, i) => {
           const on = i === selectedIdx;
           return (
@@ -527,13 +527,28 @@ function ConceptStudio({ ai }: { ai: ListingAiOutput }) {
   );
 }
 
-type Zone = { key: string; label: string; color: string; x: number; y: number; w: number; h: number };
+type Zone = {
+  key: string;
+  label: string;
+  color: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+};
 
 function deriveZones(name: string, layout: string): Zone[] {
   const t = `${name} ${layout}`.toLowerCase();
   const zones: Zone[] = [];
-  const push = (key: string, label: string, color: string, x: number, y: number, w: number, h: number) =>
-    zones.push({ key, label, color, x, y, w, h });
+  const push = (
+    key: string,
+    label: string,
+    color: string,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+  ) => zones.push({ key, label, color, x, y, w, h });
   // Always: parcel boundary implicit; road on south
   if (/cottage|homestead|bungalow|house|villa/.test(t)) {
     push("house", "Main house", "#00c2e8", 20, 25, 60, 38);
@@ -568,7 +583,16 @@ function ConceptSchematic({ zones }: { zones: Zone[] }) {
       role="img"
       aria-label="Conceptual site layout"
     >
-      <rect x="1" y="1" width="98" height="98" fill="none" stroke="#d4a017" strokeWidth="0.4" strokeDasharray="1.5 1.5" />
+      <rect
+        x="1"
+        y="1"
+        width="98"
+        height="98"
+        fill="none"
+        stroke="#d4a017"
+        strokeWidth="0.4"
+        strokeDasharray="1.5 1.5"
+      />
       {zones.map((z) => (
         <g key={z.key}>
           <rect
@@ -645,10 +669,7 @@ function ContactSeller({ propertyId, sellerId }: { propertyId: string; sellerId:
         <p className="text-xs text-muted-foreground mt-2">
           The seller will see your enquiry in their dashboard. You can track it there too.
         </p>
-        <Link
-          to="/dashboard"
-          className="mt-3 inline-block text-xs text-accent hover:underline"
-        >
+        <Link to="/dashboard" className="mt-3 inline-block text-xs text-accent hover:underline">
           Go to my dashboard →
         </Link>
       </div>

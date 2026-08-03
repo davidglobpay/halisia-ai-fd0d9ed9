@@ -134,7 +134,10 @@ export async function updateVaultDocument(
 
 export async function deleteVaultDocument(doc: VaultDocument): Promise<void> {
   if (doc.storage_path)
-    await supabase.storage.from(VAULT_BUCKET).remove([doc.storage_path]).catch(() => undefined);
+    await supabase.storage
+      .from(VAULT_BUCKET)
+      .remove([doc.storage_path])
+      .catch(() => undefined);
   const { error } = await supabase.from("vault_documents").delete().eq("id", doc.id);
   if (error) throw error;
 }

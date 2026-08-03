@@ -1,15 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import {
-  Briefcase,
-  Landmark,
-  ShieldAlert,
-  Loader2,
-  Sparkles,
-  Info,
-  Plus,
-} from "lucide-react";
+import { Briefcase, Landmark, ShieldAlert, Loader2, Sparkles, Info, Plus } from "lucide-react";
 import type { PropertyRow } from "@/lib/properties";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -84,16 +76,15 @@ function BidRequestsPanel({ property }: { property: PropertyRow }) {
   });
 
   return (
-    <div
-      data-testid="bid-panel"
-      className="glass rounded-2xl border border-white/10 p-5"
-    >
+    <div data-testid="bid-panel" className="glass rounded-2xl border border-white/10 p-5">
       <header className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <div className="text-[11px] uppercase tracking-widest text-accent inline-flex items-center gap-1">
             <Briefcase className="h-3 w-3" /> Professional matching
           </div>
-          <h2 className="text-lg font-display font-semibold mt-1">Request bids from verified pros</h2>
+          <h2 className="text-lg font-display font-semibold mt-1">
+            Request bids from verified pros
+          </h2>
           <p className="text-xs text-muted-foreground mt-1">
             Post a scope of work and receive proposals from architects, engineers, surveyors and
             builders.
@@ -206,7 +197,9 @@ function BidRequestsPanel({ property }: { property: PropertyRow }) {
         ) : (q.data ?? []).length === 0 ? (
           <p className="text-xs text-muted-foreground">No bid requests yet for this property.</p>
         ) : (
-          (q.data ?? []).map((r) => <RequestRow key={r.id} id={r.id} title={r.title} status={r.status} scope={r.scope} />)
+          (q.data ?? []).map((r) => (
+            <RequestRow key={r.id} id={r.id} title={r.title} status={r.status} scope={r.scope} />
+          ))
         )}
       </div>
 
@@ -265,7 +258,8 @@ function RequestRow({
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium">{pr.company_name}</span>
                   <span className="text-muted-foreground tabular-nums">
-                    {pr.currency} {pr.amount?.toLocaleString?.() ?? "—"} · {pr.timeline_days ?? "—"}d
+                    {pr.currency} {pr.amount?.toLocaleString?.() ?? "—"} · {pr.timeline_days ?? "—"}
+                    d
                   </span>
                 </div>
                 {pr.message && <p className="text-muted-foreground mt-0.5">{pr.message}</p>}
@@ -349,10 +343,7 @@ function InsuranceBriefPanel({ property }: { property: PropertyRow }) {
   const ai = (q.data?.ai_output as unknown as InsuranceAiOutput | null) ?? null;
 
   return (
-    <div
-      data-testid="insurance-panel"
-      className="glass rounded-2xl border border-white/10 p-5"
-    >
+    <div data-testid="insurance-panel" className="glass rounded-2xl border border-white/10 p-5">
       <header className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <div className="text-[11px] uppercase tracking-widest text-accent inline-flex items-center gap-1">
@@ -385,7 +376,9 @@ function InsuranceBriefPanel({ property }: { property: PropertyRow }) {
 
       {!ai ? (
         <p className="mt-3 text-xs text-muted-foreground">
-          {user ? "No brief yet — generate one to see key risks and coverage." : "Sign in to generate an insurance brief."}
+          {user
+            ? "No brief yet — generate one to see key risks and coverage."
+            : "Sign in to generate an insurance brief."}
         </p>
       ) : (
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -395,7 +388,10 @@ function InsuranceBriefPanel({ property }: { property: PropertyRow }) {
             </h3>
             <ul className="space-y-2">
               {ai.keyRisks.map((r: InsuranceRisk) => (
-                <li key={r.name} className="rounded-lg border border-white/10 bg-white/[0.03] p-2 text-xs">
+                <li
+                  key={r.name}
+                  className="rounded-lg border border-white/10 bg-white/[0.03] p-2 text-xs"
+                >
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-medium">{r.name}</span>
                     <SeverityPill s={r.severity} />
@@ -461,7 +457,9 @@ function SeverityPill({ s }: { s: InsuranceRisk["severity"] }) {
         ? "border-amber-400/30 bg-amber-500/10 text-amber-glow"
         : "border-emerald-400/30 bg-emerald-500/10 text-emerald-glow";
   return (
-    <span className={`rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-widest ${cls}`}>
+    <span
+      className={`rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-widest ${cls}`}
+    >
       {s}
     </span>
   );

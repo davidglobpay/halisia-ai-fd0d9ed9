@@ -111,7 +111,11 @@ export function buildConceptStudyPdf(input: {
   doc.setFontSize(10);
   doc.setTextColor(0, 194, 232);
   doc.text(
-    [p.address, p.county ? `${p.county} County` : null, p.size_value ? `${p.size_value} ${p.size_unit ?? ""}`.trim() : null]
+    [
+      p.address,
+      p.county ? `${p.county} County` : null,
+      p.size_value ? `${p.size_value} ${p.size_unit ?? ""}`.trim() : null,
+    ]
       .filter(Boolean)
       .join("  ·  ") || "Location not stated",
     M,

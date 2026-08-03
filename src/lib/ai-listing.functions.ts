@@ -88,8 +88,7 @@ function heuristicPrice(input: ListingAiInput): { min: number | null; max: numbe
 
 function fallback(input: ListingAiInput): ListingAiOutput {
   const loc = input.address ?? input.county ?? "Kenya";
-  const size =
-    input.size_value != null ? `${input.size_value} ${input.size_unit ?? "acres"} ` : "";
+  const size = input.size_value != null ? `${input.size_value} ${input.size_unit ?? "acres"} ` : "";
   const kind = input.kind.replace("_", " ");
   const price = heuristicPrice(input);
   const currency = input.currency || "KES";
@@ -100,12 +99,12 @@ function fallback(input: ListingAiInput): ListingAiOutput {
     headline: `${kind[0]?.toUpperCase()}${kind.slice(1)} opportunity in ${loc}`,
     aiSummary: `${size}${kind} listed for ${input.intent} in ${loc}. ${
       input.amenities?.length ? `Amenities include ${input.amenities.slice(0, 4).join(", ")}.` : ""
-    } ${
-      input.utilities?.length ? `Utilities on-site: ${input.utilities.join(", ")}.` : ""
-    }`.trim(),
+    } ${input.utilities?.length ? `Utilities on-site: ${input.utilities.join(", ")}.` : ""}`.trim(),
     marketingHighlights: [
       input.access_type ? `${input.access_type} access` : "Motorable access",
-      input.utilities?.length ? `${input.utilities.length} utilities on-site` : "Utility-ready plot",
+      input.utilities?.length
+        ? `${input.utilities.length} utilities on-site`
+        : "Utility-ready plot",
       input.amenities?.[0] ?? "Established neighbourhood",
       "Priced for a fast decision",
     ].filter(Boolean) as string[],
@@ -121,10 +120,11 @@ function fallback(input: ListingAiInput): ListingAiOutput {
       note: "Heuristic band from size, kind and county baselines — refine with local comps.",
     },
     socialCaptions: {
-      twitter: `🇰🇪 New on HALISIA AI: ${size}${kind} in ${loc}. AI-scored & ready to explore.`.slice(
-        0,
-        260,
-      ),
+      twitter:
+        `🇰🇪 New on HALISIA AI: ${size}${kind} in ${loc}. AI-scored & ready to explore.`.slice(
+          0,
+          260,
+        ),
       facebook: `Now on HALISIA AI — ${size}${kind} in ${loc}. Every listing is scored by our Land Intelligence Engine so you buy with confidence.`,
       whatsapp: `*${size}${kind} in ${loc}* — listed on HALISIA AI with a full Land Intelligence breakdown. DM for details.`,
       instagram: `${size}${kind} · ${loc}\n\nAI-scored on HALISIA AI. Tap the link in bio for the full intelligence report.\n\n#HalisiaAI #Kenya #RealEstate`,
@@ -249,19 +249,28 @@ RULES:
           note: String(pe.note ?? fb.priceEstimate.note).slice(0, 240),
         },
         socialCaptions: {
-          twitter: String(parsed.socialCaptions?.twitter ?? fb.socialCaptions.twitter).slice(0, 280),
-          facebook: String(parsed.socialCaptions?.facebook ?? fb.socialCaptions.facebook).slice(0, 600),
-          whatsapp: String(parsed.socialCaptions?.whatsapp ?? fb.socialCaptions.whatsapp).slice(0, 600),
-          instagram: String(parsed.socialCaptions?.instagram ?? fb.socialCaptions.instagram).slice(0, 800),
+          twitter: String(parsed.socialCaptions?.twitter ?? fb.socialCaptions.twitter).slice(
+            0,
+            280,
+          ),
+          facebook: String(parsed.socialCaptions?.facebook ?? fb.socialCaptions.facebook).slice(
+            0,
+            600,
+          ),
+          whatsapp: String(parsed.socialCaptions?.whatsapp ?? fb.socialCaptions.whatsapp).slice(
+            0,
+            600,
+          ),
+          instagram: String(parsed.socialCaptions?.instagram ?? fb.socialCaptions.instagram).slice(
+            0,
+            800,
+          ),
         },
         disclaimers: asStrArr(parsed.disclaimers, 5, 240).length
           ? asStrArr(parsed.disclaimers, 5, 240)
           : BASE_DISCLAIMERS,
         concepts: isLand ? concepts : [],
-        confidencePct: Math.max(
-          0,
-          Math.min(100, Math.round(Number(parsed.confidencePct) || 62)),
-        ),
+        confidencePct: Math.max(0, Math.min(100, Math.round(Number(parsed.confidencePct) || 62))),
         generatedAt: new Date().toISOString(),
       };
     } catch (e) {

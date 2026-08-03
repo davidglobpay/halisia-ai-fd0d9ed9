@@ -41,9 +41,7 @@ export function VersionHistory({ propertyId }: { propertyId: string }) {
           <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> Loading versions…
         </div>
       )}
-      {q.error && (
-        <p className="mt-2 text-[11px] text-red-300">{(q.error as Error).message}</p>
-      )}
+      {q.error && <p className="mt-2 text-[11px] text-red-300">{(q.error as Error).message}</p>}
       {q.data && q.data.length === 0 && (
         <p className="mt-2 text-[11px] text-muted-foreground">
           No versions yet — the next time you save this listing a snapshot is recorded here.

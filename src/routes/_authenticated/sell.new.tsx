@@ -24,7 +24,13 @@ import {
 import { generateListingAi } from "@/lib/ai-listing.functions";
 import { coachListing, type CoachOutput } from "@/lib/listing-coach.functions";
 import { uploadListingPhoto } from "@/lib/listing-media";
-import { upsertRentalDetails, FURNISHING_OPTIONS, RENTAL_UTILITIES, SECURITY_FEATURES, ACCESSIBILITY_FEATURES } from "@/lib/rentals";
+import {
+  upsertRentalDetails,
+  FURNISHING_OPTIONS,
+  RENTAL_UTILITIES,
+  SECURITY_FEATURES,
+  ACCESSIBILITY_FEATURES,
+} from "@/lib/rentals";
 import { PinPicker } from "@/components/halisia/pin-picker";
 import {
   EMPTY_DRAFT,
@@ -92,7 +98,10 @@ function SellNew() {
   const set = <K extends keyof WizardDraft>(k: K, v: WizardDraft[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
 
-  const toggleIn = (k: "utilities" | "utilities_included" | "security_features" | "accessibility_features", v: string) =>
+  const toggleIn = (
+    k: "utilities" | "utilities_included" | "security_features" | "accessibility_features",
+    v: string,
+  ) =>
     setForm((f) => ({
       ...f,
       [k]: f[k].includes(v) ? f[k].filter((x) => x !== v) : [...f[k], v],
@@ -115,7 +124,10 @@ function SellNew() {
           size_unit: form.size_unit,
           bedrooms: form.bedrooms ? Number(form.bedrooms) : null,
           bathrooms: form.bathrooms ? Number(form.bathrooms) : null,
-          amenities: form.amenities.split(",").map((s) => s.trim()).filter(Boolean),
+          amenities: form.amenities
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
           utilities: form.utilities,
           access_type: form.access_type || null,
           photos: form.media_urls.length,
@@ -228,7 +240,8 @@ function SellNew() {
           },
         });
         await updateProperty(row.id, {
-          ai_summary: ai as unknown as import("@/integrations/supabase/types").Database["public"]["Tables"]["properties"]["Update"]["ai_summary"],
+          ai_summary:
+            ai as unknown as import("@/integrations/supabase/types").Database["public"]["Tables"]["properties"]["Update"]["ai_summary"],
         });
       } catch (err) {
         console.warn("AI enrichment skipped", err);
@@ -323,217 +336,220 @@ function SellNew() {
       >
         {step === 0 && (
           <>
-        <Field label="Listing title" required>
-          <input
-            required
-            maxLength={140}
-            value={form.title}
-            onChange={(e) => set("title", e.target.value)}
-            className="input"
-            placeholder="e.g. 0.25 acre plot near Tatu City"
-          />
-        </Field>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Type">
-            <select
-              value={form.kind}
-              onChange={(e) => set("kind", e.target.value as PropertyKind)}
-              className="input"
-            >
-              {PROPERTY_KINDS.map((k) => (
-                <option key={k.value} value={k.value}>
-                  {k.label}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Intent">
-            <select
-              value={form.intent}
-              onChange={(e) => set("intent", e.target.value as ListingIntent)}
-              className="input"
-            >
-              {INTENTS.map((i) => (
-                <option key={i.value} value={i.value}>
-                  {i.label}
-                </option>
-              ))}
-            </select>
-          </Field>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Field label="Price">
-            <input
-              type="number"
-              min={0}
-              value={form.price}
-              onChange={(e) => set("price", e.target.value)}
-              className="input"
-              placeholder="0"
-            />
-          </Field>
-          <Field label="Currency">
-            <input
-              value={form.currency}
-              onChange={(e) => set("currency", e.target.value.toUpperCase().slice(0, 4))}
-              className="input"
-            />
-          </Field>
-          <Field label="Size">
-            <div className="flex gap-2">
+            <Field label="Listing title" required>
               <input
-                type="number"
-                min={0}
-                value={form.size_value}
-                onChange={(e) => set("size_value", e.target.value)}
-                className="input flex-1"
+                required
+                maxLength={140}
+                value={form.title}
+                onChange={(e) => set("title", e.target.value)}
+                className="input"
+                placeholder="e.g. 0.25 acre plot near Tatu City"
               />
-              <select
-                value={form.size_unit}
-                onChange={(e) => set("size_unit", e.target.value)}
-                className="input w-24"
-              >
-                <option value="acres">acres</option>
-                <option value="ha">ha</option>
-                <option value="sqm">sqm</option>
-                <option value="sqft">sqft</option>
-              </select>
+            </Field>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Type">
+                <select
+                  value={form.kind}
+                  onChange={(e) => set("kind", e.target.value as PropertyKind)}
+                  className="input"
+                >
+                  {PROPERTY_KINDS.map((k) => (
+                    <option key={k.value} value={k.value}>
+                      {k.label}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Intent">
+                <select
+                  value={form.intent}
+                  onChange={(e) => set("intent", e.target.value as ListingIntent)}
+                  className="input"
+                >
+                  {INTENTS.map((i) => (
+                    <option key={i.value} value={i.value}>
+                      {i.label}
+                    </option>
+                  ))}
+                </select>
+              </Field>
             </div>
-          </Field>
-        </div>
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              <Field label="Price">
+                <input
+                  type="number"
+                  min={0}
+                  value={form.price}
+                  onChange={(e) => set("price", e.target.value)}
+                  className="input"
+                  placeholder="0"
+                />
+              </Field>
+              <Field label="Currency">
+                <input
+                  value={form.currency}
+                  onChange={(e) => set("currency", e.target.value.toUpperCase().slice(0, 4))}
+                  className="input"
+                />
+              </Field>
+              <Field label="Size">
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    min={0}
+                    value={form.size_value}
+                    onChange={(e) => set("size_value", e.target.value)}
+                    className="input flex-1"
+                  />
+                  <select
+                    value={form.size_unit}
+                    onChange={(e) => set("size_unit", e.target.value)}
+                    className="input w-24"
+                  >
+                    <option value="acres">acres</option>
+                    <option value="ha">ha</option>
+                    <option value="sqm">sqm</option>
+                    <option value="sqft">sqft</option>
+                  </select>
+                </div>
+              </Field>
+            </div>
           </>
         )}
 
         {step === 1 && (
           <>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="County">
-            <input
-              value={form.county}
-              onChange={(e) => set("county", e.target.value)}
-              className="input"
-              placeholder="Nairobi"
-            />
-          </Field>
-          <Field label="Address / neighbourhood">
-            <input
-              value={form.address}
-              onChange={(e) => set("address", e.target.value)}
-              className="input"
-              placeholder="Kilimani"
-            />
-          </Field>
-        </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="County">
+                <input
+                  value={form.county}
+                  onChange={(e) => set("county", e.target.value)}
+                  className="input"
+                  placeholder="Nairobi"
+                />
+              </Field>
+              <Field label="Address / neighbourhood">
+                <input
+                  value={form.address}
+                  onChange={(e) => set("address", e.target.value)}
+                  className="input"
+                  placeholder="Kilimani"
+                />
+              </Field>
+            </div>
 
-        <PinPicker
-          lat={form.latitude ? Number(form.latitude) : null}
-          lng={form.longitude ? Number(form.longitude) : null}
-          onPick={(lat, lng) =>
-            setForm((f) => ({ ...f, latitude: lat.toFixed(6), longitude: lng.toFixed(6) }))
-          }
-        />
+            <PinPicker
+              lat={form.latitude ? Number(form.latitude) : null}
+              lng={form.longitude ? Number(form.longitude) : null}
+              onPick={(lat, lng) =>
+                setForm((f) => ({ ...f, latitude: lat.toFixed(6), longitude: lng.toFixed(6) }))
+              }
+            />
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Latitude" hint="Optional but enables LIOS + maps">
-            <input
-              type="number"
-              step="any"
-              value={form.latitude}
-              onChange={(e) => set("latitude", e.target.value)}
-              className="input"
-              placeholder="-1.29"
-            />
-          </Field>
-          <Field label="Longitude">
-            <input
-              type="number"
-              step="any"
-              value={form.longitude}
-              onChange={(e) => set("longitude", e.target.value)}
-              className="input"
-              placeholder="36.82"
-            />
-          </Field>
-        </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Latitude" hint="Optional but enables LIOS + maps">
+                <input
+                  type="number"
+                  step="any"
+                  value={form.latitude}
+                  onChange={(e) => set("latitude", e.target.value)}
+                  className="input"
+                  placeholder="-1.29"
+                />
+              </Field>
+              <Field label="Longitude">
+                <input
+                  type="number"
+                  step="any"
+                  value={form.longitude}
+                  onChange={(e) => set("longitude", e.target.value)}
+                  className="input"
+                  placeholder="36.82"
+                />
+              </Field>
+            </div>
           </>
         )}
 
         {step === 2 && (
           <>
-        <Field label="Amenities" hint="Comma separated (Water, Fibre, Perimeter fence…)">
-          <input
-            value={form.amenities}
-            onChange={(e) => set("amenities", e.target.value)}
-            className="input"
-          />
-        </Field>
+            <Field label="Amenities" hint="Comma separated (Water, Fibre, Perimeter fence…)">
+              <input
+                value={form.amenities}
+                onChange={(e) => set("amenities", e.target.value)}
+                className="input"
+              />
+            </Field>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Bedrooms">
-            <input
-              type="number"
-              min={0}
-              value={form.bedrooms}
-              onChange={(e) => set("bedrooms", e.target.value)}
-              className="input"
-            />
-          </Field>
-          <Field label="Bathrooms">
-            <input
-              type="number"
-              min={0}
-              value={form.bathrooms}
-              onChange={(e) => set("bathrooms", e.target.value)}
-              className="input"
-            />
-          </Field>
-        </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Bedrooms">
+                <input
+                  type="number"
+                  min={0}
+                  value={form.bedrooms}
+                  onChange={(e) => set("bedrooms", e.target.value)}
+                  className="input"
+                />
+              </Field>
+              <Field label="Bathrooms">
+                <input
+                  type="number"
+                  min={0}
+                  value={form.bathrooms}
+                  onChange={(e) => set("bathrooms", e.target.value)}
+                  className="input"
+                />
+              </Field>
+            </div>
 
-        <Field label="Access" hint="How does one reach the plot?">
-          <select
-            value={form.access_type}
-            onChange={(e) => set("access_type", e.target.value)}
-            className="input"
-          >
-            <option value="">— select —</option>
-            {ACCESS_OPTIONS.map((a) => (
-              <option key={a} value={a}>
-                {a}
-              </option>
-            ))}
-          </select>
-        </Field>
+            <Field label="Access" hint="How does one reach the plot?">
+              <select
+                value={form.access_type}
+                onChange={(e) => set("access_type", e.target.value)}
+                className="input"
+              >
+                <option value="">— select —</option>
+                {ACCESS_OPTIONS.map((a) => (
+                  <option key={a} value={a}>
+                    {a}
+                  </option>
+                ))}
+              </select>
+            </Field>
 
-        <Field label="Utilities on-site" hint="Tick everything already available.">
-          <div className="flex flex-wrap gap-2">
-            {UTILITY_OPTIONS.map((u) => {
-              const on = form.utilities.includes(u);
-              return (
-                <button
-                  type="button"
-                  key={u}
-                  onClick={() => toggleIn("utilities", u)}
-                  className={`rounded-full border px-3 py-1 text-xs transition ${
-                    on
-                      ? "border-accent bg-accent/20 text-accent"
-                      : "border-white/10 bg-white/5 text-muted-foreground hover:text-foreground"
-                  }`}
-                  aria-pressed={on}
-                >
-                  {u}
-                </button>
-              );
-            })}
-          </div>
-        </Field>
+            <Field label="Utilities on-site" hint="Tick everything already available.">
+              <div className="flex flex-wrap gap-2">
+                {UTILITY_OPTIONS.map((u) => {
+                  const on = form.utilities.includes(u);
+                  return (
+                    <button
+                      type="button"
+                      key={u}
+                      onClick={() => toggleIn("utilities", u)}
+                      className={`rounded-full border px-3 py-1 text-xs transition ${
+                        on
+                          ? "border-accent bg-accent/20 text-accent"
+                          : "border-white/10 bg-white/5 text-muted-foreground hover:text-foreground"
+                      }`}
+                      aria-pressed={on}
+                    >
+                      {u}
+                    </button>
+                  );
+                })}
+              </div>
+            </Field>
           </>
         )}
 
         {step === 3 && (
           <>
-            <Field label="Upload photos" hint="JPG/PNG up to 8MB each. Three or more performs best.">
+            <Field
+              label="Upload photos"
+              hint="JPG/PNG up to 8MB each. Three or more performs best."
+            >
               <div className="flex flex-wrap items-center gap-2">
                 <input
                   ref={fileRef}
@@ -568,8 +584,16 @@ function SellNew() {
             {form.media_urls.length > 0 && (
               <ul className="grid grid-cols-3 gap-2">
                 {form.media_urls.map((u) => (
-                  <li key={u} className="relative overflow-hidden rounded-xl border border-white/10">
-                    <img src={u} alt="Listing upload" className="h-24 w-full object-cover" loading="lazy" />
+                  <li
+                    key={u}
+                    className="relative overflow-hidden rounded-xl border border-white/10"
+                  >
+                    <img
+                      src={u}
+                      alt="Listing upload"
+                      className="h-24 w-full object-cover"
+                      loading="lazy"
+                    />
                     <div className="absolute inset-x-0 bottom-0 flex justify-between bg-black/60 px-1.5 py-1 text-[10px]">
                       <button
                         type="button"
@@ -626,7 +650,8 @@ function SellNew() {
               </button>
               {coach && (
                 <span className="text-[11px] text-muted-foreground">
-                  Confidence {coach.confidencePct}% · {new Date(coach.generatedAt).toLocaleTimeString()}
+                  Confidence {coach.confidencePct}% ·{" "}
+                  {new Date(coach.generatedAt).toLocaleTimeString()}
                 </span>
               )}
             </div>
@@ -685,16 +710,16 @@ function SellNew() {
               </>
             )}
 
-        <Field label="Description">
-          <textarea
-            rows={5}
-            maxLength={4000}
-            value={form.description}
-            onChange={(e) => set("description", e.target.value)}
-            className="input"
-            placeholder="What makes this property special?"
-          />
-        </Field>
+            <Field label="Description">
+              <textarea
+                rows={5}
+                maxLength={4000}
+                value={form.description}
+                onChange={(e) => set("description", e.target.value)}
+                className="input"
+                placeholder="What makes this property special?"
+              />
+            </Field>
           </>
         )}
 
@@ -704,61 +729,145 @@ function SellNew() {
               <>
                 <div className="grid gap-4 sm:grid-cols-3">
                   <Field label="Monthly rent">
-                    <input type="number" min={0} value={form.monthly_rent} onChange={(e) => set("monthly_rent", e.target.value)} className="input" />
+                    <input
+                      type="number"
+                      min={0}
+                      value={form.monthly_rent}
+                      onChange={(e) => set("monthly_rent", e.target.value)}
+                      className="input"
+                    />
                   </Field>
                   <Field label="Deposit">
-                    <input type="number" min={0} value={form.deposit} onChange={(e) => set("deposit", e.target.value)} className="input" />
+                    <input
+                      type="number"
+                      min={0}
+                      value={form.deposit}
+                      onChange={(e) => set("deposit", e.target.value)}
+                      className="input"
+                    />
                   </Field>
                   <Field label="Service charge">
-                    <input type="number" min={0} value={form.service_charge} onChange={(e) => set("service_charge", e.target.value)} className="input" />
+                    <input
+                      type="number"
+                      min={0}
+                      value={form.service_charge}
+                      onChange={(e) => set("service_charge", e.target.value)}
+                      className="input"
+                    />
                   </Field>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-3">
                   <Field label="Available from">
-                    <input type="date" value={form.available_from} onChange={(e) => set("available_from", e.target.value)} className="input" />
+                    <input
+                      type="date"
+                      value={form.available_from}
+                      onChange={(e) => set("available_from", e.target.value)}
+                      className="input"
+                    />
                   </Field>
                   <Field label="Furnishing">
-                    <select value={form.furnishing} onChange={(e) => set("furnishing", e.target.value)} className="input">
+                    <select
+                      value={form.furnishing}
+                      onChange={(e) => set("furnishing", e.target.value)}
+                      className="input"
+                    >
                       <option value="">— select —</option>
                       {FURNISHING_OPTIONS.map((f) => (
-                        <option key={f} value={f}>{f}</option>
+                        <option key={f} value={f}>
+                          {f}
+                        </option>
                       ))}
                     </select>
                   </Field>
                   <Field label="Parking spaces">
-                    <input type="number" min={0} value={form.parking_spaces} onChange={(e) => set("parking_spaces", e.target.value)} className="input" />
+                    <input
+                      type="number"
+                      min={0}
+                      value={form.parking_spaces}
+                      onChange={(e) => set("parking_spaces", e.target.value)}
+                      className="input"
+                    />
                   </Field>
                 </div>
-                <Chips label="Utilities included in rent" options={RENTAL_UTILITIES} value={form.utilities_included} onToggle={(v) => toggleIn("utilities_included", v)} />
-                <Chips label="Security" options={SECURITY_FEATURES} value={form.security_features} onToggle={(v) => toggleIn("security_features", v)} />
-                <Chips label="Accessibility" options={ACCESSIBILITY_FEATURES} value={form.accessibility_features} onToggle={(v) => toggleIn("accessibility_features", v)} />
-                <Field label="Public transport" hint="Nearest matatu stage, bus route, commuter rail…">
-                  <input value={form.public_transport} onChange={(e) => set("public_transport", e.target.value)} className="input" />
+                <Chips
+                  label="Utilities included in rent"
+                  options={RENTAL_UTILITIES}
+                  value={form.utilities_included}
+                  onToggle={(v) => toggleIn("utilities_included", v)}
+                />
+                <Chips
+                  label="Security"
+                  options={SECURITY_FEATURES}
+                  value={form.security_features}
+                  onToggle={(v) => toggleIn("security_features", v)}
+                />
+                <Chips
+                  label="Accessibility"
+                  options={ACCESSIBILITY_FEATURES}
+                  value={form.accessibility_features}
+                  onToggle={(v) => toggleIn("accessibility_features", v)}
+                />
+                <Field
+                  label="Public transport"
+                  hint="Nearest matatu stage, bus route, commuter rail…"
+                >
+                  <input
+                    value={form.public_transport}
+                    onChange={(e) => set("public_transport", e.target.value)}
+                    className="input"
+                  />
                 </Field>
                 <Field label="House rules">
-                  <textarea rows={3} value={form.house_rules} onChange={(e) => set("house_rules", e.target.value)} className="input" />
+                  <textarea
+                    rows={3}
+                    value={form.house_rules}
+                    onChange={(e) => set("house_rules", e.target.value)}
+                    className="input"
+                  />
                 </Field>
               </>
             ) : (
               <p className="text-xs text-muted-foreground">
-                Rental terms apply to “For rent” and “For lease” listings. Switch the intent in step 1
-                to capture rent, deposit, furnishing and house rules.
+                Rental terms apply to “For rent” and “For lease” listings. Switch the intent in step
+                1 to capture rent, deposit, furnishing and house rules.
               </p>
             )}
 
             <div className="grid gap-4 sm:grid-cols-3">
               <Field label="Contact name">
-                <input value={form.contact_name} onChange={(e) => set("contact_name", e.target.value)} className="input" />
+                <input
+                  value={form.contact_name}
+                  onChange={(e) => set("contact_name", e.target.value)}
+                  className="input"
+                />
               </Field>
               <Field label="Contact phone">
-                <input value={form.contact_phone} onChange={(e) => set("contact_phone", e.target.value)} className="input" placeholder="+254…" />
+                <input
+                  value={form.contact_phone}
+                  onChange={(e) => set("contact_phone", e.target.value)}
+                  className="input"
+                  placeholder="+254…"
+                />
               </Field>
               <Field label="Contact email">
-                <input type="email" value={form.contact_email} onChange={(e) => set("contact_email", e.target.value)} className="input" />
+                <input
+                  type="email"
+                  value={form.contact_email}
+                  onChange={(e) => set("contact_email", e.target.value)}
+                  className="input"
+                />
               </Field>
             </div>
-            <Field label="Viewing instructions" hint="When can people view, and what should they bring?">
-              <textarea rows={3} value={form.viewing_instructions} onChange={(e) => set("viewing_instructions", e.target.value)} className="input" />
+            <Field
+              label="Viewing instructions"
+              hint="When can people view, and what should they bring?"
+            >
+              <textarea
+                rows={3}
+                value={form.viewing_instructions}
+                onChange={(e) => set("viewing_instructions", e.target.value)}
+                className="input"
+              />
             </Field>
           </>
         )}
@@ -781,11 +890,13 @@ function SellNew() {
               <div className="rounded-xl border border-amber-300/20 bg-amber-300/5 p-3 text-xs">
                 <div className="font-medium text-amber-200">Still missing</div>
                 <ul className="mt-1 list-disc pl-4 text-muted-foreground">
-                  {checklist.filter((c) => !c.done).map((c) => (
-                    <li key={c.key}>
-                      {c.label} — {c.why}
-                    </li>
-                  ))}
+                  {checklist
+                    .filter((c) => !c.done)
+                    .map((c) => (
+                      <li key={c.key}>
+                        {c.label} — {c.why}
+                      </li>
+                    ))}
                 </ul>
               </div>
             )}
@@ -840,9 +951,9 @@ function SellNew() {
           </button>
         </div>
         <p className="text-[11px] text-muted-foreground">
-          On submit, HALISIA AI drafts your title, marketing highlights, SEO description, price
-          band and (for land) concept layouts — labelled as estimates. Confirm price and legal
-          details with a licensed professional before transacting.
+          On submit, HALISIA AI drafts your title, marketing highlights, SEO description, price band
+          and (for land) concept layouts — labelled as estimates. Confirm price and legal details
+          with a licensed professional before transacting.
         </p>
       </form>
     </main>
