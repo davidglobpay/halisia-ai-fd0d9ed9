@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { listRentalVacancies, formatRent } from "@/lib/rentals";
 import { AvailabilityCalendar } from "@/components/halisia/availability-calendar";
+import { ViewingBooking } from "@/components/halisia/viewing-booking";
 import { parseAvailability, parseViewings } from "@/lib/rental-availability";
 import { ClarifyStep } from "@/components/halisia/clarify-step";
 import { renterClarifications, type ClarifyAnswers } from "@/lib/clarify";
@@ -543,6 +544,10 @@ function RentalsPage() {
                       viewings={parseViewings(r?.viewing_windows)}
                       fallbackFrom={r?.available_from ?? null}
                     />
+                  </div>
+
+                  <div className="mt-3">
+                    <ViewingBooking propertyId={listing.id} mode="renter" />
                   </div>
 
                   <details className="mt-3 rounded-xl border border-white/10 bg-white/5 p-2.5">
