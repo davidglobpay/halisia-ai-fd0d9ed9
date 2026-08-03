@@ -455,8 +455,8 @@ export function FloatingSearch() {
           }}
           role="combobox"
           aria-expanded={open}
-          aria-owns={listboxId}
-          aria-controls={listboxId}
+          aria-owns={open ? listboxId : undefined}
+          aria-controls={open ? listboxId : undefined}
           aria-haspopup="listbox"
         >
           <Search className="h-4 w-4 text-accent shrink-0" aria-hidden="true" />
@@ -474,7 +474,7 @@ export function FloatingSearch() {
             onKeyDown={onKey}
             placeholder="Search anywhere in Kenya — town, road, coordinates, or ask a question…"
             aria-autocomplete="list"
-            aria-controls={listboxId}
+            aria-controls={open ? listboxId : undefined}
             aria-activedescendant={open && rows[active] ? `fs-opt-${active}` : undefined}
             aria-label="Search Kenya by town, road, coordinates, or question"
             className="flex-1 bg-transparent outline-none text-sm placeholder:text-muted-foreground min-w-0"
