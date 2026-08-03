@@ -395,6 +395,7 @@ export type Database = {
       professional_profiles: {
         Row: {
           availability: string | null;
+          availability_slots: Json;
           bio: string | null;
           category: Database["public"]["Enums"]["pro_category"];
           contact_email: string | null;
@@ -414,13 +415,17 @@ export type Database = {
           town: string | null;
           updated_at: string;
           user_id: string;
+          verification_evidence: Json;
+          verification_note: string | null;
           verification_status: Database["public"]["Enums"]["pro_verification"];
+          verification_submitted_at: string | null;
           verified_at: string | null;
           website: string | null;
           years_experience: number | null;
         };
         Insert: {
           availability?: string | null;
+          availability_slots?: Json;
           bio?: string | null;
           category: Database["public"]["Enums"]["pro_category"];
           contact_email?: string | null;
@@ -440,13 +445,17 @@ export type Database = {
           town?: string | null;
           updated_at?: string;
           user_id: string;
+          verification_evidence?: Json;
+          verification_note?: string | null;
           verification_status?: Database["public"]["Enums"]["pro_verification"];
+          verification_submitted_at?: string | null;
           verified_at?: string | null;
           website?: string | null;
           years_experience?: number | null;
         };
         Update: {
           availability?: string | null;
+          availability_slots?: Json;
           bio?: string | null;
           category?: Database["public"]["Enums"]["pro_category"];
           contact_email?: string | null;
@@ -466,7 +475,10 @@ export type Database = {
           town?: string | null;
           updated_at?: string;
           user_id?: string;
+          verification_evidence?: Json;
+          verification_note?: string | null;
           verification_status?: Database["public"]["Enums"]["pro_verification"];
+          verification_submitted_at?: string | null;
           verified_at?: string | null;
           website?: string | null;
           years_experience?: number | null;
@@ -476,11 +488,15 @@ export type Database = {
       professional_requests: {
         Row: {
           budget_note: string | null;
+          confirmed_end: string | null;
+          confirmed_start: string | null;
           contact_email: string | null;
           contact_phone: string | null;
           county: string | null;
           created_at: string;
           id: string;
+          preferred_end: string | null;
+          preferred_start: string | null;
           professional_id: string;
           project_brief: string;
           property_id: string | null;
@@ -490,11 +506,15 @@ export type Database = {
         };
         Insert: {
           budget_note?: string | null;
+          confirmed_end?: string | null;
+          confirmed_start?: string | null;
           contact_email?: string | null;
           contact_phone?: string | null;
           county?: string | null;
           created_at?: string;
           id?: string;
+          preferred_end?: string | null;
+          preferred_start?: string | null;
           professional_id: string;
           project_brief: string;
           property_id?: string | null;
@@ -504,11 +524,15 @@ export type Database = {
         };
         Update: {
           budget_note?: string | null;
+          confirmed_end?: string | null;
+          confirmed_start?: string | null;
           contact_email?: string | null;
           contact_phone?: string | null;
           county?: string | null;
           created_at?: string;
           id?: string;
+          preferred_end?: string | null;
+          preferred_start?: string | null;
           professional_id?: string;
           project_brief?: string;
           property_id?: string | null;

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Brain,
+  Check,
   ChevronDown,
   CloudSun,
   Landmark,
@@ -23,9 +24,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ConfidenceIndicator } from "@/components/halisia/ds/confidence-indicator";
-import { track } from "@/lib/analytics";
+import { recordStageOpen, track } from "@/lib/analytics";
+import { useReducedMotionPref } from "@/hooks/use-reduced-motion-pref";
 
-type Stage = {
+export type Stage = {
   title: string;
   role: string;
   detail: string;
@@ -39,6 +41,10 @@ type Stage = {
   what: string[];
   /** Named datasets / systems used. */
   sources: { label: string; url?: string }[];
+  /** Plain-language value of this stage to the reader. */
+  youGet: string;
+  /** Share of the final intelligence score this stage influences, in %. */
+  weight: number;
   /** Where this stage can be uncertain. */
   caveat: string;
 };
@@ -62,6 +68,9 @@ export const PIPELINE_STAGES: Stage[] = [
       "The AI listing coach flags missing or contradictory information before publishing.",
     ],
     sources: [{ label: "Seller-declared data (HALISIA listing wizard)" }],
+    youGet:
+      "You control this stage: the more complete and honest your listing, the higher every downstream score can climb.",
+    weight: 6,
     caveat:
       "Self-declared by the seller and not independently verified, so it carries the lowest weight in the score.",
   },
@@ -82,6 +91,9 @@ export const PIPELINE_STAGES: Stage[] = [
       { label: "Browser Geolocation API" },
       { label: "Leaflet / OpenStreetMap pin picker", url: "https://www.openstreetmap.org/" },
     ],
+    youGet:
+      "A precise pin means the amenities, climate and risk figures you read actually describe your parcel — not the next ridge.",
+    weight: 9,
     caveat:
       "Pin accuracy depends on how precisely the seller placed it; a coarse pin shifts nearby-amenity results.",
   },
@@ -102,6 +114,9 @@ export const PIPELINE_STAGES: Stage[] = [
       { label: "OpenStreetMap contributors", url: "https://www.openstreetmap.org/copyright" },
       { label: "Overpass API", url: "https://overpass-api.de/" },
     ],
+    youGet:
+      "This is what tells you how far the nearest school, clinic, matatu stage or market really is.",
+    weight: 13,
     caveat:
       "Rural coverage is thinner than urban coverage, so sparse areas can under-report amenities.",
   },
@@ -119,6 +134,9 @@ export const PIPELINE_STAGES: Stage[] = [
       "Place enrichment adds categorised POIs and isoline reachability around the parcel.",
     ],
     sources: [{ label: "Geoapify Places & Geocoding", url: "https://www.geoapify.com/" }],
+    youGet:
+      "It turns your pin into a proper address and neighbourhood picture you can share with a bank or buyer.",
+    weight: 7,
     caveat:
       "Place categories are generalised globally and may not match Kenyan local naming exactly.",
   },
@@ -136,6 +154,9 @@ export const PIPELINE_STAGES: Stage[] = [
       "Climate normals feed flood, drought and construction-window risk scoring.",
     ],
     sources: [{ label: "Open-Meteo archive & forecast API", url: "https://open-meteo.com/" }],
+    youGet:
+      "You get an honest read on rainfall, flooding and the best months to build before you commit money.",
+    weight: 10,
     caveat:
       "Reanalysis grids are coarse; micro-climates in valleys or highlands may differ locally.",
   },
@@ -157,6 +178,9 @@ export const PIPELINE_STAGES: Stage[] = [
       { label: "ISRIC SoilGrids v2.0", url: "https://soilgrids.org/" },
       { label: "Copernicus / ASTER elevation", url: "https://www.earthdata.nasa.gov/" },
     ],
+    youGet:
+      "You see slope, drainage and likely soil behaviour early — the things that quietly blow up foundation budgets.",
+    weight: 14,
     caveat:
       "Global rasters are modelled at 30–250 m resolution — indicative only, never a substitute for a site survey.",
   },
@@ -177,6 +201,9 @@ export const PIPELINE_STAGES: Stage[] = [
       { label: "Kenya National Bureau of Statistics", url: "https://www.knbs.or.ke/" },
       { label: "IEBC boundary datasets", url: "https://www.iebc.or.ke/" },
     ],
+    youGet:
+      "It places your parcel in its official county and ward context, which matters for approvals and services.",
+    weight: 8,
     caveat:
       "Official releases lag reality between census cycles, so fast-growing areas can look understated.",
   },
@@ -194,6 +221,9 @@ export const PIPELINE_STAGES: Stage[] = [
       "Every claim is bound to the signal it came from for the evidence panel.",
     ],
     sources: [{ label: "HALISIA reasoning layer over the retrieved signals above" }],
+    youGet:
+      "You get a plain-language explanation, not a black-box number, including what the system could not confirm.",
+    weight: 10,
     caveat:
       "Reasoning inherits the weakest input — thin data in means a hedged, lower-confidence narrative out.",
   },
@@ -211,6 +241,9 @@ export const PIPELINE_STAGES: Stage[] = [
       "The final score ships with a confidence percentage and its full evidence trail.",
     ],
     sources: [{ label: "HALISIA Land Intelligence Engine (10 weighted scorers)" }],
+    youGet:
+      "One comparable score you can defend to a spouse, a partner or a lender — with the workings attached.",
+    weight: 15,
     caveat: "A score is decision support, not a valuation, survey or legal opinion.",
   },
   {
@@ -226,6 +259,9 @@ export const PIPELINE_STAGES: Stage[] = [
       "Buyers can open any citation, download the PDF dossier or compare locations.",
     ],
     sources: [{ label: "HALISIA marketplace & PDF dossier export" }],
+    youGet:
+      "You can act: open a citation, download the dossier, compare two parcels or contact the seller with evidence in hand.",
+    weight: 8,
     caveat:
       "Displays exactly what the pipeline produced — always read the confidence chips alongside it.",
   },
@@ -256,35 +292,13 @@ const TONE: Record<Stage["tone"], { ring: string; icon: string; chip: string }> 
 
 export function DataPipeline() {
   const [active, setActive] = useState<Stage | null>(null);
-  const [reduced, setReduced] = useState(false);
+  const [reduced, setReducedPref] = useReducedMotionPref();
   const seen = useRef<Set<string>>(new Set());
 
-  // Seed from the OS setting, then let the local toggle override it.
-  useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem("halisia:pipelineReducedMotion");
-      if (stored === "1" || stored === "0") {
-        setReduced(stored === "1");
-        return;
-      }
-      setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-    } catch {
-      /* storage or matchMedia unavailable */
-    }
-  }, []);
-
   const toggleReduced = useCallback(() => {
-    setReduced((prev) => {
-      const next = !prev;
-      try {
-        window.localStorage.setItem("halisia:pipelineReducedMotion", next ? "1" : "0");
-      } catch {
-        /* ignore */
-      }
-      track({ name: "pipeline_motion_toggled", reduced: next });
-      return next;
-    });
-  }, []);
+    setReducedPref();
+    track({ name: "pipeline_motion_toggled", reduced: !reduced });
+  }, [reduced, setReducedPref]);
 
   // One view event per stage, the first time it scrolls into view.
   const observe = useCallback((el: HTMLLIElement | null, stage: Stage, index: number) => {
@@ -307,6 +321,8 @@ export function DataPipeline() {
 
   const openStage = (stage: Stage, index: number) => {
     track({ name: "pipeline_stage_click", stage: stage.title, index: index + 1, tone: stage.tone });
+    track({ name: "pipeline_modal_open", stage: stage.title, index: index + 1 });
+    recordStageOpen(stage.title);
     setActive(stage);
   };
 
@@ -428,7 +444,11 @@ export function DataPipeline() {
       </div>
 
       <Dialog open={!!active} onOpenChange={(o) => !o && setActive(null)}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+        <DialogContent
+          className={`max-h-[85vh] overflow-y-auto sm:max-w-lg ${
+            reduced ? "duration-0 data-[state=closed]:duration-0" : ""
+          }`}
+        >
           {active && (
             <>
               <DialogHeader>
@@ -445,6 +465,18 @@ export function DataPipeline() {
                 sources={active.sources.length}
               />
 
+              <div className="rounded-xl border border-accent/25 bg-accent/10 p-3">
+                <div className="text-[10px] uppercase tracking-widest text-accent">
+                  What this means for you
+                </div>
+                <p className="mt-1.5 text-[12px] leading-relaxed text-foreground/90">
+                  {active.youGet}
+                </p>
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  Influences roughly {active.weight}% of the HALISIA Intelligence Score.
+                </p>
+              </div>
+
               <div>
                 <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
                   What happens in this stage
@@ -460,11 +492,18 @@ export function DataPipeline() {
 
               <div>
                 <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                  Data sources used
+                  Data sources used in this stage
                 </div>
-                <ul className="mt-2 grid gap-1.5">
+                <ul className="mt-2 grid gap-1.5" aria-label="Checklist of data sources used">
                   {active.sources.map((src) => (
-                    <li key={src.label} className="text-[12px]">
+                    <li
+                      key={src.label}
+                      className="flex items-start gap-2 rounded-lg border border-white/10 bg-white/[0.03] p-2 text-[12px]"
+                    >
+                      <Check
+                        className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-300"
+                        aria-hidden="true"
+                      />
                       {src.url ? (
                         <a
                           href={src.url}

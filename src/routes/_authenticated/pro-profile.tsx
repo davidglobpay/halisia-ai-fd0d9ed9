@@ -1,19 +1,36 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Briefcase, Loader2, Star } from "lucide-react";
+import {
+  ArrowLeft,
+  Briefcase,
+  CalendarCheck,
+  Loader2,
+  Plus,
+  ShieldCheck,
+  Star,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   PRO_CATEGORIES,
   PRO_CATEGORY_LABELS,
+  WEEKDAYS,
   averageRating,
+  confirmRequestWindow,
   listMyProProfiles,
   listRequestsForMe,
   listReviews,
+  parseAvailability,
+  parseEvidence,
+  profileReadiness,
   saveProProfile,
   setRequestStatus,
+  submitVerification,
   verificationLabel,
+  type AvailabilitySlot,
   type ProCategory,
+  type VerificationEvidence,
 } from "@/lib/professionals";
 
 export const Route = createFileRoute("/_authenticated/pro-profile")({
@@ -61,6 +78,12 @@ function ProDashboard() {
     website: "",
     published: false,
   });
+  const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
+  const [evidence, setEvidence] = useState<VerificationEvidence[]>([]);
+  const [evLabel, setEvLabel] = useState("");
+  const [evUrl, setEvUrl] = useState("");
+  const [evKind, setEvKind] = useState<VerificationEvidence["kind"]>("registration_certificate");
+  const [verifyNote, setVerifyNote] = useState("");
 
   useEffect(() => {
     if (!first) return;
@@ -82,6 +105,9 @@ function ProDashboard() {
       website: first.website ?? "",
       published: first.published,
     });
+    setSlots(parseAvailability(first));
+    setEvidence(parseEvidence(first));
+    setVerifyNote(first.verification_note ?? "");
   }, [first]);
 
   const save = useMutation({
@@ -106,6 +132,7 @@ function ProDashboard() {
         contact_phone: form.contact_phone || null,
         website: form.website || null,
         published: form.published,
+        availability_slots: slots as unknown as never,
       }),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["my-pro-profiles"] });
@@ -120,6 +147,35 @@ function ProDashboard() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const confirmSlot = useMutation({
+    mutationFn: (v: { id: string; start: string; end: string }) => confirmRequestWindow(v),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["pro-requests-mine"] });
+      toast.success("Time window confirmed");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const verify = useMutation({
+    mutationFn: () => {
+      if (!first) throw new Error("Save your profile first");
+      return submitVerification({
+        id: first.id,
+        evidence,
+        registration_body: form.registration_body || null,
+        registration_number: form.registration_number || null,
+        note: verifyNote || null,
+      });
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["my-pro-profiles"] });
+      toast.success("Submitted for verification", {
+        description: "Your registration number stays hidden until Halisia approves it.",
+      });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const reviews = useQuery({
     queryKey: ["pro-reviews", first?.id ?? "none"],
     queryFn: () => (first ? listReviews(first.id) : Promise.resolve([])),
@@ -127,6 +183,15 @@ function ProDashboard() {
   });
   const avg = averageRating(reviews.data ?? []);
   const leads = requests.data ?? [];
+  const readiness = profileReadiness({
+    display_name: form.display_name,
+    category: form.category,
+    county: form.county,
+    bio: form.bio,
+    years_experience: form.years_experience ? Number(form.years_experience) : null,
+    contact_email: form.contact_email,
+    contact_phone: form.contact_phone,
+  });
 
   return (
     <main className="min-h-dvh px-4 sm:px-6 pt-24 pb-16 max-w-5xl mx-auto">
@@ -265,11 +330,84 @@ function ProDashboard() {
             <input
               type="checkbox"
               checked={form.published}
+              disabled={!readiness.ok}
               onChange={(e) => setForm({ ...form, published: e.target.checked })}
-              className="h-4 w-4 accent-[oklch(0.68_0.19_249)]"
+              className="h-4 w-4 accent-[oklch(0.68_0.19_249)] disabled:opacity-50"
             />
             Publish my profile in Halisia Connections
           </label>
+          {!readiness.ok && (
+            <p className="rounded-xl border border-amber-400/30 bg-amber-400/10 p-2.5 text-[11px] text-amber-200 sm:col-span-2">
+              Add the following before publishing: {readiness.missing.join(", ")}.
+            </p>
+          )}
+
+          <fieldset className="rounded-2xl border border-white/10 p-3 sm:col-span-2">
+            <legend className="px-1 text-[10px] uppercase tracking-widest text-muted-foreground">
+              Weekly availability for consultations
+            </legend>
+            {slots.length === 0 && (
+              <p className="text-[11px] text-muted-foreground">
+                Add windows so clients can request a time that already suits you.
+              </p>
+            )}
+            <ul className="grid gap-2">
+              {slots.map((s, i) => (
+                <li key={i} className="flex flex-wrap items-center gap-2">
+                  <select
+                    aria-label="Day"
+                    value={s.day}
+                    onChange={(e) =>
+                      setSlots(
+                        slots.map((x, j) => (j === i ? { ...x, day: Number(e.target.value) } : x)),
+                      )
+                    }
+                    className="h-9 rounded-xl border border-white/10 bg-white/5 px-2 text-xs"
+                  >
+                    {WEEKDAYS.map((d, di) => (
+                      <option key={d} value={di}>
+                        {d}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="time"
+                    aria-label="Start time"
+                    value={s.start}
+                    onChange={(e) =>
+                      setSlots(slots.map((x, j) => (j === i ? { ...x, start: e.target.value } : x)))
+                    }
+                    className="h-9 rounded-xl border border-white/10 bg-white/5 px-2 text-xs"
+                  />
+                  <input
+                    type="time"
+                    aria-label="End time"
+                    value={s.end}
+                    onChange={(e) =>
+                      setSlots(slots.map((x, j) => (j === i ? { ...x, end: e.target.value } : x)))
+                    }
+                    className="h-9 rounded-xl border border-white/10 bg-white/5 px-2 text-xs"
+                  />
+                  <button
+                    type="button"
+                    aria-label="Remove window"
+                    onClick={() => setSlots(slots.filter((_, j) => j !== i))}
+                    className="rounded-full border border-white/15 p-1.5 text-muted-foreground hover:text-red-300"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <button
+              type="button"
+              onClick={() => setSlots([...slots, { day: 2, start: "09:00", end: "12:00" }])}
+              className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-white/15 px-3 py-1 text-[11px] hover:text-accent"
+            >
+              <Plus className="h-3 w-3" aria-hidden="true" /> Add window
+            </button>
+          </fieldset>
+
           <p className="text-[11px] text-muted-foreground/80 sm:col-span-2">
             Registration details you enter are shown as self-declared and unconfirmed until Halisia
             verifies them. We never present unverified registration as verified.
@@ -287,6 +425,115 @@ function ProDashboard() {
             </button>
           </div>
         </form>
+      </section>
+
+      <section className="mb-10" aria-label="Verification">
+        <h2 className="mb-3 text-sm uppercase tracking-widest text-muted-foreground">
+          Registration verification
+        </h2>
+        <div className="glass rounded-2xl border border-white/10 p-4">
+          <p className="text-[12px] text-muted-foreground">
+            Attach evidence of your registration — a certificate, practising licence or a link to
+            the regulator's register. Your registration number stays hidden from the public
+            directory until Halisia approves it.
+          </p>
+          {first?.verification_submitted_at && (
+            <p className="mt-2 text-[11px] text-amber-200">
+              Submitted {new Date(first.verification_submitted_at).toLocaleString()} · status:{" "}
+              {first.verification_status}
+            </p>
+          )}
+          <ul className="mt-3 grid gap-2">
+            {evidence.map((e, i) => (
+              <li
+                key={i}
+                className="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/[0.03] p-2.5 text-[12px]"
+              >
+                <span className="min-w-0 truncate">
+                  <span className="font-medium">{e.label}</span>{" "}
+                  <span className="text-muted-foreground">· {e.kind.replace(/_/g, " ")}</span>
+                </span>
+                <button
+                  type="button"
+                  aria-label={`Remove ${e.label}`}
+                  onClick={() => setEvidence(evidence.filter((_, j) => j !== i))}
+                  className="rounded-full border border-white/15 p-1 text-muted-foreground hover:text-red-300"
+                >
+                  <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                </button>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_1fr_auto_auto]">
+            <input
+              value={evLabel}
+              onChange={(ev) => setEvLabel(ev.target.value)}
+              placeholder="Document label"
+              className="h-9 rounded-xl border border-white/10 bg-white/5 px-2.5 text-xs"
+            />
+            <input
+              value={evUrl}
+              onChange={(ev) => setEvUrl(ev.target.value)}
+              placeholder="Link to document or register"
+              className="h-9 rounded-xl border border-white/10 bg-white/5 px-2.5 text-xs"
+            />
+            <select
+              aria-label="Evidence type"
+              value={evKind}
+              onChange={(ev) => setEvKind(ev.target.value as VerificationEvidence["kind"])}
+              className="h-9 rounded-xl border border-white/10 bg-white/5 px-2 text-xs"
+            >
+              <option value="registration_certificate">Registration certificate</option>
+              <option value="practising_licence">Practising licence</option>
+              <option value="id_document">ID document</option>
+              <option value="portfolio">Portfolio</option>
+              <option value="other">Other</option>
+            </select>
+            <button
+              type="button"
+              onClick={() => {
+                if (!evLabel.trim() || !evUrl.trim()) {
+                  toast.error("Add a label and a link");
+                  return;
+                }
+                setEvidence([
+                  ...evidence,
+                  {
+                    label: evLabel.trim(),
+                    url: evUrl.trim(),
+                    kind: evKind,
+                    addedAt: new Date().toISOString(),
+                  },
+                ]);
+                setEvLabel("");
+                setEvUrl("");
+              }}
+              className="h-9 rounded-full border border-white/15 px-3 text-[11px] hover:text-accent"
+            >
+              Add evidence
+            </button>
+          </div>
+          <textarea
+            value={verifyNote}
+            onChange={(ev) => setVerifyNote(ev.target.value)}
+            rows={2}
+            placeholder="Anything Halisia should know when checking your registration"
+            className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 p-2.5 text-xs"
+          />
+          <button
+            type="button"
+            disabled={verify.isPending || !first}
+            onClick={() => verify.mutate()}
+            className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-accent px-4 py-2 text-xs font-medium text-primary-foreground disabled:opacity-60"
+          >
+            {verify.isPending ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+            ) : (
+              <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+            )}
+            Submit for verification
+          </button>
+        </div>
       </section>
 
       <section className="mb-10" aria-label="Project requests">
@@ -307,12 +554,44 @@ function ProDashboard() {
                       {new Date(l.created_at).toLocaleString()} {l.county ? `· ${l.county}` : ""}
                     </div>
                     <p className="mt-1 text-sm">{l.project_brief}</p>
+                    {l.preferred_start && (
+                      <p className="mt-1 text-[11px] text-accent">
+                        Requested window: {new Date(l.preferred_start).toLocaleString()}
+                        {l.preferred_end
+                          ? ` – ${new Date(l.preferred_end).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}`
+                          : ""}
+                      </p>
+                    )}
+                    {l.confirmed_start && (
+                      <p className="mt-1 inline-flex items-center gap-1 text-[11px] text-emerald-300">
+                        <CalendarCheck className="h-3 w-3" aria-hidden="true" /> Confirmed for{" "}
+                        {new Date(l.confirmed_start).toLocaleString()}
+                      </p>
+                    )}
                   </div>
                   <span className="shrink-0 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-widest">
                     {l.status}
                   </span>
                 </div>
                 <div className="mt-2 flex flex-wrap gap-1.5">
+                  {l.preferred_start && !l.confirmed_start && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        confirmSlot.mutate({
+                          id: l.id,
+                          start: l.preferred_start as string,
+                          end: (l.preferred_end ?? l.preferred_start) as string,
+                        })
+                      }
+                      className="rounded-full border border-accent/40 bg-accent/10 px-2.5 py-1 text-[11px] text-accent"
+                    >
+                      Confirm requested window
+                    </button>
+                  )}
                   {["contacted", "quoted", "won", "declined"].map((s) => (
                     <button
                       key={s}

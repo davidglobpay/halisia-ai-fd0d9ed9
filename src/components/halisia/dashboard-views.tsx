@@ -19,7 +19,13 @@ import {
 import { listMyProperties, listMyLeadsAsSeller, formatPrice } from "@/lib/properties";
 import { listSavedItems } from "@/lib/saved-items";
 import { listMyContributions, summariseReputation } from "@/lib/contributions";
-import { listRequestsForMe, listMyProProfiles, PRO_CATEGORY_LABELS } from "@/lib/professionals";
+import {
+  listRequestsForMe,
+  listMyProProfiles,
+  listMyRequests,
+  PRO_CATEGORY_LABELS,
+  type ProCategory,
+} from "@/lib/professionals";
 
 export function Panel({
   title,
@@ -64,7 +70,9 @@ export function GeneralDashboard() {
   const items = saved.data ?? [];
   const locations = items.filter((i) => i.kind === "location" || i.kind === "county");
   const listings = items.filter((i) => i.kind === "property");
+  const matches = items.filter((i) => i.kind === "match");
   const favourites = items.filter((i) => i.is_favorite);
+  const inquiries = useQuery({ queryKey: ["my-pro-requests"], queryFn: listMyRequests });
 
   return (
     <div className="grid gap-3 md:grid-cols-2">
@@ -174,6 +182,94 @@ export function GeneralDashboard() {
               <li key={i.id} className="truncate text-[12px] text-muted-foreground">
                 Saved <span className="text-foreground">{i.label}</span> ·{" "}
                 {new Date(i.created_at).toLocaleDateString()}
+              </li>
+            ))}
+          </ul>
+        )}
+      </Panel>
+
+      <Panel
+        title="Saved project matches"
+        icon={<Users className="h-3 w-3" aria-hidden="true" />}
+        action={
+          <Link to="/connections" className="text-[11px] text-accent hover:underline">
+            Match a team →
+          </Link>
+        }
+      >
+        {matches.length === 0 ? (
+          <Empty>
+            Describe a project in{" "}
+            <Link to="/connections" className="text-accent hover:underline">
+              Connections
+            </Link>{" "}
+            and save the recommended team here.
+          </Empty>
+        ) : (
+          <ul className="grid gap-2">
+            {matches.slice(0, 4).map((m) => {
+              let roles: ProCategory[] = [];
+              try {
+                const parsed = JSON.parse(m.note ?? "{}") as {
+                  roles?: Array<{ category: ProCategory }>;
+                };
+                roles = (parsed.roles ?? []).map((r) => r.category);
+              } catch {
+                roles = [];
+              }
+              return (
+                <li key={m.id} className="rounded-xl border border-white/10 bg-white/[0.03] p-2.5">
+                  <div className="truncate text-[12px] font-medium">{m.label}</div>
+                  {roles.length > 0 && (
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {roles.slice(0, 6).map((r) => (
+                        <span
+                          key={r}
+                          className="rounded-full border border-white/10 px-1.5 py-0.5 text-[10px] text-muted-foreground"
+                        >
+                          {PRO_CATEGORY_LABELS[r]}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </Panel>
+
+      <Panel
+        title="My professional inquiries"
+        icon={<MessageSquare className="h-3 w-3" aria-hidden="true" />}
+        action={
+          <Link to="/connections" className="text-[11px] text-accent hover:underline">
+            Find a pro →
+          </Link>
+        }
+      >
+        {(inquiries.data ?? []).length === 0 ? (
+          <Empty>Contact requests you send to professionals are tracked here.</Empty>
+        ) : (
+          <ul className="grid gap-2">
+            {(inquiries.data ?? []).slice(0, 5).map((r) => (
+              <li key={r.id} className="rounded-xl border border-white/10 bg-white/[0.03] p-2.5">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="line-clamp-2 text-[12px]">{r.project_brief}</p>
+                  <span className="shrink-0 rounded-full border border-white/10 px-2 py-0.5 text-[10px] uppercase tracking-widest text-muted-foreground">
+                    {r.status}
+                  </span>
+                </div>
+                {r.confirmed_start ? (
+                  <div className="mt-1 inline-flex items-center gap-1 text-[11px] text-emerald-300">
+                    <CalendarClock className="h-3 w-3" aria-hidden="true" /> Confirmed{" "}
+                    {new Date(r.confirmed_start).toLocaleString()}
+                  </div>
+                ) : r.preferred_start ? (
+                  <div className="mt-1 text-[11px] text-muted-foreground">
+                    Awaiting confirmation for {new Date(r.preferred_start).toLocaleString()}
+                  </div>
+                ) : null}
               </li>
             ))}
           </ul>

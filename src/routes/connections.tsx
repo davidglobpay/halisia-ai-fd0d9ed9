@@ -24,14 +24,18 @@ import {
   inferProjectType,
   listProfessionals,
   listReviews,
+  parseAvailability,
+  publicRegistration,
   recommendTeam,
   requestProfessional,
   submitReview,
+  upcomingWindows,
   verificationLabel,
   type ProCategory,
   type ProProfile,
   type ProjectType,
 } from "@/lib/professionals";
+import { saveItem } from "@/lib/saved-items";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 
@@ -166,12 +170,47 @@ function ConnectionsPage() {
 }
 
 function ProjectMatcher({ onPickCategory }: { onPickCategory: (c: ProCategory) => void }) {
+  const { user } = useAuth();
   const [brief, setBrief] = useState("");
   const [type, setType] = useState<ProjectType | "auto">("auto");
   const [result, setResult] = useState<ProjectType | null>(null);
+  const [stageFilter, setStageFilter] = useState<string>("all");
+  const [essentialOnly, setEssentialOnly] = useState(false);
+  const [county, setCounty] = useState("");
 
   const resolved = result ?? null;
-  const team = resolved ? recommendTeam(resolved) : [];
+  const fullTeam = resolved ? recommendTeam(resolved) : [];
+  const stages = Array.from(new Set(fullTeam.map((t) => t.stage)));
+  const team = fullTeam.filter(
+    (t) => (stageFilter === "all" || t.stage === stageFilter) && (!essentialOnly || t.essential),
+  );
+
+  const saveMatch = useMutation({
+    mutationFn: async () => {
+      if (!resolved) throw new Error("Match your team first");
+      const label = `${PROJECT_TYPES.find((p) => p.value === resolved)?.label}${
+        county.trim() ? ` · ${county.trim()}` : ""
+      }`;
+      return saveItem({
+        kind: "match",
+        ref: `${resolved}:${county.trim().toLowerCase() || "kenya"}`,
+        label,
+        note: JSON.stringify({
+          projectType: resolved,
+          brief: brief.trim() || null,
+          county: county.trim() || null,
+          roles: fullTeam.map((t) => ({
+            category: t.category,
+            stage: t.stage,
+            essential: t.essential,
+          })),
+        }),
+      });
+    },
+    onSuccess: () =>
+      toast.success("Match saved", { description: "Find it under Saved on your dashboard." }),
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   return (
     <section
@@ -186,7 +225,7 @@ function ProjectMatcher({ onPickCategory }: { onPickCategory: (c: ProCategory) =
         Describe the project. Get the team it needs.
       </h2>
       <form
-        className="mt-4 grid gap-3 md:grid-cols-[1fr_auto_auto]"
+        className="mt-4 grid gap-3 md:grid-cols-[1fr_auto_auto_auto]"
         onSubmit={(e) => {
           e.preventDefault();
           setResult(type === "auto" ? inferProjectType(brief) : type);
@@ -199,6 +238,15 @@ function ProjectMatcher({ onPickCategory }: { onPickCategory: (c: ProCategory) =
             onChange={(e) => setBrief(e.target.value)}
             placeholder="I have land in Machakos and want to develop rental apartments."
             className="h-11 w-full rounded-full border border-white/10 bg-white/5 px-4 text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+          />
+        </label>
+        <label>
+          <span className="sr-only">County</span>
+          <input
+            value={county}
+            onChange={(e) => setCounty(e.target.value)}
+            placeholder="County (optional)"
+            className="h-11 w-full rounded-full border border-white/10 bg-white/5 px-4 text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent/60 md:w-40"
           />
         </label>
         <select
@@ -224,8 +272,49 @@ function ProjectMatcher({ onPickCategory }: { onPickCategory: (c: ProCategory) =
 
       {resolved && (
         <div className="mt-5" data-testid="match-result">
-          <div className="text-[11px] uppercase tracking-widest text-muted-foreground">
-            Suggested team · {PROJECT_TYPES.find((p) => p.value === resolved)?.label}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="text-[11px] uppercase tracking-widest text-muted-foreground">
+              Suggested team · {PROJECT_TYPES.find((p) => p.value === resolved)?.label}
+            </div>
+            <div className="ml-auto flex flex-wrap items-center gap-2">
+              <select
+                value={stageFilter}
+                onChange={(e) => setStageFilter(e.target.value)}
+                aria-label="Filter roles by stage"
+                className="h-8 rounded-full border border-white/10 bg-white/5 px-2.5 text-[11px]"
+              >
+                <option value="all">All stages</option>
+                {stages.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+              <label className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={essentialOnly}
+                  onChange={(e) => setEssentialOnly(e.target.checked)}
+                  className="h-3.5 w-3.5 accent-[oklch(0.78_0.16_210)]"
+                />
+                Essential roles only
+              </label>
+              <button
+                type="button"
+                data-testid="save-match"
+                disabled={saveMatch.isPending || !user}
+                onClick={() => saveMatch.mutate()}
+                title={user ? "Save this team to your dashboard" : "Sign in to save this match"}
+                className="inline-flex items-center gap-1.5 rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-[11px] text-accent disabled:opacity-50"
+              >
+                {saveMatch.isPending ? (
+                  <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
+                ) : (
+                  <Sparkles className="h-3 w-3" aria-hidden="true" />
+                )}
+                Save match
+              </button>
+            </div>
           </div>
           <ol className="mt-3 grid gap-2 sm:grid-cols-2">
             {team.map((t, i) => (
@@ -248,6 +337,18 @@ function ProjectMatcher({ onPickCategory }: { onPickCategory: (c: ProCategory) =
                   </span>
                 </div>
                 <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">{t.why}</p>
+                <div className="mt-2">
+                  <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                    <span>Match confidence</span>
+                    <span className="tabular-nums">{t.essential ? 88 : 64}%</span>
+                  </div>
+                  <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
+                      style={{ width: `${t.essential ? 88 : 64}%` }}
+                    />
+                  </div>
+                </div>
                 <div className="mt-2 flex items-center justify-between">
                   <span className="text-[10px] uppercase tracking-widest text-muted-foreground/80">
                     {t.stage}
@@ -354,17 +455,31 @@ function ProDetail({ pro, onClose }: { pro: ProProfile; onClose: () => void }) {
   const [brief, setBrief] = useState("");
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
+  const [slot, setSlot] = useState("");
   const v = verificationLabel(pro);
+  const windows = useMemo(() => upcomingWindows(parseAvailability(pro)), [pro]);
+  const reg = publicRegistration(pro);
   const portfolio = Array.isArray(pro.portfolio)
     ? (pro.portfolio as Array<Record<string, unknown>>)
     : [];
 
   const contact = useMutation({
-    mutationFn: () => requestProfessional({ professional_id: pro.id, project_brief: brief }),
+    mutationFn: () => {
+      const picked = windows.find((w) => w.start.toISOString() === slot);
+      return requestProfessional({
+        professional_id: pro.id,
+        project_brief: brief,
+        preferred_start: picked ? picked.start.toISOString() : null,
+        preferred_end: picked ? picked.end.toISOString() : null,
+      });
+    },
     onSuccess: () => {
       setBrief("");
+      setSlot("");
       toast.success("Contact request sent", {
-        description: `${pro.display_name} will see your brief in their professional dashboard.`,
+        description: slot
+          ? `${pro.display_name} will confirm your requested time window.`
+          : `${pro.display_name} will see your brief in their professional dashboard.`,
       });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -432,10 +547,10 @@ function ProDetail({ pro, onClose }: { pro: ProProfile; onClose: () => void }) {
           <Field
             label="Registration"
             value={
-              pro.registration_body
-                ? `${pro.registration_body}${pro.registration_number ? ` · ${pro.registration_number}` : ""}${
-                    pro.verification_status === "verified" ? "" : " (unconfirmed)"
-                  }`
+              reg.body
+                ? reg.hidden
+                  ? `${reg.body} · number hidden until verified`
+                  : `${reg.body}${reg.number ? ` · ${reg.number}` : ""}`
                 : "Not supplied"
             }
           />
@@ -523,6 +638,35 @@ function ProDetail({ pro, onClose }: { pro: ProProfile; onClose: () => void }) {
                 placeholder="Describe the site, the work and your timeline."
                 className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 p-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
               />
+              <div className="mt-2">
+                <label
+                  htmlFor="pro-slot"
+                  className="text-[10px] uppercase tracking-widest text-muted-foreground"
+                >
+                  Request a time window
+                </label>
+                {windows.length === 0 ? (
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    This provider hasn't published availability yet — send the brief and they will
+                    propose a time.
+                  </p>
+                ) : (
+                  <select
+                    id="pro-slot"
+                    data-testid="pro-slot"
+                    value={slot}
+                    onChange={(e) => setSlot(e.target.value)}
+                    className="mt-1 h-9 w-full rounded-xl border border-white/10 bg-white/5 px-2.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+                  >
+                    <option value="">No preference</option>
+                    {windows.map((w) => (
+                      <option key={w.start.toISOString()} value={w.start.toISOString()}>
+                        {w.label}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
               <button
                 type="submit"
                 disabled={contact.isPending}
