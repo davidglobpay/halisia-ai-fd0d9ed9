@@ -292,35 +292,13 @@ const TONE: Record<Stage["tone"], { ring: string; icon: string; chip: string }> 
 
 export function DataPipeline() {
   const [active, setActive] = useState<Stage | null>(null);
-  const [reduced, setReduced] = useState(false);
+  const [reduced, setReducedPref] = useReducedMotionPref();
   const seen = useRef<Set<string>>(new Set());
 
-  // Seed from the OS setting, then let the local toggle override it.
-  useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem("halisia:pipelineReducedMotion");
-      if (stored === "1" || stored === "0") {
-        setReduced(stored === "1");
-        return;
-      }
-      setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-    } catch {
-      /* storage or matchMedia unavailable */
-    }
-  }, []);
-
   const toggleReduced = useCallback(() => {
-    setReduced((prev) => {
-      const next = !prev;
-      try {
-        window.localStorage.setItem("halisia:pipelineReducedMotion", next ? "1" : "0");
-      } catch {
-        /* ignore */
-      }
-      track({ name: "pipeline_motion_toggled", reduced: next });
-      return next;
-    });
-  }, []);
+    setReducedPref();
+    track({ name: "pipeline_motion_toggled", reduced: !reduced });
+  }, [reduced, setReducedPref]);
 
   // One view event per stage, the first time it scrolls into view.
   const observe = useCallback((el: HTMLLIElement | null, stage: Stage, index: number) => {
@@ -343,6 +321,8 @@ export function DataPipeline() {
 
   const openStage = (stage: Stage, index: number) => {
     track({ name: "pipeline_stage_click", stage: stage.title, index: index + 1, tone: stage.tone });
+    track({ name: "pipeline_modal_open", stage: stage.title, index: index + 1 });
+    recordStageOpen(stage.title);
     setActive(stage);
   };
 
