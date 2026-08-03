@@ -39,6 +39,10 @@ type Stage = {
   what: string[];
   /** Named datasets / systems used. */
   sources: { label: string; url?: string }[];
+  /** Plain-language value of this stage to the reader. */
+  youGet: string;
+  /** Share of the final intelligence score this stage influences, in %. */
+  weight: number;
   /** Where this stage can be uncertain. */
   caveat: string;
 };
@@ -62,6 +66,9 @@ export const PIPELINE_STAGES: Stage[] = [
       "The AI listing coach flags missing or contradictory information before publishing.",
     ],
     sources: [{ label: "Seller-declared data (HALISIA listing wizard)" }],
+    youGet:
+      "You control this stage: the more complete and honest your listing, the higher every downstream score can climb.",
+    weight: 6,
     caveat:
       "Self-declared by the seller and not independently verified, so it carries the lowest weight in the score.",
   },
@@ -82,6 +89,9 @@ export const PIPELINE_STAGES: Stage[] = [
       { label: "Browser Geolocation API" },
       { label: "Leaflet / OpenStreetMap pin picker", url: "https://www.openstreetmap.org/" },
     ],
+    youGet:
+      "A precise pin means the amenities, climate and risk figures you read actually describe your parcel — not the next ridge.",
+    weight: 9,
     caveat:
       "Pin accuracy depends on how precisely the seller placed it; a coarse pin shifts nearby-amenity results.",
   },
@@ -102,6 +112,9 @@ export const PIPELINE_STAGES: Stage[] = [
       { label: "OpenStreetMap contributors", url: "https://www.openstreetmap.org/copyright" },
       { label: "Overpass API", url: "https://overpass-api.de/" },
     ],
+    youGet:
+      "This is what tells you how far the nearest school, clinic, matatu stage or market really is.",
+    weight: 13,
     caveat:
       "Rural coverage is thinner than urban coverage, so sparse areas can under-report amenities.",
   },
@@ -119,6 +132,9 @@ export const PIPELINE_STAGES: Stage[] = [
       "Place enrichment adds categorised POIs and isoline reachability around the parcel.",
     ],
     sources: [{ label: "Geoapify Places & Geocoding", url: "https://www.geoapify.com/" }],
+    youGet:
+      "It turns your pin into a proper address and neighbourhood picture you can share with a bank or buyer.",
+    weight: 7,
     caveat:
       "Place categories are generalised globally and may not match Kenyan local naming exactly.",
   },
@@ -136,6 +152,9 @@ export const PIPELINE_STAGES: Stage[] = [
       "Climate normals feed flood, drought and construction-window risk scoring.",
     ],
     sources: [{ label: "Open-Meteo archive & forecast API", url: "https://open-meteo.com/" }],
+    youGet:
+      "You get an honest read on rainfall, flooding and the best months to build before you commit money.",
+    weight: 10,
     caveat:
       "Reanalysis grids are coarse; micro-climates in valleys or highlands may differ locally.",
   },
@@ -157,6 +176,9 @@ export const PIPELINE_STAGES: Stage[] = [
       { label: "ISRIC SoilGrids v2.0", url: "https://soilgrids.org/" },
       { label: "Copernicus / ASTER elevation", url: "https://www.earthdata.nasa.gov/" },
     ],
+    youGet:
+      "You see slope, drainage and likely soil behaviour early — the things that quietly blow up foundation budgets.",
+    weight: 14,
     caveat:
       "Global rasters are modelled at 30–250 m resolution — indicative only, never a substitute for a site survey.",
   },
@@ -177,6 +199,9 @@ export const PIPELINE_STAGES: Stage[] = [
       { label: "Kenya National Bureau of Statistics", url: "https://www.knbs.or.ke/" },
       { label: "IEBC boundary datasets", url: "https://www.iebc.or.ke/" },
     ],
+    youGet:
+      "It places your parcel in its official county and ward context, which matters for approvals and services.",
+    weight: 8,
     caveat:
       "Official releases lag reality between census cycles, so fast-growing areas can look understated.",
   },
@@ -194,6 +219,9 @@ export const PIPELINE_STAGES: Stage[] = [
       "Every claim is bound to the signal it came from for the evidence panel.",
     ],
     sources: [{ label: "HALISIA reasoning layer over the retrieved signals above" }],
+    youGet:
+      "You get a plain-language explanation, not a black-box number, including what the system could not confirm.",
+    weight: 10,
     caveat:
       "Reasoning inherits the weakest input — thin data in means a hedged, lower-confidence narrative out.",
   },
@@ -211,6 +239,9 @@ export const PIPELINE_STAGES: Stage[] = [
       "The final score ships with a confidence percentage and its full evidence trail.",
     ],
     sources: [{ label: "HALISIA Land Intelligence Engine (10 weighted scorers)" }],
+    youGet:
+      "One comparable score you can defend to a spouse, a partner or a lender — with the workings attached.",
+    weight: 15,
     caveat: "A score is decision support, not a valuation, survey or legal opinion.",
   },
   {
@@ -226,6 +257,9 @@ export const PIPELINE_STAGES: Stage[] = [
       "Buyers can open any citation, download the PDF dossier or compare locations.",
     ],
     sources: [{ label: "HALISIA marketplace & PDF dossier export" }],
+    youGet:
+      "You can act: open a citation, download the dossier, compare two parcels or contact the seller with evidence in hand.",
+    weight: 8,
     caveat:
       "Displays exactly what the pipeline produced — always read the confidence chips alongside it.",
   },
