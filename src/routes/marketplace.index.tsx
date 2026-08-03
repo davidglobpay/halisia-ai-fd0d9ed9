@@ -223,7 +223,9 @@ function MarketplaceIndex() {
         </select>
         <select
           value={filters.intent}
-          onChange={(e) => setFilter({ intent: e.target.value === "all" ? undefined : e.target.value })}
+          onChange={(e) =>
+            setFilter({ intent: e.target.value === "all" ? undefined : e.target.value })
+          }
           className="rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-sm"
           aria-label="Intent"
         >
@@ -268,16 +270,36 @@ function MarketplaceIndex() {
           aria-label="Advanced filters"
           className="glass rounded-2xl border border-white/10 p-4 mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
         >
-          <NumField label="Min price (KES)" value={search.minPrice} onChange={(v) => setFilter({ minPrice: v })} />
-          <NumField label="Max price (KES)" value={search.maxPrice} onChange={(v) => setFilter({ maxPrice: v })} />
-          <NumField label="Min land size" value={search.minSize} onChange={(v) => setFilter({ minSize: v })} />
+          <NumField
+            label="Min price (KES)"
+            value={search.minPrice}
+            onChange={(v) => setFilter({ minPrice: v })}
+          />
+          <NumField
+            label="Max price (KES)"
+            value={search.maxPrice}
+            onChange={(v) => setFilter({ maxPrice: v })}
+          />
+          <NumField
+            label="Min land size"
+            value={search.minSize}
+            onChange={(v) => setFilter({ minSize: v })}
+          />
           <TextField
             label="Town / estate"
             value={search.town ?? ""}
             onChange={(v) => setFilter({ town: v || undefined })}
           />
-          <NumField label="Min bedrooms" value={search.beds} onChange={(v) => setFilter({ beds: v })} />
-          <NumField label="Min bathrooms" value={search.baths} onChange={(v) => setFilter({ baths: v })} />
+          <NumField
+            label="Min bedrooms"
+            value={search.beds}
+            onChange={(v) => setFilter({ beds: v })}
+          />
+          <NumField
+            label="Min bathrooms"
+            value={search.baths}
+            onChange={(v) => setFilter({ baths: v })}
+          />
           <NumField
             label="Min intelligence score"
             value={search.minScore}
@@ -339,7 +361,11 @@ function MarketplaceIndex() {
             );
           })}
         </div>
-        <div className="inline-flex rounded-xl glass border border-white/10 p-1" role="group" aria-label="View mode">
+        <div
+          className="inline-flex rounded-xl glass border border-white/10 p-1"
+          role="group"
+          aria-label="View mode"
+        >
           {[
             { v: "grid", icon: LayoutGrid, label: "Grid view" },
             { v: "list", icon: Rows3, label: "List view" },
@@ -360,7 +386,8 @@ function MarketplaceIndex() {
 
       <p className="mb-4 text-xs text-muted-foreground">
         {listings.length} listing{listings.length === 1 ? "" : "s"}
-        {rail === "recommended" && " · ranked by your preferences, never by sensitive personal data"}
+        {rail === "recommended" &&
+          " · ranked by your preferences, never by sensitive personal data"}
       </p>
 
       {compare.length > 0 && (
@@ -409,16 +436,16 @@ function MarketplaceIndex() {
       )}
 
       <section className="mt-10 glass rounded-2xl border border-white/10 p-4 text-xs text-muted-foreground">
-        <h2 className="text-sm font-semibold text-foreground mb-1">Your recommendations, your rules</h2>
+        <h2 className="text-sm font-semibold text-foreground mb-1">
+          Your recommendations, your rules
+        </h2>
         <p>
           Recommendations use only the filters and goals you set here plus public listing
           intelligence. Reset them any time — we never target on sensitive personal information and
           never contact you without permission.
         </p>
         <button
-          onClick={() =>
-            navigate({ search: { view, rail } as never, replace: true })
-          }
+          onClick={() => navigate({ search: { view, rail } as never, replace: true })}
           className="mt-2 rounded-full glass border border-white/10 px-3 py-1.5 text-xs"
         >
           Reset recommendations
@@ -522,7 +549,13 @@ function Actions({
   };
   return (
     <div className="flex flex-wrap items-center gap-2 text-[11px]">
-      <SaveButton kind="property" ref_={p.id} label={p.title} latitude={p.latitude} longitude={p.longitude} />
+      <SaveButton
+        kind="property"
+        ref_={p.id}
+        label={p.title}
+        latitude={p.latitude}
+        longitude={p.longitude}
+      />
       <button
         onClick={share}
         className="inline-flex items-center gap-1 rounded-full glass border border-white/10 px-2.5 py-1"
@@ -597,7 +630,12 @@ function ListingRow({
         className="sm:w-52 shrink-0 aspect-[16/10] rounded-xl overflow-hidden bg-gradient-to-br from-primary/30 via-accent/10 to-emerald-500/20 relative"
       >
         {p.cover_image ? (
-          <img src={p.cover_image} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+          <img
+            src={p.cover_image}
+            alt=""
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
         ) : (
           <div className="absolute inset-0 grid place-items-center text-muted-foreground/60">
             <Building2 className="h-8 w-8" />
@@ -714,8 +752,12 @@ function ListingCard({
           </div>
         </div>
         <div className="text-[11px] text-muted-foreground flex flex-wrap gap-x-3">
-          <span>Investment {investmentScore(p) != null ? Math.round(investmentScore(p)!) : "—"}</span>
-          <span>Development {developmentScore(p) != null ? Math.round(developmentScore(p)!) : "—"}</span>
+          <span>
+            Investment {investmentScore(p) != null ? Math.round(investmentScore(p)!) : "—"}
+          </span>
+          <span>
+            Development {developmentScore(p) != null ? Math.round(developmentScore(p)!) : "—"}
+          </span>
         </div>
         <Actions p={p} compared={compared} onCompare={onCompare} />
         {reasons?.length ? (

@@ -144,7 +144,10 @@ export function categoriesOf(row: PropertyRow): MarketplaceCategory[] {
   const inv = investmentScore(row);
   if (inv != null && inv >= 70) out.push("investment");
   const dev = developmentScore(row);
-  if ((dev != null && dev >= 70 && (kind === "land" || kind === "agricultural")) || kind === "mixed_use")
+  if (
+    (dev != null && dev >= 70 && (kind === "land" || kind === "agricultural")) ||
+    kind === "mixed_use"
+  )
     out.push("development");
 
   return Array.from(new Set(out));
@@ -186,7 +189,8 @@ export function applyFilters(rows: PropertyRow[], f: MarketplaceFilters): Proper
   const town = f.town?.trim().toLowerCase();
   return rows.filter((r) => {
     if (q) {
-      const hay = `${r.title} ${r.description ?? ""} ${r.county ?? ""} ${r.address ?? ""}`.toLowerCase();
+      const hay =
+        `${r.title} ${r.description ?? ""} ${r.county ?? ""} ${r.address ?? ""}`.toLowerCase();
       if (!hay.includes(q)) return false;
     }
     if (town && !`${r.address ?? ""} ${r.county ?? ""}`.toLowerCase().includes(town)) return false;
@@ -201,8 +205,10 @@ export function applyFilters(rows: PropertyRow[], f: MarketplaceFilters): Proper
     }
     if (f.minPrice != null && (r.price == null || Number(r.price) < f.minPrice)) return false;
     if (f.maxPrice != null && (r.price == null || Number(r.price) > f.maxPrice)) return false;
-    if (f.minSize != null && (r.size_value == null || Number(r.size_value) < f.minSize)) return false;
-    if (f.maxSize != null && (r.size_value == null || Number(r.size_value) > f.maxSize)) return false;
+    if (f.minSize != null && (r.size_value == null || Number(r.size_value) < f.minSize))
+      return false;
+    if (f.maxSize != null && (r.size_value == null || Number(r.size_value) > f.maxSize))
+      return false;
     if (f.bedrooms != null && (r.bedrooms ?? 0) < f.bedrooms) return false;
     if (f.bathrooms != null && (r.bathrooms ?? 0) < f.bathrooms) return false;
     if (f.amenities?.length) {

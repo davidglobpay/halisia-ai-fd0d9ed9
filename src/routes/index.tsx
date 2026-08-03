@@ -32,9 +32,7 @@ export const Route = createFileRoute("/")({
 
 function Landing() {
   const navigate = useNavigate();
-  return (
-    <LandingBody navigate={navigate} />
-  );
+  return <LandingBody navigate={navigate} />;
 }
 
 /**
