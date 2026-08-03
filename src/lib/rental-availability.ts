@@ -76,7 +76,9 @@ export function nextAvailable(windows: AvailabilityWindow[], from = new Date()):
   const today = toIsoDate(from);
   const active = windows.find((w) => today >= w.start && (w.end == null || today <= w.end));
   if (active) return today;
-  const upcoming = windows.filter((w) => w.start > today).sort((a, b) => a.start.localeCompare(b.start));
+  const upcoming = windows
+    .filter((w) => w.start > today)
+    .sort((a, b) => a.start.localeCompare(b.start));
   return upcoming[0]?.start ?? null;
 }
 
@@ -84,7 +86,8 @@ export function describeAvailability(
   windows: AvailabilityWindow[],
   fallbackFrom: string | null,
 ): string {
-  if (windows.length === 0) return fallbackFrom ? `Available from ${fallbackFrom}` : "Availability not stated";
+  if (windows.length === 0)
+    return fallbackFrom ? `Available from ${fallbackFrom}` : "Availability not stated";
   const next = nextAvailable(windows);
   if (!next) return `Past windows only (${windows.length})`;
   const w = windowFor(next, windows) ?? windows.find((x) => x.start === next)!;
@@ -98,7 +101,10 @@ export function describeViewings(v: ViewingWindow[]): string {
 }
 
 /** Six-week grid (leading/trailing days included) for a month calendar. */
-export function monthGrid(year: number, month: number): { iso: string; inMonth: boolean; day: number }[] {
+export function monthGrid(
+  year: number,
+  month: number,
+): { iso: string; inMonth: boolean; day: number }[] {
   const first = new Date(year, month, 1);
   const startOffset = first.getDay();
   const cells: { iso: string; inMonth: boolean; day: number }[] = [];

@@ -29,7 +29,13 @@ export function listingClarifications(d: WizardDraft): ClarifyQuestion[] {
       key: "access",
       question: "How do people reach the property today?",
       why: "Access type changes value, financing and construction cost — we will not guess it.",
-      options: ["Tarmac road", "All-weather murram", "Seasonal murram", "Footpath only", "Not sure yet"],
+      options: [
+        "Tarmac road",
+        "All-weather murram",
+        "Seasonal murram",
+        "Footpath only",
+        "Not sure yet",
+      ],
     });
 
   if (d.utilities.length === 0)
@@ -37,7 +43,13 @@ export function listingClarifications(d: WizardDraft): ClarifyQuestion[] {
       key: "utilities",
       question: "Which utilities are already connected on site?",
       why: "Water and power availability is the most asked buyer question.",
-      options: ["Power and water on site", "Power only", "Water only", "Neither yet", "Not sure yet"],
+      options: [
+        "Power and water on site",
+        "Power only",
+        "Water only",
+        "Neither yet",
+        "Not sure yet",
+      ],
     });
 
   if (!has(d.size_value))
@@ -76,12 +88,7 @@ export function listingClarifications(d: WizardDraft): ClarifyQuestion[] {
     key: "verification",
     question: "What has been verified so far?",
     why: "We only state what you confirm — HALISIA never asserts legal or title status.",
-    options: [
-      "Survey done",
-      "Title search done",
-      "Both done",
-      "Nothing verified yet",
-    ],
+    options: ["Survey done", "Title search done", "Both done", "Nothing verified yet"],
     allowFreeText: true,
   });
 

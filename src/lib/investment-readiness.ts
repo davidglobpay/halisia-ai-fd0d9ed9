@@ -54,13 +54,18 @@ export function assessReadiness(p: PropertyRow, extras: Extras = {}): ReadinessR
       evidence: hasPin
         ? `GPS pin set${p.county ? ` in ${p.county}` : ""}.`
         : "No GPS pin — location cannot be independently checked.",
-      improve: hasPin ? "Add a boundary sketch or survey extract." : "Drop a map pin on the listing.",
+      improve: hasPin
+        ? "Add a boundary sketch or survey extract."
+        : "Drop a map pin on the listing.",
     },
     {
       key: "market",
       label: "Market evidence",
       weight: 16,
-      score: (priced ? 55 : 0) + (p.view_count > 20 ? 25 : p.view_count > 5 ? 12 : 0) + (p.ai_score ? 20 : 0),
+      score:
+        (priced ? 55 : 0) +
+        (p.view_count > 20 ? 25 : p.view_count > 5 ? 12 : 0) +
+        (p.ai_score ? 20 : 0),
       evidence: priced
         ? `Asking figure stated; ${p.view_count} marketplace views recorded.`
         : "No asking figure, so no market anchor exists.",
@@ -80,9 +85,13 @@ export function assessReadiness(p: PropertyRow, extras: Extras = {}): ReadinessR
       key: "documentation",
       label: "Ownership & documentation workflow",
       weight: 15,
-      score: (p.review_state === "approved" ? 45 : p.review_state === "in_review" ? 25 : 5) + (photos >= 3 ? 25 : photos > 0 ? 10 : 0) + (p.status === "published" ? 20 : 0),
+      score:
+        (p.review_state === "approved" ? 45 : p.review_state === "in_review" ? 25 : 5) +
+        (photos >= 3 ? 25 : photos > 0 ? 10 : 0) +
+        (p.status === "published" ? 20 : 0),
       evidence: `Listing review state: ${p.review_state}; ${photos} photo(s) on file.`,
-      improve: "Upload title/search documents to your financing application and complete listing review.",
+      improve:
+        "Upload title/search documents to your financing application and complete listing review.",
     },
     {
       key: "financial",
@@ -104,7 +113,8 @@ export function assessReadiness(p: PropertyRow, extras: Extras = {}): ReadinessR
         ((p.amenities?.length ?? 0) > 0 ? 20 : 0) +
         (extras.hasConcept ? 15 : 0),
       evidence: `${p.size_value ?? "Unknown"} ${p.size_unit ?? ""} · ${(p.utilities ?? []).length} utility record(s).`,
-      improve: "Confirm plot size, utilities on site and access before a lender's technical review.",
+      improve:
+        "Confirm plot size, utilities on site and access before a lender's technical review.",
     },
     {
       key: "professional",

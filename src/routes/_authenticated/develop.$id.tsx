@@ -21,7 +21,8 @@ export const Route = createFileRoute("/_authenticated/develop/$id")({
       { property: "og:title", content: "Development studio & investment readiness · HALISIA AI" },
       {
         property: "og:description",
-        content: "Concept options, phasing, cost bands and an indicative readiness score for your land.",
+        content:
+          "Concept options, phasing, cost bands and an indicative readiness score for your land.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -104,12 +105,20 @@ function DevelopStudio() {
   const p = propQ.data!;
 
   return (
-    <main className="min-h-dvh px-4 sm:px-6 pt-24 pb-16 max-w-5xl mx-auto" data-testid="develop-studio">
-      <Link to="/dashboard" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
+    <main
+      className="min-h-dvh px-4 sm:px-6 pt-24 pb-16 max-w-5xl mx-auto"
+      data-testid="develop-studio"
+    >
+      <Link
+        to="/dashboard"
+        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+      >
         <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Back to dashboard
       </Link>
       <header className="mt-3 mb-5">
-        <div className="text-[11px] uppercase tracking-[0.25em] text-accent">Development studio</div>
+        <div className="text-[11px] uppercase tracking-[0.25em] text-accent">
+          Development studio
+        </div>
         <h1 className="text-3xl font-display font-semibold mt-1">{p.title}</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Concept-stage development options and an indicative investment-readiness assessment for{" "}
@@ -120,7 +129,8 @@ function DevelopStudio() {
       {/* Concept generator */}
       <section className="glass rounded-2xl border border-white/10 p-5 mb-6">
         <div className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.25em] text-accent">
-          <Building2 className="h-3.5 w-3.5" aria-hidden="true" /> Land development & project concept AI
+          <Building2 className="h-3.5 w-3.5" aria-hidden="true" /> Land development & project
+          concept AI
         </div>
         <div className="mt-3 grid gap-3 sm:grid-cols-3">
           <label className="grid gap-1 text-xs">
@@ -135,7 +145,12 @@ function DevelopStudio() {
           </label>
           <label className="grid gap-1 text-xs">
             <span className="text-muted-foreground">Indicative budget (KES)</span>
-            <input inputMode="numeric" value={budget} onChange={(e) => setBudget(e.target.value)} className="input" />
+            <input
+              inputMode="numeric"
+              value={budget}
+              onChange={(e) => setBudget(e.target.value)}
+              className="input"
+            />
           </label>
           <div className="flex items-end">
             <button
@@ -145,7 +160,11 @@ function DevelopStudio() {
               disabled={gen.isPending}
               className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-accent px-4 py-2 text-xs font-medium disabled:opacity-60"
             >
-              {gen.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />}
+              {gen.isPending ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+              ) : (
+                <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+              )}
               {active ? "Regenerate concepts" : "Explore development potential"}
             </button>
           </div>
@@ -155,7 +174,9 @@ function DevelopStudio() {
           <div className="mt-4 grid gap-4">
             <p className="text-sm text-foreground/90">{active.summary}</p>
             <div>
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Site read</div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                Site read
+              </div>
               <ul className="mt-1 list-disc pl-4 text-[11px] text-muted-foreground">
                 {active.siteRead.map((s) => (
                   <li key={s}>{s}</li>
@@ -166,7 +187,9 @@ function DevelopStudio() {
               {active.options.map((o) => (
                 <li key={o.name} className="rounded-2xl border border-white/10 bg-white/5 p-3.5">
                   <div className="text-sm font-medium">{o.name}</div>
-                  <div className="text-[10px] uppercase tracking-widest text-accent">{o.useType}</div>
+                  <div className="text-[10px] uppercase tracking-widest text-accent">
+                    {o.useType}
+                  </div>
                   <p className="mt-1.5 text-[11px] text-muted-foreground">{o.rationale}</p>
                   <dl className="mt-2 grid gap-1 text-[11px]">
                     <Row k="Massing" v={o.massing} />
@@ -178,7 +201,9 @@ function DevelopStudio() {
                   </dl>
                   {o.phasing.length > 0 && (
                     <>
-                      <div className="mt-2 text-[10px] uppercase tracking-widest text-muted-foreground">Phasing</div>
+                      <div className="mt-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+                        Phasing
+                      </div>
                       <ol className="list-decimal pl-4 text-[11px] text-muted-foreground">
                         {o.phasing.map((s) => (
                           <li key={s}>{s}</li>
@@ -188,7 +213,9 @@ function DevelopStudio() {
                   )}
                   {o.risks.length > 0 && (
                     <>
-                      <div className="mt-2 text-[10px] uppercase tracking-widest text-amber-200">Risks to confirm</div>
+                      <div className="mt-2 text-[10px] uppercase tracking-widest text-amber-200">
+                        Risks to confirm
+                      </div>
                       <ul className="list-disc pl-4 text-[11px] text-muted-foreground">
                         {o.risks.map((s) => (
                           <li key={s}>{s}</li>
@@ -196,12 +223,16 @@ function DevelopStudio() {
                       </ul>
                     </>
                   )}
-                  <div className="mt-2 text-[10px] text-muted-foreground">Confidence {o.confidencePct}%</div>
+                  <div className="mt-2 text-[10px] text-muted-foreground">
+                    Confidence {o.confidencePct}%
+                  </div>
                 </li>
               ))}
             </ul>
             <div>
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Next steps</div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                Next steps
+              </div>
               <ul className="mt-1 list-disc pl-4 text-[11px] text-muted-foreground">
                 {active.nextSteps.map((s) => (
                   <li key={s}>{s}</li>
@@ -218,11 +249,14 @@ function DevelopStudio() {
         <section className="glass rounded-2xl border border-white/10 p-5" data-testid="readiness">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.25em] text-accent">
-              <Gauge className="h-3.5 w-3.5" aria-hidden="true" /> Investment & construction finance readiness
+              <Gauge className="h-3.5 w-3.5" aria-hidden="true" /> Investment & construction finance
+              readiness
             </div>
             <div className="text-right">
               <div className="font-numeric text-2xl">{readiness.total}%</div>
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{readiness.band}</div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                {readiness.band}
+              </div>
             </div>
           </div>
           <ul className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -232,8 +266,18 @@ function DevelopStudio() {
                   <span className="font-medium">{f.label}</span>
                   <span className="font-numeric text-accent">{f.score}%</span>
                 </div>
-                <div className="mt-1.5 h-1.5 rounded-full bg-white/10 overflow-hidden" role="progressbar" aria-valuenow={f.score} aria-valuemin={0} aria-valuemax={100} aria-label={f.label}>
-                  <div className="h-full bg-gradient-to-r from-primary to-accent" style={{ width: `${f.score}%` }} />
+                <div
+                  className="mt-1.5 h-1.5 rounded-full bg-white/10 overflow-hidden"
+                  role="progressbar"
+                  aria-valuenow={f.score}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label={f.label}
+                >
+                  <div
+                    className="h-full bg-gradient-to-r from-primary to-accent"
+                    style={{ width: `${f.score}%` }}
+                  />
                 </div>
                 <p className="mt-1.5 text-[11px] text-muted-foreground">{f.evidence}</p>
                 <p className="text-[11px] text-accent/90">Improve: {f.improve}</p>
@@ -242,10 +286,16 @@ function DevelopStudio() {
             ))}
           </ul>
           <div className="mt-3 flex flex-wrap gap-2">
-            <Link to="/financing" className="rounded-full border border-accent/40 bg-accent/10 px-3 py-1.5 text-[11px] text-accent">
+            <Link
+              to="/financing"
+              className="rounded-full border border-accent/40 bg-accent/10 px-3 py-1.5 text-[11px] text-accent"
+            >
               Start / update financing application
             </Link>
-            <Link to="/pros" className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[11px]">
+            <Link
+              to="/pros"
+              className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[11px]"
+            >
               Request a professional review
             </Link>
           </div>

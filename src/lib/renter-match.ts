@@ -3,8 +3,7 @@ import type { Database } from "@/integrations/supabase/types";
 import type { RentalListing } from "@/lib/rentals";
 
 export type RenterPreferences = Database["public"]["Tables"]["renter_preferences"]["Row"];
-export type RenterPreferencesInsert =
-  Database["public"]["Tables"]["renter_preferences"]["Insert"];
+export type RenterPreferencesInsert = Database["public"]["Tables"]["renter_preferences"]["Insert"];
 
 export const COMMUTE_OPTIONS = [
   { value: "walk", label: "Walkable to work/school" },
@@ -153,7 +152,8 @@ export function matchRentals(
     let commute: CommuteEstimate | null = null;
 
     // Budget
-    const rent = rental?.monthly_rent != null ? Number(rental.monthly_rent) : Number(property.price ?? 0);
+    const rent =
+      rental?.monthly_rent != null ? Number(rental.monthly_rent) : Number(property.price ?? 0);
     if (prefs.budget_max != null && rent > 0) {
       weight += 30;
       const max = Number(prefs.budget_max);
@@ -208,7 +208,12 @@ export function matchRentals(
     const originLat = prefs.commute_origin_lat != null ? Number(prefs.commute_origin_lat) : null;
     const originLng = prefs.commute_origin_lng != null ? Number(prefs.commute_origin_lng) : null;
     const mode = prefs.commute_preference || "flexible";
-    if (originLat != null && originLng != null && property.latitude != null && property.longitude != null) {
+    if (
+      originLat != null &&
+      originLng != null &&
+      property.latitude != null &&
+      property.longitude != null
+    ) {
       weight += 25;
       commute = estimateCommute(
         { lat: originLat, lng: originLng },
@@ -226,21 +231,29 @@ export function matchRentals(
         }. Estimate method: ${commute.method}.`,
       );
       if (cap != null && commute.minutes > cap)
-        gaps.push(`Estimated commute (${commute.minutes} min) is longer than your ${cap}-minute limit.`);
+        gaps.push(
+          `Estimated commute (${commute.minutes} min) is longer than your ${cap}-minute limit.`,
+        );
     } else if (prefs.commute_preference) {
       weight += 10;
       const transport = (rental?.public_transport ?? "").toLowerCase();
       const parking = rental?.parking_spaces ?? 0;
       if (mode === "drive" && parking > 0) {
         score += 10;
-        reasons.push(`${parking} parking space${parking === 1 ? "" : "s"} for your car (no commute origin set, so distance was not scored).`);
+        reasons.push(
+          `${parking} parking space${parking === 1 ? "" : "s"} for your car (no commute origin set, so distance was not scored).`,
+        );
       } else if ((mode === "matatu" || mode === "walk") && transport.length > 0) {
         score += 10;
-        reasons.push("Landlord documented public transport access nearby (set a commute origin for timed bands).");
+        reasons.push(
+          "Landlord documented public transport access nearby (set a commute origin for timed bands).",
+        );
       } else if (mode === "flexible") {
         score += 6;
       } else {
-        gaps.push("Commute details for your preference are missing — add a commute origin for banded scoring.");
+        gaps.push(
+          "Commute details for your preference are missing — add a commute origin for banded scoring.",
+        );
       }
       if (originLat == null || originLng == null)
         gaps.push("No commute origin saved, so commute time could not be estimated.");

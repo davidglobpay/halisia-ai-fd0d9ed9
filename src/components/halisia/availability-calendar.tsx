@@ -59,7 +59,9 @@ export function AvailabilityCalendar({
           <button
             type="button"
             aria-label="Previous month"
-            onClick={() => setCursor((c) => (c.m === 0 ? { y: c.y - 1, m: 11 } : { ...c, m: c.m - 1 }))}
+            onClick={() =>
+              setCursor((c) => (c.m === 0 ? { y: c.y - 1, m: 11 } : { ...c, m: c.m - 1 }))
+            }
             className="rounded-full border border-white/10 p-1 hover:bg-white/10"
           >
             <ChevronLeft className="h-3.5 w-3.5" aria-hidden="true" />
@@ -68,7 +70,9 @@ export function AvailabilityCalendar({
           <button
             type="button"
             aria-label="Next month"
-            onClick={() => setCursor((c) => (c.m === 11 ? { y: c.y + 1, m: 0 } : { ...c, m: c.m + 1 }))}
+            onClick={() =>
+              setCursor((c) => (c.m === 11 ? { y: c.y + 1, m: 0 } : { ...c, m: c.m + 1 }))
+            }
             className="rounded-full border border-white/10 p-1 hover:bg-white/10"
           >
             <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
@@ -109,7 +113,9 @@ export function AvailabilityCalendar({
 
       {/* Availability ranges */}
       <div className="mt-3">
-        <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Date ranges</div>
+        <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+          Date ranges
+        </div>
         {availability.length === 0 && (
           <p className="mt-1 text-[11px] text-muted-foreground">No ranges set.</p>
         )}
@@ -124,7 +130,9 @@ export function AvailabilityCalendar({
                     value={w.start}
                     onChange={(e) =>
                       emit(
-                        availability.map((x) => (x.id === w.id ? { ...x, start: e.target.value } : x)),
+                        availability.map((x) =>
+                          x.id === w.id ? { ...x, start: e.target.value } : x,
+                        ),
                         viewings,
                       )
                     }
@@ -151,7 +159,9 @@ export function AvailabilityCalendar({
                     value={w.note ?? ""}
                     onChange={(e) =>
                       emit(
-                        availability.map((x) => (x.id === w.id ? { ...x, note: e.target.value } : x)),
+                        availability.map((x) =>
+                          x.id === w.id ? { ...x, note: e.target.value } : x,
+                        ),
                         viewings,
                       )
                     }
@@ -160,7 +170,12 @@ export function AvailabilityCalendar({
                   <button
                     type="button"
                     aria-label="Remove range"
-                    onClick={() => emit(availability.filter((x) => x.id !== w.id), viewings)}
+                    onClick={() =>
+                      emit(
+                        availability.filter((x) => x.id !== w.id),
+                        viewings,
+                      )
+                    }
                     className="text-red-300"
                   >
                     <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
@@ -246,7 +261,12 @@ export function AvailabilityCalendar({
                   <button
                     type="button"
                     aria-label="Remove viewing window"
-                    onClick={() => emit(availability, viewings.filter((x) => x.id !== v.id))}
+                    onClick={() =>
+                      emit(
+                        availability,
+                        viewings.filter((x) => x.id !== v.id),
+                      )
+                    }
                     className="text-red-300"
                   >
                     <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />

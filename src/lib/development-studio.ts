@@ -50,7 +50,9 @@ export const CONCEPT_DISCLAIMER =
   "Concept-stage guidance only. Not architectural, planning, engineering or investment advice — confirm zoning, plot ratio and approvals with the county government and a registered professional.";
 
 export function conceptFallback(d: ConceptInput): ConceptOutput {
-  const acres = d.size_unit?.toLowerCase().startsWith("acre") ? (d.size_value ?? 0) : (d.size_value ?? 0) / 4046.86;
+  const acres = d.size_unit?.toLowerCase().startsWith("acre")
+    ? (d.size_value ?? 0)
+    : (d.size_value ?? 0) / 4046.86;
   const where = d.address ?? d.county ?? "Kenya";
   const dense = acres > 0 && acres <= 0.5;
   const units = Math.max(1, Math.round(acres * (dense ? 16 : 8)));
@@ -69,17 +71,27 @@ export function conceptFallback(d: ConceptInput): ConceptOutput {
     name,
     useType,
     rationale,
-    massing: dense ? "Ground + 3 walk-up floors around a central court" : "Low-rise clusters with shared access spine",
+    massing: dense
+      ? "Ground + 3 walk-up floors around a central court"
+      : "Low-rise clusters with shared access spine",
     unitMix,
     estimatedUnits: est,
-    phasing: ["Phase 1: access, perimeter, services", "Phase 2: first block + show unit", "Phase 3: remaining blocks and landscaping"],
+    phasing: [
+      "Phase 1: access, perimeter, services",
+      "Phase 2: first block + show unit",
+      "Phase 3: remaining blocks and landscaping",
+    ],
     capexBandKes: capex,
     revenueBandKes: revenue,
     paybackYears: payback,
     risks: [
       "Plot ratio and zoning not yet confirmed with the county.",
-      d.access_type ? `Access is ${d.access_type} — check construction haulage.` : "Road access undocumented.",
-      (d.utilities ?? []).length ? "Utility capacity may need upgrading." : "No utilities recorded on site.",
+      d.access_type
+        ? `Access is ${d.access_type} — check construction haulage.`
+        : "Road access undocumented.",
+      (d.utilities ?? []).length
+        ? "Utility capacity may need upgrading."
+        : "No utilities recorded on site.",
     ],
     confidencePct: conf,
   });
@@ -88,15 +100,51 @@ export function conceptFallback(d: ConceptInput): ConceptOutput {
     summary: `Concept-stage read of ${d.title} in ${where}${acres ? ` (~${acres.toFixed(2)} acres)` : ""}. Three directions are outlined below with indicative capacity and cost bands for discussion with a registered professional.`,
     siteRead: [
       `Location: ${where}${d.county ? ` · ${d.county} County` : ""}.`,
-      acres ? `Site area approximately ${acres.toFixed(2)} acres.` : "Site area not stated — capacity figures are illustrative only.",
+      acres
+        ? `Site area approximately ${acres.toFixed(2)} acres.`
+        : "Site area not stated — capacity figures are illustrative only.",
       d.access_type ? `Access: ${d.access_type}.` : "Access type not recorded.",
-      (d.utilities ?? []).length ? `Utilities noted: ${(d.utilities ?? []).join(", ")}.` : "No utilities recorded on site.",
-      d.slopeHint ? `Terrain: ${d.slopeHint}.` : "Terrain not assessed — commission a topographic survey.",
+      (d.utilities ?? []).length
+        ? `Utilities noted: ${(d.utilities ?? []).join(", ")}.`
+        : "No utilities recorded on site.",
+      d.slopeHint
+        ? `Terrain: ${d.slopeHint}.`
+        : "Terrain not assessed — commission a topographic survey.",
     ],
     options: [
-      mk("Rental income cluster", "Residential rental", "Steady monthly yield with phased delivery to fund later blocks.", dense ? "Studios and 1-bed" : "2-bed and 3-bed units", units, "KES 6M–9M per unit", "KES 25k–55k rent per unit / month", "8–12", 55),
-      mk("Sale-led development", "Residential for sale", "Faster capital recovery where local demand favours ownership.", "3-bed maisonettes", Math.max(1, Math.round(units * 0.6)), "KES 7M–11M per unit", "KES 9M–15M per unit sale", "3–5", 50),
-      mk("Mixed use frontage", "Ground-floor retail + upper residential", "Suits plots on a busy road frontage; retail underwrites the residential.", "Retail bays + 1/2-bed above", Math.max(2, Math.round(units * 0.8)), "KES 8M–12M per unit", "Retail KES 40k–120k / bay / month", "7–10", 45),
+      mk(
+        "Rental income cluster",
+        "Residential rental",
+        "Steady monthly yield with phased delivery to fund later blocks.",
+        dense ? "Studios and 1-bed" : "2-bed and 3-bed units",
+        units,
+        "KES 6M–9M per unit",
+        "KES 25k–55k rent per unit / month",
+        "8–12",
+        55,
+      ),
+      mk(
+        "Sale-led development",
+        "Residential for sale",
+        "Faster capital recovery where local demand favours ownership.",
+        "3-bed maisonettes",
+        Math.max(1, Math.round(units * 0.6)),
+        "KES 7M–11M per unit",
+        "KES 9M–15M per unit sale",
+        "3–5",
+        50,
+      ),
+      mk(
+        "Mixed use frontage",
+        "Ground-floor retail + upper residential",
+        "Suits plots on a busy road frontage; retail underwrites the residential.",
+        "Retail bays + 1/2-bed above",
+        Math.max(2, Math.round(units * 0.8)),
+        "KES 8M–12M per unit",
+        "Retail KES 40k–120k / bay / month",
+        "7–10",
+        45,
+      ),
     ],
     nextSteps: [
       "Confirm zoning, plot ratio and ground coverage with the county planning office.",

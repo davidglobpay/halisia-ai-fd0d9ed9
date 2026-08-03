@@ -2,11 +2,24 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, ArrowLeft, ImagePlus, Loader2, Send, Sparkles, Trash2 } from "lucide-react";
-import { getProperty, updateProperty, PROPERTY_KINDS, INTENTS, type PropertyKind, type ListingIntent } from "@/lib/properties";
+import {
+  getProperty,
+  updateProperty,
+  PROPERTY_KINDS,
+  INTENTS,
+  type PropertyKind,
+  type ListingIntent,
+} from "@/lib/properties";
 import { getRentalDetails, upsertRentalDetails, FURNISHING_OPTIONS } from "@/lib/rentals";
 import { uploadListingPhoto } from "@/lib/listing-media";
 import { coachListing, type CoachOutput } from "@/lib/listing-coach.functions";
-import { EMPTY_DRAFT, buildChecklist, completeness, isRental, type WizardDraft } from "@/lib/listing-wizard";
+import {
+  EMPTY_DRAFT,
+  buildChecklist,
+  completeness,
+  isRental,
+  type WizardDraft,
+} from "@/lib/listing-wizard";
 import { listingClarifications, answersToNotes, type ClarifyAnswers } from "@/lib/clarify";
 import { ClarifyStep } from "@/components/halisia/clarify-step";
 import { PinPicker } from "@/components/halisia/pin-picker";
@@ -149,7 +162,10 @@ function EditListing() {
           size_unit: form.size_unit,
           bedrooms: form.bedrooms ? Number(form.bedrooms) : null,
           bathrooms: form.bathrooms ? Number(form.bathrooms) : null,
-          amenities: form.amenities.split(",").map((s) => s.trim()).filter(Boolean),
+          amenities: form.amenities
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
           utilities: form.utilities,
           access_type: form.access_type || null,
           photos: form.media_urls.length,
@@ -203,7 +219,10 @@ function EditListing() {
         longitude: form.longitude ? Number(form.longitude) : null,
         bedrooms: form.bedrooms ? Number(form.bedrooms) : null,
         bathrooms: form.bathrooms ? Number(form.bathrooms) : null,
-        amenities: form.amenities.split(",").map((s) => s.trim()).filter(Boolean),
+        amenities: form.amenities
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
         utilities: form.utilities,
       });
       if (rental) {
@@ -258,8 +277,14 @@ function EditListing() {
     );
 
   return (
-    <main className="min-h-dvh px-4 sm:px-6 pt-24 pb-16 max-w-3xl mx-auto" data-testid="listing-edit">
-      <Link to="/dashboard" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
+    <main
+      className="min-h-dvh px-4 sm:px-6 pt-24 pb-16 max-w-3xl mx-auto"
+      data-testid="listing-edit"
+    >
+      <Link
+        to="/dashboard"
+        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+      >
         <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Back to dashboard
       </Link>
       <header className="mt-3 mb-5">
@@ -271,13 +296,27 @@ function EditListing() {
         </p>
       </header>
 
-      <section aria-label="Listing completeness" className="glass rounded-2xl border border-white/10 p-4 mb-4">
+      <section
+        aria-label="Listing completeness"
+        className="glass rounded-2xl border border-white/10 p-4 mb-4"
+      >
         <div className="flex items-center justify-between text-xs">
           <span className="uppercase tracking-widest text-muted-foreground">Completeness</span>
-          <span className="font-numeric text-lg" data-testid="edit-completeness">{pct}%</span>
+          <span className="font-numeric text-lg" data-testid="edit-completeness">
+            {pct}%
+          </span>
         </div>
-        <div className="mt-2 h-2 rounded-full bg-white/10 overflow-hidden" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-          <div className="h-full bg-gradient-to-r from-primary to-accent transition-all" style={{ width: `${pct}%` }} />
+        <div
+          className="mt-2 h-2 rounded-full bg-white/10 overflow-hidden"
+          role="progressbar"
+          aria-valuenow={pct}
+          aria-valuemin={0}
+          aria-valuemax={100}
+        >
+          <div
+            className="h-full bg-gradient-to-r from-primary to-accent transition-all"
+            style={{ width: `${pct}%` }}
+          />
         </div>
         <ul className="mt-3 flex flex-wrap gap-1.5">
           {checklist.map((c) => (
@@ -305,21 +344,39 @@ function EditListing() {
         className="glass rounded-2xl border border-white/10 p-5 grid gap-4"
       >
         <Field label="Listing title" required>
-          <input required maxLength={140} value={form.title} onChange={(e) => set("title", e.target.value)} className="input" />
+          <input
+            required
+            maxLength={140}
+            value={form.title}
+            onChange={(e) => set("title", e.target.value)}
+            className="input"
+          />
         </Field>
 
         <div className="grid sm:grid-cols-2 gap-4">
           <Field label="Property type">
-            <select value={form.kind} onChange={(e) => set("kind", e.target.value as PropertyKind)} className="input">
+            <select
+              value={form.kind}
+              onChange={(e) => set("kind", e.target.value as PropertyKind)}
+              className="input"
+            >
               {PROPERTY_KINDS.map((k) => (
-                <option key={k.value} value={k.value}>{k.label}</option>
+                <option key={k.value} value={k.value}>
+                  {k.label}
+                </option>
               ))}
             </select>
           </Field>
           <Field label="Intent">
-            <select value={form.intent} onChange={(e) => set("intent", e.target.value as ListingIntent)} className="input">
+            <select
+              value={form.intent}
+              onChange={(e) => set("intent", e.target.value as ListingIntent)}
+              className="input"
+            >
               {INTENTS.map((k) => (
-                <option key={k.value} value={k.value}>{k.label}</option>
+                <option key={k.value} value={k.value}>
+                  {k.label}
+                </option>
               ))}
             </select>
           </Field>
@@ -335,16 +392,28 @@ function EditListing() {
             />
           </Field>
           <Field label="Currency">
-            <input value={form.currency} onChange={(e) => set("currency", e.target.value)} className="input" />
+            <input
+              value={form.currency}
+              onChange={(e) => set("currency", e.target.value)}
+              className="input"
+            />
           </Field>
         </div>
 
         <div className="grid sm:grid-cols-2 gap-4">
           <Field label="County">
-            <input value={form.county} onChange={(e) => set("county", e.target.value)} className="input" />
+            <input
+              value={form.county}
+              onChange={(e) => set("county", e.target.value)}
+              className="input"
+            />
           </Field>
           <Field label="Address / locality">
-            <input value={form.address} onChange={(e) => set("address", e.target.value)} className="input" />
+            <input
+              value={form.address}
+              onChange={(e) => set("address", e.target.value)}
+              className="input"
+            />
           </Field>
         </div>
 
@@ -360,24 +429,41 @@ function EditListing() {
 
         <div className="grid sm:grid-cols-2 gap-4">
           <Field label="Size">
-            <input inputMode="decimal" value={form.size_value} onChange={(e) => set("size_value", e.target.value)} className="input" />
+            <input
+              inputMode="decimal"
+              value={form.size_value}
+              onChange={(e) => set("size_value", e.target.value)}
+              className="input"
+            />
           </Field>
           <Field label="Size unit">
-            <input value={form.size_unit} onChange={(e) => set("size_unit", e.target.value)} className="input" />
+            <input
+              value={form.size_unit}
+              onChange={(e) => set("size_unit", e.target.value)}
+              className="input"
+            />
           </Field>
         </div>
 
         <Field label="Road access">
-          <select value={form.access_type} onChange={(e) => set("access_type", e.target.value)} className="input">
+          <select
+            value={form.access_type}
+            onChange={(e) => set("access_type", e.target.value)}
+            className="input"
+          >
             <option value="">Not stated</option>
             {ACCESS_OPTIONS.map((a) => (
-              <option key={a} value={a}>{a}</option>
+              <option key={a} value={a}>
+                {a}
+              </option>
             ))}
           </select>
         </Field>
 
         <fieldset>
-          <legend className="text-xs uppercase tracking-widest text-muted-foreground mb-1.5">Utilities on site</legend>
+          <legend className="text-xs uppercase tracking-widest text-muted-foreground mb-1.5">
+            Utilities on site
+          </legend>
           <div className="flex flex-wrap gap-1.5">
             {UTILITY_OPTIONS.map((u) => {
               const on = form.utilities.includes(u);
@@ -388,7 +474,9 @@ function EditListing() {
                   aria-pressed={on}
                   onClick={() => toggleUtility(u)}
                   className={`rounded-full border px-3 py-1 text-[11px] ${
-                    on ? "border-accent bg-accent/20 text-accent" : "border-white/10 bg-white/5 text-muted-foreground"
+                    on
+                      ? "border-accent bg-accent/20 text-accent"
+                      : "border-white/10 bg-white/5 text-muted-foreground"
                   }`}
                 >
                   {u}
@@ -399,7 +487,11 @@ function EditListing() {
         </fieldset>
 
         <Field label="Nearby amenities (comma separated)">
-          <input value={form.amenities} onChange={(e) => set("amenities", e.target.value)} className="input" />
+          <input
+            value={form.amenities}
+            onChange={(e) => set("amenities", e.target.value)}
+            className="input"
+          />
         </Field>
 
         {/* Media — preserved from the original submission */}
@@ -410,7 +502,12 @@ function EditListing() {
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
             {form.media_urls.map((u) => (
               <div key={u} className="relative rounded-lg overflow-hidden border border-white/10">
-                <img src={u} alt="Listing photo" loading="lazy" className="h-20 w-full object-cover" />
+                <img
+                  src={u}
+                  alt="Listing photo"
+                  loading="lazy"
+                  className="h-20 w-full object-cover"
+                />
                 <div className="absolute inset-x-0 bottom-0 flex justify-between bg-black/50 px-1 py-0.5">
                   <button
                     type="button"
@@ -440,7 +537,14 @@ function EditListing() {
           <label className="mt-2 inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[11px]">
             <ImagePlus className="h-3.5 w-3.5" aria-hidden="true" />
             {uploading ? "Uploading…" : "Add photos"}
-            <input ref={fileRef} type="file" accept="image/*" multiple className="sr-only" onChange={(e) => onFiles(e.target.files)} />
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="sr-only"
+              onChange={(e) => onFiles(e.target.files)}
+            />
           </label>
           {uploadError && (
             <p className="mt-1 inline-flex items-center gap-1 text-[11px] text-red-300">
@@ -450,27 +554,52 @@ function EditListing() {
         </fieldset>
 
         <Field label="Description">
-          <textarea rows={6} value={form.description} onChange={(e) => set("description", e.target.value)} className="input" />
+          <textarea
+            rows={6}
+            value={form.description}
+            onChange={(e) => set("description", e.target.value)}
+            className="input"
+          />
         </Field>
 
         {rental && (
           <div className="grid sm:grid-cols-2 gap-4">
             <Field label="Deposit">
-              <input inputMode="numeric" value={form.deposit} onChange={(e) => set("deposit", e.target.value)} className="input" />
+              <input
+                inputMode="numeric"
+                value={form.deposit}
+                onChange={(e) => set("deposit", e.target.value)}
+                className="input"
+              />
             </Field>
             <Field label="Available from">
-              <input type="date" value={form.available_from} onChange={(e) => set("available_from", e.target.value)} className="input" />
+              <input
+                type="date"
+                value={form.available_from}
+                onChange={(e) => set("available_from", e.target.value)}
+                className="input"
+              />
             </Field>
             <Field label="Furnishing">
-              <select value={form.furnishing} onChange={(e) => set("furnishing", e.target.value)} className="input">
+              <select
+                value={form.furnishing}
+                onChange={(e) => set("furnishing", e.target.value)}
+                className="input"
+              >
                 <option value="">Not stated</option>
                 {FURNISHING_OPTIONS.map((f) => (
-                  <option key={f} value={f}>{f}</option>
+                  <option key={f} value={f}>
+                    {f}
+                  </option>
                 ))}
               </select>
             </Field>
             <Field label="Contact phone">
-              <input value={form.contact_phone} onChange={(e) => set("contact_phone", e.target.value)} className="input" />
+              <input
+                value={form.contact_phone}
+                onChange={(e) => set("contact_phone", e.target.value)}
+                className="input"
+              />
             </Field>
           </div>
         )}
@@ -494,7 +623,9 @@ function EditListing() {
         {/* AI checklist refresh */}
         <section className="rounded-2xl border border-white/10 bg-white/5 p-3.5">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="text-[11px] uppercase tracking-[0.25em] text-accent">AI missing-information checklist</span>
+            <span className="text-[11px] uppercase tracking-[0.25em] text-accent">
+              AI missing-information checklist
+            </span>
             <button
               type="button"
               data-testid="refresh-coach"
@@ -502,7 +633,11 @@ function EditListing() {
               disabled={coachM.isPending}
               className="inline-flex items-center gap-1.5 rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-[11px] text-accent disabled:opacity-60"
             >
-              {coachM.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />}
+              {coachM.isPending ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+              ) : (
+                <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+              )}
               Refresh checklist
             </button>
           </div>
@@ -564,7 +699,11 @@ function EditListing() {
           data-testid="resubmit-listing"
           className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary to-accent px-5 py-2.5 text-sm font-medium disabled:opacity-60"
         >
-          {saveM.isPending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Send className="h-4 w-4" aria-hidden="true" />}
+          {saveM.isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+          ) : (
+            <Send className="h-4 w-4" aria-hidden="true" />
+          )}
           Save &amp; resubmit
         </button>
       </form>
@@ -572,7 +711,15 @@ function EditListing() {
   );
 }
 
-function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+function Field({
+  label,
+  required,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <label className="grid gap-1.5">
       <span className="text-xs uppercase tracking-widest text-muted-foreground">

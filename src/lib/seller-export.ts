@@ -158,11 +158,7 @@ export function downloadSellerPdf(rows: ListingInsight[]): string {
       y,
     );
     y += 13;
-    doc.text(
-      `Lead quality: ${r.quality.toUpperCase()} — ${r.qualityReason}`,
-      M,
-      y,
-    );
+    doc.text(`Lead quality: ${r.quality.toUpperCase()} — ${r.qualityReason}`, M, y);
     y += 13;
     doc.text(
       `7-day trend ${r.trendPct > 0 ? "+" : ""}${r.trendPct}% (${r.leadsLast7} vs ${r.leadsPrev7}) · save rate ${r.saveRate}% · enquiry rate ${r.enquiryRate}%`,
