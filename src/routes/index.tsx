@@ -32,6 +32,39 @@ export const Route = createFileRoute("/")({
 function Landing() {
   const navigate = useNavigate();
   return (
+    <LandingBody navigate={navigate} />
+  );
+}
+
+/**
+ * Static hero stage. Replaces the former video carousel — same framing,
+ * aspect ratios and foreground layout, just a cinematic gradient backdrop.
+ */
+function HeroStage({ children }: { children?: React.ReactNode }) {
+  return (
+    <div className="relative w-full overflow-hidden aspect-[3/4] sm:aspect-[16/10] md:aspect-[21/9] max-h-[92vh]">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_35%,oklch(0.34_0.09_240)_0%,oklch(0.19_0.06_255)_45%,oklch(0.13_0.04_260)_100%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(0,0,0,0.35)_78%,rgba(7,30,61,0.85)_100%)]" />
+      <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-background" />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 opacity-[0.12]"
+        style={{
+          backgroundImage:
+            "linear-gradient(oklch(1 0 0 / 0.35) 1px, transparent 1px), linear-gradient(90deg, oklch(1 0 0 / 0.35) 1px, transparent 1px)",
+          backgroundSize: "44px 44px",
+          maskImage: "radial-gradient(ellipse at center, black 20%, transparent 70%)",
+        }}
+      />
+      <div className="absolute inset-0 flex flex-col justify-end sm:justify-center">
+        <div className="mx-auto w-full max-w-7xl px-4 pb-10 sm:pb-0">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> }) {
+  return (
     <div className="min-h-screen">
       <Navbar />
 
