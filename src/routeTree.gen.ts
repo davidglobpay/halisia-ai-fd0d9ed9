@@ -24,7 +24,9 @@ import { Route as MarketplaceIndexRouteImport } from './routes/marketplace.index
 import { Route as MarketplaceIdRouteImport } from './routes/marketplace.$id'
 import { Route as CountyCodeRouteImport } from './routes/county.$code'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as AuthenticatedSellerToolsRouteImport } from './routes/_authenticated/seller-tools'
 import { Route as AuthenticatedSavedRouteImport } from './routes/_authenticated/saved'
+import { Route as AuthenticatedRentalsRouteImport } from './routes/_authenticated/rentals'
 import { Route as AuthenticatedProsRouteImport } from './routes/_authenticated/pros'
 import { Route as AuthenticatedFinancingRouteImport } from './routes/_authenticated/financing'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -104,9 +106,20 @@ const ApiChatRoute = ApiChatRouteImport.update({
   path: '/api/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedSellerToolsRoute =
+  AuthenticatedSellerToolsRouteImport.update({
+    id: '/seller-tools',
+    path: '/seller-tools',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSavedRoute = AuthenticatedSavedRouteImport.update({
   id: '/saved',
   path: '/saved',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRentalsRoute = AuthenticatedRentalsRouteImport.update({
+  id: '/rentals',
+  path: '/rentals',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedProsRoute = AuthenticatedProsRouteImport.update({
@@ -144,7 +157,9 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/financing': typeof AuthenticatedFinancingRoute
   '/pros': typeof AuthenticatedProsRoute
+  '/rentals': typeof AuthenticatedRentalsRoute
   '/saved': typeof AuthenticatedSavedRoute
+  '/seller-tools': typeof AuthenticatedSellerToolsRoute
   '/api/chat': typeof ApiChatRoute
   '/county/$code': typeof CountyCodeRoute
   '/marketplace/$id': typeof MarketplaceIdRoute
@@ -164,7 +179,9 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/financing': typeof AuthenticatedFinancingRoute
   '/pros': typeof AuthenticatedProsRoute
+  '/rentals': typeof AuthenticatedRentalsRoute
   '/saved': typeof AuthenticatedSavedRoute
+  '/seller-tools': typeof AuthenticatedSellerToolsRoute
   '/api/chat': typeof ApiChatRoute
   '/county/$code': typeof CountyCodeRoute
   '/marketplace/$id': typeof MarketplaceIdRoute
@@ -187,7 +204,9 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/financing': typeof AuthenticatedFinancingRoute
   '/_authenticated/pros': typeof AuthenticatedProsRoute
+  '/_authenticated/rentals': typeof AuthenticatedRentalsRoute
   '/_authenticated/saved': typeof AuthenticatedSavedRoute
+  '/_authenticated/seller-tools': typeof AuthenticatedSellerToolsRoute
   '/api/chat': typeof ApiChatRoute
   '/county/$code': typeof CountyCodeRoute
   '/marketplace/$id': typeof MarketplaceIdRoute
@@ -210,7 +229,9 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/financing'
     | '/pros'
+    | '/rentals'
     | '/saved'
+    | '/seller-tools'
     | '/api/chat'
     | '/county/$code'
     | '/marketplace/$id'
@@ -230,7 +251,9 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/financing'
     | '/pros'
+    | '/rentals'
     | '/saved'
+    | '/seller-tools'
     | '/api/chat'
     | '/county/$code'
     | '/marketplace/$id'
@@ -252,7 +275,9 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/financing'
     | '/_authenticated/pros'
+    | '/_authenticated/rentals'
     | '/_authenticated/saved'
+    | '/_authenticated/seller-tools'
     | '/api/chat'
     | '/county/$code'
     | '/marketplace/$id'
@@ -383,11 +408,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/seller-tools': {
+      id: '/_authenticated/seller-tools'
+      path: '/seller-tools'
+      fullPath: '/seller-tools'
+      preLoaderRoute: typeof AuthenticatedSellerToolsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/saved': {
       id: '/_authenticated/saved'
       path: '/saved'
       fullPath: '/saved'
       preLoaderRoute: typeof AuthenticatedSavedRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/rentals': {
+      id: '/_authenticated/rentals'
+      path: '/rentals'
+      fullPath: '/rentals'
+      preLoaderRoute: typeof AuthenticatedRentalsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/pros': {
@@ -425,7 +464,9 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFinancingRoute: typeof AuthenticatedFinancingRoute
   AuthenticatedProsRoute: typeof AuthenticatedProsRoute
+  AuthenticatedRentalsRoute: typeof AuthenticatedRentalsRoute
   AuthenticatedSavedRoute: typeof AuthenticatedSavedRoute
+  AuthenticatedSellerToolsRoute: typeof AuthenticatedSellerToolsRoute
   AuthenticatedSellNewRoute: typeof AuthenticatedSellNewRoute
 }
 
@@ -433,7 +474,9 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFinancingRoute: AuthenticatedFinancingRoute,
   AuthenticatedProsRoute: AuthenticatedProsRoute,
+  AuthenticatedRentalsRoute: AuthenticatedRentalsRoute,
   AuthenticatedSavedRoute: AuthenticatedSavedRoute,
+  AuthenticatedSellerToolsRoute: AuthenticatedSellerToolsRoute,
   AuthenticatedSellNewRoute: AuthenticatedSellNewRoute,
 }
 
