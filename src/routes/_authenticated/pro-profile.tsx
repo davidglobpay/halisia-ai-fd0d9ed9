@@ -330,11 +330,84 @@ function ProDashboard() {
             <input
               type="checkbox"
               checked={form.published}
+              disabled={!readiness.ok}
               onChange={(e) => setForm({ ...form, published: e.target.checked })}
-              className="h-4 w-4 accent-[oklch(0.68_0.19_249)]"
+              className="h-4 w-4 accent-[oklch(0.68_0.19_249)] disabled:opacity-50"
             />
             Publish my profile in Halisia Connections
           </label>
+          {!readiness.ok && (
+            <p className="rounded-xl border border-amber-400/30 bg-amber-400/10 p-2.5 text-[11px] text-amber-200 sm:col-span-2">
+              Add the following before publishing: {readiness.missing.join(", ")}.
+            </p>
+          )}
+
+          <fieldset className="rounded-2xl border border-white/10 p-3 sm:col-span-2">
+            <legend className="px-1 text-[10px] uppercase tracking-widest text-muted-foreground">
+              Weekly availability for consultations
+            </legend>
+            {slots.length === 0 && (
+              <p className="text-[11px] text-muted-foreground">
+                Add windows so clients can request a time that already suits you.
+              </p>
+            )}
+            <ul className="grid gap-2">
+              {slots.map((s, i) => (
+                <li key={i} className="flex flex-wrap items-center gap-2">
+                  <select
+                    aria-label="Day"
+                    value={s.day}
+                    onChange={(e) =>
+                      setSlots(
+                        slots.map((x, j) => (j === i ? { ...x, day: Number(e.target.value) } : x)),
+                      )
+                    }
+                    className="h-9 rounded-xl border border-white/10 bg-white/5 px-2 text-xs"
+                  >
+                    {WEEKDAYS.map((d, di) => (
+                      <option key={d} value={di}>
+                        {d}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="time"
+                    aria-label="Start time"
+                    value={s.start}
+                    onChange={(e) =>
+                      setSlots(slots.map((x, j) => (j === i ? { ...x, start: e.target.value } : x)))
+                    }
+                    className="h-9 rounded-xl border border-white/10 bg-white/5 px-2 text-xs"
+                  />
+                  <input
+                    type="time"
+                    aria-label="End time"
+                    value={s.end}
+                    onChange={(e) =>
+                      setSlots(slots.map((x, j) => (j === i ? { ...x, end: e.target.value } : x)))
+                    }
+                    className="h-9 rounded-xl border border-white/10 bg-white/5 px-2 text-xs"
+                  />
+                  <button
+                    type="button"
+                    aria-label="Remove window"
+                    onClick={() => setSlots(slots.filter((_, j) => j !== i))}
+                    className="rounded-full border border-white/15 p-1.5 text-muted-foreground hover:text-red-300"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <button
+              type="button"
+              onClick={() => setSlots([...slots, { day: 2, start: "09:00", end: "12:00" }])}
+              className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-white/15 px-3 py-1 text-[11px] hover:text-accent"
+            >
+              <Plus className="h-3 w-3" aria-hidden="true" /> Add window
+            </button>
+          </fieldset>
+
           <p className="text-[11px] text-muted-foreground/80 sm:col-span-2">
             Registration details you enter are shown as self-declared and unconfirmed until Halisia
             verifies them. We never present unverified registration as verified.
@@ -352,6 +425,115 @@ function ProDashboard() {
             </button>
           </div>
         </form>
+      </section>
+
+      <section className="mb-10" aria-label="Verification">
+        <h2 className="mb-3 text-sm uppercase tracking-widest text-muted-foreground">
+          Registration verification
+        </h2>
+        <div className="glass rounded-2xl border border-white/10 p-4">
+          <p className="text-[12px] text-muted-foreground">
+            Attach evidence of your registration — a certificate, practising licence or a link to
+            the regulator's register. Your registration number stays hidden from the public
+            directory until Halisia approves it.
+          </p>
+          {first?.verification_submitted_at && (
+            <p className="mt-2 text-[11px] text-amber-200">
+              Submitted {new Date(first.verification_submitted_at).toLocaleString()} · status:{" "}
+              {first.verification_status}
+            </p>
+          )}
+          <ul className="mt-3 grid gap-2">
+            {evidence.map((e, i) => (
+              <li
+                key={i}
+                className="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/[0.03] p-2.5 text-[12px]"
+              >
+                <span className="min-w-0 truncate">
+                  <span className="font-medium">{e.label}</span>{" "}
+                  <span className="text-muted-foreground">· {e.kind.replace(/_/g, " ")}</span>
+                </span>
+                <button
+                  type="button"
+                  aria-label={`Remove ${e.label}`}
+                  onClick={() => setEvidence(evidence.filter((_, j) => j !== i))}
+                  className="rounded-full border border-white/15 p-1 text-muted-foreground hover:text-red-300"
+                >
+                  <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                </button>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_1fr_auto_auto]">
+            <input
+              value={evLabel}
+              onChange={(ev) => setEvLabel(ev.target.value)}
+              placeholder="Document label"
+              className="h-9 rounded-xl border border-white/10 bg-white/5 px-2.5 text-xs"
+            />
+            <input
+              value={evUrl}
+              onChange={(ev) => setEvUrl(ev.target.value)}
+              placeholder="Link to document or register"
+              className="h-9 rounded-xl border border-white/10 bg-white/5 px-2.5 text-xs"
+            />
+            <select
+              aria-label="Evidence type"
+              value={evKind}
+              onChange={(ev) => setEvKind(ev.target.value as VerificationEvidence["kind"])}
+              className="h-9 rounded-xl border border-white/10 bg-white/5 px-2 text-xs"
+            >
+              <option value="registration_certificate">Registration certificate</option>
+              <option value="practising_licence">Practising licence</option>
+              <option value="id_document">ID document</option>
+              <option value="portfolio">Portfolio</option>
+              <option value="other">Other</option>
+            </select>
+            <button
+              type="button"
+              onClick={() => {
+                if (!evLabel.trim() || !evUrl.trim()) {
+                  toast.error("Add a label and a link");
+                  return;
+                }
+                setEvidence([
+                  ...evidence,
+                  {
+                    label: evLabel.trim(),
+                    url: evUrl.trim(),
+                    kind: evKind,
+                    addedAt: new Date().toISOString(),
+                  },
+                ]);
+                setEvLabel("");
+                setEvUrl("");
+              }}
+              className="h-9 rounded-full border border-white/15 px-3 text-[11px] hover:text-accent"
+            >
+              Add evidence
+            </button>
+          </div>
+          <textarea
+            value={verifyNote}
+            onChange={(ev) => setVerifyNote(ev.target.value)}
+            rows={2}
+            placeholder="Anything Halisia should know when checking your registration"
+            className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 p-2.5 text-xs"
+          />
+          <button
+            type="button"
+            disabled={verify.isPending || !first}
+            onClick={() => verify.mutate()}
+            className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-accent px-4 py-2 text-xs font-medium text-primary-foreground disabled:opacity-60"
+          >
+            {verify.isPending ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+            ) : (
+              <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+            )}
+            Submit for verification
+          </button>
+        </div>
       </section>
 
       <section className="mb-10" aria-label="Project requests">
