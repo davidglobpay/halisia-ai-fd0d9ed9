@@ -23,6 +23,7 @@ import { KenyaCountyMap } from "@/components/halisia/kenya-county-map";
 import { Navbar } from "@/components/halisia/navbar";
 import { SearchBar } from "@/components/halisia/search-bar";
 import { AIOrb } from "@/components/halisia/ai-orb";
+import { DataPipeline } from "@/components/halisia/data-pipeline";
 import halisiaLogo from "@/assets/halisia-logo.png.asset.json";
 
 export const Route = createFileRoute("/")({
@@ -312,6 +313,8 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
           </div>
         </div>
       </section>
+
+      <DataPipeline />
 
       {/* TESTIMONIALS */}
       <section id="voices" className="py-24">
