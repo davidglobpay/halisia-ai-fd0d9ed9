@@ -1,8 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { Info, Loader2, ShieldCheck, Sparkles, ToggleLeft, ToggleRight } from "lucide-react";
+import { Crosshair, Info, Loader2, ShieldCheck, Sparkles, ToggleLeft, ToggleRight } from "lucide-react";
 import { listRentalVacancies, formatRent } from "@/lib/rentals";
+import { AvailabilityCalendar } from "@/components/halisia/availability-calendar";
+import { parseAvailability, parseViewings } from "@/lib/rental-availability";
+import { ClarifyStep } from "@/components/halisia/clarify-step";
+import { renterClarifications, type ClarifyAnswers } from "@/lib/clarify";
+import { useMyLocation } from "@/hooks/use-my-location";
 import {
   getMyRenterPreferences,
   saveRenterPreferences,
@@ -45,6 +50,10 @@ type Draft = {
   security_priority: number;
   accessibility_needed: boolean;
   amenities: string[];
+  commute_origin_label: string;
+  commute_origin_lat: string;
+  commute_origin_lng: string;
+  max_commute_minutes: string;
 };
 
 const EMPTY: Draft = {
@@ -59,6 +68,10 @@ const EMPTY: Draft = {
   security_priority: 0,
   accessibility_needed: false,
   amenities: [],
+  commute_origin_label: "",
+  commute_origin_lat: "",
+  commute_origin_lng: "",
+  max_commute_minutes: "",
 };
 
 function toDraft(p: RenterPreferences | null): Draft {
@@ -75,6 +88,10 @@ function toDraft(p: RenterPreferences | null): Draft {
     security_priority: p.security_priority,
     accessibility_needed: p.accessibility_needed,
     amenities: p.amenities,
+    commute_origin_label: p.commute_origin_label ?? "",
+    commute_origin_lat: p.commute_origin_lat != null ? String(p.commute_origin_lat) : "",
+    commute_origin_lng: p.commute_origin_lng != null ? String(p.commute_origin_lng) : "",
+    max_commute_minutes: p.max_commute_minutes != null ? String(p.max_commute_minutes) : "",
   };
 }
 
@@ -84,6 +101,8 @@ function RentalsPage() {
   const listQ = useQuery({ queryKey: ["rental-vacancies"], queryFn: listRentalVacancies });
   const [draft, setDraft] = useState<Draft>(EMPTY);
   const [openPrefs, setOpenPrefs] = useState(false);
+  const [answers, setAnswers] = useState<ClarifyAnswers>({});
+  const geo = useMyLocation();
 
   useEffect(() => {
     if (prefsQ.data !== undefined) setDraft(toDraft(prefsQ.data));
@@ -103,6 +122,10 @@ function RentalsPage() {
         security_priority: d.security_priority,
         accessibility_needed: d.accessibility_needed,
         amenities: d.amenities,
+        commute_origin_label: d.commute_origin_label || null,
+        commute_origin_lat: d.commute_origin_lat ? Number(d.commute_origin_lat) : null,
+        commute_origin_lng: d.commute_origin_lng ? Number(d.commute_origin_lng) : null,
+        max_commute_minutes: d.max_commute_minutes ? Number(d.max_commute_minutes) : null,
       }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["renter-prefs"] }),
   });
@@ -112,6 +135,7 @@ function RentalsPage() {
     [listQ.data, prefsQ.data],
   );
   const on = prefsQ.data?.personalization_enabled ?? false;
+  const clarifications = useMemo(() => renterClarifications(prefsQ.data ?? null), [prefsQ.data]);
 
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft((d) => ({ ...d, [k]: v }));
 
@@ -203,6 +227,62 @@ function RentalsPage() {
                 ))}
               </select>
             </F>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <F label="Commute origin" hint="Where you travel to most days">
+                <input
+                  value={draft.commute_origin_label}
+                  onChange={(e) => set("commute_origin_label", e.target.value)}
+                  className="input"
+                  placeholder="Upper Hill office"
+                />
+              </F>
+              <F label="Origin coordinates" hint="Used to estimate commute bands">
+                <div className="flex gap-1.5">
+                  <input
+                    aria-label="Origin latitude"
+                    value={draft.commute_origin_lat}
+                    onChange={(e) => set("commute_origin_lat", e.target.value)}
+                    className="input"
+                    placeholder="-1.29"
+                  />
+                  <input
+                    aria-label="Origin longitude"
+                    value={draft.commute_origin_lng}
+                    onChange={(e) => set("commute_origin_lng", e.target.value)}
+                    className="input"
+                    placeholder="36.82"
+                  />
+                  <button
+                    type="button"
+                    aria-label="Use my current location as commute origin"
+                    onClick={async () => {
+                      const loc = await geo.request();
+                      if (loc)
+                        setDraft((d) => ({
+                          ...d,
+                          commute_origin_lat: String(loc.lat),
+                          commute_origin_lng: String(loc.lng),
+                          commute_origin_label: d.commute_origin_label || "My current location",
+                        }));
+                    }}
+                    disabled={geo.loading}
+                    className="rounded-full border border-accent/40 bg-accent/10 px-2.5 text-accent disabled:opacity-60"
+                  >
+                    <Crosshair className="h-3.5 w-3.5" aria-hidden="true" />
+                  </button>
+                </div>
+              </F>
+              <F label="Longest acceptable commute (min)">
+                <input
+                  type="number"
+                  min={5}
+                  max={180}
+                  value={draft.max_commute_minutes}
+                  onChange={(e) => set("max_commute_minutes", e.target.value)}
+                  className="input"
+                />
+              </F>
+            </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <F label={`Schools priority (${draft.schools_priority}/5)`}>
                 <input type="range" min={0} max={5} value={draft.schools_priority} onChange={(e) => set("schools_priority", Number(e.target.value))} className="w-full" />
