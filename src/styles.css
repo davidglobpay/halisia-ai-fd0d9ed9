@@ -63,6 +63,7 @@
   --color-gold: var(--amber-glow);
   --color-emerald: var(--emerald-glow);
   --color-crimson: var(--destructive);
+  --color-silver: var(--silver);
   /* HALISIA typography hierarchy — Space Grotesk / Inter / Cormorant Garamond */
   --font-hero: "Space Grotesk", "Sora", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Space Grotesk", "Sora", ui-sans-serif, system-ui, sans-serif;
