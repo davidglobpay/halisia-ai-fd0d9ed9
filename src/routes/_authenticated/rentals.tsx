@@ -325,6 +325,7 @@ function RentalsPage() {
             <button
               type="submit"
               disabled={save.isPending}
+*** placeholder ***
               className="inline-flex w-fit items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-accent px-5 py-2 text-xs font-medium text-primary-foreground disabled:opacity-60"
             >
               {save.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />}
