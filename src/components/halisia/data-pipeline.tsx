@@ -444,7 +444,11 @@ export function DataPipeline() {
       </div>
 
       <Dialog open={!!active} onOpenChange={(o) => !o && setActive(null)}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+        <DialogContent
+          className={`max-h-[85vh] overflow-y-auto sm:max-w-lg ${
+            reduced ? "duration-0 data-[state=closed]:duration-0" : ""
+          }`}
+        >
           {active && (
             <>
               <DialogHeader>
@@ -461,6 +465,18 @@ export function DataPipeline() {
                 sources={active.sources.length}
               />
 
+              <div className="rounded-xl border border-accent/25 bg-accent/10 p-3">
+                <div className="text-[10px] uppercase tracking-widest text-accent">
+                  What this means for you
+                </div>
+                <p className="mt-1.5 text-[12px] leading-relaxed text-foreground/90">
+                  {active.youGet}
+                </p>
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  Influences roughly {active.weight}% of the HALISIA Intelligence Score.
+                </p>
+              </div>
+
               <div>
                 <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
                   What happens in this stage
@@ -476,11 +492,18 @@ export function DataPipeline() {
 
               <div>
                 <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                  Data sources used
+                  Data sources used in this stage
                 </div>
-                <ul className="mt-2 grid gap-1.5">
+                <ul className="mt-2 grid gap-1.5" aria-label="Checklist of data sources used">
                   {active.sources.map((src) => (
-                    <li key={src.label} className="text-[12px]">
+                    <li
+                      key={src.label}
+                      className="flex items-start gap-2 rounded-lg border border-white/10 bg-white/[0.03] p-2 text-[12px]"
+                    >
+                      <Check
+                        className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-300"
+                        aria-hidden="true"
+                      />
                       {src.url ? (
                         <a
                           href={src.url}
