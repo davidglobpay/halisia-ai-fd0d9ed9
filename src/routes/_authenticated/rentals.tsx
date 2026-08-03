@@ -547,7 +547,7 @@ function RentalsPage() {
                   </div>
 
                   <div className="mt-3">
-                    <ViewingBooking propertyId={listing.id} mode="renter" />
+                    <ViewingBooking propertyId={listing.property.id} mode="renter" />
                   </div>
 
                   <details className="mt-3 rounded-xl border border-white/10 bg-white/5 p-2.5">
