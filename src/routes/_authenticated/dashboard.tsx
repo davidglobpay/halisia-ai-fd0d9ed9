@@ -143,6 +143,22 @@ function Dashboard() {
                     </span>
                   </div>
                 </Link>
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  <Link
+                    to="/sell/edit/$id"
+                    params={{ id: p.id }}
+                    className="rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] hover:text-accent"
+                  >
+                    Edit &amp; resubmit
+                  </Link>
+                  <Link
+                    to="/develop/$id"
+                    params={{ id: p.id }}
+                    className="rounded-full border border-accent/40 bg-accent/10 px-2.5 py-1 text-[11px] text-accent"
+                  >
+                    Development &amp; finance readiness
+                  </Link>
+                </div>
               </li>
             ))}
           </ul>
