@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Bookmark, Eye, Flame, Lightbulb, Loader2, MessageSquare, TrendingDown, TrendingUp } from "lucide-react";
+import { useState } from "react";
+import { Bookmark, Download, Eye, FileText, Flame, Lightbulb, Loader2, MessageSquare, TrendingDown, TrendingUp } from "lucide-react";
 import { listMyProperties, listMyLeadsAsSeller, formatPrice } from "@/lib/properties";
 import { buildInsight, fetchSaveCount, type ListingInsight } from "@/lib/seller-tools";
+import { downloadSellerCsv, downloadSellerPdf } from "@/lib/seller-export";
 
 export const Route = createFileRoute("/_authenticated/seller-tools")({
   head: () => ({
@@ -36,6 +38,22 @@ function SellerTools() {
   });
 
   const rows = insights.data ?? [];
+  const [exportMsg, setExportMsg] = useState<string | null>(null);
+  const [exporting, setExporting] = useState<"csv" | "pdf" | null>(null);
+
+  const runExport = async (kind: "csv" | "pdf") => {
+    if (rows.length === 0) return;
+    setExporting(kind);
+    setExportMsg(null);
+    try {
+      const name = kind === "csv" ? downloadSellerCsv(rows) : downloadSellerPdf(rows);
+      setExportMsg(`Downloaded ${name}`);
+    } catch (e) {
+      setExportMsg((e as Error).message || "Export failed");
+    } finally {
+      setExporting(null);
+    }
+  };
   const totals = rows.reduce(
     (acc, r) => ({
       views: acc.views + r.views,
@@ -56,6 +74,32 @@ function SellerTools() {
           suggested follow-ups. HALISIA never contacts your buyers on your behalf.
         </p>
       </header>
+
+      <section className="mb-4 flex flex-wrap items-center gap-2" aria-label="Export analytics">
+        <button
+          type="button"
+          data-testid="export-csv"
+          onClick={() => void runExport("csv")}
+          disabled={rows.length === 0 || exporting !== null}
+          className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs disabled:opacity-50"
+        >
+          {exporting === "csv" ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : <Download className="h-3.5 w-3.5" aria-hidden="true" />}
+          Export CSV
+        </button>
+        <button
+          type="button"
+          data-testid="export-pdf"
+          onClick={() => void runExport("pdf")}
+          disabled={rows.length === 0 || exporting !== null}
+          className="inline-flex items-center gap-1.5 rounded-full border border-accent/40 bg-accent/10 px-3 py-1.5 text-xs text-accent disabled:opacity-50"
+        >
+          {exporting === "pdf" ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : <FileText className="h-3.5 w-3.5" aria-hidden="true" />}
+          Export PDF report
+        </button>
+        <span aria-live="polite" className="text-[11px] text-muted-foreground">
+          {exportMsg}
+        </span>
+      </section>
 
       <section className="grid gap-3 sm:grid-cols-4 mb-6">
         <Stat icon={<Eye className="h-4 w-4" />} label="Total views" value={totals.views} />
