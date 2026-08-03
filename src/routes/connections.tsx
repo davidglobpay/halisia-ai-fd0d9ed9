@@ -455,17 +455,31 @@ function ProDetail({ pro, onClose }: { pro: ProProfile; onClose: () => void }) {
   const [brief, setBrief] = useState("");
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
+  const [slot, setSlot] = useState("");
   const v = verificationLabel(pro);
+  const windows = useMemo(() => upcomingWindows(parseAvailability(pro)), [pro]);
+  const reg = publicRegistration(pro);
   const portfolio = Array.isArray(pro.portfolio)
     ? (pro.portfolio as Array<Record<string, unknown>>)
     : [];
 
   const contact = useMutation({
-    mutationFn: () => requestProfessional({ professional_id: pro.id, project_brief: brief }),
+    mutationFn: () => {
+      const picked = windows.find((w) => w.start.toISOString() === slot);
+      return requestProfessional({
+        professional_id: pro.id,
+        project_brief: brief,
+        preferred_start: picked ? picked.start.toISOString() : null,
+        preferred_end: picked ? picked.end.toISOString() : null,
+      });
+    },
     onSuccess: () => {
       setBrief("");
+      setSlot("");
       toast.success("Contact request sent", {
-        description: `${pro.display_name} will see your brief in their professional dashboard.`,
+        description: slot
+          ? `${pro.display_name} will confirm your requested time window.`
+          : `${pro.display_name} will see your brief in their professional dashboard.`,
       });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -533,10 +547,10 @@ function ProDetail({ pro, onClose }: { pro: ProProfile; onClose: () => void }) {
           <Field
             label="Registration"
             value={
-              pro.registration_body
-                ? `${pro.registration_body}${pro.registration_number ? ` · ${pro.registration_number}` : ""}${
-                    pro.verification_status === "verified" ? "" : " (unconfirmed)"
-                  }`
+              reg.body
+                ? reg.hidden
+                  ? `${reg.body} · number hidden until verified`
+                  : `${reg.body}${reg.number ? ` · ${reg.number}` : ""}`
                 : "Not supplied"
             }
           />
