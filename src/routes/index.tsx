@@ -50,7 +50,7 @@ function HeroStage({ children }: { children?: ReactNode }) {
           frame. Muted + playsInline so mobile autoplay is allowed. */}
       <video
         aria-hidden="true"
-        className="absolute inset-0 h-full w-full object-cover opacity-70 mix-blend-screen motion-reduce:hidden [filter:contrast(1.08)_saturate(1.15)]"
+        className="absolute inset-0 h-full w-full object-cover opacity-45 motion-reduce:hidden [filter:contrast(1.06)_saturate(1.12)]"
         src={heroIntro.url}
         poster={heroIntroPoster.url}
         autoPlay
@@ -62,7 +62,12 @@ function HeroStage({ children }: { children?: ReactNode }) {
         aria-hidden="true"
         src={heroIntroPoster.url}
         alt=""
-        className="absolute inset-0 hidden h-full w-full object-cover opacity-60 motion-reduce:block"
+        className="absolute inset-0 hidden h-full w-full object-cover opacity-40 motion-reduce:block"
+      />
+      {/* Legibility scrim so the logo, headline and search bar stay readable. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(7,30,61,0.72)_0%,rgba(7,30,61,0.35)_38%,rgba(7,30,61,0.78)_100%)]"
       />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(0,0,0,0.35)_78%,rgba(7,30,61,0.85)_100%)]" />
       <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-background" />
