@@ -33,7 +33,7 @@ function ProsPage() {
   return (
     <main className="min-h-dvh px-4 sm:px-6 pt-24 pb-16 max-w-6xl mx-auto">
       <Link
-        to="/_authenticated/dashboard"
+        to="/dashboard"
         className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-3"
       >
         <ArrowLeft className="h-3.5 w-3.5" /> Back to dashboard
