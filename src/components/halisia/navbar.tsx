@@ -13,6 +13,7 @@ const LINKS: Array<{ to: string; label: string }> = [
   { to: "/title-deed", label: "Title Deed" },
   { to: "/connections", label: "Connections" },
   { to: "/compare", label: "Compare" },
+  { to: "/reports", label: "Reports" },
   { to: "/dashboard", label: "Dashboard" },
 ];
 
