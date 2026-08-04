@@ -15,6 +15,7 @@ import halisiaLogo from "../assets/halisia-logo.png.asset.json";
 import { PerfMonitor } from "../components/halisia/perf-monitor";
 import { FloatingSearch } from "../components/halisia/floating-search";
 import { NavGuide } from "../components/halisia/nav-guide";
+import { Navbar } from "../components/halisia/navbar";
 import { supabase } from "../integrations/supabase/client";
 
 function NotFoundComponent() {
@@ -184,6 +185,7 @@ function RootComponent() {
       <PerfMonitor />
       {/* Ambient futuristic backdrop — topographic contours + grid, sits behind every route */}
       <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 topo-backdrop" />
+      <Navbar />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
       <FloatingSearch />
