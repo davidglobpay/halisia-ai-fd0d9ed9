@@ -36,6 +36,7 @@ import { Route as AuthenticatedFinancingRouteImport } from './routes/_authentica
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedContributionsRouteImport } from './routes/_authenticated/contributions'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
+import { Route as AuthenticatedSharedReportTokenRouteImport } from './routes/_authenticated/shared-report.$token'
 import { Route as AuthenticatedSellNewRouteImport } from './routes/_authenticated/sell.new'
 import { Route as AuthenticatedDevelopIdRouteImport } from './routes/_authenticated/develop.$id'
 import { Route as AuthenticatedSellEditIdRouteImport } from './routes/_authenticated/sell.edit.$id'
@@ -176,6 +177,12 @@ const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
   path: '/account',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSharedReportTokenRoute =
+  AuthenticatedSharedReportTokenRouteImport.update({
+    id: '/shared-report/$token',
+    path: '/shared-report/$token',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSellNewRoute = AuthenticatedSellNewRouteImport.update({
   id: '/sell/new',
   path: '/sell/new',
@@ -221,6 +228,7 @@ export interface FileRoutesByFullPath {
   '/marketplace/': typeof MarketplaceIndexRoute
   '/develop/$id': typeof AuthenticatedDevelopIdRoute
   '/sell/new': typeof AuthenticatedSellNewRoute
+  '/shared-report/$token': typeof AuthenticatedSharedReportTokenRoute
   '/sell/edit/$id': typeof AuthenticatedSellEditIdRoute
 }
 export interface FileRoutesByTo {
@@ -251,6 +259,7 @@ export interface FileRoutesByTo {
   '/marketplace': typeof MarketplaceIndexRoute
   '/develop/$id': typeof AuthenticatedDevelopIdRoute
   '/sell/new': typeof AuthenticatedSellNewRoute
+  '/shared-report/$token': typeof AuthenticatedSharedReportTokenRoute
   '/sell/edit/$id': typeof AuthenticatedSellEditIdRoute
 }
 export interface FileRoutesById {
@@ -284,6 +293,7 @@ export interface FileRoutesById {
   '/marketplace/': typeof MarketplaceIndexRoute
   '/_authenticated/develop/$id': typeof AuthenticatedDevelopIdRoute
   '/_authenticated/sell/new': typeof AuthenticatedSellNewRoute
+  '/_authenticated/shared-report/$token': typeof AuthenticatedSharedReportTokenRoute
   '/_authenticated/sell/edit/$id': typeof AuthenticatedSellEditIdRoute
 }
 export interface FileRouteTypes {
@@ -317,6 +327,7 @@ export interface FileRouteTypes {
     | '/marketplace/'
     | '/develop/$id'
     | '/sell/new'
+    | '/shared-report/$token'
     | '/sell/edit/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -347,6 +358,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/develop/$id'
     | '/sell/new'
+    | '/shared-report/$token'
     | '/sell/edit/$id'
   id:
     | '__root__'
@@ -379,6 +391,7 @@ export interface FileRouteTypes {
     | '/marketplace/'
     | '/_authenticated/develop/$id'
     | '/_authenticated/sell/new'
+    | '/_authenticated/shared-report/$token'
     | '/_authenticated/sell/edit/$id'
   fileRoutesById: FileRoutesById
 }
@@ -591,6 +604,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/shared-report/$token': {
+      id: '/_authenticated/shared-report/$token'
+      path: '/shared-report/$token'
+      fullPath: '/shared-report/$token'
+      preLoaderRoute: typeof AuthenticatedSharedReportTokenRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/sell/new': {
       id: '/_authenticated/sell/new'
       path: '/sell/new'
@@ -628,6 +648,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSellerToolsRoute: typeof AuthenticatedSellerToolsRoute
   AuthenticatedDevelopIdRoute: typeof AuthenticatedDevelopIdRoute
   AuthenticatedSellNewRoute: typeof AuthenticatedSellNewRoute
+  AuthenticatedSharedReportTokenRoute: typeof AuthenticatedSharedReportTokenRoute
   AuthenticatedSellEditIdRoute: typeof AuthenticatedSellEditIdRoute
 }
 
@@ -644,6 +665,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSellerToolsRoute: AuthenticatedSellerToolsRoute,
   AuthenticatedDevelopIdRoute: AuthenticatedDevelopIdRoute,
   AuthenticatedSellNewRoute: AuthenticatedSellNewRoute,
+  AuthenticatedSharedReportTokenRoute: AuthenticatedSharedReportTokenRoute,
   AuthenticatedSellEditIdRoute: AuthenticatedSellEditIdRoute,
 }
 
@@ -684,3 +706,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
