@@ -33,9 +33,8 @@ import { ListingEditor, type ListingAiWithMeta } from "@/components/halisia/list
 import { ListingServices } from "@/components/halisia/listing-services";
 
 export const Route = createFileRoute("/marketplace/$id")({
-  validateSearch: (s: Record<string, unknown>) => ({
-    preview: s.preview === "1" || s.preview === 1 ? ("1" as const) : undefined,
-  }),
+  validateSearch: (s: Record<string, unknown>): { preview?: "1" } =>
+    s.preview === "1" || s.preview === 1 ? { preview: "1" } : {},
   loader: async ({ params }) => {
     const p = await getProperty(params.id);
     if (!p) throw notFound();
