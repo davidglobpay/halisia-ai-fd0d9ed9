@@ -107,8 +107,8 @@ function toReport(item: SavedItem): SavedReport {
   return {
     id: item.id,
     label: item.label,
-    lat: item.latitude ?? Number(la) || 0,
-    lng: item.longitude ?? Number(ln) || 0,
+    lat: item.latitude ?? (Number(la) || 0),
+    lng: item.longitude ?? (Number(ln) || 0),
     ref: deed ?? "",
     note: item.note,
     is_favorite: item.is_favorite,
