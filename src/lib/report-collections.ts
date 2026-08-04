@@ -120,10 +120,7 @@ function makeToken() {
 }
 
 export async function listShares(savedItemId?: string): Promise<ReportShare[]> {
-  let query = supabase
-    .from("report_shares")
-    .select("*")
-    .order("created_at", { ascending: false });
+  let query = supabase.from("report_shares").select("*").order("created_at", { ascending: false });
   if (savedItemId) query = query.eq("saved_item_id", savedItemId);
   const { data, error } = await query;
   if (error) throw error;

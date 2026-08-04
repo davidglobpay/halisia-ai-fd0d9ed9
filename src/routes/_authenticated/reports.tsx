@@ -306,9 +306,7 @@ function ReportsPage() {
               >
                 {c.name}
                 <span className="ml-1.5 tabular-nums opacity-70">
-                  {
-                    all.filter((r) => (membership.get(r.id) ?? []).includes(c.id)).length
-                  }
+                  {all.filter((r) => (membership.get(r.id) ?? []).includes(c.id)).length}
                 </span>
               </button>
               {activeCollection === c.id && (
@@ -752,7 +750,9 @@ function ShareDialog({ report, onClose }: { report: SavedReport; onClose: () => 
         <div className="relative">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="text-[11px] uppercase tracking-[0.25em] text-accent">Share report</div>
+              <div className="text-[11px] uppercase tracking-[0.25em] text-accent">
+                Share report
+              </div>
               <h2 className="mt-1 font-display text-lg font-semibold">{report.label}</h2>
               <p className="mt-1 text-[11px] text-muted-foreground">
                 Links are private: the recipient must sign in to Halisia with the exact email you
