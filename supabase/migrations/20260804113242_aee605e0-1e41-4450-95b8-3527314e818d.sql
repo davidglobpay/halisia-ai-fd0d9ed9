@@ -1,0 +1,2 @@
+ALTER TABLE public.saved_items DROP CONSTRAINT saved_items_kind_check;
+ALTER TABLE public.saved_items ADD CONSTRAINT saved_items_kind_check CHECK (kind = ANY (ARRAY['location'::text,'county'::text,'property'::text,'match'::text,'report'::text]));

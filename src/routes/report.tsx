@@ -7,6 +7,8 @@ import { Link } from "@tanstack/react-router";
 import { MapView } from "@/components/halisia/map-view";
 import { IntelligenceDashboard } from "@/components/halisia/intelligence-dashboard";
 import { generateLocationDossier } from "@/lib/pdf-dossier";
+import { SaveButton } from "@/components/halisia/save-button";
+import { reportRef } from "@/lib/saved-items";
 
 const searchSchema = z.object({
   lat: fallback(z.number(), 0).default(0),
@@ -105,6 +107,14 @@ function ReportPage() {
             </p>
           </div>
           <div className="flex gap-2">
+            <SaveButton
+              kind="report"
+              ref_={reportRef(lat, lng, ref || undefined)}
+              label={address || `${lat.toFixed(4)}, ${lng.toFixed(4)}`}
+              latitude={lat}
+              longitude={lng}
+              className="glass rounded-full px-4 py-2 text-xs inline-flex items-center gap-2"
+            />
             <button
               onClick={copy}
               className="glass rounded-full px-4 py-2 text-xs inline-flex items-center gap-2"
