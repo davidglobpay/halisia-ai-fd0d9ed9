@@ -205,7 +205,7 @@ function BidRequestsPanel({ property }: { property: PropertyRow }) {
 
       <p className="mt-3 text-[11px] text-muted-foreground">
         Providers browse open requests at{" "}
-        <Link to="/_authenticated/pros" className="text-accent hover:underline">
+        <Link to="/pros" className="text-accent hover:underline">
           the Pro network
         </Link>
         .
@@ -292,7 +292,7 @@ function FinancingCta({ property }: { property: PropertyRow }) {
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <Link
-              to="/_authenticated/financing"
+              to="/financing"
               className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground px-3 py-1.5 text-xs font-medium"
             >
               Start a financing application
