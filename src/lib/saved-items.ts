@@ -80,3 +80,73 @@ export async function isSaved(kind: SavedKind, ref: string): Promise<SavedItem |
   if (error) return null;
   return (data as SavedItem) ?? null;
 }
+
+// ---------------------------------------------------------------------------
+// Saved reports
+// ---------------------------------------------------------------------------
+
+export type SavedReport = {
+  id: string;
+  label: string;
+  lat: number;
+  lng: number;
+  ref: string;
+  note: string | null;
+  is_favorite: boolean;
+  created_at: string;
+};
+
+/** Stable key for a report: rounded coordinates keep repeat saves idempotent. */
+export function reportRef(lat: number, lng: number, deedRef?: string) {
+  return `${lat.toFixed(5)},${lng.toFixed(5)}${deedRef ? `|${deedRef}` : ""}`;
+}
+
+function toReport(item: SavedItem): SavedReport {
+  const [coords, deed] = item.ref.split("|");
+  const [la, ln] = (coords ?? "").split(",");
+  return {
+    id: item.id,
+    label: item.label,
+    lat: item.latitude ?? Number(la) || 0,
+    lng: item.longitude ?? Number(ln) || 0,
+    ref: deed ?? "",
+    note: item.note,
+    is_favorite: item.is_favorite,
+    created_at: item.created_at,
+  };
+}
+
+export async function listSavedReports(): Promise<SavedReport[]> {
+  const { data, error } = await supabase
+    .from("saved_items")
+    .select("*")
+    .eq("kind", "report")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return ((data ?? []) as SavedItem[]).map(toReport);
+}
+
+export async function saveReport(input: {
+  lat: number;
+  lng: number;
+  label: string;
+  deedRef?: string;
+  note?: string | null;
+}) {
+  return saveItem({
+    kind: "report",
+    ref: reportRef(input.lat, input.lng, input.deedRef),
+    label: input.label || `${input.lat.toFixed(4)}, ${input.lng.toFixed(4)}`,
+    latitude: input.lat,
+    longitude: input.lng,
+    note: input.note ?? null,
+  });
+}
+
+export async function updateSavedNote(id: string, note: string) {
+  const { error } = await supabase
+    .from("saved_items")
+    .update({ note: note.trim() || null })
+    .eq("id", id);
+  if (error) throw error;
+}
