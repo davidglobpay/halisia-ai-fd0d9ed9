@@ -932,6 +932,178 @@ export type Database = {
         }
         Relationships: []
       }
+      report_collection_items: {
+        Row: {
+          collection_id: string
+          created_at: string
+          id: string
+          saved_item_id: string
+          user_id: string
+        }
+        Insert: {
+          collection_id: string
+          created_at?: string
+          id?: string
+          saved_item_id: string
+          user_id: string
+        }
+        Update: {
+          collection_id?: string
+          created_at?: string
+          id?: string
+          saved_item_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_collection_items_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "report_collections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_collection_items_saved_item_id_fkey"
+            columns: ["saved_item_id"]
+            isOneToOne: false
+            referencedRelation: "saved_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      report_collections: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      report_shares: {
+        Row: {
+          created_at: string
+          deed_ref: string | null
+          expires_at: string | null
+          id: string
+          label: string
+          last_accessed_at: string | null
+          latitude: number | null
+          longitude: number | null
+          note: string | null
+          owner_id: string
+          recipient_email: string
+          revoked_at: string | null
+          saved_item_id: string
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deed_ref?: string | null
+          expires_at?: string | null
+          id?: string
+          label: string
+          last_accessed_at?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          note?: string | null
+          owner_id: string
+          recipient_email: string
+          revoked_at?: string | null
+          saved_item_id: string
+          token: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deed_ref?: string | null
+          expires_at?: string | null
+          id?: string
+          label?: string
+          last_accessed_at?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          note?: string | null
+          owner_id?: string
+          recipient_email?: string
+          revoked_at?: string | null
+          saved_item_id?: string
+          token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_shares_saved_item_id_fkey"
+            columns: ["saved_item_id"]
+            isOneToOne: false
+            referencedRelation: "saved_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      report_versions: {
+        Row: {
+          changes: Json
+          created_at: string
+          id: string
+          owner_id: string
+          saved_item_id: string
+          snapshot: Json
+          summary: string
+          version: number
+        }
+        Insert: {
+          changes?: Json
+          created_at?: string
+          id?: string
+          owner_id: string
+          saved_item_id: string
+          snapshot?: Json
+          summary: string
+          version: number
+        }
+        Update: {
+          changes?: Json
+          created_at?: string
+          id?: string
+          owner_id?: string
+          saved_item_id?: string
+          snapshot?: Json
+          summary?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_versions_saved_item_id_fkey"
+            columns: ["saved_item_id"]
+            isOneToOne: false
+            referencedRelation: "saved_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       saved_items: {
         Row: {
           created_at: string
