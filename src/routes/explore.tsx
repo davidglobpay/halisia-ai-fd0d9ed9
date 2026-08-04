@@ -10,7 +10,6 @@ import {
   type MapTheme,
   type OverlayId,
 } from "@/components/halisia/map-view";
-import { Navbar } from "@/components/halisia/navbar";
 import { SearchBar } from "@/components/halisia/search-bar";
 import { MapFrame } from "@/components/halisia/map-frame";
 import { useMyLocation } from "@/hooks/use-my-location";
@@ -262,7 +261,6 @@ function Explore() {
 
   return (
     <div className="min-h-screen" data-testid="explore-page" data-hydrated={clientReady}>
-      <Navbar />
       <div className="pt-24 pb-10 mx-auto max-w-[1400px] px-4">
         <div className="max-w-3xl">
           <SearchBar

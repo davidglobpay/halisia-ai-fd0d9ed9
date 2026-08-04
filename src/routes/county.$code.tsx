@@ -21,7 +21,6 @@ import {
   Download,
   Loader2,
 } from "lucide-react";
-import { Navbar } from "@/components/halisia/navbar";
 import countiesData from "@/data/kenya-counties.json";
 import { buildCountyProfile, COUNTY_DATA_SOURCES } from "@/lib/county-profile";
 import { CountyEmblem } from "@/components/halisia/county-emblem";
@@ -71,7 +70,6 @@ export const Route = createFileRoute("/county/$code")({
 function CountyNotFound() {
   return (
     <div className="min-h-screen">
-      <Navbar />
       <div className="mx-auto max-w-3xl px-4 py-32 text-center">
         <h1 className="text-3xl font-semibold">County not found</h1>
         <p className="mt-3 text-muted-foreground">
@@ -92,7 +90,6 @@ function CountyNotFound() {
 function CountyError() {
   return (
     <div className="min-h-screen">
-      <Navbar />
       <div className="mx-auto max-w-3xl px-4 py-32 text-center">
         <h1 className="text-3xl font-semibold">Something went wrong</h1>
         <p className="mt-3 text-muted-foreground">Refresh to try again.</p>
@@ -146,7 +143,6 @@ function CountyPage() {
 
   return (
     <div className="min-h-screen">
-      <Navbar />
       <div className="mx-auto max-w-6xl px-4 pt-24 pb-16">
         <div className="flex items-center justify-between gap-3">
           <Link

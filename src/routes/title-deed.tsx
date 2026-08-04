@@ -18,7 +18,6 @@ import {
   Trash2,
   ExternalLink,
 } from "lucide-react";
-import { Navbar } from "@/components/halisia/navbar";
 import { MapView } from "@/components/halisia/map-view";
 import { IntelligenceDashboard } from "@/components/halisia/intelligence-dashboard";
 import { extractDeedFields, type DeedFields } from "@/lib/deed-extract.functions";
@@ -293,7 +292,6 @@ function TitleDeedPage() {
 
   return (
     <div className="min-h-screen">
-      <Navbar />
       <div className="pt-24 pb-16 mx-auto max-w-[1400px] px-4">
         <header className="max-w-3xl">
           <div className="inline-flex items-center gap-2 glass rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-accent">

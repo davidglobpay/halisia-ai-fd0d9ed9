@@ -22,7 +22,6 @@ import {
   Pause,
 } from "lucide-react";
 import { KenyaCountyMap } from "@/components/halisia/kenya-county-map";
-import { Navbar } from "@/components/halisia/navbar";
 import { SearchBar } from "@/components/halisia/search-bar";
 import { AIOrb } from "@/components/halisia/ai-orb";
 import { DataPipeline } from "@/components/halisia/data-pipeline";
@@ -165,8 +164,6 @@ function HeroStage({ children }: { children?: ReactNode }) {
 function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> }) {
   return (
     <div className="min-h-screen">
-      <Navbar />
-
       {/* HERO — static cinematic stage (videos removed) */}
       <section className="relative pt-20 md:pt-24 overflow-hidden">
         <HeroStage>

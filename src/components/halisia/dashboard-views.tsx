@@ -553,13 +553,18 @@ export function ContributorSummary() {
 export function ProfessionalSummary() {
   const profiles = useQuery({ queryKey: ["my-pro-profiles"], queryFn: listMyProProfiles });
   const requests = useQuery({ queryKey: ["pro-requests-mine"], queryFn: listRequestsForMe });
+  const sent = useQuery({ queryKey: ["pro-requests-sent"], queryFn: listMyRequests });
   const mine = profiles.data ?? [];
   const leads = requests.data ?? [];
+  const published = mine.filter((p) => p.published).length;
+  const verified = mine.filter((p) => p.verification_status === "verified").length;
 
   return (
     <div className="grid gap-3">
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <Metric label="Service profiles" value={mine.length} />
+        <Metric label="Published" value={published} />
+        <Metric label="Verified" value={verified} />
         <Metric label="Project requests" value={leads.length} />
         <Metric label="Open leads" value={leads.filter((l) => l.status === "new").length} />
       </div>
@@ -573,15 +578,47 @@ export function ProfessionalSummary() {
         }
       >
         {mine.length === 0 ? (
-          <Empty>
-            Create a service profile to appear in Halisia Connections and receive project requests.
-          </Empty>
+          <div className="grid gap-2">
+            <Empty>
+              Create a service profile for your discipline — architect, engineer, surveyor, valuer,
+              contractor, lawyer, land agent or financial institution — to appear in Halisia
+              Connections and receive project requests.
+            </Empty>
+            <Link
+              to="/pro-profile"
+              className="inline-flex w-fit items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-accent px-3.5 py-1.5 text-[11px] font-medium text-primary-foreground"
+            >
+              Create service profile →
+            </Link>
+          </div>
         ) : (
           <ul className="grid gap-1.5 text-[12px]">
             {mine.map((p) => (
-              <li key={p.id}>
-                {PRO_CATEGORY_LABELS[p.category]} — {p.published ? "published" : "draft"} ·{" "}
-                {p.verification_status === "verified" ? "verified" : "self-declared"}
+              <li
+                key={p.id}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2"
+              >
+                <span className="font-medium">{PRO_CATEGORY_LABELS[p.category]}</span>
+                <span className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest">
+                  <span
+                    className={`rounded-full px-2 py-0.5 ${
+                      p.published
+                        ? "bg-emerald-500/15 text-emerald-200"
+                        : "bg-white/8 text-muted-foreground"
+                    }`}
+                  >
+                    {p.published ? "Published" : "Draft"}
+                  </span>
+                  <span
+                    className={`rounded-full px-2 py-0.5 ${
+                      p.verification_status === "verified"
+                        ? "bg-gold/15 text-gold"
+                        : "bg-white/8 text-muted-foreground"
+                    }`}
+                  >
+                    {p.verification_status === "verified" ? "Verified" : "Self-declared"}
+                  </span>
+                </span>
               </li>
             ))}
           </ul>
@@ -601,8 +638,38 @@ export function ProfessionalSummary() {
         ) : (
           <ul className="grid gap-1.5">
             {leads.slice(0, 5).map((l) => (
-              <li key={l.id} className="line-clamp-1 text-[12px]">
-                {l.project_brief}
+              <li key={l.id} className="flex items-center justify-between gap-2 text-[12px]">
+                <span className="line-clamp-1">{l.project_brief}</span>
+                <span className="shrink-0 text-[10px] uppercase tracking-widest text-muted-foreground">
+                  {l.status}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Panel>
+      <Panel
+        title="Requests I sent"
+        icon={<CalendarClock className="h-3 w-3" aria-hidden="true" />}
+        action={
+          <Link to="/connections" className="text-[11px] text-accent hover:underline">
+            Find professionals →
+          </Link>
+        }
+      >
+        {(sent.data ?? []).length === 0 ? (
+          <Empty>
+            You haven&apos;t contacted any professional yet. Use Connections to assemble a project
+            team.
+          </Empty>
+        ) : (
+          <ul className="grid gap-1.5">
+            {(sent.data ?? []).slice(0, 5).map((r) => (
+              <li key={r.id} className="flex items-center justify-between gap-2 text-[12px]">
+                <span className="line-clamp-1">{r.project_brief}</span>
+                <span className="shrink-0 text-[10px] uppercase tracking-widest text-muted-foreground">
+                  {r.status}
+                </span>
               </li>
             ))}
           </ul>

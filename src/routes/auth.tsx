@@ -7,6 +7,9 @@ import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    redirect: typeof search.redirect === "string" ? search.redirect : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Sign in · HALISIA AI" },
@@ -35,6 +38,7 @@ const passwordSchema = z.string().min(8, "At least 8 characters").max(72);
 function AuthPage() {
   const navigate = useNavigate();
   const { session } = useAuth();
+  const { redirect: redirectTo } = Route.useSearch();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
@@ -42,9 +46,15 @@ function AuthPage() {
   const [submitting, setSubmitting] = useState(false);
   const [msg, setMsg] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
 
+  // Only allow same-origin relative paths as a post sign-in destination.
+  const safeNext =
+    redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//")
+      ? redirectTo
+      : "/dashboard";
+
   useEffect(() => {
-    if (session) navigate({ to: "/saved" });
-  }, [session, navigate, pathname]);
+    if (session) navigate({ to: safeNext, replace: true });
+  }, [session, navigate, pathname, safeNext]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,7 +70,7 @@ function AuthPage() {
       if (mode === "signin") {
         const { error } = await supabase.auth.signInWithPassword({ email: emailR.data, password });
         if (error) throw error;
-        navigate({ to: "/saved" });
+        navigate({ to: safeNext, replace: true });
       } else if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
           email: emailR.data,
@@ -88,10 +98,12 @@ function AuthPage() {
     setSubmitting(true);
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+        redirect_uri: `${window.location.origin}/auth${
+          safeNext ? `?redirect=${encodeURIComponent(safeNext)}` : ""
+        }`,
       });
       if (result.error) throw result.error;
-      if (!result.redirected) navigate({ to: "/saved" });
+      if (!result.redirected) navigate({ to: safeNext, replace: true });
     } catch (err) {
       setMsg({ tone: "err", text: err instanceof Error ? err.message : "Google sign-in failed" });
       setSubmitting(false);

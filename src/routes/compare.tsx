@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowLeft, X as XIcon } from "lucide-react";
-import { Navbar } from "@/components/halisia/navbar";
 import { KENYA_COUNTY_FACTS, KENYA_COAT_OF_ARMS } from "@/lib/kenya-county-facts";
 import { COUNTY_LOGOS } from "@/lib/county-logos";
 import { dataConfidencePct } from "@/lib/county-profile";
@@ -76,7 +75,6 @@ function ComparePage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Navbar />
       <div className="mx-auto max-w-7xl px-4 pt-24 pb-10">
         <Link
           to="/explore"

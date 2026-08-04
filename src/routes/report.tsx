@@ -4,7 +4,6 @@ import { fallback, zodValidator } from "@tanstack/zod-adapter";
 import { useEffect, useState } from "react";
 import { FileDown, Loader2, Share2, MapPin, Check, ArrowLeft } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { Navbar } from "@/components/halisia/navbar";
 import { MapView } from "@/components/halisia/map-view";
 import { IntelligenceDashboard } from "@/components/halisia/intelligence-dashboard";
 import { generateLocationDossier } from "@/lib/pdf-dossier";
@@ -72,7 +71,6 @@ function ReportPage() {
   if (!valid) {
     return (
       <div className="min-h-screen">
-        <Navbar />
         <div className="pt-32 mx-auto max-w-xl px-4 text-center">
           <h1 className="font-display text-2xl">Report link is missing coordinates</h1>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -91,7 +89,6 @@ function ReportPage() {
 
   return (
     <div className="min-h-screen">
-      <Navbar />
       <div className="pt-24 pb-16 mx-auto max-w-[1400px] px-4">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
