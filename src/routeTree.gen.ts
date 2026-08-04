@@ -28,6 +28,7 @@ import { Route as CountyCodeRouteImport } from './routes/county.$code'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedSellerToolsRouteImport } from './routes/_authenticated/seller-tools'
 import { Route as AuthenticatedSavedRouteImport } from './routes/_authenticated/saved'
+import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedRentalsRouteImport } from './routes/_authenticated/rentals'
 import { Route as AuthenticatedProsRouteImport } from './routes/_authenticated/pros'
 import { Route as AuthenticatedProProfileRouteImport } from './routes/_authenticated/pro-profile'
@@ -134,6 +135,11 @@ const AuthenticatedSavedRoute = AuthenticatedSavedRouteImport.update({
   path: '/saved',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedRentalsRoute = AuthenticatedRentalsRouteImport.update({
   id: '/rentals',
   path: '/rentals',
@@ -206,6 +212,7 @@ export interface FileRoutesByFullPath {
   '/pro-profile': typeof AuthenticatedProProfileRoute
   '/pros': typeof AuthenticatedProsRoute
   '/rentals': typeof AuthenticatedRentalsRoute
+  '/reports': typeof AuthenticatedReportsRoute
   '/saved': typeof AuthenticatedSavedRoute
   '/seller-tools': typeof AuthenticatedSellerToolsRoute
   '/api/chat': typeof ApiChatRoute
@@ -235,6 +242,7 @@ export interface FileRoutesByTo {
   '/pro-profile': typeof AuthenticatedProProfileRoute
   '/pros': typeof AuthenticatedProsRoute
   '/rentals': typeof AuthenticatedRentalsRoute
+  '/reports': typeof AuthenticatedReportsRoute
   '/saved': typeof AuthenticatedSavedRoute
   '/seller-tools': typeof AuthenticatedSellerToolsRoute
   '/api/chat': typeof ApiChatRoute
@@ -267,6 +275,7 @@ export interface FileRoutesById {
   '/_authenticated/pro-profile': typeof AuthenticatedProProfileRoute
   '/_authenticated/pros': typeof AuthenticatedProsRoute
   '/_authenticated/rentals': typeof AuthenticatedRentalsRoute
+  '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/saved': typeof AuthenticatedSavedRoute
   '/_authenticated/seller-tools': typeof AuthenticatedSellerToolsRoute
   '/api/chat': typeof ApiChatRoute
@@ -299,6 +308,7 @@ export interface FileRouteTypes {
     | '/pro-profile'
     | '/pros'
     | '/rentals'
+    | '/reports'
     | '/saved'
     | '/seller-tools'
     | '/api/chat'
@@ -328,6 +338,7 @@ export interface FileRouteTypes {
     | '/pro-profile'
     | '/pros'
     | '/rentals'
+    | '/reports'
     | '/saved'
     | '/seller-tools'
     | '/api/chat'
@@ -359,6 +370,7 @@ export interface FileRouteTypes {
     | '/_authenticated/pro-profile'
     | '/_authenticated/pros'
     | '/_authenticated/rentals'
+    | '/_authenticated/reports'
     | '/_authenticated/saved'
     | '/_authenticated/seller-tools'
     | '/api/chat'
@@ -523,6 +535,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSavedRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/reports': {
+      id: '/_authenticated/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof AuthenticatedReportsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/rentals': {
       id: '/_authenticated/rentals'
       path: '/rentals'
@@ -604,6 +623,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProProfileRoute: typeof AuthenticatedProProfileRoute
   AuthenticatedProsRoute: typeof AuthenticatedProsRoute
   AuthenticatedRentalsRoute: typeof AuthenticatedRentalsRoute
+  AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedSavedRoute: typeof AuthenticatedSavedRoute
   AuthenticatedSellerToolsRoute: typeof AuthenticatedSellerToolsRoute
   AuthenticatedDevelopIdRoute: typeof AuthenticatedDevelopIdRoute
@@ -619,6 +639,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProProfileRoute: AuthenticatedProProfileRoute,
   AuthenticatedProsRoute: AuthenticatedProsRoute,
   AuthenticatedRentalsRoute: AuthenticatedRentalsRoute,
+  AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedSavedRoute: AuthenticatedSavedRoute,
   AuthenticatedSellerToolsRoute: AuthenticatedSellerToolsRoute,
   AuthenticatedDevelopIdRoute: AuthenticatedDevelopIdRoute,
