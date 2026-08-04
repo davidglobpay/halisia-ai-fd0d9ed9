@@ -37,6 +37,8 @@ import {
 } from "@/lib/professionals";
 import { saveItem } from "@/lib/saved-items";
 import { useAuth } from "@/hooks/use-auth";
+import { listMyRoles, PROFESSIONAL_ROLES, ROLE_LABELS } from "@/lib/roles";
+import { KenyaMotif, SegmentedTabs } from "@/components/halisia/ds";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/connections")({
@@ -65,6 +67,16 @@ function ConnectionsPage() {
   const [category, setCategory] = useState<ProCategory | "all">("all");
   const [q, setQ] = useState("");
   const [active, setActive] = useState<ProProfile | null>(null);
+  const { user } = useAuth();
+  const [section, setSection] = useState<"match" | "directory" | "workspace">("match");
+
+  const myRoles = useQuery({
+    queryKey: ["my-roles"],
+    queryFn: listMyRoles,
+    enabled: Boolean(user),
+  });
+  const proRoles = (myRoles.data ?? []).filter((r) => PROFESSIONAL_ROLES.includes(r));
+  const isProfessional = proRoles.length > 0;
 
   const pros = useQuery({
     queryKey: ["pro-directory", category],
@@ -83,7 +95,33 @@ function ConnectionsPage() {
   }, [pros.data, q]);
 
   return (
-    <main className="min-h-dvh px-4 sm:px-6 pt-24 pb-16 max-w-6xl mx-auto">
+    <main className="relative min-h-dvh px-4 sm:px-6 pt-24 pb-16 max-w-6xl mx-auto">
+      <KenyaMotif className="fixed inset-0 -z-10 opacity-[0.5]" />
+      <nav aria-label="Breadcrumb" className="mb-3 text-[11px] text-muted-foreground">
+        <ol className="flex flex-wrap items-center gap-1.5">
+          <li>
+            <Link to="/" className="hover:text-accent">
+              Home
+            </Link>
+          </li>
+          <li aria-hidden="true">/</li>
+          <li className={active ? "" : "text-foreground"}>
+            {active ? (
+              <button type="button" onClick={() => setActive(null)} className="hover:text-accent">
+                Connections
+              </button>
+            ) : (
+              "Connections"
+            )}
+          </li>
+          {active && (
+            <>
+              <li aria-hidden="true">/</li>
+              <li className="text-foreground">{active.display_name}</li>
+            </>
+          )}
+        </ol>
+      </nav>
       <header className="mb-8 max-w-2xl">
         <div className="text-[11px] uppercase tracking-[0.25em] text-accent">
           Halisia Connections
@@ -97,9 +135,97 @@ function ConnectionsPage() {
         </p>
       </header>
 
-      <ProjectMatcher onPickCategory={setCategory} />
+      <SegmentedTabs
+        className="mb-6"
+        value={section}
+        onValueChange={(v) => setSection(v as typeof section)}
+        ariaLabel="Connections sections"
+        items={[
+          { value: "match", label: "Project matching" },
+          { value: "directory", label: "Directory" },
+          ...(isProfessional
+            ? [{ value: "workspace" as const, label: "Professional workspace" }]
+            : []),
+        ]}
+      />
 
-      <section className="mt-10" aria-label="Professional directory">
+      {section === "match" && (
+        <ProjectMatcher
+          onPickCategory={(c) => {
+            setCategory(c);
+            setSection("directory");
+          }}
+        />
+      )}
+
+      {section === "workspace" && isProfessional && (
+        <section
+          className="glass rounded-3xl border border-accent/20 p-5"
+          aria-label="Professional workspace"
+          data-testid="pro-workspace"
+        >
+          <div className="text-[11px] uppercase tracking-[0.25em] text-accent">
+            Professional workspace
+          </div>
+          <h2 className="mt-2 font-display text-xl font-semibold">
+            Modules for your registered disciplines
+          </h2>
+          <ul className="mt-2 flex flex-wrap gap-1.5">
+            {proRoles.map((r) => (
+              <li
+                key={r}
+                className="rounded-full border border-white/15 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-widest text-muted-foreground"
+              >
+                {ROLE_LABELS[r]}
+              </li>
+            ))}
+          </ul>
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <Link
+              to="/pro-profile"
+              className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 hover:bg-white/[0.06]"
+            >
+              <div className="text-sm font-medium">My practice profile</div>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Publish your listing, upload evidence and manage verification.
+              </p>
+            </Link>
+            <Link
+              to="/pros"
+              className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 hover:bg-white/[0.06]"
+            >
+              <div className="text-sm font-medium">Incoming project requests</div>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Review briefs, confirm viewing windows and respond to clients.
+              </p>
+            </Link>
+            <Link
+              to="/dashboard"
+              className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 hover:bg-white/[0.06]"
+            >
+              <div className="text-sm font-medium">Professional dashboard</div>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Verification status, published profiles and request pipeline.
+              </p>
+            </Link>
+          </div>
+        </section>
+      )}
+
+      {!isProfessional && section !== "workspace" && (
+        <p className="mt-4 text-[11px] text-muted-foreground">
+          Work in one of these disciplines?{" "}
+          <Link to="/account" className="text-accent hover:underline">
+            Add a professional role
+          </Link>{" "}
+          to unlock the professional workspace and listing tools.
+        </p>
+      )}
+
+      <section
+        className={`mt-10 ${section === "directory" ? "" : "hidden"}`}
+        aria-label="Professional directory"
+      >
         <div className="flex flex-wrap items-center gap-2 mb-4">
           <label className="relative flex-1 min-w-[220px]">
             <span className="sr-only">Search professionals</span>
