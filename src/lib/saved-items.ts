@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export type SavedKind = "location" | "county" | "property" | "match";
+export type SavedKind = "location" | "county" | "property" | "match" | "report";
 
 export type SavedItem = {
   id: string;
