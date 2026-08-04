@@ -139,7 +139,7 @@ function ConnectionsPage() {
         className="mb-6"
         value={section}
         onValueChange={(v) => setSection(v as typeof section)}
-        ariaLabel="Connections sections"
+        label="Connections sections"
         items={[
           { value: "match", label: "Project matching" },
           { value: "directory", label: "Directory" },
