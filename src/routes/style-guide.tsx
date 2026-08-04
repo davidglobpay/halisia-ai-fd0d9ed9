@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Navbar } from "@/components/halisia/navbar";
 import {
   Surface,
   KitButton,
@@ -93,7 +92,6 @@ function StyleGuidePage() {
 
   return (
     <div className="min-h-dvh" data-testid="style-guide">
-      <Navbar />
       <main className="mx-auto w-full max-w-6xl px-4 pt-24 pb-20 sm:px-6">
         <header className="relative overflow-hidden rounded-3xl">
           <Surface elevation={3} padding="lg" className="relative overflow-hidden">

@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState, useEffect } from "react";
 import { ArrowLeft, ArrowLeftRight, Loader2, Search, X, Minus, ArrowRight } from "lucide-react";
 import { z } from "zod";
-import { Navbar } from "@/components/halisia/navbar";
 import { geocodeAddress } from "@/lib/geocode.functions";
 import { getLocationIntel, type LocationIntel } from "@/lib/location-intel.functions";
 import { generateNarrative, type NarrativeOutput } from "@/lib/ai-narrative.functions";
@@ -160,7 +159,6 @@ function CompareLocationsPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Navbar />
       <div className="mx-auto max-w-7xl px-4 pt-24 pb-16">
         <Link
           to="/explore"
