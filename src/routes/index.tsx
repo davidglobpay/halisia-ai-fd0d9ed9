@@ -164,7 +164,6 @@ function HeroStage({ children }: { children?: ReactNode }) {
 function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> }) {
   return (
     <div className="min-h-screen">
-
       {/* HERO — static cinematic stage (videos removed) */}
       <section className="relative pt-20 md:pt-24 overflow-hidden">
         <HeroStage>
