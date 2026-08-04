@@ -1,7 +1,21 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FileDown, Loader2, MapPin, Star, Trash2, FileText, Search } from "lucide-react";
+import {
+  FileDown,
+  Loader2,
+  MapPin,
+  Star,
+  Trash2,
+  FileText,
+  Search,
+  FolderPlus,
+  Share2,
+  History,
+  X,
+  Check,
+} from "lucide-react";
+import { toast } from "sonner";
 import {
   listSavedReports,
   removeSavedItem,
@@ -9,6 +23,22 @@ import {
   updateSavedNote,
   type SavedReport,
 } from "@/lib/saved-items";
+import {
+  addToCollection,
+  createCollection,
+  createShare,
+  deleteCollection,
+  listCollectionItems,
+  listCollections,
+  listShares,
+  listVersions,
+  recordVersion,
+  removeFromCollection,
+  revokeShare,
+  shareUrl,
+  type ReportCollection,
+} from "@/lib/report-collections";
+import { KenyaMotif } from "@/components/halisia/ds";
 import { generateLocationDossier } from "@/lib/pdf-dossier";
 import { formatDateTime } from "@/lib/format-datetime";
 
