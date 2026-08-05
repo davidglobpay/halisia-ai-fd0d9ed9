@@ -17,6 +17,7 @@ import { FloatingSearch } from "../components/halisia/floating-search";
 import { NavGuide } from "../components/halisia/nav-guide";
 import { Navbar } from "../components/halisia/navbar";
 import { supabase } from "../integrations/supabase/client";
+import { takePostAuthRedirect } from "../lib/post-auth";
 
 function NotFoundComponent() {
   return (
@@ -175,7 +176,16 @@ function RootComponent() {
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
       router.invalidate();
-      if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
+      if (event !== "SIGNED_OUT") {
+        queryClient.invalidateQueries();
+        if (event === "SIGNED_IN") {
+          // OAuth returns to the public origin; resume the intended destination.
+          const next = takePostAuthRedirect();
+          if (next && window.location.pathname !== next) {
+            void router.navigate({ to: next, replace: true });
+          }
+        }
+      }
     });
     return () => sub.subscription.unsubscribe();
   }, [router, queryClient]);
