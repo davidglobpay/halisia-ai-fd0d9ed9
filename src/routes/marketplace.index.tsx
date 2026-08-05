@@ -26,6 +26,7 @@ import {
   type ListingIntent,
   type PropertyRow,
 } from "@/lib/properties";
+import { DataPipeline } from "@/components/halisia/data-pipeline";
 import {
   CATEGORIES,
   MARKET_ACTIONS,
