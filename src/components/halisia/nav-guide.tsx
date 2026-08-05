@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useRouterState } from "@tanstack/react-router";
 import {
   X,
   Search,
@@ -49,6 +50,13 @@ export function NavGuide() {
   const [step, setStep] = useState(0);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  // The tour must never sit on top of sign-in / password screens.
+  const suppressed = pathname.startsWith("/auth") || pathname.startsWith("/reset-password");
+
+  useEffect(() => {
+    if (suppressed) setOpen(false);
+  }, [suppressed]);
 
   useEffect(() => {
     if (!open) return;
@@ -64,6 +72,7 @@ export function NavGuide() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (suppressed) return;
     try {
       if (!window.localStorage.getItem(STORAGE_KEY)) {
         const t = window.setTimeout(() => setOpen(true), 1200);
@@ -72,7 +81,7 @@ export function NavGuide() {
     } catch {
       /* storage disabled — skip auto-open */
     }
-  }, []);
+  }, [suppressed]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -100,6 +109,7 @@ export function NavGuide() {
 
   return (
     <>
+      {suppressed ? null : (
       <button
         type="button"
         onClick={() => {
@@ -114,8 +124,9 @@ export function NavGuide() {
           ?
         </span>
       </button>
+      )}
 
-      {open && (
+      {open && !suppressed && (
         <div
           role="dialog"
           aria-modal="true"
