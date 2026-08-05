@@ -100,7 +100,7 @@ function ConnectionsPage() {
       <nav aria-label="Breadcrumb" className="mb-3 text-[11px] text-muted-foreground">
         <ol className="flex flex-wrap items-center gap-1.5">
           <li>
-            <Link to="/" className="hover:text-accent">
+            <Link to="/" search={{ compare: "" }} className="hover:text-accent">
               Home
             </Link>
           </li>
