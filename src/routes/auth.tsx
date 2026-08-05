@@ -52,7 +52,9 @@ function AuthPage() {
       : "/dashboard";
 
   useEffect(() => {
-    if (session) navigate({ to: safeNext, replace: true });
+    if (!session) return;
+    if (typeof sessionStorage !== "undefined") sessionStorage.removeItem(POST_AUTH_KEY);
+    navigate({ to: safeNext, replace: true });
   }, [session, navigate, pathname, safeNext]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -96,10 +98,11 @@ function AuthPage() {
     setMsg(null);
     setSubmitting(true);
     try {
+      // Remember the intended destination separately: redirect_uri must be a
+      // plain same-origin URL with no extra query params.
+      sessionStorage.setItem(POST_AUTH_KEY, safeNext);
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: `${window.location.origin}/auth${
-          safeNext ? `?redirect=${encodeURIComponent(safeNext)}` : ""
-        }`,
+        redirect_uri: window.location.origin,
       });
       if (result.error) throw result.error;
       if (!result.redirected) navigate({ to: safeNext, replace: true });
