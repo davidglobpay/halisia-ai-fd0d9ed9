@@ -110,20 +110,20 @@ export function NavGuide() {
   return (
     <>
       {suppressed ? null : (
-      <button
-        type="button"
-        onClick={() => {
-          setStep(0);
-          setOpen(true);
-        }}
-        aria-label="Open guided tour"
-        title="Guided tour (press ?)"
-        className="fixed bottom-4 right-4 z-30 h-11 w-11 rounded-full glass-strong border border-[oklch(0.78_0.14_85/0.4)] text-[oklch(0.78_0.14_85)] shadow-[0_0_24px_-8px_oklch(0.78_0.14_85/0.6)] hover:scale-105 transition inline-flex items-center justify-center"
-      >
-        <span className="text-lg font-semibold" aria-hidden="true">
-          ?
-        </span>
-      </button>
+        <button
+          type="button"
+          onClick={() => {
+            setStep(0);
+            setOpen(true);
+          }}
+          aria-label="Open guided tour"
+          title="Guided tour (press ?)"
+          className="fixed bottom-4 right-4 z-30 h-11 w-11 rounded-full glass-strong border border-[oklch(0.78_0.14_85/0.4)] text-[oklch(0.78_0.14_85)] shadow-[0_0_24px_-8px_oklch(0.78_0.14_85/0.6)] hover:scale-105 transition inline-flex items-center justify-center"
+        >
+          <span className="text-lg font-semibold" aria-hidden="true">
+            ?
+          </span>
+        </button>
       )}
 
       {open && !suppressed && (
