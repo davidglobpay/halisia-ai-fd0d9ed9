@@ -437,6 +437,7 @@ function MarketplaceIndex() {
       )}
 
       <section className="mt-10 glass rounded-2xl border border-white/10 p-4 text-xs text-muted-foreground">
+        {null}
         <h2 className="text-sm font-semibold text-foreground mb-1">
           Your recommendations, your rules
         </h2>
