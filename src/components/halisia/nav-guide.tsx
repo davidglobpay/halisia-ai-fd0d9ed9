@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useRouterState } from "@tanstack/react-router";
 import {
   X,
   Search,
@@ -49,6 +50,13 @@ export function NavGuide() {
   const [step, setStep] = useState(0);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  // The tour must never sit on top of sign-in / password screens.
+  const suppressed = pathname.startsWith("/auth") || pathname.startsWith("/reset-password");
+
+  useEffect(() => {
+    if (suppressed) setOpen(false);
+  }, [suppressed]);
 
   useEffect(() => {
     if (!open) return;
@@ -64,6 +72,7 @@ export function NavGuide() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (suppressed) return;
     try {
       if (!window.localStorage.getItem(STORAGE_KEY)) {
         const t = window.setTimeout(() => setOpen(true), 1200);
@@ -72,7 +81,7 @@ export function NavGuide() {
     } catch {
       /* storage disabled — skip auto-open */
     }
-  }, []);
+  }, [suppressed]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -100,22 +109,24 @@ export function NavGuide() {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => {
-          setStep(0);
-          setOpen(true);
-        }}
-        aria-label="Open guided tour"
-        title="Guided tour (press ?)"
-        className="fixed bottom-4 right-4 z-30 h-11 w-11 rounded-full glass-strong border border-[oklch(0.78_0.14_85/0.4)] text-[oklch(0.78_0.14_85)] shadow-[0_0_24px_-8px_oklch(0.78_0.14_85/0.6)] hover:scale-105 transition inline-flex items-center justify-center"
-      >
-        <span className="text-lg font-semibold" aria-hidden="true">
-          ?
-        </span>
-      </button>
+      {suppressed ? null : (
+        <button
+          type="button"
+          onClick={() => {
+            setStep(0);
+            setOpen(true);
+          }}
+          aria-label="Open guided tour"
+          title="Guided tour (press ?)"
+          className="fixed bottom-4 right-4 z-30 h-11 w-11 rounded-full glass-strong border border-[oklch(0.78_0.14_85/0.4)] text-[oklch(0.78_0.14_85)] shadow-[0_0_24px_-8px_oklch(0.78_0.14_85/0.6)] hover:scale-105 transition inline-flex items-center justify-center"
+        >
+          <span className="text-lg font-semibold" aria-hidden="true">
+            ?
+          </span>
+        </button>
+      )}
 
-      {open && (
+      {open && !suppressed && (
         <div
           role="dialog"
           aria-modal="true"

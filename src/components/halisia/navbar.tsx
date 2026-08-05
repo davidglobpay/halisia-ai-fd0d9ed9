@@ -93,6 +93,12 @@ export function Navbar() {
               >
                 <Bookmark className="h-3.5 w-3.5 text-accent" aria-hidden="true" /> Saved
               </Link>
+              <Link
+                to="/account"
+                className="inline-flex h-9 items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 text-xs hover:bg-white/10"
+              >
+                <UserIcon className="h-3.5 w-3.5 text-accent" aria-hidden="true" /> Account
+              </Link>
               <button
                 type="button"
                 onClick={handleSignOut}
@@ -174,6 +180,12 @@ export function Navbar() {
                     className="flex items-center gap-2 px-4 py-3 rounded-xl text-[15px] text-muted-foreground hover:bg-white/5 hover:text-foreground"
                   >
                     <Bookmark className="h-4 w-4 text-accent" aria-hidden="true" /> My saved
+                  </Link>
+                  <Link
+                    to="/account"
+                    className="flex items-center gap-2 px-4 py-3 rounded-xl text-[15px] text-muted-foreground hover:bg-white/5 hover:text-foreground"
+                  >
+                    <UserIcon className="h-4 w-4 text-accent" aria-hidden="true" /> Account
                   </Link>
                   <button
                     type="button"
