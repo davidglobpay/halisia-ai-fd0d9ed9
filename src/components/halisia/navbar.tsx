@@ -181,6 +181,12 @@ export function Navbar() {
                   >
                     <Bookmark className="h-4 w-4 text-accent" aria-hidden="true" /> My saved
                   </Link>
+                  <Link
+                    to="/account"
+                    className="flex items-center gap-2 px-4 py-3 rounded-xl text-[15px] text-muted-foreground hover:bg-white/5 hover:text-foreground"
+                  >
+                    <UserIcon className="h-4 w-4 text-accent" aria-hidden="true" /> Account
+                  </Link>
                   <button
                     type="button"
                     onClick={handleSignOut}
