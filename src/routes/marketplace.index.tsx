@@ -26,6 +26,7 @@ import {
   type ListingIntent,
   type PropertyRow,
 } from "@/lib/properties";
+import { DataPipeline } from "@/components/halisia/data-pipeline";
 import {
   CATEGORIES,
   MARKET_ACTIONS,
@@ -434,6 +435,8 @@ function MarketplaceIndex() {
           ))}
         </ul>
       )}
+
+      <DataPipeline />
 
       <section className="mt-10 glass rounded-2xl border border-white/10 p-4 text-xs text-muted-foreground">
         <h2 className="text-sm font-semibold text-foreground mb-1">
