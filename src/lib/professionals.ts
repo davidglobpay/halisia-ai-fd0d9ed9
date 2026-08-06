@@ -227,10 +227,15 @@ export async function submitVerification(input: {
   return data;
 }
 
-export async function listReviews(professionalId: string): Promise<ProReview[]> {
+const REVIEW_PUBLIC_COLUMNS = "id, professional_id, rating, comment, created_at, updated_at";
+
+/** Public review shape — reviewer identity is never exposed. */
+export type PublicProReview = Omit<ProReview, "reviewer_id">;
+
+export async function listReviews(professionalId: string): Promise<PublicProReview[]> {
   const { data, error } = await supabase
     .from("professional_reviews")
-    .select("*")
+    .select(REVIEW_PUBLIC_COLUMNS)
     .eq("professional_id", professionalId)
     .order("created_at", { ascending: false });
   if (error) throw error;
@@ -241,7 +246,7 @@ export async function submitReview(input: {
   professional_id: string;
   rating: number;
   comment?: string;
-}): Promise<ProReview> {
+}): Promise<PublicProReview> {
   const { data: userRes } = await supabase.auth.getUser();
   if (!userRes?.user) throw new Error("Sign in to leave a review");
   const { data, error } = await supabase
@@ -250,7 +255,7 @@ export async function submitReview(input: {
       { ...input, reviewer_id: userRes.user.id },
       { onConflict: "professional_id,reviewer_id" },
     )
-    .select()
+    .select(REVIEW_PUBLIC_COLUMNS)
     .single();
   if (error) throw error;
   return data;
@@ -349,7 +354,7 @@ export async function setRequestStatus(id: string, status: string): Promise<void
   if (error) throw error;
 }
 
-export function averageRating(reviews: ProReview[]): number | null {
+export function averageRating(reviews: PublicProReview[]): number | null {
   if (reviews.length === 0) return null;
   return Math.round((reviews.reduce((s, r) => s + r.rating, 0) / reviews.length) * 10) / 10;
 }
