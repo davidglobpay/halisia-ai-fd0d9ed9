@@ -107,6 +107,7 @@ function HeroStage({ children }: { children?: ReactNode }) {
           muted
           playsInline
           autoPlay
+          loop
           preload="none"
           onPlaying={() => setPlaying(true)}
           onPause={() => setPlaying(false)}
