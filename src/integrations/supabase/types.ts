@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      article_media: {
+        Row: {
+          article_id: string
+          caption: string | null
+          created_at: string
+          id: string
+          media_type: string
+          position: number
+          url: string
+        }
+        Insert: {
+          article_id: string
+          caption?: string | null
+          created_at?: string
+          id?: string
+          media_type?: string
+          position?: number
+          url: string
+        }
+        Update: {
+          article_id?: string
+          caption?: string | null
+          created_at?: string
+          id?: string
+          media_type?: string
+          position?: number
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "article_media_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "news_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bid_proposals: {
         Row: {
           amount: number | null
@@ -397,6 +435,468 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      news_articles: {
+        Row: {
+          ai_processed: boolean
+          archived: boolean
+          author: string | null
+          category: string
+          cluster_id: string | null
+          confidence: number
+          county: string | null
+          created_at: string
+          environmental_impact: string | null
+          external_id: string | null
+          geo_level: Database["public"]["Enums"]["news_geo_level"]
+          id: string
+          image_url: string | null
+          infrastructure_impact: string | null
+          ingested_at: string
+          investment_impact: string | null
+          land_impact: string | null
+          language: string
+          latitude: number | null
+          longitude: number | null
+          place_label: string | null
+          property_impact: string | null
+          provider: Database["public"]["Enums"]["news_provider"]
+          published_at: string | null
+          raw_excerpt: string | null
+          save_count: number
+          share_count: number
+          source_id: string | null
+          source_logo_url: string | null
+          source_name: string | null
+          summary: string | null
+          tags: string[]
+          title: string
+          title_normalized: string
+          updated_at: string
+          url: string
+          url_hash: string
+          view_count: number
+          why_it_matters: string | null
+        }
+        Insert: {
+          ai_processed?: boolean
+          archived?: boolean
+          author?: string | null
+          category?: string
+          cluster_id?: string | null
+          confidence?: number
+          county?: string | null
+          created_at?: string
+          environmental_impact?: string | null
+          external_id?: string | null
+          geo_level?: Database["public"]["Enums"]["news_geo_level"]
+          id?: string
+          image_url?: string | null
+          infrastructure_impact?: string | null
+          ingested_at?: string
+          investment_impact?: string | null
+          land_impact?: string | null
+          language?: string
+          latitude?: number | null
+          longitude?: number | null
+          place_label?: string | null
+          property_impact?: string | null
+          provider: Database["public"]["Enums"]["news_provider"]
+          published_at?: string | null
+          raw_excerpt?: string | null
+          save_count?: number
+          share_count?: number
+          source_id?: string | null
+          source_logo_url?: string | null
+          source_name?: string | null
+          summary?: string | null
+          tags?: string[]
+          title: string
+          title_normalized: string
+          updated_at?: string
+          url: string
+          url_hash: string
+          view_count?: number
+          why_it_matters?: string | null
+        }
+        Update: {
+          ai_processed?: boolean
+          archived?: boolean
+          author?: string | null
+          category?: string
+          cluster_id?: string | null
+          confidence?: number
+          county?: string | null
+          created_at?: string
+          environmental_impact?: string | null
+          external_id?: string | null
+          geo_level?: Database["public"]["Enums"]["news_geo_level"]
+          id?: string
+          image_url?: string | null
+          infrastructure_impact?: string | null
+          ingested_at?: string
+          investment_impact?: string | null
+          land_impact?: string | null
+          language?: string
+          latitude?: number | null
+          longitude?: number | null
+          place_label?: string | null
+          property_impact?: string | null
+          provider?: Database["public"]["Enums"]["news_provider"]
+          published_at?: string | null
+          raw_excerpt?: string | null
+          save_count?: number
+          share_count?: number
+          source_id?: string | null
+          source_logo_url?: string | null
+          source_name?: string | null
+          summary?: string | null
+          tags?: string[]
+          title?: string
+          title_normalized?: string
+          updated_at?: string
+          url?: string
+          url_hash?: string
+          view_count?: number
+          why_it_matters?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_articles_cluster_id_fkey"
+            columns: ["cluster_id"]
+            isOneToOne: false
+            referencedRelation: "news_clusters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "news_articles_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "news_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      news_audio: {
+        Row: {
+          article_id: string
+          audio_url: string | null
+          created_at: string
+          duration_seconds: number | null
+          engine: string
+          id: string
+          script: string
+          segment: string
+          voice: string | null
+        }
+        Insert: {
+          article_id: string
+          audio_url?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          engine?: string
+          id?: string
+          script: string
+          segment?: string
+          voice?: string | null
+        }
+        Update: {
+          article_id?: string
+          audio_url?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          engine?: string
+          id?: string
+          script?: string
+          segment?: string
+          voice?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_audio_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "news_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      news_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          label: string
+          position: number
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          label: string
+          position?: number
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          label?: string
+          position?: number
+          slug?: string
+        }
+        Relationships: []
+      }
+      news_clusters: {
+        Row: {
+          article_count: number
+          category: string | null
+          county: string | null
+          created_at: string
+          id: string
+          key: string
+          last_article_at: string | null
+          source_count: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          article_count?: number
+          category?: string | null
+          county?: string | null
+          created_at?: string
+          id?: string
+          key: string
+          last_article_at?: string | null
+          source_count?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          article_count?: number
+          category?: string | null
+          county?: string | null
+          created_at?: string
+          id?: string
+          key?: string
+          last_article_at?: string | null
+          source_count?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      news_ingestion_logs: {
+        Row: {
+          created_at: string
+          duplicate_count: number
+          error_message: string | null
+          failed_count: number
+          fetched_count: number
+          finished_at: string | null
+          id: string
+          inserted_count: number
+          ok: boolean
+          provider: Database["public"]["Enums"]["news_provider"]
+          source_id: string | null
+          started_at: string
+        }
+        Insert: {
+          created_at?: string
+          duplicate_count?: number
+          error_message?: string | null
+          failed_count?: number
+          fetched_count?: number
+          finished_at?: string | null
+          id?: string
+          inserted_count?: number
+          ok?: boolean
+          provider: Database["public"]["Enums"]["news_provider"]
+          source_id?: string | null
+          started_at?: string
+        }
+        Update: {
+          created_at?: string
+          duplicate_count?: number
+          error_message?: string | null
+          failed_count?: number
+          fetched_count?: number
+          finished_at?: string | null
+          id?: string
+          inserted_count?: number
+          ok?: boolean
+          provider?: Database["public"]["Enums"]["news_provider"]
+          source_id?: string | null
+          started_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_ingestion_logs_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "news_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      news_locations: {
+        Row: {
+          article_id: string
+          confidence: number
+          county: string | null
+          created_at: string
+          geo_level: Database["public"]["Enums"]["news_geo_level"]
+          id: string
+          label: string
+          latitude: number | null
+          longitude: number | null
+        }
+        Insert: {
+          article_id: string
+          confidence?: number
+          county?: string | null
+          created_at?: string
+          geo_level?: Database["public"]["Enums"]["news_geo_level"]
+          id?: string
+          label: string
+          latitude?: number | null
+          longitude?: number | null
+        }
+        Update: {
+          article_id?: string
+          confidence?: number
+          county?: string | null
+          created_at?: string
+          geo_level?: Database["public"]["Enums"]["news_geo_level"]
+          id?: string
+          label?: string
+          latitude?: number | null
+          longitude?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_locations_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "news_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      news_provider_health: {
+        Row: {
+          last_error: string | null
+          last_error_at: string | null
+          last_ok_at: string | null
+          latency_ms: number | null
+          provider: Database["public"]["Enums"]["news_provider"]
+          quota_note: string | null
+          requests_today: number
+          status: Database["public"]["Enums"]["news_provider_status"]
+          updated_at: string
+        }
+        Insert: {
+          last_error?: string | null
+          last_error_at?: string | null
+          last_ok_at?: string | null
+          latency_ms?: number | null
+          provider: Database["public"]["Enums"]["news_provider"]
+          quota_note?: string | null
+          requests_today?: number
+          status?: Database["public"]["Enums"]["news_provider_status"]
+          updated_at?: string
+        }
+        Update: {
+          last_error?: string | null
+          last_error_at?: string | null
+          last_ok_at?: string | null
+          latency_ms?: number | null
+          provider?: Database["public"]["Enums"]["news_provider"]
+          quota_note?: string | null
+          requests_today?: number
+          status?: Database["public"]["Enums"]["news_provider_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      news_sources: {
+        Row: {
+          category_hint: string | null
+          county: string | null
+          created_at: string
+          feed_url: string | null
+          homepage_url: string | null
+          id: string
+          last_fetched_at: string | null
+          logo_url: string | null
+          name: string
+          provider: Database["public"]["Enums"]["news_provider"]
+          refresh_minutes: number
+          slug: string
+          status: Database["public"]["Enums"]["news_provider_status"]
+          updated_at: string
+        }
+        Insert: {
+          category_hint?: string | null
+          county?: string | null
+          created_at?: string
+          feed_url?: string | null
+          homepage_url?: string | null
+          id?: string
+          last_fetched_at?: string | null
+          logo_url?: string | null
+          name: string
+          provider: Database["public"]["Enums"]["news_provider"]
+          refresh_minutes?: number
+          slug: string
+          status?: Database["public"]["Enums"]["news_provider_status"]
+          updated_at?: string
+        }
+        Update: {
+          category_hint?: string | null
+          county?: string | null
+          created_at?: string
+          feed_url?: string | null
+          homepage_url?: string | null
+          id?: string
+          last_fetched_at?: string | null
+          logo_url?: string | null
+          name?: string
+          provider?: Database["public"]["Enums"]["news_provider"]
+          refresh_minutes?: number
+          slug?: string
+          status?: Database["public"]["Enums"]["news_provider_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      news_tags: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          slug: string
+          updated_at: string
+          usage_count: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          slug: string
+          updated_at?: string
+          usage_count?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          slug?: string
+          updated_at?: string
+          usage_count?: number
+        }
+        Relationships: []
       }
       professional_profiles: {
         Row: {
@@ -1104,6 +1604,38 @@ export type Database = {
           },
         ]
       }
+      saved_articles: {
+        Row: {
+          article_id: string
+          created_at: string
+          id: string
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          article_id: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          user_id: string
+        }
+        Update: {
+          article_id?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_articles_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "news_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       saved_items: {
         Row: {
           created_at: string
@@ -1175,6 +1707,44 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      trending_scores: {
+        Row: {
+          ai_importance: number
+          article_id: string
+          computed_at: string
+          engagement: number
+          freshness: number
+          score: number
+          source_spread: number
+        }
+        Insert: {
+          ai_importance?: number
+          article_id: string
+          computed_at?: string
+          engagement?: number
+          freshness?: number
+          score?: number
+          source_spread?: number
+        }
+        Update: {
+          ai_importance?: number
+          article_id?: string
+          computed_at?: string
+          engagement?: number
+          freshness?: number
+          score?: number
+          source_spread?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trending_scores_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: true
+            referencedRelation: "news_articles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -1492,6 +2062,19 @@ export type Database = {
         | "closed"
         | "lost"
       listing_intent: "sale" | "rent" | "lease"
+      news_geo_level:
+        | "national"
+        | "county"
+        | "sub_county"
+        | "town"
+        | "estate"
+        | "neighbourhood"
+      news_provider: "newsdata" | "gnews" | "gdelt" | "rss"
+      news_provider_status:
+        | "active"
+        | "degraded"
+        | "disabled"
+        | "awaiting_api_key"
       pro_category:
         | "architect"
         | "engineer"
@@ -1715,6 +2298,21 @@ export const Constants = {
         "lost",
       ],
       listing_intent: ["sale", "rent", "lease"],
+      news_geo_level: [
+        "national",
+        "county",
+        "sub_county",
+        "town",
+        "estate",
+        "neighbourhood",
+      ],
+      news_provider: ["newsdata", "gnews", "gdelt", "rss"],
+      news_provider_status: [
+        "active",
+        "degraded",
+        "disabled",
+        "awaiting_api_key",
+      ],
       pro_category: [
         "architect",
         "engineer",
