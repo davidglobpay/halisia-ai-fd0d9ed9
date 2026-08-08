@@ -1,0 +1,258 @@
+/**
+ * HALISIA Pulse — browser data layer.
+ * Public news reads go through the anon-readable Data API; saves are
+ * user-scoped by RLS.
+ */
+import { supabase } from "@/integrations/supabase/client";
+import type {
+  PulseArticle,
+  PulseGeoLevel,
+  PulseIngestionLog,
+  PulseProvider,
+  PulseProviderHealth,
+} from "./pulse/types";
+
+export * from "./pulse/types";
+
+const ARTICLE_COLUMNS =
+  "id, provider, url, title, author, source_name, source_logo_url, image_url, raw_excerpt, summary, why_it_matters, property_impact, land_impact, infrastructure_impact, investment_impact, environmental_impact, category, tags, county, geo_level, place_label, latitude, longitude, confidence, view_count, save_count, share_count, published_at, ingested_at";
+
+type Row = Record<string, unknown>;
+
+function toArticle(r: Row): PulseArticle {
+  return {
+    id: String(r["id"]),
+    provider: r["provider"] as PulseProvider,
+    url: String(r["url"]),
+    title: String(r["title"]),
+    author: (r["author"] as string) ?? null,
+    sourceName: (r["source_name"] as string) ?? null,
+    sourceLogoUrl: (r["source_logo_url"] as string) ?? null,
+    imageUrl: (r["image_url"] as string) ?? null,
+    rawExcerpt: (r["raw_excerpt"] as string) ?? null,
+    summary: (r["summary"] as string) ?? null,
+    whyItMatters: (r["why_it_matters"] as string) ?? null,
+    propertyImpact: (r["property_impact"] as string) ?? null,
+    landImpact: (r["land_impact"] as string) ?? null,
+    infrastructureImpact: (r["infrastructure_impact"] as string) ?? null,
+    investmentImpact: (r["investment_impact"] as string) ?? null,
+    environmentalImpact: (r["environmental_impact"] as string) ?? null,
+    category: String(r["category"] ?? "business"),
+    tags: (r["tags"] as string[]) ?? [],
+    county: (r["county"] as string) ?? null,
+    geoLevel: (r["geo_level"] as PulseGeoLevel) ?? "national",
+    placeLabel: (r["place_label"] as string) ?? null,
+    latitude: (r["latitude"] as number) ?? null,
+    longitude: (r["longitude"] as number) ?? null,
+    confidence: Number(r["confidence"] ?? 50),
+    viewCount: Number(r["view_count"] ?? 0),
+    saveCount: Number(r["save_count"] ?? 0),
+    shareCount: Number(r["share_count"] ?? 0),
+    publishedAt: (r["published_at"] as string) ?? null,
+    ingestedAt: String(r["ingested_at"] ?? new Date().toISOString()),
+  };
+}
+
+export type FeedFilters = {
+  search?: string;
+  county?: string | null;
+  category?: string | null;
+  tag?: string | null;
+  timeframe?: "today" | "week" | "month" | "all";
+  sort?: "latest" | "trending";
+  limit?: number;
+  offset?: number;
+};
+
+function sinceFor(timeframe: FeedFilters["timeframe"]): string | null {
+  const days = timeframe === "today" ? 1 : timeframe === "week" ? 7 : timeframe === "month" ? 30 : 0;
+  return days ? new Date(Date.now() - days * 86_400_000).toISOString() : null;
+}
+
+export async function fetchFeed(filters: FeedFilters = {}): Promise<PulseArticle[]> {
+  const limit = filters.limit ?? 24;
+  const offset = filters.offset ?? 0;
+
+  if (filters.sort === "trending") {
+    const { data, error } = await supabase
+      .from("trending_scores")
+      .select(`score, news_articles!inner(${ARTICLE_COLUMNS})`)
+      .order("score", { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    return (data ?? [])
+      .map((row) => {
+        const a = (row as Row)["news_articles"] as Row | null;
+        return a ? { ...toArticle(a), trendingScore: Number((row as Row)["score"] ?? 0) } : null;
+      })
+      .filter((a): a is PulseArticle => !!a)
+      .filter((a) => (filters.county ? a.county === filters.county : true))
+      .filter((a) => (filters.category ? a.category === filters.category : true));
+  }
+
+  let q = supabase
+    .from("news_articles")
+    .select(ARTICLE_COLUMNS)
+    .eq("archived", false)
+    .order("published_at", { ascending: false, nullsFirst: false })
+    .range(offset, offset + limit - 1);
+
+  if (filters.county) q = q.eq("county", filters.county);
+  if (filters.category) q = q.eq("category", filters.category);
+  if (filters.tag) q = q.contains("tags", [filters.tag]);
+  const since = sinceFor(filters.timeframe);
+  if (since) q = q.gte("published_at", since);
+  if (filters.search?.trim()) {
+    const s = filters.search.trim().replace(/[%,]/g, " ");
+    q = q.or(`title.ilike.%${s}%,summary.ilike.%${s}%,raw_excerpt.ilike.%${s}%`);
+  }
+
+  const { data, error } = await q;
+  if (error) throw error;
+  return (data ?? []).map((r) => toArticle(r as Row));
+}
+
+export async function fetchArticle(id: string): Promise<PulseArticle | null> {
+  const { data, error } = await supabase
+    .from("news_articles")
+    .select(ARTICLE_COLUMNS)
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? toArticle(data as Row) : null;
+}
+
+export async function fetchRelated(article: PulseArticle, limit = 4): Promise<PulseArticle[]> {
+  let q = supabase
+    .from("news_articles")
+    .select(ARTICLE_COLUMNS)
+    .eq("archived", false)
+    .neq("id", article.id)
+    .order("published_at", { ascending: false, nullsFirst: false })
+    .limit(limit);
+  if (article.county) q = q.eq("county", article.county);
+  else q = q.eq("category", article.category);
+  const { data } = await q;
+  return (data ?? []).map((r) => toArticle(r as Row));
+}
+
+export async function fetchCountyCounts(): Promise<Array<{ county: string; count: number }>> {
+  const { data } = await supabase
+    .from("news_articles")
+    .select("county")
+    .eq("archived", false)
+    .not("county", "is", null)
+    .limit(1000);
+  const tally = new Map<string, number>();
+  for (const r of (data ?? []) as Row[]) {
+    const c = r["county"] as string;
+    tally.set(c, (tally.get(c) ?? 0) + 1);
+  }
+  return [...tally.entries()]
+    .map(([county, count]) => ({ county, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
+/* ---------------- saved articles ---------------- */
+
+export async function listSavedArticles(userId: string): Promise<PulseArticle[]> {
+  const { data, error } = await supabase
+    .from("saved_articles")
+    .select(`created_at, news_articles!inner(${ARTICLE_COLUMNS})`)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? [])
+    .map((row) => (row as Row)["news_articles"] as Row | null)
+    .filter((a): a is Row => !!a)
+    .map(toArticle);
+}
+
+export async function listSavedIds(userId: string): Promise<string[]> {
+  const { data } = await supabase.from("saved_articles").select("article_id").eq("user_id", userId);
+  return (data ?? []).map((r) => String((r as Row)["article_id"]));
+}
+
+export async function saveArticle(userId: string, articleId: string) {
+  const { error } = await supabase
+    .from("saved_articles")
+    .insert({ user_id: userId, article_id: articleId });
+  if (error && error.code !== "23505") throw error;
+}
+
+export async function unsaveArticle(userId: string, articleId: string) {
+  const { error } = await supabase
+    .from("saved_articles")
+    .delete()
+    .eq("user_id", userId)
+    .eq("article_id", articleId);
+  if (error) throw error;
+}
+
+/* ---------------- admin ---------------- */
+
+export async function fetchProviderHealth(): Promise<PulseProviderHealth[]> {
+  const { data } = await supabase.from("news_provider_health").select("*");
+  return ((data ?? []) as Row[]).map((r) => ({
+    provider: r["provider"] as PulseProvider,
+    status: r["status"] as PulseProviderHealth["status"],
+    lastOkAt: (r["last_ok_at"] as string) ?? null,
+    lastErrorAt: (r["last_error_at"] as string) ?? null,
+    lastError: (r["last_error"] as string) ?? null,
+    latencyMs: (r["latency_ms"] as number) ?? null,
+    requestsToday: Number(r["requests_today"] ?? 0),
+    quotaNote: (r["quota_note"] as string) ?? null,
+  }));
+}
+
+export async function fetchIngestionLogs(limit = 25): Promise<PulseIngestionLog[]> {
+  const { data } = await supabase
+    .from("news_ingestion_logs")
+    .select("*")
+    .order("started_at", { ascending: false })
+    .limit(limit);
+  return ((data ?? []) as Row[]).map((r) => ({
+    id: String(r["id"]),
+    provider: r["provider"] as PulseProvider,
+    startedAt: String(r["started_at"]),
+    finishedAt: (r["finished_at"] as string) ?? null,
+    fetchedCount: Number(r["fetched_count"] ?? 0),
+    insertedCount: Number(r["inserted_count"] ?? 0),
+    duplicateCount: Number(r["duplicate_count"] ?? 0),
+    failedCount: Number(r["failed_count"] ?? 0),
+    ok: Boolean(r["ok"]),
+    errorMessage: (r["error_message"] as string) ?? null,
+  }));
+}
+
+/* ---------------- audio (browser speech synthesis) ---------------- */
+
+export function speakArticle(article: PulseArticle): (() => void) | null {
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) return null;
+  const script = [
+    article.title,
+    article.summary ?? article.rawExcerpt ?? "",
+    article.whyItMatters ? `Why it matters. ${article.whyItMatters}` : "",
+  ]
+    .filter(Boolean)
+    .join(". ");
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(script);
+  utter.rate = 1;
+  utter.lang = "en-KE";
+  window.speechSynthesis.speak(utter);
+  return () => window.speechSynthesis.cancel();
+}
+
+export function relativeTime(iso: string | null): string {
+  if (!iso) return "recently";
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.round(diff / 60_000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.round(hrs / 24);
+  if (days < 30) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString("en-KE", { timeZone: "Africa/Nairobi" });
+}
