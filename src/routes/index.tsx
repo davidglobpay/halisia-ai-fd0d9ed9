@@ -29,8 +29,8 @@ import { ScoreDrivers } from "@/components/halisia/score-drivers";
 import { useReducedMotionPref } from "@/hooks/use-reduced-motion-pref";
 import { recordSearchConversion } from "@/lib/analytics";
 import halisiaLogo from "@/assets/halisia-logo.png.asset.json";
-import heroIntro from "@/assets/hero/hero-intro.mp4.asset.json";
-import heroIntroPoster from "@/assets/hero/hero-intro-poster.jpg.asset.json";
+import heroIntro from "@/assets/hero/hero-pulse.mp4.asset.json";
+import heroIntroPoster from "@/assets/hero/hero-pulse-poster.jpg.asset.json";
 
 export const Route = createFileRoute("/")({
   validateSearch: (s) => z.object({ compare: fallback(z.string(), "").default("") }).parse(s),
