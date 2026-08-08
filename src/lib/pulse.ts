@@ -80,12 +80,12 @@ export async function fetchFeed(filters: FeedFilters = {}): Promise<PulseArticle
       .order("score", { ascending: false })
       .limit(limit);
     if (error) throw error;
-    return (data ?? [])
-      .map((row) => {
-        const a = (row as Row)["news_articles"] as Row | null;
-        return a ? { ...toArticle(a), trendingScore: Number((row as Row)["score"] ?? 0) } : null;
-      })
-      .filter((a): a is PulseArticle => !!a)
+    const mapped: PulseArticle[] = [];
+    for (const row of data ?? []) {
+      const a = (row as Row)["news_articles"] as Row | null;
+      if (a) mapped.push({ ...toArticle(a), trendingScore: Number((row as Row)["score"] ?? 0) });
+    }
+    return mapped
       .filter((a) => (filters.county ? a.county === filters.county : true))
       .filter((a) => (filters.category ? a.category === filters.category : true));
   }
