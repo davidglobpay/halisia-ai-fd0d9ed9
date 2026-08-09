@@ -40,6 +40,7 @@ import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedSharedReportTokenRouteImport } from './routes/_authenticated/shared-report.$token'
 import { Route as AuthenticatedSellNewRouteImport } from './routes/_authenticated/sell.new'
 import { Route as AuthenticatedDevelopIdRouteImport } from './routes/_authenticated/develop.$id'
+import { Route as ApiPublicHooksPulseRefreshRouteImport } from './routes/api/public/hooks/pulse-refresh'
 import { Route as AuthenticatedSellEditIdRouteImport } from './routes/_authenticated/sell.edit.$id'
 
 const TitleDeedRoute = TitleDeedRouteImport.update({
@@ -199,6 +200,12 @@ const AuthenticatedDevelopIdRoute = AuthenticatedDevelopIdRouteImport.update({
   path: '/develop/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicHooksPulseRefreshRoute =
+  ApiPublicHooksPulseRefreshRouteImport.update({
+    id: '/api/public/hooks/pulse-refresh',
+    path: '/api/public/hooks/pulse-refresh',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedSellEditIdRoute = AuthenticatedSellEditIdRouteImport.update({
   id: '/sell/edit/$id',
   path: '/sell/edit/$id',
@@ -237,6 +244,7 @@ export interface FileRoutesByFullPath {
   '/sell/new': typeof AuthenticatedSellNewRoute
   '/shared-report/$token': typeof AuthenticatedSharedReportTokenRoute
   '/sell/edit/$id': typeof AuthenticatedSellEditIdRoute
+  '/api/public/hooks/pulse-refresh': typeof ApiPublicHooksPulseRefreshRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -269,6 +277,7 @@ export interface FileRoutesByTo {
   '/sell/new': typeof AuthenticatedSellNewRoute
   '/shared-report/$token': typeof AuthenticatedSharedReportTokenRoute
   '/sell/edit/$id': typeof AuthenticatedSellEditIdRoute
+  '/api/public/hooks/pulse-refresh': typeof ApiPublicHooksPulseRefreshRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -304,6 +313,7 @@ export interface FileRoutesById {
   '/_authenticated/sell/new': typeof AuthenticatedSellNewRoute
   '/_authenticated/shared-report/$token': typeof AuthenticatedSharedReportTokenRoute
   '/_authenticated/sell/edit/$id': typeof AuthenticatedSellEditIdRoute
+  '/api/public/hooks/pulse-refresh': typeof ApiPublicHooksPulseRefreshRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -339,6 +349,7 @@ export interface FileRouteTypes {
     | '/sell/new'
     | '/shared-report/$token'
     | '/sell/edit/$id'
+    | '/api/public/hooks/pulse-refresh'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -371,6 +382,7 @@ export interface FileRouteTypes {
     | '/sell/new'
     | '/shared-report/$token'
     | '/sell/edit/$id'
+    | '/api/public/hooks/pulse-refresh'
   id:
     | '__root__'
     | '/'
@@ -405,6 +417,7 @@ export interface FileRouteTypes {
     | '/_authenticated/sell/new'
     | '/_authenticated/shared-report/$token'
     | '/_authenticated/sell/edit/$id'
+    | '/api/public/hooks/pulse-refresh'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -424,6 +437,7 @@ export interface RootRouteChildren {
   ApiChatRoute: typeof ApiChatRoute
   CountyCodeRoute: typeof CountyCodeRoute
   PulseIndexRoute: typeof PulseIndexRoute
+  ApiPublicHooksPulseRefreshRoute: typeof ApiPublicHooksPulseRefreshRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -645,6 +659,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDevelopIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/hooks/pulse-refresh': {
+      id: '/api/public/hooks/pulse-refresh'
+      path: '/api/public/hooks/pulse-refresh'
+      fullPath: '/api/public/hooks/pulse-refresh'
+      preLoaderRoute: typeof ApiPublicHooksPulseRefreshRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/sell/edit/$id': {
       id: '/_authenticated/sell/edit/$id'
       path: '/sell/edit/$id'
@@ -723,17 +744,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiChatRoute: ApiChatRoute,
   CountyCodeRoute: CountyCodeRoute,
   PulseIndexRoute: PulseIndexRoute,
+  ApiPublicHooksPulseRefreshRoute: ApiPublicHooksPulseRefreshRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
