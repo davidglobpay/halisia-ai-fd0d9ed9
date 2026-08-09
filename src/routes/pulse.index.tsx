@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Newspaper, Search, TrendingUp, Volume2 } from "lucide-react";
+import { Gauge, Newspaper, Search, TrendingUp, Volume2 } from "lucide-react";
 import {
   PULSE_CATEGORIES,
   fetchCountyCounts,
@@ -10,6 +10,7 @@ import {
   speakArticle,
   type PulseArticle,
 } from "@/lib/pulse";
+import { HCarousel } from "@/components/halisia/ds/h-carousel";
 
 export const Route = createFileRoute("/pulse/")({
   component: PulsePage,
@@ -34,39 +35,43 @@ export const Route = createFileRoute("/pulse/")({
 
 function ArticleCard({ a }: { a: PulseArticle }) {
   return (
-    <article className="elev-1 flex flex-col overflow-hidden rounded-2xl border border-white/10">
+    <article className="elev-1 flex h-full flex-col overflow-hidden rounded-2xl border border-white/10">
       {a.imageUrl && (
         <img
           src={a.imageUrl}
           alt=""
           loading="lazy"
-          className="h-40 w-full object-cover"
+          className="h-28 w-full object-cover"
           onError={(e) => ((e.currentTarget.style.display = "none"), undefined)}
         />
       )}
-      <div className="flex flex-1 flex-col gap-2 p-4">
+      <div className="flex flex-1 flex-col gap-2 p-3">
         <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-widest text-accent">
           <span>{a.category.replace(/-/g, " ")}</span>
           {a.county && <span className="text-muted-foreground">· {a.county}</span>}
           <span className="text-muted-foreground">· {relativeTime(a.publishedAt)}</span>
         </div>
-        <h3 className="text-sm font-semibold leading-snug">{a.title}</h3>
+        <h3 className="text-[13px] font-semibold leading-snug">
+          <Link to="/pulse/$id" params={{ id: a.id }} className="hover:text-accent">
+            <span className="line-clamp-3">{a.title}</span>
+          </Link>
+        </h3>
         {a.summary && (
-          <p className="line-clamp-3 text-[12px] leading-relaxed text-muted-foreground">
+          <p className="line-clamp-2 text-[11px] leading-relaxed text-muted-foreground">
             {a.summary}
           </p>
         )}
         {a.whyItMatters && (
-          <p className="rounded-lg border border-accent/25 bg-accent/10 p-2 text-[11px] leading-relaxed">
+          <p className="line-clamp-3 rounded-lg border border-accent/25 bg-accent/10 p-2 text-[11px] leading-relaxed">
             <span className="font-semibold text-accent">Why it matters — </span>
             {a.whyItMatters}
           </p>
         )}
-        <div className="mt-auto flex items-center justify-between pt-2 text-[11px] text-muted-foreground">
-          <span>
-            {a.sourceName ?? a.provider} · {a.confidence}% confidence
+        <div className="mt-auto flex items-center justify-between gap-2 pt-2 text-[10px] text-muted-foreground">
+          <span className="truncate">
+            {a.sourceName ?? a.provider} · {a.confidence}%
           </span>
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-3">
             <button
               type="button"
               onClick={() => speakArticle(a)}
@@ -75,14 +80,9 @@ function ArticleCard({ a }: { a: PulseArticle }) {
             >
               <Volume2 className="h-3.5 w-3.5" />
             </button>
-            <a
-              href={a.url}
-              target="_blank"
-              rel="noreferrer noopener"
-              className="text-accent hover:underline"
-            >
-              Read source
-            </a>
+            <Link to="/pulse/$id" params={{ id: a.id }} className="text-accent hover:underline">
+              Open
+            </Link>
           </div>
         </div>
       </div>
@@ -107,6 +107,10 @@ function PulsePage() {
     queryFn: () => fetchFeed(filters),
   });
   const countyCounts = useQuery({ queryKey: ["pulse-counties"], queryFn: fetchCountyCounts });
+  const trending = useQuery({
+    queryKey: ["pulse-trending-rail"],
+    queryFn: () => fetchFeed({ sort: "trending", limit: 12 }),
+  });
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-10">
@@ -177,14 +181,14 @@ function PulsePage() {
       </div>
 
       {!!countyCounts.data?.length && (
-        <div className="mt-3 flex flex-wrap gap-2">
-          {countyCounts.data.slice(0, 12).map((c) => (
+        <HCarousel label="Counties in the news" className="mt-3" itemClassName="w-auto">
+          {countyCounts.data.map((c) => (
             <button
               key={c.county}
               type="button"
               onClick={() => setCounty(county === c.county ? null : c.county)}
               aria-pressed={county === c.county}
-              className={`rounded-full border px-3 py-1 text-[11px] ${
+              className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-[11px] ${
                 county === c.county
                   ? "border-primary/60 text-primary"
                   : "border-white/10 text-muted-foreground"
@@ -193,7 +197,20 @@ function PulsePage() {
               {c.county} · {c.count}
             </button>
           ))}
-        </div>
+        </HCarousel>
+      )}
+
+      {!!trending.data?.length && (
+        <section className="mt-8">
+          <h2 className="flex items-center gap-2 text-sm font-semibold">
+            <TrendingUp className="h-4 w-4 text-accent" aria-hidden="true" /> Trending now
+          </h2>
+          <HCarousel label="Trending stories" className="mt-2" itemClassName="w-[250px]">
+            {trending.data.map((a) => (
+              <ArticleCard key={a.id} a={a} />
+            ))}
+          </HCarousel>
+        </section>
       )}
 
       {feed.isLoading && <p className="mt-10 text-sm text-muted-foreground">Loading the feed…</p>}
@@ -209,15 +226,28 @@ function PulsePage() {
         </div>
       )}
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {feed.data?.map((a) => <ArticleCard key={a.id} a={a} />)}
-      </div>
+      {!!feed.data?.length && (
+        <section className="mt-8">
+          <h2 className="text-sm font-semibold">
+            {sort === "trending" ? "Ranked stories" : "Latest stories"}
+          </h2>
+          <HCarousel label="Pulse stories" className="mt-2" itemClassName="w-[250px]">
+            {feed.data.map((a) => (
+              <ArticleCard key={a.id} a={a} />
+            ))}
+          </HCarousel>
+        </section>
+      )}
 
       <p className="mt-10 text-[11px] text-muted-foreground/80">
         Headlines and excerpts remain the property of their publishers; Pulse links to the original
         source. AI impact analysis is decision support, not advice.{" "}
         <Link to="/marketplace" className="text-accent hover:underline">
           Back to the marketplace
+        </Link>{" "}
+        ·{" "}
+        <Link to="/pulse/admin" className="inline-flex items-center gap-1 text-accent hover:underline">
+          <Gauge className="h-3 w-3" /> Pulse control room
         </Link>
       </p>
     </main>

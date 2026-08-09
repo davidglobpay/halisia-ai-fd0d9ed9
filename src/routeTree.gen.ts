@@ -24,6 +24,8 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PulseIndexRouteImport } from './routes/pulse.index'
 import { Route as MarketplaceIndexRouteImport } from './routes/marketplace.index'
+import { Route as PulseAdminRouteImport } from './routes/pulse.admin'
+import { Route as PulseIdRouteImport } from './routes/pulse.$id'
 import { Route as MarketplaceIdRouteImport } from './routes/marketplace.$id'
 import { Route as CountyCodeRouteImport } from './routes/county.$code'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
@@ -40,6 +42,7 @@ import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedSharedReportTokenRouteImport } from './routes/_authenticated/shared-report.$token'
 import { Route as AuthenticatedSellNewRouteImport } from './routes/_authenticated/sell.new'
 import { Route as AuthenticatedDevelopIdRouteImport } from './routes/_authenticated/develop.$id'
+import { Route as ApiPublicHooksPulseRefreshRouteImport } from './routes/api/public/hooks/pulse-refresh'
 import { Route as AuthenticatedSellEditIdRouteImport } from './routes/_authenticated/sell.edit.$id'
 
 const TitleDeedRoute = TitleDeedRouteImport.update({
@@ -115,6 +118,16 @@ const MarketplaceIndexRoute = MarketplaceIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => MarketplaceRoute,
+} as any)
+const PulseAdminRoute = PulseAdminRouteImport.update({
+  id: '/pulse/admin',
+  path: '/pulse/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PulseIdRoute = PulseIdRouteImport.update({
+  id: '/pulse/$id',
+  path: '/pulse/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const MarketplaceIdRoute = MarketplaceIdRouteImport.update({
   id: '/$id',
@@ -199,6 +212,12 @@ const AuthenticatedDevelopIdRoute = AuthenticatedDevelopIdRouteImport.update({
   path: '/develop/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicHooksPulseRefreshRoute =
+  ApiPublicHooksPulseRefreshRouteImport.update({
+    id: '/api/public/hooks/pulse-refresh',
+    path: '/api/public/hooks/pulse-refresh',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedSellEditIdRoute = AuthenticatedSellEditIdRouteImport.update({
   id: '/sell/edit/$id',
   path: '/sell/edit/$id',
@@ -231,12 +250,15 @@ export interface FileRoutesByFullPath {
   '/api/chat': typeof ApiChatRoute
   '/county/$code': typeof CountyCodeRoute
   '/marketplace/$id': typeof MarketplaceIdRoute
+  '/pulse/$id': typeof PulseIdRoute
+  '/pulse/admin': typeof PulseAdminRoute
   '/marketplace/': typeof MarketplaceIndexRoute
   '/pulse/': typeof PulseIndexRoute
   '/develop/$id': typeof AuthenticatedDevelopIdRoute
   '/sell/new': typeof AuthenticatedSellNewRoute
   '/shared-report/$token': typeof AuthenticatedSharedReportTokenRoute
   '/sell/edit/$id': typeof AuthenticatedSellEditIdRoute
+  '/api/public/hooks/pulse-refresh': typeof ApiPublicHooksPulseRefreshRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -263,12 +285,15 @@ export interface FileRoutesByTo {
   '/api/chat': typeof ApiChatRoute
   '/county/$code': typeof CountyCodeRoute
   '/marketplace/$id': typeof MarketplaceIdRoute
+  '/pulse/$id': typeof PulseIdRoute
+  '/pulse/admin': typeof PulseAdminRoute
   '/marketplace': typeof MarketplaceIndexRoute
   '/pulse': typeof PulseIndexRoute
   '/develop/$id': typeof AuthenticatedDevelopIdRoute
   '/sell/new': typeof AuthenticatedSellNewRoute
   '/shared-report/$token': typeof AuthenticatedSharedReportTokenRoute
   '/sell/edit/$id': typeof AuthenticatedSellEditIdRoute
+  '/api/public/hooks/pulse-refresh': typeof ApiPublicHooksPulseRefreshRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -298,12 +323,15 @@ export interface FileRoutesById {
   '/api/chat': typeof ApiChatRoute
   '/county/$code': typeof CountyCodeRoute
   '/marketplace/$id': typeof MarketplaceIdRoute
+  '/pulse/$id': typeof PulseIdRoute
+  '/pulse/admin': typeof PulseAdminRoute
   '/marketplace/': typeof MarketplaceIndexRoute
   '/pulse/': typeof PulseIndexRoute
   '/_authenticated/develop/$id': typeof AuthenticatedDevelopIdRoute
   '/_authenticated/sell/new': typeof AuthenticatedSellNewRoute
   '/_authenticated/shared-report/$token': typeof AuthenticatedSharedReportTokenRoute
   '/_authenticated/sell/edit/$id': typeof AuthenticatedSellEditIdRoute
+  '/api/public/hooks/pulse-refresh': typeof ApiPublicHooksPulseRefreshRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -333,12 +361,15 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/county/$code'
     | '/marketplace/$id'
+    | '/pulse/$id'
+    | '/pulse/admin'
     | '/marketplace/'
     | '/pulse/'
     | '/develop/$id'
     | '/sell/new'
     | '/shared-report/$token'
     | '/sell/edit/$id'
+    | '/api/public/hooks/pulse-refresh'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -365,12 +396,15 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/county/$code'
     | '/marketplace/$id'
+    | '/pulse/$id'
+    | '/pulse/admin'
     | '/marketplace'
     | '/pulse'
     | '/develop/$id'
     | '/sell/new'
     | '/shared-report/$token'
     | '/sell/edit/$id'
+    | '/api/public/hooks/pulse-refresh'
   id:
     | '__root__'
     | '/'
@@ -399,12 +433,15 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/county/$code'
     | '/marketplace/$id'
+    | '/pulse/$id'
+    | '/pulse/admin'
     | '/marketplace/'
     | '/pulse/'
     | '/_authenticated/develop/$id'
     | '/_authenticated/sell/new'
     | '/_authenticated/shared-report/$token'
     | '/_authenticated/sell/edit/$id'
+    | '/api/public/hooks/pulse-refresh'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -423,7 +460,10 @@ export interface RootRouteChildren {
   TitleDeedRoute: typeof TitleDeedRoute
   ApiChatRoute: typeof ApiChatRoute
   CountyCodeRoute: typeof CountyCodeRoute
+  PulseIdRoute: typeof PulseIdRoute
+  PulseAdminRoute: typeof PulseAdminRoute
   PulseIndexRoute: typeof PulseIndexRoute
+  ApiPublicHooksPulseRefreshRoute: typeof ApiPublicHooksPulseRefreshRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -532,6 +572,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/marketplace/'
       preLoaderRoute: typeof MarketplaceIndexRouteImport
       parentRoute: typeof MarketplaceRoute
+    }
+    '/pulse/admin': {
+      id: '/pulse/admin'
+      path: '/pulse/admin'
+      fullPath: '/pulse/admin'
+      preLoaderRoute: typeof PulseAdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pulse/$id': {
+      id: '/pulse/$id'
+      path: '/pulse/$id'
+      fullPath: '/pulse/$id'
+      preLoaderRoute: typeof PulseIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/marketplace/$id': {
       id: '/marketplace/$id'
@@ -645,6 +699,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDevelopIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/hooks/pulse-refresh': {
+      id: '/api/public/hooks/pulse-refresh'
+      path: '/api/public/hooks/pulse-refresh'
+      fullPath: '/api/public/hooks/pulse-refresh'
+      preLoaderRoute: typeof ApiPublicHooksPulseRefreshRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/sell/edit/$id': {
       id: '/_authenticated/sell/edit/$id'
       path: '/sell/edit/$id'
@@ -722,7 +783,10 @@ const rootRouteChildren: RootRouteChildren = {
   TitleDeedRoute: TitleDeedRoute,
   ApiChatRoute: ApiChatRoute,
   CountyCodeRoute: CountyCodeRoute,
+  PulseIdRoute: PulseIdRoute,
+  PulseAdminRoute: PulseAdminRoute,
   PulseIndexRoute: PulseIndexRoute,
+  ApiPublicHooksPulseRefreshRoute: ApiPublicHooksPulseRefreshRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

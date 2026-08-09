@@ -256,3 +256,91 @@ export function relativeTime(iso: string | null): string {
   if (days < 30) return `${days}d ago`;
   return new Date(iso).toLocaleDateString("en-KE", { timeZone: "Africa/Nairobi" });
 }
+/* ---------------- admin metrics ---------------- */
+
+export type PulseStats = {
+  totalArticles: number;
+  activeArticles: number;
+  archivedArticles: number;
+  last24h: number;
+  withAi: number;
+  sources: number;
+  lastRefreshAt: string | null;
+  inserted7d: number;
+  duplicates7d: number;
+  failed7d: number;
+  fetched7d: number;
+};
+
+export async function fetchPulseStats(): Promise<PulseStats> {
+  const since24 = new Date(Date.now() - 86_400_000).toISOString();
+  const since7 = new Date(Date.now() - 7 * 86_400_000).toISOString();
+
+  const head = () => supabase.from("news_articles").select("id", { count: "exact", head: true });
+  const [totalRes, sourcesRes, archivedRes, last24Res, aiRes] = await Promise.all([
+    head(),
+    supabase.from("news_sources").select("id", { count: "exact", head: true }),
+    head().eq("archived", true),
+    head().gte("ingested_at", since24),
+    head().not("why_it_matters", "is", null),
+  ]);
+  const total = totalRes.count ?? 0;
+  const sources = sourcesRes.count ?? 0;
+  const archived = archivedRes.count ?? 0;
+  const last24h = last24Res.count ?? 0;
+  const withAi = aiRes.count ?? 0;
+
+  const { data: logs } = await supabase
+    .from("news_ingestion_logs")
+    .select("started_at, fetched_count, inserted_count, duplicate_count, failed_count")
+    .gte("started_at", since7)
+    .order("started_at", { ascending: false })
+    .limit(500);
+
+  const rows = (logs ?? []) as Array<Record<string, unknown>>;
+  const sum = (k: string) => rows.reduce((n, r) => n + Number(r[k] ?? 0), 0);
+
+  return {
+    totalArticles: total,
+    activeArticles: total - archived,
+    archivedArticles: archived,
+    last24h,
+    withAi,
+    sources,
+    lastRefreshAt: rows[0] ? String(rows[0]["started_at"]) : null,
+    fetched7d: sum("fetched_count"),
+    inserted7d: sum("inserted_count"),
+    duplicates7d: sum("duplicate_count"),
+    failed7d: sum("failed_count"),
+  };
+}
+
+export type PulseSourceRow = {
+  id: string;
+  name: string;
+  slug: string;
+  provider: PulseProvider;
+  status: string;
+  feedUrl: string | null;
+  county: string | null;
+  refreshMinutes: number;
+  lastFetchedAt: string | null;
+};
+
+export async function fetchPulseSources(): Promise<PulseSourceRow[]> {
+  const { data } = await supabase
+    .from("news_sources")
+    .select("id, name, slug, provider, status, feed_url, county, refresh_minutes, last_fetched_at")
+    .order("name");
+  return ((data ?? []) as Row[]).map((r) => ({
+    id: String(r["id"]),
+    name: String(r["name"]),
+    slug: String(r["slug"]),
+    provider: r["provider"] as PulseProvider,
+    status: String(r["status"]),
+    feedUrl: (r["feed_url"] as string) ?? null,
+    county: (r["county"] as string) ?? null,
+    refreshMinutes: Number(r["refresh_minutes"] ?? 60),
+    lastFetchedAt: (r["last_fetched_at"] as string) ?? null,
+  }));
+}

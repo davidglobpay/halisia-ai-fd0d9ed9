@@ -12,6 +12,7 @@ export {
 export { SegmentedTabs, type SegmentedTabItem, type SegmentedTabsProps } from "./segmented-tabs";
 export { SectionHeading, type SectionHeadingProps } from "./section-heading";
 export { KenyaMotif, type KenyaMotifProps } from "./kenya-motif";
+export { HCarousel } from "./h-carousel";
 export {
   Skeleton,
   SkeletonCard,
