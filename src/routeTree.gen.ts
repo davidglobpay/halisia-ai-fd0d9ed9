@@ -24,6 +24,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PulseIndexRouteImport } from './routes/pulse.index'
 import { Route as MarketplaceIndexRouteImport } from './routes/marketplace.index'
+import { Route as PulseIdRouteImport } from './routes/pulse.$id'
 import { Route as MarketplaceIdRouteImport } from './routes/marketplace.$id'
 import { Route as CountyCodeRouteImport } from './routes/county.$code'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
@@ -116,6 +117,11 @@ const MarketplaceIndexRoute = MarketplaceIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => MarketplaceRoute,
+} as any)
+const PulseIdRoute = PulseIdRouteImport.update({
+  id: '/pulse/$id',
+  path: '/pulse/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const MarketplaceIdRoute = MarketplaceIdRouteImport.update({
   id: '/$id',
@@ -238,6 +244,7 @@ export interface FileRoutesByFullPath {
   '/api/chat': typeof ApiChatRoute
   '/county/$code': typeof CountyCodeRoute
   '/marketplace/$id': typeof MarketplaceIdRoute
+  '/pulse/$id': typeof PulseIdRoute
   '/marketplace/': typeof MarketplaceIndexRoute
   '/pulse/': typeof PulseIndexRoute
   '/develop/$id': typeof AuthenticatedDevelopIdRoute
@@ -271,6 +278,7 @@ export interface FileRoutesByTo {
   '/api/chat': typeof ApiChatRoute
   '/county/$code': typeof CountyCodeRoute
   '/marketplace/$id': typeof MarketplaceIdRoute
+  '/pulse/$id': typeof PulseIdRoute
   '/marketplace': typeof MarketplaceIndexRoute
   '/pulse': typeof PulseIndexRoute
   '/develop/$id': typeof AuthenticatedDevelopIdRoute
@@ -307,6 +315,7 @@ export interface FileRoutesById {
   '/api/chat': typeof ApiChatRoute
   '/county/$code': typeof CountyCodeRoute
   '/marketplace/$id': typeof MarketplaceIdRoute
+  '/pulse/$id': typeof PulseIdRoute
   '/marketplace/': typeof MarketplaceIndexRoute
   '/pulse/': typeof PulseIndexRoute
   '/_authenticated/develop/$id': typeof AuthenticatedDevelopIdRoute
@@ -343,6 +352,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/county/$code'
     | '/marketplace/$id'
+    | '/pulse/$id'
     | '/marketplace/'
     | '/pulse/'
     | '/develop/$id'
@@ -376,6 +386,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/county/$code'
     | '/marketplace/$id'
+    | '/pulse/$id'
     | '/marketplace'
     | '/pulse'
     | '/develop/$id'
@@ -411,6 +422,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/county/$code'
     | '/marketplace/$id'
+    | '/pulse/$id'
     | '/marketplace/'
     | '/pulse/'
     | '/_authenticated/develop/$id'
@@ -436,6 +448,7 @@ export interface RootRouteChildren {
   TitleDeedRoute: typeof TitleDeedRoute
   ApiChatRoute: typeof ApiChatRoute
   CountyCodeRoute: typeof CountyCodeRoute
+  PulseIdRoute: typeof PulseIdRoute
   PulseIndexRoute: typeof PulseIndexRoute
   ApiPublicHooksPulseRefreshRoute: typeof ApiPublicHooksPulseRefreshRoute
 }
@@ -546,6 +559,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/marketplace/'
       preLoaderRoute: typeof MarketplaceIndexRouteImport
       parentRoute: typeof MarketplaceRoute
+    }
+    '/pulse/$id': {
+      id: '/pulse/$id'
+      path: '/pulse/$id'
+      fullPath: '/pulse/$id'
+      preLoaderRoute: typeof PulseIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/marketplace/$id': {
       id: '/marketplace/$id'
@@ -743,6 +763,7 @@ const rootRouteChildren: RootRouteChildren = {
   TitleDeedRoute: TitleDeedRoute,
   ApiChatRoute: ApiChatRoute,
   CountyCodeRoute: CountyCodeRoute,
+  PulseIdRoute: PulseIdRoute,
   PulseIndexRoute: PulseIndexRoute,
   ApiPublicHooksPulseRefreshRoute: ApiPublicHooksPulseRefreshRoute,
 }
