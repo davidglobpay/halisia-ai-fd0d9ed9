@@ -272,36 +272,23 @@ export type PulseStats = {
   fetched7d: number;
 };
 
-async function countOf(
-  table: "news_articles" | "news_sources",
-  build?: (q: ReturnType<typeof supabase.from>) => unknown,
-): Promise<number> {
-  void build;
-  const { count } = await supabase.from(table).select("id", { count: "exact", head: true });
-  return count ?? 0;
-}
-
 export async function fetchPulseStats(): Promise<PulseStats> {
   const since24 = new Date(Date.now() - 86_400_000).toISOString();
   const since7 = new Date(Date.now() - 7 * 86_400_000).toISOString();
 
-  const [total, sources] = await Promise.all([
-    countOf("news_articles"),
-    countOf("news_sources"),
+  const head = () => supabase.from("news_articles").select("id", { count: "exact", head: true });
+  const [totalRes, sourcesRes, archivedRes, last24Res, aiRes] = await Promise.all([
+    head(),
+    supabase.from("news_sources").select("id", { count: "exact", head: true }),
+    head().eq("archived", true),
+    head().gte("ingested_at", since24),
+    head().not("why_it_matters", "is", null),
   ]);
-
-  const headCount = async (apply: (q: any) => any): Promise<number> => {
-    const { count } = await apply(
-      supabase.from("news_articles").select("id", { count: "exact", head: true }),
-    );
-    return count ?? 0;
-  };
-
-  const [archived, last24h, withAi] = await Promise.all([
-    headCount((q) => q.eq("archived", true)),
-    headCount((q) => q.gte("ingested_at", since24)),
-    headCount((q) => q.not("why_it_matters", "is", null)),
-  ]);
+  const total = totalRes.count ?? 0;
+  const sources = sourcesRes.count ?? 0;
+  const archived = archivedRes.count ?? 0;
+  const last24h = last24Res.count ?? 0;
+  const withAi = aiRes.count ?? 0;
 
   const { data: logs } = await supabase
     .from("news_ingestion_logs")
