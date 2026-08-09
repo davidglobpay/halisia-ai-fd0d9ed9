@@ -721,11 +721,12 @@ export function KenyaCountyMap() {
           </div>
         </div>
 
-        {/* Card grid — synced with map hover/select */}
-        <div
-          className="mt-8 grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"
-          role="list"
-          aria-label="Kenya counties"
+        {/* Compact horizontal rail — synced with map hover/select */}
+        <HCarousel
+          label="Kenya counties"
+          className="mt-8"
+          testId="county-rail"
+          itemClassName="w-[190px]"
         >
           {sortedCounties.map((c) => {
             const sel = selected.includes(c.code);
@@ -741,7 +742,6 @@ export function KenyaCountyMap() {
                 ref={(el) => {
                   cardRefs.current[c.code] = el;
                 }}
-                role="listitem"
                 aria-label={`Open ${c.name} County profile. ${METRIC_LABELS[metric]} ${formatMetric(
                   metric,
                   v,
@@ -751,7 +751,7 @@ export function KenyaCountyMap() {
                 onMouseLeave={() => setHoverCode(null)}
                 onFocus={() => setHoverCode(c.code)}
                 onBlur={() => setHoverCode(null)}
-                className={`block rounded-2xl p-3 transition cursor-pointer outline-none border ${
+                className={`block h-full rounded-2xl p-3 transition cursor-pointer outline-none border ${
                   sel
                     ? "bg-accent/10 border-accent/50"
                     : hover
@@ -789,11 +789,11 @@ export function KenyaCountyMap() {
                       "Compare"
                     )}
                   </button>
-                  <CountyEmblem code={c.code} name={c.name} size={96} className="mt-2" />
-                  <div className="mt-2 text-sm font-bold tracking-wide uppercase">{c.name}</div>
+                  <CountyEmblem code={c.code} name={c.name} size={64} className="mt-2" />
+                  <div className="mt-2 text-xs font-bold tracking-wide uppercase">{c.name}</div>
                 </div>
-                <div className="mt-3 flex items-baseline justify-center gap-1.5">
-                  <span className="text-xl font-semibold text-gradient">
+                <div className="mt-2 flex items-baseline justify-center gap-1.5">
+                  <span className="text-lg font-semibold text-gradient">
                     {formatMetric(metric, v)}
                   </span>
                   <ConfidenceDots
@@ -807,11 +807,11 @@ export function KenyaCountyMap() {
                 </div>
                 {/* Data Confidence Score */}
                 <div
-                  className="mt-3 rounded-xl bg-white/[0.04] border border-white/10 px-2.5 py-2"
+                  className="mt-2 rounded-xl bg-white/[0.04] border border-white/10 px-2.5 py-1.5"
                   aria-label={`Data confidence ${confPct} percent`}
                 >
                   <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-muted-foreground">
-                    <span>Data confidence</span>
+                    <span>Confidence</span>
                     <span className="text-foreground font-semibold">{confPct}%</span>
                   </div>
                   <div className="mt-1 h-1 rounded-full bg-white/10 overflow-hidden">
@@ -829,14 +829,14 @@ export function KenyaCountyMap() {
                 </div>
                 <div
                   data-testid={`county-open-${c.code}`}
-                  className="mt-3 inline-flex items-center gap-1 text-[11px] font-medium text-accent"
+                  className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-accent"
                 >
-                  Open county profile <ArrowRight className="h-3 w-3" />
+                  Open profile <ArrowRight className="h-3 w-3" />
                 </div>
               </Link>
             );
           })}
-        </div>
+        </HCarousel>
       </div>
     </section>
   );
