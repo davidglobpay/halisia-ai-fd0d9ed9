@@ -15,6 +15,7 @@ import { generateCountyComparePdf } from "@/lib/pdf-county-compare";
 import { CountyEmblem } from "@/components/halisia/county-emblem";
 import { dataConfidencePct } from "@/lib/county-profile";
 import { MapFrame } from "@/components/halisia/map-frame";
+import { HCarousel } from "@/components/halisia/ds/h-carousel";
 const KenyaCountyLeaflet = lazy(() => import("./kenya-county-leaflet.internal"));
 import { Link } from "@tanstack/react-router";
 import {
