@@ -1,11 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  cancelImagePrefetch,
-  imageIsCached,
-  prefetchImage,
-} from "@/lib/media-cache";
+import { cancelImagePrefetch, imageIsCached, prefetchImage } from "@/lib/media-cache";
 
 /**
  * Card image that prefetches only while near the viewport, cancels its request

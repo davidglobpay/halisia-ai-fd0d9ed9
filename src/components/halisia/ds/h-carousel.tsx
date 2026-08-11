@@ -105,11 +105,7 @@ export function HCarousel({
         ) : (
           <>
             {active && start > 0 && (
-              <div
-                aria-hidden="true"
-                className="shrink-0"
-                style={{ width: start * step - GAP }}
-              />
+              <div aria-hidden="true" className="shrink-0" style={{ width: start * step - GAP }} />
             )}
             {visibleChildren.map((child, i) => (
               <div

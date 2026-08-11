@@ -84,7 +84,11 @@ export function PulseWindow() {
       {feed.isError ? (
         <div className="elev-1 rounded-2xl border border-white/10 p-5 text-sm text-muted-foreground">
           Pulse could not be loaded right now.{" "}
-          <button type="button" onClick={() => void feed.refetch()} className="text-accent underline">
+          <button
+            type="button"
+            onClick={() => void feed.refetch()}
+            className="text-accent underline"
+          >
             Retry
           </button>
         </div>
@@ -352,7 +356,10 @@ export function ContributorAndDashboardSection() {
     >
       <div className="grid gap-4 md:grid-cols-3">
         {cards.map((c) => (
-          <div key={c.title} className="elev-1 flex flex-col rounded-2xl border border-white/10 p-5">
+          <div
+            key={c.title}
+            className="elev-1 flex flex-col rounded-2xl border border-white/10 p-5"
+          >
             <div className="grid h-11 w-11 place-items-center rounded-2xl border border-white/10 bg-white/5">
               <c.icon className="h-5 w-5 text-accent" aria-hidden="true" />
             </div>

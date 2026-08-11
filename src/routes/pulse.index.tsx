@@ -55,7 +55,12 @@ function ArticleCard({ a }: { a: PulseArticle }) {
           <span className="text-muted-foreground">· {relativeTime(a.publishedAt)}</span>
         </div>
         <h3 className="text-[13px] font-semibold leading-snug">
-          <Link to="/pulse/$id" params={{ id: a.id }} preload="intent" className="hover:text-accent">
+          <Link
+            to="/pulse/$id"
+            params={{ id: a.id }}
+            preload="intent"
+            className="hover:text-accent"
+          >
             <span className="line-clamp-3">{a.title}</span>
           </Link>
         </h3>
@@ -171,7 +176,9 @@ function PulsePage() {
             onClick={() => setTimeframe(t)}
             aria-pressed={timeframe === t}
             className={`rounded-full border px-3 py-1.5 text-[11px] capitalize ${
-              timeframe === t ? "border-accent/60 text-accent" : "border-white/10 text-muted-foreground"
+              timeframe === t
+                ? "border-accent/60 text-accent"
+                : "border-white/10 text-muted-foreground"
             }`}
           >
             {t}
@@ -271,7 +278,10 @@ function PulsePage() {
           Back to the marketplace
         </Link>{" "}
         ·{" "}
-        <Link to="/pulse/admin" className="inline-flex items-center gap-1 text-accent hover:underline">
+        <Link
+          to="/pulse/admin"
+          className="inline-flex items-center gap-1 text-accent hover:underline"
+        >
           <Gauge className="h-3 w-3" /> Pulse control room
         </Link>
       </p>
