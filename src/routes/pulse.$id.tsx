@@ -194,15 +194,21 @@ function ArticlePage() {
         </section>
       )}
 
-      {!!listings.data?.length && (
+      {(listings.isLoading || !!listings.data?.length) && !!a.county && (
         <section className="mt-8">
           <h2 className="text-sm font-semibold">Listings in {a.county}</h2>
-          <HCarousel label={`Listings in ${a.county}`} className="mt-2" itemClassName="w-[240px]">
-            {listings.data.slice(0, 12).map((p) => (
+          <HCarousel
+            label={`Listings in ${a.county}`}
+            className="mt-2"
+            itemClassName="w-[240px]"
+            loading={listings.isLoading}
+          >
+            {(listings.data ?? []).slice(0, 12).map((p) => (
               <Link
                 key={p.id}
                 to="/marketplace/$id"
                 params={{ id: p.id }}
+                preload="intent"
                 className="elev-1 block h-full rounded-2xl border border-white/10 p-3 hover:bg-white/5"
               >
                 <div className="text-[13px] font-semibold leading-snug">{p.title}</div>
@@ -215,15 +221,21 @@ function ArticlePage() {
         </section>
       )}
 
-      {!!related.data?.length && (
+      {(related.isLoading || !!related.data?.length) && (
         <section className="mt-8">
           <h2 className="text-sm font-semibold">Related stories</h2>
-          <HCarousel label="Related stories" className="mt-2" itemClassName="w-[240px]">
-            {related.data.map((r) => (
+          <HCarousel
+            label="Related stories"
+            className="mt-2"
+            itemClassName="w-[240px]"
+            loading={related.isLoading}
+          >
+            {(related.data ?? []).map((r) => (
               <Link
                 key={r.id}
                 to="/pulse/$id"
                 params={{ id: r.id }}
+                preload="intent"
                 className="elev-1 block h-full rounded-2xl border border-white/10 p-3 hover:bg-white/5"
               >
                 <div className="text-[10px] uppercase tracking-widest text-accent">

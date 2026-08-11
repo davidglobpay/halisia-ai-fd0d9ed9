@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Gauge, Newspaper, Search, TrendingUp, Volume2 } from "lucide-react";
 import {
   PULSE_CATEGORIES,
@@ -34,13 +34,29 @@ export const Route = createFileRoute("/pulse/")({
 });
 
 function ArticleCard({ a }: { a: PulseArticle }) {
+  const warm = () => {
+    if (typeof window === "undefined") return;
+    if (a.imageUrl) {
+      const img = new Image();
+      img.decoding = "async";
+      img.src = a.imageUrl;
+    }
+    // Warm the speech engine so the first "Listen" tap is instant.
+    window.speechSynthesis?.getVoices();
+  };
   return (
-    <article className="elev-1 flex h-full flex-col overflow-hidden rounded-2xl border border-white/10">
+    <article
+      onPointerEnter={warm}
+      onFocusCapture={warm}
+      className="elev-1 flex h-full flex-col overflow-hidden rounded-2xl border border-white/10"
+    >
       {a.imageUrl && (
         <img
           src={a.imageUrl}
           alt=""
           loading="lazy"
+          decoding="async"
+          fetchPriority="low"
           className="h-28 w-full object-cover"
           onError={(e) => ((e.currentTarget.style.display = "none"), undefined)}
         />
@@ -52,7 +68,7 @@ function ArticleCard({ a }: { a: PulseArticle }) {
           <span className="text-muted-foreground">· {relativeTime(a.publishedAt)}</span>
         </div>
         <h3 className="text-[13px] font-semibold leading-snug">
-          <Link to="/pulse/$id" params={{ id: a.id }} className="hover:text-accent">
+          <Link to="/pulse/$id" params={{ id: a.id }} preload="intent" className="hover:text-accent">
             <span className="line-clamp-3">{a.title}</span>
           </Link>
         </h3>
@@ -80,7 +96,12 @@ function ArticleCard({ a }: { a: PulseArticle }) {
             >
               <Volume2 className="h-3.5 w-3.5" />
             </button>
-            <Link to="/pulse/$id" params={{ id: a.id }} className="text-accent hover:underline">
+            <Link
+              to="/pulse/$id"
+              params={{ id: a.id }}
+              preload="intent"
+              className="text-accent hover:underline"
+            >
               Open
             </Link>
           </div>
@@ -111,6 +132,11 @@ function PulsePage() {
     queryKey: ["pulse-trending-rail"],
     queryFn: () => fetchFeed({ sort: "trending", limit: 12 }),
   });
+
+  // Warm the speech engine once so the first "Listen" tap has no cold start.
+  useEffect(() => {
+    window.speechSynthesis?.getVoices();
+  }, []);
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-10">
@@ -200,20 +226,24 @@ function PulsePage() {
         </HCarousel>
       )}
 
-      {!!trending.data?.length && (
+      {(trending.isLoading || !!trending.data?.length) && (
         <section className="mt-8">
           <h2 className="flex items-center gap-2 text-sm font-semibold">
             <TrendingUp className="h-4 w-4 text-accent" aria-hidden="true" /> Trending now
           </h2>
-          <HCarousel label="Trending stories" className="mt-2" itemClassName="w-[250px]">
-            {trending.data.map((a) => (
+          <HCarousel
+            label="Trending stories"
+            className="mt-2"
+            itemClassName="w-[250px]"
+            loading={trending.isLoading}
+          >
+            {(trending.data ?? []).map((a) => (
               <ArticleCard key={a.id} a={a} />
             ))}
           </HCarousel>
         </section>
       )}
 
-      {feed.isLoading && <p className="mt-10 text-sm text-muted-foreground">Loading the feed…</p>}
       {feed.isError && (
         <p className="mt-10 text-sm text-destructive">
           The feed could not be loaded. Please try again.
@@ -226,13 +256,19 @@ function PulsePage() {
         </div>
       )}
 
-      {!!feed.data?.length && (
+      {(feed.isLoading || !!feed.data?.length) && (
         <section className="mt-8">
           <h2 className="text-sm font-semibold">
             {sort === "trending" ? "Ranked stories" : "Latest stories"}
           </h2>
-          <HCarousel label="Pulse stories" className="mt-2" itemClassName="w-[250px]">
-            {feed.data.map((a) => (
+          <HCarousel
+            label="Pulse stories"
+            className="mt-2"
+            itemClassName="w-[250px]"
+            loading={feed.isLoading}
+            skeletonCount={6}
+          >
+            {(feed.data ?? []).map((a) => (
               <ArticleCard key={a.id} a={a} />
             ))}
           </HCarousel>
