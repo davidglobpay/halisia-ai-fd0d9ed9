@@ -133,6 +133,11 @@ function PulsePage() {
     queryFn: () => fetchFeed({ sort: "trending", limit: 12 }),
   });
 
+  // Warm the speech engine once so the first "Listen" tap has no cold start.
+  useEffect(() => {
+    window.speechSynthesis?.getVoices();
+  }, []);
+
   return (
     <main className="mx-auto max-w-7xl px-4 py-10">
       <header className="max-w-2xl">
@@ -221,20 +226,24 @@ function PulsePage() {
         </HCarousel>
       )}
 
-      {!!trending.data?.length && (
+      {(trending.isLoading || !!trending.data?.length) && (
         <section className="mt-8">
           <h2 className="flex items-center gap-2 text-sm font-semibold">
             <TrendingUp className="h-4 w-4 text-accent" aria-hidden="true" /> Trending now
           </h2>
-          <HCarousel label="Trending stories" className="mt-2" itemClassName="w-[250px]">
-            {trending.data.map((a) => (
+          <HCarousel
+            label="Trending stories"
+            className="mt-2"
+            itemClassName="w-[250px]"
+            loading={trending.isLoading}
+          >
+            {(trending.data ?? []).map((a) => (
               <ArticleCard key={a.id} a={a} />
             ))}
           </HCarousel>
         </section>
       )}
 
-      {feed.isLoading && <p className="mt-10 text-sm text-muted-foreground">Loading the feed…</p>}
       {feed.isError && (
         <p className="mt-10 text-sm text-destructive">
           The feed could not be loaded. Please try again.
@@ -247,13 +256,19 @@ function PulsePage() {
         </div>
       )}
 
-      {!!feed.data?.length && (
+      {(feed.isLoading || !!feed.data?.length) && (
         <section className="mt-8">
           <h2 className="text-sm font-semibold">
             {sort === "trending" ? "Ranked stories" : "Latest stories"}
           </h2>
-          <HCarousel label="Pulse stories" className="mt-2" itemClassName="w-[250px]">
-            {feed.data.map((a) => (
+          <HCarousel
+            label="Pulse stories"
+            className="mt-2"
+            itemClassName="w-[250px]"
+            loading={feed.isLoading}
+            skeletonCount={6}
+          >
+            {(feed.data ?? []).map((a) => (
               <ArticleCard key={a.id} a={a} />
             ))}
           </HCarousel>
