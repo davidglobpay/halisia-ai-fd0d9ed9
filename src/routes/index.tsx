@@ -26,6 +26,13 @@ import { SearchBar } from "@/components/halisia/search-bar";
 import { AIOrb } from "@/components/halisia/ai-orb";
 import { DataPipeline } from "@/components/halisia/data-pipeline";
 import { ScoreDrivers } from "@/components/halisia/score-drivers";
+import {
+  PulseWindow,
+  CountyListSection,
+  CountyComparisonSection,
+  MarketplaceSection,
+  ContributorAndDashboardSection,
+} from "@/components/halisia/landing-sections";
 import { useReducedMotionPref } from "@/hooks/use-reduced-motion-pref";
 import { recordSearchConversion } from "@/lib/analytics";
 import halisiaLogo from "@/assets/halisia-logo.png.asset.json";
@@ -290,8 +297,27 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
         </HeroStage>
       </section>
 
+      {/* HALISIA PULSE WINDOW */}
+      <PulseWindow />
+
       {/* COUNTY INTELLIGENCE MAP */}
       <KenyaCountyMap />
+
+      {/* COUNTY DIRECTORY + COMPARISON */}
+      <CountyListSection />
+      <CountyComparisonSection />
+
+      {/* MARKETPLACE LISTINGS */}
+      <MarketplaceSection />
+
+      {/* CONTRIBUTOR PLATFORM + DASHBOARD */}
+      <ContributorAndDashboardSection />
+
+      <div className="mx-auto max-w-7xl px-4 pt-8">
+        <div className="text-[11px] uppercase tracking-[0.25em] text-accent">
+          How the HALISIA AI engine works
+        </div>
+      </div>
 
       {/* INTELLIGENCE PILLARS */}
       <section id="intelligence" className="py-24 md:py-32">
