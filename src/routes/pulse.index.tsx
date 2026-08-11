@@ -11,6 +11,8 @@ import {
   type PulseArticle,
 } from "@/lib/pulse";
 import { HCarousel } from "@/components/halisia/ds/h-carousel";
+import { PulseImage } from "@/components/halisia/pulse-image";
+import { prefetchImage, warmSpeechEngine } from "@/lib/media-cache";
 
 export const Route = createFileRoute("/pulse/")({
   component: PulsePage,
@@ -36,13 +38,8 @@ export const Route = createFileRoute("/pulse/")({
 function ArticleCard({ a }: { a: PulseArticle }) {
   const warm = () => {
     if (typeof window === "undefined") return;
-    if (a.imageUrl) {
-      const img = new Image();
-      img.decoding = "async";
-      img.src = a.imageUrl;
-    }
-    // Warm the speech engine so the first "Listen" tap is instant.
-    window.speechSynthesis?.getVoices();
+    if (a.imageUrl) void prefetchImage(a.imageUrl).catch(() => undefined);
+    warmSpeechEngine();
   };
   return (
     <article
@@ -50,17 +47,7 @@ function ArticleCard({ a }: { a: PulseArticle }) {
       onFocusCapture={warm}
       className="elev-1 flex h-full flex-col overflow-hidden rounded-2xl border border-white/10"
     >
-      {a.imageUrl && (
-        <img
-          src={a.imageUrl}
-          alt=""
-          loading="lazy"
-          decoding="async"
-          fetchPriority="low"
-          className="h-28 w-full object-cover"
-          onError={(e) => ((e.currentTarget.style.display = "none"), undefined)}
-        />
-      )}
+      {a.imageUrl && <PulseImage src={a.imageUrl} />}
       <div className="flex flex-1 flex-col gap-2 p-3">
         <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-widest text-accent">
           <span>{a.category.replace(/-/g, " ")}</span>
@@ -68,7 +55,12 @@ function ArticleCard({ a }: { a: PulseArticle }) {
           <span className="text-muted-foreground">· {relativeTime(a.publishedAt)}</span>
         </div>
         <h3 className="text-[13px] font-semibold leading-snug">
-          <Link to="/pulse/$id" params={{ id: a.id }} preload="intent" className="hover:text-accent">
+          <Link
+            to="/pulse/$id"
+            params={{ id: a.id }}
+            preload="intent"
+            className="hover:text-accent"
+          >
             <span className="line-clamp-3">{a.title}</span>
           </Link>
         </h3>
@@ -111,6 +103,8 @@ function ArticleCard({ a }: { a: PulseArticle }) {
   );
 }
 
+export { ArticleCard };
+
 function PulsePage() {
   const [search, setSearch] = useState("");
   const [county, setCounty] = useState<string | null>(null);
@@ -135,7 +129,7 @@ function PulsePage() {
 
   // Warm the speech engine once so the first "Listen" tap has no cold start.
   useEffect(() => {
-    window.speechSynthesis?.getVoices();
+    warmSpeechEngine();
   }, []);
 
   return (
@@ -182,7 +176,9 @@ function PulsePage() {
             onClick={() => setTimeframe(t)}
             aria-pressed={timeframe === t}
             className={`rounded-full border px-3 py-1.5 text-[11px] capitalize ${
-              timeframe === t ? "border-accent/60 text-accent" : "border-white/10 text-muted-foreground"
+              timeframe === t
+                ? "border-accent/60 text-accent"
+                : "border-white/10 text-muted-foreground"
             }`}
           >
             {t}
@@ -282,7 +278,10 @@ function PulsePage() {
           Back to the marketplace
         </Link>{" "}
         ·{" "}
-        <Link to="/pulse/admin" className="inline-flex items-center gap-1 text-accent hover:underline">
+        <Link
+          to="/pulse/admin"
+          className="inline-flex items-center gap-1 text-accent hover:underline"
+        >
           <Gauge className="h-3 w-3" /> Pulse control room
         </Link>
       </p>

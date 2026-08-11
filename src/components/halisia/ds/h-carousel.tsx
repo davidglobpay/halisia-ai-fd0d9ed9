@@ -1,56 +1,15 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
-/**
- * Renders its child only once the slide is near the viewport, so a long rail
- * mounts a handful of cards instead of dozens.
- */
-function LazySlide({
-  root,
-  className,
-  eager,
-  children,
-}: {
-  root: HTMLDivElement | null;
-  className: string;
-  eager: boolean;
-  children: ReactNode;
-}) {
-  const ref = useRef<HTMLDivElement | null>(null);
-  const [shown, setShown] = useState(eager);
-
-  useEffect(() => {
-    if (shown) return;
-    const el = ref.current;
-    if (!el || typeof IntersectionObserver === "undefined") {
-      setShown(true);
-      return;
-    }
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          setShown(true);
-          io.disconnect();
-        }
-      },
-      { root: root ?? null, rootMargin: "0px 800px 0px 800px" },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [shown, root]);
-
-  return (
-    <div ref={ref} role="listitem" className={`shrink-0 snap-start ${className}`}>
-      {shown ? children : <Skeleton className="h-full min-h-[160px] w-full rounded-2xl" />}
-    </div>
-  );
-}
+const GAP = 12; // matches gap-3
 
 /**
- * Horizontal, snap-scrolling rail. Keeps dense content visible in a fraction
- * of the vertical space a grid needs, while staying keyboard and screen-reader
- * friendly.
+ * Horizontal, snap-scrolling rail.
+ *
+ * Long rails are virtualized: only the slides inside (or just outside) the
+ * scroll viewport are mounted, with spacer elements preserving scroll length.
+ * That keeps the DOM small and scrolling at 60 FPS on low-end devices.
  */
 export function HCarousel({
   label,
@@ -60,6 +19,9 @@ export function HCarousel({
   testId,
   loading = false,
   skeletonCount = 4,
+  virtualize = true,
+  virtualizeThreshold = 10,
+  overscan = 3,
 }: {
   label: string;
   children: ReactNode[];
@@ -68,22 +30,41 @@ export function HCarousel({
   testId?: string;
   loading?: boolean;
   skeletonCount?: number;
+  virtualize?: boolean;
+  virtualizeThreshold?: number;
+  overscan?: number;
 }) {
   const ref = useRef<HTMLDivElement | null>(null);
-  const [root, setRoot] = useState<HTMLDivElement | null>(null);
+  const probeRef = useRef<HTMLDivElement | null>(null);
   const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(false);
+  const [itemWidth, setItemWidth] = useState(0);
+  const [range, setRange] = useState({ start: 0, end: virtualizeThreshold });
+
+  const count = children.length;
+  const active = virtualize && !loading && itemWidth > 0 && count > virtualizeThreshold;
+
+  // Measure a single slide once so the virtual window can be computed.
+  useLayoutEffect(() => {
+    const w = probeRef.current?.offsetWidth ?? 0;
+    if (w && w !== itemWidth) setItemWidth(w);
+  }, [itemWidth, count, loading]);
 
   const sync = useCallback(() => {
     const el = ref.current;
     if (!el) return;
     setAtStart(el.scrollLeft <= 4);
     setAtEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 4);
-  }, []);
+    if (!itemWidth) return;
+    const step = itemWidth + GAP;
+    const start = Math.max(0, Math.floor(el.scrollLeft / step) - overscan);
+    const visible = Math.ceil(el.clientWidth / step);
+    setRange({ start, end: Math.min(count, start + visible + overscan * 2) });
+  }, [itemWidth, count, overscan]);
 
   useEffect(() => {
     sync();
-  }, [sync, children.length]);
+  }, [sync]);
 
   const nudge = (dir: -1 | 1) => {
     const el = ref.current;
@@ -94,13 +75,15 @@ export function HCarousel({
     el.scrollBy({ left: dir * el.clientWidth * 0.85, behavior: reduce ? "auto" : "smooth" });
   };
 
+  const step = itemWidth + GAP;
+  const start = active ? range.start : 0;
+  const end = active ? range.end : count;
+  const visibleChildren = active ? children.slice(start, end) : children;
+
   return (
     <div className={`relative ${className}`} data-testid={testId}>
       <div
-        ref={(el) => {
-          ref.current = el;
-          setRoot(el);
-        }}
+        ref={ref}
         onScroll={sync}
         role="list"
         aria-label={label}
@@ -108,17 +91,41 @@ export function HCarousel({
         tabIndex={0}
         className="flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-2 [scrollbar-width:thin] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-2xl"
       >
-        {loading
-          ? Array.from({ length: skeletonCount }).map((_, i) => (
-              <div key={`s-${i}`} role="listitem" className={`shrink-0 snap-start ${itemClassName}`}>
-                <Skeleton className="h-[180px] w-full rounded-2xl" />
-              </div>
-            ))
-          : children.map((child, i) => (
-              <LazySlide key={i} root={root} className={itemClassName} eager={i < 4}>
+        {loading ? (
+          Array.from({ length: skeletonCount }).map((_, i) => (
+            <div
+              key={`s-${i}`}
+              role="listitem"
+              className={`shrink-0 snap-start ${itemClassName}`}
+              ref={i === 0 ? probeRef : undefined}
+            >
+              <Skeleton className="h-[180px] w-full rounded-2xl" />
+            </div>
+          ))
+        ) : (
+          <>
+            {active && start > 0 && (
+              <div aria-hidden="true" className="shrink-0" style={{ width: start * step - GAP }} />
+            )}
+            {visibleChildren.map((child, i) => (
+              <div
+                key={start + i}
+                role="listitem"
+                className={`shrink-0 snap-start ${itemClassName}`}
+                ref={i === 0 ? probeRef : undefined}
+              >
                 {child}
-              </LazySlide>
+              </div>
             ))}
+            {active && end < count && (
+              <div
+                aria-hidden="true"
+                className="shrink-0"
+                style={{ width: (count - end) * step - GAP }}
+              />
+            )}
+          </>
+        )}
       </div>
       <div className="mt-1 flex justify-end gap-2">
         <button
