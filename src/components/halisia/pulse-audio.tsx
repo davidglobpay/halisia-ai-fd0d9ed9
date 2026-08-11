@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Loader2, Pause, Play, Volume2 } from "lucide-react";
 import { listTtsEngines, synthesizeArticleAudio } from "@/lib/pulse.functions";
 import { speakArticle, type PulseArticle } from "@/lib/pulse";
+import { loadAudio } from "@/lib/media-cache";
 
 type Engine = "auto" | "elevenlabs" | "azure" | "google" | "web_speech";
 
@@ -59,16 +60,18 @@ export function PulseAudioPlayer({ article }: { article: PulseArticle }) {
     if (engine === "web_speech") return playBrowser();
     setBusy(true);
     try {
-      const res = await synthesizeArticleAudio({
-        data: {
-          articleId: article.id,
-          ...(engine === "auto" ? {} : { engine }),
-        },
+      // Cached per article + engine, so replays and revisits never trigger a
+      // duplicate TTS call.
+      const res = await loadAudio(article.id, engine, async () => {
+        const r = await synthesizeArticleAudio({
+          data: {
+            articleId: article.id,
+            ...(engine === "auto" ? {} : { engine }),
+          },
+        });
+        if (!r.ok) throw new Error(r.reason);
+        return { engine: r.engine, mimeType: r.mimeType, audioBase64: r.audioBase64 };
       });
-      if (!res.ok) {
-        playBrowser(`Cloud voice unavailable — ${res.reason}. Playing the browser voice.`);
-        return;
-      }
       const el = new Audio(`data:${res.mimeType};base64,${res.audioBase64}`);
       audioRef.current = el;
       el.onended = () => setPlaying(false);
