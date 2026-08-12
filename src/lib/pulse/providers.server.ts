@@ -91,6 +91,23 @@ function buildQuery(opts: FetchOptions): string {
   return bits.length ? `Kenya AND (${bits.join(" AND ")})` : KENYA_QUERY;
 }
 
+/**
+ * NewsData.io caps `q` at 100 chars and rejects unbalanced boolean syntax, so
+ * the query is built short and never truncated mid-expression. Country is
+ * already pinned to `ke`, so the "Kenya AND" prefix is unnecessary.
+ */
+function buildNewsDataQuery(opts: FetchOptions): string {
+  const terms = [
+    opts.query,
+    opts.county ? `"${opts.county}"` : null,
+    opts.category,
+  ].filter(Boolean) as string[];
+  const q = terms.length
+    ? terms.join(" AND ")
+    : "land OR property OR housing OR infrastructure OR county";
+  return q.length <= 100 ? q : "land OR property OR housing";
+}
+
 /* ------------------------------------------------------------------ */
 /* NewsData.io                                                         */
 /* ------------------------------------------------------------------ */
@@ -129,7 +146,7 @@ export async function fetchNewsData(opts: FetchOptions = {}): Promise<ProviderRe
     apikey: key,
     country: "ke",
     language: "en",
-    q: buildQuery(opts).slice(0, 100),
+    q: buildNewsDataQuery(opts),
   });
   const { value, error, latencyMs } = await timed(() =>
     getJson<NewsDataResp>(`https://newsdata.io/api/1/latest?${params.toString()}`),
@@ -258,9 +275,26 @@ export async function fetchGdelt(opts: FetchOptions = {}): Promise<ProviderResul
     maxrecords: String(Math.min(opts.limit ?? 40, 75)),
     sort: "datedesc",
   });
-  const { value, error, latencyMs } = await timed(() =>
-    getJson<GdeltResp>(`https://api.gdeltproject.org/api/v2/doc/doc?${params.toString()}`),
-  );
+  // GDELT throttles to ~1 request / 5s and answers with plain text (not JSON)
+  // when it rejects a call, so retry once with a pause and parse defensively.
+  const url = `https://api.gdeltproject.org/api/v2/doc/doc?${params.toString()}`;
+  const { value, error, latencyMs } = await timed(async () => {
+    let last: unknown;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const text = await getText(url, 8_000);
+        const trimmed = text.trim();
+        if (!trimmed.startsWith("{")) throw new Error(trimmed.slice(0, 160) || "empty response");
+        return JSON.parse(trimmed) as GdeltResp;
+      } catch (err) {
+        last = err;
+        // Throttled: a retry inside the same refresh will be throttled too.
+        if (err instanceof Error && err.message.includes("429")) break;
+        if (attempt === 0) await new Promise((r) => setTimeout(r, 5_500));
+      }
+    }
+    throw last instanceof Error ? last : new Error(String(last));
+  });
   const rows = value?.articles ?? [];
   return {
     provider: "gdelt",
