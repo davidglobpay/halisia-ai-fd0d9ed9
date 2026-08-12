@@ -275,25 +275,15 @@ export async function fetchGdelt(opts: FetchOptions = {}): Promise<ProviderResul
     maxrecords: String(Math.min(opts.limit ?? 40, 75)),
     sort: "datedesc",
   });
-  // GDELT throttles to ~1 request / 5s and answers with plain text (not JSON)
-  // when it rejects a call, so retry once with a pause and parse defensively.
+  // GDELT throttles aggressively and answers with plain text (not JSON) when it
+  // rejects a call. It is a bonus source, so give it one short attempt and let
+  // it fail soft rather than stalling the whole refresh.
   const url = `https://api.gdeltproject.org/api/v2/doc/doc?${params.toString()}`;
   const { value, error, latencyMs } = await timed(async () => {
-    let last: unknown;
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        const text = await getText(url, 8_000);
-        const trimmed = text.trim();
-        if (!trimmed.startsWith("{")) throw new Error(trimmed.slice(0, 160) || "empty response");
-        return JSON.parse(trimmed) as GdeltResp;
-      } catch (err) {
-        last = err;
-        // Throttled: a retry inside the same refresh will be throttled too.
-        if (err instanceof Error && err.message.includes("429")) break;
-        if (attempt === 0) await new Promise((r) => setTimeout(r, 5_500));
-      }
-    }
-    throw last instanceof Error ? last : new Error(String(last));
+    const text = await getText(url, 8_000);
+    const trimmed = text.trim();
+    if (!trimmed.startsWith("{")) throw new Error(trimmed.slice(0, 160) || "empty response");
+    return JSON.parse(trimmed) as GdeltResp;
   });
   const rows = value?.articles ?? [];
   return {
