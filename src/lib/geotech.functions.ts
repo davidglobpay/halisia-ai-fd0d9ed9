@@ -115,7 +115,11 @@ async function fetchSoil(lat: number, lng: number, signal?: AbortSignal): Promis
   const url = `https://rest.isric.org/soilgrids/v2.0/properties/query?lon=${lng}&lat=${lat}&${props
     .map((p) => `property=${p}`)
     .join("&")}&${depths.map((d) => `depth=${d}`).join("&")}&value=mean`;
-  const res = await fetch(url, { signal });
+  // ISRIC intermittently hangs; cap the wait so the panel degrades fast.
+  const timeout = AbortSignal.timeout(12_000);
+  const res = await fetch(url, {
+    signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
+  });
   if (!res.ok) throw new Error(`soilgrids ${res.status}`);
   const j = (await res.json()) as {
     properties?: {
