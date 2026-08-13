@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      architectural_prototypes: {
+        Row: {
+          category: string | null
+          created_at: string
+          estimated_cost_kes: number | null
+          floors: number | null
+          footprint_sqm: number | null
+          gltf_url: string | null
+          height_m: number | null
+          id: string
+          title: string
+          usdz_url: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          estimated_cost_kes?: number | null
+          floors?: number | null
+          footprint_sqm?: number | null
+          gltf_url?: string | null
+          height_m?: number | null
+          id?: string
+          title: string
+          usdz_url?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          estimated_cost_kes?: number | null
+          floors?: number | null
+          footprint_sqm?: number | null
+          gltf_url?: string | null
+          height_m?: number | null
+          id?: string
+          title?: string
+          usdz_url?: string | null
+        }
+        Relationships: []
+      }
       article_media: {
         Row: {
           article_id: string
@@ -895,6 +934,110 @@ export type Database = {
           slug?: string
           updated_at?: string
           usage_count?: number
+        }
+        Relationships: []
+      }
+      parcel_beacons: {
+        Row: {
+          beacon_code: string
+          elevation_m: number | null
+          id: string
+          lat: number
+          lng: number
+          ordinal: number
+          parcel_id: string
+        }
+        Insert: {
+          beacon_code: string
+          elevation_m?: number | null
+          id?: string
+          lat: number
+          lng: number
+          ordinal?: number
+          parcel_id: string
+        }
+        Update: {
+          beacon_code?: string
+          elevation_m?: number | null
+          id?: string
+          lat?: number
+          lng?: number
+          ordinal?: number
+          parcel_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parcel_beacons_parcel_id_fkey"
+            columns: ["parcel_id"]
+            isOneToOne: false
+            referencedRelation: "parcels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      parcels: {
+        Row: {
+          area_sqm: number
+          centroid_lat: number
+          centroid_lng: number
+          county: string | null
+          created_at: string
+          deed_hash: string | null
+          elevation_masl: number | null
+          geometry: Json
+          id: string
+          max_building_height_m: number | null
+          owner_id: string | null
+          parcel_code: string
+          riparian_setback_m: number | null
+          road_setback_m: number | null
+          status: string | null
+          survey_verified_on: string | null
+          title_deed_no: string
+          valuation_kes: number | null
+          zoning_type: string | null
+        }
+        Insert: {
+          area_sqm: number
+          centroid_lat: number
+          centroid_lng: number
+          county?: string | null
+          created_at?: string
+          deed_hash?: string | null
+          elevation_masl?: number | null
+          geometry: Json
+          id?: string
+          max_building_height_m?: number | null
+          owner_id?: string | null
+          parcel_code: string
+          riparian_setback_m?: number | null
+          road_setback_m?: number | null
+          status?: string | null
+          survey_verified_on?: string | null
+          title_deed_no: string
+          valuation_kes?: number | null
+          zoning_type?: string | null
+        }
+        Update: {
+          area_sqm?: number
+          centroid_lat?: number
+          centroid_lng?: number
+          county?: string | null
+          created_at?: string
+          deed_hash?: string | null
+          elevation_masl?: number | null
+          geometry?: Json
+          id?: string
+          max_building_height_m?: number | null
+          owner_id?: string | null
+          parcel_code?: string
+          riparian_setback_m?: number | null
+          road_setback_m?: number | null
+          status?: string | null
+          survey_verified_on?: string | null
+          title_deed_no?: string
+          valuation_kes?: number | null
+          zoning_type?: string | null
         }
         Relationships: []
       }
