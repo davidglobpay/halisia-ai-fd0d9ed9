@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TitleDeedRouteImport } from './routes/title-deed'
 import { Route as StyleGuideRouteImport } from './routes/style-guide'
+import { Route as SpatialRouteImport } from './routes/spatial'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ReportRouteImport } from './routes/report'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
@@ -53,6 +54,11 @@ const TitleDeedRoute = TitleDeedRouteImport.update({
 const StyleGuideRoute = StyleGuideRouteImport.update({
   id: '/style-guide',
   path: '/style-guide',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SpatialRoute = SpatialRouteImport.update({
+  id: '/spatial',
+  path: '/spatial',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -235,6 +241,7 @@ export interface FileRoutesByFullPath {
   '/marketplace': typeof MarketplaceRouteWithChildren
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/spatial': typeof SpatialRoute
   '/style-guide': typeof StyleGuideRoute
   '/title-deed': typeof TitleDeedRoute
   '/account': typeof AuthenticatedAccountRoute
@@ -270,6 +277,7 @@ export interface FileRoutesByTo {
   '/logo-qa': typeof LogoQaRoute
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/spatial': typeof SpatialRoute
   '/style-guide': typeof StyleGuideRoute
   '/title-deed': typeof TitleDeedRoute
   '/account': typeof AuthenticatedAccountRoute
@@ -308,6 +316,7 @@ export interface FileRoutesById {
   '/marketplace': typeof MarketplaceRouteWithChildren
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/spatial': typeof SpatialRoute
   '/style-guide': typeof StyleGuideRoute
   '/title-deed': typeof TitleDeedRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
@@ -346,6 +355,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/report'
     | '/reset-password'
+    | '/spatial'
     | '/style-guide'
     | '/title-deed'
     | '/account'
@@ -381,6 +391,7 @@ export interface FileRouteTypes {
     | '/logo-qa'
     | '/report'
     | '/reset-password'
+    | '/spatial'
     | '/style-guide'
     | '/title-deed'
     | '/account'
@@ -418,6 +429,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/report'
     | '/reset-password'
+    | '/spatial'
     | '/style-guide'
     | '/title-deed'
     | '/_authenticated/account'
@@ -456,6 +468,7 @@ export interface RootRouteChildren {
   MarketplaceRoute: typeof MarketplaceRouteWithChildren
   ReportRoute: typeof ReportRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  SpatialRoute: typeof SpatialRoute
   StyleGuideRoute: typeof StyleGuideRoute
   TitleDeedRoute: typeof TitleDeedRoute
   ApiChatRoute: typeof ApiChatRoute
@@ -480,6 +493,13 @@ declare module '@tanstack/react-router' {
       path: '/style-guide'
       fullPath: '/style-guide'
       preLoaderRoute: typeof StyleGuideRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/spatial': {
+      id: '/spatial'
+      path: '/spatial'
+      fullPath: '/spatial'
+      preLoaderRoute: typeof SpatialRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -779,6 +799,7 @@ const rootRouteChildren: RootRouteChildren = {
   MarketplaceRoute: MarketplaceRouteWithChildren,
   ReportRoute: ReportRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  SpatialRoute: SpatialRoute,
   StyleGuideRoute: StyleGuideRoute,
   TitleDeedRoute: TitleDeedRoute,
   ApiChatRoute: ApiChatRoute,
