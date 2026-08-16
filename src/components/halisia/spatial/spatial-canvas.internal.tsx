@@ -14,6 +14,7 @@ import {
 
 export type SpatialCanvasHandle = {
   startAr: () => Promise<void>;
+  startVr: () => Promise<void>;
   endXr: () => void;
   resetView: () => void;
 };
@@ -29,7 +30,7 @@ export type SpatialCanvasProps = {
   showEnvelope: boolean;
   mode: "site" | "masterplan";
   reducedMotion: boolean;
-  onXrStateChange?: (active: boolean) => void;
+  onXrStateChange?: (active: boolean, sessionMode?: "ar" | "vr") => void;
   handleRef?: Ref<SpatialCanvasHandle>;
 };
 
@@ -58,6 +59,7 @@ export default function SpatialCanvasInternal({
   handleRef,
 }: SpatialCanvasProps) {
   const mountRef = useRef<HTMLDivElement | null>(null);
+  const overlayRef = useRef<HTMLDivElement | null>(null);
   const stateRef = useRef<{
     renderer: THREE.WebGLRenderer;
     scene: THREE.Scene;
@@ -66,8 +68,17 @@ export default function SpatialCanvasInternal({
     sun: THREE.DirectionalLight;
     sunMarker: THREE.Mesh;
     content: THREE.Group;
+    rig: THREE.Group;
+    grid: THREE.GridHelper;
+    reticle: THREE.Mesh;
+    hitTestSource: XRHitTestSource | null;
+    sessionMode: "ar" | "vr" | null;
+    placed: boolean;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [xrMode, setXrMode] = useState<"ar" | "vr" | null>(null);
+  const [placedUi, setPlacedUi] = useState(false);
+  const [xrScale, setXrScale] = useState(0.02);
 
   // ---- one-time scene bootstrap -------------------------------------------
   useEffect(() => {
