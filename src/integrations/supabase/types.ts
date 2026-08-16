@@ -2143,6 +2143,17 @@ export type Database = {
         Returns: boolean
       }
       listing_save_count: { Args: { p_property_id: string }; Returns: number }
+      pulse_provider_status: {
+        Args: never
+        Returns: {
+          last_error_at: string
+          last_ok_at: string
+          latency_ms: number
+          provider: string
+          requests_today: number
+          status: string
+        }[]
+      }
     }
     Enums: {
       app_role:
