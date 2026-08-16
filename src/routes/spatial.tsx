@@ -281,14 +281,14 @@ function SpatialPage() {
                   ]}
                   value={mode}
                   onValueChange={(v) => setMode(v as "site" | "masterplan")}
-                  ariaLabel="Spatial mode"
+                  label="Spatial mode"
                 />
                 <div className="flex flex-wrap gap-2 text-[11px]">
-                  {[
-                    ["Beacons", showBeacons, setShowBeacons] as const,
-                    ["Setbacks", showSetback, setShowSetback] as const,
-                    ["Zoning envelope", showEnvelope, setShowEnvelope] as const,
-                  ].map(([label, on, set]) => (
+                  {([
+                    ["Beacons", showBeacons, setShowBeacons],
+                    ["Setbacks", showSetback, setShowSetback],
+                    ["Zoning envelope", showEnvelope, setShowEnvelope],
+                  ] as Array<[string, boolean, (v: (p: boolean) => boolean) => void]>).map(([label, on, set]) => (
                     <button
                       key={label}
                       type="button"
