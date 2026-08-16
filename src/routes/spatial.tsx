@@ -53,7 +53,7 @@ function dayOfYearNow() {
 
 function SpatialPage() {
   const { parcel: parcelParam } = Route.useSearch();
-  const reduced = useReducedMotionPref();
+  const [reduced] = useReducedMotionPref();
   const handle = useRef<SpatialCanvasHandle>(null);
 
   const parcelsQ = useQuery({ queryKey: ["spatial", "parcels"], queryFn: fetchSpatialParcels });
