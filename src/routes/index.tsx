@@ -261,6 +261,13 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
                 >
                   View Intelligence Dashboard
                 </Link>
+                <Link
+                  to="/spatial"
+                  search={{ parcel: "" }}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-[#D4AF37]/50 bg-[#D4AF37]/15 px-4 py-2 text-xs font-semibold text-white hover:bg-[#D4AF37]/25 transition"
+                >
+                  Spatial AR Studio
+                </Link>
                 <a
                   href="#how"
                   className="inline-flex items-center gap-1.5 rounded-full glass border border-white/20 px-4 py-2 text-xs font-medium text-white hover:bg-white/10 transition"
