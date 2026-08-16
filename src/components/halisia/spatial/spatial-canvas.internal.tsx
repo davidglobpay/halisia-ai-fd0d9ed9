@@ -14,6 +14,7 @@ import {
 
 export type SpatialCanvasHandle = {
   startAr: () => Promise<void>;
+  startVr: () => Promise<void>;
   endXr: () => void;
   resetView: () => void;
 };
@@ -29,7 +30,7 @@ export type SpatialCanvasProps = {
   showEnvelope: boolean;
   mode: "site" | "masterplan";
   reducedMotion: boolean;
-  onXrStateChange?: (active: boolean) => void;
+  onXrStateChange?: (active: boolean, sessionMode?: "ar" | "vr") => void;
   handleRef?: Ref<SpatialCanvasHandle>;
 };
 
