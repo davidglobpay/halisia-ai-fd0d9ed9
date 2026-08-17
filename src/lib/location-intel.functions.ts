@@ -61,7 +61,34 @@ export type LocationIntel = {
   };
   photos: string[]; // full photo URLs (through the gateway, with browser key)
   hero: PlaceLite | null;
+  /**
+   * Per-provider health so the UI can tell "0 hospitals found" apart from
+   * "hospital data unavailable". Never contains keys or secrets.
+   */
+  providers: ProviderHealthMap;
 };
+
+export type ProviderStatus = "ok" | "degraded" | "unavailable";
+export type ProviderHealth = {
+  status: ProviderStatus;
+  /** Concise, non-secret reason (HTTP status or short error class). */
+  reason?: string;
+  httpStatus?: number;
+};
+export type ProviderHealthMap = {
+  elevation: ProviderHealth;
+  airQuality: ProviderHealth;
+  places: ProviderHealth;
+  routes: ProviderHealth;
+};
+
+const OK: ProviderHealth = { status: "ok" };
+
+/** Strip anything that could carry a key/URL query string out of an error. */
+function safeReason(err: unknown): string {
+  const msg = err instanceof Error ? err.message : String(err);
+  return msg.replace(/[?&](key|apikey|api_key)=[^&\s]*/gi, "").slice(0, 120);
+}
 
 function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
   const R = 6371;
@@ -87,14 +114,29 @@ async function callGateway(path: string, init?: RequestInit) {
 async function fetchElevation(lat: number, lng: number) {
   try {
     const res = await callGateway(`/maps/api/elevation/json?locations=${lat},${lng}`);
-    if (!res.ok) return null;
+    if (!res.ok)
+      return {
+        value: null,
+        health: {
+          status: "unavailable" as const,
+          reason: `HTTP ${res.status}`,
+          httpStatus: res.status,
+        },
+      };
     const j = (await res.json()) as {
       results?: Array<{ elevation: number; resolution: number }>;
     };
     const r = j.results?.[0];
-    return r ? { meters: r.elevation, resolution: r.resolution } : null;
-  } catch {
-    return null;
+    return {
+      value: r ? { meters: r.elevation, resolution: r.resolution } : null,
+      // A 200 with no result is a genuine no-data answer, not a failure.
+      health: r ? OK : ({ status: "degraded", reason: "no result" } as ProviderHealth),
+    };
+  } catch (err) {
+    return {
+      value: null,
+      health: { status: "unavailable" as const, reason: safeReason(err) },
+    };
   }
 }
 
@@ -105,7 +147,15 @@ async function fetchAirQuality(lat: number, lng: number) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ location: { latitude: lat, longitude: lng } }),
     });
-    if (!res.ok) return null;
+    if (!res.ok)
+      return {
+        value: null,
+        health: {
+          status: "unavailable" as const,
+          reason: `HTTP ${res.status}`,
+          httpStatus: res.status,
+        },
+      };
     const j = (await res.json()) as {
       indexes?: Array<{
         code: string;
@@ -117,19 +167,23 @@ async function fetchAirQuality(lat: number, lng: number) {
       }>;
     };
     const uni = j.indexes?.find((i) => i.code === "uaqi") ?? j.indexes?.[0];
-    if (!uni) return null;
+    if (!uni)
+      return { value: null, health: { status: "degraded", reason: "no index" } as ProviderHealth };
     const c = uni.color;
     const rgb = c
       ? `rgb(${Math.round((c.red ?? 0) * 255)}, ${Math.round((c.green ?? 0) * 255)}, ${Math.round((c.blue ?? 0) * 255)})`
       : null;
     return {
-      universalAqi: uni.aqi,
-      category: uni.category,
-      dominant: uni.dominantPollutant ?? null,
-      color: rgb,
+      value: {
+        universalAqi: uni.aqi,
+        category: uni.category,
+        dominant: uni.dominantPollutant ?? null,
+        color: rgb,
+      },
+      health: OK,
     };
-  } catch {
-    return null;
+  } catch (err) {
+    return { value: null, health: { status: "unavailable" as const, reason: safeReason(err) } };
   }
 }
 
@@ -138,7 +192,7 @@ async function fetchNearby(
   lng: number,
   includedTypes: string[],
   max = 6,
-): Promise<PlaceLite[]> {
+): Promise<{ value: PlaceLite[]; health: ProviderHealth }> {
   try {
     const res = await callGateway(`/places/v1/places:searchNearby`, {
       method: "POST",
@@ -155,7 +209,11 @@ async function fetchNearby(
         },
       }),
     });
-    if (!res.ok) return [];
+    if (!res.ok)
+      return {
+        value: [],
+        health: { status: "unavailable", reason: `HTTP ${res.status}`, httpStatus: res.status },
+      };
     const j = (await res.json()) as {
       places?: Array<{
         id: string;
@@ -176,7 +234,7 @@ async function fetchNearby(
         priceLevel?: string;
       }>;
     };
-    return (j.places ?? []).map((p) => {
+    const value = (j.places ?? []).map((p) => {
       const loc = p.location ? { lat: p.location.latitude, lng: p.location.longitude } : undefined;
       const oh = p.currentOpeningHours ?? p.regularOpeningHours;
       const photoRefs = (p.photos ?? [])
@@ -203,8 +261,9 @@ async function fetchNearby(
         businessStatus: p.businessStatus,
       };
     });
-  } catch {
-    return [];
+    return { value, health: OK };
+  } catch (err) {
+    return { value: [], health: { status: "unavailable", reason: safeReason(err) } };
   }
 }
 
@@ -212,8 +271,8 @@ async function fetchRouteMatrix(
   origin: { lat: number; lng: number },
   destinations: Array<{ lat: number; lng: number }>,
   mode: "DRIVE" | "WALK",
-): Promise<Array<{ minutes: number | null; km: number | null }>> {
-  if (!destinations.length) return [];
+): Promise<{ value: Array<{ minutes: number | null; km: number | null }>; health: ProviderHealth }> {
+  if (!destinations.length) return { value: [], health: OK };
   const key = `rm|${mode}|${origin.lat.toFixed(4)},${origin.lng.toFixed(4)}|${destinations
     .map((d) => `${d.lat.toFixed(4)},${d.lng.toFixed(4)}`)
     .join(";")}`;
@@ -238,7 +297,15 @@ async function fetchRouteMatrix(
           ...(mode === "DRIVE" ? { routingPreference: "TRAFFIC_AWARE" } : {}),
         }),
       });
-      if (!res.ok) return destinations.map(() => ({ minutes: null, km: null }));
+      if (!res.ok)
+        return {
+          value: destinations.map(() => ({ minutes: null, km: null })),
+          health: {
+            status: "unavailable",
+            reason: `HTTP ${res.status}`,
+            httpStatus: res.status,
+          } as ProviderHealth,
+        };
       const text = await res.text();
       // Response is a JSON array (or NDJSON). Parse defensively.
       let items: Array<{
@@ -278,10 +345,13 @@ async function fetchRouteMatrix(
           km: typeof it.distanceMeters === "number" ? it.distanceMeters / 1000 : null,
         };
       }
-      return out;
+      return { value: out, health: OK };
     });
-  } catch {
-    return destinations.map(() => ({ minutes: null, km: null }));
+  } catch (err) {
+    return {
+      value: destinations.map(() => ({ minutes: null, km: null })),
+      health: { status: "unavailable", reason: safeReason(err) },
+    };
   }
 }
 
@@ -294,7 +364,7 @@ export const getLocationIntel = createServerFn({ method: "POST" })
   })
   .handler(async ({ data }): Promise<LocationIntel> => {
     const browserKey = process.env.GOOGLE_MAPS_BROWSER_KEY;
-    const [elevation, airQuality, schools, hospitals, groceries, transit, restaurants, banks] =
+    const [elevationR, airQualityR, schoolsR, hospitalsR, groceriesR, transitR, restaurantsR, banksR] =
       await Promise.all([
         fetchElevation(data.lat, data.lng),
         fetchAirQuality(data.lat, data.lng),
@@ -305,6 +375,29 @@ export const getLocationIntel = createServerFn({ method: "POST" })
         fetchNearby(data.lat, data.lng, ["restaurant", "cafe"], 6),
         fetchNearby(data.lat, data.lng, ["bank", "atm"], 6),
       ]);
+
+    const schools = schoolsR.value;
+    const hospitals = hospitalsR.value;
+    const groceries = groceriesR.value;
+    const transit = transitR.value;
+    const restaurants = restaurantsR.value;
+    const banks = banksR.value;
+
+    // Aggregate Places health: any hard failure degrades the module; all
+    // failing makes it unavailable. This is what lets the UI say
+    // "hospital data unavailable" instead of "0 hospitals".
+    const placesHealths = [schoolsR, hospitalsR, groceriesR, transitR, restaurantsR, banksR].map(
+      (r) => r.health,
+    );
+    const failed = placesHealths.filter((h) => h.status !== "ok");
+    const places: ProviderHealth =
+      failed.length === 0
+        ? OK
+        : failed.length === placesHealths.length
+          ? { status: "unavailable", reason: failed[0]?.reason ?? "all place queries failed" }
+          : { status: "degraded", reason: `${failed.length}/6 place queries failed` };
+
+    let routes: ProviderHealth = OK;
 
     // Compute walking + driving times for all destinations in two matrix calls.
     const all = [...schools, ...hospitals, ...groceries, ...transit, ...restaurants, ...banks];
@@ -326,10 +419,16 @@ export const getLocationIntel = createServerFn({ method: "POST" })
           "WALK",
         ),
       ]);
+      routes =
+        drive.health.status === "ok" && walk.health.status === "ok"
+          ? OK
+          : drive.health.status !== "ok" && walk.health.status !== "ok"
+            ? { status: "unavailable", reason: drive.health.reason ?? walk.health.reason }
+            : { status: "degraded", reason: drive.health.reason ?? walk.health.reason };
       dests.forEach((d, k) => {
-        d.p.driveMin = drive[k]?.minutes ?? null;
-        d.p.driveKm = drive[k]?.km ?? null;
-        d.p.walkMin = walk[k]?.minutes ?? null;
+        d.p.driveMin = drive.value[k]?.minutes ?? null;
+        d.p.driveKm = drive.value[k]?.km ?? null;
+        d.p.walkMin = walk.value[k]?.minutes ?? null;
       });
     }
 
@@ -360,11 +459,17 @@ export const getLocationIntel = createServerFn({ method: "POST" })
     return {
       ok: true,
       coords: { lat: data.lat, lng: data.lng },
-      elevation,
-      airQuality,
+      elevation: elevationR.value,
+      airQuality: airQualityR.value,
       categories: { schools, hospitals, groceries, transit, restaurants, banks },
       photos,
       hero,
+      providers: {
+        elevation: elevationR.health,
+        airQuality: airQualityR.health,
+        places,
+        routes,
+      },
     };
   });
 

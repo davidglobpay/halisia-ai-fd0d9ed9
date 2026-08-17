@@ -68,17 +68,8 @@ export default function SpatialCanvasInternal({
     sun: THREE.DirectionalLight;
     sunMarker: THREE.Mesh;
     content: THREE.Group;
-    rig: THREE.Group;
-    grid: THREE.GridHelper;
-    reticle: THREE.Mesh;
-    hitTestSource: XRHitTestSource | null;
-    sessionMode: "ar" | "vr" | null;
-    placed: boolean;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [xrMode, setXrMode] = useState<"ar" | "vr" | null>(null);
-  const [placedUi, setPlacedUi] = useState(false);
-  const [xrScale, setXrScale] = useState(0.02);
 
   // ---- one-time scene bootstrap -------------------------------------------
   useEffect(() => {
@@ -354,21 +345,10 @@ export default function SpatialCanvasInternal({
     handleRef,
     () => ({
       async startAr() {
-        const s = stateRef.current;
-        const xr = (navigator as Navigator & { xr?: XRSystem }).xr;
-        if (!s || !xr) throw new Error("WebXR is not available in this browser.");
-        const session = await xr.requestSession("immersive-ar", {
-          requiredFeatures: ["local-floor"],
-          optionalFeatures: ["hit-test", "dom-overlay"],
-        });
-        await s.renderer.xr.setSession(session);
-        // Scale the parcel down to a tabletop model for room-scale AR.
-        s.content.scale.setScalar(0.02);
-        s.content.position.set(0, -0.6, -1.2);
-        session.addEventListener("end", () => {
-          s.content.scale.setScalar(1);
-          s.content.position.set(0, 0, 0);
-        });
+        await enterXr("ar");
+      },
+      async startVr() {
+        await enterXr("vr");
       },
       endXr() {
         void stateRef.current?.renderer.xr.getSession()?.end();
