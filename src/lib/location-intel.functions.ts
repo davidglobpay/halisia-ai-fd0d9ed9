@@ -271,8 +271,8 @@ async function fetchRouteMatrix(
   origin: { lat: number; lng: number },
   destinations: Array<{ lat: number; lng: number }>,
   mode: "DRIVE" | "WALK",
-): Promise<Array<{ minutes: number | null; km: number | null }>> {
-  if (!destinations.length) return [];
+): Promise<{ value: Array<{ minutes: number | null; km: number | null }>; health: ProviderHealth }> {
+  if (!destinations.length) return { value: [], health: OK };
   const key = `rm|${mode}|${origin.lat.toFixed(4)},${origin.lng.toFixed(4)}|${destinations
     .map((d) => `${d.lat.toFixed(4)},${d.lng.toFixed(4)}`)
     .join(";")}`;
@@ -297,7 +297,15 @@ async function fetchRouteMatrix(
           ...(mode === "DRIVE" ? { routingPreference: "TRAFFIC_AWARE" } : {}),
         }),
       });
-      if (!res.ok) return destinations.map(() => ({ minutes: null, km: null }));
+      if (!res.ok)
+        return {
+          value: destinations.map(() => ({ minutes: null, km: null })),
+          health: {
+            status: "unavailable",
+            reason: `HTTP ${res.status}`,
+            httpStatus: res.status,
+          } as ProviderHealth,
+        };
       const text = await res.text();
       // Response is a JSON array (or NDJSON). Parse defensively.
       let items: Array<{
@@ -337,10 +345,13 @@ async function fetchRouteMatrix(
           km: typeof it.distanceMeters === "number" ? it.distanceMeters / 1000 : null,
         };
       }
-      return out;
+      return { value: out, health: OK };
     });
-  } catch {
-    return destinations.map(() => ({ minutes: null, km: null }));
+  } catch (err) {
+    return {
+      value: destinations.map(() => ({ minutes: null, km: null })),
+      health: { status: "unavailable", reason: safeReason(err) },
+    };
   }
 }
 
@@ -353,7 +364,7 @@ export const getLocationIntel = createServerFn({ method: "POST" })
   })
   .handler(async ({ data }): Promise<LocationIntel> => {
     const browserKey = process.env.GOOGLE_MAPS_BROWSER_KEY;
-    const [elevation, airQuality, schools, hospitals, groceries, transit, restaurants, banks] =
+    const [elevationR, airQualityR, schoolsR, hospitalsR, groceriesR, transitR, restaurantsR, banksR] =
       await Promise.all([
         fetchElevation(data.lat, data.lng),
         fetchAirQuality(data.lat, data.lng),
@@ -364,6 +375,29 @@ export const getLocationIntel = createServerFn({ method: "POST" })
         fetchNearby(data.lat, data.lng, ["restaurant", "cafe"], 6),
         fetchNearby(data.lat, data.lng, ["bank", "atm"], 6),
       ]);
+
+    const schools = schoolsR.value;
+    const hospitals = hospitalsR.value;
+    const groceries = groceriesR.value;
+    const transit = transitR.value;
+    const restaurants = restaurantsR.value;
+    const banks = banksR.value;
+
+    // Aggregate Places health: any hard failure degrades the module; all
+    // failing makes it unavailable. This is what lets the UI say
+    // "hospital data unavailable" instead of "0 hospitals".
+    const placesHealths = [schoolsR, hospitalsR, groceriesR, transitR, restaurantsR, banksR].map(
+      (r) => r.health,
+    );
+    const failed = placesHealths.filter((h) => h.status !== "ok");
+    const places: ProviderHealth =
+      failed.length === 0
+        ? OK
+        : failed.length === placesHealths.length
+          ? { status: "unavailable", reason: failed[0]?.reason ?? "all place queries failed" }
+          : { status: "degraded", reason: `${failed.length}/6 place queries failed` };
+
+    let routes: ProviderHealth = OK;
 
     // Compute walking + driving times for all destinations in two matrix calls.
     const all = [...schools, ...hospitals, ...groceries, ...transit, ...restaurants, ...banks];
@@ -385,10 +419,16 @@ export const getLocationIntel = createServerFn({ method: "POST" })
           "WALK",
         ),
       ]);
+      routes =
+        drive.health.status === "ok" && walk.health.status === "ok"
+          ? OK
+          : drive.health.status !== "ok" && walk.health.status !== "ok"
+            ? { status: "unavailable", reason: drive.health.reason ?? walk.health.reason }
+            : { status: "degraded", reason: drive.health.reason ?? walk.health.reason };
       dests.forEach((d, k) => {
-        d.p.driveMin = drive[k]?.minutes ?? null;
-        d.p.driveKm = drive[k]?.km ?? null;
-        d.p.walkMin = walk[k]?.minutes ?? null;
+        d.p.driveMin = drive.value[k]?.minutes ?? null;
+        d.p.driveKm = drive.value[k]?.km ?? null;
+        d.p.walkMin = walk.value[k]?.minutes ?? null;
       });
     }
 
@@ -419,11 +459,17 @@ export const getLocationIntel = createServerFn({ method: "POST" })
     return {
       ok: true,
       coords: { lat: data.lat, lng: data.lng },
-      elevation,
-      airQuality,
+      elevation: elevationR.value,
+      airQuality: airQualityR.value,
       categories: { schools, hospitals, groceries, transit, restaurants, banks },
       photos,
       hero,
+      providers: {
+        elevation: elevationR.health,
+        airQuality: airQualityR.health,
+        places,
+        routes,
+      },
     };
   });
 
