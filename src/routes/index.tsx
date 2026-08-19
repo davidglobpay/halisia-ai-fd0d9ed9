@@ -464,7 +464,7 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
                 }}
               />
               <img
-                src={halisiaLogo.url}
+                src={halisiaSymbol.url}
                 alt="HALISIA — Land Intelligence"
                 width={72}
                 height={72}
