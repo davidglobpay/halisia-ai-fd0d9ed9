@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 import { fallback } from "@tanstack/zod-adapter";
 import { motion } from "framer-motion";
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import {
   ArrowRight,
   Brain,
@@ -18,8 +18,6 @@ import {
   FileText,
   Quote,
   Star,
-  Play,
-  Pause,
 } from "lucide-react";
 import { KenyaCountyMap } from "@/components/halisia/kenya-county-map";
 import { SearchBar } from "@/components/halisia/search-bar";
@@ -33,7 +31,6 @@ import {
   MarketplaceSection,
   ContributorAndDashboardSection,
 } from "@/components/halisia/landing-sections";
-import { useReducedMotionPref } from "@/hooks/use-reduced-motion-pref";
 import { recordSearchConversion } from "@/lib/analytics";
 import halisiaSymbol from "@/assets/brand/halisia-symbol.png.asset.json";
 import halisiaWordmark from "@/assets/brand/halisia-wordmark.png.asset.json";
