@@ -341,6 +341,37 @@ export default function SpatialCanvasInternal({
     s.sun.target.updateMatrixWorld();
   }, [sunHour, dayOfYear, parcel]);
 
+  const enterXr = async (sessionMode: "ar" | "vr") => {
+    const s = stateRef.current;
+    if (!s) return;
+    const xr = (navigator as Navigator & { xr?: XRSystem }).xr;
+    const wanted = sessionMode === "ar" ? "immersive-ar" : "immersive-vr";
+    if (!xr || !(await xr.isSessionSupported(wanted).catch(() => false))) {
+      setError(
+        sessionMode === "ar"
+          ? "Immersive AR is not available on this device or browser."
+          : "Immersive VR is not available on this device or browser.",
+      );
+      return;
+    }
+    const init: XRSessionInit =
+      sessionMode === "ar"
+        ? {
+            requiredFeatures: ["local-floor"],
+            optionalFeatures: ["hit-test", "dom-overlay"],
+            ...(overlayRef.current ? { domOverlay: { root: overlayRef.current } } : {}),
+          }
+        : { optionalFeatures: ["local-floor", "bounded-floor"] };
+    try {
+      const session = await xr.requestSession(wanted, init);
+      await s.renderer.xr.setSession(session);
+      onXrStateChange?.(true, sessionMode);
+      session.addEventListener("end", () => onXrStateChange?.(false, sessionMode));
+    } catch {
+      setError("Could not start the immersive session.");
+    }
+  };
+
   useImperativeHandle(
     handleRef,
     () => ({

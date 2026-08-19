@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 import { fallback } from "@tanstack/zod-adapter";
 import { motion } from "framer-motion";
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import {
   ArrowRight,
   Brain,
@@ -18,8 +18,6 @@ import {
   FileText,
   Quote,
   Star,
-  Play,
-  Pause,
 } from "lucide-react";
 import { KenyaCountyMap } from "@/components/halisia/kenya-county-map";
 import { SearchBar } from "@/components/halisia/search-bar";
@@ -33,11 +31,9 @@ import {
   MarketplaceSection,
   ContributorAndDashboardSection,
 } from "@/components/halisia/landing-sections";
-import { useReducedMotionPref } from "@/hooks/use-reduced-motion-pref";
 import { recordSearchConversion } from "@/lib/analytics";
-import halisiaLogo from "@/assets/halisia-logo.png.asset.json";
-import heroIntro from "@/assets/hero/hero-pulse.mp4.asset.json";
-import heroIntroPoster from "@/assets/hero/hero-pulse-poster.jpg.asset.json";
+import halisiaSymbol from "@/assets/brand/halisia-symbol.png.asset.json";
+import halisiaWordmark from "@/assets/brand/halisia-wordmark.png.asset.json";
 
 export const Route = createFileRoute("/")({
   validateSearch: (s) => z.object({ compare: fallback(z.string(), "").default("") }).parse(s),
@@ -55,81 +51,13 @@ function Landing() {
  * slow connections, reduced-motion or blocked autoplay we stay on the still.
  */
 function HeroStage({ children }: { children?: ReactNode }) {
-  const [reduced] = useReducedMotionPref();
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [playing, setPlaying] = useState(false);
-  const [loadVideo, setLoadVideo] = useState(false);
-  const [lowBandwidth, setLowBandwidth] = useState(false);
-
-  useEffect(() => {
-    type Conn = { saveData?: boolean; effectiveType?: string };
-    const c = (navigator as Navigator & { connection?: Conn }).connection;
-    if (c?.saveData || (c?.effectiveType && /(^|-)2g$/.test(c.effectiveType))) {
-      setLowBandwidth(true);
-    }
-  }, []);
-
-  const toggle = useCallback(() => {
-    if (!loadVideo) {
-      setLoadVideo(true);
-      setPlaying(true);
-      return;
-    }
-    const el = videoRef.current;
-    if (!el) return;
-    if (el.paused) {
-      void el.play().then(
-        () => setPlaying(true),
-        () => setPlaying(false),
-      );
-    } else {
-      el.pause();
-      setPlaying(false);
-    }
-  }, [loadVideo]);
-
   return (
     <div className="relative w-full overflow-hidden aspect-[3/4] sm:aspect-[16/10] md:aspect-[21/9] max-h-[92vh]">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_35%,oklch(0.34_0.09_240)_0%,oklch(0.19_0.06_255)_45%,oklch(0.13_0.04_260)_100%)]" />
-      {/* Static preview frame — always present, and the only visual until the
-          visitor asks for the film. */}
-      <img
-        aria-hidden="true"
-        src={heroIntroPoster.url}
-        alt=""
-        className={`absolute inset-0 h-full w-full object-cover opacity-40 ${
-          playing ? "hidden" : "block"
-        }`}
-      />
-      {loadVideo && (
-        <video
-          ref={videoRef}
-          aria-hidden="true"
-          data-testid="hero-video"
-          className={`absolute inset-0 h-full w-full object-cover opacity-45 [filter:contrast(1.06)_saturate(1.12)] ${
-            playing ? "block" : "hidden"
-          }`}
-          src={heroIntro.url}
-          poster={heroIntroPoster.url}
-          muted
-          playsInline
-          autoPlay
-          loop
-          preload="none"
-          onPlaying={() => setPlaying(true)}
-          onPause={() => setPlaying(false)}
-          onError={() => {
-            setPlaying(false);
-            setLoadVideo(false);
-          }}
-        />
-      )}
-      {/* Legibility scrim so the logo, headline and search bar stay readable. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(7,30,61,0.72)_0%,rgba(7,30,61,0.35)_38%,rgba(7,30,61,0.78)_100%)]"
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(7,30,61,0.55)_0%,rgba(7,30,61,0.2)_38%,rgba(7,30,61,0.7)_100%)]"
       />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_45%,rgba(0,0,0,0.35)_78%,rgba(7,30,61,0.85)_100%)]" />
       <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-background" />
       <div
         aria-hidden="true"
@@ -143,27 +71,6 @@ function HeroStage({ children }: { children?: ReactNode }) {
       />
       <div className="absolute inset-0 flex flex-col justify-end sm:justify-center">
         <div className="mx-auto w-full max-w-7xl px-4 pb-10 sm:pb-0">{children}</div>
-      </div>
-      <div className="absolute bottom-3 right-3 z-10 flex items-center gap-2">
-        {!playing && (lowBandwidth || reduced) && (
-          <span className="hidden sm:inline rounded-full border border-white/15 bg-black/40 px-2.5 py-1 text-[10px] text-white/70 backdrop-blur">
-            {lowBandwidth ? "Data saver — still frame shown" : "Reduced motion on"}
-          </span>
-        )}
-        <button
-          type="button"
-          onClick={toggle}
-          data-testid="hero-video-toggle"
-          aria-pressed={playing}
-          className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/45 px-3 py-1.5 text-[11px] text-white backdrop-blur transition hover:bg-black/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-        >
-          {playing ? (
-            <Pause className="h-3.5 w-3.5" aria-hidden="true" />
-          ) : (
-            <Play className="h-3.5 w-3.5" aria-hidden="true" />
-          )}
-          {playing ? "Pause intro" : "Play intro film"}
-        </button>
       </div>
     </div>
   );
@@ -204,8 +111,8 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
                 }}
               />
               <img
-                src={halisiaLogo.url}
-                alt="HALISIA"
+                src={halisiaSymbol.url}
+                alt="HALISIA.AI"
                 width={200}
                 height={200}
                 decoding="async"
@@ -222,6 +129,14 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
                 }}
               />
             </div>
+            <img
+              src={halisiaWordmark.url}
+              alt="HALISIA.AI — Land Intelligence Engine"
+              width={653}
+              height={237}
+              decoding="async"
+              className="mb-5 h-auto w-[min(340px,72vw)] object-contain drop-shadow-[0_8px_24px_oklch(0.14_0.05_260/0.75)]"
+            />
             <div className="mb-4 inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.32em] text-white/75">
               <span className="h-px w-8 bg-white/30" />
               Kenya · Beta · Land Intelligence
@@ -549,7 +464,7 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
                 }}
               />
               <img
-                src={halisiaLogo.url}
+                src={halisiaSymbol.url}
                 alt="HALISIA — Land Intelligence"
                 width={72}
                 height={72}
