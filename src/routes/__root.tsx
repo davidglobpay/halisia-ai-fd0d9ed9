@@ -11,7 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import halisiaLogo from "../assets/halisia-logo.png.asset.json";
+import halisiaLogo from "../assets/brand/halisia-symbol.png.asset.json";
 import { PerfMonitor } from "../components/halisia/perf-monitor";
 import { FloatingSearch } from "../components/halisia/floating-search";
 import { NavGuide } from "../components/halisia/nav-guide";
@@ -129,7 +129,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       {
         rel: "icon",
-        href: "/__l5e/assets-v1/df3c3df2-f292-4207-8044-70216128e1b8/halisia-logo.png",
+        href: halisiaLogo.url,
         type: "image/png",
       },
       { rel: "apple-touch-icon", href: halisiaLogo.url },

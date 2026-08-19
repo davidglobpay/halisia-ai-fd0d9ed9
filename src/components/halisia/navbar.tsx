@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Menu, X, LogIn, LogOut, Bookmark, User as UserIcon } from "lucide-react";
-import halisiaLogo from "@/assets/halisia-logo.png.asset.json";
+import halisiaLogo from "@/assets/brand/halisia-symbol.png.asset.json";
 import { useAuth } from "@/hooks/use-auth";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
