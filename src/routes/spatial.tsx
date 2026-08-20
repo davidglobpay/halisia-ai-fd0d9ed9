@@ -7,17 +7,22 @@ import {
   Boxes,
   Building2,
   Cuboid,
+  Crosshair,
+  Glasses,
   Loader2,
   Maximize2,
   MapPin,
   Ruler,
   Scan,
+  ShieldAlert,
   Sun,
 } from "lucide-react";
 import { Surface, KitButton, SegmentedTabs, SectionHeading, StatusBadge } from "@/components/halisia/ds";
 import { SpatialCanvas, type SpatialCanvasHandle } from "@/components/halisia/spatial/spatial-canvas";
+import type { ArPlacementState } from "@/components/halisia/spatial/spatial-canvas.internal";
 import { LandPassport } from "@/components/halisia/spatial/land-passport";
 import { useReducedMotionPref } from "@/hooks/use-reduced-motion-pref";
+import { useMyLocation } from "@/hooks/use-my-location";
 import {
   distanceM,
   fetchSpatialListings,
@@ -70,8 +75,17 @@ function SpatialPage() {
   const [showEnvelope, setShowEnvelope] = useState(true);
   const [xrActive, setXrActive] = useState(false);
   const [xrSupported, setXrSupported] = useState<boolean | null>(null);
+  const [vrSupported, setVrSupported] = useState<boolean | null>(null);
+  const [xrMode, setXrMode] = useState<"ar" | "vr" | null>(null);
+  const [placement, setPlacement] = useState<ArPlacementState>({
+    hitTest: false,
+    surfaceFound: false,
+    placed: false,
+  });
   const [xrError, setXrError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
+  const { request: requestLocation, location, error: locationError, loading: locating } =
+    useMyLocation();
 
   useEffect(() => {
     if (!parcels.length) return;
@@ -86,12 +100,17 @@ function SpatialPage() {
     const xr = (navigator as Navigator & { xr?: XRSystem }).xr;
     if (!xr?.isSessionSupported) {
       setXrSupported(false);
+      setVrSupported(false);
       return;
     }
     void xr
       .isSessionSupported("immersive-ar")
       .then(setXrSupported)
       .catch(() => setXrSupported(false));
+    void xr
+      .isSessionSupported("immersive-vr")
+      .then(setVrSupported)
+      .catch(() => setVrSupported(false));
   }, []);
 
   const parcel = parcels.find((p) => p.id === selectedId) ?? null;
@@ -115,16 +134,23 @@ function SpatialPage() {
       .slice(0, 4);
   }, [listingsQ.data, parcel]);
 
-  const startAr = async () => {
+  const startSession = async (kind: "ar" | "vr") => {
     setXrError(null);
     setStarting(true);
+    setXrMode(kind);
     try {
-      await handle.current?.startAr();
+      if (kind === "ar") {
+        void requestLocation();
+        await handle.current?.startAr();
+      } else {
+        await handle.current?.startVr();
+      }
     } catch (err) {
+      setXrMode(null);
       setXrError(
         err instanceof Error
           ? `${err.message} Use the model viewer fallback below on iOS or Android.`
-          : "Could not start the AR session.",
+          : `Could not start the ${kind === "ar" ? "AR" : "VR"} session.`,
       );
     } finally {
       setStarting(false);
