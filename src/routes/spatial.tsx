@@ -7,17 +7,22 @@ import {
   Boxes,
   Building2,
   Cuboid,
+  Crosshair,
+  Glasses,
   Loader2,
   Maximize2,
   MapPin,
   Ruler,
   Scan,
+  ShieldAlert,
   Sun,
 } from "lucide-react";
 import { Surface, KitButton, SegmentedTabs, SectionHeading, StatusBadge } from "@/components/halisia/ds";
 import { SpatialCanvas, type SpatialCanvasHandle } from "@/components/halisia/spatial/spatial-canvas";
+import type { ArPlacementState } from "@/components/halisia/spatial/spatial-canvas.internal";
 import { LandPassport } from "@/components/halisia/spatial/land-passport";
 import { useReducedMotionPref } from "@/hooks/use-reduced-motion-pref";
+import { useMyLocation } from "@/hooks/use-my-location";
 import {
   distanceM,
   fetchSpatialListings,
@@ -70,8 +75,17 @@ function SpatialPage() {
   const [showEnvelope, setShowEnvelope] = useState(true);
   const [xrActive, setXrActive] = useState(false);
   const [xrSupported, setXrSupported] = useState<boolean | null>(null);
+  const [vrSupported, setVrSupported] = useState<boolean | null>(null);
+  const [xrMode, setXrMode] = useState<"ar" | "vr" | null>(null);
+  const [placement, setPlacement] = useState<ArPlacementState>({
+    hitTest: false,
+    surfaceFound: false,
+    placed: false,
+  });
   const [xrError, setXrError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
+  const { request: requestLocation, location, error: locationError, loading: locating } =
+    useMyLocation();
 
   useEffect(() => {
     if (!parcels.length) return;
@@ -86,12 +100,17 @@ function SpatialPage() {
     const xr = (navigator as Navigator & { xr?: XRSystem }).xr;
     if (!xr?.isSessionSupported) {
       setXrSupported(false);
+      setVrSupported(false);
       return;
     }
     void xr
       .isSessionSupported("immersive-ar")
       .then(setXrSupported)
       .catch(() => setXrSupported(false));
+    void xr
+      .isSessionSupported("immersive-vr")
+      .then(setVrSupported)
+      .catch(() => setVrSupported(false));
   }, []);
 
   const parcel = parcels.find((p) => p.id === selectedId) ?? null;
@@ -115,16 +134,23 @@ function SpatialPage() {
       .slice(0, 4);
   }, [listingsQ.data, parcel]);
 
-  const startAr = async () => {
+  const startSession = async (kind: "ar" | "vr") => {
     setXrError(null);
     setStarting(true);
+    setXrMode(kind);
     try {
-      await handle.current?.startAr();
+      if (kind === "ar") {
+        void requestLocation();
+        await handle.current?.startAr();
+      } else {
+        await handle.current?.startVr();
+      }
     } catch (err) {
+      setXrMode(null);
       setXrError(
         err instanceof Error
           ? `${err.message} Use the model viewer fallback below on iOS or Android.`
-          : "Could not start the AR session.",
+          : `Could not start the ${kind === "ar" ? "AR" : "VR"} session.`,
       );
     } finally {
       setStarting(false);
@@ -184,7 +210,11 @@ function SpatialPage() {
                   showEnvelope={showEnvelope}
                   mode={mode}
                   reducedMotion={reduced}
-                  onXrStateChange={setXrActive}
+                  onXrStateChange={(active, sessionMode) => {
+                    setXrActive(active);
+                    setXrMode(active ? (sessionMode ?? null) : null);
+                  }}
+                  onArPlacementChange={setPlacement}
                 />
                 <div className="pointer-events-none absolute inset-x-0 top-0 flex flex-wrap items-center gap-2 p-3">
                   <span className="pointer-events-auto rounded-full glass-strong border border-white/15 px-3 py-1 text-[11px]">
@@ -195,7 +225,21 @@ function SpatialPage() {
                   </StatusBadge>
                   {xrActive && (
                     <span className="pointer-events-auto rounded-full bg-[#008F55]/20 border border-[#008F55]/50 px-3 py-1 text-[11px] text-[#7ee0b4]">
-                      XR session live
+                      {xrMode === "vr" ? "VR session live" : "AR session live"}
+                    </span>
+                  )}
+                  {xrActive && xrMode === "ar" && (
+                    <span
+                      className="pointer-events-auto rounded-full glass-strong border border-white/15 px-3 py-1 text-[11px]"
+                      data-testid="spatial-placement-hint"
+                    >
+                      {placement.placed
+                        ? "Twin anchored — tap Re-place to move it"
+                        : placement.surfaceFound
+                          ? "Surface detected — tap to place"
+                          : placement.hitTest
+                            ? "Scanning for a ground surface…"
+                            : "Hit testing unavailable — twin shown in front of you"}
                     </span>
                   )}
                 </div>
@@ -208,14 +252,26 @@ function SpatialPage() {
                     <Maximize2 className="h-3.5 w-3.5" aria-hidden="true" /> Reset view
                   </KitButton>
                   {xrActive ? (
-                    <KitButton size="sm" variant="destructive" onClick={() => handle.current?.endXr()}>
-                      Exit XR
-                    </KitButton>
+                    <>
+                      {xrMode === "ar" && placement.placed && placement.hitTest && (
+                        <KitButton
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => handle.current?.resetPlacement()}
+                        >
+                          <Crosshair className="h-3.5 w-3.5" aria-hidden="true" /> Re-place
+                        </KitButton>
+                      )}
+                      <KitButton size="sm" variant="destructive" onClick={() => handle.current?.endXr()}>
+                        Exit XR
+                      </KitButton>
+                    </>
                   ) : (
+                    <>
                     <KitButton
                       size="sm"
                       variant="premium"
-                      onClick={() => void startAr()}
+                      onClick={() => void startSession("ar")}
                       disabled={starting || xrSupported === false}
                       data-testid="spatial-start-ar"
                       title={
@@ -231,9 +287,68 @@ function SpatialPage() {
                       )}
                       Launch AR
                     </KitButton>
+                    <KitButton
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => void startSession("vr")}
+                      disabled={starting || vrSupported === false}
+                      data-testid="spatial-start-vr"
+                      title={
+                        vrSupported === false
+                          ? "WebXR VR is not available on this device or browser"
+                          : "Enter the immersive VR masterplan"
+                      }
+                    >
+                      <Glasses className="h-3.5 w-3.5" aria-hidden="true" /> Enter VR
+                    </KitButton>
+                    </>
                   )}
                 </div>
               </div>
+            </Surface>
+
+            <Surface elevation={1} className="p-4 text-xs" data-testid="spatial-xr-status">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="inline-flex items-center gap-1.5">
+                  <span
+                    className={`h-2 w-2 rounded-full ${xrSupported ? "bg-[#008F55]" : "bg-[#AEB7BC]"}`}
+                  />
+                  WebXR AR:{" "}
+                  {xrSupported === null ? "checking…" : xrSupported ? "supported" : "unavailable"}
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <span
+                    className={`h-2 w-2 rounded-full ${vrSupported ? "bg-[#008F55]" : "bg-[#AEB7BC]"}`}
+                  />
+                  WebXR VR:{" "}
+                  {vrSupported === null ? "checking…" : vrSupported ? "supported" : "unavailable"}
+                </span>
+                <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                  <MapPin className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
+                  {locating
+                    ? "Reading device location…"
+                    : location
+                      ? `Device GPS accuracy ±${Math.round(location.accuracy ?? 0)} m`
+                      : locationError
+                        ? `Location unavailable — ${locationError}`
+                        : "Device location not requested"}
+                  {!location && !locating && (
+                    <button
+                      type="button"
+                      className="underline"
+                      onClick={() => void requestLocation()}
+                    >
+                      Check accuracy
+                    </button>
+                  )}
+                </span>
+              </div>
+              <p className="mt-3 flex items-start gap-2 text-[11px] text-muted-foreground">
+                <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#D4AF37]" aria-hidden="true" />
+                Approximate spatial visualization — not a cadastral survey. Consumer GPS and WebXR
+                plane detection carry metre-level error; boundaries shown here must not be used for
+                beaconing, subdivision or legal demarcation.
+              </p>
             </Surface>
 
             {(xrError || xrSupported === false) && (

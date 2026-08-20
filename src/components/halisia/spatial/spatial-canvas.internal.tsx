@@ -17,6 +17,18 @@ export type SpatialCanvasHandle = {
   startVr: () => Promise<void>;
   endXr: () => void;
   resetView: () => void;
+  /** Re-arm ground placement so the next tap re-anchors the twin. */
+  resetPlacement: () => void;
+};
+
+/** Live AR placement state surfaced to the studio UI. */
+export type ArPlacementState = {
+  /** Hit-test source acquired for this session. */
+  hitTest: boolean;
+  /** A ground plane is currently detected under the reticle. */
+  surfaceFound: boolean;
+  /** The parcel twin has been anchored to the ground. */
+  placed: boolean;
 };
 
 export type SpatialCanvasProps = {
@@ -31,6 +43,7 @@ export type SpatialCanvasProps = {
   mode: "site" | "masterplan";
   reducedMotion: boolean;
   onXrStateChange?: (active: boolean, sessionMode?: "ar" | "vr") => void;
+  onArPlacementChange?: (state: ArPlacementState) => void;
   handleRef?: Ref<SpatialCanvasHandle>;
 };
 
@@ -56,10 +69,13 @@ export default function SpatialCanvasInternal({
   mode,
   reducedMotion,
   onXrStateChange,
+  onArPlacementChange,
   handleRef,
 }: SpatialCanvasProps) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const overlayRef = useRef<HTMLDivElement | null>(null);
+  const placementCb = useRef(onArPlacementChange);
+  placementCb.current = onArPlacementChange;
   const stateRef = useRef<{
     renderer: THREE.WebGLRenderer;
     scene: THREE.Scene;
@@ -68,6 +84,12 @@ export default function SpatialCanvasInternal({
     sun: THREE.DirectionalLight;
     sunMarker: THREE.Mesh;
     content: THREE.Group;
+    grid: THREE.GridHelper;
+    reticle: THREE.Mesh;
+    hitTestSource: XRHitTestSource | null;
+    placed: boolean;
+    surfaceFound: boolean;
+    arMode: boolean;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -125,7 +147,30 @@ export default function SpatialCanvasInternal({
     const content = new THREE.Group();
     scene.add(content);
 
-    stateRef.current = { renderer, scene, camera, controls, sun, sunMarker, content };
+    // AR ground reticle — a flat ring that rides the detected surface.
+    const reticle = new THREE.Mesh(
+      new THREE.RingGeometry(0.09, 0.12, 40).rotateX(-Math.PI / 2),
+      new THREE.MeshBasicMaterial({ color: 0x00c2e8, side: THREE.DoubleSide }),
+    );
+    reticle.matrixAutoUpdate = false;
+    reticle.visible = false;
+    scene.add(reticle);
+
+    stateRef.current = {
+      renderer,
+      scene,
+      camera,
+      controls,
+      sun,
+      sunMarker,
+      content,
+      grid,
+      reticle,
+      hitTestSource: null,
+      placed: false,
+      surfaceFound: false,
+      arMode: false,
+    };
 
     const onResize = () => {
       if (!mount.clientWidth) return;
@@ -137,8 +182,29 @@ export default function SpatialCanvasInternal({
     ro.observe(mount);
 
     let t = 0;
-    renderer.setAnimationLoop(() => {
+    renderer.setAnimationLoop((_time, frame) => {
       t += 0.005;
+      const st = stateRef.current;
+      if (st?.arMode && frame) {
+        const refSpace = renderer.xr.getReferenceSpace();
+        if (st.hitTestSource && refSpace && !st.placed) {
+          const hits = frame.getHitTestResults(st.hitTestSource);
+          const hit = hits[0];
+          const pose = hit?.getPose(refSpace);
+          if (pose) {
+            st.reticle.visible = true;
+            st.reticle.matrix.fromArray(pose.transform.matrix);
+            if (!st.surfaceFound) {
+              st.surfaceFound = true;
+              placementCb.current?.({ hitTest: true, surfaceFound: true, placed: false });
+            }
+          } else if (st.surfaceFound) {
+            st.reticle.visible = false;
+            st.surfaceFound = false;
+            placementCb.current?.({ hitTest: true, surfaceFound: false, placed: false });
+          }
+        }
+      }
       if (!reducedMotion) {
         content.children.forEach((child) => {
           if (child.userData["pulse"]) {
@@ -147,11 +213,27 @@ export default function SpatialCanvasInternal({
           }
         });
       }
-      controls.update();
+      if (!renderer.xr.isPresenting) controls.update();
       renderer.render(scene, camera);
     });
 
-    const onSessionEnd = () => onXrStateChange?.(false);
+    const onSessionEnd = () => {
+      const st = stateRef.current;
+      if (st) {
+        st.hitTestSource = null;
+        st.placed = false;
+        st.surfaceFound = false;
+        st.arMode = false;
+        st.reticle.visible = false;
+        st.grid.visible = true;
+        st.content.visible = true;
+        st.content.position.set(0, 0, 0);
+        st.content.quaternion.identity();
+        st.content.scale.setScalar(1);
+      }
+      placementCb.current?.({ hitTest: false, surfaceFound: false, placed: false });
+      onXrStateChange?.(false);
+    };
     const onSessionStart = () => onXrStateChange?.(true);
     renderer.xr.addEventListener("sessionstart", onSessionStart);
     renderer.xr.addEventListener("sessionend", onSessionEnd);
@@ -365,6 +447,52 @@ export default function SpatialCanvasInternal({
     try {
       const session = await xr.requestSession(wanted, init);
       await s.renderer.xr.setSession(session);
+      s.arMode = sessionMode === "ar";
+      if (s.arMode) {
+        // Tabletop twin: scale the surveyed parcel to fit ~1.2 m so it can be
+        // anchored on a floor or table in the user's room.
+        const box = new THREE.Box3().setFromObject(s.content);
+        const span = Math.max(box.getSize(new THREE.Vector3()).length(), 1);
+        s.content.scale.setScalar(1.2 / span);
+        s.content.visible = false;
+        s.grid.visible = false;
+        s.placed = false;
+        s.surfaceFound = false;
+        placementCb.current?.({ hitTest: false, surfaceFound: false, placed: false });
+        try {
+          const viewerSpace = await session.requestReferenceSpace("viewer");
+          const source = await session.requestHitTestSource?.({ space: viewerSpace });
+          s.hitTestSource = source ?? null;
+          placementCb.current?.({
+            hitTest: Boolean(source),
+            surfaceFound: false,
+            placed: false,
+          });
+          if (!source) {
+            // No hit testing on this runtime — show the twin in front of the user.
+            s.content.visible = true;
+            s.content.position.set(0, -0.4, -1.2);
+            s.placed = true;
+            placementCb.current?.({ hitTest: false, surfaceFound: false, placed: true });
+          }
+        } catch {
+          s.hitTestSource = null;
+          s.content.visible = true;
+          s.content.position.set(0, -0.4, -1.2);
+          s.placed = true;
+          placementCb.current?.({ hitTest: false, surfaceFound: false, placed: true });
+        }
+        session.addEventListener("select", () => {
+          const st = stateRef.current;
+          if (!st || st.placed || !st.reticle.visible) return;
+          st.content.position.setFromMatrixPosition(st.reticle.matrix);
+          st.content.quaternion.setFromRotationMatrix(st.reticle.matrix);
+          st.content.visible = true;
+          st.reticle.visible = false;
+          st.placed = true;
+          placementCb.current?.({ hitTest: true, surfaceFound: true, placed: true });
+        });
+      }
       onXrStateChange?.(true, sessionMode);
       session.addEventListener("end", () => onXrStateChange?.(false, sessionMode));
     } catch {
@@ -391,6 +519,18 @@ export default function SpatialCanvasInternal({
         s.controls.target.set(0, 2, 0);
         s.controls.update();
       },
+      resetPlacement() {
+        const s = stateRef.current;
+        if (!s || !s.arMode) return;
+        s.placed = false;
+        s.surfaceFound = false;
+        s.content.visible = false;
+        placementCb.current?.({
+          hitTest: Boolean(s.hitTestSource),
+          surfaceFound: false,
+          placed: false,
+        });
+      },
     }),
     [],
   );
@@ -401,6 +541,12 @@ export default function SpatialCanvasInternal({
       data-testid="spatial-canvas"
       className="absolute inset-0 [&>canvas]:h-full [&>canvas]:w-full"
     >
+      {/* DOM overlay surfaced inside the immersive AR session. */}
+      <div ref={overlayRef} className="pointer-events-none absolute inset-x-0 bottom-0 p-3">
+        <p className="mx-auto max-w-md rounded-full bg-black/60 px-3 py-1.5 text-center text-[11px] text-white/85">
+          Approximate spatial visualization — not a cadastral survey.
+        </p>
+      </div>
       {error && (
         <div className="absolute inset-0 flex items-center justify-center p-6 text-center text-sm text-muted-foreground">
           {error}
