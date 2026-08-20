@@ -147,7 +147,30 @@ export default function SpatialCanvasInternal({
     const content = new THREE.Group();
     scene.add(content);
 
-    stateRef.current = { renderer, scene, camera, controls, sun, sunMarker, content };
+    // AR ground reticle — a flat ring that rides the detected surface.
+    const reticle = new THREE.Mesh(
+      new THREE.RingGeometry(0.09, 0.12, 40).rotateX(-Math.PI / 2),
+      new THREE.MeshBasicMaterial({ color: 0x00c2e8, side: THREE.DoubleSide }),
+    );
+    reticle.matrixAutoUpdate = false;
+    reticle.visible = false;
+    scene.add(reticle);
+
+    stateRef.current = {
+      renderer,
+      scene,
+      camera,
+      controls,
+      sun,
+      sunMarker,
+      content,
+      grid,
+      reticle,
+      hitTestSource: null,
+      placed: false,
+      surfaceFound: false,
+      arMode: false,
+    };
 
     const onResize = () => {
       if (!mount.clientWidth) return;
@@ -159,8 +182,29 @@ export default function SpatialCanvasInternal({
     ro.observe(mount);
 
     let t = 0;
-    renderer.setAnimationLoop(() => {
+    renderer.setAnimationLoop((_time, frame) => {
       t += 0.005;
+      const st = stateRef.current;
+      if (st?.arMode && frame) {
+        const refSpace = renderer.xr.getReferenceSpace();
+        if (st.hitTestSource && refSpace && !st.placed) {
+          const hits = frame.getHitTestResults(st.hitTestSource);
+          const hit = hits[0];
+          const pose = hit?.getPose(refSpace);
+          if (pose) {
+            st.reticle.visible = true;
+            st.reticle.matrix.fromArray(pose.transform.matrix);
+            if (!st.surfaceFound) {
+              st.surfaceFound = true;
+              placementCb.current?.({ hitTest: true, surfaceFound: true, placed: false });
+            }
+          } else if (st.surfaceFound) {
+            st.reticle.visible = false;
+            st.surfaceFound = false;
+            placementCb.current?.({ hitTest: true, surfaceFound: false, placed: false });
+          }
+        }
+      }
       if (!reducedMotion) {
         content.children.forEach((child) => {
           if (child.userData["pulse"]) {
@@ -169,11 +213,27 @@ export default function SpatialCanvasInternal({
           }
         });
       }
-      controls.update();
+      if (!renderer.xr.isPresenting) controls.update();
       renderer.render(scene, camera);
     });
 
-    const onSessionEnd = () => onXrStateChange?.(false);
+    const onSessionEnd = () => {
+      const st = stateRef.current;
+      if (st) {
+        st.hitTestSource = null;
+        st.placed = false;
+        st.surfaceFound = false;
+        st.arMode = false;
+        st.reticle.visible = false;
+        st.grid.visible = true;
+        st.content.visible = true;
+        st.content.position.set(0, 0, 0);
+        st.content.quaternion.identity();
+        st.content.scale.setScalar(1);
+      }
+      placementCb.current?.({ hitTest: false, surfaceFound: false, placed: false });
+      onXrStateChange?.(false);
+    };
     const onSessionStart = () => onXrStateChange?.(true);
     renderer.xr.addEventListener("sessionstart", onSessionStart);
     renderer.xr.addEventListener("sessionend", onSessionEnd);
