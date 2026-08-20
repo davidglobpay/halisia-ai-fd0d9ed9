@@ -17,6 +17,18 @@ export type SpatialCanvasHandle = {
   startVr: () => Promise<void>;
   endXr: () => void;
   resetView: () => void;
+  /** Re-arm ground placement so the next tap re-anchors the twin. */
+  resetPlacement: () => void;
+};
+
+/** Live AR placement state surfaced to the studio UI. */
+export type ArPlacementState = {
+  /** Hit-test source acquired for this session. */
+  hitTest: boolean;
+  /** A ground plane is currently detected under the reticle. */
+  surfaceFound: boolean;
+  /** The parcel twin has been anchored to the ground. */
+  placed: boolean;
 };
 
 export type SpatialCanvasProps = {
@@ -31,6 +43,7 @@ export type SpatialCanvasProps = {
   mode: "site" | "masterplan";
   reducedMotion: boolean;
   onXrStateChange?: (active: boolean, sessionMode?: "ar" | "vr") => void;
+  onArPlacementChange?: (state: ArPlacementState) => void;
   handleRef?: Ref<SpatialCanvasHandle>;
 };
 
@@ -56,10 +69,13 @@ export default function SpatialCanvasInternal({
   mode,
   reducedMotion,
   onXrStateChange,
+  onArPlacementChange,
   handleRef,
 }: SpatialCanvasProps) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const overlayRef = useRef<HTMLDivElement | null>(null);
+  const placementCb = useRef(onArPlacementChange);
+  placementCb.current = onArPlacementChange;
   const stateRef = useRef<{
     renderer: THREE.WebGLRenderer;
     scene: THREE.Scene;
@@ -68,6 +84,12 @@ export default function SpatialCanvasInternal({
     sun: THREE.DirectionalLight;
     sunMarker: THREE.Mesh;
     content: THREE.Group;
+    grid: THREE.GridHelper;
+    reticle: THREE.Mesh;
+    hitTestSource: XRHitTestSource | null;
+    placed: boolean;
+    surfaceFound: boolean;
+    arMode: boolean;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
