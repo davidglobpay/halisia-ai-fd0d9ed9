@@ -355,19 +355,110 @@ async function fetchRouteMatrix(
   }
 }
 
+/** Cached shape of the Places+Routes slice (no key-bearing URLs). */
+type PlacesSlicePayload = {
+  categories: LocationIntel["categories"];
+  photoRefs: string[];
+  heroId: string | null;
+  places: ProviderHealth;
+  routes: ProviderHealth;
+};
+
 export const getLocationIntel = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => {
-    const v = input as { lat?: number; lng?: number };
+    const v = input as { lat?: number; lng?: number; parcelId?: string; refresh?: boolean };
     if (typeof v?.lat !== "number" || typeof v?.lng !== "number")
       throw new Error("lat/lng required");
-    return { lat: v.lat, lng: v.lng };
+    return {
+      lat: v.lat,
+      lng: v.lng,
+      parcelId: typeof v.parcelId === "string" ? v.parcelId : null,
+      refresh: v.refresh === true,
+    };
   })
   .handler(async ({ data }): Promise<LocationIntel> => {
     const browserKey = process.env.GOOGLE_MAPS_BROWSER_KEY;
-    const [elevationR, airQualityR, schoolsR, hospitalsR, groceriesR, transitR, restaurantsR, banksR] =
-      await Promise.all([
-        fetchElevation(data.lat, data.lng),
-        fetchAirQuality(data.lat, data.lng),
+    const snap = await import("@/lib/intel-snapshot.server");
+    const key = snap.locationKey(data.lat, data.lng, data.parcelId);
+    const cached = data.refresh ? {} : await snap.readSnapshot(key);
+    const provenance: Record<string, snapTypes.SliceProvenance> = {} as Record<
+      string,
+      snapTypes.SliceProvenance
+    >;
+
+    // -- Elevation slice (stable; long TTL) ------------------------------------
+    let elevation: LocationIntel["elevation"] = null;
+    let elevationHealth: ProviderHealth = OK;
+    const elevationHit = cached.elevation;
+    if (elevationHit) {
+      elevation = elevationHit.payload as LocationIntel["elevation"];
+      elevationHealth = { status: elevationHit.provenance.status };
+      provenance.elevation = elevationHit.provenance;
+    }
+
+    // -- Air quality slice (hours-scale TTL) -----------------------------------
+    let airQuality: LocationIntel["airQuality"] = null;
+    let airHealth: ProviderHealth = OK;
+    const airHit = cached.air_quality;
+    if (airHit) {
+      airQuality = airHit.payload as LocationIntel["airQuality"];
+      airHealth = { status: airHit.provenance.status };
+      provenance.air_quality = airHit.provenance;
+    }
+
+    // -- Places + routes slice (~30-day TTL) -----------------------------------
+    let slice: PlacesSlicePayload | null = null;
+    const placesHit = cached.places;
+    if (placesHit) {
+      slice = placesHit.payload as PlacesSlicePayload;
+      provenance.places = placesHit.provenance;
+    }
+
+    // Refresh only the missing / stale slices. Each is independent, so one
+    // provider failing preserves the rest of the snapshot.
+    const [elevationR, airQualityR] = await Promise.all([
+      elevationHit ? null : fetchElevation(data.lat, data.lng),
+      airHit ? null : fetchAirQuality(data.lat, data.lng),
+    ]);
+
+    if (elevationR) {
+      elevation = elevationR.value;
+      elevationHealth = elevationR.health;
+      provenance.elevation =
+        elevationR.health.status === "unavailable"
+          ? snap.failedProvenance("elevation", elevationR.health.reason)
+          : await snap.writeSlice({
+              key,
+              lat: data.lat,
+              lng: data.lng,
+              parcelId: data.parcelId,
+              slice: "elevation",
+              status: elevationR.health.status,
+              reason: elevationR.health.reason ?? null,
+              payload: elevationR.value,
+            });
+    }
+
+    if (airQualityR) {
+      airQuality = airQualityR.value;
+      airHealth = airQualityR.health;
+      provenance.air_quality =
+        airQualityR.health.status === "unavailable"
+          ? snap.failedProvenance("air_quality", airQualityR.health.reason)
+          : await snap.writeSlice({
+              key,
+              lat: data.lat,
+              lng: data.lng,
+              parcelId: data.parcelId,
+              slice: "air_quality",
+              status: airQualityR.health.status,
+              reason: airQualityR.health.reason ?? null,
+              payload: airQualityR.value,
+            });
+    }
+
+    if (!slice) {
+      const [schoolsR, hospitalsR, groceriesR, transitR, restaurantsR, banksR] = await Promise.all([
         fetchNearby(data.lat, data.lng, ["school", "primary_school", "secondary_school"], 6),
         fetchNearby(data.lat, data.lng, ["hospital", "doctor", "pharmacy"], 6),
         fetchNearby(data.lat, data.lng, ["supermarket", "grocery_store"], 6),
@@ -376,64 +467,112 @@ export const getLocationIntel = createServerFn({ method: "POST" })
         fetchNearby(data.lat, data.lng, ["bank", "atm"], 6),
       ]);
 
-    const schools = schoolsR.value;
-    const hospitals = hospitalsR.value;
-    const groceries = groceriesR.value;
-    const transit = transitR.value;
-    const restaurants = restaurantsR.value;
-    const banks = banksR.value;
+      const schools = schoolsR.value;
+      const hospitals = hospitalsR.value;
+      const groceries = groceriesR.value;
+      const transit = transitR.value;
+      const restaurants = restaurantsR.value;
+      const banks = banksR.value;
 
-    // Aggregate Places health: any hard failure degrades the module; all
-    // failing makes it unavailable. This is what lets the UI say
-    // "hospital data unavailable" instead of "0 hospitals".
-    const placesHealths = [schoolsR, hospitalsR, groceriesR, transitR, restaurantsR, banksR].map(
-      (r) => r.health,
-    );
-    const failed = placesHealths.filter((h) => h.status !== "ok");
-    const places: ProviderHealth =
-      failed.length === 0
-        ? OK
-        : failed.length === placesHealths.length
-          ? { status: "unavailable", reason: failed[0]?.reason ?? "all place queries failed" }
-          : { status: "degraded", reason: `${failed.length}/6 place queries failed` };
-
-    let routes: ProviderHealth = OK;
-
-    // Compute walking + driving times for all destinations in two matrix calls.
-    const all = [...schools, ...hospitals, ...groceries, ...transit, ...restaurants, ...banks];
-    const dests = all.map((p, i) => ({ p, i, loc: p.location })).filter((x) => !!x.loc) as Array<{
-      p: PlaceLite;
-      i: number;
-      loc: { lat: number; lng: number };
-    }>;
-    if (dests.length) {
-      const [drive, walk] = await Promise.all([
-        fetchRouteMatrix(
-          data,
-          dests.map((d) => d.loc),
-          "DRIVE",
-        ),
-        fetchRouteMatrix(
-          data,
-          dests.map((d) => d.loc),
-          "WALK",
-        ),
-      ]);
-      routes =
-        drive.health.status === "ok" && walk.health.status === "ok"
+      // Aggregate Places health: any hard failure degrades the module; all
+      // failing makes it unavailable. This is what lets the UI say
+      // "hospital data unavailable" instead of "0 hospitals".
+      const placesHealths = [schoolsR, hospitalsR, groceriesR, transitR, restaurantsR, banksR].map(
+        (r) => r.health,
+      );
+      const failed = placesHealths.filter((h) => h.status !== "ok");
+      const places: ProviderHealth =
+        failed.length === 0
           ? OK
-          : drive.health.status !== "ok" && walk.health.status !== "ok"
-            ? { status: "unavailable", reason: drive.health.reason ?? walk.health.reason }
-            : { status: "degraded", reason: drive.health.reason ?? walk.health.reason };
-      dests.forEach((d, k) => {
-        d.p.driveMin = drive.value[k]?.minutes ?? null;
-        d.p.driveKm = drive.value[k]?.km ?? null;
-        d.p.walkMin = walk.value[k]?.minutes ?? null;
-      });
+          : failed.length === placesHealths.length
+            ? { status: "unavailable", reason: failed[0]?.reason ?? "all place queries failed" }
+            : { status: "degraded", reason: `${failed.length}/6 place queries failed` };
+
+      let routes: ProviderHealth = OK;
+
+      // Compute walking + driving times for all destinations in two matrix calls.
+      const all = [...schools, ...hospitals, ...groceries, ...transit, ...restaurants, ...banks];
+      const dests = all.map((p, i) => ({ p, i, loc: p.location })).filter((x) => !!x.loc) as Array<{
+        p: PlaceLite;
+        i: number;
+        loc: { lat: number; lng: number };
+      }>;
+      if (dests.length) {
+        const [drive, walk] = await Promise.all([
+          fetchRouteMatrix(
+            data,
+            dests.map((d) => d.loc),
+            "DRIVE",
+          ),
+          fetchRouteMatrix(
+            data,
+            dests.map((d) => d.loc),
+            "WALK",
+          ),
+        ]);
+        routes =
+          drive.health.status === "ok" && walk.health.status === "ok"
+            ? OK
+            : drive.health.status !== "ok" && walk.health.status !== "ok"
+              ? { status: "unavailable", reason: drive.health.reason ?? walk.health.reason }
+              : { status: "degraded", reason: drive.health.reason ?? walk.health.reason };
+        dests.forEach((d, k) => {
+          d.p.driveMin = drive.value[k]?.minutes ?? null;
+          d.p.driveKm = drive.value[k]?.km ?? null;
+          d.p.walkMin = walk.value[k]?.minutes ?? null;
+        });
+      }
+
+      const photoRefs = [
+        ...schools,
+        ...hospitals,
+        ...groceries,
+        ...restaurants,
+        ...transit,
+        ...banks,
+      ]
+        .map((p) => p.photoRef)
+        .filter((x): x is string => !!x)
+        .slice(0, 8);
+
+      const heroPick =
+        [...restaurants, ...schools, ...hospitals, ...groceries].find((p) => p.photoRef) ?? null;
+
+      slice = {
+        categories: { schools, hospitals, groceries, transit, restaurants, banks },
+        photoRefs,
+        heroId: heroPick?.id ?? null,
+        places,
+        routes,
+      };
+
+      // A hard Places failure is never persisted as a fresh snapshot.
+      provenance.places =
+        places.status === "unavailable"
+          ? snap.failedProvenance("places", places.reason)
+          : await snap.writeSlice({
+              key,
+              lat: data.lat,
+              lng: data.lng,
+              parcelId: data.parcelId,
+              slice: "places",
+              status: places.status,
+              reason: places.reason ?? null,
+              payload: slice,
+            });
     }
 
-    // Build photo URLs. Places Photos (New): GET /v1/{name}/media?maxWidthPx=...
-    // The photo endpoint returns a redirect to an image; the browser key can hit it directly.
+    const categories = slice.categories;
+    const all = [
+      ...categories.schools,
+      ...categories.hospitals,
+      ...categories.groceries,
+      ...categories.transit,
+      ...categories.restaurants,
+      ...categories.banks,
+    ];
+
+    // Photo URLs are rebuilt at read time; the browser key is never persisted.
     if (browserKey) {
       for (const p of all) {
         p.photoUrls = (p.photoRefs ?? []).map(
@@ -442,36 +581,35 @@ export const getLocationIntel = createServerFn({ method: "POST" })
         );
       }
     }
-    const photoRefs = [...schools, ...hospitals, ...groceries, ...restaurants, ...transit, ...banks]
-      .map((p) => p.photoRef)
-      .filter((x): x is string => !!x)
-      .slice(0, 8);
     const photos = browserKey
-      ? photoRefs.map(
+      ? slice.photoRefs.map(
           (name) =>
             `https://places.googleapis.com/v1/${name}/media?maxWidthPx=640&key=${browserKey}`,
         )
       : [];
-
-    const hero =
-      [...restaurants, ...schools, ...hospitals, ...groceries].find((p) => p.photoRef) ?? null;
+    const hero = all.find((p) => p.id === slice!.heroId) ?? null;
 
     return {
       ok: true,
       coords: { lat: data.lat, lng: data.lng },
-      elevation: elevationR.value,
-      airQuality: airQualityR.value,
-      categories: { schools, hospitals, groceries, transit, restaurants, banks },
+      elevation,
+      airQuality,
+      categories,
       photos,
       hero,
       providers: {
-        elevation: elevationR.health,
-        airQuality: airQualityR.health,
-        places,
-        routes,
+        elevation: elevationHealth,
+        airQuality: airHealth,
+        places: slice.places,
+        routes: slice.routes,
+      },
+      snapshot: {
+        key,
+        slices: provenance as LocationIntel["snapshot"]["slices"],
       },
     };
   });
+
 
 // -- On-demand place details (reviews, extra photos) ---------------------------
 
