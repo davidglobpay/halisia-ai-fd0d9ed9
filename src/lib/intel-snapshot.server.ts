@@ -48,18 +48,8 @@ export const SLICE_META: Record<IntelSlice, { provider: string; method: string; 
     },
   };
 
-export type SliceProvenance = {
-  slice: IntelSlice;
-  provider: string;
-  status: "ok" | "degraded" | "unavailable";
-  reason?: string | null;
-  method: string;
-  version: string;
-  retrievedAt: string;
-  expiresAt: string;
-  /** True when served from the persisted snapshot rather than a live call. */
-  cached: boolean;
-};
+
+
 
 export type SnapshotRow<T> = {
   payload: T;
