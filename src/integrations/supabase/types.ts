@@ -475,6 +475,66 @@ export type Database = {
           },
         ]
       }
+      location_intel_slices: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          expires_at: string
+          id: string
+          latitude: number
+          location_key: string
+          longitude: number
+          method: string | null
+          parcel_id: string | null
+          payload: Json
+          provider: string
+          reason: string | null
+          retrieved_at: string
+          slice: string
+          status: string
+          updated_at: string
+          version: string | null
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          latitude: number
+          location_key: string
+          longitude: number
+          method?: string | null
+          parcel_id?: string | null
+          payload?: Json
+          provider: string
+          reason?: string | null
+          retrieved_at?: string
+          slice: string
+          status?: string
+          updated_at?: string
+          version?: string | null
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          latitude?: number
+          location_key?: string
+          longitude?: number
+          method?: string | null
+          parcel_id?: string | null
+          payload?: Json
+          provider?: string
+          reason?: string | null
+          retrieved_at?: string
+          slice?: string
+          status?: string
+          updated_at?: string
+          version?: string | null
+        }
+        Relationships: []
+      }
       news_articles: {
         Row: {
           ai_processed: boolean
