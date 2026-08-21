@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import type { SliceProvenance, SnapshotMeta } from "@/lib/intel-snapshot.types";
 
 const GATEWAY = "https://connector-gateway.lovable.dev/google_maps";
 
@@ -66,6 +67,8 @@ export type LocationIntel = {
    * "hospital data unavailable". Never contains keys or secrets.
    */
   providers: ProviderHealthMap;
+  /** Per-dataset provenance + freshness for the persisted snapshot. */
+  snapshot: SnapshotMeta;
 };
 
 export type ProviderStatus = "ok" | "degraded" | "unavailable";
@@ -381,10 +384,7 @@ export const getLocationIntel = createServerFn({ method: "POST" })
     const snap = await import("@/lib/intel-snapshot.server");
     const key = snap.locationKey(data.lat, data.lng, data.parcelId);
     const cached = data.refresh ? {} : await snap.readSnapshot(key);
-    const provenance: Record<string, snapTypes.SliceProvenance> = {} as Record<
-      string,
-      snapTypes.SliceProvenance
-    >;
+    const provenance: SnapshotMeta["slices"] = {};
 
     // -- Elevation slice (stable; long TTL) ------------------------------------
     let elevation: LocationIntel["elevation"] = null;
@@ -605,7 +605,7 @@ export const getLocationIntel = createServerFn({ method: "POST" })
       },
       snapshot: {
         key,
-        slices: provenance as LocationIntel["snapshot"]["slices"],
+        slices: provenance,
       },
     };
   });
