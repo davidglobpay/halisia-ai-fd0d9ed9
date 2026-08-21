@@ -14,7 +14,10 @@
  *   failure is never stamped as a fresh successful retrieval.
  */
 
-export type IntelSlice = "elevation" | "air_quality" | "places";
+import type { IntelSlice, SliceProvenance } from "@/lib/intel-snapshot.types";
+
+export type { IntelSlice, SliceProvenance };
+
 
 /** Dataset-specific freshness, per project data policy. */
 export const SLICE_TTL_MS: Record<IntelSlice, number> = {
