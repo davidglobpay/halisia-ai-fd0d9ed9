@@ -73,6 +73,16 @@ export function ringToLocal(ring: LatLng[], origin: LatLng): Vec2[] {
   return ring.map((p) => gpsToLocal(p, origin));
 }
 
+/**
+ * Single ENU → Three.js world convention shared by every Spatial mesh:
+ * east = +X, up = +Y, north = −Z. Shape/extrude geometries must bake the same
+ * convention with `rotateX(-Math.PI / 2)` so their shape-space +Y (north) axis
+ * lands on world −Z exactly like this mapping — never rotate meshes by +PI/2.
+ */
+export function enuToThree(p: Vec2, y = 0): { x: number; y: number; z: number } {
+  return { x: p.x, y, z: -p.y };
+}
+
 /** Signed area (m²) — positive when the ring winds counter-clockwise. */
 export function signedArea(ring: Vec2[]): number {
   let a = 0;
