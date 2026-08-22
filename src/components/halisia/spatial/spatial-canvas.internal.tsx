@@ -3,14 +3,24 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import {
   buildableEnvelope,
+  enuToThree,
   gpsToLocal,
   polygonAreaSqm,
   sunPosition,
   sunVector,
   type SpatialParcel,
   type SpatialPrototype,
-  type Vec2,
 } from "@/lib/spatial";
+import {
+  disposeObjectTree,
+  flatShapeGeometry,
+  footprintExtrudeGeometry,
+  ringToThreePoints,
+  setbackRibbonGeometry,
+  xrStartErrorMessage,
+  type XrSessionMode,
+  type XrStartStage,
+} from "@/lib/spatial-three";
 
 export type SpatialCanvasHandle = {
   startAr: () => Promise<void>;
@@ -47,16 +57,23 @@ export type SpatialCanvasProps = {
   handleRef?: Ref<SpatialCanvasHandle>;
 };
 
-function shapeFromRing(ring: Vec2[]): THREE.Shape {
-  const shape = new THREE.Shape();
-  ring.forEach((p, i) => (i === 0 ? shape.moveTo(p.x, p.y) : shape.lineTo(p.x, p.y)));
-  shape.closePath();
-  return shape;
-}
-
-function ringToPoints(ring: Vec2[], y: number): THREE.Vector3[] {
-  return [...ring, ring[0]!].map((p) => new THREE.Vector3(p.x, y, -p.y));
-}
+type CanvasState = {
+  renderer: THREE.WebGLRenderer;
+  scene: THREE.Scene;
+  camera: THREE.PerspectiveCamera;
+  controls: OrbitControls;
+  sun: THREE.DirectionalLight;
+  sunMarker: THREE.Mesh;
+  content: THREE.Group;
+  grid: THREE.GridHelper;
+  reticle: THREE.Mesh;
+  session: XRSession | null;
+  onSelect: (() => void) | null;
+  hitTestSource: XRHitTestSource | null;
+  placed: boolean;
+  surfaceFound: boolean;
+  arMode: boolean;
+};
 
 export default function SpatialCanvasInternal({
   parcel,
@@ -74,26 +91,21 @@ export default function SpatialCanvasInternal({
 }: SpatialCanvasProps) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const overlayRef = useRef<HTMLDivElement | null>(null);
+  // Callbacks live in refs so a changing callback identity (e.g. an inline
+  // prop from the route) can never retrigger the renderer bootstrap below.
   const placementCb = useRef(onArPlacementChange);
   placementCb.current = onArPlacementChange;
-  const stateRef = useRef<{
-    renderer: THREE.WebGLRenderer;
-    scene: THREE.Scene;
-    camera: THREE.PerspectiveCamera;
-    controls: OrbitControls;
-    sun: THREE.DirectionalLight;
-    sunMarker: THREE.Mesh;
-    content: THREE.Group;
-    grid: THREE.GridHelper;
-    reticle: THREE.Mesh;
-    hitTestSource: XRHitTestSource | null;
-    placed: boolean;
-    surfaceFound: boolean;
-    arMode: boolean;
-  } | null>(null);
+  const xrStateCb = useRef(onXrStateChange);
+  xrStateCb.current = onXrStateChange;
+  const motionRef = useRef(reducedMotion);
+  motionRef.current = reducedMotion;
+  const stateRef = useRef<CanvasState | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // ---- one-time scene bootstrap -------------------------------------------
+  // Deps intentionally empty: the renderer must never be torn down because XR
+  // state, callback identity or motion preference changed. Reactive values
+  // are read through refs instead.
   useEffect(() => {
     const mount = mountRef.current;
     if (!mount) return;
@@ -122,7 +134,7 @@ export default function SpatialCanvasInternal({
     camera.position.set(48, 42, 58);
 
     const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = !reducedMotion;
+    controls.enableDamping = !motionRef.current;
     controls.maxPolarAngle = Math.PI / 2.05;
     controls.target.set(0, 0, 0);
 
@@ -166,6 +178,8 @@ export default function SpatialCanvasInternal({
       content,
       grid,
       reticle,
+      session: null,
+      onSelect: null,
       hitTestSource: null,
       placed: false,
       surfaceFound: false,
@@ -205,7 +219,7 @@ export default function SpatialCanvasInternal({
           }
         }
       }
-      if (!reducedMotion) {
+      if (!motionRef.current) {
         content.children.forEach((child) => {
           if (child.userData["pulse"]) {
             const s = 1 + Math.sin(t * 3 + (child.userData["phase"] as number)) * 0.12;
@@ -220,6 +234,14 @@ export default function SpatialCanvasInternal({
     const onSessionEnd = () => {
       const st = stateRef.current;
       if (st) {
+        try {
+          st.hitTestSource?.cancel();
+        } catch {
+          /* source already released */
+        }
+        if (st.session && st.onSelect) st.session.removeEventListener("select", st.onSelect);
+        st.session = null;
+        st.onSelect = null;
         st.hitTestSource = null;
         st.placed = false;
         st.surfaceFound = false;
@@ -232,44 +254,61 @@ export default function SpatialCanvasInternal({
         st.content.scale.setScalar(1);
       }
       placementCb.current?.({ hitTest: false, surfaceFound: false, placed: false });
-      onXrStateChange?.(false);
+      xrStateCb.current?.(false);
     };
-    const onSessionStart = () => onXrStateChange?.(true);
+    const onSessionStart = () => xrStateCb.current?.(true);
     renderer.xr.addEventListener("sessionstart", onSessionStart);
     renderer.xr.addEventListener("sessionend", onSessionEnd);
 
     return () => {
       renderer.xr.removeEventListener("sessionstart", onSessionStart);
       renderer.xr.removeEventListener("sessionend", onSessionEnd);
+      const st = stateRef.current;
+      if (st?.session && st.onSelect) st.session.removeEventListener("select", st.onSelect);
+      try {
+        st?.hitTestSource?.cancel();
+      } catch {
+        /* source already released */
+      }
       renderer.setAnimationLoop(null);
       ro.disconnect();
       controls.dispose();
+      // Release GPU resources held by every mesh/line in the scene before the
+      // renderer itself is disposed.
+      disposeObjectTree(scene);
       renderer.dispose();
       if (renderer.domElement.parentNode === mount) mount.removeChild(renderer.domElement);
       stateRef.current = null;
     };
-  }, [reducedMotion, onXrStateChange]);
+  }, []);
+
+  // Damping follows the reduced-motion preference without a renderer rebuild.
+  useEffect(() => {
+    const s = stateRef.current;
+    if (s) s.controls.enableDamping = !reducedMotion;
+  }, [reducedMotion]);
 
   // ---- parcel geometry ----------------------------------------------------
   useEffect(() => {
     const s = stateRef.current;
     if (!s) return;
     const { content } = s;
+    // Free GPU resources of the previous build before swapping content.
+    disposeObjectTree(content);
     content.clear();
 
     const env = buildableEnvelope(parcel);
     if (env.ring.length < 3) return;
 
-    // Ground plate
+    // Ground plate (convention baked into the geometry: north → −Z)
     const ground = new THREE.Mesh(
-      new THREE.ShapeGeometry(shapeFromRing(env.ring)),
+      flatShapeGeometry(env.ring),
       new THREE.MeshStandardMaterial({
         color: 0x0f1a15,
         roughness: 0.95,
         side: THREE.DoubleSide,
       }),
     );
-    ground.rotation.x = Math.PI / 2;
     ground.position.y = 0;
     ground.receiveShadow = true;
     content.add(ground);
@@ -277,17 +316,15 @@ export default function SpatialCanvasInternal({
     // Parcel boundary
     content.add(
       new THREE.Line(
-        new THREE.BufferGeometry().setFromPoints(ringToPoints(env.ring, 0.08)),
+        new THREE.BufferGeometry().setFromPoints(ringToThreePoints(env.ring, 0.08)),
         new THREE.LineBasicMaterial({ color: 0x008f55 }),
       ),
     );
 
     // Setback ribbon (band between boundary and buildable footprint)
     if (showSetback && env.setbackM > 0) {
-      const outer = shapeFromRing(env.ring);
-      outer.holes.push(new THREE.Path(env.footprint.map((p) => new THREE.Vector2(p.x, p.y))));
       const ribbon = new THREE.Mesh(
-        new THREE.ShapeGeometry(outer),
+        setbackRibbonGeometry(env.ring, env.footprint),
         new THREE.MeshBasicMaterial({
           color: 0xe12635,
           transparent: true,
@@ -295,12 +332,11 @@ export default function SpatialCanvasInternal({
           side: THREE.DoubleSide,
         }),
       );
-      ribbon.rotation.x = Math.PI / 2;
       ribbon.position.y = 0.12;
       content.add(ribbon);
       content.add(
         new THREE.Line(
-          new THREE.BufferGeometry().setFromPoints(ringToPoints(env.footprint, 0.16)),
+          new THREE.BufferGeometry().setFromPoints(ringToThreePoints(env.footprint, 0.16)),
           new THREE.LineDashedMaterial({ color: 0xe12635 }),
         ),
       );
@@ -308,11 +344,7 @@ export default function SpatialCanvasInternal({
 
     // Zoning envelope — extruded buildable volume to the permitted height
     if (showEnvelope && env.footprint.length >= 3) {
-      const geo = new THREE.ExtrudeGeometry(shapeFromRing(env.footprint), {
-        depth: env.heightM,
-        bevelEnabled: false,
-      });
-      geo.rotateX(-Math.PI / 2);
+      const geo = footprintExtrudeGeometry(env.footprint, env.heightM);
       const envelope = new THREE.Mesh(
         geo,
         new THREE.MeshStandardMaterial({
@@ -335,6 +367,7 @@ export default function SpatialCanvasInternal({
     if (showBeacons) {
       parcel.beacons.forEach((b, i) => {
         const local = gpsToLocal({ lat: b.lat, lng: b.lng }, parcel.centroid);
+        const base = enuToThree(local, 2);
         const pillar = new THREE.Mesh(
           new THREE.CylinderGeometry(0.22, 0.22, 4, 12, 1, true),
           new THREE.MeshBasicMaterial({
@@ -344,13 +377,13 @@ export default function SpatialCanvasInternal({
             side: THREE.DoubleSide,
           }),
         );
-        pillar.position.set(local.x, 2, -local.y);
+        pillar.position.set(base.x, base.y, base.z);
         content.add(pillar);
         const knob = new THREE.Mesh(
           new THREE.OctahedronGeometry(0.85),
           new THREE.MeshBasicMaterial({ color: 0xd4af37 }),
         );
-        knob.position.set(local.x, 4.4, -local.y);
+        knob.position.set(base.x, 4.4, base.z);
         knob.userData["pulse"] = true;
         knob.userData["phase"] = i;
         content.add(knob);
@@ -423,19 +456,21 @@ export default function SpatialCanvasInternal({
     s.sun.target.updateMatrixWorld();
   }, [sunHour, dayOfYear, parcel]);
 
-  const enterXr = async (sessionMode: "ar" | "vr") => {
+  const enterXr = async (sessionMode: XrSessionMode) => {
     const s = stateRef.current;
     if (!s) return;
+    // Clear any stale error before a new attempt so recovery is visible.
+    setError(null);
+    const fail = (stage: XrStartStage, err?: unknown): never => {
+      const message = xrStartErrorMessage(sessionMode, stage, err);
+      setError(message);
+      throw new Error(message);
+    };
     const xr = (navigator as Navigator & { xr?: XRSystem }).xr;
     const wanted = sessionMode === "ar" ? "immersive-ar" : "immersive-vr";
-    if (!xr || !(await xr.isSessionSupported(wanted).catch(() => false))) {
-      setError(
-        sessionMode === "ar"
-          ? "Immersive AR is not available on this device or browser."
-          : "Immersive VR is not available on this device or browser.",
-      );
-      return;
-    }
+    if (!xr) fail("no-webxr");
+    const supported = await xr!.isSessionSupported(wanted).catch(() => false);
+    if (!supported) fail("unsupported");
     const init: XRSessionInit =
       sessionMode === "ar"
         ? {
@@ -444,60 +479,77 @@ export default function SpatialCanvasInternal({
             ...(overlayRef.current ? { domOverlay: { root: overlayRef.current } } : {}),
           }
         : { optionalFeatures: ["local-floor", "bounded-floor"] };
+    let session: XRSession;
     try {
-      const session = await xr.requestSession(wanted, init);
-      await s.renderer.xr.setSession(session);
-      s.arMode = sessionMode === "ar";
-      if (s.arMode) {
-        // Tabletop twin: scale the surveyed parcel to fit ~1.2 m so it can be
-        // anchored on a floor or table in the user's room.
-        const box = new THREE.Box3().setFromObject(s.content);
-        const span = Math.max(box.getSize(new THREE.Vector3()).length(), 1);
-        s.content.scale.setScalar(1.2 / span);
-        s.content.visible = false;
-        s.grid.visible = false;
-        s.placed = false;
-        s.surfaceFound = false;
-        placementCb.current?.({ hitTest: false, surfaceFound: false, placed: false });
-        try {
-          const viewerSpace = await session.requestReferenceSpace("viewer");
-          const source = await session.requestHitTestSource?.({ space: viewerSpace });
-          s.hitTestSource = source ?? null;
-          placementCb.current?.({
-            hitTest: Boolean(source),
-            surfaceFound: false,
-            placed: false,
-          });
-          if (!source) {
-            // No hit testing on this runtime — show the twin in front of the user.
-            s.content.visible = true;
-            s.content.position.set(0, -0.4, -1.2);
-            s.placed = true;
-            placementCb.current?.({ hitTest: false, surfaceFound: false, placed: true });
-          }
-        } catch {
-          s.hitTestSource = null;
-          s.content.visible = true;
-          s.content.position.set(0, -0.4, -1.2);
-          s.placed = true;
-          placementCb.current?.({ hitTest: false, surfaceFound: false, placed: true });
-        }
-        session.addEventListener("select", () => {
-          const st = stateRef.current;
-          if (!st || st.placed || !st.reticle.visible) return;
-          st.content.position.setFromMatrixPosition(st.reticle.matrix);
-          st.content.quaternion.setFromRotationMatrix(st.reticle.matrix);
-          st.content.visible = true;
-          st.reticle.visible = false;
-          st.placed = true;
-          placementCb.current?.({ hitTest: true, surfaceFound: true, placed: true });
-        });
-      }
-      onXrStateChange?.(true, sessionMode);
-      session.addEventListener("end", () => onXrStateChange?.(false, sessionMode));
-    } catch {
-      setError("Could not start the immersive session.");
+      session = await xr!.requestSession(wanted, init);
+    } catch (err) {
+      fail("request-failed", err);
     }
+    try {
+      await s.renderer.xr.setSession(session!);
+    } catch (err) {
+      try {
+        await session!.end();
+      } catch {
+        /* session already closed */
+      }
+      fail("request-failed", err);
+    }
+    // Successful start — make sure no stale overlay survives.
+    setError(null);
+    s.session = session!;
+    s.arMode = sessionMode === "ar";
+    if (s.arMode) {
+      // Tabletop twin: scale the surveyed parcel to fit ~1.2 m so it can be
+      // anchored on a floor or table in the user's room.
+      const box = new THREE.Box3().setFromObject(s.content);
+      const span = Math.max(box.getSize(new THREE.Vector3()).length(), 1);
+      s.content.scale.setScalar(1.2 / span);
+      s.content.visible = false;
+      s.grid.visible = false;
+      s.placed = false;
+      s.surfaceFound = false;
+      placementCb.current?.({ hitTest: false, surfaceFound: false, placed: false });
+      const showInFront = () => {
+        s.hitTestSource = null;
+        s.content.visible = true;
+        s.content.position.set(0, -0.4, -1.2);
+        s.placed = true;
+        placementCb.current?.({ hitTest: false, surfaceFound: false, placed: true });
+      };
+      try {
+        const viewerSpace = await session!.requestReferenceSpace("viewer");
+        const source = await session!.requestHitTestSource?.({ space: viewerSpace });
+        s.hitTestSource = source ?? null;
+        placementCb.current?.({
+          hitTest: Boolean(source),
+          surfaceFound: false,
+          placed: false,
+        });
+        if (!source) {
+          // No hit testing on this runtime — show the twin in front of the user.
+          showInFront();
+        }
+      } catch {
+        showInFront();
+      }
+      const onSelect = () => {
+        const st = stateRef.current;
+        if (!st || st.placed || !st.reticle.visible) return;
+        st.content.position.setFromMatrixPosition(st.reticle.matrix);
+        st.content.quaternion.setFromRotationMatrix(st.reticle.matrix);
+        st.content.visible = true;
+        st.reticle.visible = false;
+        st.placed = true;
+        placementCb.current?.({ hitTest: true, surfaceFound: true, placed: true });
+      };
+      s.onSelect = onSelect;
+      session!.addEventListener("select", onSelect);
+    }
+    xrStateCb.current?.(true, sessionMode);
+    session!.addEventListener("end", () => xrStateCb.current?.(false, sessionMode), {
+      once: true,
+    });
   };
 
   useImperativeHandle(
@@ -532,6 +584,7 @@ export default function SpatialCanvasInternal({
         });
       },
     }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- enterXr reads live state via refs
     [],
   );
 
@@ -548,7 +601,10 @@ export default function SpatialCanvasInternal({
         </p>
       </div>
       {error && (
-        <div className="absolute inset-0 flex items-center justify-center p-6 text-center text-sm text-muted-foreground">
+        <div
+          data-testid="spatial-canvas-error"
+          className="absolute inset-0 flex items-center justify-center p-6 text-center text-sm text-muted-foreground"
+        >
           {error}
         </div>
       )}
