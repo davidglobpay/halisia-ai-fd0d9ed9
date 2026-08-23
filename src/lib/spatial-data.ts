@@ -1,5 +1,10 @@
 import { supabase } from "@/integrations/supabase/client";
-import { geometryToRing, type SpatialParcel, type SpatialPrototype } from "./spatial";
+import {
+  distanceMeters,
+  geometryToRing,
+  type SpatialParcel,
+  type SpatialPrototype,
+} from "./spatial";
 
 type Row = Record<string, unknown>;
 
