@@ -1,5 +1,10 @@
 import { supabase } from "@/integrations/supabase/client";
-import { geometryToRing, type SpatialParcel, type SpatialPrototype } from "./spatial";
+import {
+  distanceMeters,
+  geometryToRing,
+  type SpatialParcel,
+  type SpatialPrototype,
+} from "./spatial";
 
 type Row = Record<string, unknown>;
 
@@ -114,14 +119,7 @@ export async function fetchSpatialListings(): Promise<SpatialListing[]> {
   }));
 }
 
-/** Haversine distance in metres — used to bind listings to nearby parcels. */
+/** Haversine distance in metres — delegates to the single tested helper. */
 export function distanceM(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
-  const R = 6_371_000;
-  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
-  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
-  const lat1 = (a.lat * Math.PI) / 180;
-  const lat2 = (b.lat * Math.PI) / 180;
-  const h =
-    Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
-  return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+  return distanceMeters(a, b);
 }

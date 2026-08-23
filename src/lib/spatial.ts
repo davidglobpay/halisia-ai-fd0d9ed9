@@ -73,6 +73,24 @@ export function ringToLocal(ring: LatLng[], origin: LatLng): Vec2[] {
   return ring.map((p) => gpsToLocal(p, origin));
 }
 
+const EARTH_RADIUS_M = 6_371_000;
+
+/**
+ * Great-circle (haversine) distance in metres between two WGS84 points.
+ * The single distance helper for every GPS feature — never approximate with
+ * raw degree differences (longitude degrees shrink with latitude, so
+ * `hypot(dLat, dLng) * 111_320` mismeasures east–west movement).
+ */
+export function distanceMeters(a: LatLng, b: LatLng): number {
+  const rad = Math.PI / 180;
+  const dLat = (b.lat - a.lat) * rad;
+  const dLng = (b.lng - a.lng) * rad;
+  const lat1 = a.lat * rad;
+  const lat2 = b.lat * rad;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 2 * EARTH_RADIUS_M * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
 /**
  * Single ENU → Three.js world convention shared by every Spatial mesh:
  * east = +X, up = +Y, north = −Z. Shape/extrude geometries must bake the same

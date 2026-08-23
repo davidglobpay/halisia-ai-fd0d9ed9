@@ -30,6 +30,11 @@ import {
   fetchSpatialPrototypes,
 } from "@/lib/spatial-data";
 import { buildableEnvelope, polygonPerimeterM, ringToLocal, sunPosition } from "@/lib/spatial";
+import {
+  arFallbackMessage,
+  arPlatformFromUA,
+  type ArPlatform,
+} from "@/lib/spatial-platform";
 
 const TITLE = "Spatial AR / VR Land Studio — HALISIA.AI";
 const DESCRIPTION =
@@ -84,8 +89,14 @@ function SpatialPage() {
   });
   const [xrError, setXrError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
+  const [arPlatform, setArPlatform] = useState<ArPlatform>("desktop");
   const { request: requestLocation, location, error: locationError, loading: locating } =
     useMyLocation();
+
+  // Platform detection is client-only (user agent + touch points).
+  useEffect(() => {
+    setArPlatform(arPlatformFromUA(navigator.userAgent, navigator.maxTouchPoints));
+  }, []);
 
   useEffect(() => {
     if (!parcels.length) return;
@@ -243,7 +254,7 @@ function SpatialPage() {
                     </span>
                   )}
                 </div>
-                <div className="absolute bottom-3 right-3 flex gap-2">
+                <div className="absolute bottom-3 right-3 flex max-w-[calc(100%-1.5rem)] flex-wrap justify-end gap-2">
                   <KitButton
                     size="sm"
                     variant="secondary"
@@ -355,7 +366,12 @@ function SpatialPage() {
               <Surface elevation={1} className="p-4 text-xs" data-testid="spatial-ar-fallback">
                 <p className="text-muted-foreground">
                   {xrError ??
-                    "This browser does not expose WebXR immersive-AR. Use the native viewers below — the 3D studio above stays fully interactive."}
+                    arFallbackMessage({
+                      platform: arPlatform,
+                      prototypeSelected: Boolean(prototype),
+                      hasUsdz: Boolean(usdz),
+                      hasGltf: Boolean(gltf),
+                    })}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {usdz && (
@@ -376,11 +392,6 @@ function SpatialPage() {
                       <Boxes className="h-3.5 w-3.5 text-accent" aria-hidden="true" /> Open in Scene
                       Viewer (Android)
                     </a>
-                  )}
-                  {!usdz && !sceneViewerHref && (
-                    <span className="text-muted-foreground">
-                      Pick a massing prototype to unlock the native AR viewers.
-                    </span>
                   )}
                 </div>
               </Surface>
