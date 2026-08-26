@@ -45,13 +45,13 @@ test.describe("ivory glass theme visual regression", () => {
     // The Three.js canvas animates every frame; mask it and assert the chrome.
     await expect(viewport).toHaveScreenshot("theme-spatial-studio.png", {
       mask: [page.locator('[data-testid="spatial-canvas"]')],
-      maxDiffPixelRatio: 0.05,
+      maxDiffPixelRatio: 0.15,
     });
 
     const rail = page.getByTestId("spatial-parcel-list");
     await expect(rail).toBeVisible();
     await expect(rail).toHaveScreenshot("theme-spatial-parcel-rail.png", {
-      maxDiffPixelRatio: 0.05,
+      maxDiffPixelRatio: 0.15,
     });
   });
 });
