@@ -160,7 +160,7 @@ export function DataPipeline() {
                   type="button"
                   onClick={() => openStage(s, i)}
                   aria-label={`${s.title} — open stage details`}
-                  className={`glass block h-full w-full rounded-2xl border text-left ${tone.ring} p-4 ${
+                  className={`holo-tile block h-full w-full rounded-2xl border text-left ${tone.ring} p-4 ${
                     reduced ? "" : "transition-all duration-300 hover:-translate-y-0.5"
                   } transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent`}
                 >

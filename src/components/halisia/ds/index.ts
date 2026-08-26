@@ -13,6 +13,8 @@ export { SegmentedTabs, type SegmentedTabItem, type SegmentedTabsProps } from ".
 export { SectionHeading, type SectionHeadingProps } from "./section-heading";
 export { KenyaMotif, type KenyaMotifProps } from "./kenya-motif";
 export { HCarousel } from "./h-carousel";
+export { HoloStack, type HoloItem, type HoloStackProps } from "./holo-stack";
+export { HoloTile, HoloTileRail, type HoloDetail, type HoloTileProps } from "./holo-tile";
 export {
   Skeleton,
   SkeletonCard,
