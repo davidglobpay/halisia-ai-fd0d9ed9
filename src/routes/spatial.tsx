@@ -81,6 +81,8 @@ function SpatialPage() {
   const startArRef = useRef<HTMLButtonElement>(null);
   const exitXrRef = useRef<HTMLButtonElement>(null);
   const parcelListRef = useRef<HTMLUListElement>(null);
+  // Control that opened the capability/fallback panel; focus returns here.
+  const panelInvokerRef = useRef<HTMLElement | null>(null);
 
   const parcelsQ = useQuery({ queryKey: ["spatial", "parcels"], queryFn: fetchSpatialParcels });
   const protosQ = useQuery({
