@@ -383,7 +383,9 @@ export function geometryToRing(geometry: unknown): LatLng[] {
     .map((pair) => {
       if (!Array.isArray(pair) || pair.length < 2) return null;
       const [lng, lat] = pair as [number, number];
-      return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
+      // Reject non-finite values and coordinates outside the Kenya WGS84
+      // envelope (e.g. Arc 1960 / UTM 37S eastings/northings).
+      return isPlausibleKenyaLatLng({ lat, lng }) ? { lat, lng } : null;
     })
     .filter((p): p is LatLng => p !== null);
   // Drop the duplicated closing vertex if present.
