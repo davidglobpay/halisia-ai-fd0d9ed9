@@ -23,6 +23,8 @@ jobs:
         run: bunx eslint . --max-warnings=0
       - name: Typecheck
         run: bun run typecheck
+      - name: Unit tests (vitest)
+        run: bunx vitest run
       - name: Vite build (development)
         run: bunx vite build --mode development
       - name: Vite build (production)

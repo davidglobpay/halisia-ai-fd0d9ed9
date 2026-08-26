@@ -16,7 +16,13 @@ function geolocationAvailable(): boolean {
   return typeof window !== "undefined" && "geolocation" in navigator;
 }
 
+/**
+ * Test-only backdoor used by the Playwright "permission denied" specs.
+ * Gated to dev/test builds so a production page can never be tricked into
+ * reporting a denied permission it does not have.
+ */
 function forceDenied(): boolean {
+  if (!import.meta.env.DEV && !import.meta.env["MODE"]?.startsWith("test")) return false;
   return typeof window !== "undefined" && Boolean(window.__halisiaForceGeolocationDenied);
 }
 

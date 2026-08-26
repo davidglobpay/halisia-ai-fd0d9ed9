@@ -101,6 +101,28 @@ export default function SpatialCanvasInternal({
   motionRef.current = reducedMotion;
   const stateRef = useRef<CanvasState | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // GPU context loss (backgrounding mid-AR, incoming call, memory pressure).
+  const [contextLost, setContextLost] = useState(false);
+  // Bumped to force the geometry + sun effects to rebuild the scene.
+  const [rebuildNonce, setRebuildNonce] = useState(0);
+  // Live AR placement mirrored into React so the DOM overlay can show it.
+  const [arPlacement, setArPlacement] = useState<ArPlacementState>({
+    hitTest: false,
+    surfaceFound: false,
+    placed: false,
+  });
+  const [arSessionActive, setArSessionActive] = useState(false);
+  // Requested session mode, captured before the session starts so the
+  // "sessionstart" handler can report ar/vr instead of a null window.
+  const pendingMode = useRef<XrSessionMode | null>(null);
+  // Re-show the twin in front of the viewer when hit testing is unavailable.
+  const showInFrontRef = useRef<(() => void) | null>(null);
+  // Stable emitter: updates local overlay state and notifies the route.
+  const emitRef = useRef<(s: ArPlacementState) => void>(() => {});
+  emitRef.current = (s: ArPlacementState) => {
+    setArPlacement(s);
+    placementCb.current?.(s);
+  };
 
   // ---- one-time scene bootstrap -------------------------------------------
   // Deps intentionally empty: the renderer must never be torn down because XR
@@ -196,7 +218,7 @@ export default function SpatialCanvasInternal({
     ro.observe(mount);
 
     let t = 0;
-    renderer.setAnimationLoop((_time, frame) => {
+    const renderLoop: XRFrameRequestCallback = (_time, frame) => {
       t += 0.005;
       const st = stateRef.current;
       if (st?.arMode && frame) {
@@ -210,12 +232,12 @@ export default function SpatialCanvasInternal({
             st.reticle.matrix.fromArray(pose.transform.matrix);
             if (!st.surfaceFound) {
               st.surfaceFound = true;
-              placementCb.current?.({ hitTest: true, surfaceFound: true, placed: false });
+              emitRef.current({ hitTest: true, surfaceFound: true, placed: false });
             }
           } else if (st.surfaceFound) {
             st.reticle.visible = false;
             st.surfaceFound = false;
-            placementCb.current?.({ hitTest: true, surfaceFound: false, placed: false });
+            emitRef.current({ hitTest: true, surfaceFound: false, placed: false });
           }
         }
       }
@@ -229,7 +251,24 @@ export default function SpatialCanvasInternal({
       }
       if (!renderer.xr.isPresenting) controls.update();
       renderer.render(scene, camera);
-    });
+    };
+    renderer.setAnimationLoop(renderLoop);
+
+    // ---- GPU context loss / restore ---------------------------------------
+    const canvas = renderer.domElement;
+    const onContextLost = (event: Event) => {
+      event.preventDefault();
+      renderer.setAnimationLoop(null);
+      setContextLost(true);
+    };
+    const onContextRestored = () => {
+      setContextLost(false);
+      renderer.setAnimationLoop(renderLoop);
+      // Force the geometry + sun effects to rebuild the scene graph.
+      setRebuildNonce((n) => n + 1);
+    };
+    canvas.addEventListener("webglcontextlost", onContextLost);
+    canvas.addEventListener("webglcontextrestored", onContextRestored);
 
     const onSessionEnd = () => {
       const st = stateRef.current;
@@ -253,16 +292,30 @@ export default function SpatialCanvasInternal({
         st.content.quaternion.identity();
         st.content.scale.setScalar(1);
       }
-      placementCb.current?.({ hitTest: false, surfaceFound: false, placed: false });
-      xrStateCb.current?.(false);
+      // Shadows are restored after the passthrough session.
+      renderer.shadowMap.enabled = true;
+      setArSessionActive(false);
+      emitRef.current({ hitTest: false, surfaceFound: false, placed: false });
+      // Single end-notification path (no per-session "end" listener).
+      xrStateCb.current?.(false, pendingMode.current ?? undefined);
+      pendingMode.current = null;
+      showInFrontRef.current = null;
     };
-    const onSessionStart = () => xrStateCb.current?.(true);
+    const onSessionStart = () => {
+      const wanted = pendingMode.current ?? undefined;
+      setArSessionActive(wanted === "ar");
+      // Shadow mapping is pure cost on a 1.2 m passthrough twin.
+      if (wanted === "ar") renderer.shadowMap.enabled = false;
+      xrStateCb.current?.(true, wanted);
+    };
     renderer.xr.addEventListener("sessionstart", onSessionStart);
     renderer.xr.addEventListener("sessionend", onSessionEnd);
 
     return () => {
       renderer.xr.removeEventListener("sessionstart", onSessionStart);
       renderer.xr.removeEventListener("sessionend", onSessionEnd);
+      canvas.removeEventListener("webglcontextlost", onContextLost);
+      canvas.removeEventListener("webglcontextrestored", onContextRestored);
       const st = stateRef.current;
       if (st?.session && st.onSelect) st.session.removeEventListener("select", st.onSelect);
       try {
@@ -277,6 +330,13 @@ export default function SpatialCanvasInternal({
       // renderer itself is disposed.
       disposeObjectTree(scene);
       renderer.dispose();
+      // dispose() alone does not reliably free the underlying context on
+      // WebKit, and iOS Safari caps concurrent live WebGL contexts.
+      try {
+        renderer.forceContextLoss();
+      } catch {
+        /* context already gone */
+      }
       if (renderer.domElement.parentNode === mount) mount.removeChild(renderer.domElement);
       stateRef.current = null;
     };
@@ -438,7 +498,20 @@ export default function SpatialCanvasInternal({
     s.camera.position.set(size * 0.55, size * (mode === "masterplan" ? 0.75 : 0.45), size * 0.7);
     s.controls.target.set(0, mode === "masterplan" ? 6 : 2, 0);
     s.controls.update();
-  }, [parcel, prototype, showBeacons, showSetback, showEnvelope, mode]);
+
+    // Fit the directional-light shadow frustum to the scene: the default
+    // ±5 unit orthographic camera covers almost nothing at parcel scale.
+    const extent = box.getSize(new THREE.Vector3());
+    const half = Math.max(extent.x, extent.z, 20) * 0.75 + 20;
+    const cam = s.sun.shadow.camera;
+    cam.left = -half;
+    cam.right = half;
+    cam.top = half;
+    cam.bottom = -half;
+    cam.near = 1;
+    cam.far = 160 + half * 2;
+    cam.updateProjectionMatrix();
+  }, [parcel, prototype, showBeacons, showSetback, showEnvelope, mode, rebuildNonce]);
 
   // ---- sun path -----------------------------------------------------------
   useEffect(() => {
@@ -454,15 +527,19 @@ export default function SpatialCanvasInternal({
     s.sunMarker.visible = pos.isDay;
     s.sun.target.position.set(0, 0, 0);
     s.sun.target.updateMatrixWorld();
-  }, [sunHour, dayOfYear, parcel]);
+  }, [sunHour, dayOfYear, parcel, rebuildNonce]);
 
   const enterXr = async (sessionMode: XrSessionMode) => {
     const s = stateRef.current;
     if (!s) return;
     // Clear any stale error before a new attempt so recovery is visible.
     setError(null);
+    // Captured before the session starts so "sessionstart"/"sessionend"
+    // report the real mode instead of an undefined window.
+    pendingMode.current = sessionMode;
     const fail = (stage: XrStartStage, err?: unknown): never => {
       const message = xrStartErrorMessage(sessionMode, stage, err);
+      pendingMode.current = null;
       setError(message);
       throw new Error(message);
     };
@@ -509,19 +586,19 @@ export default function SpatialCanvasInternal({
       s.grid.visible = false;
       s.placed = false;
       s.surfaceFound = false;
-      placementCb.current?.({ hitTest: false, surfaceFound: false, placed: false });
+      emitRef.current({ hitTest: false, surfaceFound: false, placed: false });
       const showInFront = () => {
         s.hitTestSource = null;
         s.content.visible = true;
         s.content.position.set(0, -0.4, -1.2);
         s.placed = true;
-        placementCb.current?.({ hitTest: false, surfaceFound: false, placed: true });
+        emitRef.current({ hitTest: false, surfaceFound: false, placed: true });
       };
       try {
         const viewerSpace = await session!.requestReferenceSpace("viewer");
         const source = await session!.requestHitTestSource?.({ space: viewerSpace });
         s.hitTestSource = source ?? null;
-        placementCb.current?.({
+        emitRef.current({
           hitTest: Boolean(source),
           surfaceFound: false,
           placed: false,
@@ -541,20 +618,19 @@ export default function SpatialCanvasInternal({
         st.content.visible = true;
         st.reticle.visible = false;
         st.placed = true;
-        placementCb.current?.({ hitTest: true, surfaceFound: true, placed: true });
+        emitRef.current({ hitTest: true, surfaceFound: true, placed: true });
       };
       s.onSelect = onSelect;
       session!.addEventListener("select", onSelect);
+      showInFrontRef.current = showInFront;
     }
-    xrStateCb.current?.(true, sessionMode);
-    session!.addEventListener("end", () => xrStateCb.current?.(false, sessionMode), {
-      once: true,
-    });
   };
 
-  useImperativeHandle(
-    handleRef,
-    () => ({
+  // Local mirror of the imperative handle so the in-session DOM overlay can
+  // drive the same actions as the route's control rail.
+  const apiRef = useRef<SpatialCanvasHandle | null>(null);
+  useImperativeHandle(handleRef, () => {
+    const api: SpatialCanvasHandle = {
       async startAr() {
         await enterXr("ar");
       },
@@ -577,15 +653,22 @@ export default function SpatialCanvasInternal({
         s.placed = false;
         s.surfaceFound = false;
         s.content.visible = false;
-        placementCb.current?.({
-          hitTest: Boolean(s.hitTestSource),
+        if (!s.hitTestSource) {
+          // No hit testing on this runtime: re-anchor in front of the viewer
+          // instead of hiding the twin with no way to bring it back.
+          showInFrontRef.current?.();
+          return;
+        }
+        emitRef.current({
+          hitTest: true,
           surfaceFound: false,
           placed: false,
         });
       },
-    }),
-    [],
-  );
+    };
+    apiRef.current = api;
+    return api;
+  }, []);
 
   return (
     <div
@@ -595,6 +678,30 @@ export default function SpatialCanvasInternal({
     >
       {/* DOM overlay surfaced inside the immersive AR session. */}
       <div ref={overlayRef} className="pointer-events-none absolute inset-x-0 bottom-0 p-3">
+        {arSessionActive && (
+          <div
+            data-testid="spatial-ar-overlay-controls"
+            className="pointer-events-auto mx-auto mb-2 flex max-w-md items-center justify-center gap-2"
+          >
+            <button
+              type="button"
+              data-testid="spatial-ar-overlay-replace"
+              onClick={() => apiRef.current?.resetPlacement()}
+              disabled={!arPlacement.placed}
+              className="rounded-full bg-black/70 px-4 py-2 text-[11px] font-medium text-white disabled:opacity-40"
+            >
+              Re-place
+            </button>
+            <button
+              type="button"
+              data-testid="spatial-ar-overlay-exit"
+              onClick={() => apiRef.current?.endXr()}
+              className="rounded-full bg-black/70 px-4 py-2 text-[11px] font-medium text-white"
+            >
+              Exit AR
+            </button>
+          </div>
+        )}
         <p className="mx-auto max-w-md rounded-full bg-black/60 px-3 py-1.5 text-center text-[11px] text-white/85">
           Approximate spatial visualization — not a cadastral survey.
         </p>

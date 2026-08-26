@@ -34,7 +34,33 @@ export type SpatialParcel = {
   surveyVerifiedOn: string | null;
   deedHash: string | null;
   beacons: SpatialBeacon[];
+  /**
+   * Coordinate sanity of the stored survey geometry. "out-of-bounds" usually
+   * means the source data is in a projected CRS (e.g. Arc 1960 / UTM 37S).
+   */
+  coordinateIssue?: CoordinateIssue;
 };
+
+export type CoordinateIssue = "none" | "out-of-bounds" | "invalid";
+
+/** WGS84 envelope covering the Republic of Kenya (with a small margin). */
+export const KENYA_BOUNDS = {
+  minLat: -5.0,
+  maxLat: 5.5,
+  minLng: 33.5,
+  maxLng: 42.0,
+} as const;
+
+/** True when a coordinate is finite WGS84 lat/lng inside the Kenya envelope. */
+export function isPlausibleKenyaLatLng(p: LatLng): boolean {
+  if (!p || !Number.isFinite(p.lat) || !Number.isFinite(p.lng)) return false;
+  return (
+    p.lat >= KENYA_BOUNDS.minLat &&
+    p.lat <= KENYA_BOUNDS.maxLat &&
+    p.lng >= KENYA_BOUNDS.minLng &&
+    p.lng <= KENYA_BOUNDS.maxLng
+  );
+}
 
 export type SpatialPrototype = {
   id: string;
@@ -257,7 +283,9 @@ export function sunPosition(
         ),
       ),
     ) / rad;
-  azimuth = hourAngle > 0 ? (540 - azimuth) % 360 : azimuth;
+  // NOAA convention: afternoon (hourAngle > 0) → (az + 180) % 360,
+  // morning (hourAngle <= 0) → (540 - az) % 360.
+  azimuth = hourAngle > 0 ? (azimuth + 180) % 360 : (540 - azimuth) % 360;
   return { altitudeDeg: altitude, azimuthDeg: azimuth, isDay: altitude > 0 };
 }
 
@@ -355,7 +383,9 @@ export function geometryToRing(geometry: unknown): LatLng[] {
     .map((pair) => {
       if (!Array.isArray(pair) || pair.length < 2) return null;
       const [lng, lat] = pair as [number, number];
-      return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
+      // Reject non-finite values and coordinates outside the Kenya WGS84
+      // envelope (e.g. Arc 1960 / UTM 37S eastings/northings).
+      return isPlausibleKenyaLatLng({ lat, lng }) ? { lat, lng } : null;
     })
     .filter((p): p is LatLng => p !== null);
   // Drop the duplicated closing vertex if present.
