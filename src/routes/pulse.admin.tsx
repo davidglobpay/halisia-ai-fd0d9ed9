@@ -103,7 +103,11 @@ function PulseAdmin() {
   };
 
   if (loading || (user && roles.isLoading)) {
-    return <main className="mx-auto max-w-6xl px-4 py-16 text-sm text-muted-foreground">Checking access…</main>;
+    return (
+      <main className="mx-auto max-w-6xl px-4 py-16 text-sm text-muted-foreground">
+        Checking access…
+      </main>
+    );
   }
 
   if (!user || !isAdmin) {
@@ -190,7 +194,11 @@ function PulseAdmin() {
       )}
 
       <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Articles live" value={s?.activeArticles ?? "—"} hint={`${s?.totalArticles ?? 0} total`} />
+        <Stat
+          label="Articles live"
+          value={s?.activeArticles ?? "—"}
+          hint={`${s?.totalArticles ?? 0} total`}
+        />
         <Stat label="Imported (24h)" value={s?.last24h ?? "—"} />
         <Stat label="AI enriched" value={s?.withAi ?? "—"} hint="with impact analysis" />
         <Stat label="Archived" value={s?.archivedArticles ?? "—"} hint="beyond retention" />

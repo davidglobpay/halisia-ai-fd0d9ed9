@@ -173,7 +173,10 @@ async function storeArticle(
   for (const t of tags) {
     await db
       .from("news_tags")
-      .upsert({ slug: t, label: t.replace(/-/g, " ") }, { onConflict: "slug", ignoreDuplicates: true });
+      .upsert(
+        { slug: t, label: t.replace(/-/g, " ") },
+        { onConflict: "slug", ignoreDuplicates: true },
+      );
   }
 
   // Clustering: same story, multiple outlets.
@@ -205,7 +208,8 @@ async function storeArticle(
       })
       .select("id")
       .single();
-    if (created) await db.from("news_articles").update({ cluster_id: created.id }).eq("id", inserted.id);
+    if (created)
+      await db.from("news_articles").update({ cluster_id: created.id }).eq("id", inserted.id);
   }
 
   // Trending seed score.

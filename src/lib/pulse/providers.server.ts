@@ -97,11 +97,9 @@ function buildQuery(opts: FetchOptions): string {
  * already pinned to `ke`, so the "Kenya AND" prefix is unnecessary.
  */
 function buildNewsDataQuery(opts: FetchOptions): string {
-  const terms = [
-    opts.query,
-    opts.county ? `"${opts.county}"` : null,
-    opts.category,
-  ].filter(Boolean) as string[];
+  const terms = [opts.query, opts.county ? `"${opts.county}"` : null, opts.category].filter(
+    Boolean,
+  ) as string[];
   const q = terms.length
     ? terms.join(" AND ")
     : "land OR property OR housing OR infrastructure OR county";
@@ -329,7 +327,11 @@ function decodeEntities(s: string): string {
 
 function tag(block: string, name: string): string | null {
   const m = block.match(new RegExp(`<${name}[^>]*>([\\s\\S]*?)</${name}>`, "i"));
-  return m ? decodeEntities(m[1]!.replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim() || null : null;
+  return m
+    ? decodeEntities(m[1]!.replace(/<[^>]+>/g, " "))
+        .replace(/\s+/g, " ")
+        .trim() || null
+    : null;
 }
 
 function attr(block: string, name: string, key: string): string | null {

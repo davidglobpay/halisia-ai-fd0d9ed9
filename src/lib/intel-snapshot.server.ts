@@ -15,9 +15,10 @@
  */
 
 import type { IntelSlice, SliceProvenance } from "@/lib/intel-snapshot.types";
+import type { Database, Json } from "@/integrations/supabase/types";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type { IntelSlice, SliceProvenance };
-
 
 /** Dataset-specific freshness, per project data policy. */
 export const SLICE_TTL_MS: Record<IntelSlice, number> = {
@@ -48,9 +49,6 @@ export const SLICE_META: Record<IntelSlice, { provider: string; method: string; 
     },
   };
 
-
-
-
 export type SnapshotRow<T> = {
   payload: T;
   provenance: SliceProvenance;
@@ -62,14 +60,13 @@ export function locationKey(lat: number, lng: number, parcelId?: string | null):
   return `geo:${lat.toFixed(4)},${lng.toFixed(4)}`;
 }
 
-type AnyDb = {
-  from: (t: string) => any;
-};
+type SnapshotDb = SupabaseClient<Database>;
+type SnapshotRowData = Database["public"]["Tables"]["location_intel_slices"]["Row"];
 
-async function db(): Promise<AnyDb | null> {
+async function db(): Promise<SnapshotDb | null> {
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    return supabaseAdmin as unknown as AnyDb;
+    return supabaseAdmin;
   } catch {
     // Snapshot persistence is an optimisation: never break live intelligence.
     return null;
@@ -90,17 +87,18 @@ export async function readSnapshot(
       .gt("expires_at", new Date().toISOString());
     if (error || !data) return {};
     const out: Partial<Record<IntelSlice, SnapshotRow<unknown>>> = {};
-    for (const r of data as Array<Record<string, any>>) {
+    for (const r of data as SnapshotRowData[]) {
       const slice = r.slice as IntelSlice;
       if (!(slice in SLICE_TTL_MS)) continue;
       // Only successful/partial retrievals are reusable.
       if (r.status === "unavailable") continue;
+      const status = r.status === "degraded" ? "degraded" : "ok";
       out[slice] = {
         payload: r.payload,
         provenance: {
           slice,
           provider: r.provider,
-          status: r.status,
+          status,
           reason: r.reason,
           method: r.method ?? SLICE_META[slice].method,
           version: r.version ?? SLICE_META[slice].version,
@@ -159,7 +157,7 @@ export async function writeSlice(args: {
         provider: meta.provider,
         status: args.status,
         reason: args.reason ?? null,
-        payload: args.payload as Record<string, unknown>,
+        payload: args.payload as Json,
         confidence: args.confidence ?? null,
         method: meta.method,
         version: meta.version,
