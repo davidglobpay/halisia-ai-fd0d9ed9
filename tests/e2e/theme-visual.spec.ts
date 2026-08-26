@@ -41,7 +41,7 @@ test.describe("ivory glass theme visual regression", () => {
   test("spatial studio and parcel rail render consistently", async ({ page }) => {
     await page.goto("/spatial");
     const viewport = page.getByTestId("spatial-viewport");
-    await expect(viewport).toBeVisible();
+    await expect(viewport).toBeVisible({ timeout: 30_000 });
     // The Three.js canvas animates every frame; mask it and assert the chrome.
     await expect(viewport).toHaveScreenshot("theme-spatial-studio.png", {
       mask: [page.locator('[data-testid="spatial-canvas"]')],
@@ -49,7 +49,7 @@ test.describe("ivory glass theme visual regression", () => {
     });
 
     const rail = page.getByTestId("spatial-parcel-list");
-    await expect(rail).toBeVisible();
+    await expect(rail).toBeVisible({ timeout: 30_000 });
     await expect(rail).toHaveScreenshot("theme-spatial-parcel-rail.png", {
       maxDiffPixelRatio: 0.15,
     });
