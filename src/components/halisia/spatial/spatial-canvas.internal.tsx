@@ -584,7 +584,6 @@ export default function SpatialCanvasInternal({
         });
       },
     }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- enterXr reads live state via refs
     [],
   );
 

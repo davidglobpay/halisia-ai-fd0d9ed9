@@ -257,7 +257,7 @@ export function sunPosition(
         ),
       ),
     ) / rad;
-    azimuth = hourAngle > 0 ? (540 - azimuth) % 360 : azimuth;
+  azimuth = hourAngle > 0 ? (540 - azimuth) % 360 : azimuth;
   return { altitudeDeg: altitude, azimuthDeg: azimuth, isDay: altitude > 0 };
 }
 
@@ -286,7 +286,9 @@ export function passportMetrics(parcel: SpatialParcel): PassportMetric[] {
       key: "title",
       label: "Title integrity",
       score: verified ? 94 : parcel.status === "pending" ? 62 : 40,
-      detail: verified ? "Survey verified against registry record." : "Registry verification pending.",
+      detail: verified
+        ? "Survey verified against registry record."
+        : "Registry verification pending.",
     },
     {
       key: "survey",
@@ -312,7 +314,9 @@ export function passportMetrics(parcel: SpatialParcel): PassportMetric[] {
       key: "value",
       label: "Value signal",
       score: Math.max(30, Math.min(96, Math.round(Math.log10(Math.max(density, 1)) * 24))),
-      detail: density ? `KES ${Math.round(density).toLocaleString("en-KE")} per m².` : "No valuation on file.",
+      detail: density
+        ? `KES ${Math.round(density).toLocaleString("en-KE")} per m².`
+        : "No valuation on file.",
     },
     {
       key: "geo",
