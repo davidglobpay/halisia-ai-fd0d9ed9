@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Gauge, Info } from "lucide-react";
-import { PIPELINE_STAGES } from "@/components/halisia/data-pipeline";
+import { PIPELINE_STAGES } from "@/lib/pipeline-stages";
 import { useReducedMotionPref } from "@/hooks/use-reduced-motion-pref";
 
 /**
