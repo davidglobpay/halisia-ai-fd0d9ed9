@@ -26,6 +26,7 @@ import {
   type ListingIntent,
   type PropertyRow,
 } from "@/lib/properties";
+import { HoloTile } from "@/components/halisia/ds/holo-tile";
 import { DataPipeline } from "@/components/halisia/data-pipeline";
 import {
   CATEGORIES,
@@ -449,21 +450,6 @@ function MarketplaceIndex() {
           ))}
         </div>
       )}
-      {false && (
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {listings.map((p) => (
-            <ListingCard
-              key={p.id}
-              p={p}
-              compared={compare.includes(p.id)}
-              onCompare={() => toggleCompare(p.id)}
-              reasons={recs.find((r) => r.row.id === p.id)?.reasons}
-              showWhy={whyId === p.id}
-              onWhy={() => setWhyId((id) => (id === p.id ? null : p.id))}
-            />
-          ))}
-        </ul>
-      )}
 
       <DataPipeline />
 
@@ -837,4 +823,16 @@ function EmptyState() {
       </Link>
     </div>
   );
+}
+
+/** Groups listings into county rails so the marketplace reads as horizontal shelves. */
+function groupByCounty<T extends { county?: string | null }>(rows: T[]): Array<[string, T[]]> {
+  const map = new Map<string, T[]>();
+  for (const r of rows) {
+    const key = r.county?.trim() || "Kenya";
+    const list = map.get(key);
+    if (list) list.push(r);
+    else map.set(key, [r]);
+  }
+  return [...map.entries()].sort((a, b) => b[1].length - a[1].length);
 }
