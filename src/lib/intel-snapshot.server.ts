@@ -15,7 +15,7 @@
  */
 
 import type { IntelSlice, SliceProvenance } from "@/lib/intel-snapshot.types";
-import type { Database } from "@/integrations/supabase/types";
+import type { Database, Json } from "@/integrations/supabase/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type { IntelSlice, SliceProvenance };
@@ -96,12 +96,13 @@ export async function readSnapshot(
       if (!(slice in SLICE_TTL_MS)) continue;
       // Only successful/partial retrievals are reusable.
       if (r.status === "unavailable") continue;
+      const status = r.status === "degraded" ? "degraded" : "ok";
       out[slice] = {
         payload: r.payload,
         provenance: {
           slice,
           provider: r.provider,
-          status: r.status,
+          status,
           reason: r.reason,
           method: r.method ?? SLICE_META[slice].method,
           version: r.version ?? SLICE_META[slice].version,
@@ -160,7 +161,7 @@ export async function writeSlice(args: {
         provider: meta.provider,
         status: args.status,
         reason: args.reason ?? null,
-        payload: args.payload as Record<string, unknown>,
+        payload: args.payload as Json,
         confidence: args.confidence ?? null,
         method: meta.method,
         version: meta.version,
