@@ -33,13 +33,13 @@ test("skip link reaches spatial controls and capability/fallback controls stay t
   await page.keyboard.press("Enter");
   await expect(page.locator("#spatial-controls")).toBeFocused();
 
-  // 3. From there, Tab walks the viewport controls in order.
+  // 3. From there, Tab lands on the first enabled viewport control. On a
+  //    desktop browser without WebXR the AR/VR launchers are disabled (and so
+  //    correctly skipped by the tab order) but still present and labelled.
   await page.keyboard.press("Tab");
   await expect(page.getByRole("button", { name: /reset view/i })).toBeFocused();
-  await page.keyboard.press("Tab");
-  await expect(page.getByTestId("spatial-start-ar")).toBeFocused();
-  await page.keyboard.press("Tab");
-  await expect(page.getByTestId("spatial-start-vr")).toBeFocused();
+  await expect(page.getByTestId("spatial-start-ar")).toBeVisible();
+  await expect(page.getByTestId("spatial-start-vr")).toBeVisible();
 
   // 4. Focus is not trapped: continued tabbing reaches the capability panel
   //    control and then the fallback panel, which is focusable but escapable.
