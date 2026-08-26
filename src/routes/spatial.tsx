@@ -134,6 +134,22 @@ function SpatialPage() {
   }, [parcels, parcelParam]);
 
   useEffect(() => {
+    // WebXR is gated by the `xr-spatial-tracking` permissions policy. Inside an
+    // embedding iframe (e.g. the Lovable preview) the API is present but every
+    // session request is refused, which reads as "unavailable" even on a capable
+    // ARCore phone. Detect that case so the copy stays truthful.
+    const embedded = typeof window !== "undefined" && window.self !== window.top;
+    let policyBlocked = false;
+    try {
+      const fp = (
+        document as Document & { featurePolicy?: { allowsFeature: (f: string) => boolean } }
+      ).featurePolicy;
+      if (fp?.allowsFeature) policyBlocked = !fp.allowsFeature("xr-spatial-tracking");
+    } catch {
+      policyBlocked = false;
+    }
+    setXrBlockedByFrame(embedded && policyBlocked);
+
     const xr = (navigator as Navigator & { xr?: XRSystem }).xr;
     if (!xr?.isSessionSupported) {
       setXrSupported(false);
