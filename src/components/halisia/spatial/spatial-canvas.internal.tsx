@@ -218,7 +218,7 @@ export default function SpatialCanvasInternal({
     ro.observe(mount);
 
     let t = 0;
-    renderer.setAnimationLoop((_time, frame) => {
+    const renderLoop: XRFrameRequestCallback = (_time, frame) => {
       t += 0.005;
       const st = stateRef.current;
       if (st?.arMode && frame) {
