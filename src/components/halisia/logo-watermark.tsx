@@ -1,4 +1,4 @@
-import halisiaLogo from "@/assets/brand/halisia-symbol.png.asset.json";
+import halisiaLogo from "@/assets/brand/halisia-mark.png.asset.json";
 
 /**
  * Fixed-position brand watermark rendered behind hero areas.
