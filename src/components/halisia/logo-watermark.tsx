@@ -12,10 +12,10 @@ export function LogoWatermark({ position = "right" }: { position?: "right" | "ce
   return (
     <div
       aria-hidden="true"
-      className={`pointer-events-none absolute ${posClass} w-[min(720px,80vw)] aspect-square opacity-[0.045] blur-[2px] mix-blend-screen`}
+      className={`pointer-events-none absolute ${posClass} w-[min(720px,80vw)] aspect-square opacity-[0.07] blur-[1px] mix-blend-multiply`}
       style={{
         filter:
-          "drop-shadow(0 0 60px oklch(0.78 0.14 85 / 0.35)) drop-shadow(0 0 120px oklch(0.78 0.14 85 / 0.18))",
+          "drop-shadow(0 0 60px rgba(192, 138, 46, 0.28)) drop-shadow(0 0 120px rgba(20, 123, 53, 0.14))",
       }}
     >
       <img

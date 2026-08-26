@@ -57,8 +57,7 @@ export function AIOrb({ context }: { context?: string }) {
           aria-label="Open HALISIA AI assistant"
           className="fixed bottom-6 right-6 z-40 h-16 w-16 rounded-full animate-pulse-glow"
           style={{
-            background:
-              "radial-gradient(circle at 30% 30%, oklch(0.87 0.14 208), oklch(0.68 0.19 249) 55%, oklch(0.28 0.12 275))",
+            background: "radial-gradient(circle at 30% 30%, #37BD63, #147B35 55%, #102D1A)",
           }}
         >
           <span className="absolute inset-2 rounded-full border border-white/30" />
@@ -72,8 +71,7 @@ export function AIOrb({ context }: { context?: string }) {
               <div
                 className="h-8 w-8 rounded-full animate-pulse-glow"
                 style={{
-                  background:
-                    "radial-gradient(circle at 30% 30%, oklch(0.87 0.14 208), oklch(0.68 0.19 249))",
+                  background: "radial-gradient(circle at 30% 30%, #37BD63, #147B35)",
                 }}
               />
               <div>

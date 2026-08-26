@@ -12,24 +12,24 @@
  */
 
 export const colors = {
-  // Kenyan flag palette
-  black: "#050706",
-  charcoal: "#0B0F0D",
-  graphite: "#111614",
-  white: "#FFFFFF",
-  offWhite: "#F7F8F6",
-  emerald: "#008F55", // primary — verified / positive
-  emeraldGlow: "#20D878",
-  emeraldDeep: "#006B3F",
-  crimson: "#E12635", // destructive — risk / alert
-  crimsonGlow: "#FF4A58",
-  crimsonDeep: "#BB1E2D",
+  // HALISIA light-glass brand palette
+  black: "#102D1A", // deep forest — ink / deepest surface
+  charcoal: "#1B4429",
+  graphite: "#2B5C3A",
+  white: "#F7F3EA", // egg white — page background
+  offWhite: "#FFFDF8",
+  emerald: "#147B35", // primary — verified / positive
+  emeraldGlow: "#1B9B45",
+  emeraldDeep: "#0E5A26",
+  crimson: "#B3261E", // destructive — risk / alert
+  crimsonGlow: "#D2372C",
+  crimsonDeep: "#8C1C16",
   // Accents (use sparingly)
-  gold: "#D4AF37",
-  goldSoft: "#F0C75E",
-  champagne: "#FFE59A",
-  silver: "#DCE3E6",
-  silverBrushed: "#AEB7BC",
+  gold: "#C08A2E",
+  goldSoft: "#D4AF37",
+  champagne: "#EDD493",
+  silver: "#E7E0D2",
+  silverBrushed: "#6B7A6E",
 } as const;
 
 export const gradients = {
@@ -37,8 +37,8 @@ export const gradients = {
   red: `linear-gradient(135deg, ${colors.crimsonDeep} 0%, ${colors.crimson} 55%, ${colors.crimsonGlow} 100%)`,
   gold: `linear-gradient(135deg, ${colors.gold} 0%, ${colors.goldSoft} 50%, ${colors.champagne} 100%)`,
   silver: `linear-gradient(135deg, ${colors.silverBrushed} 0%, ${colors.silver} 100%)`,
-  hero: `linear-gradient(135deg, ${colors.white} 0%, ${colors.gold} 55%, ${colors.emerald} 100%)`,
-  night: `linear-gradient(180deg, ${colors.black} 0%, ${colors.charcoal} 60%, ${colors.graphite} 100%)`,
+  hero: `linear-gradient(135deg, ${colors.black} 0%, ${colors.emerald} 45%, ${colors.gold} 100%)`,
+  night: `linear-gradient(180deg, ${colors.white} 0%, #F1ECE0 60%, #E7E0D2 100%)`,
 } as const;
 
 export const radii = {
@@ -64,13 +64,13 @@ export const spacing = {
 } as const;
 
 export const shadows = {
-  soft: "0 8px 24px rgba(0,0,0,0.25)",
-  glass: "0 1px 0 0 rgba(255,255,255,0.06) inset, 0 20px 50px rgba(0,0,0,0.45)",
-  glassStrong: "0 1px 0 0 rgba(255,255,255,0.10) inset, 0 30px 80px rgba(0,0,0,0.60)",
-  glowGold: "0 0 40px rgba(212,160,23,0.35), 0 0 80px rgba(212,160,23,0.18)",
-  glowEmerald: "0 0 40px rgba(14,124,58,0.35), 0 0 80px rgba(14,124,58,0.18)",
-  glowCrimson: "0 0 40px rgba(200,16,46,0.35), 0 0 80px rgba(200,16,46,0.18)",
-  glowSilver: "0 0 24px rgba(199,206,214,0.25)",
+  soft: "0 8px 24px rgba(16,45,26,0.10)",
+  glass: "0 1px 0 0 rgba(255,255,255,0.70) inset, 0 14px 34px rgba(16,45,26,0.08)",
+  glassStrong: "0 1px 0 0 rgba(255,255,255,0.80) inset, 0 22px 56px rgba(16,45,26,0.12)",
+  glowGold: "0 10px 34px rgba(192,138,46,0.22), 0 0 60px rgba(192,138,46,0.12)",
+  glowEmerald: "0 10px 34px rgba(20,123,53,0.22), 0 0 60px rgba(20,123,53,0.12)",
+  glowCrimson: "0 10px 34px rgba(179,38,30,0.22), 0 0 60px rgba(179,38,30,0.12)",
+  glowSilver: "0 0 24px rgba(16,45,26,0.10)",
 } as const;
 
 export const blur = {
@@ -92,8 +92,8 @@ export const semantic = {
   negative: colors.crimson,
   premium: colors.gold,
   neutral: colors.silver,
-  surface: colors.charcoal,
-  onSurface: colors.white,
+  surface: colors.offWhite,
+  onSurface: colors.black,
 } as const;
 
 export type DesignTokens = {
