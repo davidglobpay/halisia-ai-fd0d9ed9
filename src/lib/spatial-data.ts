@@ -2,6 +2,8 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   distanceMeters,
   geometryToRing,
+  isPlausibleKenyaLatLng,
+  type CoordinateIssue,
   type SpatialParcel,
   type SpatialPrototype,
 } from "./spatial";
