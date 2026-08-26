@@ -15,6 +15,14 @@ function num(v: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/** Raw vertex count of a stored GeoJSON polygon, before any validation. */
+function geometryToRingRaw(geometry: unknown): number {
+  const g = geometry as { type?: string; coordinates?: unknown } | null;
+  if (!g || !Array.isArray(g.coordinates)) return 0;
+  const outer = (g.type === "Polygon" ? g.coordinates[0] : g.coordinates) as unknown;
+  return Array.isArray(outer) ? outer.length : 0;
+}
+
 /** All publicly readable parcels with their survey beacons, ordered by county. */
 export async function fetchSpatialParcels(): Promise<SpatialParcel[]> {
   const { data, error } = await supabase
