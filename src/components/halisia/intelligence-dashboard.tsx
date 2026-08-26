@@ -253,7 +253,7 @@ export function IntelligenceDashboard({
               key={wave}
               eyebrow={meta.label}
               title={meta.hint}
-              defaultOpen={activeHere}
+              defaultOpen
               data-testid={`wave-tile-${wave}`}
               className={activeHere ? "holo-lit" : undefined}
             >
