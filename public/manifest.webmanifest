@@ -8,11 +8,7 @@
   "orientation": "portrait",
   "background_color": "#050d24",
   "theme_color": "#050d24",
-  "categories": [
-    "productivity",
-    "utilities",
-    "business"
-  ],
+  "categories": ["productivity", "utilities", "business"],
   "icons": [
     {
       "src": "/__l5e/assets-v1/b04b74f2-c6de-4b4a-802d-93f07e0187c3/halisia-mark.png",
