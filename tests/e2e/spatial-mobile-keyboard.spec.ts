@@ -13,10 +13,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe("mobile keyboard navigation", () => {
-  test.skip(
-    ({ viewport }) => !viewport || viewport.width > 600,
-    "mobile viewport projects only",
-  );
+  test.skip(({ viewport }) => !viewport || viewport.width > 600, "mobile viewport projects only");
 
   test("focus enters capability/fallback panels and returns without blocking the canvas", async ({
     page,

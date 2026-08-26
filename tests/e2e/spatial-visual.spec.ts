@@ -53,9 +53,7 @@ test.describe("spatial failure-state visuals", () => {
     await expect(canvas).toBeVisible({ timeout: 20_000 });
 
     await page.evaluate(() => {
-      const el = document.querySelector<HTMLCanvasElement>(
-        '[data-testid="spatial-canvas"] canvas',
-      );
+      const el = document.querySelector<HTMLCanvasElement>('[data-testid="spatial-canvas"] canvas');
       if (!el) throw new Error("canvas missing");
       el.dispatchEvent(new Event("webglcontextlost", { cancelable: true }));
     });
