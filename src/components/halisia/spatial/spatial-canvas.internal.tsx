@@ -100,6 +100,8 @@ export default function SpatialCanvasInternal({
   const motionRef = useRef(reducedMotion);
   motionRef.current = reducedMotion;
   const stateRef = useRef<CanvasState | null>(null);
+  // Manual GPU context restore, wired inside the renderer bootstrap.
+  const restoreRef = useRef<(() => void) | null>(null);
   const [error, setError] = useState<string | null>(null);
   // GPU context loss (backgrounding mid-AR, incoming call, memory pressure).
   const [contextLost, setContextLost] = useState(false);
