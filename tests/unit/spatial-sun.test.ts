@@ -3,13 +3,15 @@ import { sunPosition, sunVector } from "@/lib/spatial";
 
 const LAT = -1.2921;
 const LNG = 36.8219;
+/** Local clock hour of solar noon in Nairobi (EAT is ~33 min ahead of local solar time). */
+const SOLAR_NOON = 12.55;
 
 /** True when the azimuth sits east of the north–south axis (0–180°). */
 const eastOfNorth = (az: number) => az > 0 && az < 180;
 
 describe("sunPosition — Nairobi", () => {
   it("puts the June solstice noon sun due north", () => {
-    const s = sunPosition(LAT, LNG, 172, 12);
+    const s = sunPosition(LAT, LNG, 172, SOLAR_NOON);
     expect(s.azimuthDeg <= 6 || s.azimuthDeg >= 354).toBe(true);
     expect(s.altitudeDeg).toBeGreaterThan(60);
     expect(s.altitudeDeg).toBeLessThan(72);
@@ -17,7 +19,7 @@ describe("sunPosition — Nairobi", () => {
   });
 
   it("puts the December solstice noon sun due south", () => {
-    const s = sunPosition(LAT, LNG, 355, 12);
+    const s = sunPosition(LAT, LNG, 355, SOLAR_NOON);
     expect(s.azimuthDeg).toBeGreaterThanOrEqual(174);
     expect(s.azimuthDeg).toBeLessThanOrEqual(186);
   });
@@ -55,7 +57,7 @@ describe("sunPosition — Nairobi", () => {
 
 describe("sunVector", () => {
   it("returns a unit vector with positive y during the day", () => {
-    const s = sunPosition(LAT, LNG, 172, 12);
+    const s = sunPosition(LAT, LNG, 172, SOLAR_NOON);
     const v = sunVector(s);
     const len = Math.hypot(v.x, v.y, v.z);
     expect(len).toBeCloseTo(1, 6);
