@@ -110,34 +110,15 @@ export function HoloStack({
             ? children
             : (items ?? []).map((it) => (
                 <li key={it.key} className={cn("shrink-0 snap-start", itemClassName)}>
-                  <article className="holo-tile flex h-full flex-col rounded-2xl p-4">
-                    {it.icon && (
-                      <span className="mb-3 grid h-10 w-10 place-items-center rounded-xl border border-accent/30 bg-accent/10">
-                        <it.icon className="h-4.5 w-4.5 text-accent" aria-hidden="true" />
-                      </span>
-                    )}
-                    {it.meta && (
-                      <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                        {it.meta}
-                      </span>
-                    )}
-                    <h3 className="mt-1 text-sm font-semibold leading-snug">{it.title}</h3>
-                    {it.body && (
-                      <div className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
-                        {it.body}
-                      </div>
-                    )}
-                    {typeof it.value === "number" && (
-                      <div className="mt-auto pt-4">
-                        <div className="h-1 w-full overflow-hidden rounded-full bg-foreground/10">
-                          <div
-                            className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
-                            style={{ width: `${Math.max(0, Math.min(100, it.value))}%` }}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </article>
+                  <HoloTile
+                    className="h-full"
+                    eyebrow={it.meta}
+                    title={it.title}
+                    summary={it.body}
+                    icon={it.icon}
+                    meter={it.value}
+                    details={it.details}
+                  />
                 </li>
               ))}
         </ul>
