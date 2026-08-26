@@ -696,9 +696,7 @@ function MiniScore({ label, value, invert }: { label: string; value: number; inv
 
 function ScoreTile({ label, value, accent }: { label: string; value: number; accent?: boolean }) {
   return (
-    <div
-      className={`holo-tile h-full rounded-2xl p-4 ${accent ? "holo-lit" : ""}`}
-    >
+    <div className={`holo-tile h-full rounded-2xl p-4 ${accent ? "holo-lit" : ""}`}>
       <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
       <div className={`mt-1 text-3xl font-semibold ${accent ? "text-gradient" : ""}`}>
         {value}

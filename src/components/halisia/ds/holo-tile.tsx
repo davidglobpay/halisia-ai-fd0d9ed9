@@ -147,7 +147,10 @@ export function HoloTile({
             >
               {open ? "Collapse" : details?.length ? `${details.length} details` : "Details"}
               <ChevronDown
-                className={cn("h-3.5 w-3.5 transition-transform duration-300", open && "rotate-180")}
+                className={cn(
+                  "h-3.5 w-3.5 transition-transform duration-300",
+                  open && "rotate-180",
+                )}
                 aria-hidden="true"
               />
             </button>
