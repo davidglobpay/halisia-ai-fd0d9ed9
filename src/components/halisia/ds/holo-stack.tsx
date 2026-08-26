@@ -1,6 +1,7 @@
 import { useId, useState, type ReactNode } from "react";
 import { ChevronDown, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { HoloTile, type HoloDetail } from "./holo-tile";
 
 export type HoloItem = {
   key: string;
@@ -10,6 +11,8 @@ export type HoloItem = {
   icon?: LucideIcon;
   /** Optional 0-100 signal rendered as a hairline gold/green meter. */
   value?: number;
+  /** Second-level detail tiles revealed inside this tile on click. */
+  details?: HoloDetail[];
 };
 
 export type HoloStackProps = {
