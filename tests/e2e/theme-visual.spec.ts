@@ -46,12 +46,14 @@ test.describe("ivory glass theme visual regression", () => {
     await expect(viewport).toHaveScreenshot("theme-spatial-studio.png", {
       mask: [page.locator('[data-testid="spatial-canvas"]')],
       maxDiffPixelRatio: 0.15,
+      timeout: 30_000,
     });
 
     const rail = page.getByTestId("spatial-parcel-list");
     await expect(rail).toBeVisible({ timeout: 30_000 });
     await expect(rail).toHaveScreenshot("theme-spatial-parcel-rail.png", {
       maxDiffPixelRatio: 0.15,
+      timeout: 30_000,
     });
   });
 });

@@ -145,7 +145,6 @@ export function DataPipeline() {
           className="holo-panel scrollbar-none mt-8 flex snap-x snap-mandatory items-stretch gap-3 overflow-x-auto pb-3"
           role="list"
         >
-
           {PIPELINE_STAGES.map((s, i) => {
             const tone = TONE[s.tone];
             const last = i === PIPELINE_STAGES.length - 1;
@@ -208,7 +207,6 @@ export function DataPipeline() {
                     className="pointer-events-none absolute right-0 top-1/2 h-px w-3 -translate-y-1/2 translate-x-full bg-gradient-to-r from-accent/50 to-transparent"
                   />
                 )}
-
               </li>
             );
           })}

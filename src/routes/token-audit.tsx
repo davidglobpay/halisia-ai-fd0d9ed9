@@ -196,7 +196,9 @@ function TokenAuditPage() {
               style={{ background: `var(${c.token})` }}
             />
             <span className="min-w-0">
-              <span className="block truncate font-mono text-[11px] text-foreground">{c.token}</span>
+              <span className="block truncate font-mono text-[11px] text-foreground">
+                {c.token}
+              </span>
               <span className="block truncate text-[11px] text-muted-foreground">{c.value}</span>
             </span>
             {c.legacy && (

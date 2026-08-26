@@ -13,7 +13,10 @@ const DESKTOP = { width: 1280, height: 1800 };
 const MOBILE = { width: 390, height: 844 };
 
 async function family(page: Page, selector: string) {
-  return page.locator(selector).first().evaluate((el) => getComputedStyle(el).fontFamily);
+  return page
+    .locator(selector)
+    .first()
+    .evaluate((el) => getComputedStyle(el).fontFamily);
 }
 
 for (const [label, viewport] of [
