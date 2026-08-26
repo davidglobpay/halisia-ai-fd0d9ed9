@@ -121,7 +121,7 @@ export default function SpatialCanvasInternal({
   const emitRef = useRef<(s: ArPlacementState) => void>(() => {});
   emitRef.current = (s: ArPlacementState) => {
     setArPlacement(s);
-    placementCb.current?.(s);
+    emitRef.current(s);
   };
 
   // ---- one-time scene bootstrap -------------------------------------------
@@ -232,12 +232,12 @@ export default function SpatialCanvasInternal({
             st.reticle.matrix.fromArray(pose.transform.matrix);
             if (!st.surfaceFound) {
               st.surfaceFound = true;
-              placementCb.current?.({ hitTest: true, surfaceFound: true, placed: false });
+              emitRef.current({ hitTest: true, surfaceFound: true, placed: false });
             }
           } else if (st.surfaceFound) {
             st.reticle.visible = false;
             st.surfaceFound = false;
-            placementCb.current?.({ hitTest: true, surfaceFound: false, placed: false });
+            emitRef.current({ hitTest: true, surfaceFound: false, placed: false });
           }
         }
       }
@@ -275,7 +275,7 @@ export default function SpatialCanvasInternal({
         st.content.quaternion.identity();
         st.content.scale.setScalar(1);
       }
-      placementCb.current?.({ hitTest: false, surfaceFound: false, placed: false });
+      emitRef.current({ hitTest: false, surfaceFound: false, placed: false });
       xrStateCb.current?.(false);
     };
     const onSessionStart = () => xrStateCb.current?.(true);
@@ -531,19 +531,19 @@ export default function SpatialCanvasInternal({
       s.grid.visible = false;
       s.placed = false;
       s.surfaceFound = false;
-      placementCb.current?.({ hitTest: false, surfaceFound: false, placed: false });
+      emitRef.current({ hitTest: false, surfaceFound: false, placed: false });
       const showInFront = () => {
         s.hitTestSource = null;
         s.content.visible = true;
         s.content.position.set(0, -0.4, -1.2);
         s.placed = true;
-        placementCb.current?.({ hitTest: false, surfaceFound: false, placed: true });
+        emitRef.current({ hitTest: false, surfaceFound: false, placed: true });
       };
       try {
         const viewerSpace = await session!.requestReferenceSpace("viewer");
         const source = await session!.requestHitTestSource?.({ space: viewerSpace });
         s.hitTestSource = source ?? null;
-        placementCb.current?.({
+        emitRef.current({
           hitTest: Boolean(source),
           surfaceFound: false,
           placed: false,
@@ -563,7 +563,7 @@ export default function SpatialCanvasInternal({
         st.content.visible = true;
         st.reticle.visible = false;
         st.placed = true;
-        placementCb.current?.({ hitTest: true, surfaceFound: true, placed: true });
+        emitRef.current({ hitTest: true, surfaceFound: true, placed: true });
       };
       s.onSelect = onSelect;
       session!.addEventListener("select", onSelect);
@@ -599,7 +599,7 @@ export default function SpatialCanvasInternal({
         s.placed = false;
         s.surfaceFound = false;
         s.content.visible = false;
-        placementCb.current?.({
+        emitRef.current({
           hitTest: Boolean(s.hitTestSource),
           surfaceFound: false,
           placed: false,
