@@ -257,7 +257,9 @@ export function sunPosition(
         ),
       ),
     ) / rad;
-  azimuth = hourAngle > 0 ? (540 - azimuth) % 360 : azimuth;
+  // NOAA convention: afternoon (hourAngle > 0) → (az + 180) % 360,
+  // morning (hourAngle <= 0) → (540 - az) % 360.
+  azimuth = hourAngle > 0 ? (azimuth + 180) % 360 : (540 - azimuth) % 360;
   return { altitudeDeg: altitude, azimuthDeg: azimuth, isDay: altitude > 0 };
 }
 
