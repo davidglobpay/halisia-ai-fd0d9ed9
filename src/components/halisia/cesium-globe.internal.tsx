@@ -87,7 +87,10 @@ export default function CesiumGlobe({
     return () => {
       cancelled = true;
       try {
+        // Release the WebGL context: iOS Safari caps concurrent live contexts.
+        const gl = viewerRef.current?.scene?.context?._gl as WebGLRenderingContext | undefined;
         viewerRef.current?.destroy();
+        gl?.getExtension("WEBGL_lose_context")?.loseContext();
       } catch {
         /* noop */
       }
