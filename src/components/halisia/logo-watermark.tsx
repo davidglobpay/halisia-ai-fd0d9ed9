@@ -16,7 +16,6 @@ export function LogoWatermark({ position = "right" }: { position?: "right" | "ce
       style={{
         filter:
           "drop-shadow(0 0 60px rgba(192, 138, 46, 0.28)) drop-shadow(0 0 120px rgba(20, 123, 53, 0.14))",
-
       }}
     >
       <img
