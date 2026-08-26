@@ -527,7 +527,7 @@ export default function SpatialCanvasInternal({
     s.sunMarker.visible = pos.isDay;
     s.sun.target.position.set(0, 0, 0);
     s.sun.target.updateMatrixWorld();
-  }, [sunHour, dayOfYear, parcel]);
+  }, [sunHour, dayOfYear, parcel, rebuildNonce]);
 
   const enterXr = async (sessionMode: XrSessionMode) => {
     const s = stateRef.current;
