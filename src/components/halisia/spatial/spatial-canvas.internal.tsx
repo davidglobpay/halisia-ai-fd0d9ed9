@@ -498,7 +498,20 @@ export default function SpatialCanvasInternal({
     s.camera.position.set(size * 0.55, size * (mode === "masterplan" ? 0.75 : 0.45), size * 0.7);
     s.controls.target.set(0, mode === "masterplan" ? 6 : 2, 0);
     s.controls.update();
-  }, [parcel, prototype, showBeacons, showSetback, showEnvelope, mode]);
+
+    // Fit the directional-light shadow frustum to the scene: the default
+    // ±5 unit orthographic camera covers almost nothing at parcel scale.
+    const extent = box.getSize(new THREE.Vector3());
+    const half = Math.max(extent.x, extent.z, 20) * 0.75 + 20;
+    const cam = s.sun.shadow.camera;
+    cam.left = -half;
+    cam.right = half;
+    cam.top = half;
+    cam.bottom = -half;
+    cam.near = 1;
+    cam.far = 160 + half * 2;
+    cam.updateProjectionMatrix();
+  }, [parcel, prototype, showBeacons, showSetback, showEnvelope, mode, rebuildNonce]);
 
   // ---- sun path -----------------------------------------------------------
   useEffect(() => {
