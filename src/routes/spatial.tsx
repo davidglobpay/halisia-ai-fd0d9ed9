@@ -102,6 +102,7 @@ function SpatialPage() {
   const [xrActive, setXrActive] = useState(false);
   const [xrSupported, setXrSupported] = useState<boolean | null>(null);
   const [vrSupported, setVrSupported] = useState<boolean | null>(null);
+  const [xrBlockedByFrame, setXrBlockedByFrame] = useState(false);
   const [xrMode, setXrMode] = useState<"ar" | "vr" | null>(null);
   const [placement, setPlacement] = useState<ArPlacementState>({
     hitTest: false,
