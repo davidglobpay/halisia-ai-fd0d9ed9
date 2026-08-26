@@ -186,3 +186,43 @@ test.describe("Mobile viewport", () => {
     await expect(beaconsToggle).toHaveAttribute("aria-pressed", "false");
   });
 });
+
+test.describe("Keyboard and screen-reader affordances", () => {
+  test("parcel rail is an arrow-key radiogroup and status regions are labelled", async ({
+    page,
+  }) => {
+    await page.goto("/spatial");
+    const list = page.getByTestId("spatial-parcel-list");
+    await expect(list).toBeVisible({ timeout: 20_000 });
+    await expect(list).toHaveAttribute("role", "radiogroup");
+
+    const radios = list.getByRole("radio");
+    const count = await radios.count();
+    expect(count).toBeGreaterThan(0);
+    await radios.first().focus();
+    await expect(radios.first()).toBeChecked();
+
+    if (count > 1) {
+      await page.keyboard.press("ArrowDown");
+      await expect(radios.nth(1)).toBeFocused();
+      await expect(radios.nth(1)).toBeChecked();
+      await page.keyboard.press("Home");
+      await expect(radios.first()).toBeFocused();
+      await expect(radios.first()).toBeChecked();
+    }
+
+    // Capability + fallback panels expose accessible names for screen readers.
+    await expect(page.getByTestId("spatial-xr-status")).toHaveAttribute(
+      "aria-label",
+      /capability status/i,
+    );
+    await expect(page.getByTestId("spatial-ar-fallback")).toHaveAttribute(
+      "aria-label",
+      /fallback/i,
+    );
+    await expect(page.getByTestId("spatial-session-announcer")).toHaveAttribute(
+      "aria-live",
+      "polite",
+    );
+  });
+});
