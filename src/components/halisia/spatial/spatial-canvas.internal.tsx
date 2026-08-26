@@ -534,8 +534,12 @@ export default function SpatialCanvasInternal({
     if (!s) return;
     // Clear any stale error before a new attempt so recovery is visible.
     setError(null);
+    // Captured before the session starts so "sessionstart"/"sessionend"
+    // report the real mode instead of an undefined window.
+    pendingMode.current = sessionMode;
     const fail = (stage: XrStartStage, err?: unknown): never => {
       const message = xrStartErrorMessage(sessionMode, stage, err);
+      pendingMode.current = null;
       setError(message);
       throw new Error(message);
     };
@@ -618,11 +622,8 @@ export default function SpatialCanvasInternal({
       };
       s.onSelect = onSelect;
       session!.addEventListener("select", onSelect);
+      showInFrontRef.current = showInFront;
     }
-    xrStateCb.current?.(true, sessionMode);
-    session!.addEventListener("end", () => xrStateCb.current?.(false, sessionMode), {
-      once: true,
-    });
   };
 
   useImperativeHandle(
@@ -650,8 +651,14 @@ export default function SpatialCanvasInternal({
         s.placed = false;
         s.surfaceFound = false;
         s.content.visible = false;
+        if (!s.hitTestSource) {
+          // No hit testing on this runtime: re-anchor in front of the viewer
+          // instead of hiding the twin with no way to bring it back.
+          showInFrontRef.current?.();
+          return;
+        }
         emitRef.current({
-          hitTest: Boolean(s.hitTestSource),
+          hitTest: true,
           surfaceFound: false,
           placed: false,
         });
@@ -668,6 +675,30 @@ export default function SpatialCanvasInternal({
     >
       {/* DOM overlay surfaced inside the immersive AR session. */}
       <div ref={overlayRef} className="pointer-events-none absolute inset-x-0 bottom-0 p-3">
+        {arSessionActive && (
+          <div
+            data-testid="spatial-ar-overlay-controls"
+            className="pointer-events-auto mx-auto mb-2 flex max-w-md items-center justify-center gap-2"
+          >
+            <button
+              type="button"
+              data-testid="spatial-ar-overlay-replace"
+              onClick={() => handleRef.current?.resetPlacement()}
+              disabled={!arPlacement.placed}
+              className="rounded-full bg-black/70 px-4 py-2 text-[11px] font-medium text-white disabled:opacity-40"
+            >
+              Re-place
+            </button>
+            <button
+              type="button"
+              data-testid="spatial-ar-overlay-exit"
+              onClick={() => handleRef.current?.endXr()}
+              className="rounded-full bg-black/70 px-4 py-2 text-[11px] font-medium text-white"
+            >
+              Exit AR
+            </button>
+          </div>
+        )}
         <p className="mx-auto max-w-md rounded-full bg-black/60 px-3 py-1.5 text-center text-[11px] text-white/85">
           Approximate spatial visualization — not a cadastral survey.
         </p>
