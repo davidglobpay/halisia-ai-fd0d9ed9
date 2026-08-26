@@ -1,7 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { z } from "zod";
 import { fallback } from "@tanstack/zod-adapter";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Boxes,
@@ -70,6 +76,11 @@ function SpatialPage() {
   const { parcel: parcelParam } = Route.useSearch();
   const [reduced] = useReducedMotionPref();
   const handle = useRef<SpatialCanvasHandle>(null);
+  // Focus management targets for XR start/exit/error transitions.
+  const fallbackRef = useRef<HTMLElement>(null);
+  const startArRef = useRef<HTMLButtonElement>(null);
+  const exitXrRef = useRef<HTMLButtonElement>(null);
+  const parcelListRef = useRef<HTMLUListElement>(null);
 
   const parcelsQ = useQuery({ queryKey: ["spatial", "parcels"], queryFn: fetchSpatialParcels });
   const protosQ = useQuery({
@@ -180,6 +191,57 @@ function SpatialPage() {
     }
   };
 
+  // Move focus to the fallback panel whenever an XR attempt fails, so screen
+  // reader and keyboard users land on the explanation and native viewers.
+  useEffect(() => {
+    if (xrError) fallbackRef.current?.focus();
+  }, [xrError]);
+
+  // Entering XR focuses "Exit XR"; leaving it returns focus to "Launch AR".
+  const wasXrActive = useRef(false);
+  useEffect(() => {
+    if (xrActive && !wasXrActive.current) exitXrRef.current?.focus();
+    if (!xrActive && wasXrActive.current) startArRef.current?.focus();
+    wasXrActive.current = xrActive;
+  }, [xrActive]);
+
+  // Roving arrow-key navigation across the surveyed parcel radio group.
+  const onParcelKeyDown = (e: ReactKeyboardEvent<HTMLUListElement>) => {
+    const keys = ["ArrowDown", "ArrowRight", "ArrowUp", "ArrowLeft", "Home", "End"];
+    if (!keys.includes(e.key)) return;
+    const items = Array.from(
+      parcelListRef.current?.querySelectorAll<HTMLButtonElement>("button[role='radio']") ?? [],
+    );
+    if (!items.length) return;
+    const current = items.findIndex((el) => el === document.activeElement);
+    const idx = current < 0 ? 0 : current;
+    let next = idx;
+    if (e.key === "ArrowDown" || e.key === "ArrowRight") next = (idx + 1) % items.length;
+    if (e.key === "ArrowUp" || e.key === "ArrowLeft")
+      next = (idx - 1 + items.length) % items.length;
+    if (e.key === "Home") next = 0;
+    if (e.key === "End") next = items.length - 1;
+    e.preventDefault();
+    const target = items[next];
+    if (!target) return;
+    target.focus();
+    const id = target.dataset["parcelId"];
+    if (id) setSelectedId(id);
+  };
+
+  const arDisabledReason =
+    xrSupported === false
+      ? "WebXR AR is not available on this device — use the fallback viewer below"
+      : starting
+        ? "Starting an immersive session…"
+        : "Launch immersive AR";
+  const vrDisabledReason =
+    vrSupported === false
+      ? "WebXR VR is not available on this device or browser"
+      : starting
+        ? "Starting an immersive session…"
+        : "Enter the immersive VR masterplan";
+
   const usdz = prototype?.usdzUrl ?? null;
   const gltf = prototype?.gltfUrl ?? null;
   const sceneViewerHref = gltf
@@ -249,8 +311,23 @@ function SpatialPage() {
                   <StatusBadge kind={parcel.status === "verified" ? "verified" : "pending"}>
                     {parcel.status === "verified" ? "Survey verified" : "Verification pending"}
                   </StatusBadge>
+                  <span
+                    className="sr-only"
+                    role="status"
+                    aria-live="polite"
+                    data-testid="spatial-session-announcer"
+                  >
+                    {xrActive
+                      ? `${xrMode === "vr" ? "VR" : "AR"} session live.`
+                      : starting
+                        ? "Starting immersive session…"
+                        : "No immersive session running."}
+                  </span>
                   {xrActive && (
-                    <span className="pointer-events-auto rounded-full bg-[#008F55]/20 border border-[#008F55]/50 px-3 py-1 text-[11px] text-[#7ee0b4]">
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-auto rounded-full bg-[#008F55]/20 border border-[#008F55]/50 px-3 py-1 text-[11px] text-[#7ee0b4]"
+                    >
                       {xrMode === "vr" ? "VR session live" : "AR session live"}
                     </span>
                   )}
@@ -258,6 +335,8 @@ function SpatialPage() {
                     <span
                       className="pointer-events-auto rounded-full glass-strong border border-white/15 px-3 py-1 text-[11px]"
                       data-testid="spatial-placement-hint"
+                      role="status"
+                      aria-live="polite"
                     >
                       {placement.placed
                         ? "Twin anchored — tap Re-place to move it"
@@ -269,11 +348,16 @@ function SpatialPage() {
                     </span>
                   )}
                 </div>
-                <div className="absolute bottom-3 right-3 flex max-w-[calc(100%-1.5rem)] flex-wrap justify-end gap-2">
+                <div
+                  role="group"
+                  aria-label="Spatial viewport controls"
+                  className="absolute bottom-3 right-3 flex max-w-[calc(100%-1.5rem)] flex-wrap justify-end gap-2"
+                >
                   <KitButton
                     size="sm"
                     variant="secondary"
                     onClick={() => handle.current?.resetView()}
+                    aria-label="Reset view — return the 3D camera to the default parcel framing"
                   >
                     <Maximize2 className="h-3.5 w-3.5" aria-hidden="true" /> Reset view
                   </KitButton>
@@ -284,14 +368,17 @@ function SpatialPage() {
                           size="sm"
                           variant="secondary"
                           onClick={() => handle.current?.resetPlacement()}
+                          aria-label="Re-place the parcel twin on another surface"
                         >
                           <Crosshair className="h-3.5 w-3.5" aria-hidden="true" /> Re-place
                         </KitButton>
                       )}
                       <KitButton
+                        ref={exitXrRef}
                         size="sm"
                         variant="destructive"
                         onClick={() => handle.current?.endXr()}
+                        aria-label={`Exit the immersive ${xrMode === "vr" ? "VR" : "AR"} session and return to the 3D studio`}
                       >
                         Exit XR
                       </KitButton>
@@ -299,16 +386,16 @@ function SpatialPage() {
                   ) : (
                     <>
                       <KitButton
+                        ref={startArRef}
                         size="sm"
                         variant="premium"
                         onClick={() => void startSession("ar")}
                         disabled={starting || xrSupported === false}
                         data-testid="spatial-start-ar"
-                        title={
-                          xrSupported === false
-                            ? "WebXR AR is not available on this device — use the fallback viewer"
-                            : "Launch immersive AR"
-                        }
+                        title={arDisabledReason}
+                        aria-label={`Launch AR. ${arDisabledReason}`}
+                        aria-describedby="spatial-xr-status-summary"
+                        aria-busy={starting || undefined}
                       >
                         {starting ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
@@ -323,11 +410,10 @@ function SpatialPage() {
                         onClick={() => void startSession("vr")}
                         disabled={starting || vrSupported === false}
                         data-testid="spatial-start-vr"
-                        title={
-                          vrSupported === false
-                            ? "WebXR VR is not available on this device or browser"
-                            : "Enter the immersive VR masterplan"
-                        }
+                        title={vrDisabledReason}
+                        aria-label={`Enter VR. ${vrDisabledReason}`}
+                        aria-describedby="spatial-xr-status-summary"
+                        aria-busy={starting || undefined}
                       >
                         <Glasses className="h-3.5 w-3.5" aria-hidden="true" /> Enter VR
                       </KitButton>
@@ -337,10 +423,22 @@ function SpatialPage() {
               </div>
             </Surface>
 
-            <Surface elevation={1} className="p-4 text-xs" data-testid="spatial-xr-status">
-              <div className="flex flex-wrap items-center gap-3">
+            <Surface
+              elevation={1}
+              className="p-4 text-xs"
+              data-testid="spatial-xr-status"
+              role="region"
+              aria-label="Device XR and location capability status"
+            >
+              <div
+                className="flex flex-wrap items-center gap-3"
+                id="spatial-xr-status-summary"
+                role="status"
+                aria-live="polite"
+              >
                 <span className="inline-flex items-center gap-1.5">
                   <span
+                    aria-hidden="true"
                     className={`h-2 w-2 rounded-full ${xrSupported ? "bg-[#008F55]" : "bg-[#AEB7BC]"}`}
                   />
                   WebXR AR:{" "}
@@ -348,6 +446,7 @@ function SpatialPage() {
                 </span>
                 <span className="inline-flex items-center gap-1.5">
                   <span
+                    aria-hidden="true"
                     className={`h-2 w-2 rounded-full ${vrSupported ? "bg-[#008F55]" : "bg-[#AEB7BC]"}`}
                   />
                   WebXR VR:{" "}
@@ -365,8 +464,10 @@ function SpatialPage() {
                   {!location && !locating && (
                     <button
                       type="button"
-                      className="underline"
+                      className="underline rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D4AF37]"
                       onClick={() => void requestLocation()}
+                      aria-label="Check accuracy — request device GPS permission"
+                      aria-busy={locating || undefined}
                     >
                       Check accuracy
                     </button>
@@ -385,7 +486,16 @@ function SpatialPage() {
             </Surface>
 
             {(xrError || xrSupported === false) && (
-              <Surface elevation={1} className="p-4 text-xs" data-testid="spatial-ar-fallback">
+              <Surface
+                elevation={1}
+                className="p-4 text-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D4AF37]"
+                data-testid="spatial-ar-fallback"
+                ref={fallbackRef}
+                tabIndex={-1}
+                role={xrError ? "alert" : "region"}
+                aria-live={xrError ? "assertive" : "polite"}
+                aria-label="Immersive AR fallback options"
+              >
                 <p className="text-muted-foreground">
                   {xrError ??
                     arFallbackMessage({
@@ -400,6 +510,7 @@ function SpatialPage() {
                     <a
                       href={usdz}
                       rel="ar"
+                      aria-label="Open this massing prototype in AR Quick Look on iOS or iPadOS"
                       className="inline-flex items-center gap-1.5 rounded-full border border-white/15 px-3 py-1.5 hover:bg-white/10"
                     >
                       <Cuboid className="h-3.5 w-3.5 text-accent" aria-hidden="true" /> Open in AR
@@ -409,6 +520,7 @@ function SpatialPage() {
                   {sceneViewerHref && (
                     <a
                       href={sceneViewerHref}
+                      aria-label="Open this massing prototype in Google Scene Viewer on Android"
                       className="inline-flex items-center gap-1.5 rounded-full border border-white/15 px-3 py-1.5 hover:bg-white/10"
                     >
                       <Boxes className="h-3.5 w-3.5 text-accent" aria-hidden="true" /> Open in Scene
@@ -431,7 +543,11 @@ function SpatialPage() {
                   onValueChange={(v) => setMode(v as "site" | "masterplan")}
                   label="Spatial mode"
                 />
-                <div className="flex flex-wrap gap-2 text-[11px]">
+                <div
+                  className="flex flex-wrap gap-2 text-[11px]"
+                  role="group"
+                  aria-label="Map layer visibility"
+                >
                   {(
                     [
                       ["Beacons", showBeacons, setShowBeacons],
@@ -444,7 +560,7 @@ function SpatialPage() {
                       type="button"
                       aria-pressed={on}
                       onClick={() => set((v) => !v)}
-                      className={`rounded-full border px-3 py-1.5 transition ${
+                      className={`min-h-9 rounded-full border px-3 py-1.5 transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D4AF37] ${
                         on
                           ? "border-[#008F55]/60 bg-[#008F55]/15 text-foreground"
                           : "border-white/10 text-muted-foreground hover:bg-white/5"
@@ -479,18 +595,31 @@ function SpatialPage() {
                   step={0.25}
                   value={sunHour}
                   onChange={(e) => setSunHour(Number(e.target.value))}
+                  aria-label="Sun-path study time of day, East Africa Time"
+                  aria-valuetext={`${String(Math.floor(sunHour)).padStart(2, "0")}:${String(
+                    Math.round((sunHour % 1) * 60),
+                  ).padStart(2, "0")} EAT${
+                    sun ? `, sun altitude ${sun.altitudeDeg.toFixed(0)} degrees` : ""
+                  }`}
                   className="w-full accent-[#D4AF37]"
                 />
               </div>
 
               <div className="mt-5 grid gap-2">
-                <p className="text-xs text-muted-foreground">Massing prototype</p>
-                <div className="flex flex-wrap gap-2">
+                <p className="text-xs text-muted-foreground" id="spatial-prototype-label">
+                  Massing prototype
+                </p>
+                <div
+                  className="flex flex-wrap gap-2"
+                  role="group"
+                  aria-labelledby="spatial-prototype-label"
+                >
                   <button
                     type="button"
                     onClick={() => setProtoId("")}
                     aria-pressed={protoId === ""}
-                    className={`rounded-full border px-3 py-1.5 text-[11px] ${
+                    aria-label="Show bare land with no massing prototype"
+                    className={`min-h-9 rounded-full border px-3 py-1.5 text-[11px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D4AF37] ${
                       protoId === ""
                         ? "border-white/40 bg-white/10"
                         : "border-white/10 text-muted-foreground"
@@ -504,7 +633,8 @@ function SpatialPage() {
                       type="button"
                       onClick={() => setProtoId(p.id)}
                       aria-pressed={protoId === p.id}
-                      className={`rounded-full border px-3 py-1.5 text-[11px] ${
+                      aria-label={`Massing prototype ${p.title}${p.floors ? `, ${p.floors} floors` : ""}`}
+                      className={`min-h-9 rounded-full border px-3 py-1.5 text-[11px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D4AF37] ${
                         protoId === p.id
                           ? "border-[#D4AF37]/60 bg-[#D4AF37]/15 text-foreground"
                           : "border-white/10 text-muted-foreground hover:bg-white/5"
@@ -515,6 +645,7 @@ function SpatialPage() {
                     </button>
                   ))}
                 </div>
+
                 {prototype && (
                   <p className="text-[11px] text-muted-foreground">
                     {prototype.floors ?? 1} floor(s) · {prototype.footprintSqm ?? "—"} m² footprint
@@ -551,17 +682,33 @@ function SpatialPage() {
           {/* --- parcel rail --- */}
           <aside className="grid content-start gap-4">
             <Surface elevation={2} className="p-4">
-              <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+              <p
+                className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground"
+                id="spatial-parcel-label"
+              >
                 Surveyed parcels
               </p>
-              <ul className="mt-3 grid gap-2" data-testid="spatial-parcel-list">
+              <ul
+                className="mt-3 grid gap-2"
+                data-testid="spatial-parcel-list"
+                ref={parcelListRef}
+                role="radiogroup"
+                aria-labelledby="spatial-parcel-label"
+                onKeyDown={onParcelKeyDown}
+              >
                 {parcels.map((p) => (
-                  <li key={p.id}>
+                  <li key={p.id} role="none">
                     <button
                       type="button"
+                      role="radio"
+                      data-parcel-id={p.id}
                       onClick={() => setSelectedId(p.id)}
-                      aria-pressed={p.id === selectedId}
-                      className={`w-full rounded-xl border p-3 text-left text-xs transition ${
+                      aria-checked={p.id === selectedId}
+                      tabIndex={p.id === selectedId ? 0 : -1}
+                      aria-label={`Parcel ${p.parcelCode || p.titleDeedNo}, ${p.county ?? "Kenya"}, ${Math.round(
+                        p.areaSqm,
+                      ).toLocaleString("en-KE")} square metres, ${p.beacons.length} beacons`}
+                      className={`w-full rounded-xl border p-3 text-left text-xs transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D4AF37] ${
                         p.id === selectedId
                           ? "border-[#008F55]/60 bg-[#008F55]/10"
                           : "border-white/10 hover:bg-white/5"
