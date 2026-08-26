@@ -15,6 +15,8 @@
  */
 
 import type { IntelSlice, SliceProvenance } from "@/lib/intel-snapshot.types";
+import type { Database } from "@/integrations/supabase/types";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type { IntelSlice, SliceProvenance };
 
@@ -62,14 +64,13 @@ export function locationKey(lat: number, lng: number, parcelId?: string | null):
   return `geo:${lat.toFixed(4)},${lng.toFixed(4)}`;
 }
 
-type AnyDb = {
-  from: (t: string) => any;
-};
+type SnapshotDb = SupabaseClient<Database>;
+type SnapshotRowData = Database["public"]["Tables"]["location_intel_slices"]["Row"];
 
-async function db(): Promise<AnyDb | null> {
+async function db(): Promise<SnapshotDb | null> {
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    return supabaseAdmin as unknown as AnyDb;
+    return supabaseAdmin;
   } catch {
     // Snapshot persistence is an optimisation: never break live intelligence.
     return null;
@@ -90,7 +91,7 @@ export async function readSnapshot(
       .gt("expires_at", new Date().toISOString());
     if (error || !data) return {};
     const out: Partial<Record<IntelSlice, SnapshotRow<unknown>>> = {};
-    for (const r of data as Array<Record<string, any>>) {
+    for (const r of data as SnapshotRowData[]) {
       const slice = r.slice as IntelSlice;
       if (!(slice in SLICE_TTL_MS)) continue;
       // Only successful/partial retrievals are reusable.
