@@ -250,6 +250,13 @@ function SpatialPage() {
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 sm:px-6 pt-24 pb-16">
+      <a
+        href="#spatial-controls"
+        data-testid="spatial-skip-link"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-20 focus:z-50 focus:rounded-full focus:glass-strong focus:border focus:border-white/20 focus:px-4 focus:py-2 focus:text-xs"
+      >
+        Skip to spatial controls
+      </a>
       <nav aria-label="Breadcrumb" className="text-xs text-muted-foreground">
         <Link to="/" search={{ compare: "" }} className="hover:text-foreground">
           Home
@@ -275,6 +282,20 @@ function SpatialPage() {
           <button type="button" className="underline" onClick={() => void parcelsQ.refetch()}>
             Retry
           </button>
+        </Surface>
+      )}
+
+      {parcel && parcel.coordinateIssue && parcel.coordinateIssue !== "none" && (
+        <Surface
+          elevation={1}
+          className="mt-6 p-4 text-sm text-amber-200"
+          data-testid="spatial-crs-warning"
+        >
+          <span role="alert">
+            {parcel.coordinateIssue === "out-of-bounds"
+              ? "This parcel's stored survey geometry falls outside Kenya's WGS84 envelope — it is most likely recorded in a projected CRS (e.g. Arc 1960 / UTM 37S). Boundary, beacon and area rendering are not reliable until the source coordinates are reprojected."
+              : "This parcel's stored survey geometry contains invalid coordinates, so boundaries and beacons cannot be rendered reliably."}
+          </span>
         </Surface>
       )}
 
@@ -349,6 +370,8 @@ function SpatialPage() {
                   )}
                 </div>
                 <div
+                  id="spatial-controls"
+                  tabIndex={-1}
                   role="group"
                   aria-label="Spatial viewport controls"
                   className="absolute bottom-3 right-3 flex max-w-[calc(100%-1.5rem)] flex-wrap justify-end gap-2"
