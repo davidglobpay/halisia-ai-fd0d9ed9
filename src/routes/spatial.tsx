@@ -767,11 +767,18 @@ function SpatialPage() {
                 <Ruler className="h-3.5 w-3.5 text-accent" aria-hidden="true" /> How to use on site
               </p>
               <ol className="mt-2 list-decimal space-y-1 pl-4">
-                <li>Stand inside the parcel and allow location + camera access.</li>
-                <li>Tap Launch AR to drop a tabletop twin of the survey.</li>
-                <li>Match the gold beacon knobs to physical survey stones.</li>
+                <li>Allow camera access, then scan a flat floor or table surface.</li>
+                <li>Tap Launch AR and tap again to place the scaled tabletop twin.</li>
+                <li>
+                  Use the twin to read beacon layout, setbacks and massing — it is a scale model,
+                  not a 1:1 overlay on the ground.
+                </li>
                 <li>Switch to VR masterplan for the sun-path and zoning study.</li>
               </ol>
+              <p className="mt-2">
+                Beacon positions shown here are indicative. Physical beacon location must be
+                confirmed by a licensed surveyor.
+              </p>
             </Surface>
           </aside>
         </div>
