@@ -75,6 +75,10 @@ test.describe("Geolocation denied fallback", () => {
     await page.getByLabel(/simulated latitude and longitude/i).fill("-1.300000, 36.820000");
     await page.getByTestId("set-simulated-location").click();
     await expect(page).toHaveURL(/q=-1\.300000%2C36\.820000|q=-1\.300000,36\.820000/);
-    await expect(page.getByTestId("active-address")).toContainText(/-1\.30000|My live location/i);
+    // The pin is authoritative via the URL above; the label may show the raw
+    // coordinates or a reverse-geocoded street address once the provider answers.
+    await expect(page.getByTestId("active-address")).toContainText(
+      /-1\.30000|My live location|Nairobi/i,
+    );
   });
 });
