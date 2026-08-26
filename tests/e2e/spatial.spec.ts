@@ -7,12 +7,20 @@ import { expect, test } from "@playwright/test";
  * cover everything deterministic in a headless browser with XR mocks.
  */
 
+test.beforeEach(async ({ page }) => {
+  // Keep the global first-visit guide from obscuring Spatial controls. The
+  // guide has its own coverage; these tests isolate the Spatial workflow.
+  await page.addInitScript(() => {
+    window.localStorage.setItem("halisia:navguide:v1:seen", "playwright");
+  });
+});
+
 test.describe("Spatial AR/VR studio", () => {
   test("loads the viewport, capability status panel and XR controls", async ({ page }) => {
     await page.goto("/spatial");
-    await expect(page.getByTestId("spatial-viewport")).toBeVisible();
     // Parcels load from the public backend.
     await expect(page.getByTestId("spatial-parcel-list")).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByTestId("spatial-viewport")).toBeVisible();
     // Three.js canvas mounts, or a readable WebGL error is shown instead.
     await expect(
       page.locator('[data-testid="spatial-canvas"] canvas, [data-testid="spatial-canvas-error"]'),

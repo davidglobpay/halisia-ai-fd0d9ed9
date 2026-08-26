@@ -78,7 +78,7 @@ function SpatialPage() {
   });
   const listingsQ = useQuery({ queryKey: ["spatial", "listings"], queryFn: fetchSpatialListings });
 
-  const parcels = parcelsQ.data ?? [];
+  const parcels = useMemo(() => parcelsQ.data ?? [], [parcelsQ.data]);
   const [selectedId, setSelectedId] = useState<string>("");
   const [protoId, setProtoId] = useState<string>("");
   const [mode, setMode] = useState<"site" | "masterplan">("site");
