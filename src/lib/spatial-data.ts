@@ -23,6 +23,9 @@ export async function fetchSpatialParcels(): Promise<SpatialParcel[]> {
     .order("county", { ascending: true });
   if (error) throw error;
   return ((data ?? []) as Row[]).map((r) => {
+    // Beacons whose coordinates are not plausible WGS84 Kenya points (NaN from
+    // a null column, or a projected CRS such as Arc 1960 / UTM 37S) are dropped
+    // so NaN can never reach the scene graph.
     const beacons = ((r["parcel_beacons"] as Row[] | null) ?? [])
       .map((b) => ({
         id: String(b["id"]),
@@ -32,13 +35,25 @@ export async function fetchSpatialParcels(): Promise<SpatialParcel[]> {
         elevationM: num(b["elevation_m"]),
         ordinal: Number(b["ordinal"] ?? 0),
       }))
+      .filter((b) => isPlausibleKenyaLatLng({ lat: b.lat, lng: b.lng }))
       .sort((a, b) => a.ordinal - b.ordinal);
     const centroid = { lat: Number(r["centroid_lat"]), lng: Number(r["centroid_lng"]) };
+    const rawRing = geometryToRingRaw(r["geometry"]);
     let ring = geometryToRing(r["geometry"]);
     if (ring.length < 3 && beacons.length >= 3) {
       ring = beacons.map((b) => ({ lat: b.lat, lng: b.lng }));
     }
+    let coordinateIssue: CoordinateIssue = "none";
+    if (!isPlausibleKenyaLatLng(centroid)) {
+      coordinateIssue =
+        Number.isFinite(centroid.lat) && Number.isFinite(centroid.lng)
+          ? "out-of-bounds"
+          : "invalid";
+    } else if (ring.length < 3 && rawRing > 0) {
+      coordinateIssue = "out-of-bounds";
+    }
     return {
+      coordinateIssue,
       id: String(r["id"]),
       titleDeedNo: String(r["title_deed_no"] ?? ""),
       parcelCode: String(r["parcel_code"] ?? ""),
