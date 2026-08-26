@@ -271,6 +271,21 @@ export default function SpatialCanvasInternal({
     };
     canvas.addEventListener("webglcontextlost", onContextLost);
     canvas.addEventListener("webglcontextrestored", onContextRestored);
+    // "Restore" asks the driver to restore a genuinely lost context; when the
+    // context is still alive (e.g. a transient loss event) we rebuild directly.
+    restoreRef.current = () => {
+      const gl = renderer.getContext();
+      if (gl.isContextLost()) {
+        const ext = gl.getExtension("WEBGL_lose_context") as {
+          restoreContext?: () => void;
+        } | null;
+        if (ext?.restoreContext) {
+          ext.restoreContext();
+          return;
+        }
+      }
+      onContextRestored();
+    };
 
     const onSessionEnd = () => {
       const st = stateRef.current;
