@@ -758,8 +758,18 @@ function SpatialPage() {
                           : "border-white/10 hover:bg-white/5"
                       }`}
                     >
-                      <span className="block font-medium text-foreground">
+                      <span className="flex items-center gap-1.5 font-medium text-foreground">
                         {p.parcelCode || p.titleDeedNo}
+                        {p.coordinateIssue && p.coordinateIssue !== "none" && (
+                          <span
+                            data-testid="spatial-parcel-crs-flag"
+                            data-parcel-crs={p.id}
+                            title="Coordinate reference warning"
+                            className="inline-flex items-center gap-1 rounded-full border border-amber-400/50 bg-amber-400/10 px-1.5 py-0.5 text-[9px] uppercase tracking-widest text-amber-200"
+                          >
+                            <ShieldAlert className="h-3 w-3" aria-hidden="true" /> CRS
+                          </span>
+                        )}
                       </span>
                       <span className="mt-0.5 block text-muted-foreground">
                         {p.county ?? "Kenya"} · {Math.round(p.areaSqm).toLocaleString("en-KE")} m² ·{" "}
