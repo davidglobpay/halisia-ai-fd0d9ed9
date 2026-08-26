@@ -626,9 +626,11 @@ export default function SpatialCanvasInternal({
     }
   };
 
-  useImperativeHandle(
-    handleRef,
-    () => ({
+  // Local mirror of the imperative handle so the in-session DOM overlay can
+  // drive the same actions as the route's control rail.
+  const apiRef = useRef<SpatialCanvasHandle | null>(null);
+  useImperativeHandle(handleRef, () => {
+    const api: SpatialCanvasHandle = {
       async startAr() {
         await enterXr("ar");
       },
@@ -663,9 +665,10 @@ export default function SpatialCanvasInternal({
           placed: false,
         });
       },
-    }),
-    [],
-  );
+    };
+    apiRef.current = api;
+    return api;
+  }, []);
 
   return (
     <div
@@ -683,7 +686,7 @@ export default function SpatialCanvasInternal({
             <button
               type="button"
               data-testid="spatial-ar-overlay-replace"
-              onClick={() => handleRef.current?.resetPlacement()}
+              onClick={() => apiRef.current?.resetPlacement()}
               disabled={!arPlacement.placed}
               className="rounded-full bg-black/70 px-4 py-2 text-[11px] font-medium text-white disabled:opacity-40"
             >
@@ -692,7 +695,7 @@ export default function SpatialCanvasInternal({
             <button
               type="button"
               data-testid="spatial-ar-overlay-exit"
-              onClick={() => handleRef.current?.endXr()}
+              onClick={() => apiRef.current?.endXr()}
               className="rounded-full bg-black/70 px-4 py-2 text-[11px] font-medium text-white"
             >
               Exit AR
