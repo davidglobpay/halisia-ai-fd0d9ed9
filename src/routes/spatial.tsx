@@ -169,6 +169,10 @@ function SpatialPage() {
   }, [listingsQ.data, parcel]);
 
   const startSession = async (kind: "ar" | "vr") => {
+    // Remember the control that opened the fallback panel so focus can return
+    // to it when the panel closes. Focus is never trapped inside the panel.
+    const active = document.activeElement;
+    if (active instanceof HTMLElement) panelInvokerRef.current = active;
     setXrError(null);
     setStarting(true);
     setXrMode(kind);
