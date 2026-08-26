@@ -83,7 +83,10 @@ export function classify(article: RawArticle): Classification {
   const text = `${article.title} ${article.excerpt ?? ""}`.toLowerCase();
 
   // Category scoring.
-  let best = article.categoryHint && CATEGORY_KEYWORDS[article.categoryHint] ? article.categoryHint : "business";
+  let best =
+    article.categoryHint && CATEGORY_KEYWORDS[article.categoryHint]
+      ? article.categoryHint
+      : "business";
   let bestScore = article.categoryHint ? 1 : 0;
   const tags = new Set<string>();
   for (const [slug, words] of Object.entries(CATEGORY_KEYWORDS)) {
@@ -224,7 +227,9 @@ Return JSON with exactly these keys:
       environmentalImpact: str(parsed["environmental_impact"]),
       category: str(parsed["category"]),
       tags: Array.isArray(parsed["tags"])
-        ? (parsed["tags"] as unknown[]).filter((t): t is string => typeof t === "string").slice(0, 6)
+        ? (parsed["tags"] as unknown[])
+            .filter((t): t is string => typeof t === "string")
+            .slice(0, 6)
         : [],
       county: str(parsed["county"]),
       importance: typeof parsed["importance"] === "number" ? parsed["importance"] : 50,

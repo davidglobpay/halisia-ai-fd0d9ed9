@@ -83,8 +83,10 @@ async function google(text: string): Promise<{ mimeType: string; audioBase64: st
   return { mimeType: "audio/mpeg", audioBase64: json.audioContent };
 }
 
-const RUNNERS: Record<TtsEngine, (t: string) => Promise<{ mimeType: string; audioBase64: string }>> =
-  { elevenlabs, azure, google };
+const RUNNERS: Record<
+  TtsEngine,
+  (t: string) => Promise<{ mimeType: string; audioBase64: string }>
+> = { elevenlabs, azure, google };
 
 /** Synthesize with the preferred engine, degrading through the rest. */
 export async function synthesize(text: string, preferred?: TtsEngine): Promise<TtsResult> {

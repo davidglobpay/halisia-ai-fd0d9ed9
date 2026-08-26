@@ -274,7 +274,10 @@ async function fetchRouteMatrix(
   origin: { lat: number; lng: number },
   destinations: Array<{ lat: number; lng: number }>,
   mode: "DRIVE" | "WALK",
-): Promise<{ value: Array<{ minutes: number | null; km: number | null }>; health: ProviderHealth }> {
+): Promise<{
+  value: Array<{ minutes: number | null; km: number | null }>;
+  health: ProviderHealth;
+}> {
   if (!destinations.length) return { value: [], health: OK };
   const key = `rm|${mode}|${origin.lat.toFixed(4)},${origin.lng.toFixed(4)}|${destinations
     .map((d) => `${d.lat.toFixed(4)},${d.lng.toFixed(4)}`)
@@ -609,7 +612,6 @@ export const getLocationIntel = createServerFn({ method: "POST" })
       },
     };
   });
-
 
 // -- On-demand place details (reviews, extra photos) ---------------------------
 

@@ -65,7 +65,8 @@ export type FeedFilters = {
 };
 
 function sinceFor(timeframe: FeedFilters["timeframe"]): string | null {
-  const days = timeframe === "today" ? 1 : timeframe === "week" ? 7 : timeframe === "month" ? 30 : 0;
+  const days =
+    timeframe === "today" ? 1 : timeframe === "week" ? 7 : timeframe === "month" ? 30 : 0;
   return days ? new Date(Date.now() - days * 86_400_000).toISOString() : null;
 }
 

@@ -20,7 +20,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type { IntelSlice, SliceProvenance };
 
-
 /** Dataset-specific freshness, per project data policy. */
 export const SLICE_TTL_MS: Record<IntelSlice, number> = {
   // Terrain is stable until the source DEM/version changes.
@@ -49,9 +48,6 @@ export const SLICE_META: Record<IntelSlice, { provider: string; method: string; 
       version: "v1",
     },
   };
-
-
-
 
 export type SnapshotRow<T> = {
   payload: T;

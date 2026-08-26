@@ -22,7 +22,12 @@ function RadarChart({ values, labels }: { values: number[]; labels: string[] }) 
   };
   const poly = values.map((v, i) => pt(i, v).join(",")).join(" ");
   return (
-    <svg viewBox={`0 0 ${size} ${size}`} className="w-full max-w-[240px]" role="img" aria-label="Passport score radar">
+    <svg
+      viewBox={`0 0 ${size} ${size}`}
+      className="w-full max-w-[240px]"
+      role="img"
+      aria-label="Passport score radar"
+    >
       {[25, 50, 75, 100].map((ring) => (
         <polygon
           key={ring}
@@ -132,7 +137,9 @@ export function LandPassport({ parcel }: { parcel: SpatialParcel }) {
               <QrCode className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
             </div>
           )}
-          <p className="mt-1 max-w-[9rem] break-all text-[10px] text-muted-foreground">{shareUrl}</p>
+          <p className="mt-1 max-w-[9rem] break-all text-[10px] text-muted-foreground">
+            {shareUrl}
+          </p>
         </div>
       </div>
     </Surface>

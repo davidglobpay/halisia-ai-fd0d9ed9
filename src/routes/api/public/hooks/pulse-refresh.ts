@@ -27,9 +27,8 @@ export const Route = createFileRoute("/api/public/hooks/pulse-refresh")({
           /* empty body is fine */
         }
 
-        const { runIngestion, recomputeTrending, archiveOldArticles } = await import(
-          "@/lib/pulse/ingest.server"
-        );
+        const { runIngestion, recomputeTrending, archiveOldArticles } =
+          await import("@/lib/pulse/ingest.server");
 
         try {
           const summary = await runIngestion({ useAi: mode !== "refresh" });
