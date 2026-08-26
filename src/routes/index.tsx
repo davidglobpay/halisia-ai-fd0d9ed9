@@ -32,8 +32,8 @@ import {
   ContributorAndDashboardSection,
 } from "@/components/halisia/landing-sections";
 import { recordSearchConversion } from "@/lib/analytics";
-import halisiaSymbol from "@/assets/brand/halisia-symbol.png.asset.json";
-import halisiaWordmark from "@/assets/brand/halisia-wordmark.png.asset.json";
+import halisiaSymbol from "@/assets/brand/halisia-mark.png.asset.json";
+import halisiaWordmark from "@/assets/brand/halisia-lockup.png.asset.json";
 
 export const Route = createFileRoute("/")({
   validateSearch: (s) => z.object({ compare: fallback(z.string(), "").default("") }).parse(s),

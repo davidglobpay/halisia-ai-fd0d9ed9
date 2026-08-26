@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Menu, X, LogIn, LogOut, Bookmark, User as UserIcon } from "lucide-react";
-import halisiaLogo from "@/assets/brand/halisia-symbol.png.asset.json";
+import halisiaLogo from "@/assets/brand/halisia-mark.png.asset.json";
 import { useAuth } from "@/hooks/use-auth";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
@@ -56,7 +56,7 @@ export function Navbar() {
           <img
             src={halisiaLogo.url}
             alt=""
-            className="h-9 w-9 shrink-0 rounded-full object-cover shadow-[0_0_20px_oklch(0.68_0.19_249/0.5)]"
+            className="h-9 w-9 shrink-0 object-contain drop-shadow-[0_0_14px_rgba(0,143,85,0.35)]"
           />
           <span className="font-display font-semibold tracking-tight text-[15px] sm:text-[16px] truncate">
             HALISIA<span className="text-accent">·</span>AI

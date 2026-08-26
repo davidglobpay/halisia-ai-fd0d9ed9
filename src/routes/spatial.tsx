@@ -102,6 +102,7 @@ function SpatialPage() {
   const [xrActive, setXrActive] = useState(false);
   const [xrSupported, setXrSupported] = useState<boolean | null>(null);
   const [vrSupported, setVrSupported] = useState<boolean | null>(null);
+  const [xrBlockedByFrame, setXrBlockedByFrame] = useState(false);
   const [xrMode, setXrMode] = useState<"ar" | "vr" | null>(null);
   const [placement, setPlacement] = useState<ArPlacementState>({
     hitTest: false,
@@ -133,6 +134,22 @@ function SpatialPage() {
   }, [parcels, parcelParam]);
 
   useEffect(() => {
+    // WebXR is gated by the `xr-spatial-tracking` permissions policy. Inside an
+    // embedding iframe (e.g. the Lovable preview) the API is present but every
+    // session request is refused, which reads as "unavailable" even on a capable
+    // ARCore phone. Detect that case so the copy stays truthful.
+    const embedded = typeof window !== "undefined" && window.self !== window.top;
+    let policyBlocked = false;
+    try {
+      const fp = (
+        document as Document & { featurePolicy?: { allowsFeature: (f: string) => boolean } }
+      ).featurePolicy;
+      if (fp?.allowsFeature) policyBlocked = !fp.allowsFeature("xr-spatial-tracking");
+    } catch {
+      policyBlocked = false;
+    }
+    setXrBlockedByFrame(embedded && policyBlocked);
+
     const xr = (navigator as Navigator & { xr?: XRSystem }).xr;
     if (!xr?.isSessionSupported) {
       setXrSupported(false);
@@ -514,6 +531,34 @@ function SpatialPage() {
                   )}
                 </span>
               </div>
+              {xrSupported === false || vrSupported === false ? (
+                <p
+                  className="mt-3 text-[11px] text-muted-foreground"
+                  data-testid="spatial-xr-unavailable-reason"
+                >
+                  {xrBlockedByFrame ? (
+                    <>
+                      WebXR is blocked because this app is running inside an embedded preview frame.{" "}
+                      <a
+                        href="/spatial"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="focus-ring underline"
+                      >
+                        Open /spatial in its own tab
+                      </a>{" "}
+                      on an ARCore-capable Android device (Chrome) or a WebXR headset to launch an
+                      immersive session.
+                    </>
+                  ) : (
+                    <>
+                      This browser or device does not expose immersive WebXR sessions. AR needs
+                      Chrome with Google ARCore on Android; VR needs a WebXR headset browser. iOS
+                      and desktop use the 3D studio plus the native viewers below.
+                    </>
+                  )}
+                </p>
+              ) : null}
               <p className="mt-3 flex items-start gap-2 text-[11px] text-muted-foreground">
                 <ShieldAlert
                   className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#D4AF37]"

@@ -11,7 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import halisiaLogo from "../assets/brand/halisia-symbol.png.asset.json";
+import halisiaLogo from "../assets/brand/halisia-mark.png.asset.json";
 import { PerfMonitor } from "../components/halisia/perf-monitor";
 import { FloatingSearch } from "../components/halisia/floating-search";
 import { NavGuide } from "../components/halisia/nav-guide";
