@@ -181,8 +181,9 @@ test.describe("Mobile viewport", () => {
     );
 
     // Layer toggles stay clickable (not covered by the XR button row).
-    await page.getByRole("button", { name: "Beacons" }).click();
-    await expect(page.getByRole("button", { name: "Beacons" })).toHaveAttribute(
+    const beaconsToggle = page.getByRole("button", { name: "Beacons", exact: true });
+    await beaconsToggle.click();
+    await expect(beaconsToggle).toHaveAttribute(
       "aria-pressed",
       "false",
     );
