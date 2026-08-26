@@ -23,6 +23,8 @@ import { KenyaCountyMap } from "@/components/halisia/kenya-county-map";
 import { SearchBar } from "@/components/halisia/search-bar";
 import { AIOrb } from "@/components/halisia/ai-orb";
 import { DataPipeline } from "@/components/halisia/data-pipeline";
+import { HoloStack } from "@/components/halisia/ds/holo-stack";
+
 import { ScoreDrivers } from "@/components/halisia/score-drivers";
 import {
   PulseWindow,
@@ -241,92 +243,47 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
         </div>
       </div>
 
-      {/* INTELLIGENCE PILLARS */}
-      <section id="intelligence" className="py-24 md:py-32">
-        <div className="mx-auto max-w-7xl px-4">
-          <div className="max-w-2xl">
-            <div className="text-xs uppercase tracking-[0.25em] text-accent">
-              Intelligence Engine
-            </div>
-            <h2 className="mt-3 text-3xl md:text-5xl font-semibold tracking-tight">
-              Every location, translated into{" "}
-              <span className="text-gradient">signals you can trust</span>.
-            </h2>
-            <p className="mt-4 text-muted-foreground text-lg">
-              We fuse satellite data, infrastructure records, environmental models and community
-              observations — then let AI structure them into a profile with reasoning and
-              uncertainty.
-            </p>
-          </div>
+      {/* INTELLIGENCE PILLARS — holographic collapsible stack */}
+      <HoloStack
+        id="intelligence"
+        eyebrow="Intelligence Engine"
+        title={
+          <>
+            Every location, translated into{" "}
+            <span className="text-gradient">signals you can trust</span>.
+          </>
+        }
+        intro="Satellite data, infrastructure records, environmental models and community observations — structured by AI with reasoning and uncertainty."
+        items={PILLARS.map((p) => ({
+          key: p.title,
+          title: p.title,
+          body: p.body,
+          icon: p.icon,
+          meta: "Signal group",
+        }))}
+      />
 
-          <div className="mt-14 grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {PILLARS.map((p, i) => (
-              <motion.div
-                key={p.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-80px" }}
-                transition={{ delay: i * 0.06 }}
-                className="glass rounded-3xl p-6 relative overflow-hidden"
-              >
-                <div className="absolute -top-16 -right-16 h-48 w-48 rounded-full blur-3xl opacity-30 bg-gradient-to-br from-primary to-accent" />
-                <div className="h-11 w-11 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
-                  <p.icon className="h-5 w-5 text-accent" />
-                </div>
-                <h3 className="mt-4 text-lg font-semibold">{p.title}</h3>
-                <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">{p.body}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* TRUST */}
-      <section id="trust" className="py-24 md:py-32">
-        <div className="mx-auto max-w-7xl px-4 grid lg:grid-cols-2 gap-12 items-center">
-          <div>
-            <div className="text-xs uppercase tracking-[0.25em] text-accent">
-              Trust before automation
-            </div>
-            <h2 className="mt-3 text-3xl md:text-5xl font-semibold tracking-tight">
-              AI that shows its work — and its uncertainty.
-            </h2>
-            <p className="mt-4 text-muted-foreground text-lg leading-relaxed">
-              Every score comes with evidence, confidence level and what we don't yet know. We won't
-              tell you a plot is “safe” or “legal” — we'll show you what we found and recommend when
-              to bring in a surveyor, lawyer or local expert.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              {[
-                "Reasoning shown",
-                "Confidence Low/Med/High",
-                "Sources cited",
-                "Community-weighted",
-              ].map((t) => (
-                <span key={t} className="glass rounded-full px-3.5 py-1.5 text-xs">
-                  {t}
-                </span>
-              ))}
-            </div>
-          </div>
+      {/* TRUST & AUTOMATION — holographic collapsible stack */}
+      <HoloStack
+        id="trust"
+        eyebrow="Trust before automation"
+        title="AI that shows its work — and its uncertainty."
+        intro="Every score comes with evidence, a confidence level and what we don't yet know. We never call a plot safe or legal — we show what we found and when to bring in a professional."
+        items={[
+          ...TRUST.map((t) => ({
+            key: t.label,
+            title: t.stat,
+            body: t.label,
+            meta: "Guarantee",
+          })),
+          ...["Reasoning shown", "Confidence Low/Med/High", "Sources cited", "Community-weighted"].map(
+            (t) => ({ key: t, title: t, meta: "Principle" }),
+          ),
+        ]}
+        itemClassName="w-[200px] sm:w-[220px]"
+      />
 
-          <div className="grid grid-cols-2 gap-3">
-            {TRUST.map((t, i) => (
-              <motion.div
-                key={t.label}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.06 }}
-                className="glass rounded-2xl p-4"
-              >
-                <div className="text-3xl font-semibold tracking-tight text-gradient">{t.stat}</div>
-                <div className="mt-1 text-sm text-muted-foreground">{t.label}</div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* HOW IT WORKS */}
       <section id="how" className="py-24 md:py-32 border-t border-white/5">
@@ -365,52 +322,32 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
       <DataPipeline />
       <ScoreDrivers />
 
-      {/* TESTIMONIALS */}
-      <section id="voices" className="py-24">
-        <div className="mx-auto max-w-7xl px-4">
-          <div className="max-w-2xl">
-            <div className="text-xs uppercase tracking-[0.25em] text-accent">Field voices</div>
-            <h2 className="mt-3 text-3xl md:text-5xl font-semibold tracking-tight">
-              Built with buyers, builders, and diaspora investors.
-            </h2>
-          </div>
-          <div className="mt-14 grid md:grid-cols-3 gap-4">
-            {VOICES.map((v, i) => (
-              <motion.div
-                key={v.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.08 }}
-                className="glass rounded-3xl p-6 flex flex-col"
-              >
-                <Quote className="h-5 w-5 text-accent" />
-                <p className="mt-3 text-sm leading-relaxed text-foreground/90 flex-1">
-                  "{v.quote}"
-                </p>
-                <div className="mt-5 flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-xs font-semibold text-primary-foreground">
-                    {v.name
-                      .split(" ")
-                      .map((s) => s[0])
-                      .join("")
-                      .slice(0, 2)}
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium">{v.name}</div>
-                    <div className="text-[11px] text-muted-foreground">{v.role}</div>
-                  </div>
-                  <div className="ml-auto flex items-center gap-0.5 text-amber-glow">
-                    {Array.from({ length: 5 }).map((_, s) => (
-                      <Star key={s} className="h-3 w-3 fill-current" />
-                    ))}
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* PEOPLE — holographic collapsible stack */}
+      <HoloStack
+        id="voices"
+        eyebrow="People"
+        title="Built with buyers, builders, and diaspora investors."
+        intro="Field voices from the people who use HALISIA to make land decisions they can defend."
+        items={VOICES.map((v) => ({
+          key: v.name,
+          title: v.name,
+          meta: v.role,
+          body: (
+            <>
+              <Quote className="mb-1.5 h-4 w-4 text-accent" aria-hidden="true" />
+              {`"${v.quote}"`}
+              <span className="mt-2 flex items-center gap-0.5 text-amber-glow">
+                {Array.from({ length: 5 }).map((_, s) => (
+                  <Star key={s} className="h-3 w-3 fill-current" aria-hidden="true" />
+                ))}
+                <span className="sr-only">Rated 5 out of 5</span>
+              </span>
+            </>
+          ),
+        }))}
+        itemClassName="w-[280px] sm:w-[320px]"
+      />
+
 
       {/* PRICING / CTA */}
       <section id="pricing" className="py-24">

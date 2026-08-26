@@ -118,7 +118,7 @@ export function NavGuide() {
           }}
           aria-label="Open guided tour"
           title="Guided tour (press ?)"
-          className="fixed bottom-4 right-4 z-30 h-11 w-11 rounded-full glass-strong border border-[oklch(0.78_0.14_85/0.4)] text-[oklch(0.78_0.14_85)] shadow-[0_0_24px_-8px_oklch(0.78_0.14_85/0.6)] hover:scale-105 transition inline-flex items-center justify-center"
+          className="fixed bottom-4 right-4 z-30 h-11 w-11 rounded-full glass-strong border border-accent/40 text-accent shadow-[0_0_24px_-8px_var(--h-gold-ink)] hover:scale-105 transition inline-flex items-center justify-center"
         >
           <span className="text-lg font-semibold" aria-hidden="true">
             ?
@@ -136,18 +136,18 @@ export function NavGuide() {
           onClick={() => close(false)}
         >
           <div
-            className="glass-strong w-full max-w-md rounded-3xl p-5 sm:p-6 border border-[oklch(0.78_0.14_85/0.25)]"
+            className="glass-strong w-full max-w-md rounded-3xl p-5 sm:p-6 border border-accent/25"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start gap-3">
-              <div className="h-10 w-10 shrink-0 rounded-2xl grid place-items-center bg-[oklch(0.78_0.14_85/0.12)] border border-[oklch(0.78_0.14_85/0.35)] text-[oklch(0.78_0.14_85)]">
+              <div className="h-10 w-10 shrink-0 rounded-2xl grid place-items-center bg-accent/12 border border-accent/35 text-accent">
                 {(() => {
                   const Icon = STEPS[step].icon;
                   return <Icon className="h-5 w-5" aria-hidden="true" />;
                 })()}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-[11px] uppercase tracking-widest text-[oklch(0.78_0.14_85)] font-medium">
+                <div className="text-[11px] uppercase tracking-widest text-accent font-medium">
                   Guided tour · {step + 1} of {STEPS.length}
                 </div>
                 <h2 id="navguide-title" className="mt-1 text-lg font-semibold text-foreground">
@@ -175,7 +175,7 @@ export function NavGuide() {
                   key={i}
                   className={`h-1 rounded-full transition-all ${
                     i === step
-                      ? "w-6 bg-[oklch(0.78_0.14_85)]"
+                      ? "w-6 bg-accent"
                       : i < step
                         ? "w-3 bg-primary/70"
                         : "w-3 bg-white/10"
@@ -205,7 +205,7 @@ export function NavGuide() {
                   <button
                     type="button"
                     onClick={() => setStep((s) => s + 1)}
-                    className="h-9 px-4 rounded-full text-sm font-medium bg-[oklch(0.78_0.14_85)] text-[oklch(0.16_0.02_60)] hover:brightness-110"
+                    className="h-9 px-4 rounded-full text-sm font-medium bg-accent text-accent-foreground hover:brightness-110"
                   >
                     Next
                   </button>

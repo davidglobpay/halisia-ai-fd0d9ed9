@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TokenAuditRouteImport } from './routes/token-audit'
 import { Route as TitleDeedRouteImport } from './routes/title-deed'
 import { Route as StyleGuideRouteImport } from './routes/style-guide'
 import { Route as SpatialRouteImport } from './routes/spatial'
@@ -46,6 +47,11 @@ import { Route as AuthenticatedDevelopIdRouteImport } from './routes/_authentica
 import { Route as ApiPublicHooksPulseRefreshRouteImport } from './routes/api/public/hooks/pulse-refresh'
 import { Route as AuthenticatedSellEditIdRouteImport } from './routes/_authenticated/sell.edit.$id'
 
+const TokenAuditRoute = TokenAuditRouteImport.update({
+  id: '/token-audit',
+  path: '/token-audit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TitleDeedRoute = TitleDeedRouteImport.update({
   id: '/title-deed',
   path: '/title-deed',
@@ -244,6 +250,7 @@ export interface FileRoutesByFullPath {
   '/spatial': typeof SpatialRoute
   '/style-guide': typeof StyleGuideRoute
   '/title-deed': typeof TitleDeedRoute
+  '/token-audit': typeof TokenAuditRoute
   '/account': typeof AuthenticatedAccountRoute
   '/contributions': typeof AuthenticatedContributionsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -280,6 +287,7 @@ export interface FileRoutesByTo {
   '/spatial': typeof SpatialRoute
   '/style-guide': typeof StyleGuideRoute
   '/title-deed': typeof TitleDeedRoute
+  '/token-audit': typeof TokenAuditRoute
   '/account': typeof AuthenticatedAccountRoute
   '/contributions': typeof AuthenticatedContributionsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -319,6 +327,7 @@ export interface FileRoutesById {
   '/spatial': typeof SpatialRoute
   '/style-guide': typeof StyleGuideRoute
   '/title-deed': typeof TitleDeedRoute
+  '/token-audit': typeof TokenAuditRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/contributions': typeof AuthenticatedContributionsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -358,6 +367,7 @@ export interface FileRouteTypes {
     | '/spatial'
     | '/style-guide'
     | '/title-deed'
+    | '/token-audit'
     | '/account'
     | '/contributions'
     | '/dashboard'
@@ -394,6 +404,7 @@ export interface FileRouteTypes {
     | '/spatial'
     | '/style-guide'
     | '/title-deed'
+    | '/token-audit'
     | '/account'
     | '/contributions'
     | '/dashboard'
@@ -432,6 +443,7 @@ export interface FileRouteTypes {
     | '/spatial'
     | '/style-guide'
     | '/title-deed'
+    | '/token-audit'
     | '/_authenticated/account'
     | '/_authenticated/contributions'
     | '/_authenticated/dashboard'
@@ -471,6 +483,7 @@ export interface RootRouteChildren {
   SpatialRoute: typeof SpatialRoute
   StyleGuideRoute: typeof StyleGuideRoute
   TitleDeedRoute: typeof TitleDeedRoute
+  TokenAuditRoute: typeof TokenAuditRoute
   ApiChatRoute: typeof ApiChatRoute
   CountyCodeRoute: typeof CountyCodeRoute
   PulseIdRoute: typeof PulseIdRoute
@@ -481,6 +494,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/token-audit': {
+      id: '/token-audit'
+      path: '/token-audit'
+      fullPath: '/token-audit'
+      preLoaderRoute: typeof TokenAuditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/title-deed': {
       id: '/title-deed'
       path: '/title-deed'
@@ -802,6 +822,7 @@ const rootRouteChildren: RootRouteChildren = {
   SpatialRoute: SpatialRoute,
   StyleGuideRoute: StyleGuideRoute,
   TitleDeedRoute: TitleDeedRoute,
+  TokenAuditRoute: TokenAuditRoute,
   ApiChatRoute: ApiChatRoute,
   CountyCodeRoute: CountyCodeRoute,
   PulseIdRoute: PulseIdRoute,

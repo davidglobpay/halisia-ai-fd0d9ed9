@@ -54,6 +54,8 @@ const TONE: Record<Stage["tone"], { ring: string; icon: string; chip: string }> 
 
 export function DataPipeline() {
   const [active, setActive] = useState<Stage | null>(null);
+  const [open, setOpen] = useState(false);
+
   const [reduced, setReducedPref] = useReducedMotionPref();
   const seen = useRef<Set<string>>(new Set());
 
@@ -109,21 +111,41 @@ export function DataPipeline() {
               visible in the final report.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={toggleReduced}
-            aria-pressed={reduced}
-            className="glass inline-flex min-h-11 items-center gap-2 rounded-full border border-white/10 px-4 text-xs text-muted-foreground transition-colors hover:border-accent/40 hover:text-foreground"
-          >
-            <Sparkle className="h-3.5 w-3.5" aria-hidden="true" />
-            {reduced ? "Animations off" : "Reduce motion"}
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={toggleReduced}
+              aria-pressed={reduced}
+              className="glass focus-ring inline-flex min-h-11 items-center gap-2 rounded-full border border-white/10 px-4 text-xs text-muted-foreground transition-colors hover:border-accent/40 hover:text-foreground"
+            >
+              <Sparkle className="h-3.5 w-3.5" aria-hidden="true" />
+              {reduced ? "Animations off" : "Reduce motion"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setOpen((v) => !v)}
+              aria-expanded={open}
+              aria-controls="data-pipeline-panel"
+              data-testid="holo-toggle"
+              className="focus-ring inline-flex min-h-11 items-center gap-2 rounded-full border border-accent/45 bg-accent/10 px-4 text-xs font-semibold text-foreground transition-colors hover:bg-accent/20"
+            >
+              {open ? "Collapse" : `Reveal ${PIPELINE_STAGES.length} stages`}
+              <ChevronDown
+                className={`h-3.5 w-3.5 transition-transform duration-300 ${open ? "rotate-180" : ""}`}
+                aria-hidden="true"
+              />
+            </button>
+          </div>
         </div>
 
         <ol
-          className="mt-12 grid items-stretch gap-x-4 gap-y-2 sm:grid-cols-2 lg:grid-cols-5"
+          id="data-pipeline-panel"
+          hidden={!open}
+          data-testid="holo-panel"
+          className="holo-panel scrollbar-none mt-8 flex snap-x snap-mandatory items-stretch gap-3 overflow-x-auto pb-3"
           role="list"
         >
+
           {PIPELINE_STAGES.map((s, i) => {
             const tone = TONE[s.tone];
             const last = i === PIPELINE_STAGES.length - 1;
@@ -131,7 +153,7 @@ export function DataPipeline() {
             return (
               <li
                 key={s.title}
-                className="relative flex flex-col items-stretch"
+                className="relative flex w-[240px] shrink-0 snap-start flex-col items-stretch sm:w-[260px]"
                 data-testid="pipeline-stage"
                 ref={(el) => observe(el, s, i)}
               >
@@ -180,20 +202,13 @@ export function DataPipeline() {
                   </span>
                 </button>
 
-                {!last && (
-                  <span
-                    aria-hidden="true"
-                    className="mx-auto my-2 flex h-5 items-center justify-center text-muted-foreground/50 lg:hidden"
-                  >
-                    <ChevronDown className="h-4 w-4" />
-                  </span>
-                )}
                 {!last && !rowEnd && (
                   <span
                     aria-hidden="true"
-                    className="pointer-events-none absolute right-0 top-1/2 hidden h-px w-4 -translate-y-1/2 translate-x-full bg-gradient-to-r from-accent/50 to-transparent lg:block"
+                    className="pointer-events-none absolute right-0 top-1/2 h-px w-3 -translate-y-1/2 translate-x-full bg-gradient-to-r from-accent/50 to-transparent"
                   />
                 )}
+
               </li>
             );
           })}

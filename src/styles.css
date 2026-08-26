@@ -56,6 +56,19 @@
   --color-cyan-glow: var(--cyan-glow);
   --color-emerald-glow: var(--emerald-glow);
   --color-amber-glow: var(--amber-glow);
+  /*
+   * Ivory-skin remap for the light Tailwind amber/emerald shades that legacy
+   * components use for caveats and positive states. On a dark canvas 200–400
+   * read fine; on ivory glass they fail WCAG AA, so they resolve to the
+   * AA-safe gold-ink and forest-green brand values instead.
+   */
+  --color-amber-200: var(--h-gold-ink);
+  --color-amber-300: var(--h-gold-ink);
+  --color-amber-400: var(--h-gold-ink);
+  --color-emerald-200: var(--h-green);
+  --color-emerald-300: var(--h-green);
+  --color-emerald-400: var(--h-green);
+
   --color-flamingo: var(--flamingo);
   --color-earth: var(--earth);
   --color-cream: var(--cream);
@@ -108,13 +121,16 @@
   --h-green-2: #1b9b45;
   --h-green-3: #37bd63;
   --h-gold: #c08a2e;
+  /* AA-safe gold for text on ivory glass (5.1:1). Line-work keeps --h-gold. */
+  --h-gold-ink: #8a5e12;
   --h-gold-2: #d4af37;
   --h-gold-3: #edd493;
   --h-red: #b3261e;
   --h-red-2: #d2372c;
   --h-red-3: #f06a5f;
-  --h-stone: #6b7a6e;
-  --h-stone-2: #8b988d;
+  --h-stone: #33403a;
+  --h-stone-2: #6b7a6e;
+
 
   /* Legacy aliases — older rules still reference the --k-* names. */
   --k-black: var(--h-forest);
@@ -147,8 +163,8 @@
   --secondary-foreground: var(--h-forest);
   --muted: var(--h-ivory-2);
   --muted-foreground: var(--h-stone);
-  --accent: var(--h-gold); /* premium / AI */
-  --accent-foreground: #1a1204;
+  --accent: var(--h-gold-ink); /* premium / AI — AA-safe on ivory */
+  --accent-foreground: #fffdf8;
   --destructive: var(--h-red); /* risk / alert */
   --destructive-foreground: #f7f3ea;
   --border: rgba(16, 45, 26, 0.14);
@@ -740,4 +756,89 @@ html[data-reduced-motion="1"] *::after {
     outline-offset: 2px;
     border-radius: 12px;
   }
+}
+
+/*
+ * Holographic stack — hero tile + collapsible horizontal rail.
+ * Ivory glass with gold hairline refraction; no neon, no toy rounding.
+ */
+@utility holo-hero {
+  background:
+    linear-gradient(180deg, rgba(255, 253, 248, 0.92), rgba(241, 236, 224, 0.72)),
+    radial-gradient(120% 140% at 90% 0%, rgba(192, 138, 46, 0.14), transparent 60%),
+    radial-gradient(100% 120% at 0% 100%, rgba(20, 123, 53, 0.1), transparent 62%);
+  border: 1px solid rgba(16, 45, 26, 0.1);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.8) inset,
+    0 18px 44px -28px rgba(16, 45, 26, 0.35);
+  backdrop-filter: blur(22px);
+}
+
+@utility holo-tile {
+  position: relative;
+  background:
+    linear-gradient(180deg, rgba(255, 253, 248, 0.9), rgba(247, 243, 234, 0.72));
+  border: 1px solid rgba(16, 45, 26, 0.1);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.85) inset,
+    0 14px 34px -26px rgba(16, 45, 26, 0.4);
+  backdrop-filter: blur(18px);
+  transition:
+    transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 200ms ease;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(
+      115deg,
+      transparent 42%,
+      rgba(192, 138, 46, 0.14) 50%,
+      transparent 58%
+    );
+    opacity: 0;
+    transition: opacity 220ms ease;
+  }
+  &:hover {
+    transform: translateY(-3px);
+    border-color: rgba(192, 138, 46, 0.38);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.9) inset,
+      0 20px 44px -26px rgba(16, 45, 26, 0.45);
+  }
+  &:hover::after {
+    opacity: 1;
+  }
+}
+
+@keyframes holo-unfold {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@utility holo-panel {
+  animation: holo-unfold 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/*
+ * Global page backdrop — plain ivory with a faint gold graticule sphere
+ * (meridians + parallels) standing in for the globe. Purely decorative.
+ */
+@utility ivory-globe-backdrop {
+  background-color: var(--h-ivory);
 }
