@@ -292,16 +292,30 @@ export default function SpatialCanvasInternal({
         st.content.quaternion.identity();
         st.content.scale.setScalar(1);
       }
+      // Shadows are restored after the passthrough session.
+      renderer.shadowMap.enabled = true;
+      setArSessionActive(false);
       emitRef.current({ hitTest: false, surfaceFound: false, placed: false });
-      xrStateCb.current?.(false);
+      // Single end-notification path (no per-session "end" listener).
+      xrStateCb.current?.(false, pendingMode.current ?? undefined);
+      pendingMode.current = null;
+      showInFrontRef.current = null;
     };
-    const onSessionStart = () => xrStateCb.current?.(true);
+    const onSessionStart = () => {
+      const wanted = pendingMode.current ?? undefined;
+      setArSessionActive(wanted === "ar");
+      // Shadow mapping is pure cost on a 1.2 m passthrough twin.
+      if (wanted === "ar") renderer.shadowMap.enabled = false;
+      xrStateCb.current?.(true, wanted);
+    };
     renderer.xr.addEventListener("sessionstart", onSessionStart);
     renderer.xr.addEventListener("sessionend", onSessionEnd);
 
     return () => {
       renderer.xr.removeEventListener("sessionstart", onSessionStart);
       renderer.xr.removeEventListener("sessionend", onSessionEnd);
+      canvas.removeEventListener("webglcontextlost", onContextLost);
+      canvas.removeEventListener("webglcontextrestored", onContextRestored);
       const st = stateRef.current;
       if (st?.session && st.onSelect) st.session.removeEventListener("select", st.onSelect);
       try {
