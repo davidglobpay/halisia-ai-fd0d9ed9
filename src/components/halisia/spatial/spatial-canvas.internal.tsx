@@ -121,7 +121,7 @@ export default function SpatialCanvasInternal({
   const emitRef = useRef<(s: ArPlacementState) => void>(() => {});
   emitRef.current = (s: ArPlacementState) => {
     setArPlacement(s);
-    emitRef.current(s);
+    placementCb.current?.(s);
   };
 
   // ---- one-time scene bootstrap -------------------------------------------
