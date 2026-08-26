@@ -39,6 +39,7 @@ import { getGeotechIntel } from "@/lib/geotech.functions";
 import { NotificationsBell } from "@/components/halisia/notifications-bell";
 import { MapsDiagnostics } from "@/components/halisia/maps-diagnostics";
 import { Wave4Panel } from "@/components/halisia/wave4-panel";
+import { HoloTile } from "@/components/halisia/ds/holo-tile";
 import { Terrain3D } from "@/components/halisia/terrain-3d";
 import { useDevMode } from "@/hooks/use-dev-mode";
 import { PlaceCard } from "@/components/halisia/place-card";
@@ -240,45 +241,47 @@ export function IntelligenceDashboard({
         )}
       </div>
 
-      {/* Tabs grouped by wave */}
-      <div className="space-y-1.5">
+      {/* Wave dynamics as holographic tiles with collapsible horizontal detail rails */}
+      <div className="space-y-2">
         {(Object.keys(WAVE_META) as WaveId[]).map((wave) => {
           const items = TABS.filter((t) => t.wave === wave);
           if (!items.length) return null;
           const meta = WAVE_META[wave];
+          const activeHere = items.some((t) => t.id === tab);
           return (
-            <div key={wave} className="glass rounded-2xl p-1.5">
-              <div className="flex items-center justify-between px-1.5 pt-0.5 pb-1">
-                <span className="text-[9px] uppercase tracking-[0.18em] text-accent font-semibold">
-                  {meta.label}
-                </span>
-                <span className="text-[9px] uppercase tracking-widest text-muted-foreground">
-                  {meta.hint}
-                </span>
-              </div>
-              <div className="flex items-center gap-1">
+            <HoloTile
+              key={wave}
+              eyebrow={meta.label}
+              title={meta.hint}
+              defaultOpen
+              data-testid={`wave-tile-${wave}`}
+              className={activeHere ? "holo-lit" : undefined}
+            >
+              <ul className="scrollbar-none flex snap-x snap-mandatory items-stretch gap-2 overflow-x-auto pb-1">
                 {items.map((t) => {
                   const active = t.id === tab;
                   const Icon = t.icon;
                   return (
-                    <button
-                      key={t.id}
-                      onClick={() => setTab(t.id)}
-                      className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-full px-2 py-1.5 text-[11px] transition ${
-                        active
-                          ? "bg-white/15 text-foreground"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                      data-testid={`tab-${t.id}`}
-                      aria-label={`${meta.label} · ${t.label}`}
-                    >
-                      <Icon className="h-3.5 w-3.5" />
-                      <span className="hidden sm:inline">{t.label}</span>
-                    </button>
+                    <li key={t.id} className="shrink-0 snap-start">
+                      <button
+                        onClick={() => setTab(t.id)}
+                        aria-pressed={active}
+                        className={`focus-ring inline-flex min-h-10 items-center gap-1.5 rounded-full border px-3 text-[11px] transition ${
+                          active
+                            ? "border-accent/50 bg-accent/15 text-foreground"
+                            : "border-white/10 text-muted-foreground hover:text-foreground"
+                        }`}
+                        data-testid={`tab-${t.id}`}
+                        aria-label={`${meta.label} · ${t.label}`}
+                      >
+                        <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+                        <span>{t.label}</span>
+                      </button>
+                    </li>
                   );
                 })}
-              </div>
-            </div>
+              </ul>
+            </HoloTile>
           );
         })}
       </div>

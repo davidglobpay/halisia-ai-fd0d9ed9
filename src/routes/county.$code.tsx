@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import countiesData from "@/data/kenya-counties.json";
 import { buildCountyProfile, COUNTY_DATA_SOURCES } from "@/lib/county-profile";
+import { HoloTile, HoloTileRail } from "@/components/halisia/ds/holo-tile";
 import { CountyEmblem } from "@/components/halisia/county-emblem";
 import { CountyPoliticsPanel } from "@/components/halisia/county-politics-panel";
 import { LeafletLayersMap } from "@/components/halisia/leaflet-layers-map";
@@ -287,7 +288,7 @@ function CountyPage() {
 
         {/* 14. DASHBOARD SCORES */}
         <Section id="sec-dashboard" title="County Dashboard" icon={TrendingUp}>
-          <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          <HoloTileRail label="County dashboard scores" itemClassName="w-[170px]">
             <ScoreTile label="Economic" value={scores.economic} />
             <ScoreTile label="Infrastructure" value={scores.infrastructure} />
             <ScoreTile label="Governance" value={scores.governance} />
@@ -300,7 +301,7 @@ function CountyPage() {
             <ScoreTile label="Tourism" value={scores.tourism} />
             <ScoreTile label="Development readiness" value={scores.developmentReadiness} />
             <ScoreTile label="Overall" value={scores.overall} accent />
-          </div>
+          </HoloTileRail>
         </Section>
 
         {/* LOCATION & INTERACTIVE MAP */}
@@ -615,23 +616,26 @@ function Section({
   title,
   icon: Icon,
   children,
+  defaultOpen = true,
 }: {
   id?: string;
   title: string;
   icon: React.ComponentType<{ className?: string }>;
   children: React.ReactNode;
+  defaultOpen?: boolean;
 }) {
   return (
-    <section
+    <HoloTile
+      variant="hero"
       id={id}
-      className="mt-10 glass rounded-3xl p-5 md:p-7 border border-white/5 scroll-mt-32"
+      title={title}
+      icon={Icon as never}
+      defaultOpen={defaultOpen}
+      className="mt-10"
+      data-testid="county-section"
     >
-      <div className="flex items-center gap-2 text-accent text-xs uppercase tracking-[0.25em]">
-        <Icon className="h-4 w-4" />
-        <span>{title}</span>
-      </div>
-      <div className="mt-4">{children}</div>
-    </section>
+      {children}
+    </HoloTile>
   );
 }
 
@@ -692,11 +696,7 @@ function MiniScore({ label, value, invert }: { label: string; value: number; inv
 
 function ScoreTile({ label, value, accent }: { label: string; value: number; accent?: boolean }) {
   return (
-    <div
-      className={`rounded-2xl p-4 border ${
-        accent ? "bg-accent/10 border-accent/40" : "bg-white/5 border-white/10"
-      }`}
-    >
+    <div className={`holo-tile h-full rounded-2xl p-4 ${accent ? "holo-lit" : ""}`}>
       <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
       <div className={`mt-1 text-3xl font-semibold ${accent ? "text-gradient" : ""}`}>
         {value}
