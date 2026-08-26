@@ -6,10 +6,9 @@
 
 /*
  * HALISIA AI — Land Intelligence Platform design system.
- * Kenyan flag inspired: deep black surfaces, pure white typography,
- * emerald green (positive/verified), crimson red (risk/alert),
- * metallic gold accent reserved for premium / AI / awards.
- * Architectural typography, futuristic glass + topographic textures.
+ * Contemporary light-glass skin: egg-white surfaces, deep forest
+ * typography, intelligence green (positive/verified), signal red
+ * (risk/alert) and gold line-work reserved for premium / AI accents.
  */
 
 @theme inline {
@@ -64,6 +63,19 @@
   --color-emerald: var(--emerald-glow);
   --color-crimson: var(--destructive);
   --color-silver: var(--silver);
+  --color-ink: var(--h-forest);
+  --color-ivory: var(--h-ivory);
+  --color-on-dark: var(--h-ivory);
+  /*
+   * Light-glass remap. The app expresses glass line-work as `white/x` and
+   * recessed fills as `black/x`. In the ivory skin those must invert:
+   * `white/x` becomes forest-ink line-work and `black/x` becomes a warm
+   * sand recess, so all existing surfaces stay legible without touching
+   * hundreds of component class strings.
+   */
+  --color-white: var(--h-forest);
+  --color-black: var(--h-ivory-4);
+
   /* HALISIA typography hierarchy — Space Grotesk / Inter / Cormorant Garamond */
   --font-hero: "Space Grotesk", "Sora", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Space Grotesk", "Sora", ui-sans-serif, system-ui, sans-serif;
@@ -76,78 +88,99 @@
 }
 
 :root {
-  /* HALISIA — Kenyan flag palette (dark by default).
-   * Deep Black    #05070A  — background, nav, footer, cards
-   * Pure White    #F7F8FA  — typography
-   * Emerald Green #0E7C3A  — positive, verified, primary action
-   * Crimson Red   #C8102E  — warning, risk, environmental alert
-   * Metallic Gold #D4A017  — premium, AI, awards, highlights only
+  /* HALISIA — approved brand skin: contemporary light-glass.
+   * Egg White         #F7F3EA — page background, glass surfaces
+   * Deep Forest       #102D1A — typography, nav, deep surfaces
+   * Intelligence Green#147B35 — primary action, verified, positive
+   * Gold              #C08A2E — line-work, premium, AI accents (sparing)
+   * Signal Red        #B3261E — risk / alert only
    */
   --radius: 1.25rem; /* 20px — architectural, not toy-like */
-  /* Kenyan flag palette (Section 19) */
-  --k-black: #050706;
-  --k-black-2: #0b0f0d;
-  --k-black-3: #111614;
-  --k-red: #bb1e2d;
-  --k-red-2: #e12635;
-  --k-red-3: #ff4a58;
-  --k-green: #006b3f;
-  --k-green-2: #008f55;
-  --k-green-3: #20d878;
-  --k-white: #ffffff;
-  --k-white-soft: #f7f8f6;
-  --k-gold: #d4af37;
-  --k-gold-2: #f0c75e;
-  --k-gold-3: #ffe59a;
-  --k-silver: #aeb7bc;
-  --k-silver-2: #dce3e6;
-  --k-silver-3: #f5f7f8;
 
-  --background: var(--k-black);
-  --foreground: var(--k-white-soft);
-  --card: rgba(17, 22, 20, 0.72);
-  --card-foreground: var(--k-white-soft);
-  --popover: #0b0f0d;
-  --popover-foreground: var(--k-white-soft);
-  --primary: var(--k-green-2); /* verified / positive */
-  --primary-foreground: #ffffff;
-  --secondary: #1a2320;
-  --secondary-foreground: var(--k-white-soft);
-  --muted: #151b19;
-  --muted-foreground: var(--k-silver);
-  --accent: var(--k-gold); /* premium / AI */
-  --accent-foreground: #14100a;
-  --destructive: var(--k-red-2); /* risk / alert */
-  --destructive-foreground: #ffffff;
-  --border: rgba(174, 183, 188, 0.16);
-  --input: rgba(174, 183, 188, 0.1);
-  --ring: var(--k-gold);
-  --electric: var(--k-green-2);
-  --cyan-glow: var(--k-green-2);
-  --emerald-glow: var(--k-green-3);
-  --amber-glow: var(--k-gold);
-  --flamingo: var(--k-red-3);
-  --earth: #6b5a33;
-  --cream: var(--k-gold-3);
-  --silver: var(--k-silver);
-  --chart-1: var(--k-green-2);
-  --chart-2: var(--k-gold);
-  --chart-3: var(--k-red-2);
-  --chart-4: var(--k-silver);
-  --chart-5: var(--k-green-3);
-  --sidebar: #0b0f0d;
-  --sidebar-foreground: var(--k-white-soft);
-  --sidebar-primary: var(--k-green-2);
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #151b19;
-  --sidebar-accent-foreground: var(--k-white-soft);
-  --sidebar-border: rgba(174, 183, 188, 0.14);
-  --sidebar-ring: var(--k-gold);
+  --h-ivory: #f7f3ea;
+  --h-ivory-2: #f1ece0;
+  --h-ivory-3: #e7e0d2;
+  --h-ivory-4: #dcd3c1;
+  --h-forest: #102d1a;
+  --h-forest-2: #1b4429;
+  --h-forest-3: #2b5c3a;
+  --h-green: #147b35;
+  --h-green-2: #1b9b45;
+  --h-green-3: #37bd63;
+  --h-gold: #c08a2e;
+  --h-gold-2: #d4af37;
+  --h-gold-3: #edd493;
+  --h-red: #b3261e;
+  --h-red-2: #d2372c;
+  --h-red-3: #f06a5f;
+  --h-stone: #6b7a6e;
+  --h-stone-2: #8b988d;
+
+  /* Legacy aliases — older rules still reference the --k-* names. */
+  --k-black: var(--h-forest);
+  --k-black-2: var(--h-forest-2);
+  --k-black-3: var(--h-forest-3);
+  --k-red: var(--h-red);
+  --k-red-2: var(--h-red-2);
+  --k-red-3: var(--h-red-3);
+  --k-green: var(--h-green);
+  --k-green-2: var(--h-green);
+  --k-green-3: var(--h-green-2);
+  --k-white: var(--h-ivory);
+  --k-white-soft: var(--h-ivory);
+  --k-gold: var(--h-gold);
+  --k-gold-2: var(--h-gold-2);
+  --k-gold-3: var(--h-gold-3);
+  --k-silver: var(--h-stone);
+  --k-silver-2: var(--h-stone-2);
+  --k-silver-3: var(--h-ivory-3);
+
+  --background: var(--h-ivory);
+  --foreground: var(--h-forest);
+  --card: rgba(255, 253, 248, 0.78);
+  --card-foreground: var(--h-forest);
+  --popover: #fffdf8;
+  --popover-foreground: var(--h-forest);
+  --primary: var(--h-green); /* verified / positive */
+  --primary-foreground: #f7f3ea;
+  --secondary: var(--h-ivory-2);
+  --secondary-foreground: var(--h-forest);
+  --muted: var(--h-ivory-2);
+  --muted-foreground: var(--h-stone);
+  --accent: var(--h-gold); /* premium / AI */
+  --accent-foreground: #1a1204;
+  --destructive: var(--h-red); /* risk / alert */
+  --destructive-foreground: #f7f3ea;
+  --border: rgba(16, 45, 26, 0.14);
+  --input: rgba(16, 45, 26, 0.08);
+  --ring: var(--h-gold);
+  --electric: var(--h-green);
+  --cyan-glow: var(--h-green-2);
+  --emerald-glow: var(--h-green-2);
+  --amber-glow: var(--h-gold);
+  --flamingo: var(--h-red-2);
+  --earth: #7a6437;
+  --cream: var(--h-ivory-3);
+  --silver: var(--h-stone);
+  --chart-1: var(--h-green);
+  --chart-2: var(--h-gold);
+  --chart-3: var(--h-red);
+  --chart-4: var(--h-stone);
+  --chart-5: var(--h-green-3);
+  --sidebar: rgba(255, 253, 248, 0.82);
+  --sidebar-foreground: var(--h-forest);
+  --sidebar-primary: var(--h-green);
+  --sidebar-primary-foreground: #f7f3ea;
+  --sidebar-accent: var(--h-ivory-2);
+  --sidebar-accent-foreground: var(--h-forest);
+  --sidebar-border: rgba(16, 45, 26, 0.12);
+  --sidebar-ring: var(--h-gold);
   /* Motion (Section 22) */
   --motion-micro: 180ms;
   --motion-panel: 320ms;
   --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
+
 
 .dark {
   /* dark class == default (kept for shadcn components that toggle it) */
@@ -253,78 +286,78 @@
 }
 
 @utility glass {
-  background: rgba(11, 15, 13, 0.66);
-  backdrop-filter: blur(24px) saturate(140%);
-  border: 1px solid rgba(174, 183, 188, 0.16);
+  background: rgba(255, 253, 248, 0.62);
+  backdrop-filter: blur(24px) saturate(120%);
+  border: 1px solid rgba(16, 45, 26, 0.1);
   border-radius: 20px;
   box-shadow:
-    0 1px 0 0 rgba(245, 247, 248, 0.07) inset,
-    0 18px 44px rgba(0, 0, 0, 0.45);
+    0 1px 0 0 rgba(255, 255, 255, 0.7) inset,
+    0 14px 34px rgba(16, 45, 26, 0.08);
 }
 
 @utility glass-strong {
-  background: rgba(5, 7, 6, 0.84);
-  backdrop-filter: blur(32px) saturate(160%);
-  border: 1px solid rgba(174, 183, 188, 0.22);
+  background: rgba(255, 253, 248, 0.86);
+  backdrop-filter: blur(32px) saturate(135%);
+  border: 1px solid rgba(16, 45, 26, 0.12);
   border-radius: 20px;
   box-shadow:
-    0 1px 0 0 rgba(245, 247, 248, 0.1) inset,
-    0 28px 74px rgba(0, 0, 0, 0.6);
+    0 1px 0 0 rgba(255, 255, 255, 0.8) inset,
+    0 22px 56px rgba(16, 45, 26, 0.12);
 }
 
 /* Section 21 — elevation levels */
 @utility elev-1 {
-  background: rgba(17, 22, 20, 0.55);
-  backdrop-filter: blur(18px) saturate(130%);
-  border: 1px solid rgba(174, 183, 188, 0.14);
+  background: rgba(255, 253, 248, 0.5);
+  backdrop-filter: blur(18px) saturate(115%);
+  border: 1px solid rgba(16, 45, 26, 0.09);
   border-radius: 16px;
-  box-shadow: 0 1px 0 0 rgba(245, 247, 248, 0.05) inset;
+  box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.6) inset;
 }
 @utility elev-2 {
-  background: rgba(11, 15, 13, 0.7);
-  backdrop-filter: blur(26px) saturate(145%);
-  border: 1px solid rgba(174, 183, 188, 0.18);
+  background: rgba(255, 253, 248, 0.7);
+  backdrop-filter: blur(26px) saturate(125%);
+  border: 1px solid rgba(16, 45, 26, 0.11);
   border-radius: 20px;
   box-shadow:
-    0 1px 0 0 rgba(245, 247, 248, 0.08) inset,
-    0 16px 40px rgba(0, 0, 0, 0.45);
+    0 1px 0 0 rgba(255, 255, 255, 0.7) inset,
+    0 14px 34px rgba(16, 45, 26, 0.09);
   transition:
     transform var(--motion-micro) var(--motion-ease),
     box-shadow var(--motion-micro) var(--motion-ease);
 }
 @utility elev-3 {
-  background: rgba(5, 7, 6, 0.86);
-  backdrop-filter: blur(34px) saturate(160%);
-  border: 1px solid rgba(212, 175, 55, 0.3);
+  background: rgba(255, 253, 248, 0.88);
+  backdrop-filter: blur(34px) saturate(140%);
+  border: 1px solid rgba(192, 138, 46, 0.35);
   border-radius: 24px;
   box-shadow:
-    0 1px 0 0 rgba(255, 229, 154, 0.14) inset,
-    0 0 0 1px rgba(212, 175, 55, 0.08),
-    0 26px 70px rgba(0, 0, 0, 0.62),
-    0 0 44px rgba(212, 175, 55, 0.12);
+    0 1px 0 0 rgba(255, 255, 255, 0.85) inset,
+    0 0 0 1px rgba(192, 138, 46, 0.08),
+    0 24px 60px rgba(16, 45, 26, 0.14);
 }
 
 /* Restrained luminous edges */
 @utility edge-green {
   box-shadow:
-    0 0 0 1px rgba(32, 216, 120, 0.35),
-    0 0 26px rgba(0, 143, 85, 0.22);
+    0 0 0 1px rgba(20, 123, 53, 0.35),
+    0 0 26px rgba(20, 123, 53, 0.14);
 }
 @utility edge-red {
   box-shadow:
-    0 0 0 1px rgba(225, 38, 53, 0.35),
-    0 0 26px rgba(187, 30, 45, 0.22);
+    0 0 0 1px rgba(179, 38, 30, 0.35),
+    0 0 26px rgba(179, 38, 30, 0.14);
 }
 @utility edge-gold {
   box-shadow:
-    0 0 0 1px rgba(212, 175, 55, 0.4),
-    0 0 28px rgba(212, 175, 55, 0.18);
+    0 0 0 1px rgba(192, 138, 46, 0.45),
+    0 0 28px rgba(192, 138, 46, 0.14);
 }
 @utility edge-silver {
   box-shadow:
-    0 0 0 1px rgba(174, 183, 188, 0.3),
-    0 0 18px rgba(220, 227, 230, 0.12);
+    0 0 0 1px rgba(16, 45, 26, 0.16),
+    0 0 18px rgba(16, 45, 26, 0.08);
 }
+
 
 /* Buttons */
 @utility btn-base {
@@ -354,42 +387,42 @@
   }
 }
 @utility btn-primary {
-  background: linear-gradient(180deg, var(--k-green-2), var(--k-green));
-  color: #fff;
-  border: 1px solid rgba(32, 216, 120, 0.4);
+  background: linear-gradient(180deg, var(--h-green-2), var(--h-green));
+  color: var(--h-ivory);
+  border: 1px solid rgba(20, 123, 53, 0.5);
   &:hover {
     box-shadow:
-      0 0 0 1px rgba(32, 216, 120, 0.45),
-      0 0 24px rgba(0, 143, 85, 0.28);
+      0 0 0 1px rgba(20, 123, 53, 0.45),
+      0 10px 24px rgba(20, 123, 53, 0.24);
   }
 }
 @utility btn-secondary {
-  background: rgba(17, 22, 20, 0.6);
+  background: rgba(255, 253, 248, 0.72);
   backdrop-filter: blur(20px);
-  color: var(--k-white-soft);
-  border: 1px solid rgba(174, 183, 188, 0.28);
+  color: var(--h-forest);
+  border: 1px solid rgba(16, 45, 26, 0.16);
   &:hover {
-    border-color: rgba(220, 227, 230, 0.45);
+    border-color: rgba(16, 45, 26, 0.28);
   }
 }
 @utility btn-premium {
-  background: rgba(5, 7, 6, 0.85);
-  color: var(--k-gold-3);
-  border: 1px solid rgba(212, 175, 55, 0.45);
+  background: rgba(255, 253, 248, 0.9);
+  color: #6d4a12;
+  border: 1px solid rgba(192, 138, 46, 0.5);
   &:hover {
     box-shadow:
-      0 0 0 1px rgba(212, 175, 55, 0.55),
-      0 0 26px rgba(212, 175, 55, 0.2);
+      0 0 0 1px rgba(192, 138, 46, 0.55),
+      0 10px 26px rgba(192, 138, 46, 0.18);
   }
 }
 @utility btn-destructive {
-  background: linear-gradient(180deg, var(--k-red-2), var(--k-red));
-  color: #fff;
-  border: 1px solid rgba(255, 74, 88, 0.4);
+  background: linear-gradient(180deg, var(--h-red-2), var(--h-red));
+  color: var(--h-ivory);
+  border: 1px solid rgba(179, 38, 30, 0.5);
   &:hover {
     box-shadow:
-      0 0 0 1px rgba(255, 74, 88, 0.45),
-      0 0 24px rgba(187, 30, 45, 0.28);
+      0 0 0 1px rgba(179, 38, 30, 0.45),
+      0 10px 24px rgba(179, 38, 30, 0.22);
   }
 }
 
@@ -399,41 +432,42 @@
   gap: 0.25rem;
   padding: 0.25rem;
   border-radius: 14px;
-  background: rgba(11, 15, 13, 0.65);
+  background: rgba(255, 253, 248, 0.72);
   backdrop-filter: blur(22px);
-  border: 1px solid rgba(174, 183, 188, 0.18);
+  border: 1px solid rgba(16, 45, 26, 0.12);
 }
 @utility tab-item {
   border-radius: 10px;
   padding: 0.5rem 0.875rem;
   font-size: 0.875rem;
-  color: var(--k-silver);
+  color: var(--h-stone);
   transition:
     color var(--motion-micro) var(--motion-ease),
     background-color var(--motion-micro) var(--motion-ease),
     box-shadow var(--motion-micro) var(--motion-ease);
   &:hover {
-    color: var(--k-white-soft);
+    color: var(--h-forest);
   }
   &:focus-visible {
-    outline: 2px solid var(--k-gold);
+    outline: 2px solid var(--h-gold);
     outline-offset: 2px;
   }
 }
 @utility tab-item-active {
-  color: #fff;
-  background: rgba(0, 143, 85, 0.18);
+  color: var(--h-forest);
+  background: rgba(20, 123, 53, 0.12);
   box-shadow:
-    0 0 0 1px rgba(32, 216, 120, 0.4),
-    0 0 20px rgba(0, 143, 85, 0.2);
+    0 0 0 1px rgba(20, 123, 53, 0.35),
+    0 6px 18px rgba(20, 123, 53, 0.12);
 }
 @utility tab-item-active-alert {
-  color: #fff;
-  background: rgba(225, 38, 53, 0.16);
+  color: var(--h-red);
+  background: rgba(179, 38, 30, 0.1);
   box-shadow:
-    0 0 0 1px rgba(255, 74, 88, 0.4),
-    0 0 20px rgba(187, 30, 45, 0.2);
+    0 0 0 1px rgba(179, 38, 30, 0.35),
+    0 6px 18px rgba(179, 38, 30, 0.12);
 }
+
 
 /* Motion (Section 22) */
 @keyframes hal-rise {
@@ -492,17 +526,17 @@ html[data-reduced-motion="1"] *::after {
 
 @utility glow-ring {
   box-shadow:
-    0 0 0 1px oklch(0.78 0.14 85 / 0.55),
-    0 0 40px oklch(0.78 0.14 85 / 0.35),
-    0 0 80px oklch(0.78 0.14 85 / 0.18);
+    0 0 0 1px rgba(192, 138, 46, 0.55),
+    0 10px 34px rgba(192, 138, 46, 0.22),
+    0 0 60px rgba(192, 138, 46, 0.12);
 }
 
 @utility text-gradient {
   background: linear-gradient(
     135deg,
-    oklch(0.97 0.005 240) 0%,
-    oklch(0.78 0.14 85) 55%,
-    oklch(0.6 0.17 148) 100%
+    var(--h-forest) 0%,
+    var(--h-green) 45%,
+    var(--h-gold) 100%
   );
   -webkit-background-clip: text;
   background-clip: text;
@@ -510,15 +544,15 @@ html[data-reduced-motion="1"] *::after {
 }
 
 /*
- * Futuristic backdrops — subtle topographic contours + technical grid,
- * layered behind hero sections. Non-interactive, pointer-events: none.
+ * Backdrops — subtle topographic contours + technical grid, layered behind
+ * hero sections. Non-interactive, pointer-events: none.
  */
 @utility topo-backdrop {
   background-image:
-    radial-gradient(ellipse at 20% 10%, oklch(0.6 0.17 148 / 0.08) 0%, transparent 60%),
-    radial-gradient(ellipse at 80% 90%, oklch(0.78 0.14 85 / 0.06) 0%, transparent 55%),
-    linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+    radial-gradient(ellipse at 20% 10%, rgba(20, 123, 53, 0.07) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 90%, rgba(192, 138, 46, 0.07) 0%, transparent 55%),
+    linear-gradient(to right, rgba(16, 45, 26, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(16, 45, 26, 0.045) 1px, transparent 1px);
   background-size:
     100% 100%,
     100% 100%,
@@ -527,7 +561,7 @@ html[data-reduced-motion="1"] *::after {
 }
 
 @utility gold-underline {
-  border-bottom: 1px solid oklch(0.78 0.14 85 / 0.35);
+  border-bottom: 1px solid rgba(192, 138, 46, 0.4);
 }
 
 /*
@@ -545,12 +579,12 @@ html[data-reduced-motion="1"] *::after {
     z-index: -1;
     pointer-events: none;
     border-radius: inherit;
-    opacity: 0.5;
+    opacity: 0.6;
     background-image:
-      repeating-linear-gradient(90deg, rgba(174, 183, 188, 0.055) 0 1px, transparent 1px 72px),
-      repeating-linear-gradient(0deg, rgba(174, 183, 188, 0.04) 0 1px, transparent 1px 72px),
-      radial-gradient(120% 90% at 100% 0%, rgba(0, 143, 85, 0.07) 0%, transparent 58%),
-      radial-gradient(90% 80% at 0% 100%, rgba(212, 175, 55, 0.05) 0%, transparent 60%);
+      repeating-linear-gradient(90deg, rgba(16, 45, 26, 0.05) 0 1px, transparent 1px 72px),
+      repeating-linear-gradient(0deg, rgba(16, 45, 26, 0.038) 0 1px, transparent 1px 72px),
+      radial-gradient(120% 90% at 100% 0%, rgba(20, 123, 53, 0.06) 0%, transparent 58%),
+      radial-gradient(90% 80% at 0% 100%, rgba(192, 138, 46, 0.06) 0%, transparent 60%);
   }
 }
 
@@ -565,12 +599,13 @@ html[data-reduced-motion="1"] *::after {
     z-index: -1;
     pointer-events: none;
     border-radius: inherit;
-    opacity: 0.4;
+    opacity: 0.5;
     background-image:
-      repeating-linear-gradient(135deg, rgba(212, 175, 55, 0.05) 0 1px, transparent 1px 26px),
-      repeating-linear-gradient(225deg, rgba(187, 30, 45, 0.045) 0 1px, transparent 1px 26px);
+      repeating-linear-gradient(135deg, rgba(192, 138, 46, 0.06) 0 1px, transparent 1px 26px),
+      repeating-linear-gradient(225deg, rgba(16, 45, 26, 0.04) 0 1px, transparent 1px 26px);
   }
 }
+
 
 /* Thin tricolour rule — black / red / green / gold section divider. */
 @utility kenya-rule {
@@ -578,8 +613,8 @@ html[data-reduced-motion="1"] *::after {
   border-radius: 2px;
   background: linear-gradient(
     90deg,
-    rgba(174, 183, 188, 0.25) 0%,
-    var(--k-red-2) 28%,
+    rgba(16, 45, 26, 0.2) 0%,
+    var(--h-red-2) 28%,
     var(--k-green-2) 62%,
     var(--k-gold) 100%
   );
@@ -599,13 +634,13 @@ html[data-reduced-motion="1"] *::after {
   0%,
   100% {
     box-shadow:
-      0 0 0 0 oklch(0.68 0.19 249 / 0.5),
-      0 0 40px oklch(0.87 0.14 208 / 0.25);
+      0 0 0 0 rgba(20, 123, 53, 0.35),
+      0 8px 30px rgba(20, 123, 53, 0.18);
   }
   50% {
     box-shadow:
-      0 0 0 12px oklch(0.68 0.19 249 / 0),
-      0 0 60px oklch(0.87 0.14 208 / 0.45);
+      0 0 0 12px rgba(20, 123, 53, 0),
+      0 8px 44px rgba(20, 123, 53, 0.28);
   }
 }
 @keyframes shimmer {
@@ -629,20 +664,20 @@ html[data-reduced-motion="1"] *::after {
   overflow: hidden;
   background: linear-gradient(
     100deg,
-    rgba(255, 255, 255, 0.04) 0%,
-    rgba(255, 255, 255, 0.09) 40%,
-    rgba(212, 160, 23, 0.1) 50%,
-    rgba(255, 255, 255, 0.09) 60%,
-    rgba(255, 255, 255, 0.04) 100%
+    rgba(16, 45, 26, 0.05) 0%,
+    rgba(16, 45, 26, 0.09) 40%,
+    rgba(192, 138, 46, 0.14) 50%,
+    rgba(16, 45, 26, 0.09) 60%,
+    rgba(16, 45, 26, 0.05) 100%
   );
   background-size: 200% 100%;
   animation: shimmer 1.6s ease-in-out infinite;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(16, 45, 26, 0.07);
 }
 @media (prefers-reduced-motion: reduce) {
   .skeleton-shimmer {
     animation: none !important;
-    background: rgba(255, 255, 255, 0.06);
+    background: rgba(16, 45, 26, 0.06);
   }
 }
 
@@ -659,17 +694,17 @@ html[data-reduced-motion="1"] *::after {
   border-width: 0;
 }
 @utility focus-ring {
-  outline: 2px solid #d4a017;
+  outline: 2px solid var(--h-gold);
   outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(212, 160, 23, 0.25);
+  box-shadow: 0 0 0 4px rgba(192, 138, 46, 0.28);
   border-radius: 6px;
 }
 
 @utility input {
   width: 100%;
   border-radius: 0.75rem;
-  background-color: rgb(255 255 255 / 0.05);
-  border: 1px solid rgb(255 255 255 / 0.1);
+  background-color: rgba(255, 253, 248, 0.72);
+  border: 1px solid rgba(16, 45, 26, 0.12);
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
   outline: none;
@@ -684,7 +719,7 @@ html[data-reduced-motion="1"] *::after {
  */
 @layer base {
   :where(a, button, [role="button"], input, select, textarea, summary, [tabindex]):focus-visible {
-    outline: 2px solid #d4a017;
+    outline: 2px solid var(--h-gold);
     outline-offset: 2px;
     border-radius: 4px;
   }

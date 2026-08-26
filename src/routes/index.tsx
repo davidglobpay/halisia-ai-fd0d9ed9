@@ -53,10 +53,10 @@ function Landing() {
 function HeroStage({ children }: { children?: ReactNode }) {
   return (
     <div className="relative w-full overflow-hidden aspect-[3/4] sm:aspect-[16/10] md:aspect-[21/9] max-h-[92vh]">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_35%,oklch(0.34_0.09_240)_0%,oklch(0.19_0.06_255)_45%,oklch(0.13_0.04_260)_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_35%,#FFFDF8_0%,#F7F3EA_45%,#EFE9DC_100%)]" />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(7,30,61,0.55)_0%,rgba(7,30,61,0.2)_38%,rgba(7,30,61,0.7)_100%)]"
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(247,243,234,0.4)_0%,rgba(247,243,234,0)_38%,rgba(247,243,234,0.75)_100%)]"
       />
       <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-background" />
       <div
@@ -64,7 +64,7 @@ function HeroStage({ children }: { children?: ReactNode }) {
         className="pointer-events-none absolute inset-0 opacity-[0.12]"
         style={{
           backgroundImage:
-            "linear-gradient(oklch(1 0 0 / 0.35) 1px, transparent 1px), linear-gradient(90deg, oklch(1 0 0 / 0.35) 1px, transparent 1px)",
+            "linear-gradient(rgba(16,45,26,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(16,45,26,0.5) 1px, transparent 1px)",
           backgroundSize: "44px 44px",
           maskImage: "radial-gradient(ellipse at center, black 20%, transparent 70%)",
         }}
@@ -97,7 +97,7 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
                 className="absolute inset-0 -z-10 blur-3xl opacity-90 animate-pulse"
                 style={{
                   background:
-                    "radial-gradient(closest-side, oklch(0.78 0.17 210 / 0.65), oklch(0.55 0.18 260 / 0.35) 55%, transparent 75%)",
+                    "radial-gradient(closest-side, rgba(192,138,46,0.35), rgba(20,123,53,0.18) 55%, transparent 75%)",
                 }}
               />
               {/* Rotating conic aura */}
@@ -106,7 +106,7 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
                 className="absolute inset-0 -z-10 blur-2xl opacity-40 animate-[spin_18s_linear_infinite]"
                 style={{
                   background:
-                    "conic-gradient(from 0deg, oklch(0.78 0.16 210 / 0.6), oklch(0.72 0.19 45 / 0.35), oklch(0.55 0.18 260 / 0.55), oklch(0.78 0.16 210 / 0.6))",
+                    "conic-gradient(from 0deg, rgba(192,138,46,0.35), rgba(20,123,53,0.28), rgba(16,45,26,0.18), rgba(192,138,46,0.35))",
                   borderRadius: "50%",
                 }}
               />
@@ -117,7 +117,7 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
                 height={200}
                 decoding="async"
                 fetchPriority="high"
-                className="relative h-28 w-28 sm:h-36 sm:w-36 md:h-44 md:w-44 object-contain [transform:rotateX(6deg)] drop-shadow-[0_10px_28px_oklch(0.15_0.05_260/0.75)] [filter:drop-shadow(0_0_18px_oklch(0.78_0.17_210/0.55))_drop-shadow(0_0_36px_oklch(0.55_0.18_260/0.35))]"
+                className="relative h-28 w-28 sm:h-36 sm:w-36 md:h-44 md:w-44 object-contain [transform:rotateX(6deg)] drop-shadow-[0_10px_28px_rgba(16,45,26,0.22)] [filter:drop-shadow(0_0_18px_rgba(192,138,46,0.35))_drop-shadow(0_0_36px_rgba(20,123,53,0.2))]"
               />
               {/* Specular highlight sweep */}
               <div
@@ -125,7 +125,7 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
                 className="pointer-events-none absolute inset-0 mix-blend-overlay opacity-40 rounded-full"
                 style={{
                   background:
-                    "linear-gradient(120deg, transparent 40%, rgba(255,255,255,0.35) 50%, transparent 60%)",
+                    "linear-gradient(120deg, transparent 40%, rgba(255,255,255,0.6) 50%, transparent 60%)",
                 }}
               />
             </div>
@@ -135,19 +135,19 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
               width={653}
               height={237}
               decoding="async"
-              className="mb-5 h-auto w-[min(340px,72vw)] object-contain drop-shadow-[0_8px_24px_oklch(0.14_0.05_260/0.75)]"
+              className="mb-5 h-auto w-[min(340px,72vw)] object-contain drop-shadow-[0_8px_24px_rgba(16,45,26,0.18)]"
             />
-            <div className="mb-4 inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.32em] text-white/75">
-              <span className="h-px w-8 bg-white/30" />
+            <div className="mb-4 inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.32em] text-muted-foreground">
+              <span className="h-px w-8 bg-foreground/20" />
               Kenya · Beta · Land Intelligence
-              <span className="h-px w-8 bg-white/30" />
+              <span className="h-px w-8 bg-foreground/20" />
             </div>
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-semibold leading-[1.02] tracking-tight text-white [text-shadow:0_2px_30px_oklch(0.14_0.05_260/0.7)]">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-semibold leading-[1.02] tracking-tight text-foreground">
               <span className="text-gradient">Understand Every</span>
               <br />
               County.
             </h1>
-            <p className="mx-auto mt-5 max-w-xl text-base md:text-lg text-white/85 leading-relaxed [text-shadow:0_1px_16px_oklch(0.14_0.05_260/0.8)]">
+            <p className="mx-auto mt-5 max-w-xl text-base md:text-lg text-muted-foreground leading-relaxed">
               Land. People. Infrastructure. Risk. Opportunity.
               <br className="hidden sm:inline" /> Powered by Artificial Intelligence.
             </p>
@@ -166,37 +166,37 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
                   to="/"
                   hash="counties"
                   search={{ compare: "" }}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[oklch(0.77_0.14_220)] to-[oklch(0.44_0.13_250)] text-primary-foreground px-4 py-2 text-xs font-semibold shadow-[0_10px_30px_-10px_oklch(0.77_0.14_220/0.7)] hover:scale-[1.03] transition"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-[#0E5A26] text-primary-foreground px-4 py-2 text-xs font-semibold shadow-[0_10px_30px_-10px_rgba(20,123,53,0.6)] hover:scale-[1.03] transition"
                 >
                   Explore Counties <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
                 <Link
                   to="/explore"
-                  className="inline-flex items-center gap-1.5 rounded-full glass border border-white/20 px-4 py-2 text-xs font-medium text-white hover:bg-white/10 transition"
+                  className="inline-flex items-center gap-1.5 rounded-full glass border border-foreground/15 px-4 py-2 text-xs font-medium text-foreground hover:bg-foreground/5 transition"
                 >
                   View Intelligence Dashboard
                 </Link>
                 <Link
                   to="/spatial"
                   search={{ parcel: "" }}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-[#D4AF37]/50 bg-[#D4AF37]/15 px-4 py-2 text-xs font-semibold text-white hover:bg-[#D4AF37]/25 transition"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-accent/50 bg-accent/12 px-4 py-2 text-xs font-semibold text-foreground hover:bg-accent/20 transition"
                 >
                   Spatial AR Studio
                 </Link>
                 <a
                   href="#how"
-                  className="inline-flex items-center gap-1.5 rounded-full glass border border-white/20 px-4 py-2 text-xs font-medium text-white hover:bg-white/10 transition"
+                  className="inline-flex items-center gap-1.5 rounded-full glass border border-foreground/15 px-4 py-2 text-xs font-medium text-foreground hover:bg-foreground/5 transition"
                 >
                   Watch Demo
                 </a>
               </div>
-              <div className="mt-3 hidden sm:flex flex-wrap justify-center gap-2 text-xs text-white/80">
+              <div className="mt-3 hidden sm:flex flex-wrap justify-center gap-2 text-xs text-muted-foreground">
                 <span className="mr-1">Popular:</span>
                 {["Kilimani", "Kiambu Road", "Nyali", "Naivasha", "Ruiru"].map((t) => (
                   <button
                     key={t}
                     onClick={() => navigate({ to: "/explore", search: { q: t } })}
-                    className="glass rounded-full px-3 py-1 hover:text-white transition"
+                    className="glass rounded-full px-3 py-1 hover:text-foreground transition"
                   >
                     {t}
                   </button>
@@ -430,7 +430,7 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
               <Link
                 to="/explore"
                 data-testid="launch-cta"
-                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground font-medium px-6 py-3 shadow-[0_10px_40px_-10px_oklch(0.68_0.19_249)]"
+                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground font-medium px-6 py-3 shadow-[0_10px_40px_-10px_rgba(20,123,53,0.55)]"
               >
                 Launch HALISIA <ArrowRight className="h-4 w-4" />
               </Link>
@@ -449,7 +449,7 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
           className="pointer-events-none absolute inset-0 opacity-60"
           style={{
             background:
-              "radial-gradient(60% 90% at 50% 100%, oklch(0.55 0.16 220 / 0.28), transparent 70%)",
+              "radial-gradient(60% 90% at 50% 100%, rgba(20,123,53,0.16), transparent 70%)",
           }}
         />
         <div className="relative mx-auto max-w-7xl px-4 py-14">
@@ -460,7 +460,7 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
                 className="absolute inset-0 -z-10 blur-2xl opacity-70"
                 style={{
                   background:
-                    "radial-gradient(closest-side, oklch(0.75 0.16 210 / 0.55), transparent 70%)",
+                    "radial-gradient(closest-side, rgba(192,138,46,0.3), transparent 70%)",
                 }}
               />
               <img
@@ -470,7 +470,7 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
                 height={72}
                 loading="lazy"
                 decoding="async"
-                className="h-16 w-16 object-contain drop-shadow-[0_0_18px_oklch(0.75_0.16_210/0.6)]"
+                className="h-16 w-16 object-contain drop-shadow-[0_0_18px_rgba(192,138,46,0.4)]"
               />
             </div>
             <div className="text-sm font-semibold tracking-[0.32em] text-white/90">
@@ -507,7 +507,7 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
       <Link
         to="/explore"
         preload="intent"
-        className="fixed z-50 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground px-5 py-3 text-sm font-semibold shadow-[0_8px_32px_-8px_oklch(0.68_0.19_249)] hover:brightness-110 hover:scale-105 transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background left-4 sm:left-6 bottom-[max(1rem,env(safe-area-inset-bottom))] sm:bottom-6"
+        className="fixed z-50 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground px-5 py-3 text-sm font-semibold shadow-[0_8px_32px_-8px_rgba(20,123,53,0.55)] hover:brightness-110 hover:scale-105 transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background left-4 sm:left-6 bottom-[max(1rem,env(safe-area-inset-bottom))] sm:bottom-6"
         aria-label="Launch HALISIA intelligence workspace"
         title="Launch HALISIA app"
       >

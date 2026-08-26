@@ -101,9 +101,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@HalisiaAI" },
-      { name: "theme-color", content: "#071E3D" },
+      { name: "theme-color", content: "#F7F3EA" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
-      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
       { name: "apple-mobile-web-app-title", content: "HALISIA AI" },
       { name: "twitter:title", content: "HALISIA AI — Land Intelligence Platform" },
       {
