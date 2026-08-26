@@ -4,6 +4,13 @@ test.describe("Geolocation denied fallback", () => {
   test.beforeEach(async ({ page, context }) => {
     await context.clearPermissions();
     await page.addInitScript(() => {
+      // Suppress the first-visit onboarding dialog: it is modal and would
+      // intercept clicks on the search controls under test.
+      try {
+        window.localStorage.setItem("halisia:navguide:v1:seen", String(Date.now()));
+      } catch {
+        /* storage unavailable */
+      }
       window.__halisiaForceGeolocationDenied = true;
       Object.defineProperty(navigator, "geolocation", {
         configurable: true,
