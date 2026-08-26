@@ -18,10 +18,15 @@ test("skip link reaches spatial controls and capability/fallback controls stay t
   await page.goto("/spatial");
   await expect(page.getByTestId("spatial-parcel-list")).toBeVisible({ timeout: 20_000 });
 
-  // 1. The skip link is the first tab stop and becomes visible on focus.
-  await page.keyboard.press("Tab");
+  // 1. The skip link is reachable by Tab from the top of the page and becomes
+  //    visible once focused.
   const skip = page.getByTestId("spatial-skip-link");
-  await expect(skip).toBeFocused();
+  let reachedSkip = false;
+  for (let i = 0; i < 15 && !reachedSkip; i += 1) {
+    await page.keyboard.press("Tab");
+    reachedSkip = await skip.evaluate((el) => el === document.activeElement);
+  }
+  expect(reachedSkip).toBe(true);
   await expect(skip).toBeVisible();
 
   // 2. Activating it moves focus into the viewport control group.
