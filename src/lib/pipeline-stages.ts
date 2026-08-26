@@ -4,7 +4,6 @@ import {
   CloudSun,
   Landmark,
   Layers,
-  LucideIcon,
   MapPin,
   Navigation,
   Satellite,
