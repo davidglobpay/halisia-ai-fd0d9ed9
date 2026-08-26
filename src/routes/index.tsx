@@ -82,7 +82,10 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
   return (
     <div className="min-h-screen">
       {/* HERO — static cinematic stage (videos removed) */}
-      <section className="relative pt-20 md:pt-24 overflow-hidden">
+      <section
+        aria-label="HALISIA cinematic hero"
+        className="relative pt-20 md:pt-24 overflow-hidden"
+      >
         <HeroStage>
           <motion.div
             initial={{ opacity: 0, y: 24 }}

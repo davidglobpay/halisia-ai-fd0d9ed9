@@ -8,6 +8,9 @@ export default defineConfig({
   testDir: "./tests/e2e",
   timeout: 60_000,
   fullyParallel: false,
+  // Sandbox/CI containers throttle badly with many browsers: cap parallelism so
+  // hydration-dependent assertions stay deterministic.
+  workers: Number(process.env["PLAYWRIGHT_WORKERS"] ?? 2),
   retries: process.env.CI ? 1 : 0,
   reporter: [["list"]],
   use: {

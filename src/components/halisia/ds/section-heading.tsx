@@ -31,7 +31,9 @@ export function SectionHeading({
             {eyebrow}
           </p>
         ) : null}
-        <Tag className="mt-1 text-balance">{title}</Tag>
+        <Tag className={cn("mt-1 text-balance", (Tag === "h1" || Tag === "h2") && "intaglio")}>
+          {title}
+        </Tag>
         {description ? (
           <p className="text-muted-foreground mt-1 max-w-prose text-sm">{description}</p>
         ) : null}

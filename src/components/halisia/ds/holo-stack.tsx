@@ -63,7 +63,9 @@ export function HoloStack({
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="max-w-2xl">
             <div className="text-[11px] uppercase tracking-[0.28em] text-accent">{eyebrow}</div>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight md:text-4xl">{title}</h2>
+            <h2 className="intaglio mt-2 font-display text-2xl font-semibold tracking-tight md:text-4xl">
+              {title}
+            </h2>
             {intro && <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{intro}</p>}
           </div>
           <div className="flex items-center gap-2">

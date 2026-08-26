@@ -571,12 +571,12 @@ export function KenyaCountyMap() {
               </div>
             )}
             {/* Legend */}
-            <div className="pointer-events-none absolute left-4 bottom-4 glass rounded-2xl px-3 py-2 text-[11px] flex items-center gap-2">
-              <span className="text-muted-foreground uppercase tracking-widest text-[9px]">
+            <div className="pointer-events-none absolute left-4 bottom-4 rounded-2xl border border-border bg-background/95 px-3 py-2 text-[11px] flex items-center gap-2 shadow-lg">
+              <span className="text-foreground uppercase tracking-widest text-[9px]">
                 {METRIC_LABELS[metric]}
               </span>
               <span className="h-2 w-24 rounded-full bg-gradient-to-r from-[rgb(37,99,235)] via-[rgb(98,233,255)] to-[rgb(251,191,36)]" />
-              <span className="text-muted-foreground">low → high</span>
+              <span className="text-foreground">low → high</span>
             </div>
           </div>
 

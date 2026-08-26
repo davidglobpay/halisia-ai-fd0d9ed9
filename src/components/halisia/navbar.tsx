@@ -58,12 +58,12 @@ export function Navbar() {
             alt=""
             className="h-9 w-9 shrink-0 object-contain drop-shadow-[0_0_14px_rgba(0,143,85,0.35)]"
           />
-          <span className="font-display font-semibold tracking-tight text-[15px] sm:text-[16px] truncate">
+          <span className="font-display font-semibold tracking-tight text-[15px] sm:text-[16px] whitespace-nowrap">
             HALISIA<span className="text-accent">·</span>AI
           </span>
         </Link>
         <nav
-          className="hidden md:flex items-center gap-1 text-sm text-muted-foreground"
+          className="hidden md:flex min-w-0 flex-1 items-center justify-center gap-0.5 text-sm text-muted-foreground lg:gap-1"
           aria-label="Primary"
         >
           {LINKS.map((l) => {
@@ -73,7 +73,7 @@ export function Navbar() {
                 key={l.to}
                 to={l.to}
                 {...(l.to === "/" ? { search: { compare: "" } } : {})}
-                className={`px-3 py-1.5 rounded-full transition ${
+                className={`whitespace-nowrap rounded-full px-2.5 py-1.5 transition lg:px-3 ${
                   active ? "bg-white/10 text-foreground" : "hover:text-foreground hover:bg-white/5"
                 }`}
               >
@@ -82,8 +82,8 @@ export function Navbar() {
             );
           })}
         </nav>
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground hidden xl:block">
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="hidden whitespace-nowrap text-[10px] uppercase tracking-[0.25em] text-muted-foreground 2xl:block">
             Land Intelligence · Kenya
           </span>
           {!loading && user ? (
@@ -135,7 +135,9 @@ export function Navbar() {
         className={`md:hidden fixed inset-0 z-40 transition ${
           open ? "pointer-events-auto" : "pointer-events-none"
         }`}
-        aria-hidden={!open}
+        // `inert` removes the closed drawer from the a11y tree and the tab
+        // order; adding aria-hidden as well would double-hide focusable links.
+        inert={!open || undefined}
       >
         <div
           onClick={() => setOpen(false)}

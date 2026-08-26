@@ -383,7 +383,7 @@ function SpatialPage() {
                   {xrActive && (
                     <span
                       aria-hidden="true"
-                      className="pointer-events-auto rounded-full bg-[#008F55]/20 border border-[#008F55]/50 px-3 py-1 text-[11px] text-[#7ee0b4]"
+                      className="pointer-events-auto rounded-full bg-primary/20 border border-[#008F55]/50 px-3 py-1 text-[11px] text-[#7ee0b4]"
                     >
                       {xrMode === "vr" ? "VR session live" : "AR session live"}
                     </span>
@@ -498,7 +498,7 @@ function SpatialPage() {
                 <span className="inline-flex items-center gap-1.5">
                   <span
                     aria-hidden="true"
-                    className={`h-2 w-2 rounded-full ${xrSupported ? "bg-[#008F55]" : "bg-[#AEB7BC]"}`}
+                    className={`h-2 w-2 rounded-full ${xrSupported ? "bg-primary" : "bg-muted-foreground/50"}`}
                   />
                   WebXR AR:{" "}
                   {xrSupported === null ? "checking…" : xrSupported ? "supported" : "unavailable"}
@@ -506,7 +506,7 @@ function SpatialPage() {
                 <span className="inline-flex items-center gap-1.5">
                   <span
                     aria-hidden="true"
-                    className={`h-2 w-2 rounded-full ${vrSupported ? "bg-[#008F55]" : "bg-[#AEB7BC]"}`}
+                    className={`h-2 w-2 rounded-full ${vrSupported ? "bg-primary" : "bg-muted-foreground/50"}`}
                   />
                   WebXR VR:{" "}
                   {vrSupported === null ? "checking…" : vrSupported ? "supported" : "unavailable"}
@@ -556,16 +556,18 @@ function SpatialPage() {
                     </>
                   ) : (
                     <>
-                      This browser or device does not expose immersive WebXR sessions. AR needs
-                      Chrome with Google ARCore on Android; VR needs a WebXR headset browser. iOS
-                      and desktop use the 3D studio plus the native viewers below.
+                      {arPlatform === "ios"
+                        ? "Safari on iOS/iPadOS does not implement immersive WebXR — Apple's native path is AR Quick Look with a USDZ model. The 3D studio and the viewers below stay available."
+                        : arPlatform === "android"
+                          ? "This Android browser did not report an immersive WebXR session. AR needs Chrome with Google Play Services for AR (ARCore) installed and camera permission granted; Scene Viewer below is the fallback."
+                          : "This browser or device does not expose immersive WebXR sessions. VR needs a WebXR headset browser; desktop uses the 3D studio plus the native viewers below."}
                     </>
                   )}
                 </p>
               ) : null}
               <p className="mt-3 flex items-start gap-2 text-[11px] text-muted-foreground">
                 <ShieldAlert
-                  className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#D4AF37]"
+                  className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent"
                   aria-hidden="true"
                 />
                 Approximate spatial visualization — not a cadastral survey. Consumer GPS and WebXR
@@ -651,7 +653,7 @@ function SpatialPage() {
                       onClick={() => set((v) => !v)}
                       className={`min-h-9 rounded-full border px-3 py-1.5 transition focus-ring ${
                         on
-                          ? "border-[#008F55]/60 bg-[#008F55]/15 text-foreground"
+                          ? "border-[#008F55]/60 bg-primary/15 text-foreground"
                           : "border-white/10 text-muted-foreground hover:bg-white/5"
                       }`}
                     >
@@ -663,7 +665,7 @@ function SpatialPage() {
 
               <div className="mt-5 grid gap-2">
                 <label htmlFor="sun-hour" className="flex items-center gap-2 text-xs">
-                  <Sun className="h-3.5 w-3.5 text-[#D4AF37]" aria-hidden="true" /> Sun-path study —{" "}
+                  <Sun className="h-3.5 w-3.5 text-accent" aria-hidden="true" /> Sun-path study —{" "}
                   <span className="font-mono">
                     {String(Math.floor(sunHour)).padStart(2, "0")}:
                     {String(Math.round((sunHour % 1) * 60)).padStart(2, "0")}
@@ -803,7 +805,7 @@ function SpatialPage() {
                       }`}
                       className={`w-full rounded-xl border p-3 text-left text-xs transition focus-ring ${
                         p.id === selectedId
-                          ? "border-[#008F55]/60 bg-[#008F55]/10"
+                          ? "border-[#008F55]/60 bg-primary/10"
                           : "border-white/10 hover:bg-white/5"
                       }`}
                     >

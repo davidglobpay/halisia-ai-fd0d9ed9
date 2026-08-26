@@ -544,7 +544,13 @@ html[data-reduced-motion="1"] *::after {
 }
 
 @utility text-gradient {
-  background: linear-gradient(135deg, var(--h-forest) 0%, var(--h-green) 45%, var(--h-gold) 100%);
+  /* AA-safe on ivory: forest -> intelligence green -> gold ink (never light gold). */
+  background: linear-gradient(
+    135deg,
+    var(--h-forest) 0%,
+    var(--h-green) 55%,
+    var(--h-gold-ink) 100%
+  );
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -700,10 +706,12 @@ html[data-reduced-motion="1"] *::after {
   border-width: 0;
 }
 @utility focus-ring {
-  outline: 2px solid var(--h-gold);
-  outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(192, 138, 46, 0.28);
-  border-radius: 6px;
+  &:focus-visible {
+    outline: 2px solid var(--h-gold);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(192, 138, 46, 0.28);
+    border-radius: 12px;
+  }
 }
 
 @utility input {
@@ -742,18 +750,6 @@ html[data-reduced-motion="1"] *::after {
 @media (prefers-reduced-motion: reduce) {
   .animate-\[bg-drift_60s_ease-in-out_infinite_alternate\] {
     animation: none !important;
-  }
-}
-
-/*
- * focus-ring — single consistent keyboard focus treatment for spatial
- * capability, fallback and rail controls (gold ring, 2px offset).
- */
-@utility focus-ring {
-  &:focus-visible {
-    outline: 2px solid var(--k-gold);
-    outline-offset: 2px;
-    border-radius: 12px;
   }
 }
 
@@ -809,6 +805,46 @@ html[data-reduced-motion="1"] *::after {
   }
   &:hover::after {
     opacity: 1;
+  }
+}
+
+/*
+ * Intaglio — reverse 3D engraved title treatment for top-level tile
+ * headings. The letterform reads as pressed into the ivory glass: a dark
+ * inner edge above, a lit bevel below. Deliberately subtle so it stays
+ * legible and never becomes a novelty emboss.
+ */
+@utility intaglio {
+  color: color-mix(in oklab, var(--h-forest) 92%, var(--h-ivory));
+  text-shadow:
+    0 -1px 1px rgba(16, 45, 26, 0.42),
+    0 1px 0 rgba(255, 255, 255, 0.9),
+    0 2px 3px rgba(255, 253, 248, 0.55);
+  /* Clipped-gradient spans must not inherit the shadow — it would paint a
+     solid ghost behind transparent glyphs. */
+  & :where(.text-gradient) {
+    text-shadow: none;
+  }
+}
+
+/*
+ * Luminous outer glow for an active (expanded) top title tile — gold
+ * refraction with a green intelligence undertone. Restrained: no neon.
+ */
+[data-testid="holo-stack"][data-open="true"] .holo-hero {
+  border-color: rgba(192, 138, 46, 0.45);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 0 0 1px rgba(192, 138, 46, 0.22),
+    0 0 38px rgba(192, 138, 46, 0.2),
+    0 0 84px rgba(20, 123, 53, 0.12),
+    0 18px 44px -28px rgba(16, 45, 26, 0.35);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .holo-hero {
+    transition:
+      box-shadow 260ms cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 260ms ease;
   }
 }
 
