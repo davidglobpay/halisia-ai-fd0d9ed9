@@ -82,7 +82,7 @@ export function SearchBar({
         <button
           type="submit"
           disabled={loading || !q.trim()}
-          className={`${size === "lg" ? "px-5 h-11 text-sm" : "px-4 h-9 text-xs"} rounded-full font-medium bg-gradient-to-r from-primary to-accent text-primary-foreground disabled:opacity-50 flex items-center gap-2 shadow-[0_10px_30px_-10px_oklch(0.68_0.19_249/0.9)]`}
+          className={`${size === "lg" ? "px-5 h-11 text-sm" : "px-4 h-9 text-xs"} rounded-full font-medium bg-primary text-primary-foreground disabled:opacity-50 flex items-center gap-2 shadow-[0_10px_30px_-12px_rgba(16,45,26,0.55)] transition hover:brightness-110`}
         >
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
           Analyze

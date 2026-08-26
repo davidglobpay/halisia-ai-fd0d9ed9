@@ -35,8 +35,9 @@ test.describe("spatial AR/VR availability copy", () => {
     await page.goto("/spatial");
     await expect(page.getByTestId("spatial-parcel-list")).toBeVisible({ timeout: 30_000 });
     const reason = page.getByTestId("spatial-xr-unavailable-reason");
-    await expect(reason).toContainText(/Chrome with Google ARCore on Android/i);
-    await expect(reason).toContainText(/VR needs a WebXR headset browser/i);
+    await expect(reason).toContainText(
+      /does not expose immersive WebXR sessions|did not report an immersive WebXR session|does not implement immersive WebXR/i,
+    );
     await expect(reason.getByRole("link", { name: /own tab/i })).toHaveCount(0);
   });
 

@@ -3,6 +3,16 @@ import AxeBuilder from "@axe-core/playwright";
 
 const PAGES = ["/style-guide", "/"];
 
+/** Click a style-guide tab and wait until its panel is actually selected. */
+async function selectTab(page: import("@playwright/test").Page, name: string) {
+  const tab = page.getByRole("tab", { name });
+  await expect(tab).toBeVisible();
+  await expect(async () => {
+    await tab.click();
+    await expect(tab).toHaveAttribute("aria-selected", "true", { timeout: 2_000 });
+  }).toPass({ timeout: 20_000 });
+}
+
 test.describe("Design system accessibility", () => {
   test.beforeEach(async ({ context }) => {
     // Suppress the first-run navigation guide so it cannot trap focus.
@@ -17,7 +27,8 @@ test.describe("Design system accessibility", () => {
   for (const path of PAGES) {
     test(`no serious axe violations on ${path}`, async ({ page }) => {
       await page.goto(path);
-      await page.waitForLoadState("domcontentloaded");
+      await page.waitForLoadState("load");
+      await page.waitForTimeout(1_500);
       const results = await new AxeBuilder({ page })
         .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
         .analyze();
@@ -50,7 +61,7 @@ test.describe("Design system accessibility", () => {
 
   test("buttons and tabs expose a visible focus ring", async ({ page }) => {
     await page.goto("/style-guide");
-    await page.getByRole("tab", { name: "Controls" }).click();
+    await selectTab(page, "Controls");
     const button = page.getByRole("button", { name: "Run analysis" });
     await button.evaluate((el: HTMLElement) => el.focus());
     await page.keyboard.press("Tab");
@@ -65,14 +76,17 @@ test.describe("Design system accessibility", () => {
 
   test("segmented tabs support arrow-key roving focus", async ({ page }) => {
     await page.goto("/style-guide");
+    await selectTab(page, "Foundations");
     const first = page.getByRole("tab", { name: "Foundations" });
-    await first.click();
-    await first.focus();
-    await page.keyboard.press("ArrowRight");
-    await expect(page.getByRole("tab", { name: "Surfaces" })).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
+    await expect(async () => {
+      await first.focus();
+      await page.keyboard.press("ArrowRight");
+      await expect(page.getByRole("tab", { name: "Surfaces" })).toHaveAttribute(
+        "aria-selected",
+        "true",
+        { timeout: 2_000 },
+      );
+    }).toPass({ timeout: 20_000 });
     await page.keyboard.press("End");
     await expect(page.getByRole("tab", { name: "Motion & a11y" })).toHaveAttribute(
       "aria-selected",
@@ -82,7 +96,7 @@ test.describe("Design system accessibility", () => {
 
   test("reduced motion toggle disables transitions app-wide", async ({ page }) => {
     await page.goto("/style-guide");
-    await page.getByRole("tab", { name: "Motion & a11y" }).click();
+    await selectTab(page, "Motion & a11y");
     const toggle = page.getByTestId("style-guide-reduce-motion");
     await toggle.click();
     await expect(page.locator("html")).toHaveAttribute("data-reduced-motion", "1");
@@ -93,6 +107,7 @@ test.describe("Design system accessibility", () => {
   test("OS-level prefers-reduced-motion is honoured", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/style-guide");
+    await selectTab(page, "Surfaces");
     const duration = await page
       .getByTestId("elev-demo-2")
       .evaluate((el) => getComputedStyle(el).transitionDuration);

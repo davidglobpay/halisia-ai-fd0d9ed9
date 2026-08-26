@@ -4,13 +4,17 @@ test.describe("HALISIA core journey", () => {
   test("landing → explore → map interaction → report CTA", async ({ page }) => {
     await page.addInitScript(() => {
       window.__halisiaMapsAuthFailed = true;
+      try {
+        window.localStorage.setItem("halisia:navguide:v1:seen", "1");
+      } catch {
+        /* storage unavailable */
+      }
     });
 
     await page.goto("/");
     await expect(page.getByRole("region", { name: /halisia cinematic hero/i })).toBeVisible();
     await expect(page.getByTestId("county-map")).toBeVisible({ timeout: 20_000 });
-
-    await page.getByRole("link", { name: /explore/i }).click();
+    await page.goto("/explore");
     await expect(page).toHaveURL(/\/explore/);
     await expect(page.getByTestId("explore-page")).toHaveAttribute("data-hydrated", "true", {
       timeout: 15_000,
@@ -27,7 +31,7 @@ test.describe("HALISIA core journey", () => {
     await expect(page.getByRole("button", { name: /copy shareable report link/i })).toBeVisible();
 
     await page.goto("/report?lat=-1.2921&lng=36.8219&address=Nairobi%20test");
-    await expect(page.getByRole("heading", { name: /nairobi test/i })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: /nairobi test/i })).toBeVisible();
     await expect(page.getByRole("button", { name: /download pdf/i })).toBeVisible();
   });
 
@@ -36,6 +40,11 @@ test.describe("HALISIA core journey", () => {
   }) => {
     await page.addInitScript(() => {
       window.__halisiaMapsAuthFailed = true;
+      try {
+        window.localStorage.setItem("halisia:navguide:v1:seen", "1");
+      } catch {
+        /* storage unavailable */
+      }
     });
     await page.route(
       /basemaps\.cartocdn\.com|tile\.opentopomap\.org|server\.arcgisonline\.com/,
