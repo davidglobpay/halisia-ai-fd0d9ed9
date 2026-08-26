@@ -330,6 +330,13 @@ export default function SpatialCanvasInternal({
       // renderer itself is disposed.
       disposeObjectTree(scene);
       renderer.dispose();
+      // dispose() alone does not reliably free the underlying context on
+      // WebKit, and iOS Safari caps concurrent live WebGL contexts.
+      try {
+        renderer.forceContextLoss();
+      } catch {
+        /* context already gone */
+      }
       if (renderer.domElement.parentNode === mount) mount.removeChild(renderer.domElement);
       stateRef.current = null;
     };
