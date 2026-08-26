@@ -270,7 +270,7 @@ function SpatialPage() {
       <a
         href="#spatial-controls"
         data-testid="spatial-skip-link"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-20 focus:z-50 focus:rounded-full focus:glass-strong focus:border focus:border-white/20 focus:px-4 focus:py-2 focus:text-xs"
+        className="focus-ring sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-20 focus:z-50 focus:rounded-full focus:glass-strong focus:border focus:border-white/20 focus:px-4 focus:py-2 focus:text-xs"
       >
         Skip to spatial controls
       </a>
@@ -504,7 +504,7 @@ function SpatialPage() {
                   {!location && !locating && (
                     <button
                       type="button"
-                      className="underline rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D4AF37]"
+                      className="underline rounded focus-ring"
                       onClick={() => void requestLocation()}
                       aria-label="Check accuracy — request device GPS permission"
                       aria-busy={locating || undefined}
@@ -528,7 +528,7 @@ function SpatialPage() {
             {(xrError || xrSupported === false) && (
               <Surface
                 elevation={1}
-                className="p-4 text-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D4AF37]"
+                className="p-4 text-xs focus-ring"
                 data-testid="spatial-ar-fallback"
                 ref={fallbackRef}
                 tabIndex={-1}
@@ -551,7 +551,7 @@ function SpatialPage() {
                       href={usdz}
                       rel="ar"
                       aria-label="Open this massing prototype in AR Quick Look on iOS or iPadOS"
-                      className="inline-flex items-center gap-1.5 rounded-full border border-white/15 px-3 py-1.5 hover:bg-white/10"
+                      className="focus-ring inline-flex items-center gap-1.5 rounded-full border border-white/15 px-3 py-1.5 hover:bg-white/10"
                     >
                       <Cuboid className="h-3.5 w-3.5 text-accent" aria-hidden="true" /> Open in AR
                       Quick Look (iOS)
@@ -561,7 +561,7 @@ function SpatialPage() {
                     <a
                       href={sceneViewerHref}
                       aria-label="Open this massing prototype in Google Scene Viewer on Android"
-                      className="inline-flex items-center gap-1.5 rounded-full border border-white/15 px-3 py-1.5 hover:bg-white/10"
+                      className="focus-ring inline-flex items-center gap-1.5 rounded-full border border-white/15 px-3 py-1.5 hover:bg-white/10"
                     >
                       <Boxes className="h-3.5 w-3.5 text-accent" aria-hidden="true" /> Open in Scene
                       Viewer (Android)
@@ -600,7 +600,7 @@ function SpatialPage() {
                       type="button"
                       aria-pressed={on}
                       onClick={() => set((v) => !v)}
-                      className={`min-h-9 rounded-full border px-3 py-1.5 transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D4AF37] ${
+                      className={`min-h-9 rounded-full border px-3 py-1.5 transition focus-ring ${
                         on
                           ? "border-[#008F55]/60 bg-[#008F55]/15 text-foreground"
                           : "border-white/10 text-muted-foreground hover:bg-white/5"
@@ -659,7 +659,7 @@ function SpatialPage() {
                     onClick={() => setProtoId("")}
                     aria-pressed={protoId === ""}
                     aria-label="Show bare land with no massing prototype"
-                    className={`min-h-9 rounded-full border px-3 py-1.5 text-[11px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D4AF37] ${
+                    className={`min-h-9 rounded-full border px-3 py-1.5 text-[11px] focus-ring ${
                       protoId === ""
                         ? "border-white/40 bg-white/10"
                         : "border-white/10 text-muted-foreground"
@@ -674,7 +674,7 @@ function SpatialPage() {
                       onClick={() => setProtoId(p.id)}
                       aria-pressed={protoId === p.id}
                       aria-label={`Massing prototype ${p.title}${p.floors ? `, ${p.floors} floors` : ""}`}
-                      className={`min-h-9 rounded-full border px-3 py-1.5 text-[11px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D4AF37] ${
+                      className={`min-h-9 rounded-full border px-3 py-1.5 text-[11px] focus-ring ${
                         protoId === p.id
                           ? "border-[#D4AF37]/60 bg-[#D4AF37]/15 text-foreground"
                           : "border-white/10 text-muted-foreground hover:bg-white/5"
@@ -752,7 +752,7 @@ function SpatialPage() {
                           ? ". Coordinate reference warning — geometry not reliable"
                           : ""
                       }`}
-                      className={`w-full rounded-xl border p-3 text-left text-xs transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D4AF37] ${
+                      className={`w-full rounded-xl border p-3 text-left text-xs transition focus-ring ${
                         p.id === selectedId
                           ? "border-[#008F55]/60 bg-[#008F55]/10"
                           : "border-white/10 hover:bg-white/5"

@@ -703,3 +703,15 @@ html[data-reduced-motion="1"] *::after {
     animation: none !important;
   }
 }
+
+/*
+ * focus-ring — single consistent keyboard focus treatment for spatial
+ * capability, fallback and rail controls (gold ring, 2px offset).
+ */
+@utility focus-ring {
+  &:focus-visible {
+    outline: 2px solid var(--k-gold);
+    outline-offset: 2px;
+    border-radius: 12px;
+  }
+}

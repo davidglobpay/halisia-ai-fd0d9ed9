@@ -723,6 +723,17 @@ export default function SpatialCanvasInternal({
           Approximate spatial visualization — not a cadastral survey.
         </p>
       </div>
+      <div
+        data-testid="spatial-context-announcer"
+        role="status"
+        aria-live="assertive"
+        aria-atomic="true"
+        className="sr-only"
+      >
+        {contextLost
+          ? "The 3D view lost its graphics context. A restore button is available in the viewport."
+          : ""}
+      </div>
       {contextLost && (
         <div
           data-testid="spatial-context-lost"
@@ -734,12 +745,13 @@ export default function SpatialCanvasInternal({
             type="button"
             data-testid="spatial-context-restore"
             onClick={() => restoreRef.current?.()}
-            className="rounded-full border border-white/30 px-4 py-2 text-xs font-medium hover:bg-white/10"
+            className="focus-ring rounded-full border border-white/30 px-4 py-2 text-xs font-medium hover:bg-white/10"
           >
             Restore 3D view
           </button>
         </div>
       )}
+
       {error && (
         <div
           data-testid="spatial-canvas-error"
