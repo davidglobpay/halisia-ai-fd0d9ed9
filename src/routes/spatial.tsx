@@ -747,7 +747,11 @@ function SpatialPage() {
                       tabIndex={p.id === selectedId ? 0 : -1}
                       aria-label={`Parcel ${p.parcelCode || p.titleDeedNo}, ${p.county ?? "Kenya"}, ${Math.round(
                         p.areaSqm,
-                      ).toLocaleString("en-KE")} square metres, ${p.beacons.length} beacons`}
+                      ).toLocaleString("en-KE")} square metres, ${p.beacons.length} beacons${
+                        p.coordinateIssue && p.coordinateIssue !== "none"
+                          ? ". Coordinate reference warning — geometry not reliable"
+                          : ""
+                      }`}
                       className={`w-full rounded-xl border p-3 text-left text-xs transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D4AF37] ${
                         p.id === selectedId
                           ? "border-[#008F55]/60 bg-[#008F55]/10"
