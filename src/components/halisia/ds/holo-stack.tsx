@@ -78,7 +78,10 @@ export function HoloStack({
             >
               {open ? "Collapse" : count ? `Reveal ${count} tiles` : "Reveal details"}
               <ChevronDown
-                className={cn("h-3.5 w-3.5 transition-transform duration-300", open && "rotate-180")}
+                className={cn(
+                  "h-3.5 w-3.5 transition-transform duration-300",
+                  open && "rotate-180",
+                )}
                 aria-hidden="true"
               />
             </button>

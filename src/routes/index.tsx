@@ -263,7 +263,6 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
         }))}
       />
 
-
       {/* TRUST & AUTOMATION — holographic collapsible stack */}
       <HoloStack
         id="trust"
@@ -277,13 +276,15 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
             body: t.label,
             meta: "Guarantee",
           })),
-          ...["Reasoning shown", "Confidence Low/Med/High", "Sources cited", "Community-weighted"].map(
-            (t) => ({ key: t, title: t, meta: "Principle" }),
-          ),
+          ...[
+            "Reasoning shown",
+            "Confidence Low/Med/High",
+            "Sources cited",
+            "Community-weighted",
+          ].map((t) => ({ key: t, title: t, meta: "Principle" })),
         ]}
         itemClassName="w-[200px] sm:w-[220px]"
       />
-
 
       {/* HOW IT WORKS */}
       <section id="how" className="py-24 md:py-32 border-t border-white/5">
@@ -347,7 +348,6 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
         }))}
         itemClassName="w-[280px] sm:w-[320px]"
       />
-
 
       {/* PRICING / CTA */}
       <section id="pricing" className="py-24">

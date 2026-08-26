@@ -131,7 +131,6 @@
   --h-stone: #33403a;
   --h-stone-2: #6b7a6e;
 
-
   /* Legacy aliases — older rules still reference the --k-* names. */
   --k-black: var(--h-forest);
   --k-black-2: var(--h-forest-2);
@@ -776,8 +775,7 @@ html[data-reduced-motion="1"] *::after {
 
 @utility holo-tile {
   position: relative;
-  background:
-    linear-gradient(180deg, rgba(255, 253, 248, 0.9), rgba(247, 243, 234, 0.72));
+  background: linear-gradient(180deg, rgba(255, 253, 248, 0.9), rgba(247, 243, 234, 0.72));
   border: 1px solid rgba(16, 45, 26, 0.1);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.85) inset,

@@ -152,7 +152,6 @@ function SpatialPage() {
     }
     setXrBlockedByFrame(embedded && !policyAllowed);
 
-
     const xr = (navigator as Navigator & { xr?: XRSystem }).xr;
     if (!xr?.isSessionSupported) {
       setXrSupported(false);
@@ -556,7 +555,6 @@ function SpatialPage() {
                       immersive session.
                     </>
                   ) : (
-
                     <>
                       This browser or device does not expose immersive WebXR sessions. AR needs
                       Chrome with Google ARCore on Android; VR needs a WebXR headset browser. iOS
