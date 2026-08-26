@@ -80,10 +80,7 @@ describe("disposeObjectTree", () => {
       [new THREE.LineBasicMaterial(), new THREE.LineBasicMaterial()],
     ) as unknown as THREE.Line;
     const child = new THREE.Group();
-    const nested = new THREE.Mesh(
-      new THREE.SphereGeometry(1),
-      new THREE.MeshStandardMaterial(),
-    );
+    const nested = new THREE.Mesh(new THREE.SphereGeometry(1), new THREE.MeshStandardMaterial());
     child.add(nested);
     group.add(mesh, line, child);
 

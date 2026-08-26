@@ -17,8 +17,17 @@ import {
   ShieldAlert,
   Sun,
 } from "lucide-react";
-import { Surface, KitButton, SegmentedTabs, SectionHeading, StatusBadge } from "@/components/halisia/ds";
-import { SpatialCanvas, type SpatialCanvasHandle } from "@/components/halisia/spatial/spatial-canvas";
+import {
+  Surface,
+  KitButton,
+  SegmentedTabs,
+  SectionHeading,
+  StatusBadge,
+} from "@/components/halisia/ds";
+import {
+  SpatialCanvas,
+  type SpatialCanvasHandle,
+} from "@/components/halisia/spatial/spatial-canvas";
 import type { ArPlacementState } from "@/components/halisia/spatial/spatial-canvas.internal";
 import { LandPassport } from "@/components/halisia/spatial/land-passport";
 import { useReducedMotionPref } from "@/hooks/use-reduced-motion-pref";
@@ -30,11 +39,7 @@ import {
   fetchSpatialPrototypes,
 } from "@/lib/spatial-data";
 import { buildableEnvelope, polygonPerimeterM, ringToLocal, sunPosition } from "@/lib/spatial";
-import {
-  arFallbackMessage,
-  arPlatformFromUA,
-  type ArPlatform,
-} from "@/lib/spatial-platform";
+import { arFallbackMessage, arPlatformFromUA, type ArPlatform } from "@/lib/spatial-platform";
 
 const TITLE = "Spatial AR / VR Land Studio — HALISIA.AI";
 const DESCRIPTION =
@@ -67,7 +72,10 @@ function SpatialPage() {
   const handle = useRef<SpatialCanvasHandle>(null);
 
   const parcelsQ = useQuery({ queryKey: ["spatial", "parcels"], queryFn: fetchSpatialParcels });
-  const protosQ = useQuery({ queryKey: ["spatial", "prototypes"], queryFn: fetchSpatialPrototypes });
+  const protosQ = useQuery({
+    queryKey: ["spatial", "prototypes"],
+    queryFn: fetchSpatialPrototypes,
+  });
   const listingsQ = useQuery({ queryKey: ["spatial", "listings"], queryFn: fetchSpatialListings });
 
   const parcels = parcelsQ.data ?? [];
@@ -90,8 +98,12 @@ function SpatialPage() {
   const [xrError, setXrError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const [arPlatform, setArPlatform] = useState<ArPlatform>("desktop");
-  const { request: requestLocation, location, error: locationError, loading: locating } =
-    useMyLocation();
+  const {
+    request: requestLocation,
+    location,
+    error: locationError,
+    loading: locating,
+  } = useMyLocation();
 
   // Platform detection is client-only (user agent + touch points).
   useEffect(() => {
@@ -209,7 +221,10 @@ function SpatialPage() {
           {/* --- viewport --- */}
           <div className="grid gap-4">
             <Surface elevation={3} padding="none" className="overflow-hidden">
-              <div className="relative aspect-[4/3] md:aspect-[16/9]" data-testid="spatial-viewport">
+              <div
+                className="relative aspect-[4/3] md:aspect-[16/9]"
+                data-testid="spatial-viewport"
+              >
                 <SpatialCanvas
                   handleRef={handle}
                   parcel={parcel}
@@ -273,45 +288,49 @@ function SpatialPage() {
                           <Crosshair className="h-3.5 w-3.5" aria-hidden="true" /> Re-place
                         </KitButton>
                       )}
-                      <KitButton size="sm" variant="destructive" onClick={() => handle.current?.endXr()}>
+                      <KitButton
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handle.current?.endXr()}
+                      >
                         Exit XR
                       </KitButton>
                     </>
                   ) : (
                     <>
-                    <KitButton
-                      size="sm"
-                      variant="premium"
-                      onClick={() => void startSession("ar")}
-                      disabled={starting || xrSupported === false}
-                      data-testid="spatial-start-ar"
-                      title={
-                        xrSupported === false
-                          ? "WebXR AR is not available on this device — use the fallback viewer"
-                          : "Launch immersive AR"
-                      }
-                    >
-                      {starting ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
-                      ) : (
-                        <Scan className="h-3.5 w-3.5" aria-hidden="true" />
-                      )}
-                      Launch AR
-                    </KitButton>
-                    <KitButton
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => void startSession("vr")}
-                      disabled={starting || vrSupported === false}
-                      data-testid="spatial-start-vr"
-                      title={
-                        vrSupported === false
-                          ? "WebXR VR is not available on this device or browser"
-                          : "Enter the immersive VR masterplan"
-                      }
-                    >
-                      <Glasses className="h-3.5 w-3.5" aria-hidden="true" /> Enter VR
-                    </KitButton>
+                      <KitButton
+                        size="sm"
+                        variant="premium"
+                        onClick={() => void startSession("ar")}
+                        disabled={starting || xrSupported === false}
+                        data-testid="spatial-start-ar"
+                        title={
+                          xrSupported === false
+                            ? "WebXR AR is not available on this device — use the fallback viewer"
+                            : "Launch immersive AR"
+                        }
+                      >
+                        {starting ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                        ) : (
+                          <Scan className="h-3.5 w-3.5" aria-hidden="true" />
+                        )}
+                        Launch AR
+                      </KitButton>
+                      <KitButton
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => void startSession("vr")}
+                        disabled={starting || vrSupported === false}
+                        data-testid="spatial-start-vr"
+                        title={
+                          vrSupported === false
+                            ? "WebXR VR is not available on this device or browser"
+                            : "Enter the immersive VR masterplan"
+                        }
+                      >
+                        <Glasses className="h-3.5 w-3.5" aria-hidden="true" /> Enter VR
+                      </KitButton>
                     </>
                   )}
                 </div>
@@ -355,7 +374,10 @@ function SpatialPage() {
                 </span>
               </div>
               <p className="mt-3 flex items-start gap-2 text-[11px] text-muted-foreground">
-                <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#D4AF37]" aria-hidden="true" />
+                <ShieldAlert
+                  className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#D4AF37]"
+                  aria-hidden="true"
+                />
                 Approximate spatial visualization — not a cadastral survey. Consumer GPS and WebXR
                 plane detection carry metre-level error; boundaries shown here must not be used for
                 beaconing, subdivision or legal demarcation.
@@ -410,11 +432,13 @@ function SpatialPage() {
                   label="Spatial mode"
                 />
                 <div className="flex flex-wrap gap-2 text-[11px]">
-                  {([
-                    ["Beacons", showBeacons, setShowBeacons],
-                    ["Setbacks", showSetback, setShowSetback],
-                    ["Zoning envelope", showEnvelope, setShowEnvelope],
-                  ] as Array<[string, boolean, (v: (p: boolean) => boolean) => void]>).map(([label, on, set]) => (
+                  {(
+                    [
+                      ["Beacons", showBeacons, setShowBeacons],
+                      ["Setbacks", showSetback, setShowSetback],
+                      ["Zoning envelope", showEnvelope, setShowEnvelope],
+                    ] as Array<[string, boolean, (v: (p: boolean) => boolean) => void]>
+                  ).map(([label, on, set]) => (
                     <button
                       key={label}
                       type="button"
@@ -442,8 +466,8 @@ function SpatialPage() {
                   EAT
                   {sun && (
                     <span className="text-muted-foreground">
-                      · altitude {sun.altitudeDeg.toFixed(1)}° · azimuth {sun.azimuthDeg.toFixed(0)}°
-                      {sun.isDay ? "" : " · night"}
+                      · altitude {sun.altitudeDeg.toFixed(1)}° · azimuth {sun.azimuthDeg.toFixed(0)}
+                      °{sun.isDay ? "" : " · night"}
                     </span>
                   )}
                 </label>
@@ -467,7 +491,9 @@ function SpatialPage() {
                     onClick={() => setProtoId("")}
                     aria-pressed={protoId === ""}
                     className={`rounded-full border px-3 py-1.5 text-[11px] ${
-                      protoId === "" ? "border-white/40 bg-white/10" : "border-white/10 text-muted-foreground"
+                      protoId === ""
+                        ? "border-white/40 bg-white/10"
+                        : "border-white/10 text-muted-foreground"
                     }`}
                   >
                     None (bare land)
@@ -491,8 +517,8 @@ function SpatialPage() {
                 </div>
                 {prototype && (
                   <p className="text-[11px] text-muted-foreground">
-                    {prototype.floors ?? 1} floor(s) · {prototype.footprintSqm ?? "—"} m² footprint ·{" "}
-                    {prototype.heightM ?? "—"} m tall ·{" "}
+                    {prototype.floors ?? 1} floor(s) · {prototype.footprintSqm ?? "—"} m² footprint
+                    · {prototype.heightM ?? "—"} m tall ·{" "}
                     {prototype.estimatedCostKes
                       ? `KES ${prototype.estimatedCostKes.toLocaleString("en-KE")}`
                       : "cost on request"}
@@ -567,7 +593,10 @@ function SpatialPage() {
                         params={{ id: l.id }}
                         className="flex items-start gap-2 rounded-lg border border-white/10 p-2 hover:bg-white/5"
                       >
-                        <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" aria-hidden="true" />
+                        <MapPin
+                          className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent"
+                          aria-hidden="true"
+                        />
                         <span>
                           <span className="block text-foreground">{l.title}</span>
                           <span className="text-muted-foreground">
