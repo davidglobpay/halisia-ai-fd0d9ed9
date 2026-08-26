@@ -34,7 +34,33 @@ export type SpatialParcel = {
   surveyVerifiedOn: string | null;
   deedHash: string | null;
   beacons: SpatialBeacon[];
+  /**
+   * Coordinate sanity of the stored survey geometry. "out-of-bounds" usually
+   * means the source data is in a projected CRS (e.g. Arc 1960 / UTM 37S).
+   */
+  coordinateIssue?: CoordinateIssue;
 };
+
+export type CoordinateIssue = "none" | "out-of-bounds" | "invalid";
+
+/** WGS84 envelope covering the Republic of Kenya (with a small margin). */
+export const KENYA_BOUNDS = {
+  minLat: -5.0,
+  maxLat: 5.5,
+  minLng: 33.5,
+  maxLng: 42.0,
+} as const;
+
+/** True when a coordinate is finite WGS84 lat/lng inside the Kenya envelope. */
+export function isPlausibleKenyaLatLng(p: LatLng): boolean {
+  if (!p || !Number.isFinite(p.lat) || !Number.isFinite(p.lng)) return false;
+  return (
+    p.lat >= KENYA_BOUNDS.minLat &&
+    p.lat <= KENYA_BOUNDS.maxLat &&
+    p.lng >= KENYA_BOUNDS.minLng &&
+    p.lng <= KENYA_BOUNDS.maxLng
+  );
+}
 
 export type SpatialPrototype = {
   id: string;
