@@ -723,6 +723,23 @@ export default function SpatialCanvasInternal({
           Approximate spatial visualization — not a cadastral survey.
         </p>
       </div>
+      {contextLost && (
+        <div
+          data-testid="spatial-context-lost"
+          role="alert"
+          className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-black/70 p-6 text-center text-sm text-white"
+        >
+          <p>The 3D view lost its graphics context. Restore it to rebuild the scene.</p>
+          <button
+            type="button"
+            data-testid="spatial-context-restore"
+            onClick={() => restoreRef.current?.()}
+            className="rounded-full border border-white/30 px-4 py-2 text-xs font-medium hover:bg-white/10"
+          >
+            Restore 3D view
+          </button>
+        </div>
+      )}
       {error && (
         <div
           data-testid="spatial-canvas-error"
