@@ -251,7 +251,24 @@ export default function SpatialCanvasInternal({
       }
       if (!renderer.xr.isPresenting) controls.update();
       renderer.render(scene, camera);
-    });
+    };
+    renderer.setAnimationLoop(renderLoop);
+
+    // ---- GPU context loss / restore ---------------------------------------
+    const canvas = renderer.domElement;
+    const onContextLost = (event: Event) => {
+      event.preventDefault();
+      renderer.setAnimationLoop(null);
+      setContextLost(true);
+    };
+    const onContextRestored = () => {
+      setContextLost(false);
+      renderer.setAnimationLoop(renderLoop);
+      // Force the geometry + sun effects to rebuild the scene graph.
+      setRebuildNonce((n) => n + 1);
+    };
+    canvas.addEventListener("webglcontextlost", onContextLost);
+    canvas.addEventListener("webglcontextrestored", onContextRestored);
 
     const onSessionEnd = () => {
       const st = stateRef.current;
