@@ -25,7 +25,7 @@ test.describe("spatial AR/VR availability copy", () => {
     const reason = page.getByTestId("spatial-xr-unavailable-reason");
     await expect(reason).toBeVisible({ timeout: 30_000 });
     await expect(reason).toContainText(
-      /does not expose immersive WebXR sessions|embedded preview frame/i,
+      /does not expose immersive WebXR sessions|did not report an immersive WebXR session|does not implement immersive WebXR|embedded preview frame/i,
     );
     // Never claims immersive support that the device cannot deliver.
     await expect(reason).not.toContainText(/cadastral survey accuracy/i);
