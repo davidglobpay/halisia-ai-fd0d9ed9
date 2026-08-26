@@ -628,7 +628,6 @@ function Section({
     <HoloTile
       variant="hero"
       id={id}
-      eyebrow={title}
       title={title}
       icon={Icon as never}
       defaultOpen={defaultOpen}
@@ -698,9 +697,7 @@ function MiniScore({ label, value, invert }: { label: string; value: number; inv
 function ScoreTile({ label, value, accent }: { label: string; value: number; accent?: boolean }) {
   return (
     <div
-      className={`rounded-2xl p-4 border ${
-        accent ? "bg-accent/10 border-accent/40" : "bg-white/5 border-white/10"
-      }`}
+      className={`holo-tile h-full rounded-2xl p-4 ${accent ? "holo-lit" : ""}`}
     >
       <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
       <div className={`mt-1 text-3xl font-semibold ${accent ? "text-gradient" : ""}`}>
