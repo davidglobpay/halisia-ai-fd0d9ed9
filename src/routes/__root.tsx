@@ -13,6 +13,8 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import halisiaLogo from "../assets/brand/halisia-mark.png.asset.json";
 import { PerfMonitor } from "../components/halisia/perf-monitor";
+import { GlobeBackdrop } from "../components/halisia/globe-backdrop";
+
 import { FloatingSearch } from "../components/halisia/floating-search";
 import { NavGuide } from "../components/halisia/nav-guide";
 import { Navbar } from "../components/halisia/navbar";
@@ -193,8 +195,9 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <PerfMonitor />
-      {/* Ambient futuristic backdrop — topographic contours + grid, sits behind every route */}
-      <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 topo-backdrop" />
+      {/* Plain ivory backdrop with a faint gold graticule sphere (globe) */}
+      <GlobeBackdrop />
+
       <Navbar />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />

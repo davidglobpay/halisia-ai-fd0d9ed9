@@ -640,7 +640,7 @@ export function FloatingSearch() {
             {rows.length === 0 ? (
               !q.trim() ? (
                 <div className="p-4">
-                  <div className="text-[11px] uppercase tracking-widest text-[oklch(0.78_0.14_85)] font-medium mb-2.5">
+                  <div className="text-[11px] uppercase tracking-widest text-accent font-medium mb-2.5">
                     Try one of these
                   </div>
                   <div className="flex flex-wrap gap-1.5">
@@ -649,9 +649,9 @@ export function FloatingSearch() {
                         key={p.query}
                         type="button"
                         onClick={() => commit(p.query, { kind: "curated", via: "suggestion" })}
-                        className="group inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-foreground hover:border-[oklch(0.78_0.14_85/0.45)] hover:bg-white/[0.06] transition"
+                        className="group inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-foreground hover:border-accent/45 hover:bg-white/[0.06] transition"
                       >
-                        <MapPin className="h-3 w-3 text-[oklch(0.78_0.14_85)]" aria-hidden="true" />
+                        <MapPin className="h-3 w-3 text-accent" aria-hidden="true" />
                         <span>{p.label}</span>
                         <span className="text-[10px] text-muted-foreground">· {p.hint}</span>
                       </button>

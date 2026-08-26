@@ -139,16 +139,19 @@ function SpatialPage() {
     // session request is refused, which reads as "unavailable" even on a capable
     // ARCore phone. Detect that case so the copy stays truthful.
     const embedded = typeof window !== "undefined" && window.self !== window.top;
-    let policyBlocked = false;
+    // Chrome no longer exposes permissions-policy introspection, so from inside
+    // the frame we can only confirm an *allowed* policy — never rule one out.
+    let policyAllowed = false;
     try {
       const fp = (
         document as Document & { featurePolicy?: { allowsFeature: (f: string) => boolean } }
       ).featurePolicy;
-      if (fp?.allowsFeature) policyBlocked = !fp.allowsFeature("xr-spatial-tracking");
+      if (fp?.allowsFeature) policyAllowed = fp.allowsFeature("xr-spatial-tracking");
     } catch {
-      policyBlocked = false;
+      policyAllowed = false;
     }
-    setXrBlockedByFrame(embedded && policyBlocked);
+    setXrBlockedByFrame(embedded && !policyAllowed);
+
 
     const xr = (navigator as Navigator & { xr?: XRSystem }).xr;
     if (!xr?.isSessionSupported) {
@@ -538,7 +541,9 @@ function SpatialPage() {
                 >
                   {xrBlockedByFrame ? (
                     <>
-                      WebXR is blocked because this app is running inside an embedded preview frame.{" "}
+                      This app is running inside an embedded preview frame, which commonly withholds
+                      the <code>xr-spatial-tracking</code> permission and makes WebXR report as
+                      unavailable even on capable hardware.{" "}
                       <a
                         href="/spatial"
                         target="_blank"
@@ -551,6 +556,7 @@ function SpatialPage() {
                       immersive session.
                     </>
                   ) : (
+
                     <>
                       This browser or device does not expose immersive WebXR sessions. AR needs
                       Chrome with Google ARCore on Android; VR needs a WebXR headset browser. iOS
