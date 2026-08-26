@@ -101,6 +101,28 @@ export default function SpatialCanvasInternal({
   motionRef.current = reducedMotion;
   const stateRef = useRef<CanvasState | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // GPU context loss (backgrounding mid-AR, incoming call, memory pressure).
+  const [contextLost, setContextLost] = useState(false);
+  // Bumped to force the geometry + sun effects to rebuild the scene.
+  const [rebuildNonce, setRebuildNonce] = useState(0);
+  // Live AR placement mirrored into React so the DOM overlay can show it.
+  const [arPlacement, setArPlacement] = useState<ArPlacementState>({
+    hitTest: false,
+    surfaceFound: false,
+    placed: false,
+  });
+  const [arSessionActive, setArSessionActive] = useState(false);
+  // Requested session mode, captured before the session starts so the
+  // "sessionstart" handler can report ar/vr instead of a null window.
+  const pendingMode = useRef<XrSessionMode | null>(null);
+  // Re-show the twin in front of the viewer when hit testing is unavailable.
+  const showInFrontRef = useRef<(() => void) | null>(null);
+  // Stable emitter: updates local overlay state and notifies the route.
+  const emitRef = useRef<(s: ArPlacementState) => void>(() => {});
+  emitRef.current = (s: ArPlacementState) => {
+    setArPlacement(s);
+    placementCb.current?.(s);
+  };
 
   // ---- one-time scene bootstrap -------------------------------------------
   // Deps intentionally empty: the renderer must never be torn down because XR
