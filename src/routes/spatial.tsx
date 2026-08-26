@@ -195,11 +195,22 @@ function SpatialPage() {
     }
   };
 
-  // Move focus to the fallback panel whenever an XR attempt fails, so screen
-  // reader and keyboard users land on the explanation and native viewers.
+  // Non-blocking focus management for the fallback panel: focus moves into the
+  // panel when it opens through a user action and returns to the invoking
+  // control when it closes. Focus is never trapped — Tab/Shift+Tab still reach
+  // the canvas and every other control.
+  const fallbackOpen = Boolean(xrError) || xrSupported === false;
+  const wasFallbackOpen = useRef(false);
   useEffect(() => {
-    if (xrError) fallbackRef.current?.focus();
-  }, [xrError]);
+    if (fallbackOpen && !wasFallbackOpen.current) {
+      // Only pull focus when a control actually opened the panel.
+      if (panelInvokerRef.current) fallbackRef.current?.focus();
+    } else if (!fallbackOpen && wasFallbackOpen.current) {
+      panelInvokerRef.current?.focus();
+      panelInvokerRef.current = null;
+    }
+    wasFallbackOpen.current = fallbackOpen;
+  }, [fallbackOpen]);
 
   // Entering XR focuses "Exit XR"; leaving it returns focus to "Launch AR".
   const wasXrActive = useRef(false);
