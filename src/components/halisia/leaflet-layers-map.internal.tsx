@@ -103,7 +103,7 @@ export default function LeafletLayersMap({
       >
         <LayersControl position="topright">
           {BASEMAPS.map((b, i) => (
-            <LayersControl.BaseLayer key={b.id} name={b.name} checked={b.id === "esri-sat" || i === 3}>
+            <LayersControl.BaseLayer key={b.id} name={b.name} checked={b.id === "esri-sat"}>
               <TileLayer
                 url={b.url}
                 attribution={b.attribution}
