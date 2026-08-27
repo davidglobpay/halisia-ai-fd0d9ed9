@@ -122,7 +122,7 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
                 height={200}
                 decoding="async"
                 fetchPriority="high"
-                className="relative h-28 w-28 sm:h-36 sm:w-36 md:h-44 md:w-44 object-contain [transform:rotateX(6deg)] drop-shadow-[0_10px_28px_rgba(16,45,26,0.22)] [filter:drop-shadow(0_0_18px_rgba(192,138,46,0.35))_drop-shadow(0_0_36px_rgba(20,123,53,0.2))]"
+                className="relative h-48 w-48 sm:h-64 sm:w-64 md:h-80 md:w-80 lg:h-96 lg:w-96 object-contain [transform:rotateX(6deg)] drop-shadow-[0_18px_44px_rgba(16,45,26,0.28)] [filter:drop-shadow(0_0_26px_rgba(192,138,46,0.42))_drop-shadow(0_0_54px_rgba(20,123,53,0.24))]"
               />
               {/* Specular highlight sweep */}
               <div
@@ -188,12 +188,6 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
                 >
                   Spatial AR Studio
                 </Link>
-                <a
-                  href="#how"
-                  className="inline-flex items-center gap-1.5 rounded-full glass border border-foreground/15 px-4 py-2 text-xs font-medium text-foreground hover:bg-foreground/5 transition"
-                >
-                  Watch Demo
-                </a>
               </div>
               <div className="mt-3 hidden sm:flex flex-wrap justify-center gap-2 text-xs text-muted-foreground">
                 <span className="mr-1">Popular:</span>
@@ -404,18 +398,16 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
                 }}
               />
               <img
-                src={halisiaSymbol.url}
-                alt="HALISIA — Land Intelligence"
-                width={72}
-                height={72}
+                src={halisiaWordmark.url}
+                alt="HALISIA.AI — Land Intelligence Platform"
+                width={653}
+                height={237}
                 loading="lazy"
                 decoding="async"
-                className="h-16 w-16 object-contain drop-shadow-[0_0_18px_rgba(192,138,46,0.4)]"
+                className="h-auto w-[min(280px,64vw)] object-contain drop-shadow-[0_6px_18px_rgba(16,45,26,0.18)]"
               />
             </div>
-            <div className="text-sm font-semibold tracking-[0.32em] text-white/90">
-              H A L I S I A
-            </div>
+
             <div className="text-[11px] uppercase tracking-[0.28em] text-accent">
               Land · Intelligence · Platform
             </div>

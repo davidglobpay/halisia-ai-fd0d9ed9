@@ -52,10 +52,10 @@ export default function KenyaCountyLeaflet({
     const pct = max === min ? 0.5 : (v - min) / (max - min);
     return {
       fillColor: ramp(pct),
-      fillOpacity: sel ? 0.75 : hovered ? 0.55 : 0.35,
-      color: sel ? "#ffffff" : hovered ? "#62E9FF" : "#2D8CFF",
-      weight: sel ? 2.4 : hovered ? 1.8 : 0.8,
-      opacity: 0.9,
+      fillOpacity: sel ? 0.6 : hovered ? 0.45 : 0.28,
+      color: sel ? "#102D1A" : hovered ? "#147B35" : "#C08A2E",
+      weight: sel ? 2.4 : hovered ? 1.8 : 0.9,
+      opacity: 0.95,
     };
   };
 
@@ -78,12 +78,15 @@ export default function KenyaCountyLeaflet({
       zoom={6}
       zoomControl={false}
       scrollWheelZoom
-      className="absolute inset-0 h-full w-full bg-[#0a1735]"
-      style={{ background: "#0a1735" }}
+      className="absolute inset-0 h-full w-full bg-[#F1ECE0]"
+      style={{ background: "#F1ECE0" }}
     >
       <TileLayer
         attribution="&copy; OpenStreetMap contributors &copy; CARTO"
-        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+        detectRetina
+        maxNativeZoom={20}
+        maxZoom={22}
       />
       <ZoomControl position="topright" />
       <ScaleControl position="bottomleft" />

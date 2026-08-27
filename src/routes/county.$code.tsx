@@ -214,17 +214,17 @@ function CountyPage() {
 
         {/* HERO */}
         <header className="mt-6 glass-strong rounded-3xl overflow-hidden border border-white/10">
-          <div className="relative h-56 md:h-72 bg-gradient-to-br from-[#0a1735] via-[#0f1f4d] to-[#0a1735] overflow-hidden">
+          <div className="relative h-56 md:h-72 bg-gradient-to-br from-[var(--h-ivory,#f7f3ea)] via-[#FFFDF8] to-[#F1ECE0] overflow-hidden">
             <div
               aria-hidden
-              className="absolute inset-0 opacity-30"
+              className="absolute inset-0 opacity-40"
               style={{
                 backgroundImage:
-                  "radial-gradient(circle at 20% 30%, rgba(0,229,255,0.25), transparent 45%), radial-gradient(circle at 80% 70%, rgba(255,193,7,0.18), transparent 45%)",
+                  "radial-gradient(circle at 20% 30%, rgba(20,123,53,0.14), transparent 48%), radial-gradient(circle at 80% 70%, rgba(192,138,46,0.16), transparent 48%)",
               }}
             />
             <div className="absolute top-4 left-4">
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-xs font-bold text-white ring-1 ring-white/20 shadow-md">
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground ring-1 ring-foreground/10 shadow-md">
                 {String(facts.code).padStart(2, "0")}
               </span>
             </div>
@@ -244,7 +244,7 @@ function CountyPage() {
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-px bg-white/5">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-px bg-foreground/10">
             <ProfileFact label="Population (2019)" value={facts.population2019.toLocaleString()} />
             <ProfileFact label="Density" value={`${density.toLocaleString()} /km²`} />
             <ProfileFact label="Area" value={`${facts.areaKm2.toLocaleString()} km²`} />
@@ -604,7 +604,7 @@ function CountyPage() {
 
 function ProfileFact({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
-    <div className="bg-[#0a1735] px-4 py-3">
+    <div className="bg-[#FFFDF8] px-4 py-3">
       <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
       <div className={`mt-1 text-lg font-semibold ${accent ? "text-gradient" : ""}`}>{value}</div>
     </div>
