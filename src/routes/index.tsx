@@ -188,12 +188,6 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
                 >
                   Spatial AR Studio
                 </Link>
-                <a
-                  href="#how"
-                  className="inline-flex items-center gap-1.5 rounded-full glass border border-foreground/15 px-4 py-2 text-xs font-medium text-foreground hover:bg-foreground/5 transition"
-                >
-                  Watch Demo
-                </a>
               </div>
               <div className="mt-3 hidden sm:flex flex-wrap justify-center gap-2 text-xs text-muted-foreground">
                 <span className="mr-1">Popular:</span>
