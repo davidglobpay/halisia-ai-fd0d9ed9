@@ -244,7 +244,7 @@ function CountyPage() {
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-px bg-white/5">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-px bg-foreground/10">
             <ProfileFact label="Population (2019)" value={facts.population2019.toLocaleString()} />
             <ProfileFact label="Density" value={`${density.toLocaleString()} /km²`} />
             <ProfileFact label="Area" value={`${facts.areaKm2.toLocaleString()} km²`} />
