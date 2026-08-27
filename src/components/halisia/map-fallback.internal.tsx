@@ -78,7 +78,9 @@ export default function MapFallback({
         key={`${tileRetryKey}-${url}`}
         url={url}
         attribution={attribution}
-        maxZoom={19}
+        detectRetina
+        maxNativeZoom={19}
+        maxZoom={22}
         eventHandlers={{ tileerror: () => onTileError?.() }}
       />
       <ScaleControl position="bottomleft" />
