@@ -52,10 +52,10 @@ export default function KenyaCountyLeaflet({
     const pct = max === min ? 0.5 : (v - min) / (max - min);
     return {
       fillColor: ramp(pct),
-      fillOpacity: sel ? 0.75 : hovered ? 0.55 : 0.35,
-      color: sel ? "#ffffff" : hovered ? "#62E9FF" : "#2D8CFF",
-      weight: sel ? 2.4 : hovered ? 1.8 : 0.8,
-      opacity: 0.9,
+      fillOpacity: sel ? 0.6 : hovered ? 0.45 : 0.28,
+      color: sel ? "#102D1A" : hovered ? "#147B35" : "#C08A2E",
+      weight: sel ? 2.4 : hovered ? 1.8 : 0.9,
+      opacity: 0.95,
     };
   };
 
