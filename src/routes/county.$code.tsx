@@ -604,7 +604,7 @@ function CountyPage() {
 
 function ProfileFact({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
-    <div className="bg-[#0a1735] px-4 py-3">
+    <div className="bg-[#FFFDF8] px-4 py-3">
       <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
       <div className={`mt-1 text-lg font-semibold ${accent ? "text-gradient" : ""}`}>{value}</div>
     </div>
