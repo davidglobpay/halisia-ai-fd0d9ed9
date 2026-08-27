@@ -44,7 +44,7 @@ export function MapFrame({
   return (
     <div
       data-testid="map-frame"
-      className={`relative w-full ${mobileAspect} ${desktopAspect} md:min-h-[420px] rounded-2xl overflow-hidden border border-white/10 bg-[#050d24] ${className}`}
+      className={`relative w-full ${mobileAspect} ${desktopAspect} md:min-h-[420px] rounded-2xl overflow-hidden border border-white/10 bg-[#E7E0D2] ${className}`}
     >
       {children}
       {showBack && canGoBack && (
