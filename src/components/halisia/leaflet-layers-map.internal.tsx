@@ -102,7 +102,7 @@ export default function LeafletLayersMap({
         key={`${lat.toFixed(4)}-${lng.toFixed(4)}`}
       >
         <LayersControl position="topright">
-          {BASEMAPS.map((b, i) => (
+          {BASEMAPS.map((b) => (
             <LayersControl.BaseLayer key={b.id} name={b.name} checked={b.id === "esri-sat"}>
               <TileLayer
                 url={b.url}
@@ -120,11 +120,12 @@ export default function LeafletLayersMap({
               eventHandlers={{ add: () => setShowLabels(true), remove: () => setShowLabels(false) }}
             />
           </LayersControl.Overlay>
-          <LayersControl.Overlay name="Slope · hillshade" checked>
+          <LayersControl.Overlay name="Slope · hillshade">
             <TileLayer
               url="https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}"
               attribution="Hillshade © Esri"
-              opacity={0.55}
+              detectRetina
+              opacity={0.28}
             />
           </LayersControl.Overlay>
           <LayersControl.Overlay name="Drainage · hydro">
