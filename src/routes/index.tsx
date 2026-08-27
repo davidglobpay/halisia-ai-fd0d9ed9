@@ -122,7 +122,7 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
                 height={200}
                 decoding="async"
                 fetchPriority="high"
-                className="relative h-28 w-28 sm:h-36 sm:w-36 md:h-44 md:w-44 object-contain [transform:rotateX(6deg)] drop-shadow-[0_10px_28px_rgba(16,45,26,0.22)] [filter:drop-shadow(0_0_18px_rgba(192,138,46,0.35))_drop-shadow(0_0_36px_rgba(20,123,53,0.2))]"
+                className="relative h-48 w-48 sm:h-64 sm:w-64 md:h-80 md:w-80 lg:h-96 lg:w-96 object-contain [transform:rotateX(6deg)] drop-shadow-[0_18px_44px_rgba(16,45,26,0.28)] [filter:drop-shadow(0_0_26px_rgba(192,138,46,0.42))_drop-shadow(0_0_54px_rgba(20,123,53,0.24))]"
               />
               {/* Specular highlight sweep */}
               <div
