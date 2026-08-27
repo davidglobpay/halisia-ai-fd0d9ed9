@@ -762,36 +762,15 @@ export function KenyaCountyMap() {
                       : "bg-white/5 border-white/10 hover:bg-white/10"
                 } focus-visible:ring-2 focus-visible:ring-accent`}
               >
-                <div className="relative flex flex-col items-center text-center pt-1">
-                  <span
-                    aria-hidden="true"
-                    className="absolute left-0 top-0 inline-flex h-6 w-6 items-center justify-center rounded-full bg-foreground text-background text-[11px] font-bold shadow"
-                  >
-                    {c.code}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      toggleSelect(c.code);
-                    }}
-                    aria-pressed={sel}
-                    aria-label={`${sel ? "Remove" : "Add"} ${c.name} ${sel ? "from" : "to"} comparison`}
-                    className={`absolute right-0 top-0 text-[10px] rounded-full px-2 py-0.5 border transition ${
-                      sel
-                        ? "bg-accent/20 border-accent/50 text-accent"
-                        : "border-white/15 text-muted-foreground hover:text-foreground hover:bg-white/10"
-                    }`}
-                  >
-                    {sel ? (
-                      <span className="inline-flex items-center gap-1">
-                        <Check className="h-3 w-3" /> Compare
-                      </span>
-                    ) : (
-                      "Compare"
-                    )}
-                  </button>
+                <div className="flex flex-col items-center text-center">
+                  <div className="flex w-full items-center justify-start">
+                    <span
+                      aria-hidden="true"
+                      className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-foreground text-background text-[11px] font-bold shadow"
+                    >
+                      {c.code}
+                    </span>
+                  </div>
                   <CountyEmblem code={c.code} name={c.name} size={64} className="mt-2" />
                   <div className="mt-2 text-xs font-bold tracking-wide uppercase">{c.name}</div>
                 </div>
