@@ -103,8 +103,14 @@ export default function LeafletLayersMap({
       >
         <LayersControl position="topright">
           {BASEMAPS.map((b, i) => (
-            <LayersControl.BaseLayer key={b.id} name={b.name} checked={i === 3}>
-              <TileLayer url={b.url} attribution={b.attribution} maxZoom={b.max ?? 19} />
+            <LayersControl.BaseLayer key={b.id} name={b.name} checked={b.id === "esri-sat" || i === 3}>
+              <TileLayer
+                url={b.url}
+                attribution={b.attribution}
+                detectRetina
+                maxNativeZoom={b.max ?? 19}
+                maxZoom={22}
+              />
             </LayersControl.BaseLayer>
           ))}
           <LayersControl.Overlay name="Labels & roads" checked={showLabels}>
