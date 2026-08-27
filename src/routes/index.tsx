@@ -398,18 +398,16 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
                 }}
               />
               <img
-                src={halisiaSymbol.url}
-                alt="HALISIA — Land Intelligence"
-                width={72}
-                height={72}
+                src={halisiaWordmark.url}
+                alt="HALISIA.AI — Land Intelligence Platform"
+                width={653}
+                height={237}
                 loading="lazy"
                 decoding="async"
-                className="h-16 w-16 object-contain drop-shadow-[0_0_18px_rgba(192,138,46,0.4)]"
+                className="h-auto w-[min(280px,64vw)] object-contain drop-shadow-[0_6px_18px_rgba(16,45,26,0.18)]"
               />
             </div>
-            <div className="text-sm font-semibold tracking-[0.32em] text-white/90">
-              H A L I S I A
-            </div>
+
             <div className="text-[11px] uppercase tracking-[0.28em] text-accent">
               Land · Intelligence · Platform
             </div>
