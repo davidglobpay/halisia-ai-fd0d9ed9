@@ -809,11 +809,30 @@ export function KenyaCountyMap() {
                     />
                   </div>
                 </div>
-                <div
-                  data-testid={`county-open-${c.code}`}
-                  className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-accent"
-                >
-                  Open profile <ArrowRight className="h-3 w-3" />
+                <div className="mt-3 flex items-center justify-between gap-2">
+                  <span
+                    data-testid={`county-open-${c.code}`}
+                    className="inline-flex items-center gap-1 text-[11px] font-medium text-accent"
+                  >
+                    Open profile <ArrowRight className="h-3 w-3" />
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleSelect(c.code);
+                    }}
+                    aria-pressed={sel}
+                    aria-label={`${sel ? "Remove" : "Add"} ${c.name} ${sel ? "from" : "to"} comparison`}
+                    className={`shrink-0 inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-medium transition ${
+                      sel
+                        ? "bg-accent/20 border-accent/60 text-accent"
+                        : "border-foreground/20 bg-background/60 text-muted-foreground hover:text-foreground hover:bg-foreground/5"
+                    }`}
+                  >
+                    {sel ? <Check className="h-3 w-3" /> : null} Compare
+                  </button>
                 </div>
               </Link>
             );
