@@ -214,7 +214,7 @@ function CountyPage() {
 
         {/* HERO */}
         <header className="mt-6 glass-strong rounded-3xl overflow-hidden border border-white/10">
-          <div className="relative h-56 md:h-72 bg-gradient-to-br from-[#0a1735] via-[#0f1f4d] to-[#0a1735] overflow-hidden">
+          <div className="relative h-56 md:h-72 bg-gradient-to-br from-[var(--h-ivory,#f7f3ea)] via-[#FFFDF8] to-[#F1ECE0] overflow-hidden">
             <div
               aria-hidden
               className="absolute inset-0 opacity-30"
