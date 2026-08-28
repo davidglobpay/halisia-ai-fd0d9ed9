@@ -25,7 +25,7 @@ export function GlobeIntro({ label = "Kenya" }: { label?: string }) {
       /* private mode — play once anyway */
     }
     setPlaying(true);
-    const t = window.setTimeout(() => setPlaying(false), 2700);
+    const t = window.setTimeout(() => setPlaying(false), 3500);
     return () => window.clearTimeout(t);
   }, []);
 

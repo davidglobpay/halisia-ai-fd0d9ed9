@@ -1,8 +1,14 @@
 import { defineConfig, devices } from "@playwright/test";
 import { existsSync } from "node:fs";
 
-const bundledChromium = "/chromium-1194/chrome-linux/chrome";
-const executablePath = existsSync(bundledChromium) ? bundledChromium : undefined;
+// Sandboxes ship a pre-installed Chromium whose revision can differ from the
+// one this Playwright version expects. Reuse whichever build exists.
+const candidates = [
+  "/chromium-1194/chrome-linux/chrome",
+  "/opt/ms-playwright/chromium-1194/chrome-linux/chrome",
+  "/opt/ms-playwright/chromium-1228/chrome-linux64/chrome",
+];
+const executablePath = candidates.find((p) => existsSync(p));
 
 export default defineConfig({
   testDir: "./tests/e2e",

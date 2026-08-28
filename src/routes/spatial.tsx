@@ -36,6 +36,10 @@ import {
 } from "@/components/halisia/spatial/spatial-canvas";
 import type { ArPlacementState } from "@/components/halisia/spatial/spatial-canvas.internal";
 import { LandPassport } from "@/components/halisia/spatial/land-passport";
+import {
+  SpatialSearch,
+  type SpatialSearchResult,
+} from "@/components/halisia/spatial/spatial-search";
 import { useReducedMotionPref } from "@/hooks/use-reduced-motion-pref";
 import { useMyLocation } from "@/hooks/use-my-location";
 import {
@@ -110,6 +114,10 @@ function SpatialPage() {
     placed: false,
   });
   const [xrError, setXrError] = useState<string | null>(null);
+  const [searchNote, setSearchNote] = useState<string | null>(null);
+  // Set when "My location" is pressed from the search bar, so the resolved
+  // fix selects the nearest surveyed parcel exactly once.
+  const locateForSearch = useRef(false);
   const [starting, setStarting] = useState(false);
   const [arPlatform, setArPlatform] = useState<ArPlatform>("desktop");
   const {
@@ -188,6 +196,28 @@ function SpatialPage() {
       .sort((a, b) => a.dist - b.dist)
       .slice(0, 4);
   }, [listingsQ.data, parcel]);
+
+  // "My location" from the search bar: once a fix lands, jump to the nearest
+  // surveyed parcel and state the distance honestly.
+  useEffect(() => {
+    if (!locateForSearch.current || !location || !parcels.length) return;
+    locateForSearch.current = false;
+    let best = parcels[0]!;
+    let bestD = distanceM(best.centroid, location);
+    for (const p of parcels) {
+      const d = distanceM(p.centroid, location);
+      if (d < bestD) {
+        best = p;
+        bestD = d;
+      }
+    }
+    setSelectedId(best.id);
+    setSearchNote(
+      `Your location (±${Math.round(location.accuracy ?? 0)} m) → nearest surveyed parcel ${
+        best.parcelCode || best.titleDeedNo
+      }, ${bestD < 1000 ? `${Math.round(bestD)} m` : `${(bestD / 1000).toFixed(1)} km`} away. This is a positioning aid, not a cadastral survey.`,
+    );
+  }, [location, parcels]);
 
   const startSession = async (kind: "ar" | "vr") => {
     // Remember the control that opened the fallback panel so focus can return
@@ -305,6 +335,22 @@ function SpatialPage() {
         title="AR · VR · XR Land Studio"
         description="Project a surveyed Kenyan parcel into your physical space, verify beacons on the ground, test massing against zoning envelopes and issue a Digital Land Passport."
         className="mt-4"
+      />
+
+      <SpatialSearch
+        parcels={parcels}
+        note={searchNote}
+        locating={locating}
+        locationError={locationError}
+        onLocate={() => {
+          locateForSearch.current = true;
+          void requestLocation();
+        }}
+        onResolved={(r: SpatialSearchResult) => {
+          setSelectedId(r.parcelId);
+          setSearchNote(r.note);
+          handle.current?.resetView();
+        }}
       />
 
       {parcelsQ.isLoading && (
