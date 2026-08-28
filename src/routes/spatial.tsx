@@ -36,6 +36,10 @@ import {
 } from "@/components/halisia/spatial/spatial-canvas";
 import type { ArPlacementState } from "@/components/halisia/spatial/spatial-canvas.internal";
 import { LandPassport } from "@/components/halisia/spatial/land-passport";
+import {
+  SpatialSearch,
+  type SpatialSearchResult,
+} from "@/components/halisia/spatial/spatial-search";
 import { useReducedMotionPref } from "@/hooks/use-reduced-motion-pref";
 import { useMyLocation } from "@/hooks/use-my-location";
 import {
@@ -110,6 +114,10 @@ function SpatialPage() {
     placed: false,
   });
   const [xrError, setXrError] = useState<string | null>(null);
+  const [searchNote, setSearchNote] = useState<string | null>(null);
+  // Set when "My location" is pressed from the search bar, so the resolved
+  // fix selects the nearest surveyed parcel exactly once.
+  const locateForSearch = useRef(false);
   const [starting, setStarting] = useState(false);
   const [arPlatform, setArPlatform] = useState<ArPlatform>("desktop");
   const {
@@ -315,7 +323,7 @@ function SpatialPage() {
           locateForSearch.current = true;
           void requestLocation();
         }}
-        onResolved={(r) => {
+        onResolved={(r: SpatialSearchResult) => {
           setSelectedId(r.parcelId);
           setSearchNote(r.note);
           handle.current?.resetView();
