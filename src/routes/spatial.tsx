@@ -307,6 +307,26 @@ function SpatialPage() {
         className="mt-4"
       />
 
+      <SpatialSearch
+        parcels={parcels}
+        locating={locating}
+        locationError={locationError}
+        onLocate={() => {
+          locateForSearch.current = true;
+          void requestLocation();
+        }}
+        onResolved={(r) => {
+          setSelectedId(r.parcelId);
+          setSearchNote(r.note);
+          handle.current?.resetView();
+        }}
+      />
+      {searchNote && (
+        <p className="mt-2 text-xs text-muted-foreground" data-testid="spatial-search-note">
+          {searchNote}
+        </p>
+      )}
+
       {parcelsQ.isLoading && (
         <p className="mt-8 flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin text-accent" /> Loading surveyed parcels…
