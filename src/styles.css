@@ -898,16 +898,22 @@ html[data-reduced-motion="1"] *::after {
  */
 @keyframes halisia-globe-fly {
   0% {
-    transform: scale(1) translate3d(0, 0, 0);
+    transform: scale(0.92) translate3d(0, 0, 0);
     opacity: 0;
   }
-  12% {
+  10% {
+    transform: scale(1) translate3d(0, 0, 0);
     opacity: 1;
   }
-  45% {
+  /* World view holds while the globe rotates toward Africa. */
+  38% {
+    transform: scale(1) translate3d(0, 0, 0);
+    opacity: 1;
+  }
+  58% {
     transform: scale(2.4) translate3d(-6%, 4%, 0);
   }
-  75% {
+  80% {
     transform: scale(6.5) translate3d(-9%, 6%, 0);
     opacity: 1;
   }
@@ -917,18 +923,21 @@ html[data-reduced-motion="1"] *::after {
   }
 }
 @keyframes halisia-globe-spin {
-  from {
-    transform: rotate(-14deg);
+  0% {
+    transform: rotate(-150deg);
   }
-  to {
+  40% {
+    transform: rotate(-18deg);
+  }
+  100% {
     transform: rotate(6deg);
   }
 }
 .halisia-globe-intro {
-  animation: halisia-globe-fly 2600ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
+  animation: halisia-globe-fly 3400ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
 }
 .halisia-globe-intro-spin {
-  animation: halisia-globe-spin 2600ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
+  animation: halisia-globe-spin 3400ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
 }
 @media (prefers-reduced-motion: reduce) {
   .halisia-globe-intro,
