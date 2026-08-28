@@ -197,6 +197,28 @@ function SpatialPage() {
       .slice(0, 4);
   }, [listingsQ.data, parcel]);
 
+  // "My location" from the search bar: once a fix lands, jump to the nearest
+  // surveyed parcel and state the distance honestly.
+  useEffect(() => {
+    if (!locateForSearch.current || !location || !parcels.length) return;
+    locateForSearch.current = false;
+    let best = parcels[0]!;
+    let bestD = distanceM(best.centroid, location);
+    for (const p of parcels) {
+      const d = distanceM(p.centroid, location);
+      if (d < bestD) {
+        best = p;
+        bestD = d;
+      }
+    }
+    setSelectedId(best.id);
+    setSearchNote(
+      `Your location (±${Math.round(location.accuracy ?? 0)} m) → nearest surveyed parcel ${
+        best.parcelCode || best.titleDeedNo
+      }, ${bestD < 1000 ? `${Math.round(bestD)} m` : `${(bestD / 1000).toFixed(1)} km`} away. This is a positioning aid, not a cadastral survey.`,
+    );
+  }, [location, parcels]);
+
   const startSession = async (kind: "ar" | "vr") => {
     // Remember the control that opened the fallback panel so focus can return
     // to it when the panel closes. Focus is never trapped inside the panel.
