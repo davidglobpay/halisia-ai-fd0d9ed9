@@ -144,7 +144,7 @@ export function SpatialSearch({
         </KitButton>
         <KitButton
           type="button"
-          variant="ghost"
+          variant="secondary"
           onClick={onLocate}
           disabled={locating}
           data-testid="spatial-search-locate"
