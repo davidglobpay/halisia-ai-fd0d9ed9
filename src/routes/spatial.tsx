@@ -339,6 +339,7 @@ function SpatialPage() {
 
       <SpatialSearch
         parcels={parcels}
+        note={searchNote}
         locating={locating}
         locationError={locationError}
         onLocate={() => {

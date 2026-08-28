@@ -40,12 +40,15 @@ export function SpatialSearch({
   onLocate,
   locating,
   locationError,
+  note,
 }: {
   parcels: SpatialParcel[];
   onResolved: (result: SpatialSearchResult) => void;
   onLocate: () => void;
   locating?: boolean;
   locationError?: string | null;
+  /** Externally resolved note (e.g. the "my location" result). */
+  note?: string | null;
 }) {
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState(false);
@@ -159,7 +162,7 @@ export function SpatialSearch({
         aria-live="polite"
         data-testid="spatial-search-status"
       >
-        {message ?? locationError ?? "Search resolves to the nearest surveyed parcel on record."}
+        {note ?? message ?? locationError ?? "Search resolves to the nearest surveyed parcel on record."}
       </p>
     </Surface>
   );
