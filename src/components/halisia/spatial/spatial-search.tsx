@@ -162,7 +162,10 @@ export function SpatialSearch({
         aria-live="polite"
         data-testid="spatial-search-status"
       >
-        {note ?? message ?? locationError ?? "Search resolves to the nearest surveyed parcel on record."}
+        {note ??
+          message ??
+          locationError ??
+          "Search resolves to the nearest surveyed parcel on record."}
       </p>
     </Surface>
   );
