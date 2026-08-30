@@ -1035,6 +1035,50 @@ export type Database = {
           },
         ]
       }
+      parcel_verification_events: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          evidence_ref: string | null
+          from_state: string | null
+          id: string
+          method: string | null
+          note: string | null
+          parcel_id: string
+          to_state: string
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          evidence_ref?: string | null
+          from_state?: string | null
+          id?: string
+          method?: string | null
+          note?: string | null
+          parcel_id: string
+          to_state: string
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          evidence_ref?: string | null
+          from_state?: string | null
+          id?: string
+          method?: string | null
+          note?: string | null
+          parcel_id?: string
+          to_state?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parcel_verification_events_parcel_id_fkey"
+            columns: ["parcel_id"]
+            isOneToOne: false
+            referencedRelation: "parcels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       parcels: {
         Row: {
           area_sqm: number
@@ -1046,6 +1090,8 @@ export type Database = {
           elevation_masl: number | null
           geometry: Json
           id: string
+          legacy_parcel_code: string | null
+          legacy_title_deed_no: string | null
           max_building_height_m: number | null
           owner_id: string | null
           parcel_code: string
@@ -1055,6 +1101,11 @@ export type Database = {
           survey_verified_on: string | null
           title_deed_no: string
           valuation_kes: number | null
+          verification_confidence: number
+          verification_evidence_ref: string | null
+          verification_method: string | null
+          verification_state: string
+          verification_updated_at: string | null
           zoning_type: string | null
         }
         Insert: {
@@ -1067,6 +1118,8 @@ export type Database = {
           elevation_masl?: number | null
           geometry: Json
           id?: string
+          legacy_parcel_code?: string | null
+          legacy_title_deed_no?: string | null
           max_building_height_m?: number | null
           owner_id?: string | null
           parcel_code: string
@@ -1076,6 +1129,11 @@ export type Database = {
           survey_verified_on?: string | null
           title_deed_no: string
           valuation_kes?: number | null
+          verification_confidence?: number
+          verification_evidence_ref?: string | null
+          verification_method?: string | null
+          verification_state?: string
+          verification_updated_at?: string | null
           zoning_type?: string | null
         }
         Update: {
@@ -1088,6 +1146,8 @@ export type Database = {
           elevation_masl?: number | null
           geometry?: Json
           id?: string
+          legacy_parcel_code?: string | null
+          legacy_title_deed_no?: string | null
           max_building_height_m?: number | null
           owner_id?: string | null
           parcel_code?: string
@@ -1097,6 +1157,11 @@ export type Database = {
           survey_verified_on?: string | null
           title_deed_no?: string
           valuation_kes?: number | null
+          verification_confidence?: number
+          verification_evidence_ref?: string | null
+          verification_method?: string | null
+          verification_state?: string
+          verification_updated_at?: string | null
           zoning_type?: string | null
         }
         Relationships: []

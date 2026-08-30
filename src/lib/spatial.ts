@@ -33,7 +33,18 @@ export type SpatialParcel = {
   status: string | null;
   surveyVerifiedOn: string | null;
   deedHash: string | null;
+  /** Evidence-backed verification workflow state (never inferred from data completeness). */
+  verificationState: VerificationState;
+  /** 0–100 confidence recorded by a human reviewer; 0 while unverified. */
+  verificationConfidence: number;
+  verificationMethod: string | null;
+  verificationEvidenceRef: string | null;
+  verificationUpdatedAt: string | null;
+  /** Superseded identifiers kept so historical searches still resolve. */
+  legacyParcelCode: string | null;
+  legacyTitleDeedNo: string | null;
   beacons: SpatialBeacon[];
+
   /**
    * Coordinate sanity of the stored survey geometry. "out-of-bounds" usually
    * means the source data is in a projected CRS (e.g. Arc 1960 / UTM 37S).
@@ -42,6 +53,74 @@ export type SpatialParcel = {
 };
 
 export type CoordinateIssue = "none" | "out-of-bounds" | "invalid";
+
+/**
+ * Verification lifecycle. Only "evidence_backed" may ever be presented as
+ * verified, and only when a reviewer recorded survey/registry/legal evidence.
+ */
+export type VerificationState =
+  | "unverified"
+  | "submitted"
+  | "in_review"
+  | "evidence_backed"
+  | "rejected";
+
+export const VERIFICATION_STATES: readonly VerificationState[] = [
+  "unverified",
+  "submitted",
+  "in_review",
+  "evidence_backed",
+  "rejected",
+];
+
+export function toVerificationState(value: unknown): VerificationState {
+  return VERIFICATION_STATES.includes(value as VerificationState)
+    ? (value as VerificationState)
+    : "unverified";
+}
+
+/** Truthful label + badge tone for a verification state. */
+export function verificationDisplay(parcel: {
+  verificationState: VerificationState;
+  verificationConfidence: number;
+  verificationMethod: string | null;
+}): { label: string; tone: "verified" | "pending" | "expired"; detail: string } {
+  switch (parcel.verificationState) {
+    case "evidence_backed":
+      return {
+        label: "Evidence-backed",
+        tone: "verified",
+        detail: `Reviewer confidence ${parcel.verificationConfidence}%${
+          parcel.verificationMethod ? ` · ${parcel.verificationMethod}` : ""
+        }.`,
+      };
+    case "in_review":
+      return {
+        label: "In review",
+        tone: "pending",
+        detail: "A reviewer is assessing the submitted evidence.",
+      };
+    case "submitted":
+      return {
+        label: "Evidence submitted",
+        tone: "pending",
+        detail: "Evidence submitted, not yet reviewed.",
+      };
+    case "rejected":
+      return {
+        label: "Verification rejected",
+        tone: "expired",
+        detail: "Submitted evidence did not support the claimed title or survey.",
+      };
+    default:
+      return {
+        label: "Unverified",
+        tone: "pending",
+        detail: "No survey, registry or legal evidence has been reviewed for this parcel.",
+      };
+  }
+}
+
 
 /** WGS84 envelope covering the Republic of Kenya (with a small margin). */
 export const KENYA_BOUNDS = {
@@ -301,29 +380,67 @@ export function sunVector(sun: SunPosition): { x: number; y: number; z: number }
   };
 }
 
+/* ---------------- geometry / stored-area reconciliation ---------------- */
+
+export type AreaReconciliation = {
+  /** Area computed from the stored boundary ring, in m². */
+  ringAreaSqm: number;
+  /** Area recorded on the parcel record, in m². */
+  storedAreaSqm: number;
+  /** Signed difference as a percentage of the stored area. */
+  deltaPct: number;
+  /** True when ring and record disagree by more than 5%. */
+  mismatch: boolean;
+};
+
+/**
+ * Compares the stored boundary polygon against the recorded area. Returns null
+ * when either side is missing, so callers can stay silent rather than guess.
+ */
+export function reconcileArea(parcel: SpatialParcel): AreaReconciliation | null {
+  if (parcel.ring.length < 3 || !(parcel.areaSqm > 0)) return null;
+  const ringAreaSqm = polygonAreaSqm(ringToLocal(parcel.ring, parcel.centroid));
+  if (!(ringAreaSqm > 0)) return null;
+  const deltaPct = ((ringAreaSqm - parcel.areaSqm) / parcel.areaSqm) * 100;
+  return {
+    ringAreaSqm,
+    storedAreaSqm: parcel.areaSqm,
+    deltaPct,
+    mismatch: Math.abs(deltaPct) > 5,
+  };
+}
+
 /* ---------------- digital land passport scoring ---------------- */
 
 export type PassportMetric = { key: string; label: string; score: number; detail: string };
 
 export function passportMetrics(parcel: SpatialParcel): PassportMetric[] {
-  const verified = parcel.status === "verified";
+  const verification = verificationDisplay(parcel);
+  const evidenceBacked = parcel.verificationState === "evidence_backed";
   const beacons = parcel.beacons.length;
   const density = parcel.valuationKes && parcel.areaSqm ? parcel.valuationKes / parcel.areaSqm : 0;
+  const area = reconcileArea(parcel);
   return [
     {
       key: "title",
-      label: "Title integrity",
-      score: verified ? 94 : parcel.status === "pending" ? 62 : 40,
-      detail: verified
-        ? "Survey verified against registry record."
-        : "Registry verification pending.",
+      label: "Title verification",
+      // Confidence is recorded by a reviewer — never inferred from completeness.
+      score: evidenceBacked ? parcel.verificationConfidence : 0,
+      detail: verification.detail,
     },
     {
       key: "survey",
-      label: "Survey precision",
-      score: Math.min(100, 45 + beacons * 12),
-      detail: `${beacons} georeferenced beacon${beacons === 1 ? "" : "s"} captured.`,
+      label: "Survey data captured",
+      score: Math.min(100, beacons * 20),
+      detail:
+        `${beacons} georeferenced beacon${beacons === 1 ? "" : "s"} on file` +
+        (area
+          ? area.mismatch
+            ? ` · boundary encloses ${Math.round(area.ringAreaSqm).toLocaleString("en-KE")} m² vs ${Math.round(area.storedAreaSqm).toLocaleString("en-KE")} m² recorded.`
+            : ` · boundary matches the recorded ${Math.round(area.storedAreaSqm).toLocaleString("en-KE")} m².`
+          : ". No boundary polygon to cross-check."),
     },
+
     {
       key: "zoning",
       label: "Zoning clarity",
