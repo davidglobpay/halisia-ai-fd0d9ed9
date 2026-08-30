@@ -54,6 +54,74 @@ export type SpatialParcel = {
 
 export type CoordinateIssue = "none" | "out-of-bounds" | "invalid";
 
+/**
+ * Verification lifecycle. Only "evidence_backed" may ever be presented as
+ * verified, and only when a reviewer recorded survey/registry/legal evidence.
+ */
+export type VerificationState =
+  | "unverified"
+  | "submitted"
+  | "in_review"
+  | "evidence_backed"
+  | "rejected";
+
+export const VERIFICATION_STATES: readonly VerificationState[] = [
+  "unverified",
+  "submitted",
+  "in_review",
+  "evidence_backed",
+  "rejected",
+];
+
+export function toVerificationState(value: unknown): VerificationState {
+  return VERIFICATION_STATES.includes(value as VerificationState)
+    ? (value as VerificationState)
+    : "unverified";
+}
+
+/** Truthful label + badge tone for a verification state. */
+export function verificationDisplay(parcel: {
+  verificationState: VerificationState;
+  verificationConfidence: number;
+  verificationMethod: string | null;
+}): { label: string; tone: "verified" | "pending" | "expired"; detail: string } {
+  switch (parcel.verificationState) {
+    case "evidence_backed":
+      return {
+        label: "Evidence-backed",
+        tone: "verified",
+        detail: `Reviewer confidence ${parcel.verificationConfidence}%${
+          parcel.verificationMethod ? ` · ${parcel.verificationMethod}` : ""
+        }.`,
+      };
+    case "in_review":
+      return {
+        label: "In review",
+        tone: "pending",
+        detail: "A reviewer is assessing the submitted evidence.",
+      };
+    case "submitted":
+      return {
+        label: "Evidence submitted",
+        tone: "pending",
+        detail: "Evidence submitted, not yet reviewed.",
+      };
+    case "rejected":
+      return {
+        label: "Verification rejected",
+        tone: "expired",
+        detail: "Submitted evidence did not support the claimed title or survey.",
+      };
+    default:
+      return {
+        label: "Unverified",
+        tone: "pending",
+        detail: "No survey, registry or legal evidence has been reviewed for this parcel.",
+      };
+  }
+}
+
+
 /** WGS84 envelope covering the Republic of Kenya (with a small margin). */
 export const KENYA_BOUNDS = {
   minLat: -5.0,
