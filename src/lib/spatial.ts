@@ -33,7 +33,18 @@ export type SpatialParcel = {
   status: string | null;
   surveyVerifiedOn: string | null;
   deedHash: string | null;
+  /** Evidence-backed verification workflow state (never inferred from data completeness). */
+  verificationState: VerificationState;
+  /** 0–100 confidence recorded by a human reviewer; 0 while unverified. */
+  verificationConfidence: number;
+  verificationMethod: string | null;
+  verificationEvidenceRef: string | null;
+  verificationUpdatedAt: string | null;
+  /** Superseded identifiers kept so historical searches still resolve. */
+  legacyParcelCode: string | null;
+  legacyTitleDeedNo: string | null;
   beacons: SpatialBeacon[];
+
   /**
    * Coordinate sanity of the stored survey geometry. "out-of-bounds" usually
    * means the source data is in a projected CRS (e.g. Arc 1960 / UTM 37S).
