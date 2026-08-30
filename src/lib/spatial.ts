@@ -380,29 +380,67 @@ export function sunVector(sun: SunPosition): { x: number; y: number; z: number }
   };
 }
 
+/* ---------------- geometry / stored-area reconciliation ---------------- */
+
+export type AreaReconciliation = {
+  /** Area computed from the stored boundary ring, in m². */
+  ringAreaSqm: number;
+  /** Area recorded on the parcel record, in m². */
+  storedAreaSqm: number;
+  /** Signed difference as a percentage of the stored area. */
+  deltaPct: number;
+  /** True when ring and record disagree by more than 5%. */
+  mismatch: boolean;
+};
+
+/**
+ * Compares the stored boundary polygon against the recorded area. Returns null
+ * when either side is missing, so callers can stay silent rather than guess.
+ */
+export function reconcileArea(parcel: SpatialParcel): AreaReconciliation | null {
+  if (parcel.ring.length < 3 || !(parcel.areaSqm > 0)) return null;
+  const ringAreaSqm = polygonAreaSqm(ringToLocal(parcel.ring, parcel.centroid));
+  if (!(ringAreaSqm > 0)) return null;
+  const deltaPct = ((ringAreaSqm - parcel.areaSqm) / parcel.areaSqm) * 100;
+  return {
+    ringAreaSqm,
+    storedAreaSqm: parcel.areaSqm,
+    deltaPct,
+    mismatch: Math.abs(deltaPct) > 5,
+  };
+}
+
 /* ---------------- digital land passport scoring ---------------- */
 
 export type PassportMetric = { key: string; label: string; score: number; detail: string };
 
 export function passportMetrics(parcel: SpatialParcel): PassportMetric[] {
-  const verified = parcel.status === "verified";
+  const verification = verificationDisplay(parcel);
+  const evidenceBacked = parcel.verificationState === "evidence_backed";
   const beacons = parcel.beacons.length;
   const density = parcel.valuationKes && parcel.areaSqm ? parcel.valuationKes / parcel.areaSqm : 0;
+  const area = reconcileArea(parcel);
   return [
     {
       key: "title",
-      label: "Title integrity",
-      score: verified ? 94 : parcel.status === "pending" ? 62 : 40,
-      detail: verified
-        ? "Survey verified against registry record."
-        : "Registry verification pending.",
+      label: "Title verification",
+      // Confidence is recorded by a reviewer — never inferred from completeness.
+      score: evidenceBacked ? parcel.verificationConfidence : 0,
+      detail: verification.detail,
     },
     {
       key: "survey",
-      label: "Survey precision",
-      score: Math.min(100, 45 + beacons * 12),
-      detail: `${beacons} georeferenced beacon${beacons === 1 ? "" : "s"} captured.`,
+      label: "Survey data captured",
+      score: Math.min(100, beacons * 20),
+      detail:
+        `${beacons} georeferenced beacon${beacons === 1 ? "" : "s"} on file` +
+        (area
+          ? area.mismatch
+            ? ` · boundary encloses ${Math.round(area.ringAreaSqm).toLocaleString("en-KE")} m² vs ${Math.round(area.storedAreaSqm).toLocaleString("en-KE")} m² recorded.`
+            : ` · boundary matches the recorded ${Math.round(area.storedAreaSqm).toLocaleString("en-KE")} m².`
+          : ". No boundary polygon to cross-check."),
     },
+
     {
       key: "zoning",
       label: "Zoning clarity",
