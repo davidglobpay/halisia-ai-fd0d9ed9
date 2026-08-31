@@ -419,8 +419,8 @@ function SpatialPage() {
                   <span className="pointer-events-auto rounded-full glass-strong border border-white/15 px-3 py-1 text-[11px]">
                     {parcel.parcelCode || parcel.titleDeedNo}
                   </span>
-                  <StatusBadge kind={parcel.status === "verified" ? "verified" : "pending"}>
-                    {parcel.status === "verified" ? "Survey verified" : "Verification pending"}
+                  <StatusBadge kind={verificationDisplay(parcel).tone}>
+                    {verificationDisplay(parcel).label}
                   </StatusBadge>
                   <span
                     className="sr-only"
