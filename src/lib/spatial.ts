@@ -487,7 +487,9 @@ export const PASSPORT_DISCLAIMER =
 
 /** Deterministic short hash used as the human-readable passport reference. */
 export function passportRef(parcel: SpatialParcel): string {
-  const src = `${parcel.titleDeedNo}|${parcel.parcelCode}|${parcel.deedHash ?? ""}`;
+  // Derived from public identifiers only, so the reference stays stable even
+  // though deed_hash is never sent to the browser.
+  const src = `${parcel.titleDeedNo}|${parcel.parcelCode}`;
   let h = 2166136261;
   for (let i = 0; i < src.length; i++) {
     h ^= src.charCodeAt(i);
