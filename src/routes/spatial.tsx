@@ -48,7 +48,13 @@ import {
   fetchSpatialParcels,
   fetchSpatialPrototypes,
 } from "@/lib/spatial-data";
-import { buildableEnvelope, polygonPerimeterM, ringToLocal, sunPosition } from "@/lib/spatial";
+import {
+  buildableEnvelope,
+  polygonPerimeterM,
+  ringToLocal,
+  sunPosition,
+  verificationDisplay,
+} from "@/lib/spatial";
 import { arFallbackMessage, arPlatformFromUA, type ArPlatform } from "@/lib/spatial-platform";
 
 const TITLE = "Spatial AR / VR Land Studio — HALISIA.AI";
