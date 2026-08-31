@@ -308,8 +308,16 @@ function SpatialPage() {
         ? "Starting an immersive session…"
         : "Enter the immersive VR masterplan";
 
-  const usdz = prototype?.usdzUrl ?? null;
-  const gltf = prototype?.gltfUrl ?? null;
+  // Scene Viewer and Quick Look both require an absolute, publicly reachable
+  // URL — a root-relative "/_massing/..." path silently fails on device.
+  const absolute = (u: string | null) => {
+    if (!u) return null;
+    if (/^https?:\/\//i.test(u)) return u;
+    if (typeof window === "undefined") return null;
+    return new URL(u, window.location.origin).toString();
+  };
+  const usdz = absolute(prototype?.usdzUrl ?? null);
+  const gltf = absolute(prototype?.gltfUrl ?? null);
   const sceneViewerHref = gltf
     ? `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(gltf)}&mode=ar_preferred#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;end;`
     : null;
