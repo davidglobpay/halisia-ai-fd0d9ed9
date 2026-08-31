@@ -122,7 +122,7 @@ function SpatialPage() {
   const [xrError, setXrError] = useState<string | null>(null);
   const [searchNote, setSearchNote] = useState<string | null>(null);
   // Set when "My location" is pressed from the search bar, so the resolved
-  // fix selects the nearest surveyed parcel exactly once.
+  // fix selects the nearest parcel record exactly once.
   const locateForSearch = useRef(false);
   const [starting, setStarting] = useState(false);
   const [arPlatform, setArPlatform] = useState<ArPlatform>("desktop");
@@ -204,7 +204,7 @@ function SpatialPage() {
   }, [listingsQ.data, parcel]);
 
   // "My location" from the search bar: once a fix lands, jump to the nearest
-  // surveyed parcel and state the distance honestly.
+  // parcel record and state the distance honestly.
   useEffect(() => {
     if (!locateForSearch.current || !location || !parcels.length) return;
     locateForSearch.current = false;
@@ -219,7 +219,7 @@ function SpatialPage() {
     }
     setSelectedId(best.id);
     setSearchNote(
-      `Your location (±${Math.round(location.accuracy ?? 0)} m) → nearest surveyed parcel ${
+      `Your location (±${Math.round(location.accuracy ?? 0)} m) → nearest parcel record ${
         best.parcelCode || best.titleDeedNo
       }, ${bestD < 1000 ? `${Math.round(bestD)} m` : `${(bestD / 1000).toFixed(1)} km`} away. This is a positioning aid, not a cadastral survey.`,
     );
@@ -369,7 +369,7 @@ function SpatialPage() {
 
       {parcelsQ.isLoading && (
         <p className="mt-8 flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin text-accent" /> Loading surveyed parcels…
+          <Loader2 className="h-4 w-4 animate-spin text-accent" /> Loading parcel records…
         </p>
       )}
       {parcelsQ.isError && (
@@ -769,7 +769,7 @@ function SpatialPage() {
                     type="button"
                     onClick={() => setProtoId("")}
                     aria-pressed={protoId === ""}
-                    aria-label="Show bare land with no massing prototype"
+                    aria-label="Show bare land with no indicative massing prototype"
                     className={`min-h-9 rounded-full border px-3 py-1.5 text-[11px] focus-ring ${
                       protoId === ""
                         ? "border-white/40 bg-white/10"

@@ -8,10 +8,10 @@ import { geocodeAddress } from "@/lib/geocode.functions";
 /**
  * Location search for the Spatial studio.
  *
- * Accepts a parcel/LR/title-deed identifier, a county or place name, or a
- * `lat, lng` pair, plus a "my location" shortcut. Search never invents
- * geometry: it resolves a target point and then selects the *nearest surveyed
- * parcel* on record, always reporting how far that parcel is from the query.
+ * Accepts a current or superseded parcel/LR/title-deed identifier, a county or
+ * place name, or a `lat, lng` pair, plus a "my location" shortcut. Search never
+ * invents geometry: it resolves a target point and then selects the *nearest
+ * parcel record*, always reporting how far that parcel is from the query.
  */
 
 export type SpatialSearchResult = {
@@ -60,15 +60,22 @@ export function SpatialSearch({
     setBusy(true);
     setMessage(null);
     try {
-      // 1) Direct identifier / name match against surveyed parcels on record.
+      // 1) Direct identifier / name match against parcel records (current + legacy).
       const needle = query.toLowerCase();
       const direct = parcels.find((p) =>
-        [p.parcelCode, p.titleDeedNo, p.county, p.id]
+        [
+          p.parcelCode,
+          p.titleDeedNo,
+          p.legacyParcelCode,
+          p.legacyTitleDeedNo,
+          p.county,
+          p.id,
+        ]
           .filter(Boolean)
           .some((v) => String(v).toLowerCase().includes(needle)),
       );
       if (direct) {
-        const note = `Matched surveyed parcel ${direct.parcelCode || direct.titleDeedNo}.`;
+        const note = `Matched parcel record ${direct.parcelCode || direct.titleDeedNo}.`;
         setMessage(note);
         onResolved({ parcelId: direct.id, note });
         return;
@@ -86,7 +93,7 @@ export function SpatialSearch({
         const res = await geocodeAddress({ data: { query } });
         if (!res.ok) {
           setMessage(
-            `No surveyed parcel or place matched “${query}”. Try an LR / title-deed number, a place name, or "lat, lng".`,
+            `No parcel record or place matched “${query}”. Try an LR / title-deed number, a place name, or "lat, lng".`,
           );
           return;
         }
@@ -96,12 +103,12 @@ export function SpatialSearch({
 
       const best = nearest(parcels, point);
       if (!best) {
-        setMessage("No surveyed parcels are loaded yet.");
+        setMessage("No parcel records are loaded yet.");
         return;
       }
-      const note = `${label} → nearest surveyed parcel ${
+      const note = `${label} → nearest parcel record ${
         best.p.parcelCode || best.p.titleDeedNo
-      }, ${fmtDistance(best.d)} away. The studio renders that surveyed parcel, not the search point.`;
+      }, ${fmtDistance(best.d)} away. The studio renders that parcel record, not the search point.`;
       setMessage(note);
       onResolved({ parcelId: best.p.id, note });
     } catch (err) {
@@ -165,7 +172,7 @@ export function SpatialSearch({
         {note ??
           message ??
           locationError ??
-          "Search resolves to the nearest surveyed parcel on record."}
+          "Search resolves to the nearest parcel record, including superseded identifiers."}
       </p>
     </Surface>
   );
