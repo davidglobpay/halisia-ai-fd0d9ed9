@@ -410,74 +410,78 @@ export function reconcileArea(parcel: SpatialParcel): AreaReconciliation | null 
   };
 }
 
-/* ---------------- digital land passport scoring ---------------- */
+/* ---------------- digital land passport (factual only) ---------------- */
 
-export type PassportMetric = { key: string; label: string; score: number; detail: string };
+export type PassportFact = { key: string; label: string; value: string };
 
-export function passportMetrics(parcel: SpatialParcel): PassportMetric[] {
+/**
+ * Factual record summary for the Digital Land Passport. There is deliberately
+ * NO synthetic score here: completeness, beacon count, elevation or valuation
+ * density are not evidence of title validity, ownership or boundary position.
+ */
+export function passportFacts(parcel: SpatialParcel): PassportFact[] {
   const verification = verificationDisplay(parcel);
-  const evidenceBacked = parcel.verificationState === "evidence_backed";
-  const beacons = parcel.beacons.length;
-  const density = parcel.valuationKes && parcel.areaSqm ? parcel.valuationKes / parcel.areaSqm : 0;
   const area = reconcileArea(parcel);
+  const fmt = (n: number) => Math.round(n).toLocaleString("en-KE");
   return [
     {
-      key: "title",
-      label: "Title verification",
-      // Confidence is recorded by a reviewer — never inferred from completeness.
-      score: evidenceBacked ? parcel.verificationConfidence : 0,
-      detail: verification.detail,
+      key: "verification",
+      label: "Verification state",
+      value: `${verification.label} — ${verification.detail}`,
+    },
+    {
+      key: "identifiers",
+      label: "Identifiers",
+      value: [
+        parcel.titleDeedNo || null,
+        parcel.parcelCode || null,
+        parcel.legacyTitleDeedNo ? `superseded title ${parcel.legacyTitleDeedNo}` : null,
+        parcel.legacyParcelCode ? `superseded code ${parcel.legacyParcelCode}` : null,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+    },
+    {
+      key: "area",
+      label: "Recorded area",
+      value: area
+        ? area.mismatch
+          ? `${fmt(area.storedAreaSqm)} m² recorded · boundary polygon encloses ${fmt(area.ringAreaSqm)} m² (indicative, non-cadastral geometry).`
+          : `${fmt(area.storedAreaSqm)} m² recorded · boundary polygon agrees within 5%.`
+        : parcel.areaSqm > 0
+          ? `${fmt(parcel.areaSqm)} m² recorded · no boundary polygon to cross-check.`
+          : "No area recorded.",
     },
     {
       key: "survey",
-      label: "Survey data captured",
-      score: Math.min(100, beacons * 20),
-      detail:
-        `${beacons} georeferenced beacon${beacons === 1 ? "" : "s"} on file` +
-        (area
-          ? area.mismatch
-            ? ` · boundary encloses ${Math.round(area.ringAreaSqm).toLocaleString("en-KE")} m² vs ${Math.round(area.storedAreaSqm).toLocaleString("en-KE")} m² recorded.`
-            : ` · boundary matches the recorded ${Math.round(area.storedAreaSqm).toLocaleString("en-KE")} m².`
-          : ". No boundary polygon to cross-check."),
+      label: "Boundary data",
+      value: `${parcel.beacons.length} georeferenced beacon${
+        parcel.beacons.length === 1 ? "" : "s"
+      } on file. Rendered boundaries are indicative and not a cadastral survey.`,
     },
-
     {
       key: "zoning",
-      label: "Zoning clarity",
-      score: parcel.zoningType ? (parcel.maxHeightM ? 90 : 70) : 45,
-      detail: parcel.zoningType
-        ? `${parcel.zoningType}${parcel.maxHeightM ? ` · ${parcel.maxHeightM} m cap` : ""}`
+      label: "Zoning on record",
+      value: parcel.zoningType
+        ? `${parcel.zoningType}${parcel.maxHeightM ? ` · ${parcel.maxHeightM} m height cap` : ""}`
         : "No zoning class recorded.",
     },
     {
       key: "setbacks",
-      label: "Setback compliance",
-      score: parcel.roadSetbackM && parcel.riparianSetbackM ? 88 : parcel.roadSetbackM ? 68 : 40,
-      detail: `Road ${parcel.roadSetbackM ?? "—"} m · riparian ${parcel.riparianSetbackM ?? "—"} m.`,
-    },
-    {
-      key: "value",
-      label: "Value signal",
-      score: Math.max(30, Math.min(96, Math.round(Math.log10(Math.max(density, 1)) * 24))),
-      detail: density
-        ? `KES ${Math.round(density).toLocaleString("en-KE")} per m².`
-        : "No valuation on file.",
+      label: "Setbacks on record",
+      value: `Road ${parcel.roadSetbackM ?? "—"} m · riparian ${parcel.riparianSetbackM ?? "—"} m. Applied uniformly as an indicative visualisation proxy.`,
     },
     {
       key: "geo",
-      label: "Geospatial anchor",
-      score: parcel.elevationMasl ? 86 : 66,
-      detail: parcel.elevationMasl
-        ? `${parcel.elevationMasl} m above sea level.`
-        : "Elevation not surveyed.",
+      label: "Elevation",
+      value: parcel.elevationMasl != null ? `${parcel.elevationMasl} m above sea level.` : "Not recorded.",
     },
   ];
 }
 
-export function passportScore(metrics: PassportMetric[]): number {
-  if (!metrics.length) return 0;
-  return Math.round(metrics.reduce((s, m) => s + m.score, 0) / metrics.length);
-}
+/** Mandatory disclaimer shown wherever passport facts appear. */
+export const PASSPORT_DISCLAIMER =
+  "Not assessed here: title validity \u00b7 ownership \u00b7 legal boundary position.";
 
 /** Deterministic short hash used as the human-readable passport reference. */
 export function passportRef(parcel: SpatialParcel): string {
