@@ -680,8 +680,8 @@ function SpatialPage() {
                   )}
                 </div>
                 <p className="mt-3 text-[11px]" data-testid="spatial-massing-disclaimer">
-                  Models are indicative massing studies for scale and siting only — not
-                  construction documentation, and not a cadastral survey.
+                  Models are indicative massing studies for scale and siting only — not construction
+                  documentation, and not a cadastral survey.
                 </p>
               </Surface>
             )}

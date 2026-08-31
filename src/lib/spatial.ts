@@ -121,7 +121,6 @@ export function verificationDisplay(parcel: {
   }
 }
 
-
 /** WGS84 envelope covering the Republic of Kenya (with a small margin). */
 export const KENYA_BOUNDS = {
   minLat: -5.0,
@@ -474,7 +473,10 @@ export function passportFacts(parcel: SpatialParcel): PassportFact[] {
     {
       key: "geo",
       label: "Elevation",
-      value: parcel.elevationMasl != null ? `${parcel.elevationMasl} m above sea level.` : "Not recorded.",
+      value:
+        parcel.elevationMasl != null
+          ? `${parcel.elevationMasl} m above sea level.`
+          : "Not recorded.",
     },
   ];
 }

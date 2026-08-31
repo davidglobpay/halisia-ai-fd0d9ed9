@@ -58,9 +58,7 @@ export function LandPassport({ parcel }: { parcel: SpatialParcel }) {
           <p className="mt-1 font-mono text-[11px] text-accent">{ref}</p>
         </div>
         <div className="text-right">
-          <StatusBadge kind={verification.tone}>
-            {verification.label}
-          </StatusBadge>
+          <StatusBadge kind={verification.tone}>{verification.label}</StatusBadge>
           {parcel.verificationState === "evidence_backed" && (
             <p
               className="mt-1 text-[10px] uppercase tracking-widest text-muted-foreground"

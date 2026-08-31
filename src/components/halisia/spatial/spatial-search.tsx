@@ -63,14 +63,7 @@ export function SpatialSearch({
       // 1) Direct identifier / name match against parcel records (current + legacy).
       const needle = query.toLowerCase();
       const direct = parcels.find((p) =>
-        [
-          p.parcelCode,
-          p.titleDeedNo,
-          p.legacyParcelCode,
-          p.legacyTitleDeedNo,
-          p.county,
-          p.id,
-        ]
+        [p.parcelCode, p.titleDeedNo, p.legacyParcelCode, p.legacyTitleDeedNo, p.county, p.id]
           .filter(Boolean)
           .some((v) => String(v).toLowerCase().includes(needle)),
       );

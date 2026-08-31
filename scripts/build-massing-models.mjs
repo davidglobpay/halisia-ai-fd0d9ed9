@@ -30,12 +30,60 @@ function box(cx, cy, cz, w, h, d) {
   const z0 = cz - d / 2,
     z1 = cz + d / 2;
   const faces = [
-    { n: [0, 0, 1], v: [[x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]] },
-    { n: [0, 0, -1], v: [[x1, y0, z0], [x0, y0, z0], [x0, y1, z0], [x1, y1, z0]] },
-    { n: [1, 0, 0], v: [[x1, y0, z1], [x1, y0, z0], [x1, y1, z0], [x1, y1, z1]] },
-    { n: [-1, 0, 0], v: [[x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, y1, z0]] },
-    { n: [0, 1, 0], v: [[x0, y1, z1], [x1, y1, z1], [x1, y1, z0], [x0, y1, z0]] },
-    { n: [0, -1, 0], v: [[x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1]] },
+    {
+      n: [0, 0, 1],
+      v: [
+        [x0, y0, z1],
+        [x1, y0, z1],
+        [x1, y1, z1],
+        [x0, y1, z1],
+      ],
+    },
+    {
+      n: [0, 0, -1],
+      v: [
+        [x1, y0, z0],
+        [x0, y0, z0],
+        [x0, y1, z0],
+        [x1, y1, z0],
+      ],
+    },
+    {
+      n: [1, 0, 0],
+      v: [
+        [x1, y0, z1],
+        [x1, y0, z0],
+        [x1, y1, z0],
+        [x1, y1, z1],
+      ],
+    },
+    {
+      n: [-1, 0, 0],
+      v: [
+        [x0, y0, z0],
+        [x0, y0, z1],
+        [x0, y1, z1],
+        [x0, y1, z0],
+      ],
+    },
+    {
+      n: [0, 1, 0],
+      v: [
+        [x0, y1, z1],
+        [x1, y1, z1],
+        [x1, y1, z0],
+        [x0, y1, z0],
+      ],
+    },
+    {
+      n: [0, -1, 0],
+      v: [
+        [x0, y0, z0],
+        [x1, y0, z0],
+        [x1, y0, z1],
+        [x0, y0, z1],
+      ],
+    },
   ];
   const pos = [];
   const nor = [];
@@ -114,7 +162,9 @@ function buildGlb(geometry, name) {
     scene: 0,
     scenes: [{ nodes: [0], name }],
     nodes: [{ mesh: 0, name }],
-    meshes: [{ name, primitives: [{ attributes: { POSITION: 0, NORMAL: 1 }, indices: 2, material: 0 }] }],
+    meshes: [
+      { name, primitives: [{ attributes: { POSITION: 0, NORMAL: 1 }, indices: 2, material: 0 }] },
+    ],
     materials: [
       {
         name: "Massing",
@@ -139,9 +189,24 @@ function buildGlb(geometry, name) {
       { bufferView: 2, componentType: 5125, count: indices.length, type: "SCALAR" },
     ],
     bufferViews: [
-      { buffer: 0, byteOffset: views[0].byteOffset, byteLength: views[0].byteLength, target: 34962 },
-      { buffer: 0, byteOffset: views[1].byteOffset, byteLength: views[1].byteLength, target: 34962 },
-      { buffer: 0, byteOffset: views[2].byteOffset, byteLength: views[2].byteLength, target: 34963 },
+      {
+        buffer: 0,
+        byteOffset: views[0].byteOffset,
+        byteLength: views[0].byteLength,
+        target: 34962,
+      },
+      {
+        buffer: 0,
+        byteOffset: views[1].byteOffset,
+        byteLength: views[1].byteLength,
+        target: 34962,
+      },
+      {
+        buffer: 0,
+        byteOffset: views[2].byteOffset,
+        byteLength: views[2].byteLength,
+        target: 34963,
+      },
     ],
     buffers: [{ byteLength: bin.length }],
   };
