@@ -108,7 +108,15 @@ export async function fetchSpatialParcels(): Promise<SpatialParcel[]> {
       valuationKes: num(r["valuation_kes"]),
       status: (r["status"] as string) ?? null,
       surveyVerifiedOn: (r["survey_verified_on"] as string) ?? null,
-      deedHash: (r["deed_hash"] as string) ?? null,
+      // deed_hash is deliberately not selected for the public Spatial UI.
+      deedHash: null,
+      verificationState: toVerificationState(r["verification_state"]),
+      verificationConfidence: Number(r["verification_confidence"] ?? 0),
+      verificationMethod: (r["verification_method"] as string) ?? null,
+      verificationEvidenceRef: (r["verification_evidence_ref"] as string) ?? null,
+      verificationUpdatedAt: (r["verification_updated_at"] as string) ?? null,
+      legacyParcelCode: (r["legacy_parcel_code"] as string) ?? null,
+      legacyTitleDeedNo: (r["legacy_title_deed_no"] as string) ?? null,
       beacons,
     } satisfies SpatialParcel;
   });
