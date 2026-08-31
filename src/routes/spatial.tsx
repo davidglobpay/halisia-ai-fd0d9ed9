@@ -48,7 +48,13 @@ import {
   fetchSpatialParcels,
   fetchSpatialPrototypes,
 } from "@/lib/spatial-data";
-import { buildableEnvelope, polygonPerimeterM, ringToLocal, sunPosition } from "@/lib/spatial";
+import {
+  buildableEnvelope,
+  polygonPerimeterM,
+  ringToLocal,
+  sunPosition,
+  verificationDisplay,
+} from "@/lib/spatial";
 import { arFallbackMessage, arPlatformFromUA, type ArPlatform } from "@/lib/spatial-platform";
 
 const TITLE = "Spatial AR / VR Land Studio — HALISIA.AI";
@@ -116,7 +122,7 @@ function SpatialPage() {
   const [xrError, setXrError] = useState<string | null>(null);
   const [searchNote, setSearchNote] = useState<string | null>(null);
   // Set when "My location" is pressed from the search bar, so the resolved
-  // fix selects the nearest surveyed parcel exactly once.
+  // fix selects the nearest parcel record exactly once.
   const locateForSearch = useRef(false);
   const [starting, setStarting] = useState(false);
   const [arPlatform, setArPlatform] = useState<ArPlatform>("desktop");
@@ -198,7 +204,7 @@ function SpatialPage() {
   }, [listingsQ.data, parcel]);
 
   // "My location" from the search bar: once a fix lands, jump to the nearest
-  // surveyed parcel and state the distance honestly.
+  // parcel record and state the distance honestly.
   useEffect(() => {
     if (!locateForSearch.current || !location || !parcels.length) return;
     locateForSearch.current = false;
@@ -213,7 +219,7 @@ function SpatialPage() {
     }
     setSelectedId(best.id);
     setSearchNote(
-      `Your location (±${Math.round(location.accuracy ?? 0)} m) → nearest surveyed parcel ${
+      `Your location (±${Math.round(location.accuracy ?? 0)} m) → nearest parcel record ${
         best.parcelCode || best.titleDeedNo
       }, ${bestD < 1000 ? `${Math.round(bestD)} m` : `${(bestD / 1000).toFixed(1)} km`} away. This is a positioning aid, not a cadastral survey.`,
     );
@@ -308,8 +314,16 @@ function SpatialPage() {
         ? "Starting an immersive session…"
         : "Enter the immersive VR masterplan";
 
-  const usdz = prototype?.usdzUrl ?? null;
-  const gltf = prototype?.gltfUrl ?? null;
+  // Scene Viewer and Quick Look both require an absolute, publicly reachable
+  // URL — a root-relative "/_massing/..." path silently fails on device.
+  const absolute = (u: string | null) => {
+    if (!u) return null;
+    if (/^https?:\/\//i.test(u)) return u;
+    if (typeof window === "undefined") return null;
+    return new URL(u, window.location.origin).toString();
+  };
+  const usdz = absolute(prototype?.usdzUrl ?? null);
+  const gltf = absolute(prototype?.gltfUrl ?? null);
   const sceneViewerHref = gltf
     ? `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(gltf)}&mode=ar_preferred#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;end;`
     : null;
@@ -355,7 +369,7 @@ function SpatialPage() {
 
       {parcelsQ.isLoading && (
         <p className="mt-8 flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin text-accent" /> Loading surveyed parcels…
+          <Loader2 className="h-4 w-4 animate-spin text-accent" /> Loading parcel records…
         </p>
       )}
       {parcelsQ.isError && (
@@ -411,8 +425,8 @@ function SpatialPage() {
                   <span className="pointer-events-auto rounded-full glass-strong border border-white/15 px-3 py-1 text-[11px]">
                     {parcel.parcelCode || parcel.titleDeedNo}
                   </span>
-                  <StatusBadge kind={parcel.status === "verified" ? "verified" : "pending"}>
-                    {parcel.status === "verified" ? "Survey verified" : "Verification pending"}
+                  <StatusBadge kind={verificationDisplay(parcel).tone}>
+                    {verificationDisplay(parcel).label}
                   </StatusBadge>
                   <span
                     className="sr-only"
@@ -665,6 +679,10 @@ function SpatialPage() {
                     </a>
                   )}
                 </div>
+                <p className="mt-3 text-[11px]" data-testid="spatial-massing-disclaimer">
+                  Models are indicative massing studies for scale and siting only — not construction
+                  documentation, and not a cadastral survey.
+                </p>
               </Surface>
             )}
 
@@ -755,7 +773,7 @@ function SpatialPage() {
                     type="button"
                     onClick={() => setProtoId("")}
                     aria-pressed={protoId === ""}
-                    aria-label="Show bare land with no massing prototype"
+                    aria-label="Show bare land with no indicative massing prototype"
                     className={`min-h-9 rounded-full border px-3 py-1.5 text-[11px] focus-ring ${
                       protoId === ""
                         ? "border-white/40 bg-white/10"

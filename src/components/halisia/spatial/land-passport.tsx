@@ -1,70 +1,25 @@
 import { useEffect, useState } from "react";
 import { QrCode } from "lucide-react";
 import {
-  passportMetrics,
+  PASSPORT_DISCLAIMER,
+  passportFacts,
   passportRef,
-  passportScore,
   polygonPerimeterM,
   ringToLocal,
+  verificationDisplay,
   type SpatialParcel,
 } from "@/lib/spatial";
 import { Surface } from "@/components/halisia/ds";
+import { StatusBadge } from "@/components/halisia/ds/status-badge";
 
-function RadarChart({ values, labels }: { values: number[]; labels: string[] }) {
-  const size = 220;
-  const c = size / 2;
-  const r = c - 34;
-  const n = values.length;
-  const pt = (i: number, v: number) => {
-    const a = (Math.PI * 2 * i) / n - Math.PI / 2;
-    const rr = (r * Math.max(v, 4)) / 100;
-    return [c + rr * Math.cos(a), c + rr * Math.sin(a)] as const;
-  };
-  const poly = values.map((v, i) => pt(i, v).join(",")).join(" ");
-  return (
-    <svg
-      viewBox={`0 0 ${size} ${size}`}
-      className="w-full max-w-[240px]"
-      role="img"
-      aria-label="Passport score radar"
-    >
-      {[25, 50, 75, 100].map((ring) => (
-        <polygon
-          key={ring}
-          points={values.map((_, i) => pt(i, ring).join(",")).join(" ")}
-          fill="none"
-          stroke="currentColor"
-          className="text-white/10"
-        />
-      ))}
-      <polygon points={poly} fill="#008F5533" stroke="#008F55" strokeWidth={1.5} />
-      {values.map((v, i) => {
-        const [x, y] = pt(i, v);
-        return <circle key={i} cx={x} cy={y} r={2.6} fill="#D4AF37" />;
-      })}
-      {labels.map((l, i) => {
-        const [x, y] = pt(i, 118);
-        return (
-          <text
-            key={l}
-            x={x}
-            y={y}
-            textAnchor="middle"
-            dominantBaseline="middle"
-            className="fill-current text-[7px] text-muted-foreground"
-          >
-            {l}
-          </text>
-        );
-      })}
-    </svg>
-  );
-}
-
-/** Digital Land Passport: verifiable summary + QR deep-link + radar chart. */
+/**
+ * Digital Land Passport: a factual record summary plus a QR deep-link.
+ * No synthetic scoring — nothing here asserts title validity, ownership or a
+ * legal boundary position.
+ */
 export function LandPassport({ parcel }: { parcel: SpatialParcel }) {
-  const metrics = passportMetrics(parcel);
-  const score = passportScore(metrics);
+  const facts = passportFacts(parcel);
+  const verification = verificationDisplay(parcel);
   const ref = passportRef(parcel);
   const [qr, setQr] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState("");
@@ -98,34 +53,29 @@ export function LandPassport({ parcel }: { parcel: SpatialParcel }) {
           <h3 className="font-display text-xl mt-1">{parcel.titleDeedNo || parcel.parcelCode}</h3>
           <p className="text-xs text-muted-foreground mt-1">
             {parcel.county ?? "Kenya"} · {Math.round(parcel.areaSqm).toLocaleString("en-KE")} m² ·{" "}
-            {perimeter} m perimeter · {parcel.beacons.length} beacons
+            {perimeter} m indicative perimeter · {parcel.beacons.length} beacons
           </p>
           <p className="mt-1 font-mono text-[11px] text-accent">{ref}</p>
         </div>
         <div className="text-right">
-          <div className="font-display text-4xl text-[#D4AF37]">{score}</div>
-          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
-            Passport score
-          </p>
+          <StatusBadge kind={verification.tone}>{verification.label}</StatusBadge>
+          {parcel.verificationState === "evidence_backed" && (
+            <p
+              className="mt-1 text-[10px] uppercase tracking-widest text-muted-foreground"
+              data-testid="passport-reviewer-confidence"
+            >
+              Reviewer confidence {parcel.verificationConfidence}%
+            </p>
+          )}
         </div>
       </div>
 
-      <div className="mt-4 grid gap-5 md:grid-cols-[240px_1fr_auto] md:items-center">
-        <RadarChart values={metrics.map((m) => m.score)} labels={metrics.map((m) => m.label)} />
-        <ul className="grid gap-2">
-          {metrics.map((m) => (
-            <li key={m.key} className="text-xs">
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-foreground">{m.label}</span>
-                <span className="text-muted-foreground">{m.score}</span>
-              </div>
-              <div className="mt-1 h-1 rounded-full bg-white/10">
-                <div
-                  className="h-1 rounded-full bg-gradient-to-r from-[#008F55] to-[#D4AF37]"
-                  style={{ width: `${m.score}%` }}
-                />
-              </div>
-              <p className="mt-1 text-[11px] text-muted-foreground">{m.detail}</p>
+      <div className="mt-4 grid gap-5 md:grid-cols-[1fr_auto] md:items-start">
+        <ul className="grid gap-2" data-testid="passport-facts">
+          {facts.map((f) => (
+            <li key={f.key} className="text-xs">
+              <span className="text-foreground">{f.label}</span>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">{f.value}</p>
             </li>
           ))}
         </ul>
@@ -142,6 +92,10 @@ export function LandPassport({ parcel }: { parcel: SpatialParcel }) {
           </p>
         </div>
       </div>
+
+      <p className="mt-4 text-[11px] text-muted-foreground" data-testid="passport-disclaimer">
+        {PASSPORT_DISCLAIMER}
+      </p>
     </Surface>
   );
 }

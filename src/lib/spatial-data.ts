@@ -3,6 +3,7 @@ import {
   distanceMeters,
   geometryToRing,
   isPlausibleKenyaLatLng,
+  toVerificationState,
   type CoordinateIssue,
   type SpatialParcel,
   type SpatialPrototype,
@@ -23,14 +24,45 @@ function geometryToRingRaw(geometry: unknown): number {
   return Array.isArray(outer) ? outer.length : 0;
 }
 
+/**
+ * Public-safe projection of the parcel record used by the Spatial UI.
+ * Deliberately explicit (no `*`) so owner UUIDs and other private columns are
+ * never transmitted to the browser.
+ */
+const PARCEL_COLUMNS = [
+  "id",
+  "title_deed_no",
+  "parcel_code",
+  "legacy_parcel_code",
+  "legacy_title_deed_no",
+  "county",
+  "centroid_lat",
+  "centroid_lng",
+  "geometry",
+  "area_sqm",
+  "elevation_masl",
+  "zoning_type",
+  "max_building_height_m",
+  "road_setback_m",
+  "riparian_setback_m",
+  "valuation_kes",
+  "status",
+  "survey_verified_on",
+  "verification_state",
+  "verification_confidence",
+  "verification_method",
+  "verification_evidence_ref",
+  "verification_updated_at",
+].join(", ");
+
 /** All publicly readable parcels with their survey beacons, ordered by county. */
 export async function fetchSpatialParcels(): Promise<SpatialParcel[]> {
   const { data, error } = await supabase
     .from("parcels")
-    .select("*, parcel_beacons(*)")
+    .select(`${PARCEL_COLUMNS}, parcel_beacons(*)`)
     .order("county", { ascending: true });
   if (error) throw error;
-  return ((data ?? []) as Row[]).map((r) => {
+  return ((data ?? []) as unknown as Row[]).map((r) => {
     // Beacons whose coordinates are not plausible WGS84 Kenya points (NaN from
     // a null column, or a projected CRS such as Arc 1960 / UTM 37S) are dropped
     // so NaN can never reach the scene graph.
@@ -77,7 +109,15 @@ export async function fetchSpatialParcels(): Promise<SpatialParcel[]> {
       valuationKes: num(r["valuation_kes"]),
       status: (r["status"] as string) ?? null,
       surveyVerifiedOn: (r["survey_verified_on"] as string) ?? null,
-      deedHash: (r["deed_hash"] as string) ?? null,
+      // deed_hash is deliberately not selected for the public Spatial UI.
+      deedHash: null,
+      verificationState: toVerificationState(r["verification_state"]),
+      verificationConfidence: Number(r["verification_confidence"] ?? 0),
+      verificationMethod: (r["verification_method"] as string) ?? null,
+      verificationEvidenceRef: (r["verification_evidence_ref"] as string) ?? null,
+      verificationUpdatedAt: (r["verification_updated_at"] as string) ?? null,
+      legacyParcelCode: (r["legacy_parcel_code"] as string) ?? null,
+      legacyTitleDeedNo: (r["legacy_title_deed_no"] as string) ?? null,
       beacons,
     } satisfies SpatialParcel;
   });
