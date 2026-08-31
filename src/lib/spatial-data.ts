@@ -3,6 +3,7 @@ import {
   distanceMeters,
   geometryToRing,
   isPlausibleKenyaLatLng,
+  toVerificationState,
   type CoordinateIssue,
   type SpatialParcel,
   type SpatialPrototype,
