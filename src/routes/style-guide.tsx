@@ -89,6 +89,8 @@ const MOTION_ROWS = [
 function StyleGuidePage() {
   const [tab, setTab] = useState("foundations");
   const [reduced, , setReduced] = useReducedMotionPref();
+  const dev = useDevMode();
+
 
   return (
     <div className="min-h-dvh" data-testid="style-guide">
