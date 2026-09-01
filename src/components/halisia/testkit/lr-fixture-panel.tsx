@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { ClientOnly } from "@tanstack/react-router";
 import { Surface, KitButton, SectionHeading } from "@/components/halisia/ds";
 import { fetchStaticMapOSM } from "@/lib/static-map-osm";
@@ -7,6 +7,7 @@ import {
   canEnableBuildingFit,
   FIXTURE_DISCLAIMER,
   FIXTURE_MODELS,
+  HARNESS_LABEL,
   IMAGERY_CAPTION,
   KONZA_FIXTURE,
   resolveFixtureIdentifier,
@@ -35,16 +36,15 @@ function VerdictChip({ verdict }: { verdict: FixtureVerdict }) {
       : verdict === "FAIL"
         ? "bg-destructive/15 text-destructive"
         : "bg-white/10 text-muted-foreground";
-  return (
-    <span className={`font-data rounded-md px-2 py-0.5 text-[11px] ${tone}`}>{verdict}</span>
-  );
+  return <span className={`font-data rounded-md px-2 py-0.5 text-[11px] ${tone}`}>{verdict}</span>;
 }
 
 export function LrFixturePanel() {
   const resolution = useMemo(() => resolveFixtureIdentifier(KONZA_FIXTURE.searchedTitle), []);
   const [selected, setSelected] = useState<FixtureModel | null>(null);
   const [previewOn, setPreviewOn] = useState(false);
-  const [modelStatus, setModelStatus] = useState<"idle" | "loading" | "loaded" | "error">("idle");
+  const [reach, setReach] = useState<Record<string, FixtureVerdict>>({});
+  const [display, setDisplay] = useState<Record<string, FixtureVerdict>>({});
   const [imagery, setImagery] = useState<{ state: "loading" | "ok" | "unknown"; src?: string }>({
     state: "loading",
   });
@@ -62,6 +62,34 @@ export function LrFixturePanel() {
     };
   }, [lat, lng]);
 
+  // Read-only HTTPS reachability probe for each public test model.
+  useEffect(() => {
+    const ac = new AbortController();
+    for (const m of FIXTURE_MODELS) {
+      if (!m.url) {
+        setReach((p) => ({ ...p, [m.file]: "FAIL" }));
+        continue;
+      }
+      void fetch(m.url, { method: "HEAD", signal: ac.signal })
+        .then((res) => setReach((p) => ({ ...p, [m.file]: res.ok ? "PASS" : "FAIL" })))
+        .catch(() => {
+          if (!ac.signal.aborted) setReach((p) => ({ ...p, [m.file]: "UNKNOWN" }));
+        });
+    }
+    return () => ac.abort();
+  }, []);
+
+  const onStatus = useCallback(
+    (s: "loading" | "loaded" | "error") => {
+      if (!selected) return;
+      setDisplay((p) => ({
+        ...p,
+        [selected.file]: s === "loaded" ? "PASS" : s === "error" ? "FAIL" : "UNKNOWN",
+      }));
+    },
+    [selected],
+  );
+
   const absGlb = absoluteModelUrl(selected?.url ?? null);
   const sceneHref = sceneViewerHref(absGlb);
 
@@ -69,33 +97,31 @@ export function LrFixturePanel() {
     ...BASELINE_CHECKS.slice(0, 3),
     check(
       "satellite-imagery",
-      imagery.state === "ok" ? "PASS" : imagery.state === "loading" ? "UNKNOWN" : "UNKNOWN",
+      imagery.state === "ok" ? "PASS" : "UNKNOWN",
       imagery.state === "ok"
-        ? "Esri imagery tiles centred on the supplied coordinate, no boundary overlay."
+        ? "Esri imagery tiles centred on the user-supplied test coordinate, no boundary overlay."
         : "Imagery could not be loaded — reported as UNKNOWN, no imagery invented.",
     ),
     check(
       "glb-available",
-      selected ? (selected.url ? "PASS" : "FAIL") : "UNKNOWN",
-      selected
-        ? selected.url
-          ? `${selected.file} available (${selected.sizeBytes?.toLocaleString()} bytes).`
-          : `${selected.file} unavailable — no substitute model used.`
-        : "Select a fixture model.",
+      Object.values(reach).some((v) => v === "PASS") ? "PASS" : "UNKNOWN",
+      "Per-model HTTPS reachability is listed in the model compatibility matrix.",
     ),
     check(
       "desktop-3d-load",
-      modelStatus === "loaded" ? "PASS" : modelStatus === "error" ? "FAIL" : "UNKNOWN",
-      modelStatus === "loaded"
-        ? "Model rendered at authored scale in the fixture preview."
-        : "Load a model in the desktop preview to record this check.",
+      Object.values(display).some((v) => v === "PASS")
+        ? "PASS"
+        : Object.values(display).some((v) => v === "FAIL")
+          ? "FAIL"
+          : "UNKNOWN",
+      "Recorded per model when opened in the compatibility harness.",
     ),
     check(
       "android-scene-viewer-url",
       sceneHref ? "PASS" : "UNKNOWN",
       sceneHref
-        ? "Absolute HTTPS intent constructed. PHYSICAL DEVICE TEST REQUIRED to confirm launch."
-        : "Select an available model to construct the intent URL.",
+        ? "Absolute HTTPS handoff URL constructed read-only in the same public format. PHYSICAL DEVICE TEST REQUIRED."
+        : "Select a reachable model to construct the handoff URL.",
     ),
     ...BASELINE_CHECKS.slice(3),
   ];
@@ -113,14 +139,14 @@ export function LrFixturePanel() {
         <div className="mt-5 grid gap-4 md:grid-cols-3">
           <Surface elevation={1} padding="md" data-testid="fixture-searched-title">
             <p className="font-label text-accent text-[0.6875rem] tracking-[0.18em] uppercase">
-              Searched title / LR
+              Searched title — document facts
             </p>
             <p className="font-data mt-2 text-sm break-words">{KONZA_FIXTURE.searchedTitle}</p>
             <dl className="text-muted-foreground mt-3 space-y-1 text-xs">
               <div className="flex justify-between gap-2">
                 <dt>Document-stated area</dt>
                 <dd className="font-data">
-                  {KONZA_FIXTURE.documentStatedAreaHa.toFixed(4)} ha (approx.)
+                  {KONZA_FIXTURE.documentStatedAreaHa.toFixed(4)} ha (document-derived)
                 </dd>
               </div>
               <div className="flex justify-between gap-2">
@@ -129,34 +155,39 @@ export function LrFixturePanel() {
               </div>
             </dl>
             <p className="text-muted-foreground mt-3 text-xs">
-              Document-derived and unverified. No polygon is generated from the stated area.
+              Unverified document text only. No parcel dimensions, centroid or boundary are inferred
+              from the stated area.
             </p>
           </Surface>
 
           <Surface elevation={1} padding="md" data-testid="fixture-physical-location">
             <p className="font-label text-accent text-[0.6875rem] tracking-[0.18em] uppercase">
-              Physical test location
+              Physical test location — user supplied
             </p>
             <p className="font-data mt-2 text-sm" data-testid="fixture-coordinate">
               {lat}, {lng}
             </p>
+            <p className="font-data text-muted-foreground mt-1 text-[11px]">
+              {KONZA_FIXTURE.physicalTestCoordinate.source}
+            </p>
             <p className="text-muted-foreground mt-3 text-xs">
-              User-supplied physical test point. It is not derived from the title reference and does
-              not establish the boundary of that title.
+              Separate test-location field. It is not the resolution result of the land reference and
+              does not establish that reference&apos;s boundary.
             </p>
           </Surface>
 
           <Surface elevation={1} padding="md" data-testid="fixture-matched-parcel">
             <p className="font-label text-accent text-[0.6875rem] tracking-[0.18em] uppercase">
-              Matched parcel record
+              Matched HALISIA parcel record
             </p>
             <p className="font-data text-destructive mt-2 text-sm">
-              NONE — {resolution.resultState}
+              NONE — not in HALISIA parcel index
             </p>
-            <p className="text-muted-foreground mt-3 text-xs">{resolution.note}</p>
+            <p className="text-muted-foreground mt-3 text-xs">
+              {resolution.note} Result state: {resolution.resultState}.
+            </p>
             <p className="text-muted-foreground mt-2 text-xs">
-              Boundary evidence: {KONZA_FIXTURE.boundaryEvidence} · Geometry: none · Model fit:{" "}
-              {KONZA_FIXTURE.modelFit}
+              Boundary evidence: NONE (boundary not verified) · Geometry: none · Parcel fit: UNKNOWN
             </p>
           </Surface>
         </div>
@@ -181,50 +212,75 @@ export function LrFixturePanel() {
         <p className="text-muted-foreground mt-2 text-xs" data-testid="fixture-imagery-caption">
           {IMAGERY_CAPTION}
         </p>
+        <a
+          className="focus-ring mt-3 inline-block rounded-xl border border-white/15 px-3 py-2 text-xs"
+          href={`https://www.google.com/maps/@?api=1&map_action=map&center=${lat},${lng}&zoom=19&basemap=satellite`}
+          target="_blank"
+          rel="noreferrer"
+          data-testid="fixture-external-map"
+        >
+          Open external satellite view of the test coordinate
+        </a>
       </Surface>
 
       <Surface elevation={2} padding="lg">
         <SectionHeading
           as="h3"
           eyebrow="Model cohort"
-          title="Fixture models"
-          description="Indicative massing only — not construction documentation. Fit against a legal parcel boundary remains unavailable."
+          title="Model compatibility matrix"
+          description={`${HARNESS_LABEL} Models load read-only from their public source URLs; authored scale only, parcel fit UNKNOWN because there is no evidence-backed parcel polygon.`}
         />
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {FIXTURE_MODELS.map((m) => {
-            const active = selected?.file === m.file;
-            return (
-              <Surface key={m.file} elevation={1} padding="md">
-                <p className="text-sm font-semibold">{m.label}</p>
-                <p className="font-data text-muted-foreground mt-1 text-[11px] break-all">
-                  {m.file}
-                </p>
-                <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
-                  <span className="rounded-md bg-white/10 px-2 py-0.5">
-                    {m.role === "environment-control"
-                      ? "Environment control — never a building-fit model"
-                      : "Building candidate"}
-                  </span>
-                  <span className="font-data text-muted-foreground">
-                    {m.url ? `${m.sizeBytes?.toLocaleString()} B` : "UNAVAILABLE"}
-                  </span>
-                </div>
-                <KitButton
-                  variant={active ? "primary" : "secondary"}
-                  className="mt-3"
-                  disabled={!m.url}
-                  onClick={() => {
-                    setSelected(m);
-                    setPreviewOn(false);
-                    setModelStatus("idle");
-                  }}
-                  data-testid={`fixture-model-${m.file}`}
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full min-w-[720px] text-left text-xs" data-testid="fixture-model-matrix">
+            <thead className="text-muted-foreground">
+              <tr>
+                <th className="py-1 pr-3 font-medium">Model</th>
+                <th className="py-1 pr-3 font-medium">Role</th>
+                <th className="py-1 pr-3 font-medium">HTTPS reachable</th>
+                <th className="py-1 pr-3 font-medium">3D displayed</th>
+                <th className="py-1 pr-3 font-medium">Parcel fit</th>
+                <th className="py-1 font-medium">Harness</th>
+              </tr>
+            </thead>
+            <tbody>
+              {FIXTURE_MODELS.map((m) => (
+                <tr
+                  key={m.file}
+                  className="border-t border-white/10"
+                  data-testid={`fixture-model-row-${m.file}`}
                 >
-                  {active ? "Selected" : "Select"}
-                </KitButton>
-              </Surface>
-            );
-          })}
+                  <td className="py-2 pr-3">
+                    <span className="font-data break-all">{m.file}</span>
+                  </td>
+                  <td className="py-2 pr-3">
+                    {m.role === "environment-control" ? "environment-control" : "building-candidate"}
+                  </td>
+                  <td className="py-2 pr-3">
+                    <VerdictChip verdict={reach[m.file] ?? "UNKNOWN"} />
+                  </td>
+                  <td className="py-2 pr-3">
+                    <VerdictChip verdict={display[m.file] ?? "UNKNOWN"} />
+                  </td>
+                  <td className="py-2 pr-3">
+                    <VerdictChip verdict="UNKNOWN" />
+                  </td>
+                  <td className="py-2">
+                    <KitButton
+                      variant={selected?.file === m.file ? "primary" : "secondary"}
+                      disabled={!m.url}
+                      onClick={() => {
+                        setSelected(m);
+                        setPreviewOn(false);
+                      }}
+                      data-testid={`fixture-model-${m.file}`}
+                    >
+                      {selected?.file === m.file ? "Selected" : "Select"}
+                    </KitButton>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
 
         {selected ? (
@@ -232,17 +288,17 @@ export function LrFixturePanel() {
             <p className="text-sm">
               Selected: <span className="font-data">{selected.file}</span> · building-fit status:{" "}
               <span className="font-data">
-                {canEnableBuildingFit(selected) ? "ENABLED" : "UNKNOWN / UNAVAILABLE"}
+                {canEnableBuildingFit(selected) ? "ENABLED" : "UNKNOWN — boundary not verified"}
               </span>
             </p>
             {!previewOn ? (
               <KitButton onClick={() => setPreviewOn(true)} data-testid="fixture-3d-start">
-                Load desktop 3D preview
+                Load model in compatibility harness
               </KitButton>
             ) : (
               <ClientOnly fallback={<p className="text-muted-foreground text-xs">Preparing…</p>}>
                 <Suspense fallback={<p className="text-muted-foreground text-xs">Preparing…</p>}>
-                  <Preview url={selected.url!} onStatus={setModelStatus} />
+                  <Preview url={selected.url!} onStatus={onStatus} />
                 </Suspense>
               </ClientOnly>
             )}
@@ -254,7 +310,7 @@ export function LrFixturePanel() {
                   className="focus-ring rounded-xl border border-white/15 px-3 py-2 text-xs"
                   data-testid="fixture-scene-viewer"
                 >
-                  Android Scene Viewer test — PHYSICAL DEVICE TEST REQUIRED
+                  Android handoff URL — PHYSICAL DEVICE TEST REQUIRED
                 </a>
               ) : null}
               <button
@@ -263,20 +319,15 @@ export function LrFixturePanel() {
                 className="rounded-xl border border-white/10 px-3 py-2 text-xs opacity-50"
                 data-testid="fixture-quick-look"
               >
-                iOS Quick Look — UNKNOWN (no USDZ for this cohort)
+                iOS Quick Look — UNKNOWN (no USDZ supplied in this batch)
               </button>
-              <a
-                href="/spatial"
-                className="focus-ring rounded-xl border border-white/15 px-3 py-2 text-xs"
-                data-testid="fixture-webxr-link"
+              <span
+                className="text-muted-foreground rounded-xl border border-white/10 px-3 py-2 text-xs"
+                data-testid="fixture-webxr-note"
               >
-                Open the existing Spatial studio for WebXR/VR regression
-              </a>
+                WebXR / VR — PHYSICAL DEVICE TEST REQUIRED
+              </span>
             </div>
-            <p className="text-muted-foreground text-xs">
-              Opening the Spatial studio does not make LR 14726 a matched parcel and unlocks no
-              boundary evidence.
-            </p>
           </div>
         ) : null}
       </Surface>
@@ -293,7 +344,11 @@ export function LrFixturePanel() {
           </thead>
           <tbody>
             {checks.map((c) => (
-              <tr key={c.id} className="border-t border-white/10" data-testid={`fixture-log-${c.id}`}>
+              <tr
+                key={c.id}
+                className="border-t border-white/10"
+                data-testid={`fixture-log-${c.id}`}
+              >
                 <td className="py-2 pr-3">{c.label}</td>
                 <td className="py-2 pr-3">
                   <VerdictChip verdict={c.verdict} />

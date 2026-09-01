@@ -84,9 +84,14 @@ describe("Konza fixture model cohort", () => {
     for (const m of FIXTURE_MODELS) expect(m.usdzUrl).toBeNull();
   });
 
-  it("builds an absolute HTTPS Scene Viewer intent", () => {
+  it("uses public HTTPS source URLs and builds an absolute Scene Viewer intent", () => {
+    for (const m of FIXTURE_MODELS) {
+      expect(m.url).toMatch(
+        /^https:\/\/raw\.githubusercontent\.com\/SpectraStudios\/SourceCityToolkit_glb\/main\//,
+      );
+    }
     const abs = absoluteModelUrl(FIXTURE_MODELS[2]!.url, "https://example.lovable.app");
-    expect(abs).toMatch(/^https:\/\/example\.lovable\.app\/__l5e\//);
+    expect(abs).toBe(FIXTURE_MODELS[2]!.url);
     const href = sceneViewerHref(abs);
     expect(href).toContain("intent://arvr.google.com/scene-viewer/1.0?file=");
     expect(href).toContain(encodeURIComponent(abs!));
