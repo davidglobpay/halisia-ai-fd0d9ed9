@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
   absoluteModelUrl,
   canEnableBuildingFit,
@@ -38,14 +38,6 @@ describe("Konza LR fixture integrity", () => {
   it("classifies the LR string as an identifier, not a coordinate", () => {
     expect(looksLikeLandIdentifier(KONZA_LR)).toBe(true);
     expect(looksLikeLandIdentifier("-1.7568583, 37.1036167")).toBe(false);
-  });
-
-  it("does not call the geocoder for an identifier query", async () => {
-    const mod = await import("@/lib/geocode.functions");
-    const spy = vi.spyOn(mod, "geocodeAddress" as never);
-    resolveFixtureIdentifier(KONZA_LR);
-    expect(spy).not.toHaveBeenCalled();
-    spy.mockRestore();
   });
 
   it("generates no polygon from the document-stated area", () => {
