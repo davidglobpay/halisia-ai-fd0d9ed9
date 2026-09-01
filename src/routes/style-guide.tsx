@@ -10,6 +10,8 @@ import {
   ConfidenceIndicator,
 } from "@/components/halisia/ds";
 import { useReducedMotionPref } from "@/hooks/use-reduced-motion-pref";
+import { useDevMode } from "@/hooks/use-dev-mode";
+import { LrFixturePanel } from "@/components/halisia/testkit/lr-fixture-panel";
 
 const TITLE = "Design System & Brand Style Guide — HALISIA.AI";
 const DESCRIPTION =
@@ -89,6 +91,8 @@ const MOTION_ROWS = [
 function StyleGuidePage() {
   const [tab, setTab] = useState("foundations");
   const [reduced, , setReduced] = useReducedMotionPref();
+  const dev = useDevMode();
+
 
   return (
     <div className="min-h-dvh" data-testid="style-guide">
@@ -387,6 +391,7 @@ function StyleGuidePage() {
             </Surface>
           </section>
         ) : null}
+        {dev ? <LrFixturePanel /> : null}
       </main>
     </div>
   );
