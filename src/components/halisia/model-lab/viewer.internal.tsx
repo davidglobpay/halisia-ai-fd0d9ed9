@@ -272,8 +272,6 @@ export default function ModelLabViewer({
     };
     spinSetter.current = setSpin;
 
-    void loadModel(false);
-
     return () => {
       const e = engine.current;
       engine.current = null;
