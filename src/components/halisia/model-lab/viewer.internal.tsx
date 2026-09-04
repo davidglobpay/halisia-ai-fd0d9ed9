@@ -56,6 +56,11 @@ export type ModelLabViewerProps = {
   onStatus: (s: ViewerStatus) => void;
   onApi?: (api: ViewerApi | null) => void;
   onUserInteract?: () => void;
+  /**
+   * Element used as the WebXR dom-overlay root during an immersive AR session.
+   * Without a granted dom-overlay, no HTML control is visible in-session.
+   */
+  overlayRootRef?: { current: HTMLElement | null };
 };
 
 const EMPTY_STATUS: ViewerStatus = {
