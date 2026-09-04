@@ -31,6 +31,10 @@ export type ViewerStatus = {
     inSession: boolean;
     hitTest: boolean;
     placed: boolean;
+    /** Whether the active AR session granted dom-overlay. */
+    domOverlay: boolean | null;
+    /** Reference space actually granted for the active session. */
+    referenceSpace: string | null;
     note: string;
   };
   contextLost: boolean;
@@ -56,6 +60,11 @@ export type ModelLabViewerProps = {
   onStatus: (s: ViewerStatus) => void;
   onApi?: (api: ViewerApi | null) => void;
   onUserInteract?: () => void;
+  /**
+   * Element used as the WebXR dom-overlay root during an immersive AR session.
+   * Without a granted dom-overlay, no HTML control is visible in-session.
+   */
+  overlayRootRef?: { current: HTMLElement | null };
 };
 
 const EMPTY_STATUS: ViewerStatus = {
@@ -72,6 +81,8 @@ const EMPTY_STATUS: ViewerStatus = {
     inSession: false,
     hitTest: false,
     placed: false,
+    domOverlay: null,
+    referenceSpace: null,
     note: "",
   },
   contextLost: false,
@@ -84,7 +95,10 @@ export default function ModelLabViewer({
   onStatus,
   onApi,
   onUserInteract,
+  overlayRootRef,
 }: ModelLabViewerProps) {
+  const overlayRef = useRef<{ current: HTMLElement | null } | undefined>(overlayRootRef);
+  overlayRef.current = overlayRootRef;
   const hostRef = useRef<HTMLDivElement | null>(null);
   const statusRef = useRef(onStatus);
   statusRef.current = onStatus;
@@ -112,6 +126,8 @@ export default function ModelLabViewer({
     hitTestSource: XRHitTestSource | null;
     refSpace: XRReferenceSpace | null;
     session: XRSession | null;
+    savedBackground: THREE.Scene["background"];
+    savedClearAlpha: number;
     loadToken: number;
   } | null>(null);
 
@@ -129,7 +145,7 @@ export default function ModelLabViewer({
 
     let renderer: THREE.WebGLRenderer;
     try {
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "high-performance" });
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
     } catch (err) {
       statusRef.current?.({
         ...EMPTY_STATUS,
@@ -196,6 +212,8 @@ export default function ModelLabViewer({
       hitTestSource: null,
       refSpace: null,
       session: null,
+      savedBackground: null,
+      savedClearAlpha: 1,
       loadToken: 0,
     };
 
@@ -276,9 +294,11 @@ export default function ModelLabViewer({
       const e = engine.current;
       engine.current = null;
       apiCbRef.current?.(null);
-      controls.removeEventListener("start", onStart);
+      // Listeners FIRST: forceContextLoss() below would otherwise fire our own
+      // handler and drive a false context-lost UI state on every navigation.
       renderer.domElement.removeEventListener("webglcontextlost", onLost as EventListener);
       renderer.domElement.removeEventListener("webglcontextrestored", onRestored);
+      controls.removeEventListener("start", onStart);
       ro.disconnect();
       window.removeEventListener("orientationchange", resize);
       abortRef.current?.abort();
@@ -294,6 +314,8 @@ export default function ModelLabViewer({
       }
       renderer.setAnimationLoop(null);
       renderer.dispose();
+      // Final teardown only — never during model switching.
+      renderer.forceContextLoss();
       renderer.domElement.remove();
     };
     // Engine bootstrap must never rerun because a callback prop changed.
@@ -416,7 +438,7 @@ export default function ModelLabViewer({
 
         push({ state: "PARSING", progress: null, message: `Parsing ${model.file}…` });
         const gltf = await new Promise<{ scene: THREE.Group }>((resolve, reject) => {
-          new GLTFLoader().parse(bytes.slice(0), "", (g) => resolve(g as unknown as { scene: THREE.Group }), reject);
+          new GLTFLoader().parse(bytes, "", (g) => resolve(g as unknown as { scene: THREE.Group }), reject);
         });
 
         if (engine.current?.loadToken !== token) {
@@ -528,17 +550,37 @@ export default function ModelLabViewer({
           });
           return;
         }
+        const overlayRoot = overlayRef.current?.current ?? null;
+        const isAr = mode === "immersive-ar";
         const session = await xr.requestSession(mode, {
-          requiredFeatures: ["local-floor"],
-          optionalFeatures: mode === "immersive-ar" ? ["hit-test", "dom-overlay"] : [],
-          ...(mode === "immersive-ar" && typeof document !== "undefined"
-            ? { domOverlay: { root: document.body } }
-            : {}),
+          requiredFeatures: [],
+          optionalFeatures: isAr
+            ? ["hit-test", "dom-overlay", "local-floor"]
+            : ["local-floor"],
+          ...(isAr && overlayRoot ? { domOverlay: { root: overlayRoot } } : {}),
         });
         e.session = session;
+
+        // setReferenceSpaceType is renderer-global, not per-session: re-set it
+        // immediately before every setSession call.
+        const wantedSpace: XRReferenceSpaceType = isAr ? "local" : "local-floor";
+        e.renderer.xr.setReferenceSpaceType(wantedSpace);
         await e.renderer.xr.setSession(session);
-        const refSpace = await session.requestReferenceSpace("local-floor");
+        const refSpace = await session.requestReferenceSpace(wantedSpace);
         e.refSpace = refSpace;
+
+        // AR only: background occludes passthrough. scene.environment stays
+        // untouched — it is the PBR/IBL source.
+        if (isAr) {
+          e.savedBackground = e.scene.background;
+          e.savedClearAlpha = e.renderer.getClearAlpha();
+          e.scene.background = null;
+          e.renderer.setClearAlpha(0);
+        }
+
+        const domOverlayGranted = isAr
+          ? Boolean((session as XRSession & { domOverlayState?: { type?: string } }).domOverlayState)
+          : null;
 
         // Move the real loaded scene into the AR/VR wrapper — never a proxy.
         const child = e.modelRoot.children[0];
@@ -585,13 +627,27 @@ export default function ModelLabViewer({
           en.refSpace = null;
           en.session = null;
           en.reticle.visible = false;
+          if (mode === "immersive-ar") {
+            en.scene.background = en.savedBackground;
+            en.renderer.setClearAlpha(en.savedClearAlpha);
+          }
           const back = en.arRoot.children[0];
           if (back) en.modelRoot.add(back);
           en.arRoot.visible = false;
           en.arRoot.position.set(0, 0, 0);
           en.arRoot.rotation.set(0, 0, 0);
           en.arRoot.scale.setScalar(1);
-          push({ xr: { ...en.status.xr, inSession: false, placed: false, hitTest: false, note: "" } });
+          push({
+            xr: {
+              ...en.status.xr,
+              inSession: false,
+              placed: false,
+              hitTest: false,
+              domOverlay: null,
+              referenceSpace: null,
+              note: "",
+            },
+          });
           setLive("Immersive session ended.");
         };
         session.addEventListener("end", onEnd, { once: true });
@@ -602,9 +658,17 @@ export default function ModelLabViewer({
             inSession: true,
             hitTest,
             placed: false,
-            note: hitTest
-              ? MODEL_LAB_DISCLAIMER
-              : `Surface anchoring unavailable on this device. ${MODEL_LAB_DISCLAIMER}`,
+            domOverlay: domOverlayGranted,
+            referenceSpace: wantedSpace,
+            note: [
+              hitTest ? "" : "Surface anchoring unavailable on this device.",
+              isAr && domOverlayGranted === false
+                ? "In-session controls are unavailable on this device (dom-overlay was not granted)."
+                : "",
+              MODEL_LAB_DISCLAIMER,
+            ]
+              .filter(Boolean)
+              .join(" ")
           },
         });
         setLive("Immersive session started.");

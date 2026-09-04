@@ -15,6 +15,7 @@ import { Route as StyleGuideRouteImport } from './routes/style-guide'
 import { Route as SpatialRouteImport } from './routes/spatial'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ReportRouteImport } from './routes/report'
+import { Route as ModelLabRouteImport } from './routes/model-lab'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as LogoQaRouteImport } from './routes/logo-qa'
 import { Route as ExploreRouteImport } from './routes/explore'
@@ -75,6 +76,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const ReportRoute = ReportRouteImport.update({
   id: '/report',
   path: '/report',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ModelLabRoute = ModelLabRouteImport.update({
+  id: '/model-lab',
+  path: '/model-lab',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MarketplaceRoute = MarketplaceRouteImport.update({
@@ -245,6 +251,7 @@ export interface FileRoutesByFullPath {
   '/explore': typeof ExploreRoute
   '/logo-qa': typeof LogoQaRoute
   '/marketplace': typeof MarketplaceRouteWithChildren
+  '/model-lab': typeof ModelLabRoute
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/spatial': typeof SpatialRoute
@@ -282,6 +289,7 @@ export interface FileRoutesByTo {
   '/connections': typeof ConnectionsRoute
   '/explore': typeof ExploreRoute
   '/logo-qa': typeof LogoQaRoute
+  '/model-lab': typeof ModelLabRoute
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/spatial': typeof SpatialRoute
@@ -322,6 +330,7 @@ export interface FileRoutesById {
   '/explore': typeof ExploreRoute
   '/logo-qa': typeof LogoQaRoute
   '/marketplace': typeof MarketplaceRouteWithChildren
+  '/model-lab': typeof ModelLabRoute
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/spatial': typeof SpatialRoute
@@ -362,6 +371,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/logo-qa'
     | '/marketplace'
+    | '/model-lab'
     | '/report'
     | '/reset-password'
     | '/spatial'
@@ -399,6 +409,7 @@ export interface FileRouteTypes {
     | '/connections'
     | '/explore'
     | '/logo-qa'
+    | '/model-lab'
     | '/report'
     | '/reset-password'
     | '/spatial'
@@ -438,6 +449,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/logo-qa'
     | '/marketplace'
+    | '/model-lab'
     | '/report'
     | '/reset-password'
     | '/spatial'
@@ -478,6 +490,7 @@ export interface RootRouteChildren {
   ExploreRoute: typeof ExploreRoute
   LogoQaRoute: typeof LogoQaRoute
   MarketplaceRoute: typeof MarketplaceRouteWithChildren
+  ModelLabRoute: typeof ModelLabRoute
   ReportRoute: typeof ReportRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SpatialRoute: typeof SpatialRoute
@@ -534,6 +547,13 @@ declare module '@tanstack/react-router' {
       path: '/report'
       fullPath: '/report'
       preLoaderRoute: typeof ReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/model-lab': {
+      id: '/model-lab'
+      path: '/model-lab'
+      fullPath: '/model-lab'
+      preLoaderRoute: typeof ModelLabRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/marketplace': {
@@ -817,6 +837,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExploreRoute: ExploreRoute,
   LogoQaRoute: LogoQaRoute,
   MarketplaceRoute: MarketplaceRouteWithChildren,
+  ModelLabRoute: ModelLabRoute,
   ReportRoute: ReportRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SpatialRoute: SpatialRoute,

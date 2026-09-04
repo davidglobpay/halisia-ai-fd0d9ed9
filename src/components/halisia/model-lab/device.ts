@@ -37,7 +37,7 @@ export function absoluteHttpsUrl(url: string, origin?: string): string | null {
  * get a native AR action.
  */
 export function sceneViewerIntent(model: ModelLabEntry, origin?: string): string | null {
-  if (!model.buildingCandidate || model.environmentModel) return null;
+  if (model.kind !== "building") return null;
   const abs = absoluteHttpsUrl(model.glbUrl, origin);
   if (!abs) return null;
   return (
