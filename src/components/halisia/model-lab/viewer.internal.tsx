@@ -713,6 +713,7 @@ export default function ModelLabViewer({
         push({
           xr: {
             ...e.status.xr,
+            xrState: "IN_SESSION",
             inSession: true,
             hitTest,
             placed: false,
@@ -726,16 +727,26 @@ export default function ModelLabViewer({
               MODEL_LAB_DISCLAIMER,
             ]
               .filter(Boolean)
-              .join(" ")
+              .join(" "),
           },
         });
         setLive("Immersive session started.");
       } catch (err) {
-        push({
-          state: "AR_UNAVAILABLE",
-          message: `Could not start the immersive session: ${(err as Error)?.message ?? "unknown error"}`,
-          xr: { ...engine.current!.status.xr, inSession: false, note: (err as Error)?.name ?? "" },
-        });
+        // XR failures never change the model LoadState.
+        const name = (err as Error)?.name ?? "";
+        const rejected = name === "NotAllowedError" || name === "SecurityError" || name === "InvalidStateError";
+        const cur = engine.current?.status.xr;
+        if (cur) {
+          push({
+            xr: {
+              ...cur,
+              xrState: rejected ? "SESSION_REJECTED" : "ERROR",
+              inSession: false,
+              note: `${name ? `${name}: ` : ""}${(err as Error)?.message ?? "unknown error"}`,
+            },
+          });
+        }
+        setLive("The immersive session could not start.");
       }
     },
     [applyPresentation, push],
