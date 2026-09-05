@@ -575,29 +575,45 @@ export default function ModelLabViewer({
     async (mode: "immersive-ar" | "immersive-vr") => {
       const e = engine.current;
       if (!e) return;
-      push({ xr: { ...e.status.xr, note: "" } }); // clear stale error first
+      const isAr = mode === "immersive-ar";
+      // Clear any stale XR error before a new attempt. The model LoadState is
+      // never touched here — a loaded model stays READY whatever XR does.
+      push({ xr: { ...e.status.xr, xrState: "REQUESTING", note: "" } });
       const xr = (navigator as Navigator & { xr?: XRSystem }).xr;
       if (!xr) {
-        push({ state: "AR_UNAVAILABLE", message: "WebXR is not available in this browser.", xr: { ...e.status.xr, note: "WebXR Device API missing." } });
+        push({
+          xr: {
+            ...e.status.xr,
+            xrState: "UNSUPPORTED",
+            arSupported: false,
+            vrSupported: false,
+            note: "WebXR Device API missing in this browser.",
+          },
+        });
+        return;
+      }
+      // No click-time isSessionSupported(): awaiting it can consume the
+      // transient user activation that requestSession requires. The mount
+      // probe already cached the answer.
+      const cached = isAr ? e.status.xr.arSupported : e.status.xr.vrSupported;
+      if (cached === false) {
+        push({
+          xr: {
+            ...e.status.xr,
+            xrState: "UNSUPPORTED",
+            note: `This device or browser does not support ${isAr ? "immersive AR" : "immersive VR"}.`,
+          },
+        });
         return;
       }
       try {
-        const supported = await xr.isSessionSupported(mode);
-        if (!supported) {
-          push({
-            state: "AR_UNAVAILABLE",
-            message: `This device or browser does not support ${mode === "immersive-ar" ? "immersive AR" : "immersive VR"}.`,
-            xr: { ...e.status.xr, note: "Session mode unsupported." },
-          });
-          return;
-        }
         const overlayRoot = overlayRef.current?.current ?? null;
-        const isAr = mode === "immersive-ar";
         const session = await xr.requestSession(mode, {
           requiredFeatures: [],
           optionalFeatures: isAr
             ? ["hit-test", "dom-overlay", "local-floor"]
             : ["local-floor"],
+
           ...(isAr && overlayRoot ? { domOverlay: { root: overlayRoot } } : {}),
         });
         e.session = session;
