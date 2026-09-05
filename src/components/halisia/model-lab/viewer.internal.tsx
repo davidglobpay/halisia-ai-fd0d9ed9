@@ -17,6 +17,17 @@ import { MODEL_LAB_DISCLAIMER } from "./registry";
 export type EnvMode = "day" | "night" | "neutral";
 export type PresentationMode = "AUTHORED_SCALE" | "TABLETOP" | "USER_ADJUSTED";
 
+/** XR lifecycle, deliberately separate from the model LoadState. */
+export type XrState =
+  | "IDLE"
+  | "CHECKING"
+  | "READY"
+  | "UNSUPPORTED"
+  | "REQUESTING"
+  | "IN_SESSION"
+  | "SESSION_REJECTED"
+  | "ERROR";
+
 export type ViewerStatus = {
   state: LoadState;
   message: string;
@@ -26,6 +37,7 @@ export type ViewerStatus = {
   triangles: number;
   maxExtentM: number | null;
   xr: {
+    xrState: XrState;
     arSupported: boolean | null;
     vrSupported: boolean | null;
     inSession: boolean;
@@ -39,6 +51,7 @@ export type ViewerStatus = {
   };
   contextLost: boolean;
 };
+
 
 export type ViewerApi = {
   reset: () => void;
