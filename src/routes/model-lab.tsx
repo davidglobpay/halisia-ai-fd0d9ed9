@@ -134,7 +134,20 @@ function ModelLabPage() {
 
   const xr = status?.xr;
   const inSession = Boolean(xr?.inSession);
-  const intent = sceneViewerIntent(selected, typeof window !== "undefined" ? window.location.origin : undefined);
+  const intent = sceneViewerIntent(
+    selected,
+    typeof window !== "undefined" ? window.location.origin : undefined,
+    typeof window !== "undefined" ? window.location.href : undefined,
+  );
+
+  const contextLost = Boolean(status?.contextLost);
+  const restoreRenderer = useCallback(() => {
+    // Full remount: the viewer's own cleanup disposes geometries, materials,
+    // textures, controls and the canvas before a single new one is built.
+    setStatus(null);
+    setApi(null);
+    setViewerKey((k) => k + 1);
+  }, []);
 
   const errorNotice = (() => {
     const s = status?.state;
@@ -145,6 +158,7 @@ function ModelLabPage() {
     if (status?.contextLost) return `CONTEXT_LOST: ${status.message}`;
     return null;
   })();
+
 
   return (
     <main className="mx-auto w-full max-w-[1400px] px-4 py-6 sm:px-6">
