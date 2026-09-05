@@ -35,18 +35,29 @@ export function absoluteHttpsUrl(url: string, origin?: string): string | null {
 /**
  * Scene Viewer intent for building candidates ONLY. Environment shells never
  * get a native AR action.
+ *
+ * `fallbackUrl` is where the browser lands if the intent cannot be handled.
+ * It must NOT be the GLB itself — that dumps the user into a multi-megabyte
+ * raw download. Callers pass the current page URL.
  */
-export function sceneViewerIntent(model: ModelLabEntry, origin?: string): string | null {
+export function sceneViewerIntent(
+  model: ModelLabEntry,
+  origin?: string,
+  fallbackUrl?: string,
+): string | null {
   if (model.kind !== "building") return null;
   const abs = absoluteHttpsUrl(model.glbUrl, origin);
   if (!abs) return null;
+  const fallback =
+    fallbackUrl ?? (typeof window !== "undefined" ? window.location.href : abs);
   return (
     `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(abs)}` +
     `&mode=ar_preferred&title=${encodeURIComponent(model.name)}` +
     `#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;` +
-    `S.browser_fallback_url=${encodeURIComponent(abs)};end;`
+    `S.browser_fallback_url=${encodeURIComponent(fallback)};end;`
   );
 }
+
 
 export const QUICK_LOOK_UNAVAILABLE_MESSAGE =
   "AR Quick Look is unavailable for this model because no USDZ asset has been provided.";
