@@ -361,13 +361,35 @@ function ModelLabPage() {
           </Group>
 
           <Group label="XR">
-            {xr?.arSupported ? (
+            {/* Deterministic ladder: an undecided probe is never reported as a failure,
+                and no non-interactive text is ever styled to look like a button. */}
+            {xr?.arSupported == null ? (
+              <KitButton size="sm" disabled>
+                Checking AR support…
+              </KitButton>
+            ) : xr.arSupported ? (
               <KitButton size="sm" onClick={() => api?.enterAr()} disabled={inSession}>
                 Enter AR
               </KitButton>
+            ) : platform === "android" && intent ? (
+              <a
+                className="btn-base btn-primary min-h-11 px-4 text-sm"
+                href={intent}
+                rel="nofollow noopener"
+              >
+                Open in Scene Viewer
+              </a>
             ) : (
-              <span className="text-xs text-muted-foreground">AR_UNAVAILABLE on this device.</span>
+              <p className="w-full text-xs text-muted-foreground">
+                Immersive AR is not available in this browser, so the model stays in the interactive
+                3D viewer. {arCapabilitySummary(platform)}
+              </p>
             )}
+            {xr?.xrState === "SESSION_REJECTED" || xr?.xrState === "ERROR" ? (
+              <p role="alert" className="w-full text-xs text-destructive">
+                AR session could not start. {xr.note || "No diagnostic detail was reported."}
+              </p>
+            ) : null}
             {xr?.vrSupported ? (
               <KitButton size="sm" onClick={() => api?.enterVr()} disabled={inSession}>
                 Enter VR
@@ -392,7 +414,7 @@ function ModelLabPage() {
                 {m === "TABLETOP" ? "Tabletop" : m === "AUTHORED_SCALE" ? "Authored scale" : "User adjusted"}
               </KitButton>
             ))}
-            {platform === "android" && intent ? (
+            {platform === "android" && intent && xr?.arSupported ? (
               <a
                 className="btn-base btn-secondary min-h-11 px-4 text-sm"
                 href={intent}
@@ -402,6 +424,7 @@ function ModelLabPage() {
               </a>
             ) : null}
           </Group>
+
 
           <Group label="Status">
             <div className="w-full space-y-1">
