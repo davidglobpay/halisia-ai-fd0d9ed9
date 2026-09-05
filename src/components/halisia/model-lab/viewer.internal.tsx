@@ -253,7 +253,9 @@ export default function ModelLabViewer({
     const onRestored = () => {
       push({ contextLost: false, message: "WebGL context restored — reloading the model." });
       setLive("WebGL context restored.");
-      void loadModel(true);
+      // Ref, not the closed-over first-render loadModel: that one still points
+      // at the initial `model` prop and would reload the wrong asset.
+      void loadModelRef.current?.(true);
     };
     renderer.domElement.addEventListener("webglcontextlost", onLost as EventListener, false);
     renderer.domElement.addEventListener("webglcontextrestored", onRestored, false);
@@ -265,24 +267,43 @@ export default function ModelLabViewer({
     /* -------- XR support probe */
     const xr = (navigator as Navigator & { xr?: XRSystem }).xr;
     if (xr?.isSessionSupported) {
+      push({ xr: { ...engine.current.status.xr, xrState: "CHECKING" } });
+      const settle = (patch: { arSupported?: boolean; vrSupported?: boolean }) => {
+        const cur = engine.current?.status.xr;
+        if (!cur) return;
+        const next = { ...cur, ...patch };
+        const decided = next.arSupported !== null && next.vrSupported !== null;
+        push({
+          xr: {
+            ...next,
+            xrState: decided
+              ? next.arSupported || next.vrSupported
+                ? "READY"
+                : "UNSUPPORTED"
+              : "CHECKING",
+          },
+        });
+      };
       void xr
         .isSessionSupported("immersive-ar")
-        .then((v) => push({ xr: { ...engine.current!.status.xr, arSupported: v } }))
-        .catch(() => push({ xr: { ...engine.current!.status.xr, arSupported: false } }));
+        .then((v) => settle({ arSupported: v }))
+        .catch(() => settle({ arSupported: false }));
       void xr
         .isSessionSupported("immersive-vr")
-        .then((v) => push({ xr: { ...engine.current!.status.xr, vrSupported: v } }))
-        .catch(() => push({ xr: { ...engine.current!.status.xr, vrSupported: false } }));
+        .then((v) => settle({ vrSupported: v }))
+        .catch(() => settle({ vrSupported: false }));
     } else {
       push({
         xr: {
           ...EMPTY_STATUS.xr,
+          xrState: "UNSUPPORTED",
           arSupported: false,
           vrSupported: false,
           note: "This browser does not expose the WebXR Device API.",
         },
       });
     }
+
 
     /* -------- animation loop */
     let spin = false;
