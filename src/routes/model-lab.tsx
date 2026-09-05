@@ -83,6 +83,7 @@ function ModelLabPage() {
   const [api, setApi] = useState<ViewerApi | null>(null);
   const [presentation, setPresentation] = useState<PresentationMode>("TABLETOP");
   const [fullscreenError, setFullscreenError] = useState<string | null>(null);
+  const [viewerKey, setViewerKey] = useState(0);
 
   const shellRef = useRef<HTMLDivElement | null>(null);
   const overlayRootRef = useRef<HTMLDivElement | null>(null);
