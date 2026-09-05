@@ -536,6 +536,10 @@ export default function ModelLabViewer({
   );
 
   useEffect(() => {
+    loadModelRef.current = loadModel;
+  }, [loadModel]);
+
+  useEffect(() => {
     if (!engine.current) return;
     void loadModel(false);
   }, [loadModel]);
