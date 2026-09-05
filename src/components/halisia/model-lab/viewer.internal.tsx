@@ -359,6 +359,8 @@ export default function ModelLabViewer({
 
   const spinSetter = useRef<((on: boolean) => void) | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  /** Always the latest loadModel, so context-restore never reloads a stale model. */
+  const loadModelRef = useRef<((isReload: boolean) => Promise<void>) | null>(null);
 
   /* ----------------------------------------------------------- lighting */
   const applyEnv = useCallback((mode: EnvMode) => {
