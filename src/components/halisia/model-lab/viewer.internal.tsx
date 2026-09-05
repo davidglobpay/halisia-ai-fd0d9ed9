@@ -17,6 +17,17 @@ import { MODEL_LAB_DISCLAIMER } from "./registry";
 export type EnvMode = "day" | "night" | "neutral";
 export type PresentationMode = "AUTHORED_SCALE" | "TABLETOP" | "USER_ADJUSTED";
 
+/** XR lifecycle, deliberately separate from the model LoadState. */
+export type XrState =
+  | "IDLE"
+  | "CHECKING"
+  | "READY"
+  | "UNSUPPORTED"
+  | "REQUESTING"
+  | "IN_SESSION"
+  | "SESSION_REJECTED"
+  | "ERROR";
+
 export type ViewerStatus = {
   state: LoadState;
   message: string;
@@ -26,6 +37,7 @@ export type ViewerStatus = {
   triangles: number;
   maxExtentM: number | null;
   xr: {
+    xrState: XrState;
     arSupported: boolean | null;
     vrSupported: boolean | null;
     inSession: boolean;
@@ -39,6 +51,7 @@ export type ViewerStatus = {
   };
   contextLost: boolean;
 };
+
 
 export type ViewerApi = {
   reset: () => void;
@@ -76,6 +89,7 @@ const EMPTY_STATUS: ViewerStatus = {
   triangles: 0,
   maxExtentM: null,
   xr: {
+    xrState: "IDLE",
     arSupported: null,
     vrSupported: null,
     inSession: false,
@@ -239,7 +253,9 @@ export default function ModelLabViewer({
     const onRestored = () => {
       push({ contextLost: false, message: "WebGL context restored — reloading the model." });
       setLive("WebGL context restored.");
-      void loadModel(true);
+      // Ref, not the closed-over first-render loadModel: that one still points
+      // at the initial `model` prop and would reload the wrong asset.
+      void loadModelRef.current?.(true);
     };
     renderer.domElement.addEventListener("webglcontextlost", onLost as EventListener, false);
     renderer.domElement.addEventListener("webglcontextrestored", onRestored, false);
@@ -251,24 +267,43 @@ export default function ModelLabViewer({
     /* -------- XR support probe */
     const xr = (navigator as Navigator & { xr?: XRSystem }).xr;
     if (xr?.isSessionSupported) {
+      push({ xr: { ...engine.current.status.xr, xrState: "CHECKING" } });
+      const settle = (patch: { arSupported?: boolean; vrSupported?: boolean }) => {
+        const cur = engine.current?.status.xr;
+        if (!cur) return;
+        const next = { ...cur, ...patch };
+        const decided = next.arSupported !== null && next.vrSupported !== null;
+        push({
+          xr: {
+            ...next,
+            xrState: decided
+              ? next.arSupported || next.vrSupported
+                ? "READY"
+                : "UNSUPPORTED"
+              : "CHECKING",
+          },
+        });
+      };
       void xr
         .isSessionSupported("immersive-ar")
-        .then((v) => push({ xr: { ...engine.current!.status.xr, arSupported: v } }))
-        .catch(() => push({ xr: { ...engine.current!.status.xr, arSupported: false } }));
+        .then((v) => settle({ arSupported: v }))
+        .catch(() => settle({ arSupported: false }));
       void xr
         .isSessionSupported("immersive-vr")
-        .then((v) => push({ xr: { ...engine.current!.status.xr, vrSupported: v } }))
-        .catch(() => push({ xr: { ...engine.current!.status.xr, vrSupported: false } }));
+        .then((v) => settle({ vrSupported: v }))
+        .catch(() => settle({ vrSupported: false }));
     } else {
       push({
         xr: {
           ...EMPTY_STATUS.xr,
+          xrState: "UNSUPPORTED",
           arSupported: false,
           vrSupported: false,
           note: "This browser does not expose the WebXR Device API.",
         },
       });
     }
+
 
     /* -------- animation loop */
     let spin = false;
@@ -324,6 +359,8 @@ export default function ModelLabViewer({
 
   const spinSetter = useRef<((on: boolean) => void) | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  /** Always the latest loadModel, so context-restore never reloads a stale model. */
+  const loadModelRef = useRef<((isReload: boolean) => Promise<void>) | null>(null);
 
   /* ----------------------------------------------------------- lighting */
   const applyEnv = useCallback((mode: EnvMode) => {
@@ -499,6 +536,10 @@ export default function ModelLabViewer({
   );
 
   useEffect(() => {
+    loadModelRef.current = loadModel;
+  }, [loadModel]);
+
+  useEffect(() => {
     if (!engine.current) return;
     void loadModel(false);
   }, [loadModel]);
@@ -534,29 +575,45 @@ export default function ModelLabViewer({
     async (mode: "immersive-ar" | "immersive-vr") => {
       const e = engine.current;
       if (!e) return;
-      push({ xr: { ...e.status.xr, note: "" } }); // clear stale error first
+      const isAr = mode === "immersive-ar";
+      // Clear any stale XR error before a new attempt. The model LoadState is
+      // never touched here — a loaded model stays READY whatever XR does.
+      push({ xr: { ...e.status.xr, xrState: "REQUESTING", note: "" } });
       const xr = (navigator as Navigator & { xr?: XRSystem }).xr;
       if (!xr) {
-        push({ state: "AR_UNAVAILABLE", message: "WebXR is not available in this browser.", xr: { ...e.status.xr, note: "WebXR Device API missing." } });
+        push({
+          xr: {
+            ...e.status.xr,
+            xrState: "UNSUPPORTED",
+            arSupported: false,
+            vrSupported: false,
+            note: "WebXR Device API missing in this browser.",
+          },
+        });
+        return;
+      }
+      // No click-time isSessionSupported(): awaiting it can consume the
+      // transient user activation that requestSession requires. The mount
+      // probe already cached the answer.
+      const cached = isAr ? e.status.xr.arSupported : e.status.xr.vrSupported;
+      if (cached === false) {
+        push({
+          xr: {
+            ...e.status.xr,
+            xrState: "UNSUPPORTED",
+            note: `This device or browser does not support ${isAr ? "immersive AR" : "immersive VR"}.`,
+          },
+        });
         return;
       }
       try {
-        const supported = await xr.isSessionSupported(mode);
-        if (!supported) {
-          push({
-            state: "AR_UNAVAILABLE",
-            message: `This device or browser does not support ${mode === "immersive-ar" ? "immersive AR" : "immersive VR"}.`,
-            xr: { ...e.status.xr, note: "Session mode unsupported." },
-          });
-          return;
-        }
         const overlayRoot = overlayRef.current?.current ?? null;
-        const isAr = mode === "immersive-ar";
         const session = await xr.requestSession(mode, {
           requiredFeatures: [],
           optionalFeatures: isAr
             ? ["hit-test", "dom-overlay", "local-floor"]
             : ["local-floor"],
+
           ...(isAr && overlayRoot ? { domOverlay: { root: overlayRoot } } : {}),
         });
         e.session = session;
@@ -640,6 +697,7 @@ export default function ModelLabViewer({
           push({
             xr: {
               ...en.status.xr,
+              xrState: "READY",
               inSession: false,
               placed: false,
               hitTest: false,
@@ -655,6 +713,7 @@ export default function ModelLabViewer({
         push({
           xr: {
             ...e.status.xr,
+            xrState: "IN_SESSION",
             inSession: true,
             hitTest,
             placed: false,
@@ -668,16 +727,26 @@ export default function ModelLabViewer({
               MODEL_LAB_DISCLAIMER,
             ]
               .filter(Boolean)
-              .join(" ")
+              .join(" "),
           },
         });
         setLive("Immersive session started.");
       } catch (err) {
-        push({
-          state: "AR_UNAVAILABLE",
-          message: `Could not start the immersive session: ${(err as Error)?.message ?? "unknown error"}`,
-          xr: { ...engine.current!.status.xr, inSession: false, note: (err as Error)?.name ?? "" },
-        });
+        // XR failures never change the model LoadState.
+        const name = (err as Error)?.name ?? "";
+        const rejected = name === "NotAllowedError" || name === "SecurityError" || name === "InvalidStateError";
+        const cur = engine.current?.status.xr;
+        if (cur) {
+          push({
+            xr: {
+              ...cur,
+              xrState: rejected ? "SESSION_REJECTED" : "ERROR",
+              inSession: false,
+              note: `${name ? `${name}: ` : ""}${(err as Error)?.message ?? "unknown error"}`,
+            },
+          });
+        }
+        setLive("The immersive session could not start.");
       }
     },
     [applyPresentation, push],

@@ -83,6 +83,7 @@ function ModelLabPage() {
   const [api, setApi] = useState<ViewerApi | null>(null);
   const [presentation, setPresentation] = useState<PresentationMode>("TABLETOP");
   const [fullscreenError, setFullscreenError] = useState<string | null>(null);
+  const [viewerKey, setViewerKey] = useState(0);
 
   const shellRef = useRef<HTMLDivElement | null>(null);
   const overlayRootRef = useRef<HTMLDivElement | null>(null);
@@ -134,7 +135,20 @@ function ModelLabPage() {
 
   const xr = status?.xr;
   const inSession = Boolean(xr?.inSession);
-  const intent = sceneViewerIntent(selected, typeof window !== "undefined" ? window.location.origin : undefined);
+  const intent = sceneViewerIntent(
+    selected,
+    typeof window !== "undefined" ? window.location.origin : undefined,
+    typeof window !== "undefined" ? window.location.href : undefined,
+  );
+
+  const contextLost = Boolean(status?.contextLost);
+  const restoreRenderer = useCallback(() => {
+    // Full remount: the viewer's own cleanup disposes geometries, materials,
+    // textures, controls and the canvas before a single new one is built.
+    setStatus(null);
+    setApi(null);
+    setViewerKey((k) => k + 1);
+  }, []);
 
   const errorNotice = (() => {
     const s = status?.state;
@@ -145,6 +159,7 @@ function ModelLabPage() {
     if (status?.contextLost) return `CONTEXT_LOST: ${status.message}`;
     return null;
   })();
+
 
   return (
     <main className="mx-auto w-full max-w-[1400px] px-4 py-6 sm:px-6">
@@ -187,6 +202,7 @@ function ModelLabPage() {
             </div>
           ) : (
             <ModelLabViewer
+              key={`${viewerKey}`}
               model={selected}
               env={env}
               autoRotate={autoRotate && !reducedMotion}
@@ -196,6 +212,19 @@ function ModelLabPage() {
               overlayRootRef={overlayRootRef}
             />
           )}
+
+          {contextLost ? (
+            <div className="absolute inset-x-2 top-2 flex flex-wrap items-center gap-2 rounded-xl border border-white/15 bg-black/70 px-3 py-2">
+              <p className="text-xs">
+                The graphics context was lost. Rebuilding the viewer creates one fresh canvas and
+                discards the old resources.
+              </p>
+              <KitButton size="sm" variant="primary" onClick={restoreRenderer}>
+                Restore renderer
+              </KitButton>
+            </div>
+          ) : null}
+
 
           {/* dom-overlay root: the only element visible inside an AR session */}
           <div
@@ -332,13 +361,35 @@ function ModelLabPage() {
           </Group>
 
           <Group label="XR">
-            {xr?.arSupported ? (
+            {/* Deterministic ladder: an undecided probe is never reported as a failure,
+                and no non-interactive text is ever styled to look like a button. */}
+            {xr?.arSupported == null ? (
+              <KitButton size="sm" disabled>
+                Checking AR support…
+              </KitButton>
+            ) : xr.arSupported ? (
               <KitButton size="sm" onClick={() => api?.enterAr()} disabled={inSession}>
                 Enter AR
               </KitButton>
+            ) : platform === "android" && intent ? (
+              <a
+                className="btn-base btn-primary min-h-11 px-4 text-sm"
+                href={intent}
+                rel="nofollow noopener"
+              >
+                Open in Scene Viewer
+              </a>
             ) : (
-              <span className="text-xs text-muted-foreground">AR_UNAVAILABLE on this device.</span>
+              <p className="w-full text-xs text-muted-foreground">
+                Immersive AR is not available in this browser, so the model stays in the interactive
+                3D viewer. {arCapabilitySummary(platform)}
+              </p>
             )}
+            {xr?.xrState === "SESSION_REJECTED" || xr?.xrState === "ERROR" ? (
+              <p role="alert" className="w-full text-xs text-destructive">
+                AR session could not start. {xr.note || "No diagnostic detail was reported."}
+              </p>
+            ) : null}
             {xr?.vrSupported ? (
               <KitButton size="sm" onClick={() => api?.enterVr()} disabled={inSession}>
                 Enter VR
@@ -363,7 +414,7 @@ function ModelLabPage() {
                 {m === "TABLETOP" ? "Tabletop" : m === "AUTHORED_SCALE" ? "Authored scale" : "User adjusted"}
               </KitButton>
             ))}
-            {platform === "android" && intent ? (
+            {platform === "android" && intent && xr?.arSupported ? (
               <a
                 className="btn-base btn-secondary min-h-11 px-4 text-sm"
                 href={intent}
@@ -373,6 +424,7 @@ function ModelLabPage() {
               </a>
             ) : null}
           </Group>
+
 
           <Group label="Status">
             <div className="w-full space-y-1">
