@@ -202,6 +202,7 @@ function ModelLabPage() {
             </div>
           ) : (
             <ModelLabViewer
+              key={`${viewerKey}`}
               model={selected}
               env={env}
               autoRotate={autoRotate && !reducedMotion}
@@ -211,6 +212,19 @@ function ModelLabPage() {
               overlayRootRef={overlayRootRef}
             />
           )}
+
+          {contextLost ? (
+            <div className="absolute inset-x-2 top-2 flex flex-wrap items-center gap-2 rounded-xl border border-white/15 bg-black/70 px-3 py-2">
+              <p className="text-xs">
+                The graphics context was lost. Rebuilding the viewer creates one fresh canvas and
+                discards the old resources.
+              </p>
+              <KitButton size="sm" variant="primary" onClick={restoreRenderer}>
+                Restore renderer
+              </KitButton>
+            </div>
+          ) : null}
+
 
           {/* dom-overlay root: the only element visible inside an AR session */}
           <div
