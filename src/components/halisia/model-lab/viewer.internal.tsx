@@ -89,6 +89,7 @@ const EMPTY_STATUS: ViewerStatus = {
   triangles: 0,
   maxExtentM: null,
   xr: {
+    xrState: "IDLE",
     arSupported: null,
     vrSupported: null,
     inSession: false,
