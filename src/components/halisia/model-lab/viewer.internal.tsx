@@ -697,6 +697,7 @@ export default function ModelLabViewer({
           push({
             xr: {
               ...en.status.xr,
+              xrState: "READY",
               inSession: false,
               placed: false,
               hitTest: false,
