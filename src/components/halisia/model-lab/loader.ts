@@ -32,11 +32,7 @@ export type LoadProgress = {
 export class GlbLoadError extends Error {
   readonly state: Extract<LoadState, "FAILED_NETWORK" | "FAILED_ASSET">;
   readonly url: string;
-  constructor(
-    state: "FAILED_NETWORK" | "FAILED_ASSET",
-    url: string,
-    message: string,
-  ) {
+  constructor(state: "FAILED_NETWORK" | "FAILED_ASSET", url: string, message: string) {
     super(message);
     this.name = "GlbLoadError";
     this.state = state;
@@ -219,7 +215,11 @@ async function downloadOnce(
   } catch (err) {
     if (err instanceof GlbLoadError) throw err;
     if (timedOut()) {
-      throw new GlbLoadError("FAILED_NETWORK", url, `Timed out after ${opts.timeoutMs} ms fetching ${url}.`);
+      throw new GlbLoadError(
+        "FAILED_NETWORK",
+        url,
+        `Timed out after ${opts.timeoutMs} ms fetching ${url}.`,
+      );
     }
     if ((err as Error)?.name === "AbortError") throw err;
     throw new GlbLoadError(
@@ -241,7 +241,11 @@ export const glbCache = new GlbCache(2);
  */
 export async function loadGlbBytes(url: string, opts: LoadOptions = {}): Promise<ArrayBuffer> {
   if (!isAllowedModelUrl(url)) {
-    throw new GlbLoadError("FAILED_ASSET", url, `Blocked model URL (HTTPS or same-origin only): ${url}`);
+    throw new GlbLoadError(
+      "FAILED_ASSET",
+      url,
+      `Blocked model URL (HTTPS or same-origin only): ${url}`,
+    );
   }
   const cached = glbCache.get(url);
   if (cached) return cached;

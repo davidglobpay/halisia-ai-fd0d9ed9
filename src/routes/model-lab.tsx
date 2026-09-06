@@ -60,14 +60,42 @@ function Group({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function Row({ k, v }: { k: string; v: string }) {
+function Row({ k, v, code }: { k: string; v: string; code?: string }) {
   return (
     <div className="flex items-baseline justify-between gap-3 text-sm">
       <span className="text-muted-foreground">{k}</span>
-      <span className="text-right font-medium tabular-nums">{v}</span>
+      {/* Human-readable value; the raw enum stays available for debugging. */}
+      <span className="text-right font-medium tabular-nums" title={code ?? v}>
+        {v}
+      </span>
     </div>
   );
 }
+
+const LOAD_STATE_LABEL: Record<string, string> = {
+  IDLE: "Idle",
+  CHECKING: "Checking the file",
+  DOWNLOADING: "Downloading",
+  PARSING: "Parsing",
+  READY: "Ready",
+  FAILED_NETWORK: "Download failed",
+  FAILED_ASSET: "File could not be used",
+  FAILED_WEBGL: "Graphics unavailable",
+  AR_UNAVAILABLE: "AR unavailable",
+};
+
+const PERF_LABEL: Record<string, string> = {
+  LIGHT: "Light",
+  MEDIUM: "Medium",
+  HEAVY: "Heavy",
+  VERY_HEAVY: "Very heavy",
+};
+
+const PRESENTATION_LABEL: Record<PresentationMode, string> = {
+  TABLETOP: "Tabletop",
+  AUTHORED_SCALE: "Authored scale",
+  USER_ADJUSTED: "User adjusted",
+};
 
 function ModelLabPage() {
   const [platform, setPlatform] = useState<LabPlatform>("desktop");
@@ -111,7 +139,8 @@ function ModelLabPage() {
   const index = BUILDING_MODELS.findIndex((m) => m.id === selected.id);
   const step = useCallback(
     (delta: number) => {
-      const next = BUILDING_MODELS[(index + delta + BUILDING_MODELS.length) % BUILDING_MODELS.length]!;
+      const next =
+        BUILDING_MODELS[(index + delta + BUILDING_MODELS.length) % BUILDING_MODELS.length]!;
       setModelId(next.id);
     },
     [index],
@@ -141,6 +170,18 @@ function ModelLabPage() {
     typeof window !== "undefined" ? window.location.href : undefined,
   );
 
+  // The engine owns the presentation mode; local state is only the request.
+  const activePresentation = status?.presentation ?? presentation;
+
+  // After a keyed remount the fresh engine starts at its own default, so the
+  // requested presentation is re-applied as soon as the new API arrives.
+  useEffect(() => {
+    api?.setPresentation(presentation);
+    // Re-apply on a new API instance only, not on every presentation change
+    // (the click handler already applies those directly).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [api]);
+
   const contextLost = Boolean(status?.contextLost);
   const restoreRenderer = useCallback(() => {
     // Full remount: the viewer's own cleanup disposes geometries, materials,
@@ -153,13 +194,12 @@ function ModelLabPage() {
   const errorNotice = (() => {
     const s = status?.state;
     if (!s) return null;
-    if (s === "FAILED_NETWORK" || s === "FAILED_ASSET" || s === "FAILED_WEBGL" || s === "AR_UNAVAILABLE") {
+    if (s === "FAILED_NETWORK" || s === "FAILED_ASSET" || s === "FAILED_WEBGL") {
       return `${s}: ${status?.message ?? ""}`;
     }
     if (status?.contextLost) return `CONTEXT_LOST: ${status.message}`;
     return null;
   })();
-
 
   return (
     <main className="mx-auto w-full max-w-[1400px] px-4 py-6 sm:px-6">
@@ -175,7 +215,10 @@ function ModelLabPage() {
           {MODEL_LAB_DISCLAIMER}
         </p>
         {platform === "ios" ? (
-          <p role="note" className="mt-2 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-sm">
+          <p
+            role="note"
+            className="mt-2 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-sm"
+          >
             {QUICK_LOOK_UNAVAILABLE_MESSAGE}
           </p>
         ) : null}
@@ -191,7 +234,8 @@ function ModelLabPage() {
             <div className="flex h-full min-h-[52vh] w-full flex-col items-center justify-center gap-3 p-6 text-center">
               <p className="text-sm">
                 {selected.name} is a {selected.performanceClass.toLowerCase()} model of{" "}
-                {humanBytes(selected.bytes)}. On mobile data this download is not started automatically.
+                {humanBytes(selected.bytes)}. On mobile data this download is not started
+                automatically.
               </p>
               <KitButton
                 variant="primary"
@@ -224,7 +268,6 @@ function ModelLabPage() {
               </KitButton>
             </div>
           ) : null}
-
 
           {/* dom-overlay root: the only element visible inside an AR session */}
           <div
@@ -295,7 +338,12 @@ function ModelLabPage() {
         {/* controls */}
         <div className="flex flex-col gap-5 rounded-2xl border border-white/10 bg-black/20 p-4">
           <Group label="Model">
-            <KitButton iconOnly aria-label="Previous model" onClick={() => step(-1)}>
+            <KitButton
+              iconOnly
+              aria-label="Previous model"
+              disabled={inSession}
+              onClick={() => step(-1)}
+            >
               ←
             </KitButton>
             <label className="sr-only" htmlFor="model-lab-select">
@@ -305,6 +353,7 @@ function ModelLabPage() {
               id="model-lab-select"
               className="min-h-11 flex-1 rounded-xl border border-white/15 bg-transparent px-3 text-sm"
               value={selected.id}
+              disabled={inSession}
               onChange={(e) => setModelId(e.target.value)}
             >
               {BUILDING_MODELS.map((m) => (
@@ -313,7 +362,12 @@ function ModelLabPage() {
                 </option>
               ))}
             </select>
-            <KitButton iconOnly aria-label="Next model" onClick={() => step(1)}>
+            <KitButton
+              iconOnly
+              aria-label="Next model"
+              disabled={inSession}
+              onClick={() => step(1)}
+            >
               →
             </KitButton>
           </Group>
@@ -404,14 +458,18 @@ function ModelLabPage() {
               <KitButton
                 key={m}
                 size="sm"
-                variant={presentation === m ? "primary" : "secondary"}
-                aria-pressed={presentation === m}
+                variant={activePresentation === m ? "primary" : "secondary"}
+                aria-pressed={activePresentation === m}
                 onClick={() => {
                   setPresentation(m);
                   api?.setPresentation(m);
                 }}
               >
-                {m === "TABLETOP" ? "Tabletop" : m === "AUTHORED_SCALE" ? "Authored scale" : "User adjusted"}
+                {m === "TABLETOP"
+                  ? "Tabletop"
+                  : m === "AUTHORED_SCALE"
+                    ? "Authored scale"
+                    : "User adjusted"}
               </KitButton>
             ))}
             {platform === "android" && intent && xr?.arSupported ? (
@@ -425,11 +483,14 @@ function ModelLabPage() {
             ) : null}
           </Group>
 
-
           <Group label="Status">
             <div className="w-full space-y-1">
               <Row k="Model" v={selected.name} />
-              <Row k="State" v={status?.state ?? "MODEL_NOT_LOADED"} />
+              <Row
+                k="State"
+                v={LOAD_STATE_LABEL[status?.state ?? "IDLE"] ?? "Model not loaded"}
+                code={status?.state ?? "MODEL_NOT_LOADED"}
+              />
               <Row
                 k="Progress"
                 v={
@@ -444,14 +505,42 @@ function ModelLabPage() {
               <Row k="Meshes" v={String(status?.meshes ?? 0)} />
               <Row k="Triangles" v={String(status?.triangles ?? 0)} />
               <Row k="Max extent" v={status?.maxExtentM == null ? "—" : `${status.maxExtentM} m`} />
-              <Row k="Performance class" v={selected.performanceClass} />
+              <Row
+                k="Performance class"
+                v={PERF_LABEL[selected.performanceClass] ?? selected.performanceClass}
+                code={selected.performanceClass}
+              />
+              <Row
+                k="Presentation"
+                v={PRESENTATION_LABEL[activePresentation]}
+                code={activePresentation}
+              />
               <Row
                 k="AR support"
-                v={xr?.arSupported == null ? "checking…" : xr.arSupported ? "supported" : "AR_UNAVAILABLE"}
+                v={
+                  xr?.arSupported == null
+                    ? "checking…"
+                    : xr.arSupported
+                      ? "supported"
+                      : "not available"
+                }
+                code={
+                  xr?.arSupported == null
+                    ? "CHECKING"
+                    : xr.arSupported
+                      ? "SUPPORTED"
+                      : "AR_UNAVAILABLE"
+                }
               />
               <Row
                 k="VR support"
-                v={xr?.vrSupported == null ? "checking…" : xr.vrSupported ? "supported" : "unsupported"}
+                v={
+                  xr?.vrSupported == null
+                    ? "checking…"
+                    : xr.vrSupported
+                      ? "supported"
+                      : "unsupported"
+                }
               />
               <Row k="AR reference space" v={xr?.referenceSpace ?? "—"} />
               <Row
@@ -460,15 +549,37 @@ function ModelLabPage() {
               />
               <Row
                 k="Hit test"
-                v={!inSession ? "—" : xr?.hitTest ? "available" : "HIT_TEST_UNAVAILABLE"}
+                v={!inSession ? "—" : xr?.hitTest ? "available" : "not available"}
+                code={
+                  !inSession ? "—" : xr?.hitTest ? "HIT_TEST_AVAILABLE" : "HIT_TEST_UNAVAILABLE"
+                }
               />
               <Row k="Placement" v={xr?.placed ? "placed" : inSession ? "awaiting surface" : "—"} />
-              <Row k="Scene Viewer intent" v={selected.sceneViewerIntentSupported ? "constructed" : "n/a"} />
-              <Row k="Scene Viewer asset" v={`SCENE_VIEWER_${selected.sceneViewerAssetCompatibility}`} />
-              <Row k="Quick Look" v="QUICK_LOOK_UNAVAILABLE" />
-              <Row k="Parcel match" v={String(MODEL_LAB_PARCEL_CONTEXT.matchedParcelRecord)} />
-              <Row k="Boundary evidence" v={MODEL_LAB_PARCEL_CONTEXT.boundaryEvidence} />
-              <Row k="Model fit" v={MODEL_LAB_PARCEL_CONTEXT.modelFit} />
+              <Row
+                k="Scene Viewer intent"
+                v={selected.sceneViewerIntentSupported ? "constructed" : "n/a"}
+              />
+              <Row
+                k="Scene Viewer asset"
+                v={
+                  selected.sceneViewerAssetCompatibility === "UNVERIFIED"
+                    ? "not verified"
+                    : "not applicable"
+                }
+                code={`SCENE_VIEWER_${selected.sceneViewerAssetCompatibility}`}
+              />
+              <Row k="Quick Look" v="not available" code="QUICK_LOOK_UNAVAILABLE" />
+              <Row
+                k="Parcel match"
+                v="none"
+                code={String(MODEL_LAB_PARCEL_CONTEXT.matchedParcelRecord)}
+              />
+              <Row
+                k="Boundary evidence"
+                v="none"
+                code={MODEL_LAB_PARCEL_CONTEXT.boundaryEvidence}
+              />
+              <Row k="Model fit" v="unknown" code={MODEL_LAB_PARCEL_CONTEXT.modelFit} />
             </div>
           </Group>
 
