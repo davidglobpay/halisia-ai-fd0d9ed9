@@ -139,7 +139,8 @@ function ModelLabPage() {
   const index = BUILDING_MODELS.findIndex((m) => m.id === selected.id);
   const step = useCallback(
     (delta: number) => {
-      const next = BUILDING_MODELS[(index + delta + BUILDING_MODELS.length) % BUILDING_MODELS.length]!;
+      const next =
+        BUILDING_MODELS[(index + delta + BUILDING_MODELS.length) % BUILDING_MODELS.length]!;
       setModelId(next.id);
     },
     [index],
@@ -200,7 +201,6 @@ function ModelLabPage() {
     return null;
   })();
 
-
   return (
     <main className="mx-auto w-full max-w-[1400px] px-4 py-6 sm:px-6">
       <header className="mb-4">
@@ -215,7 +215,10 @@ function ModelLabPage() {
           {MODEL_LAB_DISCLAIMER}
         </p>
         {platform === "ios" ? (
-          <p role="note" className="mt-2 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-sm">
+          <p
+            role="note"
+            className="mt-2 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-sm"
+          >
             {QUICK_LOOK_UNAVAILABLE_MESSAGE}
           </p>
         ) : null}
@@ -231,7 +234,8 @@ function ModelLabPage() {
             <div className="flex h-full min-h-[52vh] w-full flex-col items-center justify-center gap-3 p-6 text-center">
               <p className="text-sm">
                 {selected.name} is a {selected.performanceClass.toLowerCase()} model of{" "}
-                {humanBytes(selected.bytes)}. On mobile data this download is not started automatically.
+                {humanBytes(selected.bytes)}. On mobile data this download is not started
+                automatically.
               </p>
               <KitButton
                 variant="primary"
@@ -264,7 +268,6 @@ function ModelLabPage() {
               </KitButton>
             </div>
           ) : null}
-
 
           {/* dom-overlay root: the only element visible inside an AR session */}
           <div
@@ -359,7 +362,12 @@ function ModelLabPage() {
                 </option>
               ))}
             </select>
-            <KitButton iconOnly aria-label="Next model" disabled={inSession} onClick={() => step(1)}>
+            <KitButton
+              iconOnly
+              aria-label="Next model"
+              disabled={inSession}
+              onClick={() => step(1)}
+            >
               →
             </KitButton>
           </Group>
@@ -457,7 +465,11 @@ function ModelLabPage() {
                   api?.setPresentation(m);
                 }}
               >
-                {m === "TABLETOP" ? "Tabletop" : m === "AUTHORED_SCALE" ? "Authored scale" : "User adjusted"}
+                {m === "TABLETOP"
+                  ? "Tabletop"
+                  : m === "AUTHORED_SCALE"
+                    ? "Authored scale"
+                    : "User adjusted"}
               </KitButton>
             ))}
             {platform === "android" && intent && xr?.arSupported ? (
@@ -470,7 +482,6 @@ function ModelLabPage() {
               </a>
             ) : null}
           </Group>
-
 
           <Group label="Status">
             <div className="w-full space-y-1">
@@ -506,12 +517,30 @@ function ModelLabPage() {
               />
               <Row
                 k="AR support"
-                v={xr?.arSupported == null ? "checking…" : xr.arSupported ? "supported" : "not available"}
-                code={xr?.arSupported == null ? "CHECKING" : xr.arSupported ? "SUPPORTED" : "AR_UNAVAILABLE"}
+                v={
+                  xr?.arSupported == null
+                    ? "checking…"
+                    : xr.arSupported
+                      ? "supported"
+                      : "not available"
+                }
+                code={
+                  xr?.arSupported == null
+                    ? "CHECKING"
+                    : xr.arSupported
+                      ? "SUPPORTED"
+                      : "AR_UNAVAILABLE"
+                }
               />
               <Row
                 k="VR support"
-                v={xr?.vrSupported == null ? "checking…" : xr.vrSupported ? "supported" : "unsupported"}
+                v={
+                  xr?.vrSupported == null
+                    ? "checking…"
+                    : xr.vrSupported
+                      ? "supported"
+                      : "unsupported"
+                }
               />
               <Row k="AR reference space" v={xr?.referenceSpace ?? "—"} />
               <Row
@@ -521,10 +550,15 @@ function ModelLabPage() {
               <Row
                 k="Hit test"
                 v={!inSession ? "—" : xr?.hitTest ? "available" : "not available"}
-                code={!inSession ? "—" : xr?.hitTest ? "HIT_TEST_AVAILABLE" : "HIT_TEST_UNAVAILABLE"}
+                code={
+                  !inSession ? "—" : xr?.hitTest ? "HIT_TEST_AVAILABLE" : "HIT_TEST_UNAVAILABLE"
+                }
               />
               <Row k="Placement" v={xr?.placed ? "placed" : inSession ? "awaiting surface" : "—"} />
-              <Row k="Scene Viewer intent" v={selected.sceneViewerIntentSupported ? "constructed" : "n/a"} />
+              <Row
+                k="Scene Viewer intent"
+                v={selected.sceneViewerIntentSupported ? "constructed" : "n/a"}
+              />
               <Row
                 k="Scene Viewer asset"
                 v={

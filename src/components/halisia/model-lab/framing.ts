@@ -28,11 +28,7 @@ function finite(v: THREE.Vector3): boolean {
 }
 
 /** Framing from an arbitrary Box3, guarding non-finite and zero-size bounds. */
-export function framingFromBox(
-  box: THREE.Box3,
-  fovDeg = 45,
-  aspect = 16 / 9,
-): Framing {
+export function framingFromBox(box: THREE.Box3, fovDeg = 45, aspect = 16 / 9): Framing {
   const center = new THREE.Vector3();
   const size = new THREE.Vector3();
   let degenerate = false;
@@ -57,8 +53,7 @@ export function framingFromBox(
 
   const vFov = (Math.max(1, fovDeg) * Math.PI) / 180;
   const hFov = 2 * Math.atan(Math.tan(vFov / 2) * Math.max(0.2, aspect));
-  const distance =
-    Math.max(radius / Math.sin(vFov / 2), radius / Math.sin(hFov / 2)) * 1.15;
+  const distance = Math.max(radius / Math.sin(vFov / 2), radius / Math.sin(hFov / 2)) * 1.15;
 
   const dir = new THREE.Vector3(0.8, 0.5, 1).normalize();
   const position = center.clone().add(dir.multiplyScalar(distance));
@@ -80,11 +75,7 @@ export function framingFromBox(
 }
 
 /** Convenience: framing directly from a loaded object. */
-export function framingFromObject(
-  object: THREE.Object3D,
-  fovDeg = 45,
-  aspect = 16 / 9,
-): Framing {
+export function framingFromObject(object: THREE.Object3D, fovDeg = 45, aspect = 16 / 9): Framing {
   return framingFromBox(new THREE.Box3().setFromObject(object), fovDeg, aspect);
 }
 

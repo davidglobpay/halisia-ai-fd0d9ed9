@@ -48,8 +48,7 @@ export function sceneViewerIntent(
   if (model.kind !== "building") return null;
   const abs = absoluteHttpsUrl(model.glbUrl, origin);
   if (!abs) return null;
-  const fallback =
-    fallbackUrl ?? (typeof window !== "undefined" ? window.location.href : abs);
+  const fallback = fallbackUrl ?? (typeof window !== "undefined" ? window.location.href : abs);
   return (
     `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(abs)}` +
     `&mode=ar_preferred&title=${encodeURIComponent(model.name)}` +
@@ -57,7 +56,6 @@ export function sceneViewerIntent(
     `S.browser_fallback_url=${encodeURIComponent(fallback)};end;`
   );
 }
-
 
 export const QUICK_LOOK_UNAVAILABLE_MESSAGE =
   "AR Quick Look is unavailable for this model because no USDZ asset has been provided.";

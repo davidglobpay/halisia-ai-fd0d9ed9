@@ -21,7 +21,13 @@ function Skeleton({ label }: { label: string }) {
   );
 }
 
-export type { ModelLabViewerProps, ViewerApi, ViewerStatus, EnvMode, PresentationMode } from "./viewer.internal";
+export type {
+  ModelLabViewerProps,
+  ViewerApi,
+  ViewerStatus,
+  EnvMode,
+  PresentationMode,
+} from "./viewer.internal";
 
 export default function ModelLabViewerClient(props: ModelLabViewerProps) {
   const [mounted, setMounted] = useState(false);

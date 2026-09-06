@@ -65,7 +65,6 @@ export type BuildingModel = BaseEntry & {
   readonly sceneViewerAssetCompatibility: "UNVERIFIED";
 };
 
-
 /** An environment shell. Structurally cannot be selected as a building. */
 export type EnvironmentModel = BaseEntry & {
   readonly kind: "environment";
@@ -113,7 +112,6 @@ function building(init: BuildingInit & { groundOffsetM?: number }): BuildingMode
     sceneViewerAssetCompatibility: "UNVERIFIED" as const,
   });
 }
-
 
 function environment(init: BuildingInit): EnvironmentModel {
   return Object.freeze({

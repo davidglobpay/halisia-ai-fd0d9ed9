@@ -56,8 +56,6 @@ export type ViewerStatus = {
   contextLost: boolean;
 };
 
-
-
 export type ViewerApi = {
   reset: () => void;
   fit: () => void;
@@ -170,7 +168,11 @@ export default function ModelLabViewer({
 
     let renderer: THREE.WebGLRenderer;
     try {
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+      renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true,
+        powerPreference: "high-performance",
+      });
     } catch (err) {
       statusRef.current?.({
         ...EMPTY_STATUS,
@@ -280,7 +282,12 @@ export default function ModelLabViewer({
     /* -------- context loss */
     const onLost = (ev: Event) => {
       ev.preventDefault();
-      push({ contextLost: true, state: "FAILED_WEBGL", message: "The WebGL context was lost (usually GPU memory pressure). Press “Restore renderer” to rebuild the scene." });
+      push({
+        contextLost: true,
+        state: "FAILED_WEBGL",
+        message:
+          "The WebGL context was lost (usually GPU memory pressure). Press “Restore renderer” to rebuild the scene.",
+      });
       setLive("WebGL context lost.");
     };
     const onRestored = () => {
@@ -336,7 +343,6 @@ export default function ModelLabViewer({
         },
       });
     }
-
 
     /* -------- animation loop */
     let spin = false;
@@ -486,7 +492,6 @@ export default function ModelLabViewer({
       e.modelRoot = fresh;
       e.scene.add(fresh);
 
-
       push({
         state: "CHECKING",
         progress: null,
@@ -522,7 +527,12 @@ export default function ModelLabViewer({
 
         push({ state: "PARSING", progress: null, message: `Parsing ${model.file}…` });
         const gltf = await new Promise<{ scene: THREE.Group }>((resolve, reject) => {
-          new GLTFLoader().parse(bytes, "", (g) => resolve(g as unknown as { scene: THREE.Group }), reject);
+          new GLTFLoader().parse(
+            bytes,
+            "",
+            (g) => resolve(g as unknown as { scene: THREE.Group }),
+            reject,
+          );
         });
 
         if (engine.current?.loadToken !== token) {
@@ -546,7 +556,6 @@ export default function ModelLabViewer({
         wrapper.add(gltf.scene);
         wrapper.position.y = "groundOffsetM" in model ? model.groundOffsetM : 0;
         fresh.add(wrapper);
-
 
         let meshes = 0;
         let triangles = 0;
@@ -615,14 +624,12 @@ export default function ModelLabViewer({
     const e = engine.current;
     if (!e) return;
     const f = framingFromObject(e.arRoot.children[0] ?? e.arRoot);
-    const base =
-      e.presentation === "AUTHORED_SCALE" ? 1 : tabletopScale(f.maxExtent, 0.5);
+    const base = e.presentation === "AUTHORED_SCALE" ? 1 : tabletopScale(f.maxExtent, 0.5);
     const s = base * (e.presentation === "USER_ADJUSTED" ? e.userScale : 1);
     e.arRoot.scale.setScalar(s > 0 && Number.isFinite(s) ? s : 1);
     // The engine owns the presentation mode; the UI mirrors this value.
     push({ presentation: e.presentation });
   }, [push]);
-
 
   const enterXr = useCallback(
     async (mode: "immersive-ar" | "immersive-vr") => {
@@ -663,9 +670,7 @@ export default function ModelLabViewer({
         const overlayRoot = overlayRef.current?.current ?? null;
         const session = await xr.requestSession(mode, {
           requiredFeatures: [],
-          optionalFeatures: isAr
-            ? ["hit-test", "dom-overlay", "local-floor"]
-            : ["local-floor"],
+          optionalFeatures: isAr ? ["hit-test", "dom-overlay", "local-floor"] : ["local-floor"],
 
           ...(isAr && overlayRoot ? { domOverlay: { root: overlayRoot } } : {}),
         });
@@ -689,7 +694,9 @@ export default function ModelLabViewer({
         }
 
         const domOverlayGranted = isAr
-          ? Boolean((session as XRSession & { domOverlayState?: { type?: string } }).domOverlayState)
+          ? Boolean(
+              (session as XRSession & { domOverlayState?: { type?: string } }).domOverlayState,
+            )
           : null;
 
         // Move the real loaded scene into the AR/VR wrapper — never a proxy.
@@ -787,7 +794,8 @@ export default function ModelLabViewer({
       } catch (err) {
         // XR failures never change the model LoadState.
         const name = (err as Error)?.name ?? "";
-        const rejected = name === "NotAllowedError" || name === "SecurityError" || name === "InvalidStateError";
+        const rejected =
+          name === "NotAllowedError" || name === "SecurityError" || name === "InvalidStateError";
         const cur = engine.current?.status.xr;
         if (cur) {
           push({
