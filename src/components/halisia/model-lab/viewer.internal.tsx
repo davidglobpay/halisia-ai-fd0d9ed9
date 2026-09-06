@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
+
 import { disposeSubtree, hasRenderableMesh } from "./disposal";
 import { framingFromObject, tabletopScale } from "./framing";
 import {
@@ -36,6 +38,8 @@ export type ViewerStatus = {
   meshes: number;
   triangles: number;
   maxExtentM: number | null;
+  /** Authoritative presentation mode, owned by the engine. */
+  presentation: PresentationMode;
   xr: {
     xrState: XrState;
     arSupported: boolean | null;
@@ -51,6 +55,7 @@ export type ViewerStatus = {
   };
   contextLost: boolean;
 };
+
 
 
 export type ViewerApi = {
@@ -88,6 +93,8 @@ const EMPTY_STATUS: ViewerStatus = {
   meshes: 0,
   triangles: 0,
   maxExtentM: null,
+  presentation: "TABLETOP",
+
   xr: {
     xrState: "IDLE",
     arSupported: null,
@@ -133,7 +140,11 @@ export default function ModelLabViewer({
     arRoot: THREE.Group;
     reticle: THREE.Mesh;
     lights: THREE.Group;
+    /** Neutral IBL, built once at bootstrap and shared by every env mode. */
+    pmrem: THREE.PMREMGenerator | null;
+    envRT: THREE.WebGLRenderTarget | null;
     status: ViewerStatus;
+
     presentation: PresentationMode;
     userScale: number;
     baseFit: { position: THREE.Vector3; target: THREE.Vector3 } | null;
@@ -210,6 +221,25 @@ export default function ModelLabViewer({
     reticle.visible = false;
     scene.add(reticle);
 
+    // Neutral image-based lighting, generated ONCE per engine. Env switching
+    // only touches analytic lights and the background, never this.
+    let pmrem: THREE.PMREMGenerator | null = null;
+    let envRT: THREE.WebGLRenderTarget | null = null;
+    try {
+      pmrem = new THREE.PMREMGenerator(renderer);
+      pmrem.compileEquirectangularShader();
+      const room = new RoomEnvironment();
+      envRT = pmrem.fromScene(room, 0.04);
+      scene.environment = envRT.texture;
+      // Modest, so the day/neutral/night analytic lighting stays legible.
+      scene.environmentIntensity = 0.35;
+      disposeSubtree(room);
+    } catch {
+      pmrem?.dispose();
+      pmrem = null;
+      envRT = null;
+    }
+
     engine.current = {
       renderer,
       scene,
@@ -219,7 +249,10 @@ export default function ModelLabViewer({
       arRoot,
       reticle,
       lights,
+      pmrem,
+      envRT,
       status: { ...EMPTY_STATUS },
+
       presentation: "TABLETOP",
       userScale: 1,
       baseFit: null,
@@ -345,8 +378,14 @@ export default function ModelLabViewer({
         disposeSubtree(e.arRoot);
         disposeSubtree(e.reticle);
         disposeSubtree(e.lights);
+        e.scene.environment = null;
+        e.envRT?.dispose();
+        e.pmrem?.dispose();
+        e.envRT = null;
+        e.pmrem = null;
         e.controls.dispose();
       }
+
       renderer.setAnimationLoop(null);
       renderer.dispose();
       // Final teardown only — never during model switching.
@@ -435,10 +474,18 @@ export default function ModelLabViewer({
       const ctrl = new AbortController();
       abortRef.current = ctrl;
 
+      // During an XR session the live wrapper lives in arRoot, not modelRoot.
+      // Dispose it where it actually is and empty arRoot, so the session's
+      // `end` handler can never reparent a disposed model.
+      if (e.arRoot.children.length > 0) {
+        for (const child of [...e.arRoot.children]) disposeSubtree(child);
+        e.arRoot.clear();
+      }
       disposeSubtree(e.modelRoot);
       const fresh = new THREE.Group();
       e.modelRoot = fresh;
       e.scene.add(fresh);
+
 
       push({
         state: "CHECKING",
@@ -493,10 +540,13 @@ export default function ModelLabViewer({
           return;
         }
 
-        // Wrap rather than mutate: authored transforms are preserved.
+        // Wrap rather than mutate: authored transforms are preserved. The
+        // ground offset is applied to the WRAPPER only.
         const wrapper = new THREE.Group();
         wrapper.add(gltf.scene);
+        wrapper.position.y = "groundOffsetM" in model ? model.groundOffsetM : 0;
         fresh.add(wrapper);
+
 
         let meshes = 0;
         let triangles = 0;
@@ -569,7 +619,10 @@ export default function ModelLabViewer({
       e.presentation === "AUTHORED_SCALE" ? 1 : tabletopScale(f.maxExtent, 0.5);
     const s = base * (e.presentation === "USER_ADJUSTED" ? e.userScale : 1);
     e.arRoot.scale.setScalar(s > 0 && Number.isFinite(s) ? s : 1);
-  }, []);
+    // The engine owns the presentation mode; the UI mirrors this value.
+    push({ presentation: e.presentation });
+  }, [push]);
+
 
   const enterXr = useCallback(
     async (mode: "immersive-ar" | "immersive-vr") => {

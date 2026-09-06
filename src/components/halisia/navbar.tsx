@@ -12,7 +12,7 @@ const LINKS: Array<{ to: string; label: string }> = [
   { to: "/marketplace", label: "Marketplace" },
   { to: "/title-deed", label: "Title Deed" },
   { to: "/spatial", label: "Spatial AR" },
-  { to: "/model-lab", label: "Explore in 3D & XR" },
+  
   { to: "/connections", label: "Connections" },
   { to: "/compare", label: "Compare" },
   { to: "/reports", label: "Reports" },
