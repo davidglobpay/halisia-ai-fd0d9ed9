@@ -49,12 +49,31 @@ export const Route = createFileRoute("/model-lab")({
 const DESKTOP_DEFAULT = "apartment-3";
 const MOBILE_DEFAULT = "market-day";
 
-function Group({ label, children }: { label: string; children: React.ReactNode }) {
+function Group({
+  label,
+  children,
+  collapsible,
+  open,
+}: {
+  label: string;
+  children: React.ReactNode;
+  /** Native <details> so a narrow viewport keeps the viewport dominant. */
+  collapsible?: boolean;
+  open?: boolean;
+}) {
+  const heading =
+    "text-[0.6875rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground";
+  if (collapsible) {
+    return (
+      <details open={open} className="flex flex-col gap-2" data-testid="model-lab-diagnostics">
+        <summary className={`cursor-pointer list-item ${heading}`}>{label}</summary>
+        <div className="mt-2 flex flex-wrap items-center gap-2">{children}</div>
+      </details>
+    );
+  }
   return (
     <section aria-label={label} className="flex flex-col gap-2">
-      <h2 className="text-[0.6875rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-        {label}
-      </h2>
+      <h2 className={heading}>{label}</h2>
       <div className="flex flex-wrap items-center gap-2">{children}</div>
     </section>
   );
@@ -78,10 +97,25 @@ const LOAD_STATE_LABEL: Record<string, string> = {
   DOWNLOADING: "Downloading",
   PARSING: "Parsing",
   READY: "Ready",
-  FAILED_NETWORK: "Download failed",
-  FAILED_ASSET: "File could not be used",
-  FAILED_WEBGL: "Graphics unavailable",
-  AR_UNAVAILABLE: "AR unavailable",
+  MODEL_NOT_LOADED: "No model is currently loaded.",
+  FAILED_NETWORK: "The model could not be downloaded.",
+  FAILED_ASSET: "This model file could not be read.",
+  FAILED_WEBGL: "3D rendering stopped unexpectedly.",
+};
+
+/** Plain-English copy for every machine state shown as body text. */
+const HUMAN_STATE: Record<string, string> = {
+  SESSION_REJECTED: "AR could not start on this device.",
+  XR_SESSION_REJECTED: "AR could not start on this device.",
+  ERROR: "AR could not start on this device.",
+  HIT_TEST_UNAVAILABLE: "Surface detection is unavailable.",
+  MODEL_NOT_LOADED: "No model is currently loaded.",
+  FAILED_NETWORK: "The model could not be downloaded.",
+  FAILED_ASSET: "This model file could not be read.",
+  FAILED_WEBGL: "3D rendering stopped unexpectedly.",
+  CONTEXT_LOST: "3D rendering stopped unexpectedly.",
+  AR_UNAVAILABLE: "AR is not available on this device.",
+  CHECKING: "Checking AR support…",
 };
 
 const PERF_LABEL: Record<string, string> = {
@@ -195,9 +229,9 @@ function ModelLabPage() {
     const s = status?.state;
     if (!s) return null;
     if (s === "FAILED_NETWORK" || s === "FAILED_ASSET" || s === "FAILED_WEBGL") {
-      return `${s}: ${status?.message ?? ""}`;
+      return `${HUMAN_STATE[s]} ${status?.message ?? ""}`.trim();
     }
-    if (status?.contextLost) return `CONTEXT_LOST: ${status.message}`;
+    if (status?.contextLost) return `${HUMAN_STATE["CONTEXT_LOST"]} ${status.message}`.trim();
     return null;
   })();
 
@@ -370,6 +404,12 @@ function ModelLabPage() {
             >
               →
             </KitButton>
+            {inSession ? (
+              <p className="w-full text-xs text-muted-foreground">
+                Model switching is locked while an immersive session is running. Exit XR to change
+                model.
+              </p>
+            ) : null}
           </Group>
 
           <Group label="View">
@@ -441,7 +481,8 @@ function ModelLabPage() {
             )}
             {xr?.xrState === "SESSION_REJECTED" || xr?.xrState === "ERROR" ? (
               <p role="alert" className="w-full text-xs text-destructive">
-                AR session could not start. {xr.note || "No diagnostic detail was reported."}
+                {HUMAN_STATE[xr.xrState] ?? "AR could not start on this device."}{" "}
+                {xr.note || "No diagnostic detail was reported."}
               </p>
             ) : null}
             {xr?.vrSupported ? (
@@ -454,24 +495,6 @@ function ModelLabPage() {
                 Exit XR
               </KitButton>
             ) : null}
-            {(["TABLETOP", "AUTHORED_SCALE", "USER_ADJUSTED"] as const).map((m) => (
-              <KitButton
-                key={m}
-                size="sm"
-                variant={activePresentation === m ? "primary" : "secondary"}
-                aria-pressed={activePresentation === m}
-                onClick={() => {
-                  setPresentation(m);
-                  api?.setPresentation(m);
-                }}
-              >
-                {m === "TABLETOP"
-                  ? "Tabletop"
-                  : m === "AUTHORED_SCALE"
-                    ? "Authored scale"
-                    : "User adjusted"}
-              </KitButton>
-            ))}
             {platform === "android" && intent && xr?.arSupported ? (
               <a
                 className="btn-base btn-secondary min-h-11 px-4 text-sm"
@@ -483,7 +506,24 @@ function ModelLabPage() {
             ) : null}
           </Group>
 
-          <Group label="Status">
+          <Group label="Presentation">
+            {(["TABLETOP", "AUTHORED_SCALE", "USER_ADJUSTED"] as const).map((m) => (
+              <KitButton
+                key={m}
+                size="sm"
+                variant={activePresentation === m ? "primary" : "secondary"}
+                aria-pressed={activePresentation === m}
+                onClick={() => {
+                  setPresentation(m);
+                  api?.setPresentation(m);
+                }}
+              >
+                {PRESENTATION_LABEL[m]}
+              </KitButton>
+            ))}
+          </Group>
+
+          <Group label="Diagnostics" collapsible open={!coarse}>
             <div className="w-full space-y-1">
               <Row k="Model" v={selected.name} />
               <Row
@@ -504,6 +544,8 @@ function ModelLabPage() {
               <Row k="Bytes" v={humanBytes(selected.bytes)} />
               <Row k="Meshes" v={String(status?.meshes ?? 0)} />
               <Row k="Triangles" v={String(status?.triangles ?? 0)} />
+              {/* Google recommends <= 10 materials for Scene Viewer; reported, never gated. */}
+              <Row k="Materials" v={String(status?.materialCount ?? 0)} />
               <Row k="Max extent" v={status?.maxExtentM == null ? "—" : `${status.maxExtentM} m`} />
               <Row
                 k="Performance class"
@@ -549,7 +591,13 @@ function ModelLabPage() {
               />
               <Row
                 k="Hit test"
-                v={!inSession ? "—" : xr?.hitTest ? "available" : "not available"}
+                v={
+                  !inSession
+                    ? "—"
+                    : xr?.hitTest
+                      ? "available"
+                      : HUMAN_STATE["HIT_TEST_UNAVAILABLE"]!
+                }
                 code={
                   !inSession ? "—" : xr?.hitTest ? "HIT_TEST_AVAILABLE" : "HIT_TEST_UNAVAILABLE"
                 }

@@ -59,6 +59,12 @@ export type BuildingModel = BaseEntry & {
    * or below its ground plane rests on y = 0.
    */
   readonly groundOffsetM: number;
+  /**
+   * Authored material count when it has been measured for this asset, else
+   * null. Google recommends <= 10 materials for Scene Viewer; the value is
+   * surfaced as diagnostics, never used to gate loading.
+   */
+  readonly materialCount: number | null;
   /** Whether an Android Scene Viewer intent can be constructed at all. */
   readonly sceneViewerIntentSupported: true;
   /** Whether the asset actually works in Scene Viewer — never inferred. */
@@ -103,11 +109,14 @@ function base(init: BuildingInit): BaseEntry {
   };
 }
 
-function building(init: BuildingInit & { groundOffsetM?: number }): BuildingModel {
+function building(
+  init: BuildingInit & { groundOffsetM?: number; materialCount?: number | null },
+): BuildingModel {
   return Object.freeze({
     ...base(init),
     kind: "building" as const,
     groundOffsetM: init.groundOffsetM ?? 0,
+    materialCount: init.materialCount ?? null,
     sceneViewerIntentSupported: true as const,
     sceneViewerAssetCompatibility: "UNVERIFIED" as const,
   });
@@ -128,8 +137,8 @@ export const BUILDING_MODELS: readonly BuildingModel[] = Object.freeze([
     id: "apartment-3",
     name: "Apartment 3",
     file: "Apartment_3.glb",
-    // TODO: replace 0 with the measured authored-origin-to-ground offset in metres for Apartment_3.glb.
-    groundOffsetM: 0,
+    // Measured authored-origin-to-ground offset, in metres.
+    groundOffsetM: -8.3719,
     category: "residential",
     typology: "Mid-rise apartment block",
     bytes: 23_739_464,
@@ -140,8 +149,8 @@ export const BUILDING_MODELS: readonly BuildingModel[] = Object.freeze([
     id: "apartment-1-2",
     name: "Apartment 1_2",
     file: "Apartment_1_2.glb",
-    // TODO: replace 0 with the measured authored-origin-to-ground offset in metres for Apartment_1_2.glb.
-    groundOffsetM: 0,
+    // Measured authored-origin-to-ground offset, in metres.
+    groundOffsetM: -8.3719,
     category: "residential",
     typology: "Paired apartment massing",
     bytes: 25_503_336,
@@ -152,8 +161,8 @@ export const BUILDING_MODELS: readonly BuildingModel[] = Object.freeze([
     id: "market-day",
     name: "Market Day",
     file: "Market_Day.glb",
-    // TODO: replace 0 with the measured authored-origin-to-ground offset in metres for Market_Day.glb.
-    groundOffsetM: 0,
+    // Measured authored-origin-to-ground offset, in metres.
+    groundOffsetM: -9.3628,
     category: "commercial",
     typology: "Open market hall",
     bytes: 17_786_532,
@@ -164,8 +173,8 @@ export const BUILDING_MODELS: readonly BuildingModel[] = Object.freeze([
     id: "apartment-6-rooftop-bar",
     name: "Apartment 6 — Rooftop Bar",
     file: "Apartment_6_Rooftop_Bar.glb",
-    // TODO: replace 0 with the measured authored-origin-to-ground offset in metres for Apartment_6_Rooftop_Bar.glb.
-    groundOffsetM: 0,
+    // Measured authored-origin-to-ground offset, in metres.
+    groundOffsetM: -6.5319,
     category: "mixed-use",
     typology: "Mixed-use block with rooftop terrace",
     bytes: 29_030_476,
