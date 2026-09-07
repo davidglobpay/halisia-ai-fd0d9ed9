@@ -37,6 +37,8 @@ export type ViewerStatus = {
   bytes: string;
   meshes: number;
   triangles: number;
+  /** Distinct materials in the loaded scene — reported, never gated on. */
+  materialCount: number;
   maxExtentM: number | null;
   /** Authoritative presentation mode, owned by the engine. */
   presentation: PresentationMode;
@@ -90,6 +92,7 @@ const EMPTY_STATUS: ViewerStatus = {
   bytes: "unknown size",
   meshes: 0,
   triangles: 0,
+  materialCount: 0,
   maxExtentM: null,
   presentation: "TABLETOP",
 
@@ -498,6 +501,7 @@ export default function ModelLabViewer({
         message: isReload ? `Reloading ${model.file}…` : `Checking ${model.file}…`,
         meshes: 0,
         triangles: 0,
+        materialCount: 0,
         maxExtentM: null,
       });
       setLive(`Loading ${model.name}.`);
@@ -559,6 +563,7 @@ export default function ModelLabViewer({
 
         let meshes = 0;
         let triangles = 0;
+        const materials = new Set<THREE.Material>();
         gltf.scene.traverse((o) => {
           const m = o as THREE.Mesh;
           if (m.isMesh && m.geometry) {
@@ -566,6 +571,9 @@ export default function ModelLabViewer({
             const idx = m.geometry.getIndex();
             const pos = m.geometry.getAttribute("position");
             triangles += Math.floor((idx ? idx.count : (pos?.count ?? 0)) / 3);
+            const mat = m.material;
+            if (Array.isArray(mat)) mat.forEach((x) => materials.add(x));
+            else if (mat) materials.add(mat);
           }
         });
 
@@ -576,6 +584,7 @@ export default function ModelLabViewer({
           message: `${model.name} loaded from ${model.file}.`,
           meshes,
           triangles,
+          materialCount: materials.size,
         });
         setLive(`${model.name} loaded.`);
       } catch (err) {
