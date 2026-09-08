@@ -251,23 +251,26 @@ export async function loadGlbBytes(url: string, opts: LoadOptions = {}): Promise
   if (cached) return cached;
 
   const existing = inFlight.get(url);
-  if (existing) return existing;
+  if (existing) return withCallerAbort(existing, opts.signal);
 
   const timeoutMs = opts.timeoutMs ?? 30_000;
   const retries = Math.max(0, opts.retries ?? 2);
 
+  // The shared download deliberately does NOT carry the caller's signal: a
+  // caller that unmounts (React StrictMode double-mount, model switch) must
+  // not abort a download other callers are already awaiting, which previously
+  // left every subsequent caller awaiting an aborted deduped promise forever.
   const run = (async () => {
     let lastErr: unknown;
     for (let attempt = 0; attempt <= retries; attempt += 1) {
       try {
-        const buf = await downloadOnce(url, { ...opts, timeoutMs });
+        const buf = await downloadOnce(url, { ...opts, signal: undefined, timeoutMs });
         glbCache.set(url, buf);
         return buf;
       } catch (err) {
         lastErr = err;
         if (err instanceof GlbLoadError && err.state === "FAILED_ASSET") break;
         if ((err as Error)?.name === "AbortError") break;
-        if (opts.signal?.aborted) break;
       }
     }
     throw lastErr;
@@ -276,7 +279,29 @@ export async function loadGlbBytes(url: string, opts: LoadOptions = {}): Promise
   });
 
   inFlight.set(url, run);
-  return run;
+  return withCallerAbort(run, opts.signal);
+}
+
+/**
+ * Per-caller cancellation. The shared download keeps running and still
+ * populates the cache; only this caller's await is rejected.
+ */
+function withCallerAbort<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {
+  if (!signal) return promise;
+  const abortError = () => {
+    const e = new Error("Aborted by caller");
+    e.name = "AbortError";
+    return e;
+  };
+  if (signal.aborted) {
+    promise.catch(() => undefined);
+    return Promise.reject(abortError());
+  }
+  return new Promise<T>((resolve, reject) => {
+    const onAbort = () => reject(abortError());
+    signal.addEventListener("abort", onAbort, { once: true });
+    promise.then(resolve, reject).finally(() => signal.removeEventListener("abort", onAbort));
+  });
 }
 
 /** Test/reset helper. */
