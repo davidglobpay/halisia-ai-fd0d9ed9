@@ -535,6 +535,942 @@ export type Database = {
         }
         Relationships: []
       }
+      marketplace_commissions: {
+        Row: {
+          agreement_id: string
+          agreement_snapshot: Json
+          agreement_version: number
+          applied_rate: number | null
+          applied_tiers: Json
+          base_amount: number
+          calc_method: Database["public"]["Enums"]["mkt_fee_method"]
+          calculation_id: string
+          clawback_amount: number
+          created_at: string
+          currency: string
+          gross_amount: number
+          id: string
+          net_amount: number
+          notes: string | null
+          refund_adjustment: number
+          source_id: string
+          state: Database["public"]["Enums"]["mkt_commission_state"]
+          tax_amount: number
+          transaction_id: string
+          updated_at: string
+        }
+        Insert: {
+          agreement_id: string
+          agreement_snapshot: Json
+          agreement_version: number
+          applied_rate?: number | null
+          applied_tiers?: Json
+          base_amount: number
+          calc_method: Database["public"]["Enums"]["mkt_fee_method"]
+          calculation_id: string
+          clawback_amount?: number
+          created_at?: string
+          currency: string
+          gross_amount: number
+          id?: string
+          net_amount: number
+          notes?: string | null
+          refund_adjustment?: number
+          source_id: string
+          state?: Database["public"]["Enums"]["mkt_commission_state"]
+          tax_amount?: number
+          transaction_id: string
+          updated_at?: string
+        }
+        Update: {
+          agreement_id?: string
+          agreement_snapshot?: Json
+          agreement_version?: number
+          applied_rate?: number | null
+          applied_tiers?: Json
+          base_amount?: number
+          calc_method?: Database["public"]["Enums"]["mkt_fee_method"]
+          calculation_id?: string
+          clawback_amount?: number
+          created_at?: string
+          currency?: string
+          gross_amount?: number
+          id?: string
+          net_amount?: number
+          notes?: string | null
+          refund_adjustment?: number
+          source_id?: string
+          state?: Database["public"]["Enums"]["mkt_commission_state"]
+          tax_amount?: number
+          transaction_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_commissions_agreement_id_fkey"
+            columns: ["agreement_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_partner_agreements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_commissions_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_sources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_commissions_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: true
+            referencedRelation: "marketplace_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_external_listings: {
+        Row: {
+          active: boolean
+          address: string | null
+          amenities: Json
+          availability_status: Database["public"]["Enums"]["mkt_availability"]
+          bathrooms: number | null
+          bedrooms: number | null
+          booking_amount: number | null
+          canonical_url: string | null
+          completion_date: string | null
+          county: string | null
+          created_at: string
+          currency: string
+          description: string | null
+          developer_name: string | null
+          freshness: Database["public"]["Enums"]["mkt_freshness"]
+          hero_image_url: string | null
+          id: string
+          intent: Database["public"]["Enums"]["mkt_listing_intent"]
+          latitude: number | null
+          listing_category: Database["public"]["Enums"]["mkt_listing_category"]
+          locality: string | null
+          longitude: number | null
+          original_listing_url: string | null
+          payment_plan_summary: string | null
+          price: number | null
+          price_qualifier: string | null
+          project_name: string | null
+          size_unit: string | null
+          size_value: number | null
+          source_checked_at: string | null
+          source_id: string
+          source_listing_id: string
+          source_updated_at: string | null
+          specifications: Json
+          tenure: string | null
+          title: string
+          updated_at: string
+          verification_status: Database["public"]["Enums"]["mkt_verification_status"]
+        }
+        Insert: {
+          active?: boolean
+          address?: string | null
+          amenities?: Json
+          availability_status?: Database["public"]["Enums"]["mkt_availability"]
+          bathrooms?: number | null
+          bedrooms?: number | null
+          booking_amount?: number | null
+          canonical_url?: string | null
+          completion_date?: string | null
+          county?: string | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          developer_name?: string | null
+          freshness?: Database["public"]["Enums"]["mkt_freshness"]
+          hero_image_url?: string | null
+          id?: string
+          intent?: Database["public"]["Enums"]["mkt_listing_intent"]
+          latitude?: number | null
+          listing_category?: Database["public"]["Enums"]["mkt_listing_category"]
+          locality?: string | null
+          longitude?: number | null
+          original_listing_url?: string | null
+          payment_plan_summary?: string | null
+          price?: number | null
+          price_qualifier?: string | null
+          project_name?: string | null
+          size_unit?: string | null
+          size_value?: number | null
+          source_checked_at?: string | null
+          source_id: string
+          source_listing_id: string
+          source_updated_at?: string | null
+          specifications?: Json
+          tenure?: string | null
+          title: string
+          updated_at?: string
+          verification_status?: Database["public"]["Enums"]["mkt_verification_status"]
+        }
+        Update: {
+          active?: boolean
+          address?: string | null
+          amenities?: Json
+          availability_status?: Database["public"]["Enums"]["mkt_availability"]
+          bathrooms?: number | null
+          bedrooms?: number | null
+          booking_amount?: number | null
+          canonical_url?: string | null
+          completion_date?: string | null
+          county?: string | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          developer_name?: string | null
+          freshness?: Database["public"]["Enums"]["mkt_freshness"]
+          hero_image_url?: string | null
+          id?: string
+          intent?: Database["public"]["Enums"]["mkt_listing_intent"]
+          latitude?: number | null
+          listing_category?: Database["public"]["Enums"]["mkt_listing_category"]
+          locality?: string | null
+          longitude?: number | null
+          original_listing_url?: string | null
+          payment_plan_summary?: string | null
+          price?: number | null
+          price_qualifier?: string | null
+          project_name?: string | null
+          size_unit?: string | null
+          size_value?: number | null
+          source_checked_at?: string | null
+          source_id?: string
+          source_listing_id?: string
+          source_updated_at?: string | null
+          specifications?: Json
+          tenure?: string | null
+          title?: string
+          updated_at?: string
+          verification_status?: Database["public"]["Enums"]["mkt_verification_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_external_listings_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_feature_flags: {
+        Row: {
+          description: string | null
+          enabled: boolean
+          key: string
+          updated_at: string
+        }
+        Insert: {
+          description?: string | null
+          enabled?: boolean
+          key: string
+          updated_at?: string
+        }
+        Update: {
+          description?: string | null
+          enabled?: boolean
+          key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      marketplace_leads: {
+        Row: {
+          assigned_to: string | null
+          consent_marketing: boolean
+          consent_marketing_at: string | null
+          consent_partner_contact: boolean
+          consent_partner_contact_at: string | null
+          consent_receipt: Json
+          created_at: string
+          email: string | null
+          enquiry_type: string
+          external_listing_id: string | null
+          full_name: string
+          id: string
+          message: string | null
+          phone: string | null
+          referral_id: string | null
+          source_id: string | null
+          status: Database["public"]["Enums"]["mkt_lead_status"]
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          consent_marketing?: boolean
+          consent_marketing_at?: string | null
+          consent_partner_contact?: boolean
+          consent_partner_contact_at?: string | null
+          consent_receipt?: Json
+          created_at?: string
+          email?: string | null
+          enquiry_type?: string
+          external_listing_id?: string | null
+          full_name: string
+          id?: string
+          message?: string | null
+          phone?: string | null
+          referral_id?: string | null
+          source_id?: string | null
+          status?: Database["public"]["Enums"]["mkt_lead_status"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          consent_marketing?: boolean
+          consent_marketing_at?: string | null
+          consent_partner_contact?: boolean
+          consent_partner_contact_at?: string | null
+          consent_receipt?: Json
+          created_at?: string
+          email?: string | null
+          enquiry_type?: string
+          external_listing_id?: string | null
+          full_name?: string
+          id?: string
+          message?: string | null
+          phone?: string | null
+          referral_id?: string | null
+          source_id?: string | null
+          status?: Database["public"]["Enums"]["mkt_lead_status"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_leads_external_listing_id_fkey"
+            columns: ["external_listing_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_external_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_leads_referral_id_fkey"
+            columns: ["referral_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_referrals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_leads_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_listing_price_history: {
+        Row: {
+          availability_status:
+            | Database["public"]["Enums"]["mkt_availability"]
+            | null
+          booking_amount: number | null
+          currency: string | null
+          id: string
+          listing_id: string
+          observed_at: string
+          price: number | null
+        }
+        Insert: {
+          availability_status?:
+            | Database["public"]["Enums"]["mkt_availability"]
+            | null
+          booking_amount?: number | null
+          currency?: string | null
+          id?: string
+          listing_id: string
+          observed_at?: string
+          price?: number | null
+        }
+        Update: {
+          availability_status?:
+            | Database["public"]["Enums"]["mkt_availability"]
+            | null
+          booking_amount?: number | null
+          currency?: string | null
+          id?: string
+          listing_id?: string
+          observed_at?: string
+          price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_listing_price_history_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_external_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_partner_agreements: {
+        Row: {
+          agreement_type: string
+          attribution_window_days: number
+          created_at: string
+          currency: string
+          effective_from: string
+          effective_to: string | null
+          evidence_ref: string | null
+          exclusions: Json
+          fee_method: Database["public"]["Enums"]["mkt_fee_method"]
+          flat_fee: number | null
+          id: string
+          max_fee: number | null
+          min_fee: number | null
+          percentage_rate: number | null
+          signed_at: string | null
+          signed_by: string | null
+          source_id: string
+          status: Database["public"]["Enums"]["mkt_agreement_status"]
+          tax_inclusive: boolean
+          tax_rate: number | null
+          tiers: Json
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          agreement_type?: string
+          attribution_window_days?: number
+          created_at?: string
+          currency?: string
+          effective_from: string
+          effective_to?: string | null
+          evidence_ref?: string | null
+          exclusions?: Json
+          fee_method: Database["public"]["Enums"]["mkt_fee_method"]
+          flat_fee?: number | null
+          id?: string
+          max_fee?: number | null
+          min_fee?: number | null
+          percentage_rate?: number | null
+          signed_at?: string | null
+          signed_by?: string | null
+          source_id: string
+          status?: Database["public"]["Enums"]["mkt_agreement_status"]
+          tax_inclusive?: boolean
+          tax_rate?: number | null
+          tiers?: Json
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          agreement_type?: string
+          attribution_window_days?: number
+          created_at?: string
+          currency?: string
+          effective_from?: string
+          effective_to?: string | null
+          evidence_ref?: string | null
+          exclusions?: Json
+          fee_method?: Database["public"]["Enums"]["mkt_fee_method"]
+          flat_fee?: number | null
+          id?: string
+          max_fee?: number | null
+          min_fee?: number | null
+          percentage_rate?: number | null
+          signed_at?: string | null
+          signed_by?: string | null
+          source_id?: string
+          status?: Database["public"]["Enums"]["mkt_agreement_status"]
+          tax_inclusive?: boolean
+          tax_rate?: number | null
+          tiers?: Json
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_partner_agreements_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_payouts: {
+        Row: {
+          amount: number
+          commission_id: string
+          created_at: string
+          currency: string
+          id: string
+          invoice_ref: string | null
+          paid_at: string | null
+          payment_reference: string | null
+          source_id: string
+          state: Database["public"]["Enums"]["mkt_payout_state"]
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          commission_id: string
+          created_at?: string
+          currency?: string
+          id?: string
+          invoice_ref?: string | null
+          paid_at?: string | null
+          payment_reference?: string | null
+          source_id: string
+          state?: Database["public"]["Enums"]["mkt_payout_state"]
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          commission_id?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          invoice_ref?: string | null
+          paid_at?: string | null
+          payment_reference?: string | null
+          source_id?: string
+          state?: Database["public"]["Enums"]["mkt_payout_state"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_payouts_commission_id_fkey"
+            columns: ["commission_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_commissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_payouts_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_referral_events: {
+        Row: {
+          event_type: Database["public"]["Enums"]["mkt_referral_event"]
+          external_listing_id: string | null
+          id: string
+          metadata: Json
+          occurred_at: string
+          override_by: string | null
+          override_reason: string | null
+          referral_id: string | null
+          source_id: string | null
+        }
+        Insert: {
+          event_type: Database["public"]["Enums"]["mkt_referral_event"]
+          external_listing_id?: string | null
+          id?: string
+          metadata?: Json
+          occurred_at?: string
+          override_by?: string | null
+          override_reason?: string | null
+          referral_id?: string | null
+          source_id?: string | null
+        }
+        Update: {
+          event_type?: Database["public"]["Enums"]["mkt_referral_event"]
+          external_listing_id?: string | null
+          id?: string
+          metadata?: Json
+          occurred_at?: string
+          override_by?: string | null
+          override_reason?: string | null
+          referral_id?: string | null
+          source_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_referral_events_external_listing_id_fkey"
+            columns: ["external_listing_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_external_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_referral_events_referral_id_fkey"
+            columns: ["referral_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_referrals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_referral_events_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_referrals: {
+        Row: {
+          attribution_window_days: number | null
+          created_at: string
+          expires_at: string | null
+          external_listing_id: string | null
+          id: string
+          property_id: string | null
+          referral_code: string
+          session_hash: string | null
+          source_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          attribution_window_days?: number | null
+          created_at?: string
+          expires_at?: string | null
+          external_listing_id?: string | null
+          id?: string
+          property_id?: string | null
+          referral_code: string
+          session_hash?: string | null
+          source_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          attribution_window_days?: number | null
+          created_at?: string
+          expires_at?: string | null
+          external_listing_id?: string | null
+          id?: string
+          property_id?: string | null
+          referral_code?: string
+          session_hash?: string | null
+          source_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_referrals_external_listing_id_fkey"
+            columns: ["external_listing_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_external_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_referrals_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_referrals_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_source_members: {
+        Row: {
+          created_at: string
+          id: string
+          role: string
+          source_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: string
+          source_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: string
+          source_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_source_members_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_source_sync_runs: {
+        Row: {
+          actor_id: string | null
+          archived_count: number
+          completed_at: string | null
+          created_count: number
+          error_count: number
+          error_detail: Json
+          fetched_count: number
+          id: string
+          mode: Database["public"]["Enums"]["mkt_integration_mode"]
+          ok: boolean
+          source_id: string
+          started_at: string
+          updated_count: number
+        }
+        Insert: {
+          actor_id?: string | null
+          archived_count?: number
+          completed_at?: string | null
+          created_count?: number
+          error_count?: number
+          error_detail?: Json
+          fetched_count?: number
+          id?: string
+          mode: Database["public"]["Enums"]["mkt_integration_mode"]
+          ok?: boolean
+          source_id: string
+          started_at?: string
+          updated_count?: number
+        }
+        Update: {
+          actor_id?: string | null
+          archived_count?: number
+          completed_at?: string | null
+          created_count?: number
+          error_count?: number
+          error_detail?: Json
+          fetched_count?: number
+          id?: string
+          mode?: Database["public"]["Enums"]["mkt_integration_mode"]
+          ok?: boolean
+          source_id?: string
+          started_at?: string
+          updated_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_source_sync_runs_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_sources: {
+        Row: {
+          active: boolean
+          can_display_description: boolean
+          can_display_floorplans: boolean
+          can_display_images: boolean
+          can_republish: boolean
+          can_store_locally: boolean
+          commercial_status: Database["public"]["Enums"]["mkt_commercial_status"]
+          created_at: string
+          default_referral_rate: number | null
+          description: string | null
+          id: string
+          integration_mode: Database["public"]["Enums"]["mkt_integration_mode"]
+          logo_url: string | null
+          name: string
+          partner_feed: boolean
+          rights_basis: string | null
+          rights_checked_at: string | null
+          rights_expires_at: string | null
+          slug: string
+          source_type: Database["public"]["Enums"]["mkt_source_type"]
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          active?: boolean
+          can_display_description?: boolean
+          can_display_floorplans?: boolean
+          can_display_images?: boolean
+          can_republish?: boolean
+          can_store_locally?: boolean
+          commercial_status?: Database["public"]["Enums"]["mkt_commercial_status"]
+          created_at?: string
+          default_referral_rate?: number | null
+          description?: string | null
+          id?: string
+          integration_mode?: Database["public"]["Enums"]["mkt_integration_mode"]
+          logo_url?: string | null
+          name: string
+          partner_feed?: boolean
+          rights_basis?: string | null
+          rights_checked_at?: string | null
+          rights_expires_at?: string | null
+          slug: string
+          source_type: Database["public"]["Enums"]["mkt_source_type"]
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          active?: boolean
+          can_display_description?: boolean
+          can_display_floorplans?: boolean
+          can_display_images?: boolean
+          can_republish?: boolean
+          can_store_locally?: boolean
+          commercial_status?: Database["public"]["Enums"]["mkt_commercial_status"]
+          created_at?: string
+          default_referral_rate?: number | null
+          description?: string | null
+          id?: string
+          integration_mode?: Database["public"]["Enums"]["mkt_integration_mode"]
+          logo_url?: string | null
+          name?: string
+          partner_feed?: boolean
+          rights_basis?: string | null
+          rights_checked_at?: string | null
+          rights_expires_at?: string | null
+          slug?: string
+          source_type?: Database["public"]["Enums"]["mkt_source_type"]
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: []
+      }
+      marketplace_transactions: {
+        Row: {
+          close_evidence: Json
+          closed_at: string | null
+          created_at: string
+          currency: string
+          external_listing_id: string | null
+          id: string
+          idempotency_key: string
+          lead_id: string | null
+          referral_id: string | null
+          refunded_amount: number
+          source_id: string
+          status: Database["public"]["Enums"]["mkt_transaction_status"]
+          transaction_value: number
+          updated_at: string
+        }
+        Insert: {
+          close_evidence?: Json
+          closed_at?: string | null
+          created_at?: string
+          currency?: string
+          external_listing_id?: string | null
+          id?: string
+          idempotency_key: string
+          lead_id?: string | null
+          referral_id?: string | null
+          refunded_amount?: number
+          source_id: string
+          status?: Database["public"]["Enums"]["mkt_transaction_status"]
+          transaction_value: number
+          updated_at?: string
+        }
+        Update: {
+          close_evidence?: Json
+          closed_at?: string | null
+          created_at?: string
+          currency?: string
+          external_listing_id?: string | null
+          id?: string
+          idempotency_key?: string
+          lead_id?: string | null
+          referral_id?: string | null
+          refunded_amount?: number
+          source_id?: string
+          status?: Database["public"]["Enums"]["mkt_transaction_status"]
+          transaction_value?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_transactions_external_listing_id_fkey"
+            columns: ["external_listing_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_external_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_transactions_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_transactions_referral_id_fkey"
+            columns: ["referral_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_referrals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_transactions_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_verification_evidence: {
+        Row: {
+          authority: string
+          created_at: string
+          evidence_type: string
+          id: string
+          listing_id: string
+          metadata: Json
+          method: string
+          record_class: Database["public"]["Enums"]["mkt_evidence_class"]
+          recorded_by: string | null
+          retrieved_at: string
+          source_record_id: string | null
+          source_record_url: string | null
+        }
+        Insert: {
+          authority: string
+          created_at?: string
+          evidence_type: string
+          id?: string
+          listing_id: string
+          metadata?: Json
+          method: string
+          record_class: Database["public"]["Enums"]["mkt_evidence_class"]
+          recorded_by?: string | null
+          retrieved_at?: string
+          source_record_id?: string | null
+          source_record_url?: string | null
+        }
+        Update: {
+          authority?: string
+          created_at?: string
+          evidence_type?: string
+          id?: string
+          listing_id?: string
+          metadata?: Json
+          method?: string
+          record_class?: Database["public"]["Enums"]["mkt_evidence_class"]
+          recorded_by?: string | null
+          retrieved_at?: string
+          source_record_id?: string | null
+          source_record_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_verification_evidence_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_external_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       news_articles: {
         Row: {
           ai_processed: boolean
@@ -2267,6 +3203,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_source_member: { Args: { _source_id: string }; Returns: boolean }
       listing_save_count: { Args: { p_property_id: string }; Returns: number }
       pulse_provider_status: {
         Args: never
@@ -2341,6 +3278,99 @@ export type Database = {
         | "closed"
         | "lost"
       listing_intent: "sale" | "rent" | "lease"
+      mkt_agreement_status:
+        | "draft"
+        | "active"
+        | "suspended"
+        | "expired"
+        | "terminated"
+      mkt_availability:
+        | "available"
+        | "reserved"
+        | "sold"
+        | "let"
+        | "withdrawn"
+        | "unknown"
+      mkt_commercial_status:
+        | "discovery_only"
+        | "outreach_pending"
+        | "referral_partner"
+        | "sales_partner"
+      mkt_commission_state:
+        | "pending"
+        | "approved"
+        | "disputed"
+        | "invoiced"
+        | "paid"
+        | "reversed"
+      mkt_evidence_class:
+        | "registry"
+        | "survey"
+        | "legal"
+        | "professional"
+        | "official_publication"
+        | "partner_attested"
+      mkt_fee_method: "percentage" | "flat" | "hybrid" | "tiered"
+      mkt_freshness: "fresh" | "recent" | "stale" | "expired" | "unknown"
+      mkt_integration_mode: "outbound" | "curated" | "feed" | "api" | "partner"
+      mkt_lead_status:
+        | "new"
+        | "contacted"
+        | "qualified"
+        | "viewing"
+        | "negotiation"
+        | "won"
+        | "lost"
+        | "spam"
+      mkt_listing_category:
+        | "land"
+        | "house"
+        | "apartment"
+        | "commercial"
+        | "industrial"
+        | "agricultural"
+        | "offplan"
+        | "affordable_housing"
+        | "rental"
+        | "development"
+        | "other"
+      mkt_listing_intent: "sale" | "rent" | "lease" | "apply"
+      mkt_payout_state: "draft" | "invoiced" | "paid" | "failed" | "cancelled"
+      mkt_referral_event:
+        | "LISTING_IMPRESSION"
+        | "LISTING_CLICK"
+        | "EXPLORE_HALISIA"
+        | "SOURCE_OUTBOUND_CLICK"
+        | "ENQUIRY_STARTED"
+        | "ENQUIRY_COMPLETED"
+        | "CALLBACK_REQUESTED"
+        | "VIEWING_REQUESTED"
+        | "VIEWING_BOOKED"
+        | "VIEWING_COMPLETED"
+        | "OFFER_STARTED"
+        | "OFFER_SUBMITTED"
+        | "RESERVATION"
+        | "TRANSACTION_PENDING"
+        | "CLOSED_WON"
+        | "CLOSED_LOST"
+      mkt_source_type:
+        | "portal"
+        | "developer"
+        | "land_company"
+        | "government"
+        | "agency"
+        | "partner"
+      mkt_transaction_status:
+        | "pending"
+        | "closed_won"
+        | "closed_lost"
+        | "cancelled"
+        | "refunded"
+        | "partially_refunded"
+      mkt_verification_status:
+        | "SOURCE_LISTED"
+        | "HALISIA_REVIEWED"
+        | "HALISIA_VERIFIED"
       news_geo_level:
         | "national"
         | "county"
@@ -2577,6 +3607,110 @@ export const Constants = {
         "lost",
       ],
       listing_intent: ["sale", "rent", "lease"],
+      mkt_agreement_status: [
+        "draft",
+        "active",
+        "suspended",
+        "expired",
+        "terminated",
+      ],
+      mkt_availability: [
+        "available",
+        "reserved",
+        "sold",
+        "let",
+        "withdrawn",
+        "unknown",
+      ],
+      mkt_commercial_status: [
+        "discovery_only",
+        "outreach_pending",
+        "referral_partner",
+        "sales_partner",
+      ],
+      mkt_commission_state: [
+        "pending",
+        "approved",
+        "disputed",
+        "invoiced",
+        "paid",
+        "reversed",
+      ],
+      mkt_evidence_class: [
+        "registry",
+        "survey",
+        "legal",
+        "professional",
+        "official_publication",
+        "partner_attested",
+      ],
+      mkt_fee_method: ["percentage", "flat", "hybrid", "tiered"],
+      mkt_freshness: ["fresh", "recent", "stale", "expired", "unknown"],
+      mkt_integration_mode: ["outbound", "curated", "feed", "api", "partner"],
+      mkt_lead_status: [
+        "new",
+        "contacted",
+        "qualified",
+        "viewing",
+        "negotiation",
+        "won",
+        "lost",
+        "spam",
+      ],
+      mkt_listing_category: [
+        "land",
+        "house",
+        "apartment",
+        "commercial",
+        "industrial",
+        "agricultural",
+        "offplan",
+        "affordable_housing",
+        "rental",
+        "development",
+        "other",
+      ],
+      mkt_listing_intent: ["sale", "rent", "lease", "apply"],
+      mkt_payout_state: ["draft", "invoiced", "paid", "failed", "cancelled"],
+      mkt_referral_event: [
+        "LISTING_IMPRESSION",
+        "LISTING_CLICK",
+        "EXPLORE_HALISIA",
+        "SOURCE_OUTBOUND_CLICK",
+        "ENQUIRY_STARTED",
+        "ENQUIRY_COMPLETED",
+        "CALLBACK_REQUESTED",
+        "VIEWING_REQUESTED",
+        "VIEWING_BOOKED",
+        "VIEWING_COMPLETED",
+        "OFFER_STARTED",
+        "OFFER_SUBMITTED",
+        "RESERVATION",
+        "TRANSACTION_PENDING",
+        "CLOSED_WON",
+        "CLOSED_LOST",
+      ],
+      mkt_source_type: [
+        "portal",
+        "developer",
+        "land_company",
+        "government",
+        "agency",
+        "partner",
+      ],
+      mkt_transaction_status: [
+        "pending",
+        "closed_won",
+        "closed_lost",
+        "cancelled",
+        "refunded",
+        "partially_refunded",
+      ],
+      mkt_verification_status: [
+        "SOURCE_LISTED",
+        "HALISIA_REVIEWED",
+        "HALISIA_VERIFIED",
+      ],
       news_geo_level: [
         "national",
         "county",
