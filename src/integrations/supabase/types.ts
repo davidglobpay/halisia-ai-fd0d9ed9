@@ -3203,8 +3203,39 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_privileged_role: {
+        Args: { _role: Database["public"]["Enums"]["app_role"] }
+        Returns: boolean
+      }
       is_source_member: { Args: { _source_id: string }; Returns: boolean }
+      is_verified_surveyor: { Args: { _user_id: string }; Returns: boolean }
       listing_save_count: { Args: { p_property_id: string }; Returns: number }
+      mkt_create_lead: {
+        Args: {
+          p_consent_marketing?: boolean
+          p_consent_partner_contact: boolean
+          p_email?: string
+          p_enquiry_type?: string
+          p_external_listing_id?: string
+          p_full_name: string
+          p_message?: string
+          p_phone?: string
+          p_referral_id?: string
+        }
+        Returns: string
+      }
+      mkt_create_referral: {
+        Args: {
+          p_external_listing_id?: string
+          p_property_id?: string
+          p_source_id?: string
+        }
+        Returns: {
+          expires_at: string
+          id: string
+          referral_code: string
+        }[]
+      }
       pulse_provider_status: {
         Args: never
         Returns: {
