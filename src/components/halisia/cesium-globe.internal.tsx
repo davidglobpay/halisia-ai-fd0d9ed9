@@ -47,7 +47,11 @@ export default function CesiumGlobe({
         viewer.scene.globe.enableLighting = true;
         viewer.scene.backgroundColor = Cesium.Color.fromCssColorString("#050d24");
         viewer.scene.skyAtmosphere.show = true;
-        viewer.cesiumWidget.creditContainer.style.display = "none";
+        // Attribution for Cesium and the imagery provider must stay visible.
+        const credits = viewer.cesiumWidget.creditContainer as HTMLElement;
+        credits.style.display = "";
+        credits.style.color = "rgba(255,255,255,0.85)";
+        credits.style.fontSize = "10px";
         viewerRef.current = viewer;
 
         const dest = Cesium.Cartesian3.fromDegrees(lng, lat, 25_000);
