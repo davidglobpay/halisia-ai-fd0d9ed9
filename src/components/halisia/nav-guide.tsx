@@ -21,12 +21,12 @@ const STEPS = [
   {
     icon: MapIcon,
     title: "Click a county tile",
-    body: "The landing map shows all 47 counties with official emblems. Tap any tile for a full political, economic, and geospatial profile.",
+    body: "The landing map shows all 47 counties with county emblems. Tap any tile for a full political, economic, and geospatial profile.",
   },
   {
     icon: Sparkles,
     title: "AI Land Intelligence Score",
-    body: "Every location gets a persona-weighted 10-module score — investors, home buyers, farmers, developers — with confidence, sources, and limitations.",
+    body: "Every location gets a score weighted to what you're trying to do — investing, buying a home, farming, developing — with its inputs, confidence and limitations listed.",
   },
   {
     icon: Layers,
