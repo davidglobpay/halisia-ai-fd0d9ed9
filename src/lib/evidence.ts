@@ -40,7 +40,7 @@ export const CITATIONS: Record<string, Citation> = {
   listing: {
     key: "listing",
     label: "Owner-declared listing data",
-    url: "https://halisi-ai.lovable.app/marketplace",
+    url: "https://halisia-ai.lovable.app/marketplace",
     detail: "Fields captured by the owner in the HALISIA listing wizard.",
   },
   osm: {
@@ -76,7 +76,7 @@ export const CITATIONS: Record<string, Citation> = {
   platform: {
     key: "platform",
     label: "HALISIA platform activity",
-    url: "https://halisi-ai.lovable.app/dashboard",
+    url: "https://halisia-ai.lovable.app/dashboard",
     detail: "Views, saved items, leads, proposals and financing records on this account.",
   },
 };

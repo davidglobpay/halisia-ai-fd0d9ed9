@@ -107,7 +107,7 @@ function ConfidenceDots({
   const n = level === "high" ? 3 : level === "med" ? 2 : 1;
   const tip = `${METRIC_LABELS[metric]} for ${countyName}: ${level.toUpperCase()} confidence — ${
     level === "high"
-      ? "cross-verified against multiple public sources."
+      ? "supported by multiple public sources."
       : level === "med"
         ? "partially sourced; consider on-the-ground verification."
         : "sparse data; treat as a directional signal only."
@@ -430,7 +430,7 @@ export function KenyaCountyMap() {
                   Confidence definitions
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground max-w-2xl">
-                  Three dots = cross-verified, two = partial, one = directional. Each metric is
+                  Three dots = multiple-source support, two = partial, one = directional. Each metric is
                   scored independently against its own sources.
                 </p>
               </div>

@@ -99,7 +99,7 @@ export async function generateCountyComparePdf(counties: County[]) {
   doc.setFontSize(8);
   doc.setTextColor(...muted);
   doc.text(
-    "Informational only — verify with a licensed professional. Confidence bands: 1 = directional, 2 = partial, 3 = cross-verified.",
+    "Informational only — verify with a licensed professional. Confidence bands: 1 = directional, 2 = partial, 3 = multiple-source support.",
     M,
     H - 20,
   );

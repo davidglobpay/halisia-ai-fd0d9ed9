@@ -123,10 +123,26 @@ export function MapView({
     return () => {
       cancelled = true;
       clickListenerRef.current?.remove();
+      clickListenerRef.current = null;
       markerDragListenerRef.current?.remove();
+      markerDragListenerRef.current = null;
       markerRef.current?.setMap(null);
+      markerRef.current = null;
       Object.values(overlayRefs.current).forEach((layer) => layer?.setMap(null));
       overlayRefs.current = {};
+      const map = mapRef.current;
+      if (map) {
+        const overlayTypes = map.overlayMapTypes;
+        Object.values(imageOverlayRefs.current).forEach((layer) => {
+          if (!layer) return;
+          const idx = overlayTypes.getArray().indexOf(layer);
+          if (idx >= 0) overlayTypes.removeAt(idx);
+        });
+        window.google?.maps?.event?.clearInstanceListeners(map);
+      }
+      imageOverlayRefs.current = {};
+      mapRef.current = null;
+      setMapReady(false);
     };
   }, [loadAttempt]);
 
@@ -157,7 +173,10 @@ export function MapView({
       if (!e.latLng) return;
       onMapClick({ lat: e.latLng.lat(), lng: e.latLng.lng() });
     });
-    return () => clickListenerRef.current?.remove();
+    return () => {
+      clickListenerRef.current?.remove();
+      clickListenerRef.current = null;
+    };
   }, [mapReady, onMapClick]);
 
   // Built-in Google overlays (traffic/transit/bicycling)
@@ -247,6 +266,16 @@ export function MapView({
         });
       }
     }
+    return () => {
+      markerDragListenerRef.current?.remove();
+      markerDragListenerRef.current = null;
+      const current = markerRef.current;
+      if (current) {
+        window.google?.maps?.event?.clearInstanceListeners(current);
+        current.setMap(null);
+      }
+      markerRef.current = null;
+    };
   }, [mapReady, marker?.lat, marker?.lng, marker?.label, markerDraggable, onMarkerDrag]);
 
   return (

@@ -1,3 +1,4 @@
+import { formatDateTime } from "@/lib/format-datetime";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
@@ -638,11 +639,9 @@ function AITab({ narrative, loading }: { narrative?: NarrativeOutput; loading: b
       </div>
     );
 
-  const updated = new Date(narrative.lastUpdated || Date.now());
-  const updatedLabel = updated.toLocaleString(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
+  const updatedLabel = narrative.lastUpdated
+    ? `Updated ${formatDateTime(narrative.lastUpdated)}`
+    : "Timestamp unavailable";
 
   return (
     <div className="space-y-3">
@@ -653,7 +652,7 @@ function AITab({ narrative, loading }: { narrative?: NarrativeOutput; loading: b
           <div className="text-[10px] uppercase tracking-widest text-accent">
             HALISIA AI · Executive summary
           </div>
-          <span className="ml-auto text-[10px] text-muted-foreground">Updated {updatedLabel}</span>
+          <span className="ml-auto text-[10px] text-muted-foreground">{updatedLabel}</span>
         </div>
         <div className="mt-1 text-base font-semibold tracking-tight">{narrative.headline}</div>
         {narrative.overview && (

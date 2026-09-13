@@ -256,10 +256,10 @@ export function MarketplaceSection() {
       eyebrow="Marketplace"
       title={
         <>
-          Listings with an <span className="text-gradient">intelligence score</span>.
+          Listings, with the <span className="text-gradient">evidence behind them</span>.
         </>
       }
-      intro="Every listing is verified through the HALISIA data pipeline before it reaches you."
+      intro="Every listing shows its source, how complete its data is, and what evidence we have — or don't."
       action={
         <Link
           to="/marketplace"
@@ -324,7 +324,7 @@ export function ContributorAndDashboardSection() {
     {
       icon: Users,
       title: "Contributor platform",
-      body: "Add photos, voice notes and on-the-ground observations. Verified contributions raise county confidence scores and earn reputation.",
+      body: "Reviewed contributions add to county data completeness and build contributor reputation.",
       to: "/contributions" as const,
       cta: "Start contributing",
     },
@@ -338,7 +338,7 @@ export function ContributorAndDashboardSection() {
     {
       icon: BarChart3,
       title: "Professional connections",
-      body: "Match with surveyors, valuers, architects and lawyers, with verification status and availability.",
+      body: "Match with surveyors, valuers, architects and lawyers, with the credentials they've submitted and their stated availability.",
       to: "/connections" as const,
       cta: "Find professionals",
     },
