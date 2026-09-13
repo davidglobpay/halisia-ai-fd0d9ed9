@@ -638,11 +638,9 @@ function AITab({ narrative, loading }: { narrative?: NarrativeOutput; loading: b
       </div>
     );
 
-  const updated = new Date(narrative.lastUpdated || Date.now());
-  const updatedLabel = updated.toLocaleString(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
+  const updatedLabel = narrative.lastUpdated
+    ? formatDateTime(narrative.lastUpdated)
+    : "Timestamp unavailable";
 
   return (
     <div className="space-y-3">
