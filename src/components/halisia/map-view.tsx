@@ -173,7 +173,10 @@ export function MapView({
       if (!e.latLng) return;
       onMapClick({ lat: e.latLng.lat(), lng: e.latLng.lng() });
     });
-    return () => clickListenerRef.current?.remove();
+    return () => {
+      clickListenerRef.current?.remove();
+      clickListenerRef.current = null;
+    };
   }, [mapReady, onMapClick]);
 
   // Built-in Google overlays (traffic/transit/bicycling)
