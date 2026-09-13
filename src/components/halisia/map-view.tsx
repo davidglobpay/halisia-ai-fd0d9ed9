@@ -123,10 +123,26 @@ export function MapView({
     return () => {
       cancelled = true;
       clickListenerRef.current?.remove();
+      clickListenerRef.current = null;
       markerDragListenerRef.current?.remove();
+      markerDragListenerRef.current = null;
       markerRef.current?.setMap(null);
+      markerRef.current = null;
       Object.values(overlayRefs.current).forEach((layer) => layer?.setMap(null));
       overlayRefs.current = {};
+      const map = mapRef.current;
+      if (map) {
+        const overlayTypes = map.overlayMapTypes;
+        Object.values(imageOverlayRefs.current).forEach((layer) => {
+          if (!layer) return;
+          const idx = overlayTypes.getArray().indexOf(layer);
+          if (idx >= 0) overlayTypes.removeAt(idx);
+        });
+        window.google?.maps?.event?.clearInstanceListeners(map);
+      }
+      imageOverlayRefs.current = {};
+      mapRef.current = null;
+      setMapReady(false);
     };
   }, [loadAttempt]);
 
