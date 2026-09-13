@@ -640,7 +640,7 @@ function AITab({ narrative, loading }: { narrative?: NarrativeOutput; loading: b
     );
 
   const updatedLabel = narrative.lastUpdated
-    ? formatDateTime(narrative.lastUpdated)
+    ? `Updated ${formatDateTime(narrative.lastUpdated)}`
     : "Timestamp unavailable";
 
   return (
