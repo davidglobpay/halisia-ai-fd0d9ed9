@@ -266,6 +266,16 @@ export function MapView({
         });
       }
     }
+    return () => {
+      markerDragListenerRef.current?.remove();
+      markerDragListenerRef.current = null;
+      const current = markerRef.current;
+      if (current) {
+        window.google?.maps?.event?.clearInstanceListeners(current);
+        current.setMap(null);
+      }
+      markerRef.current = null;
+    };
   }, [mapReady, marker?.lat, marker?.lng, marker?.label, markerDraggable, onMarkerDrag]);
 
   return (
