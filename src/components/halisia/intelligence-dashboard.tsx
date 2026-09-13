@@ -652,7 +652,7 @@ function AITab({ narrative, loading }: { narrative?: NarrativeOutput; loading: b
           <div className="text-[10px] uppercase tracking-widest text-accent">
             HALISIA AI · Executive summary
           </div>
-          <span className="ml-auto text-[10px] text-muted-foreground">Updated {updatedLabel}</span>
+          <span className="ml-auto text-[10px] text-muted-foreground">{updatedLabel}</span>
         </div>
         <div className="mt-1 text-base font-semibold tracking-tight">{narrative.headline}</div>
         {narrative.overview && (
