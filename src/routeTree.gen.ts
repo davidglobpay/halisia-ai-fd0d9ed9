@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TokenAuditRouteImport } from './routes/token-audit'
 import { Route as TitleDeedRouteImport } from './routes/title-deed'
+import { Route as SystemStatusRouteImport } from './routes/system-status'
 import { Route as StyleGuideRouteImport } from './routes/style-guide'
 import { Route as SpatialRouteImport } from './routes/spatial'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
@@ -56,6 +57,11 @@ const TokenAuditRoute = TokenAuditRouteImport.update({
 const TitleDeedRoute = TitleDeedRouteImport.update({
   id: '/title-deed',
   path: '/title-deed',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SystemStatusRoute = SystemStatusRouteImport.update({
+  id: '/system-status',
+  path: '/system-status',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StyleGuideRoute = StyleGuideRouteImport.update({
@@ -256,6 +262,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/spatial': typeof SpatialRoute
   '/style-guide': typeof StyleGuideRoute
+  '/system-status': typeof SystemStatusRoute
   '/title-deed': typeof TitleDeedRoute
   '/token-audit': typeof TokenAuditRoute
   '/account': typeof AuthenticatedAccountRoute
@@ -294,6 +301,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/spatial': typeof SpatialRoute
   '/style-guide': typeof StyleGuideRoute
+  '/system-status': typeof SystemStatusRoute
   '/title-deed': typeof TitleDeedRoute
   '/token-audit': typeof TokenAuditRoute
   '/account': typeof AuthenticatedAccountRoute
@@ -335,6 +343,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/spatial': typeof SpatialRoute
   '/style-guide': typeof StyleGuideRoute
+  '/system-status': typeof SystemStatusRoute
   '/title-deed': typeof TitleDeedRoute
   '/token-audit': typeof TokenAuditRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
@@ -376,6 +385,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/spatial'
     | '/style-guide'
+    | '/system-status'
     | '/title-deed'
     | '/token-audit'
     | '/account'
@@ -414,6 +424,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/spatial'
     | '/style-guide'
+    | '/system-status'
     | '/title-deed'
     | '/token-audit'
     | '/account'
@@ -454,6 +465,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/spatial'
     | '/style-guide'
+    | '/system-status'
     | '/title-deed'
     | '/token-audit'
     | '/_authenticated/account'
@@ -495,6 +507,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SpatialRoute: typeof SpatialRoute
   StyleGuideRoute: typeof StyleGuideRoute
+  SystemStatusRoute: typeof SystemStatusRoute
   TitleDeedRoute: typeof TitleDeedRoute
   TokenAuditRoute: typeof TokenAuditRoute
   ApiChatRoute: typeof ApiChatRoute
@@ -519,6 +532,13 @@ declare module '@tanstack/react-router' {
       path: '/title-deed'
       fullPath: '/title-deed'
       preLoaderRoute: typeof TitleDeedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/system-status': {
+      id: '/system-status'
+      path: '/system-status'
+      fullPath: '/system-status'
+      preLoaderRoute: typeof SystemStatusRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/style-guide': {
@@ -842,6 +862,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SpatialRoute: SpatialRoute,
   StyleGuideRoute: StyleGuideRoute,
+  SystemStatusRoute: SystemStatusRoute,
   TitleDeedRoute: TitleDeedRoute,
   TokenAuditRoute: TokenAuditRoute,
   ApiChatRoute: ApiChatRoute,

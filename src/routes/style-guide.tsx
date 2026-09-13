@@ -32,24 +32,29 @@ export const Route = createFileRoute("/style-guide")({
 });
 
 const COLORS: Array<{ name: string; hex: string; use: string; swatch: string }> = [
-  { name: "Deep Black", hex: "#050706", use: "App background", swatch: "bg-[#050706]" },
-  { name: "Panel Black", hex: "#0B0F0D", use: "Glass panels, popovers", swatch: "bg-[#0B0F0D]" },
-  { name: "Surface", hex: "#111614", use: "Elevation 1 tiles", swatch: "bg-[#111614]" },
+  { name: "Egg White", hex: "#F7F3EA", use: "Page background", swatch: "bg-[#F7F3EA]" },
+  { name: "Off White", hex: "#FFFDF8", use: "Glass panels, popovers", swatch: "bg-[#FFFDF8]" },
+  { name: "Deep Forest", hex: "#102D1A", use: "Primary text, navigation", swatch: "bg-[#102D1A]" },
   {
-    name: "Emerald Green",
-    hex: "#008F55",
+    name: "Intelligence Green",
+    hex: "#147B35",
     use: "Verified, positive, primary",
-    swatch: "bg-[#008F55]",
+    swatch: "bg-[#147B35]",
   },
-  { name: "Crimson Red", hex: "#BB1E2D", use: "Risk, alerts, destructive", swatch: "bg-[#BB1E2D]" },
+  { name: "Signal Red", hex: "#B3261E", use: "Risk, alerts, destructive", swatch: "bg-[#B3261E]" },
   {
     name: "Metallic Gold",
-    hex: "#D4AF37",
+    hex: "#C08A2E",
     use: "Premium & AI moments only",
-    swatch: "bg-[#D4AF37]",
+    swatch: "bg-[#C08A2E]",
   },
-  { name: "Silver", hex: "#AEB7BC", use: "Secondary text, borders", swatch: "bg-[#AEB7BC]" },
-  { name: "Soft White", hex: "#F5F7F8", use: "Primary text", swatch: "bg-[#F5F7F8]" },
+  { name: "Stone", hex: "#33403A", use: "Secondary text", swatch: "bg-[#33403A]" },
+  {
+    name: "Warm Silver",
+    hex: "#E7E0D2",
+    use: "Borders and quiet surfaces",
+    swatch: "bg-[#E7E0D2]",
+  },
 ];
 
 const TYPE_ROWS = [
@@ -92,7 +97,6 @@ function StyleGuidePage() {
   const [tab, setTab] = useState("foundations");
   const [reduced, , setReduced] = useReducedMotionPref();
   const dev = useDevMode();
-
 
   return (
     <div className="min-h-dvh" data-testid="style-guide">
