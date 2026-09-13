@@ -236,17 +236,6 @@ export function MapView({
             `https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Hydro_Reference_Overlay/MapServer/tile/${z}/${c.y}/${c.x}`,
         }),
     );
-    return () => {
-      Object.values(overlayRefs.current).forEach((layer) => layer?.setMap(null));
-      overlayRefs.current = {};
-      const overlayTypes = m.overlayMapTypes;
-      Object.values(imageOverlayRefs.current).forEach((layer) => {
-        if (!layer) return;
-        const idx = overlayTypes.getArray().indexOf(layer);
-        if (idx >= 0) overlayTypes.removeAt(idx);
-      });
-      imageOverlayRefs.current = {};
-    };
   }, [mapReady, overlays]);
 
   useEffect(() => {
