@@ -1,20 +1,32 @@
 import { createFileRoute } from "@tanstack/react-router";
-
-type Msg = { role: "user" | "assistant" | "system"; content: string };
+import {
+  AiGatewayError,
+  completeAiChat,
+  sanitizeMessages,
+  type AiMessage,
+} from "@/lib/ai-gateway.server";
 
 export const Route = createFileRoute("/api/chat")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const key = process.env.LOVABLE_API_KEY;
-        if (!key) return Response.json({ reply: "AI is not configured yet." }, { status: 500 });
+        let payload: { messages?: unknown; context?: unknown };
+        try {
+          payload = (await request.json()) as { messages?: unknown; context?: unknown };
+        } catch {
+          return Response.json({ reply: "The request body must be valid JSON." }, { status: 400 });
+        }
+        const messages = sanitizeMessages(payload.messages);
+        const context =
+          typeof payload.context === "string" ? payload.context.trim().slice(0, 4_000) : "";
+        if (!messages.some((message) => message.role === "user")) {
+          return Response.json(
+            { reply: "Please include a question for HALISIA AI." },
+            { status: 400 },
+          );
+        }
 
-        const { messages = [], context } = (await request.json()) as {
-          messages?: Msg[];
-          context?: string;
-        };
-
-        const system: Msg = {
+        const system: AiMessage = {
           role: "system",
           content: [
             "You are HALISIA AI, a land intelligence assistant for Kenya.",
@@ -30,38 +42,31 @@ export const Route = createFileRoute("/api/chat")({
         };
 
         try {
-          const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Lovable-API-Key": key,
-            },
-            body: JSON.stringify({
-              model: "google/gemini-3-flash-preview",
-              messages: [system, ...messages],
-            }),
+          const result = await completeAiChat({ messages: [system, ...messages] });
+          return Response.json({
+            reply: result.content,
+            model: result.model,
+            provider: result.provider,
           });
-          if (!res.ok) {
-            const body = await res.text();
-            console.error("AI gateway error", res.status, body);
-            if (res.status === 429)
-              return Response.json({
-                reply: "I'm getting a lot of questions right now — please try again in a moment.",
-              });
-            if (res.status === 402)
-              return Response.json({
-                reply: "AI credits are exhausted. Please top up in Settings → Plans & credits.",
-              });
-            return Response.json({ reply: "I hit a snag reaching my model. Try again shortly." });
+        } catch (error) {
+          if (error instanceof AiGatewayError) {
+            const replies: Record<AiGatewayError["code"], string> = {
+              not_configured: "AI is not configured yet.",
+              rate_limited: "I'm getting a lot of questions right now — please try again shortly.",
+              credits_exhausted: "AI service capacity is temporarily unavailable.",
+              timeout: "The analysis took too long. Please try a shorter question.",
+              upstream: "I couldn't reach the intelligence service. Please try again shortly.",
+            };
+            return Response.json(
+              { reply: replies[error.code], code: error.code },
+              { status: error.status },
+            );
           }
-          const data = (await res.json()) as {
-            choices?: Array<{ message?: { content?: string } }>;
-          };
-          const reply = data?.choices?.[0]?.message?.content ?? "I couldn't form a reply.";
-          return Response.json({ reply });
-        } catch (err) {
-          console.error(err);
-          return Response.json({ reply: "Network hiccup on my side. Try again." });
+          console.error("Unexpected HALISIA chat error", error);
+          return Response.json(
+            { reply: "HALISIA AI encountered an unexpected error." },
+            { status: 500 },
+          );
         }
       },
     },
