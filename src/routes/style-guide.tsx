@@ -38,7 +38,7 @@ const COLORS: Array<{ name: string; hex: string; use: string; swatch: string }> 
   {
     name: "Intelligence Green",
     hex: "#147B35",
-    use: "Verified, positive, primary",
+    use: "Evidence-backed, positive, primary",
     swatch: "bg-[#147B35]",
   },
   { name: "Signal Red", hex: "#B3261E", use: "Risk, alerts, destructive", swatch: "bg-[#B3261E]" },
@@ -135,7 +135,7 @@ function StyleGuidePage() {
                 as="h3"
                 eyebrow="Section 19"
                 title="Colour system"
-                description="Kenyan flag palette. Green means verified or positive, red means risk, gold is reserved for premium and AI moments."
+                description="Kenyan flag palette. Green means evidence-backed or positive, red means risk, gold is reserved for premium and AI moments."
               />
               <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                 {COLORS.map((c) => (
@@ -230,7 +230,7 @@ function StyleGuidePage() {
                     <p className="text-sm font-semibold capitalize">{edge} edge</p>
                     <p className="text-muted-foreground mt-1 text-xs">
                       {edge === "green"
-                        ? "Verified / positive"
+                        ? "Evidence-backed / positive"
                         : edge === "red"
                           ? "Risk / alert"
                           : edge === "gold"
