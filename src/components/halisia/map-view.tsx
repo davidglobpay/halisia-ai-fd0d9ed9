@@ -374,7 +374,11 @@ export function MapView({
       {streetView && !streetViewOpen && (
         <button
           type="button"
-          onClick={() => setStreetViewOpen(true)}
+          onClick={(event) => {
+            event.stopPropagation();
+            setStreetViewOpen(true);
+          }}
+          onPointerDown={(event) => event.stopPropagation()}
           className="absolute bottom-3 left-3 z-[650] inline-flex min-h-11 items-center gap-2 rounded-full border border-white/15 bg-black/65 px-4 py-2 text-xs font-semibold text-white shadow-xl backdrop-blur hover:bg-black/80"
           aria-label="Open nearby Google Street View"
           data-testid="open-street-view"
