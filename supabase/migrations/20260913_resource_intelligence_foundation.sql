@@ -1,5 +1,6 @@
 -- HALISIA Resource Intelligence Foundation — additive/staged only.
 -- Does not modify parcels, marketplace tables, Spatial routes or protected AR/XR assets.
+-- Safe to re-run after a manually applied staging/prod validation.
 
 CREATE TABLE IF NOT EXISTS public.resource_sources (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -118,20 +119,37 @@ ALTER TABLE public.resource_evidence_links ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.resource_assessments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.resource_feature_flags ENABLE ROW LEVEL SECURITY;
 
+-- M0-A is intentionally server-only. Supabase default grants can otherwise
+-- leave direct client table privileges present even with RLS enabled.
+REVOKE ALL ON public.resource_sources FROM anon, authenticated;
+REVOKE ALL ON public.resource_observations FROM anon, authenticated;
+REVOKE ALL ON public.resource_evidence_links FROM anon, authenticated;
+REVOKE ALL ON public.resource_assessments FROM anon, authenticated;
+REVOKE ALL ON public.resource_feature_flags FROM anon, authenticated;
+
 GRANT ALL ON public.resource_sources TO service_role;
 GRANT ALL ON public.resource_observations TO service_role;
 GRANT ALL ON public.resource_evidence_links TO service_role;
 GRANT ALL ON public.resource_assessments TO service_role;
 GRANT ALL ON public.resource_feature_flags TO service_role;
 
+DROP POLICY IF EXISTS "service role manages resource sources" ON public.resource_sources;
 CREATE POLICY "service role manages resource sources" ON public.resource_sources
 FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "service role manages resource observations" ON public.resource_observations;
 CREATE POLICY "service role manages resource observations" ON public.resource_observations
 FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "service role manages resource evidence links" ON public.resource_evidence_links;
 CREATE POLICY "service role manages resource evidence links" ON public.resource_evidence_links
 FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "service role manages resource assessments" ON public.resource_assessments;
 CREATE POLICY "service role manages resource assessments" ON public.resource_assessments
 FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "service role manages resource flags" ON public.resource_feature_flags;
 CREATE POLICY "service role manages resource flags" ON public.resource_feature_flags
 FOR ALL TO service_role USING (true) WITH CHECK (true);
 
