@@ -7,6 +7,8 @@ INSERT INTO _ri_check VALUES
 ('RLS resource observations', (SELECT relrowsecurity FROM pg_class WHERE oid='public.resource_observations'::regclass)),
 ('RLS resource assessments', (SELECT relrowsecurity FROM pg_class WHERE oid='public.resource_assessments'::regclass)),
 ('no authenticated direct write observations', NOT has_table_privilege('authenticated','public.resource_observations','INSERT')),
+('no authenticated direct read observations', NOT has_table_privilege('authenticated','public.resource_observations','SELECT')),
+('no anon direct write observations', NOT has_table_privilege('anon','public.resource_observations','INSERT')),
 ('score withheld when insufficient evidence', EXISTS (
   SELECT 1 FROM pg_constraint WHERE conname='resource_assessment_score_gate'
 )),
