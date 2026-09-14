@@ -1,0 +1,21 @@
+name: Resource Intelligence Guard
+
+on:
+  pull_request:
+    paths:
+      - 'src/lib/resource-intelligence*'
+      - 'supabase/migrations/**resource_intelligence**'
+      - 'tests/unit/resource-intelligence*'
+      - 'tests/sql/resource-intelligence*'
+      - 'scripts/check-resource-protected-paths.sh'
+      - '.github/workflows/resource-intelligence-guard.yml'
+
+jobs:
+  protected-paths:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Ensure Resource Intelligence does not touch protected Spatial/AR/XR paths
+        run: bash scripts/check-resource-protected-paths.sh origin/${{ github.base_ref }}
