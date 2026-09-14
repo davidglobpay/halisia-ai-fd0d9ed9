@@ -44,7 +44,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/connections")({
   head: () => ({
     meta: [
-      { title: "Halisia Connections · Find verified property professionals in Kenya" },
+      { title: "Halisia Connections · Find property professionals in Kenya" },
       {
         name: "description",
         content:
@@ -187,7 +187,7 @@ function ConnectionsPage() {
             >
               <div className="text-sm font-medium">My practice profile</div>
               <p className="mt-1 text-[11px] text-muted-foreground">
-                Publish your listing, upload evidence and manage verification.
+                Publish your listing, upload evidence and manage credential review.
               </p>
             </Link>
             <Link
@@ -205,7 +205,7 @@ function ConnectionsPage() {
             >
               <div className="text-sm font-medium">Professional dashboard</div>
               <p className="mt-1 text-[11px] text-muted-foreground">
-                Verification status, published profiles and request pipeline.
+                Credential review status, published profiles and request pipeline.
               </p>
             </Link>
           </div>
