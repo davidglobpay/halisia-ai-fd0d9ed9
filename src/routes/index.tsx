@@ -16,8 +16,6 @@ import {
   Search,
   MousePointerClick,
   FileText,
-  Quote,
-  Star,
 } from "lucide-react";
 import { KenyaCountyMap } from "@/components/halisia/kenya-county-map";
 import { SearchBar } from "@/components/halisia/search-bar";
@@ -208,7 +206,7 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
                 <BadgeCheck className="h-4 w-4 text-accent" /> Confidence-scored
               </div>
               <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-accent" /> Community-verified
+                <Users className="h-4 w-4 text-accent" /> Community-contributed
               </div>
               <div className="flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4 text-accent" /> Never legal advice
@@ -217,9 +215,6 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
           </motion.div>
         </HeroStage>
       </section>
-
-      {/* HALISIA PULSE WINDOW */}
-      <PulseWindow />
 
       {/* COUNTY INTELLIGENCE MAP */}
       <KenyaCountyMap />
@@ -334,6 +329,9 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
         }))}
         itemClassName="w-[280px] sm:w-[320px]"
       />
+
+      {/* HALISIA PULSE WINDOW */}
+      <PulseWindow />
 
       {/* PRICING / CTA */}
       <section id="pricing" className="py-24">
