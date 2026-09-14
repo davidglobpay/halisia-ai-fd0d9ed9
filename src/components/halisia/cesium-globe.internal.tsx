@@ -9,16 +9,22 @@ export default function CesiumGlobe({
   lat,
   lng,
   label,
+  intro = false,
+  onFlightComplete,
 }: {
   lat: number;
   lng: number;
   label: string;
+  intro?: boolean;
+  onFlightComplete?: () => void;
 }) {
   const el = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const viewerRef = useRef<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const completeRef = useRef(onFlightComplete);
+  completeRef.current = onFlightComplete;
 
   useEffect(() => {
     let cancelled = false;
@@ -26,27 +32,41 @@ export default function CesiumGlobe({
       .then((C) => {
         if (cancelled || !el.current) return;
         const Cesium = C as CesiumNS;
-        // No Ion token: use OSM imagery, ellipsoid terrain.
-        Cesium.Ion.defaultAccessToken = "";
-        const viewer = new Cesium.Viewer(el.current, {
+        const ionToken = import.meta.env.VITE_CESIUM_ION_TOKEN;
+        Cesium.Ion.defaultAccessToken = ionToken ?? "";
+
+        const viewerOptions: Record<string, unknown> = {
           baseLayerPicker: false,
           geocoder: false,
           homeButton: false,
-          sceneModePicker: true,
+          sceneModePicker: !intro,
           navigationHelpButton: false,
           animation: false,
           timeline: false,
           fullscreenButton: false,
           infoBox: false,
           selectionIndicator: false,
-          imageryProvider: new Cesium.OpenStreetMapImageryProvider({
-            url: "https://tile.openstreetmap.org/",
+          imageryProvider: new Cesium.UrlTemplateImageryProvider({
+            url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+            credit: "Tiles © Esri, Maxar, Earthstar Geographics",
+            maximumLevel: 19,
           }),
-          terrainProvider: new Cesium.EllipsoidTerrainProvider(),
-        });
+        };
+
+        if (ionToken && Cesium.Terrain?.fromWorldTerrain) {
+          viewerOptions.terrain = Cesium.Terrain.fromWorldTerrain({
+            requestVertexNormals: true,
+            requestWaterMask: true,
+          });
+        } else {
+          viewerOptions.terrainProvider = new Cesium.EllipsoidTerrainProvider();
+        }
+
+        const viewer = new Cesium.Viewer(el.current, viewerOptions);
         viewer.scene.globe.enableLighting = true;
         viewer.scene.backgroundColor = Cesium.Color.fromCssColorString("#050d24");
         viewer.scene.skyAtmosphere.show = true;
+        viewer.scene.screenSpaceCameraController.enableInputs = !intro;
         // Attribution for Cesium and the imagery provider must stay visible.
         const credits = viewer.cesiumWidget.creditContainer as HTMLElement;
         credits.style.display = "";
@@ -54,16 +74,41 @@ export default function CesiumGlobe({
         credits.style.fontSize = "10px";
         viewerRef.current = viewer;
 
-        const dest = Cesium.Cartesian3.fromDegrees(lng, lat, 25_000);
-        viewer.camera.flyTo({
-          destination: dest,
-          orientation: {
-            heading: Cesium.Math.toRadians(20),
-            pitch: Cesium.Math.toRadians(-45),
-            roll: 0,
-          },
-          duration: 2.4,
-        });
+        const flyTo = (targetLng: number, targetLat: number, height: number, duration: number) =>
+          new Promise<void>((resolve) => {
+            viewer.camera.flyTo({
+              destination: Cesium.Cartesian3.fromDegrees(targetLng, targetLat, height),
+              orientation: {
+                heading: Cesium.Math.toRadians(intro ? 0 : 20),
+                pitch: Cesium.Math.toRadians(intro ? -90 : -45),
+                roll: 0,
+              },
+              duration,
+              complete: resolve,
+              cancel: resolve,
+            });
+          });
+
+        if (intro) {
+          viewer.camera.setView({
+            destination: Cesium.Cartesian3.fromDegrees(15, 2, 20_000_000),
+            orientation: {
+              heading: 0,
+              pitch: Cesium.Math.toRadians(-90),
+              roll: 0,
+            },
+          });
+          void (async () => {
+            await flyTo(20, 1, 5_500_000, 1.25);
+            if (cancelled) return;
+            await flyTo(37.5, 0.2, 650_000, 1.25);
+            if (cancelled) return;
+            await flyTo(lng, lat, 25_000, 1.4);
+            if (!cancelled) completeRef.current?.();
+          })();
+        } else {
+          void flyTo(lng, lat, 25_000, 2.4);
+        }
 
         viewer.entities.add({
           position: Cesium.Cartesian3.fromDegrees(lng, lat),
@@ -100,7 +145,7 @@ export default function CesiumGlobe({
       }
       viewerRef.current = null;
     };
-  }, [lat, lng, label]);
+  }, [lat, lng, label, intro]);
 
   return (
     <div className="absolute inset-0">
