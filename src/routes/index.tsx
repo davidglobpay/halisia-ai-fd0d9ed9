@@ -16,8 +16,6 @@ import {
   Search,
   MousePointerClick,
   FileText,
-  Quote,
-  Star,
 } from "lucide-react";
 import { KenyaCountyMap } from "@/components/halisia/kenya-county-map";
 import { SearchBar } from "@/components/halisia/search-bar";
@@ -208,7 +206,7 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
                 <BadgeCheck className="h-4 w-4 text-accent" /> Confidence-scored
               </div>
               <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-accent" /> Community-verified
+                <Users className="h-4 w-4 text-accent" /> Community-contributed
               </div>
               <div className="flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4 text-accent" /> Never legal advice
@@ -217,9 +215,6 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
           </motion.div>
         </HeroStage>
       </section>
-
-      {/* HALISIA PULSE WINDOW */}
-      <PulseWindow />
 
       {/* COUNTY INTELLIGENCE MAP */}
       <KenyaCountyMap />
@@ -323,28 +318,20 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
       {/* PEOPLE — holographic collapsible stack */}
       <HoloStack
         id="voices"
-        eyebrow="People"
-        title="Built with buyers, builders, and diaspora investors."
-        intro="Field voices from the people who use HALISIA to make land decisions they can defend."
-        items={VOICES.map((v) => ({
-          key: v.name,
-          title: v.name,
-          meta: v.role,
-          body: (
-            <>
-              <Quote className="mb-1.5 h-4 w-4 text-accent" aria-hidden="true" />
-              {`"${v.quote}"`}
-              <span className="mt-2 flex items-center gap-0.5 text-amber-glow">
-                {Array.from({ length: 5 }).map((_, s) => (
-                  <Star key={s} className="h-3 w-3 fill-current" aria-hidden="true" />
-                ))}
-                <span className="sr-only">Rated 5 out of 5</span>
-              </span>
-            </>
-          ),
+        eyebrow="Use cases"
+        title="How people use HALISIA."
+        intro="Common situations the platform is built for."
+        items={SCENARIOS.map((s) => ({
+          key: s.title,
+          title: s.title,
+          meta: s.role,
+          body: s.body,
         }))}
         itemClassName="w-[280px] sm:w-[320px]"
       />
+
+      {/* HALISIA PULSE WINDOW */}
+      <PulseWindow />
 
       {/* PRICING / CTA */}
       <section id="pricing" className="py-24">
@@ -487,10 +474,10 @@ const PILLARS = [
 ];
 
 const TRUST = [
-  { stat: "40+", label: "signal categories per location" },
-  { stat: "3-tier", label: "confidence on every score" },
+  { stat: "Cited", label: "every score names its sources" },
+  { stat: "Ranked", label: "confidence stated on every output" },
   { stat: "Kenya", label: "first · global by design" },
-  { stat: "0", label: "hidden auto-decisions" },
+  { stat: "Never", label: "we do not assert title, boundary or ownership" },
 ];
 
 const STEPS = [
@@ -501,8 +488,8 @@ const STEPS = [
   },
   {
     icon: MousePointerClick,
-    title: "See live intelligence",
-    body: "Real Google Maps signals — elevation, air quality, schools, hospitals, transit — plus an AI reading with strengths, watch-outs, and next steps.",
+    title: "Read the location profile",
+    body: "Elevation, air quality, schools, hospitals and transit from Google Places, Open-Topo-Data and ISRIC SoilGrids, with an AI reading that shows its sources, confidence and gaps.",
   },
   {
     icon: FileText,
@@ -511,23 +498,24 @@ const STEPS = [
   },
 ];
 
-const VOICES = [
+/**
+ * Illustrative scenarios — not testimonials. No named person, quote or rating
+ * is claimed here, because we hold no verified customer statements.
+ */
+const SCENARIOS = [
   {
-    name: "Achieng O.",
-    role: "First-time buyer · Kiambu",
-    quote:
-      "I was about to wire the deposit for a plot that turned out to be in a seasonal flood line. HALISIA showed the elevation and long-rains context in one screen.",
+    title: "Before wiring a deposit",
+    role: "First-time buyer",
+    body: "Check elevation and long-rains context against the plot's pin before money moves, so a seasonal flood line shows up on screen rather than after the sale.",
   },
   {
-    name: "Brian K.",
-    role: "Diaspora investor · Houston",
-    quote:
-      "I can't fly home for every viewing. Pulling up the same intelligence my cousin sees on the ground makes the conversation honest, fast, and quantitative.",
+    title: "Buying from abroad",
+    role: "Diaspora investor",
+    body: "Open the same location profile your family sees on the ground, so a remote conversation runs on shared evidence instead of description.",
   },
   {
-    name: "Wanjiru M.",
-    role: "Small developer · Ruaka",
-    quote:
-      "The confidence bands are the killer feature. It doesn't pretend to know everything — it tells me exactly where to spend my next site visit.",
+    title: "Choosing where to spend a site visit",
+    role: "Small developer",
+    body: "Confidence bands mark what is thin, so the next trip targets the gaps rather than re-confirming what is already documented.",
   },
 ];

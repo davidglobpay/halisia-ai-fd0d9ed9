@@ -639,9 +639,8 @@ function AITab({ narrative, loading }: { narrative?: NarrativeOutput; loading: b
       </div>
     );
 
-  const updatedLabel = narrative.lastUpdated
-    ? `Updated ${formatDateTime(narrative.lastUpdated)}`
-    : "Timestamp unavailable";
+  const updatedStamp = narrative.lastUpdated ? formatDateTime(narrative.lastUpdated) : "—";
+  const updatedLabel = updatedStamp === "—" ? "Timestamp unavailable" : `Updated ${updatedStamp}`;
 
   return (
     <div className="space-y-3">
