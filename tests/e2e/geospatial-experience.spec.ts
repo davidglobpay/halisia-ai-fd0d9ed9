@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 test("landing hands off from a streamed Earth-to-Kenya intro", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.addInitScript(() => sessionStorage.removeItem("halisia:globe-intro:v2"));
   await page.goto("/");
   const intro = page.getByTestId("globe-intro");
@@ -12,7 +13,7 @@ test("landing hands off from a streamed Earth-to-Kenya intro", async ({ page }) 
 
 test("Explore exposes a closable Street View experience", async ({ page }) => {
   await page.goto("/explore");
-  const open = page.getByTestId("open-street-view").first();
+  const open = page.locator('[data-testid="open-street-view"]:visible').first();
   await expect(open).toBeVisible();
   await open.click();
   await expect(page.getByTestId("street-view-panel")).toBeVisible();
