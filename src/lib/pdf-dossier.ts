@@ -1,6 +1,10 @@
 import jsPDF from "jspdf";
 import { fetchStaticMapCached } from "@/lib/static-map-cache";
-import { getWave4Intel, type Wave4Intel } from "@/lib/wave4-intel.functions";
+import {
+  getWave4Intel,
+  type Wave4Intel,
+  type ScoreExplain,
+} from "@/lib/wave4-intel.functions";
 import {
   drawIsometricTerrain,
   fetchElevationGrid,
@@ -8,24 +12,6 @@ import {
   type ElevationGrid,
 } from "@/lib/terrain-grid";
 import { startTerrainTimer, recordTerrainEvent } from "@/lib/terrain-telemetry";
-
-function hash(lat: number, lng: number, salt: number) {
-  const x = Math.sin(lat * 12.9898 + lng * 78.233 + salt) * 43758.5453;
-  return Math.floor((x - Math.floor(x)) * 40) + 55;
-}
-
-const SCORES = [
-  { key: 1, label: "Road access", note: "Tarmac ≤ 800m from parcel centroid" },
-  { key: 2, label: "Water", note: "Piped supply intermittent; boreholes common" },
-  { key: 3, label: "Electricity", note: "Kenya Power grid coverage confirmed" },
-  { key: 4, label: "Fibre / Internet", note: "Home fibre from 2+ providers" },
-  { key: 5, label: "Flood risk", invert: true, note: "Assessed vs 10-yr rainfall & terrain" },
-  { key: 6, label: "Safety index", note: "Community-reported; verify locally" },
-  { key: 7, label: "Schools nearby", note: "12 primary · 4 secondary within 3km" },
-  { key: 8, label: "Healthcare", note: "Nearest Level-4 hospital ~4.2km" },
-  { key: 9, label: "Investment potential", note: "Growth corridor · price +8% YoY" },
-  { key: 10, label: "Construction readiness", note: "Soil & survey data limited" },
-];
 
 export async function generateLocationDossier(opts: {
   lat: number;
@@ -108,7 +94,6 @@ export async function generateLocationDossier(opts: {
   const accent: [number, number, number] = [45, 140, 255];
   const bg: [number, number, number] = [247, 249, 252];
 
-  const livable = hash(lat, lng, 99);
 
   // ---------- Page 1: cover ----------
   doc.setFillColor(...bg);
@@ -142,34 +127,51 @@ export async function generateLocationDossier(opts: {
     doc.textWithLink("Open shareable view →", M, 114, { url: shareUrl });
   }
 
-  // Livability panel
+  // Composite indicator — withheld when open-data coverage cannot support it.
+  const composite = wave4?.breakdown.investment ?? null;
+  const compositeScore = composite && composite.confidence !== "low" ? composite.score : null;
+
   doc.setFillColor(255, 255, 255);
   doc.roundedRect(M, 120, W - M * 2, 90, 10, 10, "F");
   doc.setTextColor(...muted);
   doc.setFontSize(9);
-  doc.text("LIVABILITY INDEX", M + 20, 145);
-  doc.setTextColor(...ink);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(42);
-  doc.text(`${livable}`, M + 20, 190);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(11);
-  doc.setTextColor(...muted);
-  doc.text("/ 100", M + 100, 190);
+  doc.text("COMPOSITE OPEN-DATA INDICATOR · INDICATIVE", M + 20, 145);
+  if (compositeScore != null) {
+    doc.setTextColor(...ink);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(42);
+    doc.text(`${compositeScore}`, M + 20, 190);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.setTextColor(...muted);
+    doc.text("/ 100", M + 100, 190);
+  } else {
+    doc.setTextColor(...ink);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.text("Not assessed", M + 20, 172);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(...muted);
+    doc.text(
+      "Open-data coverage at this location is too thin to support an indicator.",
+      M + 20,
+      190,
+    );
+  }
 
-  // Right side quick facts
   doc.setFontSize(9);
   doc.setTextColor(...muted);
-  doc.text("AI CONFIDENCE", W - M - 160, 145);
+  doc.text("OPEN-DATA CONFIDENCE", W - M - 175, 145);
   doc.setFontSize(14);
   doc.setTextColor(...ink);
   doc.setFont("helvetica", "bold");
-  doc.text("Medium", W - M - 160, 165);
+  doc.text(composite ? composite.confidence.toUpperCase() : "NO DATA", W - M - 175, 165);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.setTextColor(...muted);
-  doc.text("Cross-referenced against public geodata,", W - M - 160, 183);
-  doc.text("terrain elevation, and network coverage.", W - M - 160, 195);
+  doc.text("Derived from OpenStreetMap facility counts and", W - M - 175, 183);
+  doc.text("Open-Meteo climate normals. Not a survey or valuation.", W - M - 175, 195);
 
   // Hero map (light view) — degrade gracefully if the static-map API is not authorized.
   if (base.dataUrl) {
@@ -199,51 +201,102 @@ export async function generateLocationDossier(opts: {
   );
   doc.text("halisia.ai", W - M - 40, H - 30);
 
-  // ---------- Page 2: Intelligence scores ----------
-  doc.addPage();
-  doc.setFillColor(...bg);
-  doc.rect(0, 0, W, H, "F");
-  drawHeader(doc, W, M, "Intelligence scores", ink, muted);
+  // ---------- Page 2: Open-data indicators ----------
+  // Omitted entirely when Wave 4 returned nothing — an empty page is honest,
+  // a populated one would not be.
+  if (wave4) {
+    doc.addPage();
+    doc.setFillColor(...bg);
+    doc.rect(0, 0, W, H, "F");
+    drawHeader(doc, W, M, "Open-data indicators · indicative", ink, muted);
 
-  const scores = SCORES.map((s) => {
-    const raw = hash(lat, lng, s.key);
-    return { ...s, value: s.invert ? 100 - raw : raw };
-  });
-
-  const y = 110;
-  const colW = (W - M * 2 - 20) / 2;
-  const rowH = 80;
-  scores.forEach((s, i) => {
-    const col = i % 2;
-    const row = Math.floor(i / 2);
-    const x = M + col * (colW + 20);
-    const yy = y + row * (rowH + 12);
-    doc.setFillColor(255, 255, 255);
-    doc.roundedRect(x, yy, colW, rowH, 8, 8, "F");
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(...muted);
-    doc.text(s.label.toUpperCase(), x + 14, yy + 20);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(22);
-    doc.setTextColor(...ink);
-    doc.text(`${s.value}`, x + 14, yy + 46);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.setTextColor(...muted);
-    doc.text("/100", x + 44, yy + 46);
-    // bar
-    doc.setFillColor(230, 235, 242);
-    doc.roundedRect(x + 14, yy + 54, colW - 28, 5, 2.5, 2.5, "F");
-    doc.setFillColor(...accent);
-    doc.roundedRect(x + 14, yy + 54, ((colW - 28) * s.value) / 100, 5, 2.5, 2.5, "F");
+    doc.text(
+      "Formula-based indicators computed from public open data. Not measurements, not a valuation.",
+      M,
+      96,
+    );
+
+    const cards: Array<{ label: string; ex: ScoreExplain }> = [
+      { label: "Accessibility", ex: wave4.breakdown.accessibility },
+      { label: "Infrastructure", ex: wave4.breakdown.infrastructure },
+      { label: "Environment", ex: wave4.breakdown.environment },
+      { label: "Development", ex: wave4.breakdown.development },
+      { label: "Investment (composite)", ex: wave4.breakdown.investment },
+    ];
+
+    const colW = (W - M * 2 - 20) / 2;
+    const cardH = 132;
+    cards.forEach((c, i) => {
+      const col = i % 2;
+      const row = Math.floor(i / 2);
+      const x = M + col * (colW + 20);
+      const yy = 116 + row * (cardH + 12);
+      const withheld = c.ex.confidence === "low";
+
+      doc.setFillColor(255, 255, 255);
+      doc.roundedRect(x, yy, colW, cardH, 8, 8, "F");
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(...muted);
+      doc.text(c.label.toUpperCase(), x + 14, yy + 20);
+
+      if (withheld) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(12);
+        doc.setTextColor(...ink);
+        doc.text("Insufficient coverage", x + 14, yy + 44);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(...muted);
+        doc.text(
+          doc.splitTextToSize(
+            "Too few mapped features here to compute this. Absence in OpenStreetMap is not evidence that facilities are absent.",
+            colW - 28,
+          ),
+          x + 14,
+          yy + 60,
+        );
+      } else {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(22);
+        doc.setTextColor(...ink);
+        doc.text(`${c.ex.score}`, x + 14, yy + 46);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(...muted);
+        doc.text("/100", x + 48, yy + 46);
+        doc.setFillColor(230, 235, 242);
+        doc.roundedRect(x + 14, yy + 54, colW - 28, 5, 2.5, 2.5, "F");
+        doc.setFillColor(...accent);
+        doc.roundedRect(x + 14, yy + 54, ((colW - 28) * c.ex.score) / 100, 5, 2.5, 2.5, "F");
+
+        doc.setFontSize(7.5);
+        doc.setTextColor(...muted);
+        doc.text(`Formula: ${c.ex.formula}`, x + 14, yy + 72);
+        const factorLines = c.ex.factors.map(
+          (f) => `${f.label}: ${typeof f.value === "number" ? Math.round(f.value * 10) / 10 : f.value} (${f.weight})`,
+        );
+        doc.text(doc.splitTextToSize(factorLines.join("  ·  "), colW - 28), x + 14, yy + 84);
+        doc.text(`Confidence: ${c.ex.confidence}`, x + 14, yy + 120);
+      }
+    });
+
     doc.setFontSize(8);
     doc.setTextColor(...muted);
-    const note = doc.splitTextToSize(s.note, colW - 28);
-    doc.text(note, x + 14, yy + 70);
-  });
-
-  drawFooter(doc, W, H, M, muted);
+    doc.text(
+      doc.splitTextToSize(
+        "Facility counts are a capped sample — the Overpass query returns at most 60 elements within 3 km, so dense areas are understated. These indicators use fixed heuristic weights and are not calibrated against transaction or survey data.",
+        W - M * 2,
+      ),
+      M,
+      H - 70,
+    );
+    drawFooter(doc, W, H, M, muted);
+  }
 
   // ---------- Page 3: Evidence layers ----------
   doc.addPage();
@@ -258,22 +311,22 @@ export async function generateLocationDossier(opts: {
     {
       img: terrain.dataUrl,
       title: "Terrain & slope",
-      desc: "Contour shading indicates gradient — steeper slopes drain faster but complicate construction.",
+      desc: "Terrain basemap with contour shading. Gradient must be confirmed by survey.",
     },
     {
       img: hybrid.dataUrl,
       title: "Built environment",
-      desc: "Hybrid view overlays road network on satellite imagery to reveal built density and access.",
+      desc: "Hybrid view: road network over satellite imagery at the parcel centroid.",
     },
     {
       img: sat.dataUrl,
       title: "High-resolution satellite",
-      desc: "Direct visual of vegetation, water bodies and hard-surface coverage around the parcel.",
+      desc: "High-resolution satellite imagery. Visual reference only; no classification applied.",
     },
     {
       img: base.dataUrl,
       title: "Drainage & flood context",
-      desc: "Blue water features and low-lying land around the marker suggest natural drainage paths.",
+      desc: "Light basemap with water features as mapped by the basemap provider. No flood modelling has been performed.",
     },
   ];
 
@@ -317,17 +370,18 @@ export async function generateLocationDossier(opts: {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
   doc.setTextColor(...ink);
-  doc.text("Summary", M + 20, 135);
+  doc.text("What this dossier does and does not establish", M + 20, 135);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.setTextColor(...muted);
-  const summary = `This location shows strong infrastructure signals — road access, electricity and connectivity all score above average. Moderate flood exposure was detected using terrain shape and 10-year rainfall models; the surrounding drainage pattern is worth verifying on-site during long rains. Investment momentum along the corridor is positive with double-digit annualised growth in comparable plots.`;
-  doc.text(doc.splitTextToSize(summary, W - M * 2 - 40), M + 20, 155);
+  const scopeNote =
+    "This dossier assembles public open data and basemap imagery for the coordinate given. It does not establish ownership, boundaries, plot size, zoning, servicing, flood risk or market value. No site visit, survey, title search or valuation informed any figure in it. Every indicator shown is formula-based and indicative, with its inputs printed alongside it.";
+  doc.text(doc.splitTextToSize(scopeNote, W - M * 2 - 40), M + 20, 155);
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
   doc.setTextColor(...ink);
-  doc.text("Recommendations", M + 20, 250);
+  doc.text("Standard verification checklist", M + 20, 250);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.setTextColor(...muted);
@@ -365,7 +419,7 @@ export async function generateLocationDossier(opts: {
             wave4.climate.meanTempC != null ? `${wave4.climate.meanTempC.toFixed(1)} °C` : "—",
           ],
           [
-            "Temperature range",
+            "Daily-mean range",
             wave4.climate.tempMinC != null && wave4.climate.tempMaxC != null
               ? `${wave4.climate.tempMinC.toFixed(0)} – ${wave4.climate.tempMaxC.toFixed(0)} °C`
               : "—",
@@ -447,34 +501,7 @@ export async function generateLocationDossier(opts: {
       doc.text(`${k}: ${v}`, M + 16 + col * (W / 2 - M), 152 + row * 18);
     });
 
-    // Score infographics — horizontal bars
-    const scoreLabels: Array<[string, number]> = [
-      ["Accessibility", wave4.scores.accessibility],
-      ["Infrastructure", wave4.scores.infrastructure],
-      ["Environment", wave4.scores.environment],
-      ["Development", wave4.scores.development],
-      ["Investment (composite)", wave4.scores.investment],
-    ];
-    doc.setFillColor(255, 255, 255);
-    doc.roundedRect(M, 220, W - M * 2, 170, 10, 10, "F");
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.setTextColor(...ink);
-    doc.text("Investment scores", M + 16, 242);
-    scoreLabels.forEach(([label, v], i) => {
-      const y = 258 + i * 24;
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
-      doc.setTextColor(...ink);
-      doc.text(label, M + 16, y);
-      doc.setTextColor(...muted);
-      doc.text(`${v}/100`, W - M - 40, y, { align: "right" });
-      doc.setFillColor(235, 240, 248);
-      doc.roundedRect(M + 130, y - 8, W - M * 2 - 190, 8, 4, 4, "F");
-      doc.setFillColor(...accent);
-      doc.roundedRect(M + 130, y - 8, ((W - M * 2 - 190) * v) / 100, 8, 4, 4, "F");
-    });
-
+    // Formula inputs and confidence are presented once on the open-data indicators page.
     // Facility mix — top 6 categories
     const facEntries = Object.entries(wave4.facilities)
       .map(([k, list]) => [k, list.length] as [string, number])
@@ -503,10 +530,14 @@ export async function generateLocationDossier(opts: {
 
     doc.setFontSize(8);
     doc.setTextColor(...muted);
+    const usedSources = wave4.sources.filter((s) => s.used).map((s) => s.label);
+    doc.setFontSize(8);
+    doc.setTextColor(...muted);
     doc.text(
-      `Sources: OpenStreetMap (Nominatim + Overpass) · Open-Meteo climate archive · generated ${new Date(
-        wave4.generatedAt,
-      ).toLocaleString()}`,
+      doc.splitTextToSize(
+        `Sources contacted: ${usedSources.length ? usedSources.join(" · ") : "none returned data"} · generated ${new Date(wave4.generatedAt).toLocaleString()}`,
+        W - M * 2,
+      ),
       M,
       H - 55,
     );

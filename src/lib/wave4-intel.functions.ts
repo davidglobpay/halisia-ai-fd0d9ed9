@@ -157,7 +157,7 @@ async function fetchOverpass(lat: number, lng: number, radiusM = 3000) {
 }
 
 async function fetchClimate(lat: number, lng: number) {
-  // 30-year normals (1991-2020) from Open-Meteo climate archive.
+  // 2010–2020 normals from the Open-Meteo climate archive.
   const url = `https://climate-api.open-meteo.com/v1/climate?latitude=${lat}&longitude=${lng}&start_date=2010-01-01&end_date=2020-12-31&models=EC_Earth3P_HR&daily=temperature_2m_mean,precipitation_sum`;
   try {
     const res = await fetch(url);
@@ -173,7 +173,7 @@ async function fetchClimate(lat: number, lng: number) {
     const tempMaxC = Math.max(...temps);
     // Rain daily → annual mean over ~11 years.
     const totalRain = rains.reduce((a, b) => a + b, 0);
-    const years = rains.length / 365;
+    const years = rains.length / 365.25;
     const annualRainfallMm = years > 0 ? totalRain / years : null;
     return { meanTempC, tempMinC, tempMaxC, annualRainfallMm };
   } catch {
@@ -185,7 +185,7 @@ function classifyAdmin(n: NominatimResp | null) {
   const a = n?.address ?? {};
   return {
     county: a["county"] ?? a["state"] ?? a["region"] ?? null,
-    constituency: a["state_district"] ?? a["county_code"] ?? null,
+    constituency: a["state_district"] ?? null,
     ward: a["suburb"] ?? a["neighbourhood"] ?? a["quarter"] ?? null,
     town: a["city"] ?? a["town"] ?? null,
     village: a["village"] ?? a["hamlet"] ?? null,
