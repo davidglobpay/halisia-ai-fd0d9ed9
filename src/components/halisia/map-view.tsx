@@ -126,7 +126,11 @@ export function MapView({
       clickListenerRef.current = null;
       markerDragListenerRef.current?.remove();
       markerDragListenerRef.current = null;
-      markerRef.current?.setMap(null);
+      const activeMarker = markerRef.current;
+      if (activeMarker) {
+        window.google?.maps?.event?.clearInstanceListeners(activeMarker);
+        activeMarker.setMap(null);
+      }
       markerRef.current = null;
       Object.values(overlayRefs.current).forEach((layer) => layer?.setMap(null));
       overlayRefs.current = {};
