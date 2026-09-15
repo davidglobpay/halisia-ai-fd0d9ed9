@@ -272,9 +272,40 @@ export function score(facilities: Record<string, Wave4Facility[]>, climate: Wave
   const investment = clip(
     accessibility * 0.35 + infrastructure * 0.35 + environment * 0.15 + development * 0.15,
   );
-  const dataSignal = count("hospitals") + count("schools") + count("transit") + count("markets");
-  const confidence: ScoreExplain["confidence"] =
-    dataSignal >= 15 ? "high" : dataSignal >= 6 ? "medium" : "low";
+  // Confidence is per-component: each indicator may only claim as much
+  // confidence as the mapped features it is actually computed from. A
+  // component with nothing mapped scores the bare formula constant, which is
+  // not evidence, so it stays "low" and the dossier withholds it.
+  const band = (signal: number): ScoreExplain["confidence"] =>
+    signal >= 15 ? "high" : signal >= 6 ? "medium" : "low";
+  const RANK: Record<ScoreExplain["confidence"], number> = { low: 0, medium: 1, high: 2 };
+  const weakest = (...cs: ScoreExplain["confidence"][]): ScoreExplain["confidence"] =>
+    cs.reduce((a, b) => (RANK[b] < RANK[a] ? b : a), "high" as ScoreExplain["confidence"]);
+
+  const accessSignal = count("transit") + count("fuel") + count("markets");
+  const infraSignal =
+    count("hospitals") +
+    count("schools") +
+    count("banks") +
+    count("police") +
+    count("fire") +
+    count("government");
+  const accessibilityConfidence = band(accessSignal);
+  const infrastructureConfidence = band(infraSignal);
+  // Development is derived from accessibility and infrastructure, so it
+  // inherits their weakest coverage.
+  const developmentConfidence = weakest(accessibilityConfidence, infrastructureConfidence);
+  // Climate is an independent source — good climate coverage says nothing
+  // about how well the area is mapped in OpenStreetMap.
+  const environmentConfidence: ScoreExplain["confidence"] =
+    climate.meanTempC != null && climate.annualRainfallMm != null ? "high" : "low";
+  // The composite is only as trustworthy as the weakest OSM-derived component
+  // feeding it. Climate support alone must never unlock it.
+  const investmentConfidence = weakest(
+    accessibilityConfidence,
+    infrastructureConfidence,
+    developmentConfidence,
+  );
 
   const breakdown = {
     accessibility: {
