@@ -241,7 +241,7 @@ function extractFacilities(
   return out;
 }
 
-function score(facilities: Record<string, Wave4Facility[]>, climate: Wave4Intel["climate"]) {
+export function score(facilities: Record<string, Wave4Facility[]>, climate: Wave4Intel["climate"]) {
   const count = (k: string) => facilities[k]?.length ?? 0;
   const clip = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
 
