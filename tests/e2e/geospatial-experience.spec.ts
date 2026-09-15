@@ -12,6 +12,7 @@ test("landing hands off from a streamed Earth-to-Kenya intro", async ({ page }) 
 });
 
 test("Explore exposes a closable Street View experience", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("halisia:navguide:v1:seen", "e2e"));
   await page.goto("/explore");
   await expect(page.getByTestId("explore-page")).toHaveAttribute("data-hydrated", "true", {
     timeout: 30_000,
