@@ -379,7 +379,7 @@ export function MapView({
             setStreetViewOpen(true);
           }}
           onPointerDown={(event) => event.stopPropagation()}
-          className="absolute bottom-3 left-3 z-[650] inline-flex min-h-11 items-center gap-2 rounded-full border border-white/15 bg-black/65 px-4 py-2 text-xs font-semibold text-white shadow-xl backdrop-blur hover:bg-black/80"
+          className="absolute bottom-3 left-3 z-[1200] inline-flex min-h-11 items-center gap-2 rounded-full border border-white/15 bg-black/65 px-4 py-2 text-xs font-semibold text-white shadow-xl backdrop-blur hover:bg-black/80"
           aria-label="Open nearby Google Street View"
           data-testid="open-street-view"
         >
