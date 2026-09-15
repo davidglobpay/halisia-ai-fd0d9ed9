@@ -2808,6 +2808,260 @@ export type Database = {
           },
         ]
       }
+      resource_assessments: {
+        Row: {
+          assessment_key: string
+          confidence_pct: number | null
+          coverage: number | null
+          domain: string
+          generated_at: string
+          generated_by: string
+          id: string
+          metadata: Json
+          methodology: string
+          methodology_version: string
+          missing_evidence: Json
+          reviewed_at: string | null
+          reviewed_by: string | null
+          score: number | null
+          state: string
+          subject_ref: string
+          subject_type: string
+        }
+        Insert: {
+          assessment_key: string
+          confidence_pct?: number | null
+          coverage?: number | null
+          domain: string
+          generated_at?: string
+          generated_by: string
+          id?: string
+          metadata?: Json
+          methodology: string
+          methodology_version: string
+          missing_evidence?: Json
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          score?: number | null
+          state?: string
+          subject_ref: string
+          subject_type: string
+        }
+        Update: {
+          assessment_key?: string
+          confidence_pct?: number | null
+          coverage?: number | null
+          domain?: string
+          generated_at?: string
+          generated_by?: string
+          id?: string
+          metadata?: Json
+          methodology?: string
+          methodology_version?: string
+          missing_evidence?: Json
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          score?: number | null
+          state?: string
+          subject_ref?: string
+          subject_type?: string
+        }
+        Relationships: []
+      }
+      resource_evidence_links: {
+        Row: {
+          assessment_ref: string
+          created_at: string
+          id: string
+          observation_id: string
+          role: string
+          weight: number
+        }
+        Insert: {
+          assessment_ref: string
+          created_at?: string
+          id?: string
+          observation_id: string
+          role: string
+          weight?: number
+        }
+        Update: {
+          assessment_ref?: string
+          created_at?: string
+          id?: string
+          observation_id?: string
+          role?: string
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_evidence_links_observation_id_fkey"
+            columns: ["observation_id"]
+            isOneToOne: false
+            referencedRelation: "resource_observations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resource_feature_flags: {
+        Row: {
+          description: string | null
+          enabled: boolean
+          key: string
+          updated_at: string
+        }
+        Insert: {
+          description?: string | null
+          enabled?: boolean
+          key: string
+          updated_at?: string
+        }
+        Update: {
+          description?: string | null
+          enabled?: boolean
+          key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      resource_observations: {
+        Row: {
+          algorithm_version: string | null
+          confidence_pct: number | null
+          created_at: string
+          domain: string
+          epistemic_tier: string
+          id: string
+          indicator: string
+          metadata: Json
+          methodology: string
+          model_version: string | null
+          observed_at: string | null
+          parcel_id: string | null
+          provenance_hash: string
+          retrieved_at: string
+          source_id: string
+          source_record_id: string | null
+          spatial_resolution: string | null
+          subject_ref: string
+          subject_type: string
+          temporal_resolution: string | null
+          unit: string | null
+          valid_from: string | null
+          valid_to: string | null
+          value_json: Json
+          verification_state: string
+        }
+        Insert: {
+          algorithm_version?: string | null
+          confidence_pct?: number | null
+          created_at?: string
+          domain: string
+          epistemic_tier?: string
+          id?: string
+          indicator: string
+          metadata?: Json
+          methodology: string
+          model_version?: string | null
+          observed_at?: string | null
+          parcel_id?: string | null
+          provenance_hash: string
+          retrieved_at?: string
+          source_id: string
+          source_record_id?: string | null
+          spatial_resolution?: string | null
+          subject_ref: string
+          subject_type: string
+          temporal_resolution?: string | null
+          unit?: string | null
+          valid_from?: string | null
+          valid_to?: string | null
+          value_json?: Json
+          verification_state?: string
+        }
+        Update: {
+          algorithm_version?: string | null
+          confidence_pct?: number | null
+          created_at?: string
+          domain?: string
+          epistemic_tier?: string
+          id?: string
+          indicator?: string
+          metadata?: Json
+          methodology?: string
+          model_version?: string | null
+          observed_at?: string | null
+          parcel_id?: string | null
+          provenance_hash?: string
+          retrieved_at?: string
+          source_id?: string
+          source_record_id?: string | null
+          spatial_resolution?: string | null
+          subject_ref?: string
+          subject_type?: string
+          temporal_resolution?: string | null
+          unit?: string | null
+          valid_from?: string | null
+          valid_to?: string | null
+          value_json?: Json
+          verification_state?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_observations_parcel_id_fkey"
+            columns: ["parcel_id"]
+            isOneToOne: false
+            referencedRelation: "parcels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_observations_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "resource_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resource_sources: {
+        Row: {
+          active: boolean
+          approved_method: string
+          authority: string
+          created_at: string
+          id: string
+          licence: string | null
+          source_class: string
+          source_system: string
+          source_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          approved_method: string
+          authority: string
+          created_at?: string
+          id?: string
+          licence?: string | null
+          source_class: string
+          source_system: string
+          source_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          approved_method?: string
+          authority?: string
+          created_at?: string
+          id?: string
+          licence?: string | null
+          source_class?: string
+          source_system?: string
+          source_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       saved_articles: {
         Row: {
           article_id: string
