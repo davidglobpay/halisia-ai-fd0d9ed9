@@ -11,26 +11,30 @@ const SESSION_KEY = "halisia:globe-intro:v2";
  * Reduced-motion users skip the flight and see the map immediately.
  */
 export function GlobeIntro({ label = "Kenya" }: { label?: string }) {
-  const [playing, setPlaying] = useState(false);
+  const [playing, setPlaying] = useState(() => {
+    if (typeof window === "undefined") return false;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return false;
+    try {
+      return window.sessionStorage.getItem(SESSION_KEY) !== "1";
+    } catch {
+      return true;
+    }
+  });
 
   const finish = useCallback(() => setPlaying(false), []);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) return;
+    if (!playing || typeof window === "undefined") return;
     try {
-      if (window.sessionStorage.getItem(SESSION_KEY)) return;
       window.sessionStorage.setItem(SESSION_KEY, "1");
     } catch {
-      /* private mode — play once anyway */
+      /* private mode — the fail-safe still hands over to the map */
     }
 
-    setPlaying(true);
     // Network/CDN failure must never leave the county map blocked.
     const fallback = window.setTimeout(finish, 9_000);
     return () => window.clearTimeout(fallback);
-  }, [finish]);
+  }, [finish, playing]);
 
   if (!playing) return null;
 
