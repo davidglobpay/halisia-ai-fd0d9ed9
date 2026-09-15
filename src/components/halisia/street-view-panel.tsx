@@ -70,7 +70,7 @@ export function StreetViewPanel({
 
   return (
     <section
-      className="absolute inset-0 z-[800] bg-[#071226]"
+      className="absolute inset-0 z-[1300] bg-[#071226]"
       aria-label="Street View"
       data-testid="street-view-panel"
     >
