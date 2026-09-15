@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { CesiumGlobe } from "@/components/halisia/cesium-globe";
 
 const SESSION_KEY = "halisia:globe-intro:v2";
@@ -21,7 +21,23 @@ export function GlobeIntro({ label = "Kenya" }: { label?: string }) {
     }
   });
 
-  const finish = useCallback(() => setPlaying(false), []);
+  // Keep the hand-off visible long enough to be perceived after navigation.
+  // Cesium can report completion immediately when imagery is cached or unavailable.
+  const startedAtRef = useRef(
+    typeof performance === "undefined" ? 0 : performance.now(),
+  );
+  const finishTimerRef = useRef<number | null>(null);
+  const finish = useCallback(() => {
+    const elapsed =
+      typeof performance === "undefined" ? 6_000 : performance.now() - startedAtRef.current;
+    const remaining = Math.max(0, 6_000 - elapsed);
+    if (finishTimerRef.current !== null) window.clearTimeout(finishTimerRef.current);
+    if (remaining > 0) {
+      finishTimerRef.current = window.setTimeout(() => setPlaying(false), remaining);
+      return;
+    }
+    setPlaying(false);
+  }, []);
 
   useEffect(() => {
     if (!playing || typeof window === "undefined") return;
@@ -33,7 +49,10 @@ export function GlobeIntro({ label = "Kenya" }: { label?: string }) {
 
     // Network/CDN failure must never leave the county map blocked.
     const fallback = window.setTimeout(finish, 9_000);
-    return () => window.clearTimeout(fallback);
+    return () => {
+      window.clearTimeout(fallback);
+      if (finishTimerRef.current !== null) window.clearTimeout(finishTimerRef.current);
+    };
   }, [finish, playing]);
 
   if (!playing) return null;
