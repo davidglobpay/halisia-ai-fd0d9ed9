@@ -316,7 +316,7 @@ export function score(facilities: Record<string, Wave4Facility[]>, climate: Wave
         { label: "Fuel stations", value: count("fuel"), weight: "×4" },
         { label: "Marketplaces", value: count("markets"), weight: "×5" },
       ],
-      confidence,
+      confidence: accessibilityConfidence,
       note: "Higher when there are many transit stops and market anchors within 3 km.",
     },
     infrastructure: {
@@ -330,7 +330,7 @@ export function score(facilities: Record<string, Wave4Facility[]>, climate: Wave
         { label: "Fire stations", value: count("fire"), weight: "×6" },
         { label: "Government offices", value: count("government"), weight: "×3" },
       ],
-      confidence,
+      confidence: infrastructureConfidence,
       note: "Weights emergency services higher because they're rarer but critical.",
     },
     environment: {
@@ -344,9 +344,7 @@ export function score(facilities: Record<string, Wave4Facility[]>, climate: Wave
           weight: "600–1500 ideal",
         },
       ],
-      confidence: (climate.meanTempC != null && climate.annualRainfallMm != null
-        ? "high"
-        : "low") as ScoreExplain["confidence"],
+      confidence: environmentConfidence,
       note: "Open-Meteo 2010–2020 climate normals (EC-Earth3P-HR downscaled).",
     },
     development: {
@@ -356,7 +354,7 @@ export function score(facilities: Record<string, Wave4Facility[]>, climate: Wave
         { label: "Places of worship", value: count("worship"), weight: "×1" },
         { label: "Marketplaces", value: count("markets"), weight: "×2" },
       ],
-      confidence,
+      confidence: developmentConfidence,
       note: "Community anchors correlate with settled, buildable neighbourhoods.",
     },
     investment: {
@@ -368,7 +366,7 @@ export function score(facilities: Record<string, Wave4Facility[]>, climate: Wave
         { label: "Environment", value: environment, weight: "×0.15" },
         { label: "Development", value: development, weight: "×0.15" },
       ],
-      confidence,
+      confidence: investmentConfidence,
       note: "Composite view — not a valuation.",
     },
   };
