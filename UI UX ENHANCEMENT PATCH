@@ -1,0 +1,136 @@
+#!/usr/bin/env python3
+"""HALISIA.AI UI/UX enhancement patch — run from the repository root.
+
+    python3 apply_ui_enhancements.py          # apply
+    python3 apply_ui_enhancements.py --check  # dry run, reports what would change
+
+Every edit is an exact-string replacement that must match exactly the expected
+number of times, so it refuses to half-apply against a file that has changed.
+Protected surfaces (Spatial/XR, Konza fixtures, Model Lab internals, public/_massing)
+are not touched.
+"""
+import sys, pathlib
+
+CHECK = "--check" in sys.argv
+
+EDITS = {
+    "src/styles.css": [
+        # 1. Status/text utilities that currently render below WCAG AA on ivory glass.
+        (
+            "  --color-cyan-glow: var(--cyan-glow);\n  --color-emerald-glow: var(--emerald-glow);\n  --color-amber-glow: var(--amber-glow);\n",
+            "  /* Text-safe remaps: the raw --*-glow vars still drive glows and shadows. */\n"
+            "  --color-cyan-glow: var(--h-green-ink);\n  --color-emerald-glow: var(--h-green-ink);\n  --color-amber-glow: var(--h-gold-ink);\n",
+            1,
+        ),
+        ("  --color-emerald: var(--emerald-glow);\n", "  --color-emerald: var(--h-green);\n", 1),
+        # 2. New ink token + AA-safe secondary text.
+        (
+            "  --h-green-3: #37bd63;\n",
+            "  --h-green-3: #37bd63;\n  /* AA-safe green for small text on tinted glass (7.6:1 on ivory). */\n  --h-green-ink: #0e5a26;\n",
+            1,
+        ),
+        ("  --h-stone-2: #6b7a6e;\n", "  --h-stone-2: #5f6e62; /* 4.9:1 on ivory, 4.6:1 on ivory-2 */\n", 1),
+        # 3. Visible control boundaries (WCAG 1.4.11, 3:1).
+        ("  --input: rgba(16, 45, 26, 0.08);\n", "  --input: #7f8d86; /* 3.1:1 input boundary on ivory */\n", 1),
+        (
+            "  background-color: rgba(255, 253, 248, 0.72);\n  border: 1px solid rgba(16, 45, 26, 0.12);\n  padding: 0.5rem 0.75rem;\n",
+            "  background-color: rgba(255, 253, 248, 0.72);\n  border: 1px solid var(--input);\n  padding: 0.5rem 0.75rem;\n",
+            1,
+        ),
+        # 4. Focus indicators: brand gold is 2.7:1, gold-ink is 5.1:1.
+        ("  --ring: var(--h-gold);\n", "  --ring: var(--h-gold-ink);\n", 1),
+        ("  --sidebar-ring: var(--h-gold);\n", "  --sidebar-ring: var(--h-gold-ink);\n", 1),
+        ("    outline: 2px solid var(--k-gold);\n", "    outline: 2px solid var(--h-gold-ink);\n", 1),
+        ("    outline: 2px solid var(--h-gold);\n", "    outline: 2px solid var(--h-gold-ink);\n", 3),
+        # 5. Buttons: the lighter gradient stop put button text at 3.3:1 / 4.4:1.
+        (
+            "  background: linear-gradient(180deg, var(--h-green-2), var(--h-green));\n",
+            "  background: linear-gradient(180deg, var(--h-green), var(--h-green-ink));\n",
+            1,
+        ),
+        (
+            "  background: linear-gradient(180deg, var(--h-red-2), var(--h-red));\n",
+            "  background: linear-gradient(180deg, var(--h-red), #8c1c16);\n",
+            1,
+        ),
+        # 6. Charts: every series >= 3:1 on ivory; min colour-blind separation 9.4 (was 6.9).
+        ("  --chart-2: var(--h-gold);\n", "  --chart-2: #b37e1d;\n", 1),
+        ("  --chart-3: var(--h-red);\n", "  --chart-3: #850404;\n", 1),
+        ("  --chart-4: var(--h-stone);\n", "  --chart-4: #73927b;\n", 1),
+        ("  --chart-5: var(--h-green-3);\n", "  --chart-5: #597962;\n", 1),
+        # 7. Off-palette neon in the map pin pulse.
+        ("rgba(32, 216, 120, 0.45)", "rgba(20, 123, 53, 0.45)", 1),
+        ("rgba(32, 216, 120, 0)", "rgba(20, 123, 53, 0)", 1),
+    ],
+    "src/components/halisia/ds/status-badge.tsx": [
+        # 10px uppercase with widest tracking is hard to read on phones.
+        (
+            "text-[10px] font-medium uppercase tracking-widest",
+            "text-[11px] font-semibold uppercase tracking-wider",
+            1,
+        ),
+    ],
+    "src/design-tokens.ts": [
+        (
+            '  emeraldDeep: "#0E5A26",\n',
+            '  emeraldDeep: "#0E5A26",\n  emeraldInk: "#0E5A26", // AA-safe small text on tinted glass\n',
+            1,
+        ),
+        (
+            'export const radii = {\n',
+            '/** Chart series, in order. Each >= 3:1 on ivory; tested for protan/deutan/tritan separation. */\n'
+            'export const chart = ["#147B35", "#B37E1D", "#850404", "#73927B", "#597962"] as const;\n\n'
+            'export const radii = {\n',
+            1,
+        ),
+    ],
+}
+
+APPEND = {
+    "src/styles.css": """
+/*
+ * Smooth layered elevation (opt-in). Five eased layers read as real depth on
+ * ivory glass without the muddy halo of a single large blur.
+ */
+@utility shadow-smooth {
+  box-shadow:
+    0 1px 1px rgba(16, 45, 26, 0.03),
+    0 2px 4px rgba(16, 45, 26, 0.03),
+    0 5px 10px rgba(16, 45, 26, 0.035),
+    0 10px 22px rgba(16, 45, 26, 0.04),
+    0 22px 48px rgba(16, 45, 26, 0.05);
+}
+"""
+}
+
+failed = False
+out = {}
+for rel, edits in EDITS.items():
+    p = pathlib.Path(rel)
+    if not p.exists():
+        print(f"MISSING {rel}"); failed = True; continue
+    s = p.read_text(encoding="utf-8")
+    if "--h-green-ink" in s or "emeraldInk" in s:
+        print(f"ALREADY APPLIED {rel}"); continue
+    for old, new, n in edits:
+        c = s.count(old)
+        if c == 0 and new in s:
+            continue  # this edit is already in place
+        if c != n:
+            print(f"MISMATCH {rel}: expected {n}, found {c}: {old.strip()[:70]!r}")
+            failed = True
+        else:
+            s = s.replace(old, new)
+    if rel in APPEND and "@utility shadow-smooth" not in s:
+        s = s.rstrip("\n") + "\n" + APPEND[rel]
+    out[p] = s
+if failed:
+    print("\nNothing written: the files have changed since this patch was made.")
+    sys.exit(1)
+if CHECK:
+    print("Dry run OK - all edits match.")
+    sys.exit(0)
+for p, s in out.items():
+    p.write_text(s, encoding="utf-8")
+print("Applied. Now run: bunx prettier --write src/styles.css src/design-tokens.ts "
+      "src/components/halisia/ds/status-badge.tsx && bun run typecheck && bunx vitest run && bun run build")
