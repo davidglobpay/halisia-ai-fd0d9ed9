@@ -1,0 +1,678 @@
+{
+  "global": {
+    "color": {
+      "brand": {
+        "ivory": {
+          "value": "#F7F3EA",
+          "type": "color",
+          "description": "Page background"
+        },
+        "ivory-2": {
+          "value": "#F1ECE0",
+          "type": "color"
+        },
+        "ivory-3": {
+          "value": "#E7E0D2",
+          "type": "color"
+        },
+        "ivory-4": {
+          "value": "#DCD3C1",
+          "type": "color"
+        },
+        "forest": {
+          "value": "#102D1A",
+          "type": "color",
+          "description": "Ink, 13.4:1 on ivory"
+        },
+        "green": {
+          "value": "#147B35",
+          "type": "color",
+          "description": "Primary / verified, 4.8:1"
+        },
+        "green-ink": {
+          "value": "#0E5A26",
+          "type": "color",
+          "description": "Small text on tints, 7.6:1"
+        },
+        "gold": {
+          "value": "#C08A2E",
+          "type": "color",
+          "description": "Line-work only, 2.7:1 \u2014 never text"
+        },
+        "gold-ink": {
+          "value": "#8A5E12",
+          "type": "color",
+          "description": "Gold text and focus rings, 5.1:1"
+        },
+        "red": {
+          "value": "#B3261E",
+          "type": "color",
+          "description": "Risk / alert, 5.9:1"
+        },
+        "stone": {
+          "value": "#33403A",
+          "type": "color"
+        },
+        "stone-2": {
+          "value": "#5F6E62",
+          "type": "color",
+          "description": "Secondary text, 4.9:1"
+        }
+      },
+      "scale": {
+        "forest": {
+          "50": {
+            "value": "#e8fded",
+            "type": "color",
+            "description": "1.04:1 on ivory"
+          },
+          "100": {
+            "value": "#def3e3",
+            "type": "color",
+            "description": "1.05:1 on ivory"
+          },
+          "200": {
+            "value": "#cae2d0",
+            "type": "color",
+            "description": "1.24:1 on ivory"
+          },
+          "300": {
+            "value": "#afc9b5",
+            "type": "color",
+            "description": "1.6:1 on ivory"
+          },
+          "400": {
+            "value": "#91ad98",
+            "type": "color",
+            "description": "2.2:1 on ivory"
+          },
+          "500": {
+            "value": "#73927b",
+            "type": "color",
+            "description": "3.1:1 on ivory"
+          },
+          "600": {
+            "value": "#597962",
+            "type": "color",
+            "description": "4.37:1 on ivory"
+          },
+          "700": {
+            "value": "#46634e",
+            "type": "color",
+            "description": "6.01:1 on ivory"
+          },
+          "800": {
+            "value": "#324c3a",
+            "type": "color",
+            "description": "8.5:1 on ivory"
+          },
+          "900": {
+            "value": "#203627",
+            "type": "color",
+            "description": "11.72:1 on ivory"
+          },
+          "950": {
+            "value": "#102d1a",
+            "type": "color",
+            "description": "13.43:1 on ivory"
+          }
+        },
+        "green": {
+          "50": {
+            "value": "#e6ffe8",
+            "type": "color",
+            "description": "1.05:1 on ivory"
+          },
+          "100": {
+            "value": "#c5fecd",
+            "type": "color",
+            "description": "1.03:1 on ivory"
+          },
+          "200": {
+            "value": "#afedb8",
+            "type": "color",
+            "description": "1.21:1 on ivory"
+          },
+          "300": {
+            "value": "#8fd49a",
+            "type": "color",
+            "description": "1.57:1 on ivory"
+          },
+          "400": {
+            "value": "#6cb979",
+            "type": "color",
+            "description": "2.14:1 on ivory"
+          },
+          "500": {
+            "value": "#469f59",
+            "type": "color",
+            "description": "2.98:1 on ivory"
+          },
+          "600": {
+            "value": "#147b35",
+            "type": "color",
+            "description": "4.84:1 on ivory"
+          },
+          "700": {
+            "value": "#026e2b",
+            "type": "color",
+            "description": "5.8:1 on ivory"
+          },
+          "800": {
+            "value": "#035420",
+            "type": "color",
+            "description": "8.27:1 on ivory"
+          },
+          "900": {
+            "value": "#003c14",
+            "type": "color",
+            "description": "11.45:1 on ivory"
+          },
+          "950": {
+            "value": "#01250a",
+            "type": "color",
+            "description": "14.93:1 on ivory"
+          }
+        },
+        "gold": {
+          "50": {
+            "value": "#fff5e8",
+            "type": "color",
+            "description": "1.03:1 on ivory"
+          },
+          "100": {
+            "value": "#feeacd",
+            "type": "color",
+            "description": "1.06:1 on ivory"
+          },
+          "200": {
+            "value": "#fbd49b",
+            "type": "color",
+            "description": "1.26:1 on ivory"
+          },
+          "300": {
+            "value": "#e4b979",
+            "type": "color",
+            "description": "1.65:1 on ivory"
+          },
+          "400": {
+            "value": "#cb9b52",
+            "type": "color",
+            "description": "2.27:1 on ivory"
+          },
+          "500": {
+            "value": "#c08a2e",
+            "type": "color",
+            "description": "2.74:1 on ivory"
+          },
+          "600": {
+            "value": "#956605",
+            "type": "color",
+            "description": "4.54:1 on ivory"
+          },
+          "700": {
+            "value": "#795204",
+            "type": "color",
+            "description": "6.28:1 on ivory"
+          },
+          "800": {
+            "value": "#5d3e02",
+            "type": "color",
+            "description": "8.8:1 on ivory"
+          },
+          "900": {
+            "value": "#422b01",
+            "type": "color",
+            "description": "12.02:1 on ivory"
+          },
+          "950": {
+            "value": "#291900",
+            "type": "color",
+            "description": "15.38:1 on ivory"
+          }
+        },
+        "red": {
+          "50": {
+            "value": "#fff4f2",
+            "type": "color",
+            "description": "1.03:1 on ivory"
+          },
+          "100": {
+            "value": "#ffe6e3",
+            "type": "color",
+            "description": "1.07:1 on ivory"
+          },
+          "200": {
+            "value": "#ffcdc5",
+            "type": "color",
+            "description": "1.28:1 on ivory"
+          },
+          "300": {
+            "value": "#fea69a",
+            "type": "color",
+            "description": "1.7:1 on ivory"
+          },
+          "400": {
+            "value": "#f67a6b",
+            "type": "color",
+            "description": "2.4:1 on ivory"
+          },
+          "500": {
+            "value": "#de5649",
+            "type": "color",
+            "description": "3.43:1 on ivory"
+          },
+          "600": {
+            "value": "#c53128",
+            "type": "color",
+            "description": "4.93:1 on ivory"
+          },
+          "700": {
+            "value": "#b3261e",
+            "type": "color",
+            "description": "5.9:1 on ivory"
+          },
+          "800": {
+            "value": "#850404",
+            "type": "color",
+            "description": "9.4:1 on ivory"
+          },
+          "900": {
+            "value": "#610102",
+            "type": "color",
+            "description": "12.53:1 on ivory"
+          },
+          "950": {
+            "value": "#3e0001",
+            "type": "color",
+            "description": "15.73:1 on ivory"
+          }
+        },
+        "stone": {
+          "50": {
+            "value": "#f0f9f5",
+            "type": "color",
+            "description": "1.03:1 on ivory"
+          },
+          "100": {
+            "value": "#e5f0eb",
+            "type": "color",
+            "description": "1.05:1 on ivory"
+          },
+          "200": {
+            "value": "#d3ded8",
+            "type": "color",
+            "description": "1.25:1 on ivory"
+          },
+          "300": {
+            "value": "#b8c4be",
+            "type": "color",
+            "description": "1.62:1 on ivory"
+          },
+          "400": {
+            "value": "#9ba8a2",
+            "type": "color",
+            "description": "2.23:1 on ivory"
+          },
+          "500": {
+            "value": "#7f8d86",
+            "type": "color",
+            "description": "3.13:1 on ivory"
+          },
+          "600": {
+            "value": "#65746d",
+            "type": "color",
+            "description": "4.44:1 on ivory"
+          },
+          "700": {
+            "value": "#515e58",
+            "type": "color",
+            "description": "6.13:1 on ivory"
+          },
+          "800": {
+            "value": "#33403a",
+            "type": "color",
+            "description": "9.8:1 on ivory"
+          },
+          "900": {
+            "value": "#29332e",
+            "type": "color",
+            "description": "11.8:1 on ivory"
+          },
+          "950": {
+            "value": "#171f1b",
+            "type": "color",
+            "description": "15.19:1 on ivory"
+          }
+        }
+      },
+      "semantic": {
+        "background": {
+          "value": "{color.brand.ivory}",
+          "type": "color"
+        },
+        "foreground": {
+          "value": "{color.brand.forest}",
+          "type": "color"
+        },
+        "primary": {
+          "value": "{color.brand.green}",
+          "type": "color"
+        },
+        "accent": {
+          "value": "{color.brand.gold-ink}",
+          "type": "color"
+        },
+        "destructive": {
+          "value": "{color.brand.red}",
+          "type": "color"
+        },
+        "muted-foreground": {
+          "value": "{color.brand.stone}",
+          "type": "color"
+        },
+        "ring": {
+          "value": "{color.brand.gold-ink}",
+          "type": "color"
+        },
+        "input-border": {
+          "value": "#7F8D86",
+          "type": "color",
+          "description": "3.1:1 boundary"
+        }
+      },
+      "chart": {
+        "1": {
+          "value": "#147B35",
+          "type": "color"
+        },
+        "2": {
+          "value": "#B37E1D",
+          "type": "color"
+        },
+        "3": {
+          "value": "#850404",
+          "type": "color"
+        },
+        "4": {
+          "value": "#73927B",
+          "type": "color"
+        },
+        "5": {
+          "value": "#597962",
+          "type": "color"
+        }
+      }
+    },
+    "borderRadius": {
+      "xs": {
+        "value": "6",
+        "type": "borderRadius"
+      },
+      "sm": {
+        "value": "10",
+        "type": "borderRadius"
+      },
+      "md": {
+        "value": "12",
+        "type": "borderRadius"
+      },
+      "lg": {
+        "value": "16",
+        "type": "borderRadius"
+      },
+      "xl": {
+        "value": "20",
+        "type": "borderRadius"
+      },
+      "2xl": {
+        "value": "24",
+        "type": "borderRadius"
+      },
+      "pill": {
+        "value": "9999",
+        "type": "borderRadius"
+      }
+    },
+    "spacing": {
+      "hair": {
+        "value": "2",
+        "type": "spacing"
+      },
+      "xs": {
+        "value": "4",
+        "type": "spacing"
+      },
+      "sm": {
+        "value": "8",
+        "type": "spacing"
+      },
+      "md": {
+        "value": "12",
+        "type": "spacing"
+      },
+      "lg": {
+        "value": "16",
+        "type": "spacing"
+      },
+      "xl": {
+        "value": "24",
+        "type": "spacing"
+      },
+      "2xl": {
+        "value": "32",
+        "type": "spacing"
+      },
+      "3xl": {
+        "value": "48",
+        "type": "spacing"
+      },
+      "4xl": {
+        "value": "64",
+        "type": "spacing"
+      }
+    },
+    "boxShadow": {
+      "glass": {
+        "value": [
+          {
+            "x": "0",
+            "y": "14",
+            "blur": "34",
+            "spread": "0",
+            "color": "rgba(16,45,26,0.08)",
+            "type": "dropShadow"
+          }
+        ],
+        "type": "boxShadow"
+      },
+      "glass-strong": {
+        "value": [
+          {
+            "x": "0",
+            "y": "22",
+            "blur": "56",
+            "spread": "0",
+            "color": "rgba(16,45,26,0.12)",
+            "type": "dropShadow"
+          }
+        ],
+        "type": "boxShadow"
+      },
+      "smooth": {
+        "value": [
+          {
+            "x": "0",
+            "y": "1",
+            "blur": "1",
+            "spread": "0",
+            "color": "rgba(16,45,26,0.03)",
+            "type": "dropShadow"
+          },
+          {
+            "x": "0",
+            "y": "2",
+            "blur": "4",
+            "spread": "0",
+            "color": "rgba(16,45,26,0.03)",
+            "type": "dropShadow"
+          },
+          {
+            "x": "0",
+            "y": "5",
+            "blur": "10",
+            "spread": "0",
+            "color": "rgba(16,45,26,0.035)",
+            "type": "dropShadow"
+          },
+          {
+            "x": "0",
+            "y": "10",
+            "blur": "22",
+            "spread": "0",
+            "color": "rgba(16,45,26,0.04)",
+            "type": "dropShadow"
+          },
+          {
+            "x": "0",
+            "y": "22",
+            "blur": "48",
+            "spread": "0",
+            "color": "rgba(16,45,26,0.05)",
+            "type": "dropShadow"
+          }
+        ],
+        "type": "boxShadow",
+        "description": "Layered elevation"
+      }
+    },
+    "fontFamilies": {
+      "display": {
+        "value": "Space Grotesk",
+        "type": "fontFamilies"
+      },
+      "body": {
+        "value": "Inter",
+        "type": "fontFamilies"
+      },
+      "editorial": {
+        "value": "Cormorant Garamond",
+        "type": "fontFamilies"
+      },
+      "mono": {
+        "value": "IBM Plex Mono",
+        "type": "fontFamilies"
+      }
+    },
+    "fontWeights": {
+      "regular": {
+        "value": "400",
+        "type": "fontWeights"
+      },
+      "medium": {
+        "value": "500",
+        "type": "fontWeights"
+      },
+      "semibold": {
+        "value": "600",
+        "type": "fontWeights"
+      },
+      "bold": {
+        "value": "700",
+        "type": "fontWeights"
+      }
+    },
+    "fontSizes": {
+      "badge": {
+        "value": "11",
+        "type": "fontSizes"
+      },
+      "caption": {
+        "value": "12",
+        "type": "fontSizes"
+      },
+      "small": {
+        "value": "14",
+        "type": "fontSizes"
+      },
+      "body": {
+        "value": "16",
+        "type": "fontSizes"
+      },
+      "h3": {
+        "value": "28",
+        "type": "fontSizes"
+      },
+      "h2": {
+        "value": "44",
+        "type": "fontSizes"
+      },
+      "h1": {
+        "value": "64",
+        "type": "fontSizes"
+      }
+    },
+    "typography": {
+      "h1": {
+        "value": {
+          "fontFamily": "{fontFamilies.display}",
+          "fontWeight": "{fontWeights.bold}",
+          "fontSize": "{fontSizes.h1}",
+          "lineHeight": "105%",
+          "letterSpacing": "-2%"
+        },
+        "type": "typography"
+      },
+      "h2": {
+        "value": {
+          "fontFamily": "{fontFamilies.display}",
+          "fontWeight": "{fontWeights.bold}",
+          "fontSize": "{fontSizes.h2}",
+          "lineHeight": "112%",
+          "letterSpacing": "-1.5%"
+        },
+        "type": "typography"
+      },
+      "h3": {
+        "value": {
+          "fontFamily": "{fontFamilies.display}",
+          "fontWeight": "{fontWeights.semibold}",
+          "fontSize": "{fontSizes.h3}",
+          "lineHeight": "120%",
+          "letterSpacing": "-1%"
+        },
+        "type": "typography"
+      },
+      "body": {
+        "value": {
+          "fontFamily": "{fontFamilies.body}",
+          "fontWeight": "{fontWeights.regular}",
+          "fontSize": "{fontSizes.body}",
+          "lineHeight": "170%",
+          "letterSpacing": "0%"
+        },
+        "type": "typography"
+      }
+    },
+    "duration": {
+      "micro": {
+        "value": "180ms",
+        "type": "other"
+      },
+      "panel": {
+        "value": "320ms",
+        "type": "other"
+      },
+      "ease": {
+        "value": "cubic-bezier(0.22, 1, 0.36, 1)",
+        "type": "other"
+      }
+    }
+  },
+  "$themes": [],
+  "$metadata": {
+    "tokenSetOrder": [
+      "global"
+    ]
+  }
+}
