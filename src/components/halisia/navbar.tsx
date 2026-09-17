@@ -1,10 +1,18 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Menu, X, LogIn, LogOut, Bookmark, User as UserIcon } from "lucide-react";
+import { Menu, X, LogIn, LogOut, Bookmark, ChevronDown, User as UserIcon } from "lucide-react";
 import halisiaLogo from "@/assets/brand/halisia-mark.png.asset.json";
 import { useAuth } from "@/hooks/use-auth";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const LINKS: Array<{ to: string; label: string }> = [
   { to: "/", label: "Home" },
@@ -18,6 +26,27 @@ const LINKS: Array<{ to: string; label: string }> = [
   { to: "/reports", label: "Reports" },
   { to: "/dashboard", label: "Dashboard" },
 ];
+
+// Finished public pages that previously had no menu entry.
+const MORE_LINKS: Array<{ to: string; label: string }> = [
+  { to: "/model-lab", label: "Model Lab" },
+  { to: "/pulse", label: "Pulse news" },
+  { to: "/compare-locations", label: "Compare locations" },
+];
+
+// Tools behind sign-in; only listed once the user is signed in.
+const MEMBER_LINKS: Array<{ to: string; label: string }> = [
+  { to: "/sell/new", label: "Sell land" },
+  { to: "/seller-tools", label: "Seller tools" },
+  { to: "/rentals", label: "Rentals" },
+  { to: "/financing", label: "Financing" },
+  { to: "/pros", label: "Professionals" },
+  { to: "/contributions", label: "Contributions" },
+];
+
+// Exact or nested match, so "/compare" is not active on "/compare-locations".
+const isActive = (pathname: string, to: string) =>
+  to === "/" ? pathname === "/" : pathname === to || pathname.startsWith(`${to}/`);
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
@@ -68,7 +97,7 @@ export function Navbar() {
           aria-label="Primary"
         >
           {LINKS.map((l) => {
-            const active = l.to === "/" ? pathname === "/" : pathname.startsWith(l.to);
+            const active = isActive(pathname, l.to);
             return (
               <Link
                 key={l.to}
@@ -82,6 +111,35 @@ export function Navbar() {
               </Link>
             );
           })}
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1.5 transition lg:px-3 ${
+                [...MORE_LINKS, ...(user ? MEMBER_LINKS : [])].some((l) => isActive(pathname, l.to))
+                  ? "bg-white/10 text-foreground"
+                  : "hover:text-foreground hover:bg-white/5"
+              }`}
+            >
+              More <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-52">
+              {MORE_LINKS.map((l) => (
+                <DropdownMenuItem key={l.to} asChild>
+                  <Link to={l.to}>{l.label}</Link>
+                </DropdownMenuItem>
+              ))}
+              {!loading && user ? (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel>Your tools</DropdownMenuLabel>
+                  {MEMBER_LINKS.map((l) => (
+                    <DropdownMenuItem key={l.to} asChild>
+                      <Link to={l.to}>{l.label}</Link>
+                    </DropdownMenuItem>
+                  ))}
+                </>
+              ) : null}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </nav>
         <div className="flex shrink-0 items-center gap-2">
           <span className="hidden whitespace-nowrap text-[10px] uppercase tracking-[0.25em] text-muted-foreground 2xl:block">
@@ -152,11 +210,26 @@ export function Navbar() {
             open ? "translate-y-0 opacity-100" : "-translate-y-3 opacity-0"
           }`}
         >
-          <ul className="flex flex-col gap-1">
-            {LINKS.map((l) => {
-              const active = l.to === "/" ? pathname === "/" : pathname.startsWith(l.to);
+          <ul className="flex flex-col gap-1 max-h-[calc(100vh-120px)] overflow-y-auto">
+            {[
+              ...LINKS,
+              ...MORE_LINKS,
+              ...(!loading && user ? MEMBER_LINKS : []),
+            ].map((l, idx) => {
+              const active = isActive(pathname, l.to);
+              const groupStart =
+                idx === LINKS.length
+                  ? "More"
+                  : idx === LINKS.length + MORE_LINKS.length
+                    ? "Your tools"
+                    : null;
               return (
                 <li key={l.to}>
+                  {groupStart ? (
+                    <p className="mt-2 border-t border-white/10 px-4 pb-1 pt-3 text-[11px] uppercase tracking-wider text-muted-foreground">
+                      {groupStart}
+                    </p>
+                  ) : null}
                   <Link
                     to={l.to}
                     {...(l.to === "/" ? { search: { compare: "" } } : {})}
