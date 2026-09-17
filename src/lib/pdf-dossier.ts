@@ -1,6 +1,11 @@
 import jsPDF from "jspdf";
 import { fetchStaticMapCached } from "@/lib/static-map-cache";
-import { getWave4Intel, type Wave4Intel, type ScoreExplain } from "@/lib/wave4-intel.functions";
+import {
+  getWave4Intel,
+  OVERPASS_CATEGORY_LABELS,
+  type Wave4Intel,
+  type ScoreExplain,
+} from "@/lib/wave4-intel.functions";
 import {
   drawIsometricTerrain,
   fetchElevationGrid,
@@ -8,6 +13,16 @@ import {
   type ElevationGrid,
 } from "@/lib/terrain-grid";
 import { startTerrainTimer, recordTerrainEvent } from "@/lib/terrain-telemetry";
+
+// jsPDF's built-in Helvetica only covers WinAnsi. Characters outside it
+// (arrows, Greek letters) render as garbage, so none are used in this file.
+function nairobiStamp(d: Date): string {
+  try {
+    return `${d.toLocaleString("en-GB", { timeZone: "Africa/Nairobi" })} EAT`;
+  } catch {
+    return "Timestamp unavailable";
+  }
+}
 
 export async function generateLocationDossier(opts: {
   lat: number;
@@ -58,7 +73,7 @@ export async function generateLocationDossier(opts: {
   const base = pick(0);
   const terrain = pick(1);
   const hybrid = pick(2);
-  progress(35, "Aggregating Wave 4 open data…");
+  progress(35, "Aggregating public open data…");
   let wave4: Wave4Intel | null = null;
   try {
     wave4 = await getWave4Intel({ data: { lat, lng } });
@@ -67,7 +82,7 @@ export async function generateLocationDossier(opts: {
   }
   const sat = pick(3);
 
-  // Wave 2 · Isometric terrain grid (rendered off-screen to a PNG the PDF embeds).
+  // Isometric terrain grid (rendered off-screen to a PNG the PDF embeds).
   progress(55, "Sampling ASTER elevation grid…");
   let terrainGrid: ElevationGrid | null = null;
   try {
@@ -110,16 +125,13 @@ export async function generateLocationDossier(opts: {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
   doc.setTextColor(...muted);
-  doc.text(
-    `${lat.toFixed(5)}, ${lng.toFixed(5)}  ·  Generated ${new Date().toLocaleString()}`,
-    M,
-    100,
-  );
+  const coverMeta = `${lat.toFixed(5)}, ${lng.toFixed(5)}  ·  Generated ${nairobiStamp(new Date())}`;
+  doc.text(coverMeta, M, 100);
 
   if (shareUrl) {
     doc.setFontSize(9);
     doc.setTextColor(...accent);
-    doc.textWithLink("Open shareable view →", M, 114, { url: shareUrl });
+    doc.textWithLink("Open shareable view", M, 114, { url: shareUrl });
   }
 
   // Composite indicator — withheld when open-data coverage cannot support it.
@@ -149,7 +161,10 @@ export async function generateLocationDossier(opts: {
     doc.setFontSize(9);
     doc.setTextColor(...muted);
     doc.text(
-      "Open-data coverage at this location is too thin to support an indicator.",
+      doc.splitTextToSize(
+        "Open-data coverage at this location is too thin to support an indicator.",
+        W - M * 2 - 240,
+      ),
       M + 20,
       190,
     );
@@ -165,36 +180,31 @@ export async function generateLocationDossier(opts: {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.setTextColor(...muted);
-  doc.text("Derived from OpenStreetMap facility counts and", W - M - 175, 183);
-  doc.text("Open-Meteo climate normals. Not a survey or valuation.", W - M - 175, 195);
+  doc.text("Follows the weakest OpenStreetMap-derived", W - M - 175, 183);
+  doc.text("component. Not a survey or valuation.", W - M - 175, 195);
 
   // Hero map (light view) — degrade gracefully if the static-map API is not authorized.
   if (base.dataUrl) {
     doc.addImage(base.dataUrl, "PNG", M, 230, W - M * 2, 320);
     doc.setFontSize(8);
     doc.setTextColor(...muted);
-    doc.text("Fig 1 · Light basemap · parcel centroid marked", M, 565);
+    doc.text("Fig 1 · Light basemap · search point marked", M, 565);
   } else {
     doc.setFillColor(235, 240, 248);
     doc.roundedRect(M, 230, W - M * 2, 320, 10, 10, "F");
     doc.setFontSize(10);
     doc.setTextColor(...muted);
     doc.text(
-      "Basemap unavailable — enable the Static Maps API for this key to embed live evidence.",
+      doc.splitTextToSize(
+        "Basemap unavailable — enable the Static Maps API for this key to embed live evidence.",
+        W - M * 2 - 40,
+      ),
       M + 20,
       390,
     );
   }
 
-  // Footer
-  doc.setFontSize(8);
-  doc.setTextColor(...muted);
-  doc.text(
-    "Informational only — verify title, survey and zoning with a licensed professional.",
-    M,
-    H - 30,
-  );
-  doc.text("halisia.ai", W - M - 40, H - 30);
+  drawFooter(doc, W, H, M, muted);
 
   // ---------- Page 2: Open-data indicators ----------
   // Omitted entirely when Wave 4 returned nothing — an empty page is honest,
@@ -203,7 +213,7 @@ export async function generateLocationDossier(opts: {
     doc.addPage();
     doc.setFillColor(...bg);
     doc.rect(0, 0, W, H, "F");
-    drawHeader(doc, W, M, "Open-data indicators · indicative", ink, muted);
+    drawHeader(doc, M, "Open-data indicators · indicative", ink, muted);
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
@@ -223,12 +233,14 @@ export async function generateLocationDossier(opts: {
     ];
 
     const colW = (W - M * 2 - 20) / 2;
-    const cardH = 132;
+    const cardH = 158;
+    const lineH = 9;
     cards.forEach((c, i) => {
       const col = i % 2;
       const row = Math.floor(i / 2);
       const x = M + col * (colW + 20);
-      const yy = 116 + row * (cardH + 12);
+      const yy = 112 + row * (cardH + 10);
+      const innerW = colW - 28;
       const withheld = c.ex.confidence === "low";
 
       doc.setFillColor(255, 255, 255);
@@ -250,35 +262,46 @@ export async function generateLocationDossier(opts: {
         doc.text(
           doc.splitTextToSize(
             "Too few mapped features here to compute this. Absence in OpenStreetMap is not evidence that facilities are absent.",
-            colW - 28,
+            innerW,
           ),
           x + 14,
           yy + 60,
         );
-      } else {
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(22);
-        doc.setTextColor(...ink);
-        doc.text(`${c.ex.score}`, x + 14, yy + 46);
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(9);
-        doc.setTextColor(...muted);
-        doc.text("/100", x + 48, yy + 46);
-        doc.setFillColor(230, 235, 242);
-        doc.roundedRect(x + 14, yy + 54, colW - 28, 5, 2.5, 2.5, "F");
-        doc.setFillColor(...accent);
-        doc.roundedRect(x + 14, yy + 54, ((colW - 28) * c.ex.score) / 100, 5, 2.5, 2.5, "F");
-
-        doc.setFontSize(7.5);
-        doc.setTextColor(...muted);
-        doc.text(`Formula: ${c.ex.formula}`, x + 14, yy + 72);
-        const factorLines = c.ex.factors.map(
-          (f) =>
-            `${f.label}: ${typeof f.value === "number" ? Math.round(f.value * 10) / 10 : f.value} (${f.weight})`,
-        );
-        doc.text(doc.splitTextToSize(factorLines.join("  ·  "), colW - 28), x + 14, yy + 84);
-        doc.text(`Confidence: ${c.ex.confidence}`, x + 14, yy + 120);
+        return;
       }
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(22);
+      doc.setTextColor(...ink);
+      doc.text(`${c.ex.score}`, x + 14, yy + 46);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(...muted);
+      doc.text("/100", x + 48, yy + 46);
+      doc.setFillColor(230, 235, 242);
+      doc.roundedRect(x + 14, yy + 54, innerW, 5, 2.5, 2.5, "F");
+      doc.setFillColor(...accent);
+      doc.roundedRect(x + 14, yy + 54, (innerW * c.ex.score) / 100, 5, 2.5, 2.5, "F");
+
+      // Wrap formula and factors so long infrastructure lines never spill into
+      // the neighbouring card, and cap them so they never reach the confidence line.
+      doc.setFontSize(7.5);
+      doc.setTextColor(...muted);
+      const formulaLines = (
+        doc.splitTextToSize(`Formula: ${c.ex.formula}`, innerW) as string[]
+      ).slice(0, 2);
+      doc.text(formulaLines, x + 14, yy + 72);
+      const factorText = c.ex.factors
+        .map((f) => `${f.label}: ${Math.round(f.value * 10) / 10} (${f.weight})`)
+        .join("  ·  ");
+      const factorsY = yy + 72 + formulaLines.length * lineH + 4;
+      const maxFactorLines = Math.max(1, Math.floor((yy + cardH - 26 - factorsY) / lineH) + 1);
+      const factorLines = (doc.splitTextToSize(factorText, innerW) as string[]).slice(
+        0,
+        maxFactorLines,
+      );
+      doc.text(factorLines, x + 14, factorsY);
+      doc.text(`Confidence: ${c.ex.confidence}`, x + 14, yy + cardH - 12);
     });
 
     doc.setFontSize(8);
@@ -294,11 +317,11 @@ export async function generateLocationDossier(opts: {
     drawFooter(doc, W, H, M, muted);
   }
 
-  // ---------- Page 3: Evidence layers ----------
+  // ---------- Page 3: Evidence imagery ----------
   doc.addPage();
   doc.setFillColor(...bg);
   doc.rect(0, 0, W, H, "F");
-  drawHeader(doc, W, M, "Evidence · terrain, drainage & flood exposure", ink, muted);
+  drawHeader(doc, M, "Evidence imagery · terrain, built form & water", ink, muted);
 
   const imgW = (W - M * 2 - 20) / 2;
   const imgH = 180;
@@ -312,7 +335,7 @@ export async function generateLocationDossier(opts: {
     {
       img: hybrid.dataUrl,
       title: "Built environment",
-      desc: "Hybrid view: road network over satellite imagery at the parcel centroid.",
+      desc: "Hybrid view: road network over satellite imagery at the search point.",
     },
     {
       img: sat.dataUrl,
@@ -321,7 +344,7 @@ export async function generateLocationDossier(opts: {
     },
     {
       img: base.dataUrl,
-      title: "Drainage & flood context",
+      title: "Mapped water features",
       desc: "Light basemap with water features as mapped by the basemap provider. No flood modelling has been performed.",
     },
   ];
@@ -349,20 +372,20 @@ export async function generateLocationDossier(opts: {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(...muted);
-    const d = doc.splitTextToSize(e.desc, imgW - 24);
-    doc.text(d, x + 12, yy + imgH + 22);
+    doc.text(doc.splitTextToSize(e.desc, imgW - 24), x + 12, yy + imgH + 22);
   });
 
   drawFooter(doc, W, H, M, muted);
 
-  // ---------- Page 4: AI narrative ----------
+  // ---------- Page 4: Scope & verification ----------
+  // No AI-generated narrative is included, so the page is not labelled as one.
   doc.addPage();
   doc.setFillColor(...bg);
   doc.rect(0, 0, W, H, "F");
-  drawHeader(doc, W, M, "AI narrative & recommendations", ink, muted);
+  drawHeader(doc, M, "Scope & verification checklist", ink, muted);
 
   doc.setFillColor(255, 255, 255);
-  doc.roundedRect(M, 110, W - M * 2, 220, 10, 10, "F");
+  doc.roundedRect(M, 110, W - M * 2, 230, 10, 10, "F");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
   doc.setTextColor(...ink);
@@ -372,12 +395,14 @@ export async function generateLocationDossier(opts: {
   doc.setTextColor(...muted);
   const scopeNote =
     "This dossier assembles public open data and basemap imagery for the coordinate given. It does not establish ownership, boundaries, plot size, zoning, servicing, flood risk or market value. No site visit, survey, title search or valuation informed any figure in it. Every indicator shown is formula-based and indicative, with its inputs printed alongside it.";
-  doc.text(doc.splitTextToSize(scopeNote, W - M * 2 - 40), M + 20, 155);
+  const scopeLines = doc.splitTextToSize(scopeNote, W - M * 2 - 40) as string[];
+  doc.text(scopeLines, M + 20, 155);
 
+  const checklistY = 155 + scopeLines.length * 12 + 22;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
   doc.setTextColor(...ink);
-  doc.text("Standard verification checklist", M + 20, 250);
+  doc.text("Standard verification checklist", M + 20, checklistY);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.setTextColor(...muted);
@@ -387,18 +412,17 @@ export async function generateLocationDossier(opts: {
     "3. Confirm Kenya Power connection point and estimated last-mile cost.",
     "4. Verify title deed and any encumbrances at the local Lands registry.",
   ];
-  doc.text(recs.join("\n"), M + 20, 270, { lineHeightFactor: 1.5 });
+  doc.text(recs.join("\n"), M + 20, checklistY + 20, { lineHeightFactor: 1.5 });
 
   drawFooter(doc, W, H, M, muted);
 
-  // ---------- Wave 1 & 2 · Climate + isometric terrain ----------
+  // ---------- Page 5: Climate normals & terrain ----------
   if (wave4 || terrainGrid) {
     doc.addPage();
     doc.setFillColor(...bg);
     doc.rect(0, 0, W, H, "F");
-    drawHeader(doc, W, M, "Waves 1 & 2 · Climate normals + 3D terrain", ink, muted);
+    drawHeader(doc, M, "Climate normals & terrain", ink, muted);
 
-    // Climate tiles (from Wave 4 Open-Meteo aggregation).
     doc.setFillColor(255, 255, 255);
     doc.roundedRect(M, 110, W - M * 2, 90, 10, 10, "F");
     doc.setFont("helvetica", "bold");
@@ -435,7 +459,6 @@ export async function generateLocationDossier(opts: {
       doc.text(`${k}: ${v}`, M + 16 + col * (W / 2 - M), 152 + row * 18);
     });
 
-    // Terrain infographic
     doc.setFillColor(255, 255, 255);
     doc.roundedRect(M, 220, W - M * 2, H - 260 - 40, 10, 10, "F");
     doc.setFont("helvetica", "bold");
@@ -448,12 +471,12 @@ export async function generateLocationDossier(opts: {
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
       doc.setTextColor(...muted);
-      const stats = `Elevation ${s.minM}–${s.maxM} m · relief Δ ${s.reliefM} m · sampled span ~${s.spanKm} km · overall grade ~${s.slopePct}%`;
-      doc.text(stats, M + 16, 534);
+      const stats = `Elevation ${s.minM}–${s.maxM} m · relief ${s.reliefM} m · sampled span ~${s.spanKm} km · overall grade ~${s.slopePct}%`;
+      doc.text(doc.splitTextToSize(stats, W - M * 2 - 32), M + 16, 534);
       doc.text(
-        "Colour ramp: green (low) → amber → white (high). Cyan pin marks the search point.",
+        "Colour ramp: green (low), amber, then white (high). Cyan pin marks the search point.",
         M + 16,
-        548,
+        560,
       );
     } else {
       doc.setFont("helvetica", "normal");
@@ -469,19 +492,19 @@ export async function generateLocationDossier(opts: {
     drawFooter(doc, W, H, M, muted);
   }
 
-  // ---------- Page 5: Wave 4 · Public open-data intelligence ----------
+  // ---------- Page 6: Administrative profile & nearby facilities ----------
   if (wave4) {
     doc.addPage();
     doc.setFillColor(...bg);
     doc.rect(0, 0, W, H, "F");
-    drawHeader(doc, W, M, "Wave 4 · Public open-data intelligence", ink, muted);
+    drawHeader(doc, M, "Administrative profile & nearby facilities", ink, muted);
 
     doc.setFillColor(255, 255, 255);
     doc.roundedRect(M, 110, W - M * 2, 90, 10, 10, "F");
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
     doc.setTextColor(...ink);
-    doc.text("Administrative profile", M + 16, 132);
+    doc.text("Administrative profile (OpenStreetMap reverse lookup)", M + 16, 132);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(...muted);
@@ -498,44 +521,55 @@ export async function generateLocationDossier(opts: {
     });
 
     // Formula inputs and confidence are presented once on the open-data indicators page.
-    // Facility mix — top 6 categories
     const facEntries = Object.entries(wave4.facilities)
       .map(([k, list]) => [k, list.length] as [string, number])
       .sort((a, b) => b[1] - a[1])
       .slice(0, 6);
+    const facTop = 220;
+    const facH = 60 + facEntries.length * 20 + 24;
     doc.setFillColor(255, 255, 255);
-    doc.roundedRect(M, 410, W - M * 2, 170, 10, 10, "F");
+    doc.roundedRect(M, facTop, W - M * 2, facH, 10, 10, "F");
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
     doc.setTextColor(...ink);
-    doc.text("Nearby public facilities (3 km)", M + 16, 432);
+    doc.text("Mapped public facilities within 3 km", M + 16, facTop + 22);
     const maxCount = Math.max(1, ...facEntries.map(([, n]) => n));
     facEntries.forEach(([k, n], i) => {
-      const y = 450 + i * 20;
+      const y = facTop + 48 + i * 20;
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
       doc.setTextColor(...ink);
-      doc.text(k, M + 16, y);
+      doc.text(OVERPASS_CATEGORY_LABELS[k] ?? k, M + 16, y);
       doc.setTextColor(...muted);
-      doc.text(String(n), W - M - 30, y, { align: "right" });
+      doc.text(String(n), W - M - 16, y, { align: "right" });
       doc.setFillColor(235, 240, 248);
       doc.roundedRect(M + 130, y - 8, W - M * 2 - 180, 8, 4, 4, "F");
-      doc.setFillColor(...accent);
-      doc.roundedRect(M + 130, y - 8, ((W - M * 2 - 180) * n) / maxCount, 8, 4, 4, "F");
+      if (n > 0) {
+        doc.setFillColor(...accent);
+        doc.roundedRect(M + 130, y - 8, ((W - M * 2 - 180) * n) / maxCount, 8, 4, 4, "F");
+      }
     });
-
     doc.setFontSize(8);
     doc.setTextColor(...muted);
+    doc.text(
+      doc.splitTextToSize(
+        "Counts reflect what is mapped in OpenStreetMap, capped at 12 per category. A zero means nothing is mapped, not that nothing exists.",
+        W - M * 2 - 32,
+      ),
+      M + 16,
+      facTop + facH - 16,
+    );
+
     const usedSources = wave4.sources.filter((s) => s.used).map((s) => s.label);
     doc.setFontSize(8);
     doc.setTextColor(...muted);
     doc.text(
       doc.splitTextToSize(
-        `Sources contacted: ${usedSources.length ? usedSources.join(" · ") : "none returned data"} · generated ${new Date(wave4.generatedAt).toLocaleString()}`,
+        `Sources that returned data: ${usedSources.length ? usedSources.join(" · ") : "none"} · generated ${nairobiStamp(new Date(wave4.generatedAt))}`,
         W - M * 2,
       ),
       M,
-      H - 55,
+      H - 60,
     );
     drawFooter(doc, W, H, M, muted);
   }
@@ -565,7 +599,6 @@ export async function generateLocationDossier(opts: {
 
 function drawHeader(
   doc: jsPDF,
-  W: number,
   M: number,
   title: string,
   ink: [number, number, number],
@@ -582,6 +615,7 @@ function drawHeader(
 }
 
 function drawFooter(doc: jsPDF, W: number, H: number, M: number, muted: [number, number, number]) {
+  doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   doc.setTextColor(...muted);
   doc.text(
@@ -589,7 +623,7 @@ function drawFooter(doc: jsPDF, W: number, H: number, M: number, muted: [number,
     M,
     H - 30,
   );
-  doc.text("halisia.ai", W - M - 40, H - 30);
+  doc.text("halisia.ai", W - M, H - 30, { align: "right" });
 }
 
 function renderTerrainToPngDataUrl(grid: ElevationGrid, w: number, h: number): string | null {
