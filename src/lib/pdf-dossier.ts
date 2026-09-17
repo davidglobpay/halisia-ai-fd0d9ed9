@@ -1,10 +1,6 @@
 import jsPDF from "jspdf";
 import { fetchStaticMapCached } from "@/lib/static-map-cache";
-import {
-  getWave4Intel,
-  type Wave4Intel,
-  type ScoreExplain,
-} from "@/lib/wave4-intel.functions";
+import { getWave4Intel, type Wave4Intel, type ScoreExplain } from "@/lib/wave4-intel.functions";
 import {
   drawIsometricTerrain,
   fetchElevationGrid,
@@ -93,7 +89,6 @@ export async function generateLocationDossier(opts: {
   const muted: [number, number, number] = [100, 116, 139];
   const accent: [number, number, number] = [45, 140, 255];
   const bg: [number, number, number] = [247, 249, 252];
-
 
   // ---------- Page 1: cover ----------
   doc.setFillColor(...bg);
@@ -278,7 +273,8 @@ export async function generateLocationDossier(opts: {
         doc.setTextColor(...muted);
         doc.text(`Formula: ${c.ex.formula}`, x + 14, yy + 72);
         const factorLines = c.ex.factors.map(
-          (f) => `${f.label}: ${typeof f.value === "number" ? Math.round(f.value * 10) / 10 : f.value} (${f.weight})`,
+          (f) =>
+            `${f.label}: ${typeof f.value === "number" ? Math.round(f.value * 10) / 10 : f.value} (${f.weight})`,
         );
         doc.text(doc.splitTextToSize(factorLines.join("  ·  "), colW - 28), x + 14, yy + 84);
         doc.text(`Confidence: ${c.ex.confidence}`, x + 14, yy + 120);
