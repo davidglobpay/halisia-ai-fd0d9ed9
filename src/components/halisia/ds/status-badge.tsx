@@ -96,7 +96,7 @@ export function StatusBadge({
   const Icon = cfg.icon;
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-widest ${cfg.tone} ${cfg.ring} ${className}`}
+      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${cfg.tone} ${cfg.ring} ${className}`}
     >
       <Icon className="h-3 w-3" aria-hidden="true" />
       {children ?? cfg.label}
