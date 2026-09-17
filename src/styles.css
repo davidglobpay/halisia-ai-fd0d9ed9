@@ -53,9 +53,10 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-electric: var(--electric);
-  --color-cyan-glow: var(--cyan-glow);
-  --color-emerald-glow: var(--emerald-glow);
-  --color-amber-glow: var(--amber-glow);
+  /* Text-safe remaps: the raw --*-glow vars still drive glows and shadows. */
+  --color-cyan-glow: var(--h-green-ink);
+  --color-emerald-glow: var(--h-green-ink);
+  --color-amber-glow: var(--h-gold-ink);
   /*
    * Ivory-skin remap for the light Tailwind amber/emerald shades that legacy
    * components use for caveats and positive states. On a dark canvas 200–400
@@ -73,7 +74,7 @@
   --color-earth: var(--earth);
   --color-cream: var(--cream);
   --color-gold: var(--amber-glow);
-  --color-emerald: var(--emerald-glow);
+  --color-emerald: var(--h-green);
   --color-crimson: var(--destructive);
   --color-silver: var(--silver);
   --color-ink: var(--h-forest);
@@ -120,6 +121,8 @@
   --h-green: #147b35;
   --h-green-2: #1b9b45;
   --h-green-3: #37bd63;
+  /* AA-safe green for small text on tinted glass (7.6:1 on ivory). */
+  --h-green-ink: #0e5a26;
   --h-gold: #c08a2e;
   /* AA-safe gold for text on ivory glass (5.1:1). Line-work keeps --h-gold. */
   --h-gold-ink: #8a5e12;
@@ -129,7 +132,7 @@
   --h-red-2: #d2372c;
   --h-red-3: #f06a5f;
   --h-stone: #33403a;
-  --h-stone-2: #6b7a6e;
+  --h-stone-2: #5f6e62; /* 4.9:1 on ivory, 4.6:1 on ivory-2 */
 
   /* Legacy aliases — older rules still reference the --k-* names. */
   --k-black: var(--h-forest);
@@ -167,8 +170,8 @@
   --destructive: var(--h-red); /* risk / alert */
   --destructive-foreground: #f7f3ea;
   --border: rgba(16, 45, 26, 0.14);
-  --input: rgba(16, 45, 26, 0.08);
-  --ring: var(--h-gold);
+  --input: #7f8d86; /* 3.1:1 input boundary on ivory */
+  --ring: var(--h-gold-ink);
   --electric: var(--h-green);
   --cyan-glow: var(--h-green-2);
   --emerald-glow: var(--h-green-2);
@@ -178,10 +181,10 @@
   --cream: var(--h-ivory-3);
   --silver: var(--h-stone);
   --chart-1: var(--h-green);
-  --chart-2: var(--h-gold);
-  --chart-3: var(--h-red);
-  --chart-4: var(--h-stone);
-  --chart-5: var(--h-green-3);
+  --chart-2: #b37e1d;
+  --chart-3: #850404;
+  --chart-4: #73927b;
+  --chart-5: #597962;
   --sidebar: rgba(255, 253, 248, 0.82);
   --sidebar-foreground: var(--h-forest);
   --sidebar-primary: var(--h-green);
@@ -189,7 +192,7 @@
   --sidebar-accent: var(--h-ivory-2);
   --sidebar-accent-foreground: var(--h-forest);
   --sidebar-border: rgba(16, 45, 26, 0.12);
-  --sidebar-ring: var(--h-gold);
+  --sidebar-ring: var(--h-gold-ink);
   /* Motion (Section 22) */
   --motion-micro: 180ms;
   --motion-panel: 320ms;
@@ -395,12 +398,12 @@
     transform: translateY(0) scale(0.99);
   }
   &:focus-visible {
-    outline: 2px solid var(--k-gold);
+    outline: 2px solid var(--h-gold-ink);
     outline-offset: 2px;
   }
 }
 @utility btn-primary {
-  background: linear-gradient(180deg, var(--h-green-2), var(--h-green));
+  background: linear-gradient(180deg, var(--h-green), var(--h-green-ink));
   color: var(--h-ivory);
   border: 1px solid rgba(20, 123, 53, 0.5);
   &:hover {
@@ -429,7 +432,7 @@
   }
 }
 @utility btn-destructive {
-  background: linear-gradient(180deg, var(--h-red-2), var(--h-red));
+  background: linear-gradient(180deg, var(--h-red), #8c1c16);
   color: var(--h-ivory);
   border: 1px solid rgba(179, 38, 30, 0.5);
   &:hover {
@@ -462,7 +465,7 @@
     color: var(--h-forest);
   }
   &:focus-visible {
-    outline: 2px solid var(--h-gold);
+    outline: 2px solid var(--h-gold-ink);
     outline-offset: 2px;
   }
 }
@@ -495,10 +498,10 @@
 @keyframes hal-pin-pulse {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(32, 216, 120, 0.45);
+    box-shadow: 0 0 0 0 rgba(20, 123, 53, 0.45);
   }
   50% {
-    box-shadow: 0 0 0 10px rgba(32, 216, 120, 0);
+    box-shadow: 0 0 0 10px rgba(20, 123, 53, 0);
   }
 }
 @utility motion-rise {
@@ -707,7 +710,7 @@ html[data-reduced-motion="1"] *::after {
 }
 @utility focus-ring {
   &:focus-visible {
-    outline: 2px solid var(--h-gold);
+    outline: 2px solid var(--h-gold-ink);
     outline-offset: 2px;
     box-shadow: 0 0 0 4px rgba(192, 138, 46, 0.28);
     border-radius: 12px;
@@ -718,7 +721,7 @@ html[data-reduced-motion="1"] *::after {
   width: 100%;
   border-radius: 0.75rem;
   background-color: rgba(255, 253, 248, 0.72);
-  border: 1px solid rgba(16, 45, 26, 0.12);
+  border: 1px solid var(--input);
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
   outline: none;
@@ -733,7 +736,7 @@ html[data-reduced-motion="1"] *::after {
  */
 @layer base {
   :where(a, button, [role="button"], input, select, textarea, summary, [tabindex]):focus-visible {
-    outline: 2px solid var(--h-gold);
+    outline: 2px solid var(--h-gold-ink);
     outline-offset: 2px;
     border-radius: 4px;
   }
@@ -944,4 +947,17 @@ html[data-reduced-motion="1"] *::after {
   .halisia-globe-intro-spin {
     animation: none !important;
   }
+}
+
+/*
+ * Smooth layered elevation (opt-in). Five eased layers read as real depth on
+ * ivory glass without the muddy halo of a single large blur.
+ */
+@utility shadow-smooth {
+  box-shadow:
+    0 1px 1px rgba(16, 45, 26, 0.03),
+    0 2px 4px rgba(16, 45, 26, 0.03),
+    0 5px 10px rgba(16, 45, 26, 0.035),
+    0 10px 22px rgba(16, 45, 26, 0.04),
+    0 22px 48px rgba(16, 45, 26, 0.05);
 }

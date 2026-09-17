@@ -21,6 +21,7 @@ export const colors = {
   emerald: "#147B35", // primary — verified / positive
   emeraldGlow: "#1B9B45",
   emeraldDeep: "#0E5A26",
+  emeraldInk: "#0E5A26", // AA-safe small text on tinted glass
   crimson: "#B3261E", // destructive — risk / alert
   crimsonGlow: "#D2372C",
   crimsonDeep: "#8C1C16",
@@ -40,6 +41,9 @@ export const gradients = {
   hero: `linear-gradient(135deg, ${colors.black} 0%, ${colors.emerald} 45%, ${colors.gold} 100%)`,
   night: `linear-gradient(180deg, ${colors.white} 0%, #F1ECE0 60%, #E7E0D2 100%)`,
 } as const;
+
+/** Chart series, in order. Each >= 3:1 on ivory; tested for protan/deutan/tritan separation. */
+export const chart = ["#147B35", "#B37E1D", "#850404", "#73927B", "#597962"] as const;
 
 export const radii = {
   xs: "6px",
