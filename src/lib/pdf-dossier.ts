@@ -1,10 +1,6 @@
 import jsPDF from "jspdf";
 import { fetchStaticMapCached } from "@/lib/static-map-cache";
-import {
-  getWave4Intel,
-  type Wave4Intel,
-  type ScoreExplain,
-} from "@/lib/wave4-intel.functions";
+import { getWave4Intel, type Wave4Intel, type ScoreExplain } from "@/lib/wave4-intel.functions";
 import {
   drawIsometricTerrain,
   fetchElevationGrid,
