@@ -79,10 +79,7 @@ export function PartnerListings() {
 
   if (query.isError) {
     return (
-      <section
-        className="mt-10 glass rounded-2xl border border-white/10 p-4"
-        data-testid="partner-listings"
-      >
+      <section className="mt-10 glass rounded-2xl border border-white/10 p-4" data-testid="partner-listings">
         <h2 className="text-sm font-semibold">Partner listings</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           These could not be loaded just now. Your own listings above are unaffected.
@@ -209,7 +206,7 @@ function PartnerCard({ listing }: { listing: PartnerListing }) {
       : null;
 
   return (
-    <article className="glass flex h-full flex-col rounded-2xl border border-white/10 p-4">
+    <article className="glass glow-sheen flex h-full flex-col rounded-2xl p-4">
       <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
         {listing.source?.name ?? "Source unavailable"}
       </p>
