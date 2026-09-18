@@ -48,6 +48,7 @@ import {
   type Rail,
 } from "@/lib/marketplace";
 import { SaveButton } from "@/components/halisia/save-button";
+import { PartnerListings } from "@/components/halisia/partner-listings";
 import { LeafletLayersMap } from "@/components/halisia/leaflet-layers-map";
 
 const searchSchema = z.object({
@@ -450,6 +451,8 @@ function MarketplaceIndex() {
           ))}
         </div>
       )}
+
+      <PartnerListings />
 
       <DataPipeline />
 
