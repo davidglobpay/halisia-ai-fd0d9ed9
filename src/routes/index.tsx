@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { SkyScroll } from "@/components/halisia/sky-scroll";
 import { z } from "zod";
 import { fallback } from "@tanstack/zod-adapter";
 import { motion } from "framer-motion";
@@ -79,6 +80,7 @@ function HeroStage({ children }: { children?: ReactNode }) {
 function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> }) {
   return (
     <div className="min-h-screen">
+      <SkyScroll />
       {/* HERO — static cinematic stage (videos removed) */}
       <section
         aria-label="HALISIA cinematic hero"
