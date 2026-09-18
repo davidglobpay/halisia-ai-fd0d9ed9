@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { SkyScroll } from "@/components/halisia/sky-scroll";
+import { FeatureRail } from "@/components/halisia/feature-rail";
 import { z } from "zod";
 import { fallback } from "@tanstack/zod-adapter";
 import { motion } from "framer-motion";
@@ -54,12 +55,12 @@ function Landing() {
 function HeroStage({ children }: { children?: ReactNode }) {
   return (
     <div className="relative w-full overflow-hidden aspect-[3/4] sm:aspect-[16/10] md:aspect-[21/9] max-h-[92vh]">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_35%,#FFFDF8_0%,#F7F3EA_45%,#EFE9DC_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_35%,rgba(255,253,248,0.82)_0%,rgba(247,243,234,0.55)_45%,rgba(239,233,220,0.18)_100%)]" />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(247,243,234,0.4)_0%,rgba(247,243,234,0)_38%,rgba(247,243,234,0.75)_100%)]"
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(247,243,234,0.28)_0%,rgba(247,243,234,0)_38%,rgba(247,243,234,0.45)_100%)]"
       />
-      <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-background" />
+      <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-[rgba(247,243,234,0.55)]" />
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 opacity-[0.12]"
@@ -218,15 +219,21 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
         </HeroStage>
       </section>
 
+      {/* TOOLS RAIL — the paid entry points, straight after the search bar */}
+      <FeatureRail />
+
+      {/* MARKETPLACE LISTINGS */}
+      <MarketplaceSection />
+
+      {/* HALISIA PULSE WINDOW */}
+      <PulseWindow />
+
       {/* COUNTY INTELLIGENCE MAP */}
       <KenyaCountyMap />
 
       {/* COUNTY DIRECTORY + COMPARISON */}
       <CountyListSection />
       <CountyComparisonSection />
-
-      {/* MARKETPLACE LISTINGS */}
-      <MarketplaceSection />
 
       {/* CONTRIBUTOR PLATFORM + DASHBOARD */}
       <ContributorAndDashboardSection />
@@ -331,9 +338,6 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
         }))}
         itemClassName="w-[280px] sm:w-[320px]"
       />
-
-      {/* HALISIA PULSE WINDOW */}
-      <PulseWindow />
 
       {/* PRICING / CTA */}
       <section id="pricing" className="py-24">
