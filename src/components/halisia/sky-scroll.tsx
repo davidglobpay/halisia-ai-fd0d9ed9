@@ -168,7 +168,8 @@ export function SkyScroll() {
       if (!reduced) {
         // Near hills move more than far hills, which reads as depth.
         hillLayerRefs.forEach((ref, idx) => {
-          if (ref.current) ref.current.style.transform = `translate3d(0, ${p * (idx + 1) * 1.6}vh, 0)`;
+          if (ref.current)
+            ref.current.style.transform = `translate3d(0, ${p * (idx + 1) * 1.6}vh, 0)`;
         });
       }
     };
@@ -249,7 +250,11 @@ export function SkyScroll() {
       />
 
       <div ref={cloudsRef} className="absolute inset-0 will-change-transform">
-        <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 60" preserveAspectRatio="none">
+        <svg
+          className="absolute inset-0 h-full w-full"
+          viewBox="0 0 100 60"
+          preserveAspectRatio="none"
+        >
           <g fill="#fffdf8" opacity="0.55">
             <ellipse cx="18" cy="14" rx="13" ry="3.4" />
             <ellipse cx="26" cy="12" rx="8" ry="2.6" />

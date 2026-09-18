@@ -72,7 +72,9 @@ export async function getPartnerListing(id: string): Promise<PartnerListing | nu
 }
 
 /** The link out to the source, when one has been recorded. */
-export function partnerUrl(row: Pick<ExternalListingRow, "original_listing_url" | "canonical_url">) {
+export function partnerUrl(
+  row: Pick<ExternalListingRow, "original_listing_url" | "canonical_url">,
+) {
   const raw = row.original_listing_url ?? row.canonical_url;
   if (!raw) return null;
   return /^https?:\/\//i.test(raw) ? raw : null;
@@ -100,7 +102,9 @@ export function formatPartnerPrice(
   return `${row.currency ?? "KES"} ${n}${per}${qualifier}`;
 }
 
-export function formatSize(row: Pick<ExternalListingRow, "size_value" | "size_unit">): string | null {
+export function formatSize(
+  row: Pick<ExternalListingRow, "size_value" | "size_unit">,
+): string | null {
   if (row.size_value == null) return null;
   return `${new Intl.NumberFormat("en-KE").format(Number(row.size_value))} ${row.size_unit ?? ""}`.trim();
 }
