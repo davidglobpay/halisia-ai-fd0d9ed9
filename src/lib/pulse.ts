@@ -19,6 +19,47 @@ const ARTICLE_COLUMNS =
 
 type Row = Record<string, unknown>;
 
+/**
+ * Pulse only carries stories that bear on land decisions. Everything else in
+ * the archive — politics, sport, health, general business — stays out of the
+ * feed even though it is still stored.
+ */
+export const TOPIC_CATEGORIES = [
+  "land",
+  "property",
+  "housing",
+  "infrastructure",
+  "roads",
+  "transport",
+  "utilities",
+  "energy",
+  "agriculture",
+  "environment",
+  "climate",
+  "flooding",
+  "investment",
+] as const;
+
+/**
+ * Mining and natural-resource stories have no category of their own in the
+ * archive, so they are matched on the headline instead.
+ */
+const TOPIC_KEYWORDS = ["mining", "mineral", "quarry", "geothermal", "titanium", "gemstone"];
+
+const TOPIC_FILTER = [
+  `category.in.(${TOPIC_CATEGORIES.join(",")})`,
+  "tags.cs.{land}",
+  ...TOPIC_KEYWORDS.map((k) => `title.ilike.*${k}*`),
+].join(",");
+
+/** True when an article belongs in Pulse; used where filtering happens client-side. */
+export function isTopicArticle(a: Pick<PulseArticle, "category" | "tags" | "title">): boolean {
+  if ((TOPIC_CATEGORIES as readonly string[]).includes(a.category)) return true;
+  if (a.tags?.includes("land")) return true;
+  const t = a.title.toLowerCase();
+  return TOPIC_KEYWORDS.some((k) => t.includes(k));
+}
+
 function toArticle(r: Row): PulseArticle {
   return {
     id: String(r["id"]),
@@ -87,6 +128,7 @@ export async function fetchFeed(filters: FeedFilters = {}): Promise<PulseArticle
       if (a) mapped.push({ ...toArticle(a), trendingScore: Number((row as Row)["score"] ?? 0) });
     }
     return mapped
+      .filter(isTopicArticle)
       .filter((a) => (filters.county ? a.county === filters.county : true))
       .filter((a) => (filters.category ? a.category === filters.category : true));
   }
@@ -98,6 +140,7 @@ export async function fetchFeed(filters: FeedFilters = {}): Promise<PulseArticle
     .order("published_at", { ascending: false, nullsFirst: false })
     .range(offset, offset + limit - 1);
 
+  q = q.or(TOPIC_FILTER);
   if (filters.county) q = q.eq("county", filters.county);
   if (filters.category) q = q.eq("category", filters.category);
   if (filters.tag) q = q.contains("tags", [filters.tag]);
@@ -129,6 +172,7 @@ export async function fetchRelated(article: PulseArticle, limit = 4): Promise<Pu
     .select(ARTICLE_COLUMNS)
     .eq("archived", false)
     .neq("id", article.id)
+    .or(TOPIC_FILTER)
     .order("published_at", { ascending: false, nullsFirst: false })
     .limit(limit);
   if (article.county) q = q.eq("county", article.county);
@@ -142,6 +186,7 @@ export async function fetchCountyCounts(): Promise<Array<{ county: string; count
     .from("news_articles")
     .select("county")
     .eq("archived", false)
+    .or(TOPIC_FILTER)
     .not("county", "is", null)
     .limit(1000);
   const tally = new Map<string, number>();
