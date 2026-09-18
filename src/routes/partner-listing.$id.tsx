@@ -144,8 +144,7 @@ function PartnerListingPage() {
           label="Availability"
           value={
             listing.availability_status
-              ? (AVAILABILITY_LABELS[listing.availability_status] ??
-                listing.availability_status)
+              ? (AVAILABILITY_LABELS[listing.availability_status] ?? listing.availability_status)
               : null
           }
         />
@@ -158,7 +157,10 @@ function PartnerListingPage() {
 
       <div className="mt-6">
         {url ? (
-          <button onClick={openSource} className="btn-base btn-primary inline-flex items-center gap-2">
+          <button
+            onClick={openSource}
+            className="btn-base btn-primary inline-flex items-center gap-2"
+          >
             <ExternalLink className="h-4 w-4" aria-hidden="true" /> View on{" "}
             {listing.source?.name ?? "the source site"}
           </button>
