@@ -15,6 +15,8 @@ import type { LucideIcon } from "lucide-react";
 
 type Tool = {
   to: string;
+  /** Anchor on the landing page, for tools that live in a section rather than a route. */
+  hash?: string;
   label: string;
   blurb: string;
   action: string;
@@ -33,15 +35,16 @@ const TOOLS: Tool[] = [
   {
     to: "/explore",
     label: "Coordinates",
-    blurb: "Drop in latitude and longitude and get the full location profile.",
+    blurb: "Paste a latitude and longitude and read the full location profile.",
     action: "Enter coordinates",
     Icon: Crosshair,
   },
   {
-    to: "/explore",
+    to: "/",
+    hash: "counties",
     label: "Map pin",
-    blurb: "Pin any point on the map and read what surrounds it.",
-    action: "Open the map",
+    blurb: "Tap any county on the live map and drop a pin where you are looking.",
+    action: "Open the county map",
     Icon: MapPin,
   },
   {
@@ -155,6 +158,8 @@ export function FeatureRail() {
             <li key={`${t.to}-${t.label}`} className="w-[260px] shrink-0 snap-start sm:w-[300px]">
               <Link
                 to={t.to}
+                hash={t.hash}
+                search={t.to === "/" ? { compare: "" } : undefined}
                 className="glass-card glow-sheen group flex h-full flex-col rounded-3xl p-5 focus-ring"
               >
                 <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">

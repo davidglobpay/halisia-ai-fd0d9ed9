@@ -14,6 +14,7 @@ import { HCarousel } from "@/components/halisia/ds/h-carousel";
 import { PulseImage } from "@/components/halisia/pulse-image";
 import { fetchFeed, relativeTime } from "@/lib/pulse";
 import { listProperties, formatPrice } from "@/lib/properties";
+import { listPartnerListings, formatPartnerPrice } from "@/lib/marketplace-external";
 import countiesData from "@/data/kenya-counties.json";
 
 type CountyProps = { code: number; name: string };
@@ -129,7 +130,58 @@ export function PulseWindow() {
           ))}
         </HCarousel>
       )}
+      <NewListingsStrip />
     </SectionShell>
+  );
+}
+
+/**
+ * New arrivals from partner sources, shown alongside the news because both
+ * answer the same question: what changed this week?
+ */
+function NewListingsStrip() {
+  const listings = useQuery({
+    queryKey: ["landing-new-partner-listings"],
+    queryFn: () => listPartnerListings(),
+    staleTime: 5 * 60_000,
+  });
+  const rows = (listings.data ?? []).slice(0, 6);
+  if (listings.isLoading || rows.length === 0) return null;
+
+  return (
+    <div className="mt-8">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 className="text-sm font-semibold">New in the marketplace</h3>
+        <Link to="/marketplace" preload="intent" className="text-xs text-accent hover:underline">
+          See all listings
+        </Link>
+      </div>
+      <ul className="scrollbar-none mt-3 flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2">
+        {rows.map((l) => (
+          <li key={l.id} className="w-[220px] shrink-0 snap-start">
+            <Link
+              to="/partner-listing/$id"
+              params={{ id: l.id }}
+              className="glass glow-sheen flex h-full flex-col rounded-2xl p-3 focus-ring"
+            >
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                {l.source?.name ?? "Partner listing"}
+              </span>
+              <span className="mt-1 line-clamp-2 text-[13px] font-semibold leading-snug">
+                {l.title}
+              </span>
+              <span className="mt-1 text-[11px] text-muted-foreground">
+                {[l.locality, l.county].filter(Boolean).join(", ") || "Kenya"}
+              </span>
+              <span className="mt-auto pt-2 text-[12px] font-semibold">{formatPartnerPrice(l)}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-2 text-[11px] text-muted-foreground">
+        Listed by other companies and not verified by HALISIA.
+      </p>
+    </div>
   );
 }
 
