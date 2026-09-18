@@ -303,23 +303,39 @@
 }
 
 @utility glass {
-  background: rgba(255, 253, 248, 0.62);
-  backdrop-filter: blur(24px) saturate(120%);
-  border: 1px solid rgba(16, 45, 26, 0.1);
-  border-radius: 20px;
-  box-shadow:
-    0 1px 0 0 rgba(255, 255, 255, 0.7) inset,
-    0 14px 34px rgba(16, 45, 26, 0.08);
-}
-
-@utility glass-strong {
-  background: rgba(255, 253, 248, 0.86);
-  backdrop-filter: blur(32px) saturate(135%);
-  border: 1px solid rgba(16, 45, 26, 0.12);
+  /* Layered so it reads as glass over the moving sky: a vertical falloff,
+     a bright top edge, and depth built from several soft shadows. */
+  background: linear-gradient(
+    180deg,
+    rgba(255, 253, 248, 0.74) 0%,
+    rgba(255, 253, 248, 0.56) 100%
+  );
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  border: 1px solid rgba(255, 253, 248, 0.6);
   border-radius: 20px;
   box-shadow:
     0 1px 0 0 rgba(255, 255, 255, 0.8) inset,
-    0 22px 56px rgba(16, 45, 26, 0.12);
+    0 2px 6px rgba(16, 45, 26, 0.04),
+    0 10px 24px rgba(16, 45, 26, 0.06),
+    0 24px 48px rgba(16, 45, 26, 0.06);
+}
+
+@utility glass-strong {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 253, 248, 0.92) 0%,
+    rgba(255, 253, 248, 0.8) 100%
+  );
+  backdrop-filter: blur(32px) saturate(150%);
+  -webkit-backdrop-filter: blur(32px) saturate(150%);
+  border: 1px solid rgba(255, 253, 248, 0.72);
+  border-radius: 20px;
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.9) inset,
+    0 3px 8px rgba(16, 45, 26, 0.05),
+    0 14px 32px rgba(16, 45, 26, 0.08),
+    0 32px 64px rgba(16, 45, 26, 0.09);
 }
 
 /* Section 21 — elevation levels */
@@ -960,4 +976,97 @@ html[data-reduced-motion="1"] *::after {
     0 5px 10px rgba(16, 45, 26, 0.035),
     0 10px 22px rgba(16, 45, 26, 0.04),
     0 22px 48px rgba(16, 45, 26, 0.05);
+}
+
+/*
+ * Glass card — the shared surface for cards across the app. Layered so it reads
+ * as real glass on the moving sky: a translucent body, a bright top edge, and a
+ * soft shadow that deepens on hover.
+ */
+@utility glass-card {
+  position: relative;
+  background:
+    linear-gradient(180deg, rgba(255, 253, 248, 0.86) 0%, rgba(255, 253, 248, 0.62) 100%);
+  border: 1px solid rgba(255, 253, 248, 0.7);
+  box-shadow:
+    0 1px 1px rgba(16, 45, 26, 0.03),
+    0 6px 14px rgba(16, 45, 26, 0.05),
+    0 18px 38px rgba(16, 45, 26, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  transition:
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@utility glass-card-hover {
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow:
+      0 2px 2px rgba(16, 45, 26, 0.04),
+      0 10px 20px rgba(16, 45, 26, 0.07),
+      0 28px 56px rgba(16, 45, 26, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+}
+
+/*
+ * A slow highlight that crosses the surface on hover, like light moving over
+ * glass. Purely decorative, and switched off for reduced motion.
+ */
+@utility glow-sheen {
+  overflow: hidden;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: -40% -60%;
+    background: linear-gradient(
+      115deg,
+      transparent 42%,
+      rgba(255, 255, 255, 0.55) 50%,
+      transparent 58%
+    );
+    transform: translateX(-60%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 200ms ease;
+  }
+  &:hover::after,
+  &:focus-visible::after {
+    opacity: 1;
+    animation: halisia-sheen 900ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow:
+      0 2px 2px rgba(16, 45, 26, 0.04),
+      0 10px 20px rgba(16, 45, 26, 0.07),
+      0 28px 56px rgba(16, 45, 26, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+}
+
+@keyframes halisia-sheen {
+  from {
+    transform: translateX(-60%);
+  }
+  to {
+    transform: translateX(60%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-card,
+  .glow-sheen {
+    transition: none;
+  }
+  .glow-sheen::after {
+    animation: none;
+    display: none;
+  }
+  .glow-sheen:hover,
+  .glass-card-hover:hover {
+    transform: none;
+  }
 }
