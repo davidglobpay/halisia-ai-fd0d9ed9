@@ -7,6 +7,13 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
 import { disposeSubtree, hasRenderableMesh } from "./disposal";
 import { framingFromObject, tabletopScale } from "./framing";
 import {
+  buildStudioGround,
+  buildTerrainGround,
+  configureSunShadow,
+  fogForEnv,
+  DEFAULT_TERRAIN_SITE,
+} from "./ground";
+import {
   GlbLoadError,
   humanBytes,
   loadGlbBytes,
@@ -42,6 +49,13 @@ export type ViewerStatus = {
   maxExtentM: number | null;
   /** Authoritative presentation mode, owned by the engine. */
   presentation: PresentationMode;
+  /** What the building is standing on, and the relief under it. */
+  ground: {
+    kind: "studio" | "terrain";
+    reliefM: number | null;
+    centreElevationM: number | null;
+    siteName: string | null;
+  };
   xr: {
     xrState: XrState;
     arSupported: boolean | null;
@@ -95,6 +109,7 @@ const EMPTY_STATUS: ViewerStatus = {
   materialCount: 0,
   maxExtentM: null,
   presentation: "TABLETOP",
+  ground: { kind: "studio", reliefM: null, centreElevationM: null, siteName: null },
 
   xr: {
     xrState: "IDLE",
@@ -141,6 +156,10 @@ export default function ModelLabViewer({
     arRoot: THREE.Group;
     reticle: THREE.Mesh;
     lights: THREE.Group;
+    /** Whatever the building is currently standing on. */
+    ground: THREE.Group | null;
+    /** Guards an in-flight terrain fetch against teardown and re-entry. */
+    groundToken: number;
     /** Neutral IBL, built once at bootstrap and shared by every env mode. */
     pmrem: THREE.PMREMGenerator | null;
     envRT: THREE.WebGLRenderTarget | null;
@@ -154,13 +173,19 @@ export default function ModelLabViewer({
     session: XRSession | null;
     savedBackground: THREE.Scene["background"];
     savedClearAlpha: number;
+    savedFog: THREE.Scene["fog"];
     loadToken: number;
   } | null>(null);
 
   const push = useCallback((patch: Partial<ViewerStatus>) => {
     const e = engine.current;
     if (!e) return;
-    e.status = { ...e.status, ...patch, xr: { ...e.status.xr, ...(patch.xr ?? {}) } };
+    e.status = {
+      ...e.status,
+      ...patch,
+      ground: { ...e.status.ground, ...(patch.ground ?? {}) },
+      xr: { ...e.status.xr, ...(patch.xr ?? {}) },
+    };
     statusRef.current?.({ ...e.status });
   }, []);
 
@@ -189,6 +214,9 @@ export default function ModelLabViewer({
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1;
     renderer.xr.enabled = true;
+    // Without a shadow under it, a building never reads as standing on ground.
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     host.appendChild(renderer.domElement);
     renderer.domElement.style.touchAction = "none";
     renderer.domElement.style.display = "block";
@@ -198,7 +226,7 @@ export default function ModelLabViewer({
     renderer.domElement.setAttribute("aria-label", "Interactive 3D architectural model viewer");
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(45, 16 / 9, 0.1, 2000);
+    const camera = new THREE.PerspectiveCamera(45, 16 / 9, 0.1, 6000);
     camera.position.set(8, 5, 10);
 
     const controls = new OrbitControls(camera, renderer.domElement);
@@ -217,6 +245,11 @@ export default function ModelLabViewer({
     arRoot.visible = false;
     const lights = new THREE.Group();
     scene.add(modelRoot, arRoot, lights);
+
+    // Something to stand on from the very first frame. Real terrain replaces
+    // this as soon as the elevation service answers.
+    const studio = buildStudioGround();
+    scene.add(studio.group);
 
     const reticle = new THREE.Mesh(
       new THREE.RingGeometry(0.09, 0.11, 32).rotateX(-Math.PI / 2),
@@ -254,6 +287,8 @@ export default function ModelLabViewer({
       arRoot,
       reticle,
       lights,
+      ground: studio.group,
+      groundToken: 0,
       pmrem,
       envRT,
       status: { ...EMPTY_STATUS },
@@ -266,8 +301,40 @@ export default function ModelLabViewer({
       session: null,
       savedBackground: null,
       savedClearAlpha: 1,
+      savedFog: null,
       loadToken: 0,
     };
+
+    /* -------- real ground, once the elevation service answers */
+    const groundToken = ++engine.current.groundToken;
+    void buildTerrainGround(DEFAULT_TERRAIN_SITE)
+      .then((terrain) => {
+        const e = engine.current;
+        // Teardown, or a newer request, happened while this was in flight.
+        if (!e || e.groundToken !== groundToken) {
+          disposeSubtree(terrain.group);
+          return;
+        }
+        if (e.ground) {
+          e.scene.remove(e.ground);
+          disposeSubtree(e.ground);
+        }
+        e.ground = terrain.group;
+        e.scene.add(terrain.group);
+        if (e.session) terrain.group.visible = false; // never over AR passthrough
+        push({
+          ground: {
+            kind: "terrain",
+            reliefM: terrain.reliefM,
+            centreElevationM: terrain.centreElevationM,
+            siteName: DEFAULT_TERRAIN_SITE.name,
+          },
+        });
+      })
+      .catch(() => {
+        // Elevation is unavailable — the studio ground stays, and the building
+        // still stands on something rather than floating.
+      });
 
     /* -------- resize */
     const resize = () => {
@@ -387,6 +454,8 @@ export default function ModelLabViewer({
         disposeSubtree(e.arRoot);
         disposeSubtree(e.reticle);
         disposeSubtree(e.lights);
+        if (e.ground) disposeSubtree(e.ground);
+        e.ground = null;
         e.scene.environment = null;
         e.envRT?.dispose();
         e.pmrem?.dispose();
@@ -419,12 +488,17 @@ export default function ModelLabViewer({
     e.lights = g;
     e.scene.add(g);
 
+    // Ground and background meet in haze instead of butting against each other.
+    if (!e.session) e.scene.fog = fogForEnv(mode);
+    const extent = e.status.maxExtentM ?? 60;
+
     if (mode === "day") {
       e.scene.background = new THREE.Color(0xdfe9f2);
       e.renderer.toneMappingExposure = 1.05;
       g.add(new THREE.HemisphereLight(0xffffff, 0x8f8b7a, 2.1));
       const sun = new THREE.DirectionalLight(0xfff3dd, 2.4);
       sun.position.set(40, 70, 30);
+      configureSunShadow(sun, extent);
       g.add(sun);
     } else if (mode === "night") {
       e.scene.background = new THREE.Color(0x0d1420);
@@ -432,6 +506,7 @@ export default function ModelLabViewer({
       g.add(new THREE.HemisphereLight(0x35507a, 0x0a0f16, 0.9));
       const moon = new THREE.DirectionalLight(0xbcd2ff, 0.9);
       moon.position.set(-30, 50, -20);
+      configureSunShadow(moon, extent);
       g.add(moon);
       const fill = new THREE.PointLight(0xffd9a0, 12, 60, 2);
       fill.position.set(0, 6, 0);
@@ -442,6 +517,7 @@ export default function ModelLabViewer({
       g.add(new THREE.HemisphereLight(0xffffff, 0x9a9484, 2.4));
       const key = new THREE.DirectionalLight(0xffffff, 1.4);
       key.position.set(20, 40, 25);
+      configureSunShadow(key, extent);
       g.add(key);
       const rim = new THREE.DirectionalLight(0xffffff, 0.6);
       rim.position.set(-25, 20, -30);
@@ -457,6 +533,10 @@ export default function ModelLabViewer({
     spinSetter.current?.(autoRotate);
   }, [autoRotate]);
 
+  /** Current env, read inside loadModel without making it a dependency. */
+  const envRef = useRef(env);
+  envRef.current = env;
+
   /* -------------------------------------------------------------- loading */
   const fit = useCallback(() => {
     const e = engine.current;
@@ -464,7 +544,9 @@ export default function ModelLabViewer({
     const f = framingFromObject(e.modelRoot, e.camera.fov, e.camera.aspect);
     e.camera.position.copy(f.position);
     e.camera.near = f.near;
-    e.camera.far = f.far;
+    // The ground runs far wider than the model. Fog hides everything past
+    // 1600 m, so this only has to be further out than that.
+    e.camera.far = Math.max(f.far, 3500);
     e.camera.updateProjectionMatrix();
     e.controls.target.copy(f.target);
     e.controls.minDistance = f.minDistance;
@@ -568,6 +650,9 @@ export default function ModelLabViewer({
           const m = o as THREE.Mesh;
           if (m.isMesh && m.geometry) {
             meshes += 1;
+            // The building throws a shadow onto the ground, and onto itself.
+            m.castShadow = true;
+            m.receiveShadow = true;
             const idx = m.geometry.getIndex();
             const pos = m.geometry.getAttribute("position");
             triangles += Math.floor((idx ? idx.count : (pos?.count ?? 0)) / 3);
@@ -578,6 +663,8 @@ export default function ModelLabViewer({
         });
 
         fit();
+        // The shadow frustum is sized from the model, which is only known now.
+        applyEnv(envRef.current);
         push({
           state: "READY",
           progress: 1,
@@ -600,7 +687,7 @@ export default function ModelLabViewer({
       }
       // model is intentionally the only dependency that should retrigger loads
     },
-    [model, fit, push],
+    [model, fit, push, applyEnv],
   );
 
   useEffect(() => {
@@ -693,13 +780,17 @@ export default function ModelLabViewer({
         const refSpace = await session.requestReferenceSpace(wantedSpace);
         e.refSpace = refSpace;
 
-        // AR only: background occludes passthrough. scene.environment stays
-        // untouched — it is the PBR/IBL source.
+        // AR only: background and ground both occlude passthrough, and fog
+        // would tint the real world. scene.environment stays untouched — it is
+        // the PBR/IBL source.
         if (isAr) {
           e.savedBackground = e.scene.background;
           e.savedClearAlpha = e.renderer.getClearAlpha();
+          e.savedFog = e.scene.fog;
           e.scene.background = null;
+          e.scene.fog = null;
           e.renderer.setClearAlpha(0);
+          if (e.ground) e.ground.visible = false;
         }
 
         const domOverlayGranted = isAr
@@ -755,8 +846,10 @@ export default function ModelLabViewer({
           en.reticle.visible = false;
           if (mode === "immersive-ar") {
             en.scene.background = en.savedBackground;
+            en.scene.fog = en.savedFog;
             en.renderer.setClearAlpha(en.savedClearAlpha);
           }
+          if (en.ground) en.ground.visible = true;
           const back = en.arRoot.children[0];
           if (back) en.modelRoot.add(back);
           en.arRoot.visible = false;
