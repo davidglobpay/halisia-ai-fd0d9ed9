@@ -41,7 +41,7 @@ import {
   isNew,
   railFilter,
   recommend,
-  verification,
+  listingTrust,
   type MarketAction,
   type MarketplaceCategory,
   type MarketplaceFilters,
@@ -115,7 +115,7 @@ function MarketplaceIndex() {
       bedrooms: search.beds,
       bathrooms: search.baths,
       roadAccess: search.road || undefined,
-      verified: search.verified || undefined,
+      evidenceVerified: search.verified || undefined,
       minScore: search.minScore,
       minInvestment: search.minInvest,
       minDevelopment: search.minDev,
@@ -337,7 +337,7 @@ function MarketplaceIndex() {
               checked={Boolean(search.verified)}
               onChange={(e) => setFilter({ verified: e.target.checked || undefined })}
             />
-            Verified listings only
+            Evidence-verified listings only
           </label>
         </section>
       )}
@@ -521,21 +521,16 @@ function TextField({
 }
 
 function Badges({ p }: { p: PropertyRow }) {
-  const v = verification(p);
+  const trust = listingTrust(p);
   const c = completeness(p);
   const lios = intelligenceScore(p);
   return (
     <div className="flex flex-wrap items-center gap-1.5 text-[10px]">
-      <span
-        className={`rounded-full px-2 py-0.5 border ${
-          v === "verified"
-            ? "border-emerald-400/40 text-emerald-300 bg-emerald-400/10"
-            : v === "reviewed"
-              ? "border-amber-400/40 text-amber-300 bg-amber-400/10"
-              : "border-white/15 text-muted-foreground"
-        }`}
-      >
-        {v === "verified" ? "Verified" : v === "reviewed" ? "Reviewed" : "Unverified"}
+      <span className="rounded-full border border-sky-400/40 bg-sky-400/10 px-2 py-0.5 text-sky-300">
+        Source listed
+      </span>
+      <span className="rounded-full border border-white/15 px-2 py-0.5 text-muted-foreground">
+        {trust.evidenceVerified ? "Evidence verified" : "Evidence not reviewed"}
       </span>
       <span className="rounded-full border border-white/15 px-2 py-0.5 text-muted-foreground">
         {c}% complete

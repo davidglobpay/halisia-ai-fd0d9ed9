@@ -94,21 +94,34 @@ describe("landing scenarios are illustrative, not testimonial", () => {
   });
 });
 
-describe("verification tiers stay distinct", () => {
-  it("does not collapse distinct verification states into one label", () => {
-    const tiers = [
-      "SOURCE_LISTED",
-      "DATA_COMPLETENESS",
-      "DOCUMENTS_REVIEWED",
-      "EVIDENCE_VERIFIED",
-      "REGULATOR_VERIFIED",
-    ];
-    const core = read("src/lib/marketplace.ts");
-    const present = tiers.filter((t) => core.includes(t));
-    // Whichever tiers this module knows about must remain individually named.
-    for (const tier of present) {
-      expect(core).toContain(tier);
-    }
-    expect(new Set(present).size).toBe(present.length);
+describe("marketplace trust states stay explicit", () => {
+  const core = read("src/lib/marketplace.ts");
+  const marketplace = read("src/routes/marketplace.index.tsx");
+  const tiers = [
+    "SOURCE_LISTED",
+    "DATA_COMPLETENESS",
+    "DOCUMENTS_REVIEWED",
+    "EVIDENCE_VERIFIED",
+    "REGULATOR_VERIFIED",
+  ];
+
+  it.each(tiers)("requires the %s concept", (tier) => {
+    expect(core).toContain(`"${tier}"`);
+  });
+
+  it("does not derive evidence verification from listing fields", () => {
+    expect(core).not.toContain('return "verified"');
+    expect(core).not.toContain("Verified listing with complete data");
+    expect(core).not.toMatch(/ai_score[\s\S]{0,160}evidenceVerified:\s*true/);
+    expect(core).not.toMatch(/latitude[\s\S]{0,160}evidenceVerified:\s*true/);
+    expect(core).not.toMatch(/completeness\([^)]*\)[\s\S]{0,160}evidenceVerified:\s*true/);
+  });
+
+  it("labels provenance, completeness and evidence separately in marketplace UI", () => {
+    expect(marketplace).toContain("Source listed");
+    expect(marketplace).toContain("% complete");
+    expect(marketplace).toContain("Evidence not reviewed");
+    expect(marketplace).toContain("Evidence-verified listings only");
+    expect(marketplace).not.toMatch(/>Verified<|Verified listings only/);
   });
 });

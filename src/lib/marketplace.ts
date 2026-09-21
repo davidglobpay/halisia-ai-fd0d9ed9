@@ -101,14 +101,43 @@ export function completeness(row: PropertyRow): number {
   return Math.round((checks.filter(Boolean).length / checks.length) * 100);
 }
 
-export type VerificationStatus = "verified" | "reviewed" | "unverified";
+/**
+ * Public trust concepts are deliberately independent. A source listing and a
+ * complete row describe provenance and data quality; neither is evidence.
+ */
+export const LISTING_TRUST_CONCEPTS = [
+  "SOURCE_LISTED",
+  "DATA_COMPLETENESS",
+  "DOCUMENTS_REVIEWED",
+  "EVIDENCE_VERIFIED",
+  "REGULATOR_VERIFIED",
+] as const;
 
-export function verification(row: PropertyRow): VerificationStatus {
-  const c = completeness(row);
-  const hasGeo = row.latitude != null && row.longitude != null;
-  if (c >= 85 && hasGeo && row.ai_score) return "verified";
-  if (c >= 60 && hasGeo) return "reviewed";
-  return "unverified";
+export type ListingTrustConcept = (typeof LISTING_TRUST_CONCEPTS)[number];
+
+export type ListingTrustState = {
+  provenance: "SOURCE_LISTED";
+  dataState: "DATA_COMPLETENESS";
+  dataCompleteness: number;
+  documentsReviewed: boolean;
+  evidenceVerified: boolean;
+  regulatorVerified: boolean;
+};
+
+/**
+ * Native property rows do not carry qualifying review/evidence relations.
+ * Keep all evidence states false until an authoritative evidence record is
+ * fetched and joined explicitly; never infer them from AI, coordinates or media.
+ */
+export function listingTrust(row: PropertyRow): ListingTrustState {
+  return {
+    provenance: "SOURCE_LISTED",
+    dataState: "DATA_COMPLETENESS",
+    dataCompleteness: completeness(row),
+    documentsReviewed: false,
+    evidenceVerified: false,
+    regulatorVerified: false,
+  };
 }
 
 export function isNew(row: PropertyRow, days = 14): boolean {
@@ -168,7 +197,7 @@ export type MarketplaceFilters = {
   bathrooms?: number;
   amenities?: string[];
   roadAccess?: boolean;
-  verified?: boolean;
+  evidenceVerified?: boolean;
   minScore?: number;
   minInvestment?: number;
   minDevelopment?: number;
@@ -216,7 +245,7 @@ export function applyFilters(rows: PropertyRow[], f: MarketplaceFilters): Proper
       if (!f.amenities.every((a) => set.includes(a.toLowerCase()))) return false;
     }
     if (f.roadAccess && !hasRoadAccess(r)) return false;
-    if (f.verified && verification(r) !== "verified") return false;
+    if (f.evidenceVerified && !listingTrust(r).evidenceVerified) return false;
     if (f.minScore != null && (intelligenceScore(r) ?? 0) < f.minScore) return false;
     if (f.minInvestment != null && (investmentScore(r) ?? 0) < f.minInvestment) return false;
     if (f.minDevelopment != null && (developmentScore(r) ?? 0) < f.minDevelopment) return false;
@@ -274,11 +303,7 @@ export function recommend(
         score += 8;
         reasons.push(`${row.bedrooms} bedrooms meets your minimum`);
       }
-      if (verification(row) === "verified") {
-        score += 10;
-        reasons.push("Verified listing with complete data");
-      }
-      if (isNew(row)) {
+       if (isNew(row)) {
         score += 6;
         reasons.push("Newly listed");
       }
@@ -295,7 +320,7 @@ export const RAILS = [
   { value: "recommended", label: "AI recommendations" },
   { value: "new", label: "New listings" },
   { value: "trending", label: "Trending" },
-  { value: "verified", label: "Verified" },
+  { value: "evidence_verified", label: "Evidence verified" },
   { value: "investment", label: "Investment" },
   { value: "rentals", label: "Rental vacancies" },
   { value: "developments", label: "Featured developments" },
@@ -309,8 +334,8 @@ export function railFilter(rows: PropertyRow[], rail: Rail): PropertyRow[] {
       return rows.filter((r) => isNew(r));
     case "trending":
       return [...rows].sort((a, b) => trendingScore(b) - trendingScore(a));
-    case "verified":
-      return rows.filter((r) => verification(r) === "verified");
+    case "evidence_verified":
+      return rows.filter((r) => listingTrust(r).evidenceVerified);
     case "investment":
       return rows.filter((r) => categoriesOf(r).includes("investment"));
     case "rentals":
