@@ -3,18 +3,9 @@ import { useState } from "react";
 import {
   ArrowLeft,
   Building2,
-  Users,
   MapPin,
   Landmark,
   TrendingUp,
-  ShieldCheck,
-  Stethoscope,
-  GraduationCap,
-  Leaf,
-  Home,
-  Wrench,
-  Sparkles,
-  Trees,
   BookOpen,
   Info,
   Vote,
@@ -23,13 +14,35 @@ import {
 } from "lucide-react";
 import countiesData from "@/data/kenya-counties.json";
 import { buildCountyProfile, COUNTY_DATA_SOURCES } from "@/lib/county-profile";
-import { HoloTile, HoloTileRail } from "@/components/halisia/ds/holo-tile";
+import { DENSITY_PROVENANCE } from "@/lib/county-metrics";
+import { HoloTile } from "@/components/halisia/ds/holo-tile";
 import { CountyEmblem } from "@/components/halisia/county-emblem";
 import { CountyPoliticsPanel } from "@/components/halisia/county-politics-panel";
+import { TERM_CAVEAT } from "@/lib/county-politics";
 import { LeafletLayersMap } from "@/components/halisia/leaflet-layers-map";
 import { CountyEvidenceStrip } from "@/components/halisia/county-evidence-strip";
 import { generateCountyProfilePdf } from "@/lib/pdf-county-profile";
 import { SaveButton } from "@/components/halisia/save-button";
+
+/**
+ * County profile page.
+ *
+ * This page used to run to sixteen sections — economic, social, cultural,
+ * security, infrastructure, health, education, environment, land, housing,
+ * investment — each showing 0-100 scores and a paragraph of analysis. Not one
+ * of those scores was measured. They came from a sine hash of the county code,
+ * and the paragraphs beside them ("Kenya Power grid coverage, county water
+ * schemes and Safaricom/Airtel 4G footprint") were the same generic text on
+ * all 47 pages. An "AI Executive Summary" told the reader HALISIA scored the
+ * county N/100, and a "data confidence" badge in the hero was computed from
+ * the invented numbers.
+ *
+ * All of it is removed. What is left is the published record — the census
+ * figures, the gazetted area, the IEBC constituency and ward counts, the
+ * elected leadership and the 2022 turnout, the county's economic activities
+ * and landmarks, and a real map. It is a much shorter page. Every line on it
+ * can be followed to a source.
+ */
 
 type Feature = { properties: { code: number; name: string; lat: number; lng: number } };
 const FEATURES = (countiesData as { features: Feature[] }).features;
@@ -51,8 +64,12 @@ export const Route = createFileRoute("/county/$code")({
       };
     }
     const p = loaderData.profile;
-    const title = `${p.facts.name} County — HALISIA AI intelligence profile`;
-    const desc = `AI-scored profile of ${p.facts.name} County, Kenya (code ${p.facts.code}). Population ${p.facts.population2019.toLocaleString()}, ${p.facts.constituencies} constituencies, ${p.facts.wards} wards. Overall score ${p.scores.overall}/100.`;
+    const title = `${p.facts.name} County — HALISIA AI county record`;
+    const desc =
+      `${p.facts.name} County, Kenya (code ${p.facts.code}). ` +
+      `Population ${p.facts.population2019.toLocaleString()} at the 2019 census, ` +
+      `${p.facts.areaKm2.toLocaleString()} km², ${p.facts.constituencies} constituencies, ` +
+      `${p.facts.wards} wards. Published sources only.`;
     return {
       meta: [
         { title },
@@ -100,30 +117,18 @@ function CountyError() {
 }
 
 const SECTION_NAV = [
-  { id: "sec-summary", label: "AI Summary" },
-  { id: "sec-dashboard", label: "Dashboard" },
-  { id: "sec-map", label: "Location & Map" },
-  { id: "sec-overview", label: "Overview" },
-  { id: "sec-economic", label: "Economic" },
-  { id: "sec-political", label: "Political" },
-  { id: "sec-political-intel", label: "Political Intel" },
-  { id: "sec-social", label: "Social" },
-  { id: "sec-cultural", label: "Cultural" },
-  { id: "sec-security", label: "Security" },
-  { id: "sec-infra", label: "Infrastructure" },
-  { id: "sec-health", label: "Health" },
-  { id: "sec-education", label: "Education" },
-  { id: "sec-environment", label: "Environment" },
-  { id: "sec-land", label: "Land" },
-  { id: "sec-housing", label: "Housing" },
-  { id: "sec-investment", label: "Investment" },
-  { id: "sec-recs", label: "Recommendations" },
-  { id: "sec-references", label: "References" },
+  { id: "sec-record", label: "The record" },
+  { id: "sec-map", label: "Location & map" },
+  { id: "sec-admin", label: "Administration" },
+  { id: "sec-economy", label: "Economy" },
+  { id: "sec-political", label: "Political record" },
+  { id: "sec-landmarks", label: "Landmarks" },
+  { id: "sec-references", label: "Sources" },
 ];
 
 function CountyPage() {
   const { profile } = Route.useLoaderData();
-  const { facts, latLng, scores, metrics, density } = profile;
+  const { facts, latLng, density } = profile;
   const [pdf, setPdf] = useState<{
     pct: number;
     stage: string;
@@ -184,7 +189,7 @@ function CountyPage() {
               onClick={handleDownload}
               disabled={pdf.busy}
               data-testid="download-county-pdf"
-              aria-label={`Download ${facts.name} county PDF report`}
+              aria-label={`Download ${facts.name} county PDF record`}
               className="inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-medium text-[#071E3D] shadow-lg shadow-accent/20 transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {pdf.busy ? (
@@ -192,7 +197,7 @@ function CountyPage() {
               ) : (
                 <Download className="h-4 w-4" />
               )}
-              {pdf.busy ? "Generating…" : "Download PDF report"}
+              {pdf.busy ? "Generating…" : "Download PDF record"}
             </button>
             <SaveButton
               kind="county"
@@ -228,9 +233,6 @@ function CountyPage() {
                 {String(facts.code).padStart(2, "0")}
               </span>
             </div>
-            <div className="absolute top-4 right-4">
-              <HeroConfidenceBadge pct={profile.confidencePct} />
-            </div>
             <div className="absolute inset-0 p-6 md:p-8 flex flex-col items-center justify-end text-center">
               <CountyEmblem code={facts.code} name={facts.name} size={128} priority />
               <div className="mt-3 text-[11px] uppercase tracking-[0.3em] text-accent">
@@ -244,13 +246,15 @@ function CountyPage() {
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-px bg-foreground/10">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-px bg-foreground/10">
             <ProfileFact label="Population (2019)" value={facts.population2019.toLocaleString()} />
-            <ProfileFact label="Density" value={`${density.toLocaleString()} /km²`} />
+            <ProfileFact
+              label="Density"
+              value={density != null ? `${density.toLocaleString()} /km²` : "Not recorded"}
+            />
             <ProfileFact label="Area" value={`${facts.areaKm2.toLocaleString()} km²`} />
             <ProfileFact label="Constituencies" value={String(facts.constituencies)} />
             <ProfileFact label="Wards" value={String(facts.wards)} />
-            <ProfileFact label="Overall score" value={`${scores.overall}/100`} accent />
           </div>
         </header>
 
@@ -272,40 +276,22 @@ function CountyPage() {
           </div>
         </nav>
 
-        {/* AI SUMMARY */}
-        <Section id="sec-summary" title="AI Executive Summary" icon={Sparkles}>
+        {/* THE RECORD */}
+        <Section id="sec-record" title="The record" icon={Info}>
           <p className="text-base md:text-lg leading-relaxed text-foreground/90">
-            {profile.aiSummary}
+            {profile.summary}
           </p>
-          <ConfidenceBar pct={profile.confidencePct} />
-          <div className="mt-6 grid md:grid-cols-2 gap-4">
-            <ListCard title="Strengths" items={profile.strengths} tone="ok" />
-            <ListCard title="Weaknesses" items={profile.weaknesses} tone="warn" />
-            <ListCard title="Opportunities" items={profile.opportunities} tone="ok" />
-            <ListCard title="Key risks" items={profile.risks} tone="warn" />
+          <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-muted-foreground">
+            <span className="text-foreground font-medium">What this page does not hold.</span>{" "}
+            HALISIA has no livability, growth, water-reliability, healthcare, education, security or
+            investment score for any Kenyan county, and does not publish one. Figures on this page
+            come from the 2019 census, the IEBC register and OpenStreetMap, and nothing else is
+            shown. HALISIA does not assert title, boundary or ownership over any parcel.
           </div>
         </Section>
 
-        {/* 14. DASHBOARD SCORES */}
-        <Section id="sec-dashboard" title="County Dashboard" icon={TrendingUp}>
-          <HoloTileRail label="County dashboard scores" itemClassName="w-[170px]">
-            <ScoreTile label="Economic" value={scores.economic} />
-            <ScoreTile label="Infrastructure" value={scores.infrastructure} />
-            <ScoreTile label="Governance" value={scores.governance} />
-            <ScoreTile label="Healthcare" value={scores.healthcare} />
-            <ScoreTile label="Education" value={scores.education} />
-            <ScoreTile label="Environment" value={scores.environment} />
-            <ScoreTile label="Security" value={scores.security} />
-            <ScoreTile label="Habitability" value={scores.habitability} />
-            <ScoreTile label="Investment" value={scores.investment} />
-            <ScoreTile label="Tourism" value={scores.tourism} />
-            <ScoreTile label="Development readiness" value={scores.developmentReadiness} />
-            <ScoreTile label="Overall" value={scores.overall} accent />
-          </HoloTileRail>
-        </Section>
-
         {/* LOCATION & INTERACTIVE MAP */}
-        <Section id="sec-map" title="Location & Interactive Map" icon={MapPin}>
+        <Section id="sec-map" title="Location & map" icon={MapPin}>
           <div className="grid md:grid-cols-[1fr_2fr] gap-4">
             <div className="space-y-3">
               <Definition label="Headquarters">{facts.headquarters}</Definition>
@@ -314,11 +300,13 @@ function CountyPage() {
                 {latLng.lat.toFixed(4)}°, {latLng.lng.toFixed(4)}°
               </Definition>
               <Definition label="Area">
-                {facts.areaKm2.toLocaleString()} km² · density {density.toLocaleString()}/km²
+                {facts.areaKm2.toLocaleString()} km²
+                {density != null ? ` · ${density.toLocaleString()} people/km²` : ""}
               </Definition>
               <p className="text-xs text-muted-foreground">
-                Interactive OpenStreetMap view. Use layer controls to switch between street,
-                satellite, and terrain basemaps.
+                Boundaries and basemap from OpenStreetMap. The marker is the county centroid, not a
+                parcel or an address. Use the layer control to switch between street, satellite and
+                terrain.
               </p>
             </div>
             <LeafletLayersMap
@@ -329,270 +317,87 @@ function CountyPage() {
           </div>
         </Section>
 
-        {/* 1. OVERVIEW */}
-        <Section id="sec-overview" title="1 · County Overview" icon={Building2}>
-          <div className="grid md:grid-cols-2 gap-6">
-            <Definition label="Administrative Structure">
-              {facts.constituencies} constituencies · {facts.wards} wards · headquartered at{" "}
-              {facts.headquarters}. Governed by a County Executive Committee and a County Assembly
-              under the Constitution of Kenya, 2010.
-            </Definition>
-            <Definition label="Geographic Characteristics">
-              Located in the {facts.region} region, covering {facts.areaKm2.toLocaleString()} km²
-              with a population density of ~{density.toLocaleString()} people/km².
-            </Definition>
-            <Definition label="Major Urban Centres">
-              {[facts.headquarters, ...facts.landmarks.slice(0, 2)].join(", ")}.
-            </Definition>
-            <Definition label="Strategic Importance">
-              Anchors {facts.economy.slice(0, 2).join(" and ").toLowerCase()} value chains for the
-              wider {facts.region} region.
-            </Definition>
-          </div>
-        </Section>
-
-        {/* 2. ECONOMIC */}
-        <Section id="sec-economic" title="2 · Economic Analysis" icon={TrendingUp}>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <div className="text-xs uppercase tracking-widest text-accent">Main activities</div>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {facts.economy.map((e: string) => (
-                  <span key={e} className="rounded-full glass px-3 py-1 text-xs">
-                    {e}
-                  </span>
-                ))}
-              </div>
-              <div className="mt-4 text-xs uppercase tracking-widest text-accent">
-                Priority investment sectors
-              </div>
-              <ul className="mt-2 list-disc pl-5 text-sm text-muted-foreground space-y-1">
-                {profile.prioritySectors.map((s: string) => (
-                  <li key={s}>{s}</li>
-                ))}
-              </ul>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <MiniScore label="Economic growth" value={scores.economic} />
-              <MiniScore label="Business climate" value={scores.governance} />
-              <MiniScore label="Investment" value={scores.investment} />
-              <MiniScore label="Employment" value={scores.economic - 4} />
-            </div>
-          </div>
-        </Section>
-
-        {/* 3. POLITICAL */}
-        <Section id="sec-political" title="3 · Political & Governance" icon={Landmark}>
+        {/* ADMINISTRATION */}
+        <Section id="sec-admin" title="Administration" icon={Building2}>
           <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-3">
-            <Definition label="Governor">{facts.governor}</Definition>
-            <Definition label="Senator">{facts.senator}</Definition>
-            <Definition label="Constituencies">{facts.constituencies}</Definition>
-            <Definition label="County wards">{facts.wards}</Definition>
+            <Definition label="Governor elected 2022">{facts.governor}</Definition>
+            <Definition label="Senator elected 2022">{facts.senator}</Definition>
+            <Definition label="Constituencies">{String(facts.constituencies)}</Definition>
+            <Definition label="County wards">{String(facts.wards)}</Definition>
           </div>
-          <div className="mt-4 grid md:grid-cols-2 gap-4">
-            <Definition label="CIDP highlights">
-              Focus areas typically include water &amp; sanitation, health, roads, agriculture value
-              addition, ECDE and digital transformation.
-            </Definition>
-            <Definition label="Flagship projects">
-              County flagship projects prioritise{" "}
-              {profile.prioritySectors.slice(0, 2).join(" and ")}, informed by the Council of
-              Governors development framework.
-            </Definition>
-          </div>
+          <p className="mt-4 text-sm text-muted-foreground">
+            Constituency and ward counts are from the IEBC register. The names are the August 2022
+            election result — {TERM_CAVEAT} The county is governed by a County Executive Committee
+            and a County Assembly under the Constitution of Kenya, 2010.
+          </p>
         </Section>
 
-        {/* 3b. POLITICAL INTELLIGENCE */}
-        <Section id="sec-political-intel" title="3b · Political Intelligence Dashboard" icon={Vote}>
+        {/* ECONOMY */}
+        <Section id="sec-economy" title="Economic activities" icon={TrendingUp}>
+          <div className="flex flex-wrap gap-2">
+            {facts.economy.map((e: string) => (
+              <span key={e} className="rounded-full glass px-3 py-1 text-sm">
+                {e}
+              </span>
+            ))}
+          </div>
+          <p className="mt-4 text-sm text-muted-foreground">
+            The principal activities recorded for this county. HALISIA does not hold county GDP,
+            employment or sector-growth figures, so none are shown and no sector is ranked.
+          </p>
+        </Section>
+
+        {/* POLITICAL RECORD */}
+        <Section id="sec-political" title="Political record" icon={Vote}>
           <CountyPoliticsPanel code={facts.code} />
         </Section>
 
-        {/* 4. SOCIAL */}
-        <Section id="sec-social" title="4 · Social Analysis" icon={Users}>
-          <div className="grid md:grid-cols-3 gap-3">
-            <MiniScore label="Community wellbeing" value={scores.habitability} />
-            <MiniScore label="Social development" value={scores.education} />
-            <MiniScore
-              label="Human development"
-              value={Math.round((scores.education + scores.healthcare) / 2)}
-            />
-          </div>
-          <p className="mt-4 text-sm text-muted-foreground">
-            Urbanisation is concentrated around {facts.headquarters}, with a youth-heavy demographic
-            pyramid consistent with national KNBS trends.
-          </p>
-        </Section>
-
-        {/* 5. CULTURAL */}
-        <Section id="sec-cultural" title="5 · Cultural Analysis" icon={BookOpen}>
-          <p className="text-sm text-muted-foreground">
-            Home to communities with deep cultural heritage. Notable assets include{" "}
-            {facts.landmarks.slice(0, 3).join(", ")}. Traditional livelihoods overlap the county's
-            modern economy in {facts.economy.slice(0, 2).join(" and ").toLowerCase()}.
-          </p>
-        </Section>
-
-        {/* 6. SECURITY */}
-        <Section id="sec-security" title="6 · Security Analysis" icon={ShieldCheck}>
-          <div className="grid md:grid-cols-3 gap-3">
-            <MiniScore label="Public safety" value={scores.security} />
-            <MiniScore
-              label="Disaster preparedness"
-              value={Math.round((scores.security + scores.governance) / 2)}
-            />
-            <MiniScore label="Environmental risk" value={100 - scores.environment} invert />
-          </div>
-        </Section>
-
-        {/* 7. INFRASTRUCTURE */}
-        <Section id="sec-infra" title="7 · Infrastructure Analysis" icon={Wrench}>
-          <div className="grid md:grid-cols-3 gap-3">
-            <MiniScore label="Accessibility" value={scores.infrastructure} />
-            <MiniScore
-              label="Connectivity"
-              value={Math.round((scores.infrastructure + scores.investment) / 2)}
-            />
-            <MiniScore label="Infrastructure development" value={scores.developmentReadiness} />
-          </div>
-          <div className="mt-4 grid md:grid-cols-2 gap-4 text-sm text-muted-foreground">
-            <Definition label="Transport">
-              National &amp; county roads network with feeder links to key markets; regional
-              airstrips where present; SGR/MGR access from adjacent counties.
-            </Definition>
-            <Definition label="Utilities">
-              Kenya Power grid coverage, county water schemes and Safaricom/Airtel 4G footprint;
-              growing fibre backbone via KENET/NOFBI.
-            </Definition>
-          </div>
-        </Section>
-
-        {/* 8. HEALTH */}
-        <Section id="sec-health" title="8 · Healthcare Analysis" icon={Stethoscope}>
-          <MiniScore label="Healthcare accessibility" value={scores.healthcare} />
-          <p className="mt-3 text-sm text-muted-foreground">
-            Tiered from Level 5/6 referral facilities through county hospitals, health centres and
-            dispensaries, complemented by faith-based and private providers.
-          </p>
-        </Section>
-
-        {/* 9. EDUCATION */}
-        <Section id="sec-education" title="9 · Education Analysis" icon={GraduationCap}>
-          <MiniScore label="Education accessibility" value={scores.education} />
-          <p className="mt-3 text-sm text-muted-foreground">
-            Universities, TVETs and colleges alongside secondary and primary schools per the KICD
-            framework and CBC roll-out.
-          </p>
-        </Section>
-
-        {/* 10. ENVIRONMENT */}
-        <Section id="sec-environment" title="10 · Environmental Analysis" icon={Leaf}>
-          <div className="grid md:grid-cols-3 gap-3">
-            <MiniScore label="Environmental sustainability" value={scores.environment} />
-            <MiniScore
-              label="Climate resilience"
-              value={Math.round((scores.environment + scores.security) / 2)}
-            />
-            <MiniScore label="Water reliability" value={metrics.water} />
-          </div>
-          <p className="mt-3 text-sm text-muted-foreground">
-            Terrain, rivers and forests characterise the county's natural capital; climate patterns
-            follow Kenya Meteorological Department bulletins.
-          </p>
-        </Section>
-
-        {/* 11. LAND */}
-        <Section id="sec-land" title="11 · Land &amp; Development" icon={Trees}>
-          <div className="grid md:grid-cols-2 gap-3">
-            <MiniScore label="Development potential" value={scores.developmentReadiness} />
-            <MiniScore label="Land suitability" value={metrics.livability} />
-          </div>
-        </Section>
-
-        {/* 12. HOUSING */}
-        <Section id="sec-housing" title="12 · Housing &amp; Habitability" icon={Home}>
-          <div className="grid md:grid-cols-3 gap-3">
-            <MiniScore label="Habitability" value={scores.habitability} />
-            <MiniScore
-              label="Quality of life"
-              value={Math.round((scores.habitability + scores.education) / 2)}
-            />
-            <MiniScore
-              label="Family friendliness"
-              value={Math.round((scores.habitability + scores.security) / 2)}
-            />
-          </div>
-        </Section>
-
-        {/* 13. INVESTMENT */}
-        <Section id="sec-investment" title="13 · Investment Analysis" icon={Sparkles}>
-          <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-3">
-            <MiniScore label="Investment attractiveness" value={scores.investment} />
-            <MiniScore
-              label="Return potential"
-              value={Math.round((scores.investment + scores.economic) / 2)}
-            />
-            <MiniScore
-              label="Growth potential"
-              value={Math.round((scores.economic + scores.developmentReadiness) / 2)}
-            />
-            <MiniScore
-              label="Risk rating"
-              value={100 - Math.round((scores.security + scores.environment) / 2)}
-              invert
-            />
-          </div>
-        </Section>
-
-        {/* 15. RECOMMENDATIONS */}
-        <Section id="sec-recs" title="Strategic Recommendations" icon={Sparkles}>
-          <ol className="list-decimal pl-5 space-y-2 text-sm text-muted-foreground">
-            {profile.recommendations.map((r: string) => (
-              <li key={r}>{r}</li>
+        {/* LANDMARKS */}
+        <Section id="sec-landmarks" title="Landmarks" icon={BookOpen}>
+          <ul className="flex flex-wrap gap-2">
+            {facts.landmarks.map((l: string) => (
+              <li
+                key={l}
+                className="rounded-full bg-white/5 border border-white/10 px-3 py-1 text-sm"
+              >
+                {l}
+              </li>
             ))}
-          </ol>
-          <p className="mt-4 text-sm">
-            <span className="font-semibold text-foreground">Development outlook:</span>{" "}
-            <span className="text-muted-foreground">{profile.outlook}</span>
-          </p>
+          </ul>
         </Section>
 
-        {/* 16. REFERENCES */}
-        <Section id="sec-references" title="16 · References &amp; Evidence" icon={Info}>
+        {/* SOURCES */}
+        <Section id="sec-references" title="Sources" icon={Landmark}>
           <div className="mb-4">
             <div className="mb-2 text-xs uppercase tracking-widest text-muted-foreground">
-              Image evidence — auto-generated map panels (OSM/Esri fallback ensures no blank tiles)
+              Map panels — OpenStreetMap, with an Esri fallback when a tile is unavailable
             </div>
             <CountyEvidenceStrip lat={latLng.lat} lng={latLng.lng} countyName={facts.name} />
           </div>
           <ul className="grid md:grid-cols-2 gap-2 text-sm">
             {COUNTY_DATA_SOURCES.map((s) => (
-              <li
-                key={s.url}
-                className="glass rounded-2xl p-3 flex items-start justify-between gap-3"
-              >
-                <div>
-                  <a
-                    href={s.url}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    className="font-medium text-foreground hover:text-accent"
-                  >
-                    {s.label}
-                  </a>
-                  <div className="text-xs text-muted-foreground">Last verified: {s.verified}</div>
-                </div>
+              <li key={s.url} className="glass rounded-2xl p-3">
+                <a
+                  href={s.url}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="font-medium text-foreground hover:text-accent"
+                >
+                  {s.label}
+                </a>
+                <div className="mt-1 text-xs text-muted-foreground">{s.used}</div>
               </li>
             ))}
           </ul>
-          <p className="mt-4 text-xs text-muted-foreground">
-            AI-generated intelligence derived from public open data. Only publicly licensed or
-            permissioned imagery is used; verify with a licensed professional before commercial
-            decisions.
+          <p className="mt-4 text-xs text-muted-foreground">{DENSITY_PROVENANCE}</p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Public open data, reproduced without interpretation. Verify with a licensed professional
+            before any commercial decision.
           </p>
         </Section>
 
         <div className="mt-10 text-center text-xs text-muted-foreground">
-          HALISIA AI · county intelligence profile · code {facts.code} ·{" "}
+          HALISIA AI · county record · code {facts.code} ·{" "}
           <MapPin className="inline h-3 w-3" /> {latLng.lat.toFixed(3)}°, {latLng.lng.toFixed(3)}°
         </div>
       </div>
@@ -602,11 +407,11 @@ function CountyPage() {
 
 // ---------- Small presentational helpers ----------
 
-function ProfileFact({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+function ProfileFact({ label, value }: { label: string; value: string }) {
   return (
     <div className="bg-[#FFFDF8] px-4 py-3">
       <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
-      <div className={`mt-1 text-lg font-semibold ${accent ? "text-gradient" : ""}`}>{value}</div>
+      <div className="mt-1 text-lg font-semibold">{value}</div>
     </div>
   );
 }
@@ -639,103 +444,11 @@ function Section({
   );
 }
 
-function HeroConfidenceBadge({ pct }: { pct: number }) {
-  const tone =
-    pct >= 80
-      ? "from-emerald-400/80 to-accent"
-      : pct >= 60
-        ? "from-accent to-cyan-glow"
-        : "from-amber-glow to-amber-500";
-  return (
-    <div
-      className="hidden md:flex flex-col items-center justify-center rounded-2xl bg-white/10 backdrop-blur border border-white/15 px-4 py-3 shrink-0"
-      aria-label={`Data confidence ${pct} percent`}
-    >
-      <div className="text-[9px] uppercase tracking-widest text-muted-foreground">
-        Data confidence
-      </div>
-      <div className="mt-1 flex items-baseline gap-1">
-        <span
-          className={`text-3xl font-semibold bg-gradient-to-br ${tone} bg-clip-text text-transparent`}
-        >
-          {pct}
-        </span>
-        <span className="text-xs text-muted-foreground">%</span>
-      </div>
-      <div className="mt-1 h-1 w-16 rounded-full bg-white/10 overflow-hidden">
-        <div className={`h-full bg-gradient-to-r ${tone}`} style={{ width: `${pct}%` }} />
-      </div>
-    </div>
-  );
-}
-
 function Definition({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
       <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
       <div className="mt-1 text-sm">{children}</div>
-    </div>
-  );
-}
-
-function MiniScore({ label, value, invert }: { label: string; value: number; invert?: boolean }) {
-  const clamped = Math.max(0, Math.min(100, value));
-  const good = invert ? clamped < 40 : clamped > 70;
-  const mid = invert ? clamped < 60 : clamped > 55;
-  const color = good ? "bg-emerald-400" : mid ? "bg-accent" : "bg-amber-glow";
-  return (
-    <div className="rounded-2xl bg-white/5 border border-white/10 p-3">
-      <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
-      <div className="mt-1 text-2xl font-semibold">{clamped}/100</div>
-      <div className="mt-2 h-1.5 rounded-full bg-white/10 overflow-hidden">
-        <div className={`${color} h-full`} style={{ width: `${clamped}%` }} />
-      </div>
-    </div>
-  );
-}
-
-function ScoreTile({ label, value, accent }: { label: string; value: number; accent?: boolean }) {
-  return (
-    <div className={`holo-tile h-full rounded-2xl p-4 ${accent ? "holo-lit" : ""}`}>
-      <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
-      <div className={`mt-1 text-3xl font-semibold ${accent ? "text-gradient" : ""}`}>
-        {value}
-        <span className="text-sm text-muted-foreground">/100</span>
-      </div>
-    </div>
-  );
-}
-
-function ConfidenceBar({ pct }: { pct: number }) {
-  return (
-    <div className="mt-4 flex items-center gap-3 text-xs">
-      <span className="text-muted-foreground uppercase tracking-widest">Data confidence</span>
-      <div className="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden max-w-xs">
-        <div className="bg-accent h-full" style={{ width: `${pct}%` }} />
-      </div>
-      <span className="text-foreground font-medium">{pct}%</span>
-    </div>
-  );
-}
-
-function ListCard({ title, items, tone }: { title: string; items: string[]; tone: "ok" | "warn" }) {
-  return (
-    <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
-      <div
-        className={`text-xs uppercase tracking-widest ${
-          tone === "ok" ? "text-accent" : "text-amber-glow"
-        }`}
-      >
-        {title}
-      </div>
-      <ul className="mt-2 space-y-1.5 text-sm text-muted-foreground">
-        {items.map((it) => (
-          <li key={it} className="flex gap-2">
-            <span className={tone === "ok" ? "text-accent" : "text-amber-glow"}>•</span>
-            <span>{it}</span>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }

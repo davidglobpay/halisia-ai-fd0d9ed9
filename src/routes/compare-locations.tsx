@@ -29,12 +29,12 @@ export const Route = createFileRoute("/compare-locations")({
       {
         name: "description",
         content:
-          "Recompute the HALISIA Land Intelligence Score for two Kenyan locations side by side and see which factors drive the difference.",
+          "Compare the measured readings for two Kenyan locations side by side, and see which of them HALISIA can read at all.",
       },
       { property: "og:title", content: "Compare Locations — HALISIA.AI" },
       {
         property: "og:description",
-        content: "Side-by-side LIOS recompute for two locations, with per-module deltas.",
+        content: "Side-by-side location readings, with per-module deltas and what is not assessed.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -175,8 +175,8 @@ function CompareLocationsPage() {
               Compare two locations
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Re-runs all 10 Land Intelligence modules for each location and shows which factors
-              drive the difference.
+              Reads each location and compares the modules HALISIA can measure. Modules with no
+              data behind them are shown as not assessed for both, never as a score.
             </p>
           </div>
           <div
@@ -236,7 +236,7 @@ function CompareLocationsPage() {
 
         {(!params.a || !params.b) && (
           <p className="mt-4 text-sm text-muted-foreground">
-            Enter two locations to see side-by-side scores.
+            Enter two locations to see their readings side by side.
           </p>
         )}
 
@@ -330,7 +330,8 @@ function LocationColumn({
     );
   }
   const loc = query.data;
-  const t = decision ? tone(decision.overall) : null;
+  const hasReading = decision?.reading != null;
+  const t = hasReading ? tone(decision!.reading!) : null;
   return (
     <section
       aria-label={`Location ${label} intelligence`}
@@ -350,33 +351,43 @@ function LocationColumn({
         </div>
       )}
 
-      {decision && t ? (
+      {decision ? (
         <>
           <div className="mt-4 flex items-center gap-3">
             <div
               className="h-20 w-20 rounded-full grid place-items-center shrink-0"
               style={{
-                background: `conic-gradient(${t.ring} ${decision.overall * 3.6}deg, rgba(255,255,255,0.08) 0deg)`,
+                background:
+                  hasReading && t
+                    ? `conic-gradient(${t.ring} ${decision.reading! * 3.6}deg, rgba(255,255,255,0.08) 0deg)`
+                    : "rgba(255,255,255,0.06)",
               }}
             >
               <div className="h-16 w-16 rounded-full grid place-items-center bg-background/90">
                 <div className="text-center">
-                  <div className={`text-xl font-bold tabular-nums ${t.text}`}>
-                    {decision.overall}
+                  <div
+                    className={`text-xl font-bold tabular-nums ${t ? t.text : "text-muted-foreground"}`}
+                  >
+                    {hasReading ? decision.reading : "—"}
                   </div>
                   <div className="text-[10px] text-muted-foreground -mt-0.5">
-                    Grade {decision.grade}
+                    {decision.grade ? `Grade ${decision.grade}` : "No reading"}
                   </div>
                 </div>
               </div>
             </div>
             <div className="min-w-0">
-              <div className={`text-base font-semibold ${t.text}`}>{decision.recommendation}</div>
+              <div
+                className={`text-sm font-semibold ${t ? t.text : "text-muted-foreground"} leading-snug`}
+              >
+                {decision.readingLabel}
+              </div>
               <div className="text-[11px] text-muted-foreground">
-                Confidence {decision.confidencePct}% · {decision.modules.length} modules
+                {decision.measuredCount} measured · {decision.notAssessedCount} not assessed
+                {decision.confidencePct != null && ` · confidence ${decision.confidencePct}%`}
               </div>
               <div className="text-[10px] text-muted-foreground">
-                Freshness {new Date(decision.freshness).toLocaleString()}
+                Read {new Date(decision.freshness).toLocaleString()}
               </div>
             </div>
           </div>
@@ -384,17 +395,23 @@ function LocationColumn({
             {decision.modules.map((m) => (
               <li
                 key={m.id}
-                className="flex items-center justify-between gap-2 rounded-md border border-white/5 bg-white/[0.02] px-2 py-1"
+                className={`flex items-center justify-between gap-2 rounded-md border px-2 py-1 ${
+                  m.score != null
+                    ? "border-white/5 bg-white/[0.02]"
+                    : "border-dashed border-white/10 bg-transparent text-muted-foreground"
+                }`}
               >
                 <span className="truncate">{m.label}</span>
-                <span className="tabular-nums font-medium">{m.score}</span>
+                <span className="tabular-nums font-medium">
+                  {m.score != null ? m.score : "Not assessed"}
+                </span>
               </li>
             ))}
           </ul>
         </>
       ) : (
         <div className="mt-6 flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> Computing intelligence…
+          <Loader2 className="h-4 w-4 animate-spin" /> Reading this location…
         </div>
       )}
     </section>
@@ -404,17 +421,27 @@ function LocationColumn({
 function DeltaTable({ a, b, persona }: { a: DecisionOutput; b: DecisionOutput; persona: string }) {
   const bMap = new Map(b.modules.map((m) => [m.id, m]));
   type Row = { a: ModuleOutput; b: ModuleOutput; delta: number };
+
+  // Only a module measured at BOTH locations can be differenced. Subtracting
+  // a missing reading from a present one would manufacture a delta.
   const rows: Row[] = a.modules
     .map((am) => {
       const bm = bMap.get(am.id);
-      if (!bm) return null;
+      if (!bm || am.score == null || bm.score == null) return null;
       return { a: am, b: bm, delta: am.score - bm.score };
     })
     .filter((r): r is Row => !!r)
     .sort((x, y) => Math.abs(y.delta) - Math.abs(x.delta));
 
-  const overallDelta = a.overall - b.overall;
-  const winner = overallDelta > 0 ? "A" : overallDelta < 0 ? "B" : "Tie";
+  const notComparable = a.modules.filter((am) => {
+    const bm = bMap.get(am.id);
+    return am.score == null || bm?.score == null;
+  });
+
+  const bothHaveReading = a.reading != null && b.reading != null;
+  const readingDelta = bothHaveReading ? a.reading! - b.reading! : null;
+  const ahead =
+    readingDelta == null ? null : readingDelta > 0 ? "A" : readingDelta < 0 ? "B" : "Level";
 
   return (
     <section
@@ -423,13 +450,18 @@ function DeltaTable({ a, b, persona }: { a: DecisionOutput; b: DecisionOutput; p
       className="mt-6 glass-strong rounded-3xl p-4"
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-lg font-semibold">What drives the difference</h2>
+        <h2 className="text-lg font-semibold">What differs between the readings</h2>
         <div className="text-[11px] text-muted-foreground">
-          Optimised for {persona} · Winner:{" "}
-          <span className="font-semibold text-foreground">
-            {winner} ({overallDelta > 0 ? "+" : ""}
-            {overallDelta} pts)
-          </span>
+          Weighted for {persona} ·{" "}
+          {ahead == null ? (
+            <span className="font-semibold text-foreground">no comparable reading</span>
+          ) : (
+            <span className="font-semibold text-foreground">
+              {ahead === "Level"
+                ? "Level"
+                : `${ahead} reads higher (${readingDelta! > 0 ? "+" : ""}${readingDelta} pts)`}
+            </span>
+          )}
         </div>
       </div>
       <div className="mt-3 overflow-x-auto">
@@ -454,7 +486,7 @@ function DeltaTable({ a, b, persona }: { a: DecisionOutput; b: DecisionOutput; p
               const Icon = r.delta > 0 ? ArrowRight : r.delta < 0 ? ArrowLeft : Minus;
               const driver =
                 r.delta === 0
-                  ? "Equal signals in both locations"
+                  ? "Same reading at both locations"
                   : r.delta > 0
                     ? r.a.reasons[0]
                     : r.b.reasons[0];
@@ -479,9 +511,32 @@ function DeltaTable({ a, b, persona }: { a: DecisionOutput; b: DecisionOutput; p
           </tbody>
         </table>
       </div>
+      {notComparable.length > 0 && (
+        <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+          <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+            Not comparable — HALISIA holds no data for {notComparable.length} of{" "}
+            {a.modules.length} modules at one or both locations
+          </div>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {notComparable.map((m) => (
+              <span
+                key={m.id}
+                className="rounded-full border border-dashed border-white/15 px-2 py-0.5 text-[11px] text-muted-foreground"
+              >
+                {m.label}
+              </span>
+            ))}
+          </div>
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            These are not scored at either location, so no difference can be computed. Each
+            location's report lists what to check instead.
+          </p>
+        </div>
+      )}
       <p className="mt-3 text-[10px] text-muted-foreground">
-        Δ = A − B. Positive numbers favour Location A for the selected persona; negative favour B.
-        Freshness A: {new Date(a.freshness).toLocaleString()} · Freshness B:{" "}
+        Δ = A − B across the {rows.length} module{rows.length === 1 ? "" : "s"} measured at both
+        locations. A higher reading is not a recommendation to buy. Read A:{" "}
+        {new Date(a.freshness).toLocaleString()} · Read B:{" "}
         {new Date(b.freshness).toLocaleString()}.
       </p>
     </section>

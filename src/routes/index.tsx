@@ -1,5 +1,4 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { SkyScroll } from "@/components/halisia/sky-scroll";
 import { FeatureRail } from "@/components/halisia/feature-rail";
 import { z } from "zod";
 import { fallback } from "@tanstack/zod-adapter";
@@ -55,12 +54,12 @@ function Landing() {
 function HeroStage({ children }: { children?: ReactNode }) {
   return (
     <div className="relative w-full overflow-hidden aspect-[3/4] sm:aspect-[16/10] md:aspect-[21/9] max-h-[92vh]">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_35%,rgba(255,253,248,0.82)_0%,rgba(247,243,234,0.55)_45%,rgba(239,233,220,0.18)_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_35%,#FFFDF8_0%,#F7F3EA_45%,#EFE9DC_100%)]" />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(247,243,234,0.28)_0%,rgba(247,243,234,0)_38%,rgba(247,243,234,0.45)_100%)]"
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(247,243,234,0.4)_0%,rgba(247,243,234,0)_38%,rgba(247,243,234,0.75)_100%)]"
       />
-      <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-[rgba(247,243,234,0.55)]" />
+      <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-background" />
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 opacity-[0.12]"
@@ -81,7 +80,6 @@ function HeroStage({ children }: { children?: ReactNode }) {
 function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> }) {
   return (
     <div className="min-h-screen">
-      <SkyScroll />
       {/* HERO — static cinematic stage (videos removed) */}
       <section
         aria-label="HALISIA cinematic hero"
@@ -495,7 +493,7 @@ const STEPS = [
   {
     icon: MousePointerClick,
     title: "Read the location profile",
-    body: "Elevation, air quality, schools, hospitals and transit from Google Places, Open-Topo-Data and ISRIC SoilGrids, with an AI reading that shows its sources, confidence and gaps.",
+    body: "Elevation, air quality, schools, hospitals and transit from the Google Maps Elevation API, the Google Air Quality API and Google Places, with a written read that names its sources and what it could not assess.",
   },
   {
     icon: FileText,

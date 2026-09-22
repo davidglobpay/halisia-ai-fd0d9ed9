@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { z } from "zod";
 import {
   MapPin,
-  Sparkles,
   Building2,
   Plus,
   Search,
@@ -35,9 +34,6 @@ import {
   applyFilters,
   categoriesOf,
   completeness,
-  intelligenceScore,
-  investmentScore,
-  developmentScore,
   isNew,
   railFilter,
   recommend,
@@ -67,10 +63,6 @@ const searchSchema = z.object({
   baths: z.coerce.number().optional(),
   road: z.coerce.boolean().optional(),
   verified: z.coerce.boolean().optional(),
-  minScore: z.coerce.number().optional(),
-  minInvest: z.coerce.number().optional(),
-  minDev: z.coerce.number().optional(),
-  minEnv: z.coerce.number().optional(),
 });
 
 export const Route = createFileRoute("/marketplace/")({
@@ -116,10 +108,6 @@ function MarketplaceIndex() {
       bathrooms: search.baths,
       roadAccess: search.road || undefined,
       verified: search.verified || undefined,
-      minScore: search.minScore,
-      minInvestment: search.minInvest,
-      minDevelopment: search.minDev,
-      minEnvironment: search.minEnv,
     }),
     [search],
   );
@@ -157,9 +145,9 @@ function MarketplaceIndex() {
           <div className="text-[11px] uppercase tracking-[0.25em] text-accent">Halisia AI</div>
           <h1 className="text-3xl sm:text-4xl font-display font-semibold mt-1">AI Marketplace</h1>
           <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-            Buy, sell, rent, lease, invest, develop and connect. Every listing inherits the Land
-            Intelligence Score — investment, construction, environment and infrastructure — with a
-            confidence rating on every AI estimate.
+            Buy, sell, rent, lease, invest, develop and connect. Every listing shows its source
+            and how complete its details are. Open one with coordinates to read the site's terrain,
+            air quality and nearby amenities — and what HALISIA cannot assess.
           </p>
         </div>
         <Link
@@ -303,26 +291,6 @@ function MarketplaceIndex() {
             value={search.baths}
             onChange={(v) => setFilter({ baths: v })}
           />
-          <NumField
-            label="Min intelligence score"
-            value={search.minScore}
-            onChange={(v) => setFilter({ minScore: v })}
-          />
-          <NumField
-            label="Min investment potential"
-            value={search.minInvest}
-            onChange={(v) => setFilter({ minInvest: v })}
-          />
-          <NumField
-            label="Min development suitability"
-            value={search.minDev}
-            onChange={(v) => setFilter({ minDev: v })}
-          />
-          <NumField
-            label="Min environmental score"
-            value={search.minEnv}
-            onChange={(v) => setFilter({ minEnv: v })}
-          />
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
@@ -337,7 +305,7 @@ function MarketplaceIndex() {
               checked={Boolean(search.verified)}
               onChange={(e) => setFilter({ verified: e.target.checked || undefined })}
             />
-            Verified listings only
+            Complete listings only
           </label>
         </section>
       )}
@@ -520,10 +488,19 @@ function TextField({
   );
 }
 
+/**
+ * Listing badges.
+ *
+ * The tier used to read "Verified / Reviewed / Unverified" and depended in
+ * part on the presence of an `ai_score` object — so a listing was called
+ * verified because a generated score existed on it. Nothing here verifies a
+ * claim, so the labels now say what is actually measured: how much of the
+ * listing the seller filled in. The old score badge is gone along with the
+ * stored figure it came from.
+ */
 function Badges({ p }: { p: PropertyRow }) {
   const v = verification(p);
   const c = completeness(p);
-  const lios = intelligenceScore(p);
   return (
     <div className="flex flex-wrap items-center gap-1.5 text-[10px]">
       <span
@@ -535,19 +512,18 @@ function Badges({ p }: { p: PropertyRow }) {
               : "border-white/15 text-muted-foreground"
         }`}
       >
-        {v === "verified" ? "Verified" : v === "reviewed" ? "Reviewed" : "Unverified"}
+        {v === "verified"
+          ? "Details complete"
+          : v === "reviewed"
+            ? "Most details given"
+            : "Sparse details"}
       </span>
       <span className="rounded-full border border-white/15 px-2 py-0.5 text-muted-foreground">
-        {c}% complete
+        {c}% of fields filled
       </span>
       {isNew(p) && (
         <span className="rounded-full border border-accent/40 bg-accent/10 px-2 py-0.5 text-accent">
           New
-        </span>
-      )}
-      {lios != null && (
-        <span className="rounded-full border border-white/15 px-2 py-0.5 font-mono">
-          LIOS {Math.round(lios)}
         </span>
       )}
     </div>
@@ -715,7 +691,6 @@ function ListingCard({
   showWhy?: boolean;
   onWhy?: () => void;
 }) {
-  const aiScore = intelligenceScore(p);
   const cats = categoriesOf(p);
   return (
     <li className="glass rounded-2xl border border-white/10 overflow-hidden flex flex-col">
@@ -736,11 +711,6 @@ function ListingCard({
           {p.featured && (
             <span className="absolute top-2 left-2 rounded-full bg-amber-glow/90 text-black text-[10px] uppercase tracking-widest px-2 py-0.5">
               Featured
-            </span>
-          )}
-          {aiScore != null && (
-            <span className="absolute top-2 right-2 rounded-full bg-black/70 backdrop-blur px-2 py-0.5 text-[11px] font-mono">
-              LIOS {Math.round(aiScore)}
             </span>
           )}
         </div>
@@ -768,17 +738,9 @@ function ListingCard({
         )}
         <div className="flex items-center justify-between">
           <div className="text-sm font-semibold">{formatPrice(p)}</div>
-          <div className="inline-flex items-center gap-1 text-[11px] text-accent">
-            <Sparkles className="h-3 w-3" /> AI scored
-          </div>
-        </div>
-        <div className="text-[11px] text-muted-foreground flex flex-wrap gap-x-3">
-          <span>
-            Investment {investmentScore(p) != null ? Math.round(investmentScore(p)!) : "—"}
-          </span>
-          <span>
-            Development {developmentScore(p) != null ? Math.round(developmentScore(p)!) : "—"}
-          </span>
+          {p.latitude != null && p.longitude != null && (
+            <span className="text-[11px] text-muted-foreground">Open for readings</span>
+          )}
         </div>
         <Actions p={p} compared={compared} onCompare={onCompare} />
         {reasons?.length ? (

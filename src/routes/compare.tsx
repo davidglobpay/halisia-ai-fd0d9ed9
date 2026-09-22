@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, X as XIcon } from "lucide-react";
 import { KENYA_COUNTY_FACTS, KENYA_COAT_OF_ARMS } from "@/lib/kenya-county-facts";
 import { COUNTY_LOGOS } from "@/lib/county-logos";
-import { dataConfidencePct } from "@/lib/county-profile";
+import { populationDensity, formatMetric } from "@/lib/county-metrics";
 import { getCountyPolitics } from "@/lib/county-politics";
 
 export const Route = createFileRoute("/compare")({
@@ -13,7 +13,7 @@ export const Route = createFileRoute("/compare")({
       {
         name: "description",
         content:
-          "Side-by-side comparison of your saved Kenyan counties: emblem, data confidence, key statistics, leadership and voter turnout.",
+          "Side-by-side comparison of your saved Kenyan counties: 2019 census population and density, gazetted area, constituencies, elected leadership and 2022 turnout.",
       },
       { property: "og:title", content: "Compare Counties — HALISIA.AI" },
       {
@@ -139,7 +139,7 @@ function CompareCard({ code, onRemove }: { code: number; onRemove: () => void })
   const facts = KENYA_COUNTY_FACTS[code];
   if (!facts) return null;
   const politics = getCountyPolitics(code);
-  const confidence = dataConfidencePct(code);
+  const density = populationDensity(code);
   return (
     <div className="relative rounded-2xl border border-white/10 bg-white/5 p-4">
       <button
@@ -165,11 +165,14 @@ function CompareCard({ code, onRemove }: { code: number; onRemove: () => void })
       </div>
 
       <dl className="mt-4 space-y-2 text-xs">
-        <Row label="Confidence" value={`${confidence}%`} />
         <Row label="Population (2019)" value={facts.population2019.toLocaleString()} />
+        <Row
+          label="Density"
+          value={formatMetric("population", density != null ? Math.round(density) : 0)}
+        />
         <Row label="Area" value={`${facts.areaKm2.toLocaleString()} km²`} />
         <Row label="Constituencies" value={String(facts.constituencies)} />
-        <Row label="Governor" value={facts.governor} />
+        <Row label="Governor (2022)" value={facts.governor} />
         {politics && (
           <>
             <Row label="Coalition" value={politics.coalition} />
@@ -178,10 +181,9 @@ function CompareCard({ code, onRemove }: { code: number; onRemove: () => void })
               value={
                 politics.history.find((h) => h.year === 2022)?.turnoutPct != null
                   ? `${politics.history.find((h) => h.year === 2022)!.turnoutPct}%`
-                  : "—"
+                  : "Not recorded"
               }
             />
-            <Row label="Opinion index" value={`${politics.publicOpinion.overall}/100`} />
           </>
         )}
       </dl>
@@ -221,8 +223,8 @@ function SummaryTable({ codes }: { codes: number[] }) {
               <th className="px-3 py-2 text-left">County</th>
               <th className="px-3 py-2 text-right">Population</th>
               <th className="px-3 py-2 text-right">Area (km²)</th>
-              <th className="px-3 py-2 text-right">Confidence</th>
-              <th className="px-3 py-2 text-right">Opinion</th>
+              <th className="px-3 py-2 text-right">Density (/km²)</th>
+              <th className="px-3 py-2 text-right">2022 turnout</th>
             </tr>
           </thead>
           <tbody>
@@ -238,10 +240,15 @@ function SummaryTable({ codes }: { codes: number[] }) {
                     {f.areaKm2.toLocaleString()}
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums">
-                    {dataConfidencePct(f.code)}%
+                    {formatMetric(
+                      "population",
+                      Math.round(populationDensity(f.code) ?? 0),
+                    )}
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums">
-                    {pol ? `${pol.publicOpinion.overall}/100` : "—"}
+                    {pol?.history.find((h) => h.year === 2022)?.turnoutPct != null
+                      ? `${pol!.history.find((h) => h.year === 2022)!.turnoutPct}%`
+                      : "Not recorded"}
                   </td>
                 </tr>
               );
@@ -249,6 +256,11 @@ function SummaryTable({ codes }: { codes: number[] }) {
           </tbody>
         </table>
       </div>
+      <p className="border-t border-white/10 px-4 py-3 text-[11px] text-muted-foreground">
+        Population and area from the KNBS 2019 Census; density is the two divided. Turnout is the
+        IEBC figure for the 2022 gubernatorial race, rounded. HALISIA holds no composite score or
+        opinion index for any county and shows none.
+      </p>
     </section>
   );
 }
