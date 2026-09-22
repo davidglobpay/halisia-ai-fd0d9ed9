@@ -93,7 +93,7 @@ export function Navbar() {
           </span>
         </Link>
         <nav
-          className="hidden md:flex min-w-0 flex-1 items-center justify-center gap-0.5 text-sm text-muted-foreground lg:gap-1"
+          className="hidden xl:flex min-w-0 flex-1 items-center justify-center gap-0.5 text-sm text-muted-foreground 2xl:gap-1"
           aria-label="Primary"
         >
           {LINKS.map((l) => {
@@ -146,7 +146,7 @@ export function Navbar() {
             Land Intelligence · Kenya
           </span>
           {!loading && user ? (
-            <div className="hidden md:flex items-center gap-1.5">
+            <div className="hidden xl:flex items-center gap-1.5">
               <Link
                 to="/saved"
                 className="inline-flex h-9 items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 text-xs hover:bg-white/10"
@@ -172,7 +172,7 @@ export function Navbar() {
           ) : !loading ? (
             <Link
               to="/auth"
-              className="hidden md:inline-flex h-9 items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-accent px-3 text-xs font-medium text-primary-foreground"
+              className="hidden xl:inline-flex h-9 items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-accent px-3 text-xs font-medium text-primary-foreground"
             >
               <LogIn className="h-3.5 w-3.5" aria-hidden="true" /> Sign in
             </Link>
@@ -180,7 +180,7 @@ export function Navbar() {
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
-            className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-full glass hover:bg-white/10 transition"
+            className="xl:hidden inline-flex h-10 w-10 items-center justify-center rounded-full glass hover:bg-white/10 transition"
             aria-label={open ? "Close navigation" : "Open navigation"}
             aria-expanded={open}
             aria-controls="halisia-mobile-nav"
@@ -191,7 +191,7 @@ export function Navbar() {
       </header>
       <div
         id="halisia-mobile-nav"
-        className={`md:hidden fixed inset-0 z-40 transition ${
+        className={`xl:hidden fixed inset-0 z-40 transition ${
           open ? "pointer-events-auto" : "pointer-events-none"
         }`}
         // `inert` removes the closed drawer from the a11y tree and the tab
