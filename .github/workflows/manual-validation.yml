@@ -1,0 +1,60 @@
+name: Manual branch validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch or commit to validate
+        required: true
+        default: fix/halisia-production-stability
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Typecheck, lint, tests and builds
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: bunx prettier --check .
+      - run: bunx eslint . --max-warnings=0
+      - run: bun run typecheck
+      - run: bunx vitest run
+      - run: bunx vite build --mode development
+      - run: bunx vite build --mode production
+
+  e2e:
+    name: Playwright browser tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: quality
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: bunx playwright install --with-deps chromium
+      - run: bunx playwright test
+        env:
+          CI: "1"
+      - name: Upload failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: halisia-playwright-failure
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7
+          if-no-files-found: ignore
