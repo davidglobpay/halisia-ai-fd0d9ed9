@@ -23,6 +23,7 @@ import {
 } from "@/components/halisia/model-lab/device";
 import { KitButton } from "@/components/halisia/ds/button";
 import { humanBytes } from "@/components/halisia/model-lab/loader";
+import { ARCHITECTURAL_CATALOGUE, catalogueCoverage } from "@/lib/architectural-catalogue";
 
 export const Route = createFileRoute("/model-lab")({
   head: () => ({
@@ -257,6 +258,28 @@ function ModelLabPage() {
           </p>
         ) : null}
       </header>
+
+      <section className="mb-4 rounded-2xl border border-white/10 bg-black/20 p-4" aria-labelledby="catalogue-coverage-title">
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <h2 id="catalogue-coverage-title" className="text-sm font-semibold">Architectural catalogue expansion</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {ARCHITECTURAL_CATALOGUE.length} governed slots across six typologies. New assets appear in the playable selector only after licence, dimensions, size and compatibility checks pass.
+            </p>
+          </div>
+          <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-muted-foreground">
+            {BUILDING_MODELS.length} playable now
+          </span>
+        </div>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {catalogueCoverage().map((row) => (
+            <div key={row.typology} className="rounded-xl border border-white/10 px-3 py-2 text-xs">
+              <span className="font-medium capitalize">{row.typology.replace("-", " / ")}</span>
+              <span className="float-right text-muted-foreground">{row.admitted}/{row.total} admitted</span>
+            </div>
+          ))}
+        </div>
+      </section>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
         {/* viewport */}
