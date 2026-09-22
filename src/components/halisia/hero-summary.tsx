@@ -1,60 +1,31 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import {
-  TrendingUp,
-  HardHat,
-  ShieldCheck,
-  Waves,
-  Building2,
-  Zap,
-  Leaf,
-  Sparkles,
-  MapPin,
-} from "lucide-react";
+import { Sparkles, MapPin, CircleSlash } from "lucide-react";
 import type { LocationIntel } from "@/lib/location-intel.functions";
 import type { NarrativeOutput } from "@/lib/ai-narrative.functions";
+import {
+  runIntelligenceEngine,
+  DOSSIER_SCOPE,
+  type ModuleOutput,
+} from "@/lib/intelligence-engine";
+import { useUserPersona } from "@/hooks/use-user-persona";
 
-/* ---------- score derivations (pure, no new data calls) ---------- */
-
-function clamp(n: number) {
-  return Math.max(0, Math.min(100, Math.round(n)));
-}
-
-function deriveScores(intel?: LocationIntel, narrative?: NarrativeOutput) {
-  const c = intel?.categories;
-  const infraCount =
-    (c?.schools.length ?? 0) +
-    (c?.hospitals.length ?? 0) +
-    (c?.groceries.length ?? 0) +
-    (c?.banks.length ?? 0);
-  const accessCount = (c?.transit.length ?? 0) + (c?.restaurants.length ?? 0);
-  const elev = intel?.elevation?.meters ?? null;
-  const aqi = intel?.airQuality?.universalAqi ?? null;
-
-  const investment = narrative?.businessSuitability?.score ?? clamp(40 + infraCount * 3);
-  const construction = elev != null ? clamp(elev < 20 ? 45 : elev < 100 ? 65 : 80) : 60;
-  const safety = aqi != null ? clamp(50 + aqi / 2) : 60;
-  const flood = elev != null ? clamp(elev < 20 ? 30 : elev < 100 ? 60 : 85) : 60;
-  const infrastructure = clamp(35 + infraCount * 4);
-  const utilities = clamp(40 + infraCount * 3 + accessCount * 2);
-  const environment = aqi != null ? clamp(aqi) : 55;
-  const futureGrowth = clamp(
-    ((narrative?.businessSuitability?.score ?? 60) + (narrative?.familySuitability?.score ?? 60)) /
-      2,
-  );
-  const overall = narrative?.livability ?? clamp((investment + infrastructure + environment) / 3);
-  return {
-    overall,
-    investment,
-    construction,
-    safety,
-    flood,
-    infrastructure,
-    utilities,
-    environment,
-    futureGrowth,
-  };
-}
+/**
+ * The hero read for a location.
+ *
+ * This component used to score the location itself, in parallel with the
+ * intelligence engine and disagreeing with it. It derived eight gauges from
+ * whatever was to hand: "Safety" was `50 + airQualityIndex / 2`, "Utilities"
+ * was a count of shops and restaurants, "Future growth" was the mean of two
+ * LLM numbers, and anything unknown fell back to 55 or 60. It then multiplied
+ * the headline score by 65,000, added 1.5 million and printed the result as
+ * a headline valuation in shillings per acre — a price, in front of a buyer,
+ * derived from a language model's opinion of how livable a place felt.
+ *
+ * The price is gone and the parallel scorer with it. This now renders what
+ * `runIntelligenceEngine` measured and nothing else, so one scorer governs the
+ * whole app and the hero cannot contradict the dossier below it.
+ */
 
 function toneFor(score: number) {
   if (score >= 75) return { ring: "#22c55e", text: "text-emerald-glow", label: "Excellent" };
@@ -63,15 +34,7 @@ function toneFor(score: number) {
   return { ring: "#ef4444", text: "text-destructive", label: "Weak" };
 }
 
-function estimateValueKES(overall: number) {
-  // Coarse indicative range keyed off overall score (KES / acre).
-  const base = 1_500_000 + overall * 65_000;
-  const low = Math.round(base * 0.75);
-  const high = Math.round(base * 1.35);
-  const fmt = (n: number) =>
-    n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` : `${Math.round(n / 1000)}k`;
-  return `KSh ${fmt(low)}–${fmt(high)} / acre`;
-}
+const NEUTRAL = { ring: "rgba(255,255,255,0.14)", text: "text-muted-foreground", label: "—" };
 
 /* ---------- animated circular gauge ---------- */
 
@@ -97,15 +60,15 @@ function Gauge({
   size = 72,
   stroke = 6,
 }: {
-  score: number;
+  score: number | null;
   size?: number;
   stroke?: number;
 }) {
-  const v = useCountUp(score);
-  const tone = toneFor(score);
+  const v = useCountUp(score ?? 0);
+  const tone = score != null ? toneFor(score) : NEUTRAL;
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
-  const off = c * (1 - v / 100);
+  const off = score != null ? c * (1 - v / 100) : c;
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
@@ -117,45 +80,46 @@ function Gauge({
           className="stroke-white/10"
           fill="none"
         />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          strokeWidth={stroke}
-          stroke={tone.ring}
-          fill="none"
-          strokeLinecap="round"
-          strokeDasharray={c}
-          strokeDashoffset={off}
-          style={{ filter: `drop-shadow(0 0 6px ${tone.ring}66)` }}
-        />
+        {score != null && (
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={r}
+            strokeWidth={stroke}
+            stroke={tone.ring}
+            fill="none"
+            strokeLinecap="round"
+            strokeDasharray={c}
+            strokeDashoffset={off}
+            style={{ filter: `drop-shadow(0 0 6px ${tone.ring}66)` }}
+          />
+        )}
       </svg>
       <div className="absolute inset-0 grid place-items-center">
-        <span className={`text-sm font-semibold tabular-nums ${tone.text}`}>{Math.round(v)}</span>
+        <span className={`text-sm font-semibold tabular-nums ${tone.text}`}>
+          {score != null ? Math.round(v) : "—"}
+        </span>
       </div>
     </div>
   );
 }
 
-function GaugeTile({
-  label,
-  score,
-  icon: Icon,
-}: {
-  label: string;
-  score: number;
-  icon: React.ElementType;
-}) {
-  const tone = toneFor(score);
+/** A tile per measured module. Modules with no data never reach this. */
+function ModuleTile({ m }: { m: ModuleOutput }) {
+  const tone = m.score != null ? toneFor(m.score) : NEUTRAL;
   return (
     <div className="glass rounded-2xl p-3 flex items-center gap-3">
-      <Gauge score={score} />
+      <Gauge score={m.score} />
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">
-          <Icon className="h-3 w-3 text-accent" />
-          <span className="truncate">{label}</span>
+        <div className="text-[10px] uppercase tracking-widest text-muted-foreground truncate">
+          {m.label}
         </div>
         <div className={`mt-0.5 text-xs font-medium ${tone.text}`}>{tone.label}</div>
+        {m.confidencePct != null && m.confidencePct < 100 && (
+          <div className="text-[10px] text-muted-foreground">
+            Partly measured · {m.confidencePct}%
+          </div>
+        )}
       </div>
     </div>
   );
@@ -165,7 +129,7 @@ function RatingPill({ label, score }: { label: string; score: number }) {
   const tone = toneFor(score);
   return (
     <div className="glass rounded-full pl-2 pr-3 py-1 inline-flex items-center gap-1.5 text-[11px]">
-      <span className={`h-1.5 w-1.5 rounded-full`} style={{ background: tone.ring }} />
+      <span className="h-1.5 w-1.5 rounded-full" style={{ background: tone.ring }} />
       <span className="text-muted-foreground">{label}</span>
       <span className={`font-semibold tabular-nums ${tone.text}`}>{score}</span>
     </div>
@@ -187,13 +151,21 @@ export function HeroSummary({
   intel?: LocationIntel;
   narrative?: NarrativeOutput;
 }) {
-  const s = deriveScores(intel, narrative);
-  const overallTone = toneFor(s.overall);
-  const overallCount = useCountUp(s.overall, 1100);
+  const [persona] = useUserPersona();
+  const decision = runIntelligenceEngine(intel, narrative, persona);
+  const reading = decision.reading;
+  const tone = reading != null ? toneFor(reading) : NEUTRAL;
+  const readingCount = useCountUp(reading ?? 0, 1100);
+
+  const measured = decision.modules.filter((m) => m.score != null);
+  const notAssessed = decision.modules.filter((m) => m.score == null);
+
+  // The narrative is a written read, not a measurement. It is shown as prose
+  // and never converted into a number anywhere on this surface.
   const summary =
     narrative?.paragraphs?.[0] ??
     narrative?.overview ??
-    "HALISIA AI is compiling the executive read for this location…";
+    "HALISIA is reading this location…";
 
   return (
     <motion.section
@@ -202,33 +174,37 @@ export function HeroSummary({
       transition={{ duration: 0.35 }}
       data-testid="hero-summary"
       className="glass-strong rounded-3xl p-4 sm:p-5 relative overflow-hidden"
-      aria-label="Property AI hero summary"
+      aria-label="Location hero summary"
     >
       <div
         className="absolute -top-24 -right-16 h-56 w-56 rounded-full blur-3xl opacity-40"
-        style={{ background: `radial-gradient(circle, ${overallTone.ring}88, transparent 70%)` }}
+        style={{ background: `radial-gradient(circle, ${tone.ring}88, transparent 70%)` }}
       />
 
       <div className="relative grid gap-4 sm:grid-cols-[auto_minmax(0,1fr)] items-start">
-        {/* Overall AI score */}
+        {/* The reading */}
         <div className="flex items-center gap-3 sm:flex-col sm:items-start">
-          <div className="relative">
-            <Gauge score={s.overall} size={110} stroke={9} />
-          </div>
+          <Gauge score={reading} size={110} stroke={9} />
           <div className="sm:mt-1">
-            <div className="text-[10px] uppercase tracking-[0.2em] text-accent">AI Score</div>
-            <div className={`text-2xl font-bold tabular-nums ${overallTone.text}`}>
-              {Math.round(overallCount)}
-              <span className="text-sm text-muted-foreground font-normal">/100</span>
+            <div className="text-[10px] uppercase tracking-[0.2em] text-accent">
+              {decision.readingLabel}
             </div>
-            <div className={`text-xs ${overallTone.text}`}>{overallTone.label}</div>
+            <div className={`text-2xl font-bold tabular-nums ${tone.text}`}>
+              {reading != null ? Math.round(readingCount) : "—"}
+              {reading != null && (
+                <span className="text-sm text-muted-foreground font-normal">/100</span>
+              )}
+            </div>
+            <div className={`text-xs ${tone.text}`}>
+              {reading != null ? tone.label : "Not enough read"}
+            </div>
           </div>
         </div>
 
-        {/* Address + summary */}
+        {/* Address + written read */}
         <div className="min-w-0">
           <div className="flex items-start gap-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">
-            <MapPin className="h-3 w-3 text-accent shrink-0" /> Property
+            <MapPin className="h-3 w-3 text-accent shrink-0" /> Location
           </div>
           <h2 className="mt-0.5 text-lg sm:text-xl font-semibold leading-tight line-clamp-2">
             {address}
@@ -240,45 +216,67 @@ export function HeroSummary({
             )}
           </div>
 
-          <div className="mt-2.5 flex flex-wrap gap-1.5">
-            <RatingPill label="Investment" score={s.investment} />
-            <RatingPill label="Livability" score={s.overall} />
-            <RatingPill label="Construction" score={s.construction} />
-            <RatingPill label="Risk" score={s.flood} />
-            <RatingPill label="Future" score={s.futureGrowth} />
-          </div>
+          {measured.length > 0 && (
+            <div className="mt-2.5 flex flex-wrap gap-1.5">
+              {measured.map((m) => (
+                <RatingPill key={m.id} label={m.label} score={m.score!} />
+              ))}
+            </div>
+          )}
 
           <div className="mt-3 rounded-2xl border border-white/10 bg-black/15 p-3">
             <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-accent">
-              <Sparkles className="h-3 w-3" /> One-line read
+              <Sparkles className="h-3 w-3" /> Written read
             </div>
             <p className="mt-1 text-sm leading-relaxed text-foreground/90 line-clamp-3">
               {summary}
             </p>
-            <div className="mt-2 flex items-center justify-between text-[11px]">
-              <span className="text-muted-foreground">Indicative value</span>
-              <span className="font-medium text-foreground/90">{estimateValueKES(s.overall)}</span>
-            </div>
+            <p className="mt-2 text-[11px] text-muted-foreground">
+              A written interpretation of the readings below. HALISIA holds no price or transaction
+              data for this location and publishes no valuation.
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Gauge dashboard */}
-      <div className="relative mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-        <GaugeTile label="Investment" score={s.investment} icon={TrendingUp} />
-        <GaugeTile label="Construction" score={s.construction} icon={HardHat} />
-        <GaugeTile label="Safety" score={s.safety} icon={ShieldCheck} />
-        <GaugeTile label="Flood" score={s.flood} icon={Waves} />
-        <GaugeTile label="Infrastructure" score={s.infrastructure} icon={Building2} />
-        <GaugeTile label="Utilities" score={s.utilities} icon={Zap} />
-        <GaugeTile label="Environment" score={s.environment} icon={Leaf} />
-        <GaugeTile label="Future growth" score={s.futureGrowth} icon={Sparkles} />
-      </div>
+      {/* Measured modules */}
+      {measured.length > 0 && (
+        <div className="relative mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          {measured.map((m) => (
+            <ModuleTile key={m.id} m={m} />
+          ))}
+        </div>
+      )}
 
-      <div className="relative mt-2 text-[10px] text-muted-foreground">
-        Gauges animate from live intelligence signals. Confidence:{" "}
-        {narrative?.confidencePct != null ? `${narrative.confidencePct}%` : "computing…"} · Values
-        indicative, not appraisal.
+      {/* What could not be read */}
+      {notAssessed.length > 0 && (
+        <div
+          className="relative mt-3 rounded-2xl border border-dashed border-white/12 p-3"
+          data-testid="hero-not-assessed"
+        >
+          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">
+            <CircleSlash className="h-3 w-3" /> Not assessed — {notAssessed.length} of{" "}
+            {decision.modules.length}
+          </div>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {notAssessed.map((m) => (
+              <span
+                key={m.id}
+                title={m.nextStep}
+                className="rounded-full border border-white/10 px-2 py-0.5 text-[11px] text-muted-foreground"
+              >
+                {m.label}
+              </span>
+            ))}
+          </div>
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            HALISIA holds no data that answers these. The full report lists who to ask for each.
+          </p>
+        </div>
+      )}
+
+      <div className="relative mt-2 text-[10px] text-muted-foreground leading-relaxed">
+        {decision.scopeNote} {DOSSIER_SCOPE}
       </div>
     </motion.section>
   );

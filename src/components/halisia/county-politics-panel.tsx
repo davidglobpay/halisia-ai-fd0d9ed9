@@ -1,25 +1,28 @@
 import { useMemo } from "react";
-import {
-  Vote,
-  Users2,
-  Landmark,
-  Sparkles,
-  ExternalLink,
-  ShieldAlert,
-  Timer,
-  BarChart3,
-  Flag,
-} from "lucide-react";
+import { Vote, Users2, Landmark, ExternalLink, ShieldAlert, Timer } from "lucide-react";
 import {
   getCountyPolitics,
   PARTY_COLORS,
   POLITICS_SOURCES,
-  type CountyPolitics,
+  TERM_CAVEAT,
   type ElectionCycle,
   type Leader,
-  type PublicOpinion,
 } from "@/lib/county-politics";
 
+/**
+ * The county political record.
+ *
+ * This panel previously carried a "Public Opinion — Composite Research Index"
+ * with four 0-100 scores and a turnout-correlation chart, and a party
+ * vote-share bar. Neither had data behind it: the scores were arithmetic on a
+ * per-code jitter term, and the vote-share bar showed the same 55/32/8/5 split
+ * for all 47 counties. Both are removed. So are the "frequently discussed
+ * public issues" lists, which were written per region and displayed as
+ * findings about the county on screen.
+ *
+ * What remains is the gazetted record — who holds each seat, on which party,
+ * which party won each cycle, and the turnout the IEBC published for 2022.
+ */
 export function CountyPoliticsPanel({ code }: { code: number }) {
   const politics = useMemo(() => getCountyPolitics(code), [code]);
   if (!politics) return null;
@@ -30,57 +33,37 @@ export function CountyPoliticsPanel({ code }: { code: number }) {
 
       {/* Leadership */}
       <div>
-        <SubHead icon={Users2} label="Current Leadership (2022 – 2027)" />
+        <SubHead icon={Users2} label="Elected in August 2022, for the 2022 – 2027 term" />
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-3">
           <LeaderCard leader={politics.leadership.governor} />
           <LeaderCard leader={politics.leadership.senator} />
           <CoalitionCard coalition={politics.coalition} />
         </div>
         <p className="mt-3 text-[11px] text-muted-foreground">
-          Deputy Governor, Woman Representative and Members of Parliament are matters of public
-          record — verify names and party affiliations with the IEBC candidate register and
-          Parliament of Kenya directories linked below.
+          {TERM_CAVEAT} Deputy Governor, Woman Representative and Members of Parliament are
+          matters of public record but are not held here — look them up in the IEBC candidate
+          register and the Parliament of Kenya directories linked below.
         </p>
       </div>
 
       {/* Election history */}
       <div>
-        <SubHead icon={Vote} label="Gubernatorial Election History" />
+        <SubHead icon={Vote} label="Gubernatorial results by cycle" />
         <div className="mt-3 grid md:grid-cols-3 gap-3">
           {politics.history.map((h) => (
             <ElectionCard key={h.year} cycle={h} />
           ))}
         </div>
-        <TurnoutChart history={politics.history} />
-      </div>
-
-      {/* Party landscape */}
-      <div>
-        <SubHead icon={Flag} label="Party Landscape — 2022 Gubernatorial (approximate)" />
-        <PartyBar landscape={politics.partyLandscape} />
-        <p className="mt-2 text-[11px] text-muted-foreground">
-          Share values are directional buckets summarising publicly released IEBC results, not exact
-          tallies. See the IEBC results portal for the official percentages.
+        <p className="mt-3 text-[11px] text-muted-foreground">
+          Winning party per cycle, from IEBC gazette notices. Turnout is shown only for 2022, the
+          one year for which this dataset holds a county figure; the winner's vote share is not held
+          here at all. Read both from the IEBC results portal.
         </p>
-      </div>
-
-      {/* Key issues + priorities */}
-      <div className="grid md:grid-cols-2 gap-3">
-        <IssueList
-          title="Frequently discussed public issues"
-          items={politics.keyIssues}
-          tone="warn"
-        />
-        <IssueList
-          title="Public development priorities"
-          items={politics.developmentPriorities}
-          tone="ok"
-        />
       </div>
 
       {/* Timeline */}
       <div>
-        <SubHead icon={Timer} label="County Political Timeline" />
+        <SubHead icon={Timer} label="County political timeline" />
         <ol className="mt-3 relative border-l border-white/10 pl-4 space-y-3">
           {politics.timeline.map((m) => (
             <li key={`${m.year}-${m.label}`} className="relative">
@@ -94,24 +77,17 @@ export function CountyPoliticsPanel({ code }: { code: number }) {
         </ol>
       </div>
 
-      {/* Public opinion (composite index, disclaimer-safe) */}
-      <PublicOpinionSection opinion={politics.publicOpinion} />
-
-      {/* AI summary */}
-      <div className="rounded-2xl border border-accent/30 bg-accent/5 p-4">
-        <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-accent">
-          <Sparkles className="h-4 w-4" /> AI Political Summary
+      {/* Summary — a statement of the record, not an interpretation of it */}
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+        <div className="text-xs uppercase tracking-widest text-muted-foreground">
+          Summary of the record
         </div>
-        <p className="mt-2 text-sm leading-relaxed text-foreground/90">{politics.aiSummary}</p>
-        <p className="mt-2 text-[10px] text-muted-foreground">
-          AI-generated interpretation of publicly available records. Not a prediction, forecast,
-          endorsement or representation of any individual's political views.
-        </p>
+        <p className="mt-2 text-sm leading-relaxed text-foreground/90">{politics.summary}</p>
       </div>
 
       {/* Sources */}
       <div>
-        <SubHead icon={Landmark} label="Public Data Sources" />
+        <SubHead icon={Landmark} label="Where this comes from" />
         <ul className="mt-3 grid sm:grid-cols-2 gap-2">
           {POLITICS_SOURCES.map((s) => (
             <li key={s.url} className="rounded-xl bg-white/5 border border-white/10 p-3 text-xs">
@@ -145,17 +121,16 @@ function Disclaimer({ needsVerification }: { needsVerification: boolean }) {
     <div className="rounded-2xl border border-amber-glow/30 bg-amber-glow/5 p-3 text-[11px] text-muted-foreground flex gap-2">
       <ShieldAlert className="h-4 w-4 text-amber-glow shrink-0 mt-0.5" />
       <div>
-        <span className="text-foreground font-medium">
-          Research tool — not a prediction platform.
-        </span>{" "}
-        This dashboard aggregates publicly available information from the IEBC, Parliament of Kenya,
-        Council of Governors and county CIDPs. It does not infer private political preferences,
-        generate polling estimates, or forecast election outcomes.
+        <span className="text-foreground font-medium">The 2022 record, not today's roll.</span>{" "}
+        Names, parties, winning cycles and turnout come from IEBC gazette notices and the
+        Parliament and Senate directories, as they stood after the August 2022 election. HALISIA
+        holds no polling, no sentiment estimate and no forecast for any county, and publishes
+        none.
         {needsVerification && (
           <>
             {" "}
             <span className="text-amber-glow">
-              Some party fields for this county are not encoded — verify with the IEBC register.
+              A party field for this county is not encoded here — check the IEBC register.
             </span>
           </>
         )}
@@ -169,7 +144,7 @@ function LeaderCard({ leader }: { leader: Leader }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
       <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-        {leader.role}
+        {leader.role} elected 2022
       </div>
       <div className="mt-1 text-base font-semibold">{leader.name}</div>
       <div
@@ -192,14 +167,14 @@ function CoalitionCard({ coalition }: { coalition: string }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
       <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-        Executive Coalition
+        Winning coalition, 2022
       </div>
       <div className="mt-1 text-base font-semibold">{coalition}</div>
       <div className="mt-2 h-2 rounded-full bg-white/10 overflow-hidden">
         <div className="h-full" style={{ width: "100%", background: color, opacity: 0.75 }} />
       </div>
       <div className="mt-2 text-[10px] text-muted-foreground">
-        Based on gazetted 2022 gubernatorial result.
+        The coalition the winning party belonged to in 2022.
       </div>
     </div>
   );
@@ -210,10 +185,10 @@ function ElectionCard({ cycle }: { cycle: ElectionCycle }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
       <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-        {cycle.year} · General election
+        {cycle.year} · Gubernatorial
       </div>
       <div className="mt-1 text-sm font-medium">
-        {cycle.governor ?? "Winner on public record — verify with IEBC"}
+        {cycle.governor ?? "Winner not held in this dataset"}
       </div>
       <div
         className="mt-2 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px]"
@@ -223,226 +198,7 @@ function ElectionCard({ cycle }: { cycle: ElectionCycle }) {
         {cycle.party}
       </div>
       <div className="mt-2 text-[11px] text-muted-foreground">
-        Turnout: {cycle.turnoutPct != null ? `${cycle.turnoutPct}%` : "—"}
-      </div>
-    </div>
-  );
-}
-
-function TurnoutChart({ history }: { history: ElectionCycle[] }) {
-  const w = 320;
-  const h = 80;
-  const pad = 16;
-  const xs = history.map((_, i) => pad + i * ((w - 2 * pad) / (history.length - 1)));
-  const ys = history.map((c) => {
-    const t = c.turnoutPct ?? 0;
-    return h - pad - ((h - 2 * pad) * t) / 100;
-  });
-  const path = xs.map((x, i) => `${i === 0 ? "M" : "L"}${x},${ys[i]}`).join(" ");
-  return (
-    <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-3">
-      <div className="flex items-center gap-2 text-[11px] uppercase tracking-widest text-muted-foreground">
-        <BarChart3 className="h-3.5 w-3.5 text-accent" /> Voter turnout trend (gubernatorial)
-      </div>
-      <svg viewBox={`0 0 ${w} ${h}`} className="mt-2 w-full max-w-md">
-        <path d={path} fill="none" stroke="currentColor" className="text-accent" strokeWidth={2} />
-        {xs.map((x, i) => (
-          <g key={i}>
-            <circle cx={x} cy={ys[i]} r={3} className="fill-accent" />
-            <text
-              x={x}
-              y={h - 2}
-              textAnchor="middle"
-              className="fill-muted-foreground"
-              fontSize={9}
-            >
-              {history[i].year}
-            </text>
-            <text x={x} y={ys[i] - 6} textAnchor="middle" className="fill-foreground" fontSize={9}>
-              {history[i].turnoutPct != null ? `${history[i].turnoutPct}%` : "—"}
-            </text>
-          </g>
-        ))}
-      </svg>
-      <div className="text-[10px] text-muted-foreground">
-        National reference: 2013 ≈ 86%, 2017 ≈ 78%, 2022 ≈ 65%.
-      </div>
-    </div>
-  );
-}
-
-function PartyBar({ landscape }: { landscape: Array<{ party: string; sharePct: number }> }) {
-  return (
-    <div className="mt-3 rounded-2xl border border-white/10 bg-white/5 p-3">
-      <div className="flex h-3 w-full overflow-hidden rounded-full border border-white/10">
-        {landscape.map((seg) => {
-          const color =
-            PARTY_COLORS[seg.party as keyof typeof PARTY_COLORS] ?? PARTY_COLORS.Unknown;
-          return (
-            <div
-              key={seg.party}
-              style={{ width: `${seg.sharePct}%`, background: color }}
-              title={`${seg.party} ~${seg.sharePct}%`}
-            />
-          );
-        })}
-      </div>
-      <ul className="mt-3 grid grid-cols-2 gap-1.5 text-[11px]">
-        {landscape.map((seg) => {
-          const color =
-            PARTY_COLORS[seg.party as keyof typeof PARTY_COLORS] ?? PARTY_COLORS.Unknown;
-          return (
-            <li key={seg.party} className="flex items-center gap-2 text-muted-foreground">
-              <span className="h-2 w-2 rounded-full" style={{ background: color }} />
-              <span className="text-foreground">{seg.party}</span>
-              <span className="ml-auto tabular-nums">~{seg.sharePct}%</span>
-            </li>
-          );
-        })}
-      </ul>
-    </div>
-  );
-}
-
-function IssueList({
-  title,
-  items,
-  tone,
-}: {
-  title: string;
-  items: string[];
-  tone: "ok" | "warn";
-}) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-      <div
-        className={`text-[11px] uppercase tracking-widest ${
-          tone === "ok" ? "text-accent" : "text-amber-glow"
-        }`}
-      >
-        {title}
-      </div>
-      <ul className="mt-2 space-y-1.5 text-sm text-muted-foreground">
-        {items.map((it) => (
-          <li key={it} className="flex gap-2">
-            <span className={tone === "ok" ? "text-accent" : "text-amber-glow"}>•</span>
-            <span>{it}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function PublicOpinionSection({ opinion }: { opinion: PublicOpinion }) {
-  const dims: Array<{ key: keyof PublicOpinion["scores"]; label: string }> = [
-    { key: "Governance", label: "Governance" },
-    { key: "ServiceDelivery", label: "Service delivery" },
-    { key: "Security", label: "Security" },
-    { key: "Economy", label: "Economy" },
-  ];
-  const bandFor = (n: number) =>
-    n >= 70 ? "Positive" : n >= 55 ? "Moderate" : n >= 40 ? "Mixed" : "Concern";
-  return (
-    <div>
-      <SubHead icon={BarChart3} label="Public Opinion — Composite Research Index" />
-      <div className="mt-3 rounded-2xl border border-amber-glow/30 bg-amber-glow/5 p-3 text-[11px] text-muted-foreground flex gap-2">
-        <ShieldAlert className="h-4 w-4 text-amber-glow shrink-0 mt-0.5" />
-        <div>
-          <span className="text-foreground font-medium">Research aggregate — not a poll.</span>{" "}
-          Values are a directional composite index built from publicly released turnout, CIDP/OAG
-          issue density, and third-party public-opinion priors. Verify sentiment claims with the
-          primary sources listed below before publishing.
-        </div>
-      </div>
-      <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-3">
-        {dims.map((d) => {
-          const v = opinion.scores[d.key];
-          return (
-            <div key={d.key} className="rounded-2xl border border-white/10 bg-white/5 p-3">
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                {d.label}
-              </div>
-              <div className="mt-1 text-2xl font-semibold tabular-nums">{v}</div>
-              <div className="mt-1 text-[10px] text-muted-foreground">
-                {bandFor(v)} · index /100
-              </div>
-              <div className="mt-2 h-1.5 rounded-full bg-white/10 overflow-hidden">
-                <div className="h-full bg-accent" style={{ width: `${v}%` }} />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <div className="mt-2 text-[11px] text-muted-foreground">
-        Overall composite:{" "}
-        <span className="text-foreground tabular-nums">{opinion.overall}/100</span>
-        {" · "}
-        {opinion.method}
-      </div>
-
-      {/* Correlation vs turnout — disclaimer-safe */}
-      <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-3">
-        <div className="text-[11px] uppercase tracking-widest text-muted-foreground">
-          Opinion index vs voter turnout (historical)
-        </div>
-        <div className="mt-2 space-y-2">
-          {opinion.correlation.map((row) => (
-            <div key={row.year} className="grid grid-cols-[3rem_1fr_1fr] items-center gap-2">
-              <div className="text-[11px] tabular-nums text-muted-foreground">{row.year}</div>
-              <div>
-                <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                  Turnout
-                </div>
-                <div className="h-2 rounded-full bg-white/10 overflow-hidden">
-                  <div
-                    className="h-full bg-cyan-glow"
-                    style={{ width: `${row.turnoutPct ?? 0}%` }}
-                  />
-                </div>
-                <div className="text-[10px] text-muted-foreground tabular-nums">
-                  {row.turnoutPct != null ? `${row.turnoutPct}%` : "—"}
-                </div>
-              </div>
-              <div>
-                <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                  Opinion index
-                </div>
-                <div className="h-2 rounded-full bg-white/10 overflow-hidden">
-                  <div className="h-full bg-accent" style={{ width: `${row.opinionIndex}%` }} />
-                </div>
-                <div className="text-[10px] text-muted-foreground tabular-nums">
-                  {row.opinionIndex}/100
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="mt-2 text-[10px] text-muted-foreground">
-          Correlation shown for context only. Higher turnout does not causally imply higher
-          approval; both signals share underlying civic engagement drivers.
-        </div>
-      </div>
-
-      {/* Citations */}
-      <div className="mt-4">
-        <div className="text-[11px] uppercase tracking-widest text-muted-foreground">
-          Source-backed citations
-        </div>
-        <ul className="mt-2 flex flex-wrap gap-2">
-          {opinion.citations.map((c) => (
-            <li key={c.url}>
-              <a
-                href={c.url}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="inline-flex items-center gap-1 rounded-full bg-white/5 border border-white/10 px-2.5 py-1 text-[11px] hover:border-accent/40 hover:text-accent"
-              >
-                {c.label} <ExternalLink className="h-3 w-3" />
-              </a>
-            </li>
-          ))}
-        </ul>
+        {cycle.turnoutPct != null ? `Turnout ${cycle.turnoutPct}% (IEBC)` : "Turnout not held here"}
       </div>
     </div>
   );

@@ -251,7 +251,7 @@ export function CountyComparisonSection() {
           Compare counties <span className="text-gradient">side by side</span>.
         </>
       }
-      intro="Livability, growth, water reliability and investment signals, aligned on one screen."
+      intro="Population density, the 2022 election result and recorded economic activities, aligned on one screen."
     >
       <div className="elev-1 flex flex-wrap items-end gap-3 rounded-2xl border border-white/10 p-5">
         {(

@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { MapContainer, TileLayer, GeoJSON, ZoomControl, ScaleControl } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import countiesData from "@/data/kenya-counties.json";
-import { metricValue, type CountyMetric } from "@/lib/county-metrics";
+import { metricRampT, type CountyMetric } from "@/lib/county-metrics";
 
 function ramp(pct: number): string {
   const stops: Array<[number, [number, number, number]]> = [
@@ -40,18 +40,12 @@ export default function KenyaCountyLeaflet({
 }: Props) {
   const layerRef = useRef<L.GeoJSON | null>(null);
 
-  const { min, max } = useMemo(() => {
-    const values = (countiesData as { features: { properties: { code: number } }[] }).features.map(
-      (f) => metricValue(f.properties.code, metric),
-    );
-    return { min: Math.min(...values), max: Math.max(...values) };
-  }, [metric]);
-
+  // Shading position comes from the shared ramp in county-metrics, which is
+  // logarithmic: Kenyan county densities span about 6 to 6,300 people per km²,
+  // and a linear ramp collapses 45 of the 47 counties into one colour.
   const styleFor = (code: number, hovered: boolean, sel: boolean): L.PathOptions => {
-    const v = metricValue(code, metric);
-    const pct = max === min ? 0.5 : (v - min) / (max - min);
     return {
-      fillColor: ramp(pct),
+      fillColor: ramp(metricRampT(code, metric)),
       fillOpacity: sel ? 0.6 : hovered ? 0.45 : 0.28,
       color: sel ? "#102D1A" : hovered ? "#147B35" : "#C08A2E",
       weight: sel ? 2.4 : hovered ? 1.8 : 0.9,
@@ -70,7 +64,7 @@ export default function KenyaCountyLeaflet({
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [metric, selected, hoverCode, min, max]);
+  }, [metric, selected, hoverCode]);
 
   return (
     <MapContainer

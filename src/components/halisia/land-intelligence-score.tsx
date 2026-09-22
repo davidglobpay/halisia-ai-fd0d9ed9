@@ -16,6 +16,8 @@ import {
   Clock,
   Database,
   BadgeCheck,
+  CircleSlash,
+  ClipboardCheck,
   ArrowLeftRight,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
@@ -24,6 +26,7 @@ import {
   runIntelligenceEngine,
   PERSONAS,
   labelForPersona,
+  DOSSIER_SCOPE,
   type ModuleOutput,
 } from "@/lib/intelligence-engine";
 import { useUserPersona } from "@/hooks/use-user-persona";
@@ -32,6 +35,16 @@ import type { NarrativeOutput } from "@/lib/ai-narrative.functions";
 import { getFeedback, setRating, flagIssue, type ModuleFeedback } from "@/lib/feedback-store";
 import { generateIntelligencePdf } from "@/lib/pdf-intelligence";
 
+/**
+ * The location dossier.
+ *
+ * This panel used to lead with a Land Intelligence Score out of 100 and a
+ * verdict — Highly Recommended through Not Recommended — over ten modules,
+ * seven of which had no data behind them. It now leads with a reading named
+ * for its inputs, shows the unassessable modules as checks to run rather than
+ * scores to trust, and states in one line which three services HALISIA reads.
+ */
+
 function tone(score: number) {
   if (score >= 75) return { ring: "#22c55e", text: "text-emerald-glow", label: "Excellent" };
   if (score >= 60) return { ring: "#62e9ff", text: "text-cyan-glow", label: "Good" };
@@ -39,7 +52,14 @@ function tone(score: number) {
   return { ring: "#ef4444", text: "text-destructive", label: "Weak" };
 }
 
+const NEUTRAL_TONE = {
+  ring: "rgba(255,255,255,0.12)",
+  text: "text-muted-foreground",
+  label: "—",
+};
+
 function TrendIcon({ trend }: { trend: ModuleOutput["trend"] }) {
+  if (trend == null) return null;
   const Icon = trend === "up" ? TrendingUp : trend === "down" ? TrendingDown : Minus;
   const cls =
     trend === "up"
@@ -50,32 +70,41 @@ function TrendIcon({ trend }: { trend: ModuleOutput["trend"] }) {
   return <Icon className={`h-3 w-3 ${cls}`} aria-hidden />;
 }
 
-function verification(m: ModuleOutput): { label: string; cls: string } {
-  if (m.confidencePct >= 75 && m.sources.length >= 2)
+/**
+ * The badge describes how the figure was obtained, not how good it is.
+ *
+ * It used to read "Verified" whenever confidence cleared 75 with two or more
+ * sources, and "AI-Estimated" otherwise — which called a direct elevation
+ * reading an estimate and called a pair of guessed inputs verified. Now it
+ * follows the module's status: measured in full, measured in part when a
+ * provider did not answer, or not assessed at all.
+ */
+function provenanceBadge(m: ModuleOutput): { label: string; cls: string } {
+  if (m.status === "not-assessed")
     return {
-      label: "Verified",
-      cls: "text-emerald-glow border-emerald-400/30 bg-emerald-500/10",
+      label: "Not assessed",
+      cls: "text-muted-foreground border-white/15 bg-white/5",
     };
-  if (m.confidencePct >= 45)
-    return { label: "AI-Estimated", cls: "text-cyan-glow border-cyan-400/30 bg-cyan-500/10" };
-  return { label: "Unverified", cls: "text-amber-glow border-amber-400/30 bg-amber-500/10" };
+  if ((m.confidencePct ?? 0) >= 100)
+    return { label: "Measured", cls: "text-emerald-glow border-emerald-400/30 bg-emerald-500/10" };
+  return {
+    label: "Partly measured",
+    cls: "text-amber-glow border-amber-400/30 bg-amber-500/10",
+  };
 }
 
+/**
+ * Only the three services this engine actually calls. The map used to carry
+ * links for another nine — an elevation archive, a soil database, a weather
+ * archive, a crowd-mapping project, the land registry, planning offices,
+ * county development plans and a community layer marked as planned — none of
+ * which the dossier reads, and one of which does not exist.
+ */
 const SOURCE_URLS: Record<string, string> = {
   "Google Places": "https://developers.google.com/maps/documentation/places/web-service/overview",
-  "AI Narrative": "https://halisia.ai/docs/ai-narrative",
-  "County growth signals": "https://www.knbs.or.ke/",
-  "Open-Topo-Data ASTER 30m": "https://www.opentopodata.org/datasets/aster/",
-  "SoilGrids v2.0 (regional)": "https://soilgrids.org/",
-  "Ardhisasa (external)": "https://ardhisasa.lands.go.ke/",
-  "County planning office (external)": "https://cog.go.ke/",
+  "Google Maps Elevation API":
+    "https://developers.google.com/maps/documentation/elevation/overview",
   "Google Air Quality API": "https://developers.google.com/maps/documentation/air-quality",
-  "Open-Meteo": "https://open-meteo.com/",
-  OpenStreetMap: "https://www.openstreetmap.org/",
-  "OpenStreetMap POIs": "https://wiki.openstreetmap.org/wiki/Points_of_interest",
-  "HALISIA community reports (planned)": "https://halisia.ai/community",
-  "County CIDPs (external)":
-    "https://www.cog.go.ke/downloads/category/106-county-integrated-development-plans-cidps",
 };
 
 function sourceUrl(label: string): string | null {
@@ -83,8 +112,9 @@ function sourceUrl(label: string): string | null {
 }
 
 function ModuleCard({ m, freshness }: { m: ModuleOutput; freshness: string }) {
-  const t = tone(m.score);
-  const v = verification(m);
+  const assessed = m.status === "measured" && m.score != null;
+  const t = assessed ? tone(m.score!) : NEUTRAL_TONE;
+  const v = provenanceBadge(m);
   const [fb, setFb] = useState<ModuleFeedback | undefined>(undefined);
   const [flagOpen, setFlagOpen] = useState(false);
   const [flagText, setFlagText] = useState("");
@@ -108,42 +138,63 @@ function ModuleCard({ m, freshness }: { m: ModuleOutput; freshness: string }) {
 
   return (
     <details
-      className="group rounded-2xl border border-white/10 bg-white/[0.03] open:bg-white/[0.05]"
+      className={`group rounded-2xl border bg-white/[0.03] open:bg-white/[0.05] ${
+        assessed ? "border-white/10" : "border-white/10 border-dashed"
+      }`}
       data-testid={`module-card-${m.id}`}
+      data-status={m.status}
     >
       <summary className="cursor-pointer list-none px-3 py-2.5 flex items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 rounded-2xl">
-        <div
-          className="h-9 w-9 rounded-full grid place-items-center text-[11px] font-bold tabular-nums shrink-0"
-          style={{
-            background: `conic-gradient(${t.ring} ${m.score * 3.6}deg, rgba(255,255,255,0.08) 0deg)`,
-          }}
-        >
-          <span className="h-7 w-7 rounded-full grid place-items-center bg-background/90">
-            <span className={t.text}>{m.score}</span>
-          </span>
-        </div>
+        {assessed ? (
+          <div
+            className="h-9 w-9 rounded-full grid place-items-center text-[11px] font-bold tabular-nums shrink-0"
+            style={{
+              background: `conic-gradient(${t.ring} ${m.score! * 3.6}deg, rgba(255,255,255,0.08) 0deg)`,
+            }}
+          >
+            <span className="h-7 w-7 rounded-full grid place-items-center bg-background/90">
+              <span className={t.text}>{m.score}</span>
+            </span>
+          </div>
+        ) : (
+          <div
+            className="h-9 w-9 rounded-full grid place-items-center shrink-0 border border-dashed border-white/20"
+            aria-hidden
+          >
+            <CircleSlash className="h-4 w-4 text-muted-foreground" />
+          </div>
+        )}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             <span className="text-sm font-medium truncate">{m.label}</span>
-            <span className="text-[10px] font-semibold text-foreground/70 px-1.5 rounded bg-white/5 border border-white/10">
-              {m.grade}
-            </span>
+            {m.grade && (
+              <span className="text-[10px] font-semibold text-foreground/70 px-1.5 rounded bg-white/5 border border-white/10">
+                {m.grade}
+              </span>
+            )}
             <TrendIcon trend={m.trend} />
           </div>
           <div className="mt-0.5 flex flex-wrap items-center gap-1 text-[10px] text-muted-foreground">
             <span
               className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 ${v.cls}`}
-              title="Verification status"
+              title="How this figure was obtained"
             >
               <BadgeCheck className="h-2.5 w-2.5" /> {v.label}
             </span>
-            <span className="inline-flex items-center gap-1">
-              <Database className="h-2.5 w-2.5" /> {m.sources.length} sources
-            </span>
-            <span className="inline-flex items-center gap-1" title={formatDateTime(freshness)}>
-              <Clock className="h-2.5 w-2.5" /> {formatDate(freshness)}
-            </span>
-            <span>· Confidence {m.confidencePct}%</span>
+            {assessed ? (
+              <>
+                <span className="inline-flex items-center gap-1">
+                  <Database className="h-2.5 w-2.5" />{" "}
+                  {m.sources.length === 1 ? "1 source" : `${m.sources.length} sources`}
+                </span>
+                <span className="inline-flex items-center gap-1" title={formatDateTime(freshness)}>
+                  <Clock className="h-2.5 w-2.5" /> {formatDate(freshness)}
+                </span>
+                {m.confidencePct != null && <span>· Confidence {m.confidencePct}%</span>}
+              </>
+            ) : (
+              <span>HALISIA holds no data for this — see what to check</span>
+            )}
           </div>
         </div>
         <ChevronRight
@@ -154,7 +205,7 @@ function ModuleCard({ m, freshness }: { m: ModuleOutput; freshness: string }) {
       <div className="px-3 pb-3 space-y-2.5 text-sm text-foreground/90">
         <div>
           <div className="text-[10px] uppercase tracking-widest text-accent flex items-center gap-1">
-            <Info className="h-3 w-3" /> Why this score
+            <Info className="h-3 w-3" /> {assessed ? "Why this reading" : "Why there is no reading"}
           </div>
           <ul className="mt-1 space-y-1">
             {m.reasons.map((r, i) => (
@@ -166,13 +217,13 @@ function ModuleCard({ m, freshness }: { m: ModuleOutput; freshness: string }) {
           </ul>
         </div>
 
-        <div>
-          <div className="text-[10px] uppercase tracking-widest text-muted-foreground flex items-center gap-1">
-            <ShieldCheck className="h-3 w-3" /> Sources ({m.sources.length})
-          </div>
-          <div className="mt-1 flex flex-wrap gap-1">
-            {m.sources.map((s) =>
-              (() => {
+        {m.sources.length > 0 && (
+          <div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground flex items-center gap-1">
+              <ShieldCheck className="h-3 w-3" /> Read for this reading ({m.sources.length})
+            </div>
+            <div className="mt-1 flex flex-wrap gap-1">
+              {m.sources.map((s) => {
                 const url = sourceUrl(s);
                 const base =
                   "text-[10px] px-1.5 py-0.5 rounded bg-white/5 border border-white/10 inline-flex items-center gap-1";
@@ -192,37 +243,57 @@ function ModuleCard({ m, freshness }: { m: ModuleOutput; freshness: string }) {
                     {s}
                   </span>
                 );
-              })(),
-            )}
+              })}
+            </div>
+            <div className="mt-1 text-[10px] text-muted-foreground">
+              Read {formatDateTime(freshness)}
+            </div>
           </div>
-          <div className="mt-1 text-[10px] text-muted-foreground">
-            Last updated {formatDateTime(freshness)}
-          </div>
-        </div>
+        )}
 
-        {/* Possible Limitations — expandable drilldown */}
+        {m.missing.length > 0 && (
+          <div
+            className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5"
+            data-testid={`missing-${m.id}`}
+          >
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              Not held by HALISIA
+            </div>
+            <ul className="mt-1 space-y-0.5 text-[12px] text-foreground/85">
+              {m.missing.map((s, i) => (
+                <li key={i} className="flex gap-2">
+                  <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-white/25 shrink-0" />
+                  <span>{s}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <details
           className="rounded-lg border border-amber-400/25 bg-amber-500/[0.06] px-2.5 py-1.5"
           data-testid={`limits-${m.id}`}
         >
           <summary className="cursor-pointer list-none flex items-center gap-1.5 text-[11px] font-medium text-amber-glow">
             <AlertTriangle className="h-3 w-3" />
-            Possible limitations · what to verify next
+            What to verify next
           </summary>
           <div className="mt-2 space-y-1.5 text-[12px] text-foreground/85">
-            <div>
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                Cannot verify from open data
+            {m.limitations.length > 0 && (
+              <div>
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                  What this does not prove
+                </div>
+                <ul className="mt-1 space-y-0.5">
+                  {m.limitations.map((l, i) => (
+                    <li key={i} className="flex gap-2">
+                      <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-amber-400/70 shrink-0" />
+                      <span>{l}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <ul className="mt-1 space-y-0.5">
-                {m.limitations.map((l, i) => (
-                  <li key={i} className="flex gap-2">
-                    <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-amber-400/70 shrink-0" />
-                    <span>{l}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            )}
             <div>
               <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
                 Check this next
@@ -235,7 +306,7 @@ function ModuleCard({ m, freshness }: { m: ModuleOutput; freshness: string }) {
         {/* Feedback widget */}
         <div
           role="group"
-          aria-label={`Rate ${m.label} intelligence`}
+          aria-label={`Rate ${m.label}`}
           className="flex flex-wrap items-center gap-1.5 border-t border-white/10 pt-2"
         >
           <span className="text-[10px] uppercase tracking-widest text-muted-foreground mr-1">
@@ -328,7 +399,8 @@ export function LandIntelligenceScore({
     () => runIntelligenceEngine(intel, narrative, persona),
     [intel, narrative, persona],
   );
-  const t = tone(decision.overall);
+  const hasReading = decision.reading != null;
+  const t = hasReading ? tone(decision.reading!) : NEUTRAL_TONE;
 
   const [downloading, setDownloading] = useState(false);
   const [pdfStage, setPdfStage] = useState("");
@@ -357,7 +429,7 @@ export function LandIntelligenceScore({
       });
     } catch (e) {
       console.error(e);
-      setPdfError("Couldn't generate the AI report PDF.");
+      setPdfError("Couldn't generate the report PDF.");
     } finally {
       setDownloading(false);
       setPdfStage("");
@@ -367,17 +439,17 @@ export function LandIntelligenceScore({
 
   return (
     <section
-      aria-label="Land Intelligence Score"
+      aria-label="Location readings"
       data-testid="land-intelligence-score"
       className="glass-strong rounded-3xl p-4 sm:p-5"
     >
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-accent">
-          <Sparkles className="h-3 w-3" /> HALISIA AI · Land Intelligence Score
+          <Sparkles className="h-3 w-3" /> HALISIA AI · Location readings
         </div>
         <div
           role="tablist"
-          aria-label="Optimise recommendation for persona"
+          aria-label="Weight the reading for a persona"
           className="ml-auto flex flex-wrap items-center gap-1 rounded-full bg-white/5 border border-white/10 p-1"
         >
           {PERSONAS.map((p) => {
@@ -402,31 +474,39 @@ export function LandIntelligenceScore({
         </div>
       </div>
 
-      {/* Decision head */}
+      {/* Reading head */}
       <div className="mt-3 grid gap-3 sm:grid-cols-[auto_minmax(0,1fr)] items-start">
         <div
           className="h-24 w-24 rounded-full grid place-items-center shrink-0"
           style={{
-            background: `conic-gradient(${t.ring} ${decision.overall * 3.6}deg, rgba(255,255,255,0.08) 0deg)`,
+            background: hasReading
+              ? `conic-gradient(${t.ring} ${decision.reading! * 3.6}deg, rgba(255,255,255,0.08) 0deg)`
+              : "rgba(255,255,255,0.06)",
           }}
         >
           <div className="h-20 w-20 rounded-full grid place-items-center bg-background/90">
             <div className="text-center">
-              <div className={`text-2xl font-bold tabular-nums ${t.text}`}>{decision.overall}</div>
+              <div className={`text-2xl font-bold tabular-nums ${t.text}`}>
+                {hasReading ? decision.reading : "—"}
+              </div>
               <div className="text-[10px] text-muted-foreground -mt-0.5">
-                Grade {decision.grade}
+                {decision.grade ? `Grade ${decision.grade}` : "No reading"}
               </div>
             </div>
           </div>
         </div>
         <div className="min-w-0">
-          <div className="text-[10px] uppercase tracking-widest text-accent">Recommendation</div>
-          <div className={`text-base sm:text-lg font-semibold ${t.text}`}>
-            {decision.recommendation}
+          <div className="text-[10px] uppercase tracking-widest text-accent">
+            {decision.readingLabel}
           </div>
+          <div className={`text-base sm:text-lg font-semibold ${t.text}`}>{decision.headline}</div>
           <div className="text-[11px] text-muted-foreground">
-            Optimised for {labelForPersona(persona)} · Confidence {decision.confidencePct}%
+            Weighted for {labelForPersona(persona)}
+            {decision.confidencePct != null && ` · Confidence ${decision.confidencePct}%`}
           </div>
+          <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
+            {decision.scopeNote}
+          </p>
           <ul className="mt-2 space-y-1 text-[13px] leading-snug">
             {decision.reasons.map((r, i) => (
               <li key={i} className="flex gap-2">
@@ -452,7 +532,7 @@ export function LandIntelligenceScore({
           ) : (
             <FileDown className="h-3.5 w-3.5" />
           )}
-          {downloading ? `${pdfPct}% · ${pdfStage || "Working…"}` : "Download AI report (PDF)"}
+          {downloading ? `${pdfPct}% · ${pdfStage || "Working…"}` : "Download report (PDF)"}
         </button>
         <Link
           to="/compare-locations"
@@ -472,6 +552,28 @@ export function LandIntelligenceScore({
         </p>
       )}
 
+      {/* Due diligence — what HALISIA cannot assess, and who can */}
+      {decision.dueDiligence.length > 0 && (
+        <div
+          className="mt-4 rounded-2xl border border-amber-400/25 bg-amber-500/[0.06] p-3"
+          data-testid="due-diligence"
+        >
+          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-amber-glow">
+            <ClipboardCheck className="h-3 w-3" /> HALISIA cannot assess these —{" "}
+            {decision.notAssessedCount} checks to run yourself
+          </div>
+          <ul className="mt-2 grid gap-2 sm:grid-cols-2">
+            {decision.dueDiligence.map((d) => (
+              <li key={d.label} className="rounded-xl bg-white/5 border border-white/10 p-2.5">
+                <div className="text-[12px] font-medium">{d.label}</div>
+                <div className="mt-0.5 text-[11px] leading-snug text-muted-foreground">{d.why}</div>
+                <div className="mt-1 text-[11px] leading-snug text-foreground/85">{d.who}</div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* Module breakdown */}
       <div className="mt-4 grid gap-2 sm:grid-cols-2">
         {decision.modules.map((m) => (
@@ -482,7 +584,7 @@ export function LandIntelligenceScore({
       {/* Professional recommendations */}
       <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-3">
         <div className="text-[10px] uppercase tracking-widest text-accent">
-          Recommended professionals
+          Who to bring in next
         </div>
         <div className="mt-1.5 flex flex-wrap gap-1.5">
           {decision.professionalRecs.map((r) => (
@@ -497,8 +599,7 @@ export function LandIntelligenceScore({
       </div>
 
       <p className="mt-3 text-[10px] text-muted-foreground leading-relaxed">
-        Predictions are estimates, not certainties. Verify title, zoning and site conditions with
-        licensed professionals before any transaction. Updated {formatDateTime(decision.freshness)}.
+        {DOSSIER_SCOPE} Updated {formatDateTime(decision.freshness)}.
       </p>
     </section>
   );

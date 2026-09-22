@@ -25,8 +25,8 @@ const STEPS = [
   },
   {
     icon: Sparkles,
-    title: "AI Land Intelligence Score",
-    body: "Every location gets a score weighted to what you're trying to do — investing, buying a home, farming, developing — with its inputs, confidence and limitations listed.",
+    title: "Location readings",
+    body: "Every location is read for terrain, air quality and nearby amenities, weighted to what you're doing — investing, buying a home, farming, developing. Anything HALISIA cannot read is listed as a check to run, never as a score.",
   },
   {
     icon: Layers,

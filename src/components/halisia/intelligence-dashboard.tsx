@@ -165,7 +165,7 @@ export function IntelligenceDashboard({
     staleTime: 10 * 60 * 1000,
   });
 
-  const livability = narrativeQ.data?.livability ?? null;
+  const narrativeReady = narrativeQ.data != null;
 
   return (
     <div className="space-y-3">
@@ -213,15 +213,10 @@ export function IntelligenceDashboard({
           )}
         </div>
         <div className="mt-3 flex items-center gap-2 flex-wrap">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-glow/15 text-emerald-glow px-2.5 py-1 text-xs font-medium">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-glow animate-pulse" />
-            Livability {livability != null ? `· ${livability}` : "…"}
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 border border-white/10 px-2.5 py-1 text-xs text-muted-foreground">
+            <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+            {narrativeReady ? "Written read ready" : "Reading this location…"}
           </span>
-          {narrativeQ.data && (
-            <span className="text-[11px] text-muted-foreground">
-              AI confidence: {narrativeQ.data.confidence}
-            </span>
-          )}
           {intelQ.isFetching && <Loader2 className="h-3.5 w-3.5 animate-spin text-accent" />}
         </div>
 
