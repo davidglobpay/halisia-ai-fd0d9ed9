@@ -53,7 +53,7 @@ function Landing() {
  */
 function HeroStage({ children }: { children?: ReactNode }) {
   return (
-    <div className="relative w-full overflow-hidden aspect-[3/4] sm:aspect-[16/10] md:aspect-[21/9] max-h-[92vh]">
+    <div className="relative w-full overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_35%,#FFFDF8_0%,#F7F3EA_45%,#EFE9DC_100%)]" />
       <div
         aria-hidden="true"
@@ -70,8 +70,8 @@ function HeroStage({ children }: { children?: ReactNode }) {
           maskImage: "radial-gradient(ellipse at center, black 20%, transparent 70%)",
         }}
       />
-      <div className="absolute inset-0 flex flex-col justify-end sm:justify-center">
-        <div className="mx-auto w-full max-w-7xl px-4 pb-10 sm:pb-0">{children}</div>
+      <div className="relative z-10 flex min-h-[calc(100svh-5rem)] flex-col justify-center py-10 sm:py-14">
+        <div className="mx-auto w-full max-w-7xl px-4">{children}</div>
       </div>
     </div>
   );
@@ -94,7 +94,7 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
           >
             {/* Cinematic 3D hero logo — layered halo, chromatic aberration
                 shadows, and a slow parallax tilt for depth. */}
-            <div className="relative mb-6 flex items-center justify-center [perspective:1200px]">
+            <div className="relative mb-4 flex items-center justify-center [perspective:1200px]">
               {/* Outer halo */}
               <div
                 aria-hidden="true"
@@ -121,7 +121,7 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
                 height={200}
                 decoding="async"
                 fetchPriority="high"
-                className="relative h-48 w-48 sm:h-64 sm:w-64 md:h-80 md:w-80 lg:h-96 lg:w-96 object-contain [transform:rotateX(6deg)] drop-shadow-[0_18px_44px_rgba(16,45,26,0.28)] [filter:drop-shadow(0_0_26px_rgba(192,138,46,0.42))_drop-shadow(0_0_54px_rgba(20,123,53,0.24))]"
+                className="relative h-36 w-36 sm:h-44 sm:w-44 md:h-52 md:w-52 lg:h-60 lg:w-60 object-contain [transform:rotateX(6deg)] drop-shadow-[0_18px_44px_rgba(16,45,26,0.28)] [filter:drop-shadow(0_0_26px_rgba(192,138,46,0.42))_drop-shadow(0_0_54px_rgba(20,123,53,0.24))]"
               />
               {/* Specular highlight sweep */}
               <div
