@@ -4,7 +4,10 @@ import { ARCHITECTURAL_CATALOGUE, assessArchitecturalAsset, catalogueCoverage } 
 describe("architectural catalogue", () => {
   it("reserves five traceable slots for each of six typologies", () => {
     expect(ARCHITECTURAL_CATALOGUE).toHaveLength(30);
-    expect(catalogueCoverage().every((row) => row.total === 5)).toBe(true);
+    const coverage = catalogueCoverage();
+    expect(coverage).toHaveLength(6);
+    expect(coverage.every((row) => row.total === 5)).toBe(true);
+    expect(coverage.every((row) => row.admitted === 0)).toBe(true);
   });
 
   it("rejects oversized, unlicensed or dimensionless assets", () => {
