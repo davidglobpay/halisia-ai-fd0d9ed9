@@ -1070,3 +1070,217 @@ html[data-reduced-motion="1"] *::after {
     transform: none;
   }
 }
+
+/* ============================================================================
+ * ROTATING TILE GLOW
+ * Paste this block at the very end of src/styles.css.
+ *
+ * A live conic halo that turns slowly around every card, in the nine greens
+ * from the HALISIA green palette. On a pale ivory page a pale glass card has
+ * almost nothing to push against; a coloured light bleeding out from behind
+ * its edges is what lifts it off the background.
+ *
+ * The halo is a masked ring: it renders only in the band OUTSIDE the tile's
+ * edge, never across its face. That matters for two reasons. Body text keeps
+ * exactly the contrast it was designed with, because no coloured layer ever
+ * comes between the reader and the words. And the effect is immune to the
+ * hover transform on these cards, which creates a stacking context and would
+ * otherwise make a behind-the-card glow jump in front of it mid-animation.
+ *
+ * No JavaScript. One pseudo-element per tile, and an angle animated through a
+ * registered custom property. Browsers without @property (older Firefox) get
+ * the same ring standing still, which still reads as a green halo.
+ * ========================================================================== */
+
+/* The nine greens, in hue order so the sweep is smooth rather than stripey. */
+:root {
+  --g-jade: #00a86b;
+  --g-jungle: #28ae89;
+  --g-mint: #3db489;
+  --g-emerald: #4fc978;
+  --g-kelly: #4cbb17;
+  --g-pear: #74b72e;
+  --g-neon: #37fd12;
+  --g-chartreuse: #7fff00;
+  --g-lime: #c7ea46;
+
+  /*
+   * How hard the glow burns. Ivory is a pale ground, so the lightest greens in
+   * the palette — chartreuse and lime — need help to register against it. This
+   * is the dial to turn if it reads too loud on a real screen, or too shy.
+   */
+  --tile-glow-strength: 0.65;
+  /* Thickness of the ring, and so how far the light spills. */
+  --tile-glow-spread: 18px;
+  --tile-glow-speed: 14s;
+}
+
+@property --halisia-glow-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes halisia-glow-turn {
+  to {
+    --halisia-glow-angle: 360deg;
+  }
+}
+
+/*
+ * The ring.
+ *
+ * `inset` pushes the box out past the tile on every side; `padding` of the
+ * same size makes the content box exactly the tile's footprint; the two masks
+ * composited with `exclude` then knock that footprint out, leaving only the
+ * surrounding band painted. The blur softens both of its edges into a halo.
+ */
+@utility tile-glow {
+  position: relative;
+  isolation: isolate;
+
+  &::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset: calc(var(--tile-glow-spread) * -1);
+    padding: var(--tile-glow-spread);
+    border-radius: calc(var(--radius) + var(--tile-glow-spread));
+    pointer-events: none;
+    opacity: var(--tile-glow-strength);
+    filter: blur(calc(var(--tile-glow-spread) * 0.8));
+    background: conic-gradient(
+      from var(--halisia-glow-angle),
+      var(--g-jade),
+      var(--g-jungle),
+      var(--g-mint),
+      var(--g-emerald),
+      var(--g-kelly),
+      var(--g-pear),
+      var(--g-neon),
+      var(--g-chartreuse),
+      var(--g-lime),
+      var(--g-jade)
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: halisia-glow-turn var(--tile-glow-speed) linear infinite;
+  }
+}
+
+/*
+ * Applied to the card surfaces, not to every glass thing. `.glass` on its own
+ * dresses pills and small buttons all over the app; haloing those would turn
+ * the page into a light show. These three are the tile-sized surfaces.
+ */
+.holo-tile,
+.glass-strong,
+.glass-card {
+  position: relative;
+  isolation: isolate;
+}
+
+.holo-tile::before,
+.glass-strong::before,
+.glass-card::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: calc(var(--tile-glow-spread) * -1);
+  padding: var(--tile-glow-spread);
+  border-radius: calc(var(--radius) + var(--tile-glow-spread));
+  pointer-events: none;
+  opacity: var(--tile-glow-strength);
+  filter: blur(calc(var(--tile-glow-spread) * 0.8));
+  background: conic-gradient(
+    from var(--halisia-glow-angle),
+    var(--g-jade),
+    var(--g-jungle),
+    var(--g-mint),
+    var(--g-emerald),
+    var(--g-kelly),
+    var(--g-pear),
+    var(--g-neon),
+    var(--g-chartreuse),
+    var(--g-lime),
+    var(--g-jade)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: halisia-glow-turn var(--tile-glow-speed) linear infinite;
+}
+
+/*
+ * Tiles in a row turning in perfect lockstep looks mechanical. Staggering the
+ * start makes a wall of cards feel alive rather than driven by one motor. The
+ * delays are negative so every tile begins mid-cycle and nothing has to wait
+ * for the effect to start.
+ */
+.holo-tile:nth-of-type(3n + 2)::before,
+.glass-card:nth-of-type(3n + 2)::before {
+  animation-delay: -4.6s;
+}
+.holo-tile:nth-of-type(3n + 3)::before,
+.glass-card:nth-of-type(3n + 3)::before {
+  animation-delay: -9.2s;
+}
+
+/* More light under an open tile, so the active one still leads the eye. */
+.holo-lit::before,
+[data-testid="holo-stack"][data-open="true"] .holo-hero::before {
+  --tile-glow-strength: 0.92;
+  --tile-glow-spread: 24px;
+}
+
+/* Opt out for any surface where the halo fights the content. */
+.tile-glow-off::before {
+  display: none !important;
+}
+
+/*
+ * Reduced motion: the halo stays, the rotation stops. Someone who has asked
+ * the system for less movement should still get the depth the layout relies
+ * on — they simply should not get a spinning light. The global reduce-motion
+ * rule earlier in this file clamps animation duration to ~0, which would
+ * freeze the angle at 0deg; this pins a chosen angle instead of whichever
+ * frame it happened to land on.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .holo-tile::before,
+  .glass-strong::before,
+  .glass-card::before,
+  .tile-glow::before {
+    animation: none !important;
+    --halisia-glow-angle: 135deg;
+  }
+}
+
+html[data-reduced-motion="1"] .holo-tile::before,
+html[data-reduced-motion="1"] .glass-strong::before,
+html[data-reduced-motion="1"] .glass-card::before,
+html[data-reduced-motion="1"] .tile-glow::before {
+  animation: none !important;
+  --halisia-glow-angle: 135deg;
+}
+
+/* A rotating halo is meaningless on paper and costs ink. */
+@media print {
+  .holo-tile::before,
+  .glass-strong::before,
+  .glass-card::before,
+  .tile-glow::before {
+    display: none !important;
+  }
+}
