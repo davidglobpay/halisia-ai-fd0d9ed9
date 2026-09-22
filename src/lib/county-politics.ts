@@ -1,13 +1,22 @@
-// County Political Intelligence — public, publicly-verifiable information
-// only. Sources: IEBC 2013/2017/2022 gazette notices, Parliament of Kenya,
-// Senate of Kenya, Council of Governors, and each county's CIDP. Where a
-// specific value is uncertain we return `null` and the UI surfaces a
-// "verify with IEBC public register" prompt rather than guessing.
+// County political record — published, checkable facts only.
 //
-// This module is a research aid, not a prediction engine or campaign tool.
-// Every leader field is a matter of public record; every "issue" is drawn
-// from public CIDPs and audit reports. All AI-generated summaries are
-// clearly labelled in the UI.
+// Sources: IEBC gazette notices and results portals for 2013, 2017 and 2022,
+// the Parliament and Senate of Kenya member directories, and the Kenya
+// Gazette.
+//
+// This module used to also publish a "Public Opinion — Composite Research
+// Index": four 0-100 scores per county, produced by arithmetic on turnout
+// plus a per-code jitter term, and presented beneath citations to national
+// polling houses. No poll stood behind any of it. It also
+// published a party vote-share bar that assigned the same 55/32/8/5 split to
+// every county in Kenya. Both are gone, along with the regional "key issues"
+// lists that were written generically and displayed as findings about a
+// specific county.
+//
+// What is left is the record: who was elected, on which party, in which year,
+// and the turnout the IEBC released. Nothing here is a prediction, a rating
+// or an endorsement, and no field may be added that cannot be traced to a
+// gazette notice or an official register.
 
 import { getCountyFacts } from "@/lib/kenya-county-facts";
 
@@ -102,95 +111,14 @@ export type CountyPolitics = {
     womanRep: Leader | null;
   };
   coalition: Coalition;
-  history: ElectionCycle[]; // 2013, 2017, 2022 (best-effort public record)
-  partyLandscape: Array<{ party: PartyCode; sharePct: number }>; // approximate 2022 gubernatorial vote share buckets
-  keyIssues: string[]; // drawn from CIDP / audit / press
-  developmentPriorities: string[];
-  timeline: PoliticalMilestone[];
-  aiSummary: string;
-  needsVerification: boolean; // true when we relied on generic scaffolding
-  publicOpinion: PublicOpinion;
-};
-
-export type OpinionDimension = "Governance" | "ServiceDelivery" | "Security" | "Economy";
-export type PublicOpinion = {
-  // Composite index in 0..100. Derived deterministically from published
-  // signals (turnout trend, issue density, audit references). NOT a poll.
-  scores: Record<OpinionDimension, number>;
-  overall: number;
-  method: string; // one-line methodology summary
-  citations: Array<{ label: string; url: string }>;
-  // Correlation series for disclaimer-safe visualisation only.
-  correlation: Array<{ year: number; turnoutPct: number | null; opinionIndex: number }>;
-};
-
-const OPINION_CITATIONS: PublicOpinion["citations"] = [
-  { label: "IEBC — official election results portal", url: "https://www.iebc.or.ke/" },
-  {
-    label: "KNBS — Kenya Continuous Household Survey",
-    url: "https://www.knbs.or.ke/",
-  },
-  { label: "Afrobarometer — Kenya rounds", url: "https://www.afrobarometer.org/countries/kenya/" },
-  {
-    label: "Office of the Auditor-General — county reports",
-    url: "https://www.oagkenya.go.ke/",
-  },
-  { label: "County CIDP (2023–2027)", url: "https://www.cog.go.ke/" },
-  { label: "TIFA Research — public opinion polls", url: "https://www.tifaresearch.com/" },
-  { label: "Infotrak Research — public opinion", url: "https://www.infotrakresearch.com/" },
-];
-
-function clamp(n: number, lo: number, hi: number) {
-  return Math.max(lo, Math.min(hi, n));
-}
-
-function computePublicOpinion(args: {
-  code: number;
+  /** 2013, 2017 and 2022 gubernatorial cycles, as gazetted. */
   history: ElectionCycle[];
-  keyIssues: string[];
+  timeline: PoliticalMilestone[];
+  /** A plain statement of the record. Not an interpretation. */
+  summary: string;
+  /** True when a party field for this county is not encoded here. */
   needsVerification: boolean;
-}): PublicOpinion {
-  const { code, history, keyIssues, needsVerification } = args;
-  const turnouts = history.map((h) => h.turnoutPct).filter((n): n is number => n != null);
-  const avgTurnout = turnouts.length ? turnouts.reduce((a, b) => a + b, 0) / turnouts.length : 60;
-  const latest = turnouts[turnouts.length - 1] ?? avgTurnout;
-  const trend = turnouts.length >= 2 ? latest - turnouts[0] : 0;
-  const issueLoad = Math.min(keyIssues.length, 6); // 0..6
-  // Deterministic per-code jitter so scores differ between counties without
-  // implying a poll. Range ±4 points.
-  const jitter = ((code * 2654435761) % 1000) / 125 - 4;
-
-  const governance = clamp(52 + trend * 0.6 - issueLoad * 1.8 + jitter, 25, 82);
-  const serviceDelivery = clamp(48 + (latest - 60) * 0.35 - issueLoad * 2 + jitter, 20, 80);
-  const security = clamp(60 - issueLoad * 1.2 + jitter * 0.5, 25, 85);
-  const economy = clamp(50 + trend * 0.4 - issueLoad * 1.5 - jitter * 0.3, 25, 80);
-
-  const scores: PublicOpinion["scores"] = {
-    Governance: Math.round(governance),
-    ServiceDelivery: Math.round(serviceDelivery),
-    Security: Math.round(security),
-    Economy: Math.round(economy),
-  };
-  const overall = Math.round((governance + serviceDelivery + security + economy) / 4);
-
-  const correlation = history.map((h) => ({
-    year: h.year,
-    turnoutPct: h.turnoutPct,
-    opinionIndex: Math.round(
-      clamp(45 + ((h.turnoutPct ?? avgTurnout) - 60) * 0.5 - issueLoad * 1.2 + jitter, 20, 85),
-    ),
-  }));
-
-  return {
-    scores,
-    overall,
-    method: needsVerification
-      ? "Composite research index derived from published turnout, issue frequency in CIDP/OAG reports, and public-poll priors. Values are directional, not a survey."
-      : "Composite research index blending IEBC turnout trends, CIDP/OAG issue density, and Afrobarometer/TIFA/Infotrak priors. Deterministic, not a survey.",
-    citations: OPINION_CITATIONS,
-    correlation,
-  };
-}
+};
 
 // ------------------------------------------------------------------------
 // 2022 party affiliations, gazetted by the IEBC. Where a value is not
@@ -298,10 +226,10 @@ const SENATOR_PARTY_2022: Record<number, PartyCode> = {
   47: "ODM",
 };
 
-// Voter turnout (IEBC provisional/final results, gubernatorial race).
-// National average 2013 ≈ 86%, 2017 ≈ 78%, 2022 ≈ 65%. County-level
-// numbers here are rounded approximations of publicly released IEBC
-// figures and should be treated as directional.
+// Voter turnout in the 2022 gubernatorial race, rounded to the nearest whole
+// percent from the figures the IEBC released. Only 2022 is carried: there is
+// no county-level 2013 or 2017 figure in this module, and the national
+// averages for those years are not a substitute for one.
 const TURNOUT_2022: Record<number, number> = {
   1: 44,
   2: 61,
@@ -352,8 +280,6 @@ const TURNOUT_2022: Record<number, number> = {
   47: 55,
 };
 
-const TURNOUT_2017 = 78; // national average, rounded
-const TURNOUT_2013 = 86;
 
 // Which coalition/party historically won the gubernatorial seat in each
 // county — 2013/2017 based on IEBC gazette notices at party level.
@@ -407,108 +333,17 @@ const HISTORY_PARTY: Record<number, { y2013: string; y2017: string }> = {
   47: { y2013: "TNA", y2017: "Jubilee" },
 };
 
-// Regional issue archetypes drawn from published CIDPs and Auditor-General
-// reports — kept intentionally generic where county-specific text is not
-// authoritatively captured here.
-const REGION_ISSUES: Record<string, string[]> = {
-  Coast: [
-    "Land tenure & squatter settlement disputes",
-    "Port-city youth unemployment",
-    "Fresh-water reliability during dry season",
-    "Tourism recovery post-Covid",
-    "Public participation in county budget cycle",
-  ],
-  "North Eastern": [
-    "Insecurity & cross-border tensions",
-    "Drought resilience & pastoralist livelihoods",
-    "Access to piped water and boreholes",
-    "Girl-child education completion rates",
-    "Health facility staffing in remote wards",
-  ],
-  Eastern: [
-    "Feeder-road tarmacking backlog",
-    "Irrigation & drought mitigation",
-    "Value addition for miraa, coffee, mango",
-    "Youth employment & TVET access",
-    "Ward-level dispensary equipping",
-  ],
-  Central: [
-    "Coffee & tea sector reforms",
-    "Housing affordability near Nairobi metro",
-    "Youth employment & drug abuse programmes",
-    "Water rationing in urban centres",
-    "County own-source revenue transparency",
-  ],
-  "Rift Valley": [
-    "Farm inputs cost & subsidy transparency",
-    "Land use & Mau/Cherangany conservation",
-    "Feeder roads & post-harvest storage",
-    "Public health facility staffing",
-    "Athletics & sports infrastructure",
-  ],
-  Western: [
-    "Sugar industry reforms",
-    "Feeder roads & bodaboda safety",
-    "Youth unemployment & Jua Kali finance",
-    "Health facility equipping",
-    "Cross-border trade formalisation",
-  ],
-  Nyanza: [
-    "Lake Victoria fisheries & BMU governance",
-    "Flood mitigation on Nyando/Nyakach basins",
-    "Sugar & rice sector reforms",
-    "Youth unemployment & informal-sector finance",
-    "Health & HIV programme continuity",
-  ],
-  Nairobi: [
-    "Traffic decongestion & BRT roll-out",
-    "Informal settlements & housing affordability",
-    "Waste management & drainage",
-    "Public participation in ward development",
-    "Own-source revenue leakage",
-  ],
-};
-
-const REGION_PRIORITIES: Record<string, string[]> = {
-  Coast: ["Blue economy & fisheries", "Tourism value chains", "Water & sanitation", "Youth TVET"],
-  "North Eastern": [
-    "Drought resilience",
-    "Livestock value chains",
-    "Health outreach",
-    "Education access",
-  ],
-  Eastern: ["Irrigation", "Value addition", "County road network", "ECDE & TVET"],
-  Central: ["Coffee/tea reforms", "Affordable housing", "Youth enterprise", "County ICT"],
-  "Rift Valley": [
-    "Farm mechanisation",
-    "Water storage",
-    "Feeder roads",
-    "Health facility upgrades",
-  ],
-  Western: ["Sugar reforms", "Youth enterprise", "Universal healthcare", "Cross-border trade"],
-  Nyanza: ["Fisheries value chains", "Flood infrastructure", "Universal healthcare", "SME finance"],
-  Nairobi: ["Public transport", "Affordable housing", "Waste & drainage", "Digital services"],
-};
-
 function partyOf(code: number, map: Record<number, PartyCode>): PartyCode {
   return map[code] ?? "Unknown";
 }
 
-function landscapeFor(winner: PartyCode): Array<{ party: PartyCode; sharePct: number }> {
-  // Directional 2022 gubernatorial vote-share buckets around the winner.
-  // We publish these as approximate ranges only — never as exact figures.
-  if (winner === "Unknown") {
-    return [{ party: "Unknown", sharePct: 100 }];
-  }
-  const runnerUp: PartyCode =
-    COALITION_OF[winner] === "Kenya Kwanza" ? "ODM" : winner === "ODM" ? "UDA" : "UDA";
-  return [
-    { party: winner, sharePct: 55 },
-    { party: runnerUp, sharePct: 32 },
-    { party: "Independent", sharePct: 8 },
-    { party: "Unknown", sharePct: 5 },
-  ];
-}
+/**
+ * A seat can change hands between elections — through impeachment, a
+ * by-election or a death. This dataset holds the 2022 result and is not
+ * updated for mid-term changes, so every surface that shows a name says so.
+ */
+export const TERM_CAVEAT =
+  "Seats can change mid-term through impeachment, a by-election or a death; HALISIA holds the 2022 result and does not track changes since. Check the current holder with the IEBC or the Council of Governors.";
 
 export function getCountyPolitics(code: number): CountyPolitics | null {
   const facts = getCountyFacts(code);
@@ -520,20 +355,24 @@ export function getCountyPolitics(code: number): CountyPolitics | null {
   const hist = HISTORY_PARTY[code];
   const turnout22 = TURNOUT_2022[code] ?? null;
 
+  // Turnout is carried only for 2022, where the IEBC published a county
+  // figure. The 2013 and 2017 entries used to show 86% and 78% — the national
+  // averages — on every county page, which read as a county figure and was
+  // not one.
   const history: ElectionCycle[] = [
     {
       year: 2013,
       governor: null,
       party: hist?.y2013 ?? "Unknown",
       votePct: null,
-      turnoutPct: TURNOUT_2013,
+      turnoutPct: null,
     },
     {
       year: 2017,
       governor: null,
       party: hist?.y2017 ?? "Unknown",
       votePct: null,
-      turnoutPct: TURNOUT_2017,
+      turnoutPct: null,
     },
     {
       year: 2022,
@@ -544,36 +383,55 @@ export function getCountyPolitics(code: number): CountyPolitics | null {
     },
   ];
 
-  const region = facts.region;
-  const keyIssues = REGION_ISSUES[region] ?? [];
-  const priorities = REGION_PRIORITIES[region] ?? [];
-
   const timeline: PoliticalMilestone[] = [
     {
       year: 2010,
-      label: "Constitution of Kenya promulgated — devolution framework",
+      label: "Constitution of Kenya promulgated — county governments established",
       kind: "policy",
     },
     {
       year: 2013,
-      label: `First gubernatorial election (${hist?.y2013 ?? "party record: verify with IEBC"})`,
+      label: `First gubernatorial election${hist?.y2013 ? ` — won on ${hist.y2013}` : " — party record not encoded here"}`,
       kind: "election",
     },
     {
       year: 2017,
-      label: `Second general election (${hist?.y2017 ?? "party record: verify with IEBC"})`,
+      label: `Second gubernatorial election${hist?.y2017 ? ` — won on ${hist.y2017}` : " — party record not encoded here"}`,
       kind: "election",
     },
     {
       year: 2022,
-      label: `Governor ${facts.governor} elected on ${govParty === "Unknown" ? "party record: verify with IEBC" : govParty}`,
+      label: `Governor ${facts.governor} elected${govParty === "Unknown" ? "" : ` on ${govParty}`}`,
       kind: "election",
     },
-    { year: 2023, label: "CIDP III (2023–2027) tabled at the County Assembly", kind: "policy" },
     { year: 2027, label: "Next scheduled general election", kind: "milestone" },
   ];
 
-  const summary = `Publicly available records show ${facts.name} County is currently led by Governor ${facts.governor} (${govParty}) and Senator ${facts.senator} (${senParty}), with the executive aligned to the ${coalition} coalition. Recurring themes in the county's published CIDP and Auditor-General reports include ${keyIssues.slice(0, 3).join(", ").toLowerCase()}. Historical gubernatorial contests in ${facts.name} have alternated between ${hist?.y2013 ?? "unrecorded"} (2013) and ${hist?.y2017 ?? "unrecorded"} (2017). Voter turnout in the 2022 gubernatorial race is estimated at ${turnout22 ?? "—"}%. This is a summary of public information only, not a prediction or endorsement.`;
+  const turnoutSentence =
+    turnout22 != null
+      ? ` The IEBC put turnout in the 2022 gubernatorial race at about ${turnout22}%.`
+      : "";
+
+  // Deliberately past tense. This dataset records who WON in August 2022, not
+  // who holds the seat today: a governorship can change mid-term through
+  // impeachment, a by-election or a death, and HALISIA does not track those.
+  // Saying "is represented by" would assert something this data cannot support.
+  const coalitionSentence =
+    coalition === "Kenya Kwanza" || coalition === "Azimio"
+      ? ` The winning party sat in the ${coalition} coalition.`
+      : govParty === "Independent"
+        ? " The governor was elected as an independent."
+        : "";
+
+  const summary =
+    `At the August 2022 general election, ${facts.name} County elected ${facts.governor}` +
+    (govParty === "Unknown" ? "" : ` (${govParty})`) +
+    ` as Governor and ${facts.senator}` +
+    (senParty === "Unknown" ? "" : ` (${senParty})`) +
+    ` as Senator, for the 2022–2027 term.` +
+    coalitionSentence +
+    turnoutSentence +
+    ` ${TERM_CAVEAT}`;
 
   return {
     code,
@@ -597,18 +455,9 @@ export function getCountyPolitics(code: number): CountyPolitics | null {
     },
     coalition,
     history,
-    partyLandscape: landscapeFor(govParty),
-    keyIssues,
-    developmentPriorities: priorities,
     timeline,
-    aiSummary: summary,
+    summary,
     needsVerification: govParty === "Unknown" || senParty === "Unknown",
-    publicOpinion: computePublicOpinion({
-      code,
-      history,
-      keyIssues,
-      needsVerification: govParty === "Unknown" || senParty === "Unknown",
-    }),
   };
 }
 
@@ -625,8 +474,5 @@ export const POLITICS_SOURCES: Array<{ label: string; url: string }> = [
     label: "Senate of Kenya — sitting senators",
     url: "http://www.parliament.go.ke/the-senate/senators",
   },
-  { label: "Council of Governors", url: "https://www.cog.go.ke/" },
   { label: "Kenya Gazette", url: "http://kenyalaw.org/kenya_gazette/" },
-  { label: "Office of the Auditor-General — county reports", url: "https://www.oagkenya.go.ke/" },
-  { label: "Kenya National Bureau of Statistics", url: "https://www.knbs.or.ke/" },
 ];

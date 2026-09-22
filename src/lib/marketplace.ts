@@ -51,36 +51,20 @@ export const MARKET_ACTIONS = [
 
 export type MarketAction = (typeof MARKET_ACTIONS)[number]["value"];
 
-function scoreObj(row: PropertyRow): Record<string, unknown> {
-  return row.ai_score && typeof row.ai_score === "object"
-    ? (row.ai_score as Record<string, unknown>)
-    : {};
-}
-
-function numField(v: unknown): number | null {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
-}
-
-/** Overall Land Intelligence Score (0-100) when the engine has run. */
-export function intelligenceScore(row: PropertyRow): number | null {
-  return numField(scoreObj(row).overall);
-}
-
-export function investmentScore(row: PropertyRow): number | null {
-  const s = scoreObj(row);
-  return numField(s.investment) ?? numField(s.investment_potential) ?? intelligenceScore(row);
-}
-
-export function developmentScore(row: PropertyRow): number | null {
-  const s = scoreObj(row);
-  return numField(s.construction) ?? numField(s.development) ?? intelligenceScore(row);
-}
-
-export function environmentScore(row: PropertyRow): number | null {
-  const s = scoreObj(row);
-  return numField(s.environment) ?? numField(s.environmental) ?? null;
-}
+/*
+ * The `ai_score` column is left alone, and deliberately unread.
+ *
+ * It holds {overall, investment, construction, environment, …} written by the
+ * previous intelligence engine — the one whose "Legal readiness" was a count
+ * of nearby banks and whose Market and Community figures defaulted to 55 when
+ * nothing was known. Those numbers cannot be relabelled into something true,
+ * so this module no longer surfaces them: no LIOS badge, no investment or
+ * development figure on a card, no ranking weight, no filter.
+ *
+ * The column itself is production data and is not touched here. A listing's
+ * readings now come from the live engine on its own page, where the sources
+ * are named and the unassessable parts say so.
+ */
 
 /** Percentage of the marketplace-critical fields the seller has supplied. */
 export function completeness(row: PropertyRow): number {
@@ -96,17 +80,22 @@ export function completeness(row: PropertyRow): number {
     (row.utilities?.length ?? 0) > 0,
     Boolean(row.cover_image),
     Boolean(row.ai_summary),
-    Boolean(row.ai_score),
   ];
   return Math.round((checks.filter(Boolean).length / checks.length) * 100);
 }
 
+/**
+ * How complete a listing's own details are. The keys are historical; nothing
+ * here verifies a claim, checks a document or confirms ownership, and the UI
+ * must not label these as verification. "verified" means the seller filled in
+ * nearly every field and gave coordinates — no more than that.
+ */
 export type VerificationStatus = "verified" | "reviewed" | "unverified";
 
 export function verification(row: PropertyRow): VerificationStatus {
   const c = completeness(row);
   const hasGeo = row.latitude != null && row.longitude != null;
-  if (c >= 85 && hasGeo && row.ai_score) return "verified";
+  if (c >= 85 && hasGeo) return "verified";
   if (c >= 60 && hasGeo) return "reviewed";
   return "unverified";
 }
@@ -141,13 +130,13 @@ export function categoriesOf(row: PropertyRow): MarketplaceCategory[] {
   if (amen.some((a) => a.includes("short stay") || a.includes("airbnb") || a.includes("furnished")))
     out.push("short_stay");
 
-  const inv = investmentScore(row);
-  if (inv != null && inv >= 70) out.push("investment");
-  const dev = developmentScore(row);
-  if (
-    (dev != null && dev >= 70 && (kind === "land" || kind === "agricultural")) ||
-    kind === "mixed_use"
-  )
+  // These two tags used to be assigned when the stored score cleared 70 —
+  // that is, when a number built from nearby bank counts happened to be high.
+  // They now follow what the seller listed: an income-producing or commercial
+  // asset is an investment listing, and undeveloped or mixed-use land is a
+  // development one.
+  if (rental || kind === "commercial" || kind === "industrial") out.push("investment");
+  if (kind === "land" || kind === "agricultural" || kind === "mixed_use")
     out.push("development");
 
   return Array.from(new Set(out));
@@ -169,10 +158,6 @@ export type MarketplaceFilters = {
   amenities?: string[];
   roadAccess?: boolean;
   verified?: boolean;
-  minScore?: number;
-  minInvestment?: number;
-  minDevelopment?: number;
-  minEnvironment?: number;
 };
 
 const ROAD_HINTS = ["road", "tarmac", "murram", "access", "highway", "motorable"];
@@ -217,10 +202,6 @@ export function applyFilters(rows: PropertyRow[], f: MarketplaceFilters): Proper
     }
     if (f.roadAccess && !hasRoadAccess(r)) return false;
     if (f.verified && verification(r) !== "verified") return false;
-    if (f.minScore != null && (intelligenceScore(r) ?? 0) < f.minScore) return false;
-    if (f.minInvestment != null && (investmentScore(r) ?? 0) < f.minInvestment) return false;
-    if (f.minDevelopment != null && (developmentScore(r) ?? 0) < f.minDevelopment) return false;
-    if (f.minEnvironment != null && (environmentScore(r) ?? 0) < f.minEnvironment) return false;
     return true;
   });
 }
@@ -247,11 +228,6 @@ export function recommend(
     .map((row) => {
       const reasons: string[] = [];
       let score = 0;
-      const lios = intelligenceScore(row);
-      if (lios != null) {
-        score += lios * 0.4;
-        reasons.push(`Land Intelligence Score ${Math.round(lios)}/100`);
-      }
       if (prefs.county && row.county === prefs.county) {
         score += 25;
         reasons.push(`In your preferred county (${prefs.county})`);
@@ -276,7 +252,7 @@ export function recommend(
       }
       if (verification(row) === "verified") {
         score += 10;
-        reasons.push("Verified listing with complete data");
+        reasons.push("Listing details are complete, with coordinates");
       }
       if (isNew(row)) {
         score += 6;
@@ -295,7 +271,7 @@ export const RAILS = [
   { value: "recommended", label: "AI recommendations" },
   { value: "new", label: "New listings" },
   { value: "trending", label: "Trending" },
-  { value: "verified", label: "Verified" },
+  { value: "verified", label: "Complete listings" },
   { value: "investment", label: "Investment" },
   { value: "rentals", label: "Rental vacancies" },
   { value: "developments", label: "Featured developments" },

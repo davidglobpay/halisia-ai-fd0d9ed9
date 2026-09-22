@@ -41,7 +41,7 @@ function fallback(d: CoachInput): CoachOutput {
   if (!d.hasPin)
     missing.push({
       label: "Map pin / GPS coordinates",
-      why: "Without coordinates we cannot compute the Land Intelligence Score or show maps.",
+      why: "Without coordinates HALISIA cannot read the site or show it on a map.",
       severity: "high",
     });
   if ((d.photos ?? 0) < 3)

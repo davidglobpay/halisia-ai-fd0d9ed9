@@ -75,7 +75,7 @@ function suggestImprovements(
   const out: string[] = [];
   if (p.latitude == null || p.longitude == null)
     out.push(
-      "Add a map pin — listings with coordinates get a Land Intelligence Score and rank higher.",
+      "Add a map pin — coordinates let HALISIA read terrain, air quality and nearby amenities for the site.",
     );
   if ((p.media_urls?.length ?? 0) < 3)
     out.push("Upload at least three photos, including the access road.");

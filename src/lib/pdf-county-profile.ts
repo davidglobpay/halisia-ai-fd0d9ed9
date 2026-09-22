@@ -1,6 +1,29 @@
+/**
+ * County record PDF.
+ *
+ * This export used to run to seven pages. Page 2 was an "AI Executive
+ * Summary" plus strengths, weaknesses, opportunities and risks. Page 3 was
+ * twelve dashboard scores out of 100. Page 5 was strategic recommendations
+ * and a five-to-ten-year development outlook. The cover carried an "OVERALL
+ * HALISIA SCORE" in 48-point type and a data-confidence bar.
+ *
+ * None of those numbers were measured. They came from a sine hash of the
+ * county code, which means two counties could swap scores if their codes were
+ * swapped, and the written claims beside them changed accordingly. A PDF is
+ * the artefact people forward and cite, so it was the most dangerous place in
+ * the product for an invented figure to live.
+ *
+ * The export now prints the record and stops: census population, gazetted
+ * area and the density derived from them, the IEBC constituency and ward
+ * counts, the elected leadership, the county's economic activities and
+ * landmarks, map evidence, and the sources for each. Any number that is not
+ * in a published release is not in this file.
+ */
 import jsPDF from "jspdf";
 import type { CountyProfile } from "@/lib/county-profile";
 import { COUNTY_DATA_SOURCES } from "@/lib/county-profile";
+import { DENSITY_PROVENANCE } from "@/lib/county-metrics";
+import { TERM_CAVEAT } from "@/lib/county-politics";
 import { fetchStaticMapCached } from "@/lib/static-map-cache";
 
 type Progress = (pct: number, stage: string) => void;
@@ -21,7 +44,7 @@ export async function generateCountyProfilePdf(
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
   const M = 40;
-  const { facts, latLng, scores, metrics, density } = profile;
+  const { facts, latLng, density } = profile;
 
   // ---------- Fetch map tiles up front ----------
   onProgress(8, "Fetching cover map");
@@ -31,7 +54,7 @@ export async function generateCountyProfilePdf(
     layer: "hybrid",
     zoom: 9,
   }).catch(() => null);
-  onProgress(22, "Fetching evidence tiles");
+  onProgress(24, "Fetching evidence tiles");
   const evidence = await Promise.all(
     [
       { label: "Street", layer: "roadmap-light" as const, zoom: 10 },
@@ -50,8 +73,8 @@ export async function generateCountyProfilePdf(
     ),
   );
 
-  // ---------- Cover ----------
-  onProgress(40, "Rendering cover");
+  // ---------- Page 1: Cover ----------
+  onProgress(45, "Rendering cover");
   doc.setFillColor(...BG);
   doc.rect(0, 0, W, H, "F");
   doc.setFillColor(...ACCENT);
@@ -62,7 +85,7 @@ export async function generateCountyProfilePdf(
   doc.setTextColor(...MUTED);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
-  doc.text("HALISIA AI · COUNTY INTELLIGENCE DOSSIER", M, 32);
+  doc.text("HALISIA AI · COUNTY RECORD", M, 32);
   doc.text(new Date().toLocaleString(), W - M, 32, { align: "right" });
 
   doc.setTextColor(...INK);
@@ -102,41 +125,11 @@ export async function generateCountyProfilePdf(
   doc.setLineWidth(1);
   doc.roundedRect(M, mapY, W - M * 2, mapH, 10, 10, "S");
 
-  // Overall score badge
-  const badgeY = mapY + mapH + 22;
-  doc.setFillColor(...CARD);
-  doc.roundedRect(M, badgeY, W - M * 2, 90, 10, 10, "F");
-  doc.setTextColor(...MUTED);
-  doc.setFontSize(9);
-  doc.text("OVERALL HALISIA SCORE", M + 20, badgeY + 24);
-  doc.setTextColor(...INK);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(48);
-  doc.text(`${scores.overall}`, M + 20, badgeY + 68);
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(...MUTED);
-  doc.text("/100", M + 20 + doc.getTextWidth(`${scores.overall}`) + 6, badgeY + 68);
-
-  // Confidence bar on the right of badge
-  const confX = M + 220;
-  doc.setFontSize(9);
-  doc.text("DATA CONFIDENCE", confX, badgeY + 24);
-  doc.setDrawColor(220, 226, 236);
-  doc.setFillColor(240, 244, 250);
-  doc.roundedRect(confX, badgeY + 34, 260, 10, 5, 5, "F");
-  doc.setFillColor(...ACCENT);
-  doc.roundedRect(confX, badgeY + 34, (260 * profile.confidencePct) / 100, 10, 5, 5, "F");
-  doc.setTextColor(...INK);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.text(`${profile.confidencePct}%`, confX + 270, badgeY + 44);
-
-  // Cover facts grid
-  const fY = badgeY + 110;
+  // Cover facts grid — the published figures, in place of the old score badge
+  const fY = mapY + mapH + 24;
   const facts6: Array<[string, string]> = [
     ["Population (2019)", facts.population2019.toLocaleString()],
-    ["Density", `${density.toLocaleString()} /km²`],
+    ["Density", density != null ? `${density.toLocaleString()} /km²` : "Not recorded"],
     ["Area", `${facts.areaKm2.toLocaleString()} km²`],
     ["Constituencies", String(facts.constituencies)],
     ["Wards", String(facts.wards)],
@@ -163,217 +156,128 @@ export async function generateCountyProfilePdf(
     doc.setFont("helvetica", "normal");
   });
 
+  // Scope note, in place of the old confidence bar
+  const noteY = fY + cellH * 2 + 20;
+  doc.setFillColor(...CARD);
+  doc.roundedRect(M, noteY, W - M * 2, 62, 10, 10, "F");
+  doc.setDrawColor(230, 235, 242);
+  doc.roundedRect(M, noteY, W - M * 2, 62, 10, 10, "S");
+  doc.setFontSize(9);
+  doc.setTextColor(...MUTED);
+  const scope = doc.splitTextToSize(
+    "Published sources only. HALISIA holds no livability, growth, water, healthcare, education, security or investment score for any Kenyan county, and none appears in this document. HALISIA does not assert title, boundary or ownership.",
+    W - M * 2 - 24,
+  );
+  doc.text(scope, M + 12, noteY + 20);
+
   footer(doc, W, H, M);
 
-  // ---------- Page 2: AI summary + scorecards ----------
-  onProgress(55, "Rendering AI summary");
+  // ---------- Page 2: The record ----------
+  onProgress(60, "Rendering the record");
   doc.addPage("a4", "portrait");
-  pageChrome(doc, W, M, `${facts.name} · Executive Summary`);
+  pageChrome(doc, W, M, `${facts.name} · The record`);
 
   doc.setTextColor(...INK);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
-  doc.text("AI Executive Summary", M, 78);
+  doc.text("The record", M, 78);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.setTextColor(60, 70, 90);
-  const summary = doc.splitTextToSize(profile.aiSummary, W - M * 2);
+  const summary = doc.splitTextToSize(profile.summary, W - M * 2);
   doc.text(summary, M, 98);
 
-  let y = 98 + summary.length * 12 + 12;
-  y = listBlock(doc, "Strengths", profile.strengths, M, y, W, ACCENT);
-  y = listBlock(doc, "Weaknesses", profile.weaknesses, M, y, W, GOLD);
-  y = listBlock(doc, "Opportunities", profile.opportunities, M, y, W, ACCENT);
-  y = listBlock(doc, "Key risks", profile.risks, M, y, W, GOLD);
-  footer(doc, W, H, M);
+  let y = 98 + summary.length * 12 + 20;
 
-  // ---------- Page 3: Dashboard scores ----------
-  onProgress(68, "Rendering dashboard scores");
-  doc.addPage("a4", "portrait");
-  pageChrome(doc, W, M, `${facts.name} · Dashboard Scores`);
-  doc.setTextColor(...INK);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(16);
-  doc.text("Dashboard Scores", M, 78);
-
-  const scoreRows: Array<[string, number]> = [
-    ["Economic", scores.economic],
-    ["Infrastructure", scores.infrastructure],
-    ["Governance", scores.governance],
-    ["Healthcare", scores.healthcare],
-    ["Education", scores.education],
-    ["Environment", scores.environment],
-    ["Security", scores.security],
-    ["Habitability", scores.habitability],
-    ["Investment", scores.investment],
-    ["Tourism", scores.tourism],
-    ["Development readiness", scores.developmentReadiness],
-    ["Overall", scores.overall],
-  ];
-  const sw = (W - M * 2 - 12) / 2;
-  const sh = 44;
-  scoreRows.forEach((r, i) => {
-    const col = i % 2;
-    const row = Math.floor(i / 2);
-    const x = M + col * (sw + 12);
-    const yy = 98 + row * (sh + 8);
-    doc.setFillColor(...CARD);
-    doc.roundedRect(x, yy, sw, sh, 8, 8, "F");
-    doc.setDrawColor(230, 235, 242);
-    doc.roundedRect(x, yy, sw, sh, 8, 8, "S");
-    doc.setFontSize(9);
-    doc.setTextColor(...MUTED);
-    doc.text(r[0].toUpperCase(), x + 12, yy + 16);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(18);
-    doc.setTextColor(...INK);
-    doc.text(`${r[1]}`, x + 12, yy + 36);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.setTextColor(...MUTED);
-    doc.text("/100", x + 12 + doc.getTextWidth(`${r[1]}`) + 4, yy + 36);
-    // bar
-    const barX = x + 90;
-    const barW = sw - 110;
-    doc.setFillColor(240, 244, 250);
-    doc.roundedRect(barX, yy + 28, barW, 8, 4, 4, "F");
-    const tone =
-      r[1] >= 75 ? ACCENT : r[1] >= 55 ? GOLD : ([230, 90, 90] as [number, number, number]);
-    doc.setFillColor(...tone);
-    doc.roundedRect(barX, yy + 28, (barW * Math.max(0, Math.min(100, r[1]))) / 100, 8, 4, 4, "F");
-  });
-  footer(doc, W, H, M);
-
-  // ---------- Page 4: Governance + economy ----------
-  onProgress(78, "Rendering governance & economy");
-  doc.addPage("a4", "portrait");
-  pageChrome(doc, W, M, `${facts.name} · Governance & Economy`);
+  doc.setFontSize(14);
   doc.setTextColor(...INK);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(16);
-  doc.text("Political & Governance", M, 78);
+  doc.text("Administration", M, y);
+  y += 18;
   const govRows: Array<[string, string]> = [
-    ["Governor", facts.governor],
-    ["Senator", facts.senator],
+    ["Governor elected 2022", facts.governor],
+    ["Senator elected 2022", facts.senator],
     ["Constituencies", String(facts.constituencies)],
     ["County wards", String(facts.wards)],
     ["Headquarters", facts.headquarters],
     ["Region", facts.region],
   ];
-  let gy = 96;
   govRows.forEach(([k, v]) => {
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(...MUTED);
-    doc.text(k.toUpperCase(), M, gy);
+    doc.text(k.toUpperCase(), M, y);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
     doc.setTextColor(...INK);
-    doc.text(v, M + 160, gy);
-    doc.setFont("helvetica", "normal");
-    gy += 20;
+    doc.text(v, M + 160, y);
+    y += 20;
   });
 
-  gy += 12;
-  doc.setFontSize(16);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(...MUTED);
+  const termNote = doc.splitTextToSize(TERM_CAVEAT, W - M * 2);
+  doc.text(termNote, M, y);
+  y += termNote.length * 10 + 14;
+
   doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
   doc.setTextColor(...INK);
-  doc.text("Economic Base", M, gy);
-  gy += 18;
+  doc.text("Economic activities", M, y);
+  y += 18;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.setTextColor(60, 70, 90);
   const econ = doc.splitTextToSize(
-    `Main activities: ${facts.economy.join(", ")}. Priority sectors identified by HALISIA AI: ${profile.prioritySectors.join(", ")}.`,
+    `${facts.economy.join(", ")}. HALISIA holds no county GDP, employment or sector-growth figure, so no sector is ranked here.`,
     W - M * 2,
   );
-  doc.text(econ, M, gy);
-  gy += econ.length * 12 + 12;
+  doc.text(econ, M, y);
+  y += econ.length * 12 + 20;
 
-  doc.setFontSize(16);
   doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
   doc.setTextColor(...INK);
-  doc.text("Landmarks", M, gy);
-  gy += 16;
+  doc.text("Landmarks", M, y);
+  y += 18;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.setTextColor(60, 70, 90);
   const lm = doc.splitTextToSize(facts.landmarks.join(" · "), W - M * 2);
-  doc.text(lm, M, gy);
+  doc.text(lm, M, y);
+  y += lm.length * 12 + 20;
 
-  gy += lm.length * 12 + 16;
-  doc.setFontSize(16);
   doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
   doc.setTextColor(...INK);
-  doc.text("Key Metrics", M, gy);
-  gy += 6;
-  const metricRows: Array<[string, string]> = [
-    ["Livability index", `${metrics.livability}/100`],
-    ["Population (2019)", facts.population2019.toLocaleString()],
-    ["Growth (est.)", `${metrics.growth.toFixed(1)}%`],
-    ["Water reliability", `${metrics.water}/100`],
-  ];
-  metricRows.forEach(([k, v], i) => {
-    const yy = gy + 16 + i * 20;
-    doc.setFontSize(9);
-    doc.setTextColor(...MUTED);
-    doc.text(k.toUpperCase(), M, yy);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.setTextColor(...INK);
-    doc.text(v, M + 220, yy);
-    doc.setFont("helvetica", "normal");
-  });
+  doc.text("Population density", M, y);
+  y += 18;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(20);
+  doc.text(density != null ? `${density.toLocaleString()} people / km²` : "Not recorded", M, y);
+  y += 18;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(...MUTED);
+  const prov = doc.splitTextToSize(DENSITY_PROVENANCE, W - M * 2);
+  doc.text(prov, M, y);
 
   footer(doc, W, H, M);
 
-  // ---------- Page 5: Recommendations + outlook ----------
-  onProgress(85, "Rendering recommendations");
+  // ---------- Page 3: Map evidence ----------
+  onProgress(80, "Rendering map evidence");
   doc.addPage("a4", "portrait");
-  pageChrome(doc, W, M, `${facts.name} · Recommendations`);
+  pageChrome(doc, W, M, `${facts.name} · Map evidence`);
   doc.setTextColor(...INK);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
-  doc.text("Strategic Recommendations", M, 78);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  let ry = 98;
-  profile.recommendations.forEach((r, i) => {
-    doc.setTextColor(...ACCENT);
-    doc.setFont("helvetica", "bold");
-    doc.text(`${i + 1}.`, M, ry);
-    doc.setTextColor(60, 70, 90);
-    doc.setFont("helvetica", "normal");
-    const lines = doc.splitTextToSize(r, W - M * 2 - 20);
-    doc.text(lines, M + 18, ry);
-    ry += lines.length * 12 + 6;
-  });
-
-  ry += 12;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
-  doc.setTextColor(...INK);
-  doc.text("Development outlook", M, ry);
-  ry += 16;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  doc.setTextColor(60, 70, 90);
-  const outlook = doc.splitTextToSize(profile.outlook, W - M * 2);
-  doc.text(outlook, M, ry);
-  footer(doc, W, H, M);
-
-  // ---------- Page 6: Map evidence ----------
-  onProgress(92, "Rendering map evidence");
-  doc.addPage("a4", "portrait");
-  pageChrome(doc, W, M, `${facts.name} · Map Evidence`);
-  doc.setTextColor(...INK);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(16);
-  doc.text("Map Evidence", M, 78);
+  doc.text("Map evidence", M, 78);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.setTextColor(...MUTED);
   doc.text(
-    "Google Static Maps with automatic OpenStreetMap / Esri tile-stitch fallback so imagery never renders blank.",
+    "Basemaps centred on the county centroid, with an OpenStreetMap / Esri tile-stitch fallback. Not a parcel, an address or a boundary survey.",
     M,
     92,
   );
@@ -405,33 +309,40 @@ export async function generateCountyProfilePdf(
     doc.setTextColor(...MUTED);
     doc.text(t.label.toUpperCase(), x, yy + tileH + 16);
   });
+  footer(doc, W, H, M);
 
-  // ---------- Page 7: Sources ----------
+  // ---------- Page 4: Sources ----------
+  onProgress(92, "Rendering sources");
   doc.addPage("a4", "portrait");
   pageChrome(doc, W, M, `${facts.name} · Sources`);
   doc.setTextColor(...INK);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
-  doc.text("Data sources & provenance", M, 78);
+  doc.text("Sources", M, 78);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  let sy = 100;
+  doc.setFontSize(9);
+  doc.setTextColor(...MUTED);
+  doc.text("Every figure in this document comes from one of these three.", M, 94);
+
+  let sy = 118;
   COUNTY_DATA_SOURCES.forEach((s) => {
     doc.setTextColor(...INK);
     doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
     doc.text(s.label, M, sy);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(...MUTED);
-    doc.text(s.url, M, sy + 12);
-    doc.text(`Verified: ${s.verified}`, M, sy + 24);
-    doc.setFontSize(10);
-    sy += 42;
+    doc.text(s.url, M, sy + 13);
+    const used = doc.splitTextToSize(s.used, W - M * 2);
+    doc.text(used, M, sy + 26);
+    sy += 30 + used.length * 11 + 14;
   });
+
   doc.setFontSize(8);
   doc.setTextColor(...MUTED);
   const disc = doc.splitTextToSize(
-    "AI-generated intelligence derived from public open data. Confidence bands are directional. Verify with a licensed professional before commercial decisions.",
+    "Public open data, reproduced without interpretation. This document contains no score, index, rating, forecast or recommendation. Verify with a licensed professional before any commercial decision.",
     W - M * 2,
   );
   doc.text(disc, M, sy + 8);
@@ -466,31 +377,6 @@ function pageChrome(doc: jsPDF, W: number, M: number, title: string) {
 function footer(doc: jsPDF, W: number, H: number, M: number) {
   doc.setFontSize(8);
   doc.setTextColor(...MUTED);
-  doc.text("halisia.ai · county intelligence dossier", M, H - 20);
+  doc.text("halisia.ai · county record · published sources only", M, H - 20);
   doc.text(new Date().toLocaleDateString(), W - M, H - 20, { align: "right" });
-}
-
-function listBlock(
-  doc: jsPDF,
-  title: string,
-  items: string[],
-  M: number,
-  y: number,
-  W: number,
-  tone: [number, number, number],
-): number {
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.setTextColor(...tone);
-  doc.text(title.toUpperCase(), M, y);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  doc.setTextColor(60, 70, 90);
-  let yy = y + 14;
-  items.forEach((it) => {
-    const lines = doc.splitTextToSize(`• ${it}`, W - M * 2);
-    doc.text(lines, M, yy);
-    yy += lines.length * 12 + 2;
-  });
-  return yy + 10;
 }

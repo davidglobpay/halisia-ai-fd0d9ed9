@@ -1,15 +1,21 @@
 /**
- * PDF report for the Land Intelligence Engine.
+ * PDF report for the location dossier.
  *
- * Renders the unified LIOS decision (overall score, persona-weighted
- * recommendation, all 10 modules with confidence, sources, limitations
- * and next steps) into a self-contained multi-page PDF. Deliberately
- * dependency-light — jsPDF only — so it works even when static-map
- * providers are unreachable.
+ * The cover used to open with "LIOS 72 / 100" in 28-point type and a verdict
+ * beneath it — Highly Recommended through Not Recommended — over ten modules,
+ * seven of which had no data behind them. A PDF is the artefact a buyer
+ * forwards to a spouse, a lender or a lawyer, so it is the worst place in the
+ * product for a number that was not measured.
+ *
+ * It now leads with the reading and what the reading is OF, prints the
+ * measured modules with the services actually read for each, and gives the
+ * unassessed modules a section of their own: what HALISIA does not hold and
+ * who to ask instead. Still jsPDF only, so it works when map providers are
+ * unreachable.
  */
 import jsPDF from "jspdf";
 import type { DecisionOutput, ModuleOutput } from "@/lib/intelligence-engine";
-import { labelForPersona } from "@/lib/intelligence-engine";
+import { labelForPersona, DOSSIER_SCOPE } from "@/lib/intelligence-engine";
 
 function slugify(s: string) {
   return s
@@ -19,11 +25,15 @@ function slugify(s: string) {
     .slice(0, 40);
 }
 
-function verificationOf(m: ModuleOutput): { label: string; color: [number, number, number] } {
-  if (m.confidencePct >= 75 && m.sources.length >= 2)
-    return { label: "Verified", color: [34, 197, 94] };
-  if (m.confidencePct >= 45) return { label: "AI-Estimated", color: [98, 233, 255] };
-  return { label: "Unverified", color: [212, 160, 23] };
+/**
+ * How the figure was obtained — not how good it is. The old version called a
+ * direct elevation reading "AI-Estimated" and a pair of invented inputs
+ * "Verified", because it judged by confidence and source count alone.
+ */
+function provenanceOf(m: ModuleOutput): { label: string; color: [number, number, number] } {
+  if (m.status === "not-assessed") return { label: "Not assessed", color: [140, 150, 168] };
+  if ((m.confidencePct ?? 0) >= 100) return { label: "Measured", color: [34, 197, 94] };
+  return { label: "Partly measured", color: [212, 160, 23] };
 }
 
 export interface IntelligencePdfOptions {
@@ -57,6 +67,7 @@ export async function generateIntelligencePdf(
   const INK: [number, number, number] = [22, 30, 46];
 
   const setColor = (c: [number, number, number]) => doc.setTextColor(c[0], c[1], c[2]);
+  const wrap = (t: string, w: number) => doc.splitTextToSize(t, w) as string[];
 
   // ---------- Cover page ----------
   doc.setFillColor(7, 30, 61);
@@ -64,55 +75,66 @@ export async function generateIntelligencePdf(
   setColor([255, 255, 255]);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
-  doc.text("HALISIA.AI · LAND INTELLIGENCE REPORT", M, 64);
+  doc.text("HALISIA.AI · LOCATION READINGS", M, 64);
 
   doc.setFontSize(28);
-  doc.text(`LIOS ${decision.overall} / 100`, M, 130);
-  doc.setFontSize(14);
-  setColor([0, 194, 232]);
-  doc.text(decision.recommendation, M, 154);
+  doc.text(decision.reading != null ? `${decision.reading} / 100` : "No reading", M, 130);
+  doc.setFontSize(13);
+  setColor(ACCENT);
+  doc.text(decision.readingLabel, M, 152);
 
   setColor([200, 210, 224]);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
-  const wrap = (t: string, w: number) => doc.splitTextToSize(t, w) as string[];
   const addrLines = wrap(address || `${lat.toFixed(5)}, ${lng.toFixed(5)}`, W - M * 2);
   doc.text(addrLines, M, 180);
+  let coverY = 198 + (addrLines.length - 1) * 14;
   doc.text(
-    `Coordinates ${lat.toFixed(5)}, ${lng.toFixed(5)}  ·  Grade ${decision.grade}  ·  Confidence ${decision.confidencePct}%`,
+    `Coordinates ${lat.toFixed(5)}, ${lng.toFixed(5)}` +
+      (decision.grade ? `  ·  Grade ${decision.grade}` : "") +
+      (decision.confidencePct != null ? `  ·  Confidence ${decision.confidencePct}%` : ""),
     M,
-    198 + (addrLines.length - 1) * 14,
+    coverY,
   );
+  coverY += 18;
   doc.text(
-    `Optimised for ${labelForPersona(decision.persona)}  ·  Generated ${new Date(decision.freshness).toLocaleString()}`,
+    `Weighted for ${labelForPersona(decision.persona)}  ·  Generated ${new Date(decision.freshness).toLocaleString()}`,
     M,
-    216 + (addrLines.length - 1) * 14,
+    coverY,
   );
+
+  // Scope, on the cover, where it cannot be missed.
+  coverY += 30;
+  doc.setFontSize(10);
+  setColor([170, 185, 208]);
+  const scope = wrap(decision.scopeNote, W - M * 2);
+  doc.text(scope, M, coverY);
+  coverY += scope.length * 13 + 10;
+  const scopeLine = wrap(DOSSIER_SCOPE, W - M * 2);
+  doc.text(scopeLine, M, coverY);
+
   if (shareUrl) {
     doc.setFontSize(9);
     setColor([160, 175, 200]);
     doc.text(`Shareable report · ${shareUrl}`, M, H - 60);
   }
 
-  // ---------- Body pages ----------
-  const startBody = () => {
-    doc.addPage();
-    doc.setFillColor(255, 255, 255);
-    doc.rect(0, 0, W, H, "F");
-    setColor(INK);
-  };
+  // ---------- Summary page ----------
+  doc.addPage();
+  doc.setFillColor(255, 255, 255);
+  doc.rect(0, 0, W, H, "F");
+  setColor(INK);
 
-  startBody();
   let y = M;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
-  doc.text("Executive summary", M, y);
+  doc.text("What was measured", M, y);
   y += 20;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
   const reasons = decision.reasons.length
     ? decision.reasons
-    : ["No dominant drivers detected — refer to the module breakdown."];
+    : ["Nothing could be read for this point — every provider returned empty."];
   reasons.forEach((r) => {
     const lines = wrap(`• ${r}`, W - M * 2);
     doc.text(lines, M, y);
@@ -123,16 +145,64 @@ export async function generateIntelligencePdf(
   setColor(MUTED);
   doc.setFontSize(10);
   doc.text(
-    `Confidence ${decision.confidencePct}%  ·  ${decision.modules.length} intelligence modules  ·  Freshness ${new Date(decision.freshness).toLocaleString()}`,
+    `${decision.measuredCount} of ${decision.modules.length} modules measured  ·  ` +
+      `${decision.notAssessedCount} not assessed  ·  ` +
+      `Read ${new Date(decision.freshness).toLocaleString()}`,
     M,
     y,
   );
-  y += 20;
+  y += 24;
   setColor(INK);
 
+  // ---------- Due diligence ----------
+  if (decision.dueDiligence.length) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.text("What HALISIA cannot assess", M, y);
+    y += 8;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    setColor(MUTED);
+    const intro = wrap(
+      "Each of these was previously shown as a score. HALISIA holds no data that answers them, so they are listed as checks to run before committing.",
+      W - M * 2,
+    );
+    doc.text(intro, M, y + 12);
+    y += 12 + intro.length * 12 + 10;
+
+    decision.dueDiligence.forEach((d) => {
+      if (y > H - M - 70) {
+        doc.addPage();
+        y = M;
+      }
+      setColor(INK);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.text(d.label, M, y);
+      y += 14;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      setColor(MUTED);
+      const why = wrap(d.why, W - M * 2);
+      doc.text(why, M, y);
+      y += why.length * 12 + 2;
+      setColor([0, 100, 160]);
+      const who = wrap(`→ ${d.who}`, W - M * 2);
+      doc.text(who, M, y);
+      y += who.length * 12 + 12;
+    });
+    setColor(INK);
+  }
+
+  // ---------- Professionals ----------
+  if (y > H - M - 120) {
+    doc.addPage();
+    y = M;
+  }
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("Recommended professionals", M, y);
+  setColor(INK);
+  doc.text("Who to bring in next", M, y);
   y += 16;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
@@ -143,12 +213,12 @@ export async function generateIntelligencePdf(
 
   // ---------- Module pages ----------
   const drawModule = (m: ModuleOutput) => {
-    const need = 260;
+    const need = 240;
     if (y + need > H - M) {
       doc.addPage();
       y = M;
     }
-    const v = verificationOf(m);
+    const v = provenanceOf(m);
     doc.setDrawColor(230, 234, 240);
     doc.setLineWidth(0.6);
     doc.line(M, y - 4, W - M, y - 4);
@@ -156,16 +226,23 @@ export async function generateIntelligencePdf(
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
     setColor(INK);
-    doc.text(`${m.label}`, M, y + 10);
+    doc.text(m.label, M, y + 10);
 
-    // Score chip
-    doc.setFillColor(ACCENT[0], ACCENT[1], ACCENT[2]);
-    doc.roundedRect(W - M - 80, y - 2, 80, 22, 6, 6, "F");
-    setColor([7, 30, 61]);
-    doc.setFontSize(11);
-    doc.text(`${m.score}/100 · ${m.grade}`, W - M - 74, y + 12);
+    // Score chip — only when there is a score.
+    if (m.score != null) {
+      doc.setFillColor(ACCENT[0], ACCENT[1], ACCENT[2]);
+      doc.roundedRect(W - M - 80, y - 2, 80, 22, 6, 6, "F");
+      setColor([7, 30, 61]);
+      doc.setFontSize(11);
+      doc.text(`${m.score}/100${m.grade ? ` · ${m.grade}` : ""}`, W - M - 74, y + 12);
+    } else {
+      doc.setDrawColor(200, 208, 220);
+      doc.roundedRect(W - M - 80, y - 2, 80, 22, 6, 6, "S");
+      setColor(MUTED);
+      doc.setFontSize(10);
+      doc.text("Not assessed", W - M - 72, y + 12);
+    }
 
-    // Meta row: verification · confidence · sources · trend
     y += 26;
     setColor(v.color);
     doc.setFont("helvetica", "bold");
@@ -173,18 +250,17 @@ export async function generateIntelligencePdf(
     doc.text(v.label.toUpperCase(), M, y);
     setColor(MUTED);
     doc.setFont("helvetica", "normal");
-    doc.text(
-      `  ·  Confidence ${m.confidencePct}%  ·  ${m.sources.length} sources  ·  Trend ${m.trend}`,
-      M + doc.getTextWidth(v.label.toUpperCase()),
-      y,
-    );
+    const meta =
+      m.status === "measured"
+        ? `  ·  Confidence ${m.confidencePct}%  ·  ${m.sources.length === 1 ? "1 source" : `${m.sources.length} sources`}`
+        : "  ·  no data held for this location";
+    doc.text(meta, M + doc.getTextWidth(v.label.toUpperCase()), y);
     y += 12;
 
-    // Why
     setColor(INK);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
-    doc.text("Why this score", M, y + 12);
+    doc.text(m.status === "measured" ? "Why this reading" : "Why there is no reading", M, y + 12);
     y += 18;
     doc.setFont("helvetica", "normal");
     m.reasons.forEach((r) => {
@@ -193,35 +269,52 @@ export async function generateIntelligencePdf(
       y += lines.length * 12 + 2;
     });
 
-    // Sources
-    y += 4;
-    doc.setFont("helvetica", "bold");
-    doc.text("Sources", M, y);
-    y += 12;
-    doc.setFont("helvetica", "normal");
-    setColor(MUTED);
-    const src = wrap(m.sources.join("  ·  "), W - M * 2);
-    doc.text(src, M, y);
-    y += src.length * 12 + 6;
+    if (m.sources.length) {
+      y += 4;
+      setColor(INK);
+      doc.setFont("helvetica", "bold");
+      doc.text("Read for this", M, y);
+      y += 12;
+      doc.setFont("helvetica", "normal");
+      setColor(MUTED);
+      const src = wrap(m.sources.join("  ·  "), W - M * 2);
+      doc.text(src, M, y);
+      y += src.length * 12 + 6;
+    }
 
-    // Possible limitations (explicit heading — mirrors the UI drilldown)
+    if (m.missing.length) {
+      setColor(INK);
+      doc.setFont("helvetica", "bold");
+      doc.text("Not held by HALISIA", M, y);
+      y += 12;
+      doc.setFont("helvetica", "normal");
+      setColor(MUTED);
+      m.missing.forEach((s) => {
+        const lines = wrap(`• ${s}`, W - M * 2);
+        doc.text(lines, M, y);
+        y += lines.length * 12 + 2;
+      });
+      y += 4;
+    }
+
+    if (m.limitations.length) {
+      setColor(INK);
+      doc.setFont("helvetica", "bold");
+      doc.text("What this does not prove", M, y);
+      y += 12;
+      doc.setFont("helvetica", "normal");
+      setColor([120, 90, 20]);
+      m.limitations.forEach((l) => {
+        const lines = wrap(`⚠ ${l}`, W - M * 2);
+        doc.text(lines, M, y);
+        y += lines.length * 12 + 2;
+      });
+      y += 4;
+    }
+
     setColor(INK);
     doc.setFont("helvetica", "bold");
-    doc.text("Possible limitations · what to verify next", M, y);
-    y += 12;
-    doc.setFont("helvetica", "normal");
-    setColor([120, 90, 20]);
-    m.limitations.forEach((l) => {
-      const lines = wrap(`⚠ ${l}`, W - M * 2);
-      doc.text(lines, M, y);
-      y += lines.length * 12 + 2;
-    });
-
-    // Next step
-    y += 4;
-    setColor(INK);
-    doc.setFont("helvetica", "bold");
-    doc.text("Recommended next step", M, y);
+    doc.text("Check this next", M, y);
     y += 12;
     doc.setFont("helvetica", "normal");
     setColor([0, 100, 160]);
@@ -235,7 +328,7 @@ export async function generateIntelligencePdf(
   y = M;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
-  doc.text("Module scores", M, y);
+  doc.text("Module detail", M, y);
   y += 24;
 
   const modules = decision.modules;
@@ -244,26 +337,21 @@ export async function generateIntelligencePdf(
     drawModule(m);
   });
 
-  // ---------- Footer & disclaimer ----------
+  // ---------- Footer & scope ----------
   const pages = doc.getNumberOfPages();
   for (let i = 1; i <= pages; i++) {
     doc.setPage(i);
     doc.setFontSize(8);
     setColor(MUTED);
-    doc.text(`HALISIA.AI  ·  Land Intelligence Report  ·  Page ${i} of ${pages}`, M, H - 20);
+    doc.text(`HALISIA.AI  ·  Location readings  ·  Page ${i} of ${pages}`, M, H - 20);
   }
   doc.setPage(pages);
   setColor(MUTED);
   doc.setFontSize(8);
-  doc.text(
-    "Predictions are estimates, not certainties. Verify title, zoning and site conditions with licensed professionals before any transaction.",
-    M,
-    H - 32,
-    { maxWidth: W - M * 2 },
-  );
+  doc.text(DOSSIER_SCOPE, M, H - 40, { maxWidth: W - M * 2 });
 
   const stamp = new Date().toISOString().replace(/[-:T]/g, "").slice(0, 13);
-  const filename = `halisia-intelligence-${slugify(address) || "location"}-${lat.toFixed(4)}-${lng.toFixed(4)}-${stamp}.pdf`;
+  const filename = `halisia-readings-${slugify(address) || "location"}-${lat.toFixed(4)}-${lng.toFixed(4)}-${stamp}.pdf`;
   tick(96, "Saving…");
   doc.save(filename);
   tick(100, "Done");

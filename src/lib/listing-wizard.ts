@@ -132,7 +132,7 @@ export function buildChecklist(d: WizardDraft): ChecklistItem[] {
     {
       key: "pin",
       label: "GPS / map pin",
-      why: "Unlocks the Land Intelligence Score, maps and risk layers.",
+      why: "Lets HALISIA read the site's terrain, air quality and nearby amenities, and show it on a map.",
       weight: 14,
       done: has(d.latitude) && has(d.longitude),
       required: false,
@@ -168,7 +168,7 @@ export function buildChecklist(d: WizardDraft): ChecklistItem[] {
     {
       key: "amenities",
       label: "Nearby amenities",
-      why: "Feeds the livability and schools/security scoring.",
+      why: "Buyers ask what is within reach — schools, shops, hospitals.",
       weight: 5,
       done: has(d.amenities),
       required: false,

@@ -1,9 +1,22 @@
+/**
+ * County comparison PDF.
+ *
+ * This export used to print four metrics per county — livability, density,
+ * growth and water reliability — each under a row of confidence dots, with a
+ * footer defining three dots as "multiple-source support". Only density was
+ * ever measured; the other three were generated. A reader could take that PDF
+ * into a meeting believing four figures had been checked.
+ *
+ * It now prints the one county-level figure HALISIA can cite, with its source
+ * on the page. No dots: a national census release does not need a confidence
+ * band, it needs a citation.
+ */
 import jsPDF from "jspdf";
 import {
   METRIC_LABELS,
   METRIC_UNITS,
+  DENSITY_PROVENANCE,
   countyMetrics,
-  confidence,
   formatMetric,
   type CountyMetric,
 } from "@/lib/county-metrics";
@@ -81,17 +94,9 @@ export async function generateCountyComparePdf(counties: County[]) {
       doc.setFontSize(8);
       doc.setTextColor(...muted);
       doc.text(METRIC_UNITS[mk], x + 16 + doc.getTextWidth(formatMetric(mk, m[mk])) + 4, yy + 30);
-      // Confidence dots
-      const level = confidence(c.code, mk);
-      const n = level === "high" ? 3 : level === "med" ? 2 : 1;
-      for (let k = 0; k < 3; k++) {
-        if (k < n) doc.setFillColor(...accent);
-        else doc.setFillColor(220, 226, 236);
-        doc.circle(x + colW - 24 - k * 8, yy + 24, 2.5, "F");
-      }
       doc.setFontSize(7);
       doc.setTextColor(...muted);
-      doc.text(level.toUpperCase(), x + colW - 44, yy + 12);
+      doc.text("KNBS 2019", x + colW - 60, yy + 14);
     });
   });
 
@@ -99,9 +104,9 @@ export async function generateCountyComparePdf(counties: County[]) {
   doc.setFontSize(8);
   doc.setTextColor(...muted);
   doc.text(
-    "Informational only — verify with a licensed professional. Confidence bands: 1 = directional, 2 = partial, 3 = multiple-source support.",
+    `Informational only — verify with a licensed professional. ${DENSITY_PROVENANCE} HALISIA holds no other county-level metric and prints none.`,
     M,
-    H - 20,
+    H - 32,
   );
   doc.text("halisia.ai", W - M - 40, H - 20);
 
