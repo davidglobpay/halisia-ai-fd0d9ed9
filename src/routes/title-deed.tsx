@@ -21,6 +21,7 @@ import {
 import { MapView } from "@/components/halisia/map-view";
 import { IntelligenceDashboard } from "@/components/halisia/intelligence-dashboard";
 import { extractDeedFields, type DeedFields } from "@/lib/deed-extract.functions";
+import { assessDeedEvidence } from "@/lib/deed-evidence";
 import { geocodeAddress } from "@/lib/geocode.functions";
 import { generateLocationDossier } from "@/lib/pdf-dossier";
 import { useDeedHistory, type DeedHistoryEntry } from "@/hooks/use-deed-history";
@@ -65,6 +66,10 @@ function TitleDeedPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [copiedShare, setCopiedShare] = useState(false);
   const history = useDeedHistory();
+  const deedEvidence = useMemo(
+    () => (fields ? assessDeedEvidence(fields, ocrText) : null),
+    [fields, ocrText],
+  );
 
   const processQueryValue = useCallback(
     async (value: string) => {
@@ -89,7 +94,7 @@ function TitleDeedPage() {
 
         // Geolocate and capture result for history in one flow
         setStage("locate");
-        setProgressMsg("Geolocating parcel…");
+        setProgressMsg("Finding locality context…");
         setProgress(0);
         const parts = [extracted.locationHint, extracted.registry, extracted.county]
           .filter(Boolean)
@@ -198,18 +203,26 @@ function TitleDeedPage() {
     return (result.data.text || "").trim();
   }, []);
 
-  const locateFrom = useCallback(async (f: DeedFields): Promise<void> => {
+  const locateFrom = useCallback(async (f: DeedFields, rawText: string): Promise<void> => {
     setStage("locate");
-    setProgressMsg("Geolocating parcel…");
+    setProgressMsg("Checking document location evidence…");
     setProgress(0);
+    const evidence = assessDeedEvidence(f, rawText);
+    if (evidence.coordinates) {
+      setLoc({
+        ...evidence.coordinates,
+        address: `Extracted document coordinate: ${evidence.coordinates.lat.toFixed(6)}, ${evidence.coordinates.lng.toFixed(6)}`,
+      });
+      return;
+    }
     const parts = [f.locationHint, f.registry, f.county].filter(Boolean).join(", ");
     const query = parts || f.county || f.registry || "";
     if (!query) return;
     try {
       const res = await geocodeAddress({ data: { query } });
-      if (res.ok) setLoc({ lat: res.lat, lng: res.lng, address: res.address });
+      if (res.ok) setLoc({ lat: res.lat, lng: res.lng, address: `Locality context: ${res.address}` });
     } catch (e) {
-      console.warn("locate failed", e);
+      console.warn("locality lookup failed", e);
     }
   }, []);
 
@@ -238,7 +251,7 @@ function TitleDeedPage() {
       const extracted = await extractDeedFields({ data: { text } });
       setFields(extracted);
 
-      await locateFrom(extracted);
+      await locateFrom(extracted, text);
       setStage("done");
       history.add({
         mode: "upload",
@@ -654,7 +667,7 @@ function TitleDeedPage() {
               <MapView
                 center={loc ? { lat: loc.lat, lng: loc.lng } : undefined}
                 marker={loc ? { lat: loc.lat, lng: loc.lng, label: loc.address } : null}
-                zoom={loc ? 14 : 6}
+                zoom={loc ? (deedEvidence?.precision === "exact-coordinate" ? 18 : 12) : 6}
                 mapType="hybrid"
                 theme="dark"
                 className="rounded-[22px] h-[340px]"
@@ -662,7 +675,7 @@ function TitleDeedPage() {
               {!loc && (
                 <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
                   <div className="glass rounded-full px-4 py-2 text-xs text-muted-foreground inline-flex items-center gap-2">
-                    <MapPin className="h-3.5 w-3.5 text-accent" /> Parcel location will appear here
+                    <MapPin className="h-3.5 w-3.5 text-accent" /> Verified coordinates or locality context will appear here
                   </div>
                 </div>
               )}
@@ -671,9 +684,12 @@ function TitleDeedPage() {
               <>
                 <div className="glass rounded-2xl px-4 py-2.5 text-xs text-muted-foreground">
                   <span className="uppercase tracking-widest text-accent text-[10px] mr-2">
-                    Approx. locality
+                    {deedEvidence?.precision === "exact-coordinate" ? "Document coordinate" : "Locality context"}
                   </span>
                   {loc.address}
+                  <p className="mt-1 text-[11px] text-amber-200">
+                    {deedEvidence?.message ?? "No verified parcel boundary is available."}
+                  </p>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <button

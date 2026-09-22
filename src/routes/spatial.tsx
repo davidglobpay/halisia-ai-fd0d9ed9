@@ -345,6 +345,7 @@ function SpatialPage() {
       </nav>
 
       <SectionHeading
+        as="h1"
         eyebrow="Spatial intelligence"
         title="AR · VR · XR Land Studio"
         description="Project a surveyed Kenyan parcel into your physical space, verify beacons on the ground, test massing against zoning envelopes and issue a Digital Land Passport."
