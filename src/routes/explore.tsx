@@ -261,6 +261,7 @@ function Explore() {
 
   return (
     <div className="min-h-screen" data-testid="explore-page" data-hydrated={clientReady}>
+      <h1 className="sr-only">Explore Kenyan land intelligence</h1>
       <div className="pt-24 pb-10 mx-auto max-w-[1400px] px-4">
         <div className="max-w-3xl">
           <SearchBar
