@@ -13,14 +13,25 @@ function Fallback() {
   );
 }
 
-export function CesiumGlobe(props: { lat: number; lng: number; label: string }) {
-  return (
-    <MapFrame>
-      <ClientOnly fallback={<Fallback />}>
-        <Suspense fallback={<Fallback />}>
-          <Inner {...props} />
-        </Suspense>
-      </ClientOnly>
-    </MapFrame>
+export function CesiumGlobe({
+  bare = false,
+  ...props
+}: {
+  lat: number;
+  lng: number;
+  label: string;
+  intro?: boolean;
+  onFlightComplete?: () => void;
+  bare?: boolean;
+}) {
+  const globe = (
+    <ClientOnly fallback={<Fallback />}>
+      <Suspense fallback={<Fallback />}>
+        <Inner {...props} />
+      </Suspense>
+    </ClientOnly>
   );
+
+  if (bare) return <div className="relative h-full w-full">{globe}</div>;
+  return <MapFrame>{globe}</MapFrame>;
 }

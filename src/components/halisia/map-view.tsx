@@ -1,7 +1,8 @@
 /// <reference types="google.maps" />
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
-import { AlertTriangle, Loader2, RefreshCw } from "lucide-react";
+import { AlertTriangle, Loader2, RefreshCw, ScanLine } from "lucide-react";
 import { loadGoogleMaps, resetGoogleMapsLoader } from "@/lib/google-maps-loader";
+import { StreetViewPanel } from "@/components/halisia/street-view-panel";
 
 const MapFallback = lazy(() => import("./map-fallback.internal"));
 
@@ -58,6 +59,7 @@ export function MapView({
   onMapClick,
   markerDraggable = false,
   onMarkerDrag,
+  streetView = true,
 }: {
   center?: MapLocation;
   zoom?: number;
@@ -69,6 +71,7 @@ export function MapView({
   onMapClick?: (loc: { lat: number; lng: number }) => void;
   markerDraggable?: boolean;
   onMarkerDrag?: (loc: { lat: number; lng: number }) => void;
+  streetView?: boolean;
 }) {
   const el = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
@@ -87,6 +90,7 @@ export function MapView({
   const [tileError, setTileError] = useState(false);
   const [tileRetryKey, setTileRetryKey] = useState(0);
   const [authFailed, setAuthFailed] = useState(false);
+  const [streetViewOpen, setStreetViewOpen] = useState(false);
   const hasPositionClass = /\b(absolute|relative|fixed|sticky)\b/.test(className);
 
   useEffect(() => {
@@ -366,6 +370,27 @@ export function MapView({
             <Loader2 className="h-4 w-4 animate-spin text-accent" /> Opening map…
           </div>
         </div>
+      )}
+      {streetView && !streetViewOpen && (
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            setStreetViewOpen(true);
+          }}
+          onPointerDown={(event) => event.stopPropagation()}
+          className="absolute bottom-20 left-3 z-[1200] inline-flex sm:bottom-3 min-h-11 items-center gap-2 rounded-full border border-white/15 bg-black/65 px-4 py-2 text-xs font-semibold text-white shadow-xl backdrop-blur hover:bg-black/80"
+          aria-label="Open nearby Google Street View"
+          data-testid="open-street-view"
+        >
+          <ScanLine className="h-4 w-4" /> Street View
+        </button>
+      )}
+      {streetViewOpen && (
+        <StreetViewPanel
+          location={marker ?? center}
+          onClose={() => setStreetViewOpen(false)}
+        />
       )}
     </div>
   );

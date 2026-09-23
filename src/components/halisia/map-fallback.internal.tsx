@@ -71,7 +71,7 @@ export default function MapFallback({
       zoom={13}
       zoomControl
       scrollWheelZoom
-      className="absolute inset-0 h-full w-full"
+      className="absolute inset-0 h-full w-full [&_.leaflet-control-scale]:pointer-events-none"
       key={`${lat.toFixed(4)}-${lng.toFixed(4)}-${mapType}-${theme}`}
     >
       <TileLayer

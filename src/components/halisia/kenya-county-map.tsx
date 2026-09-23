@@ -454,7 +454,9 @@ export function KenyaCountyMap() {
                   OSM fallback
                 </div>
               )}
-              <GlobeIntro label="Kenya · counties" />
+              <ClientOnly fallback={null}>
+                <GlobeIntro label="Kenya · counties" />
+              </ClientOnly>
             </MapFrame>
             {mapError && (
               <div
