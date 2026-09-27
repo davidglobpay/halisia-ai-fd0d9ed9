@@ -46,7 +46,7 @@ export function CoverageFreshness({ items }: { items: EvidenceItem[] }) {
         ))}
       </ul>
       <div className="mt-4 overflow-x-auto">
-        <table className="w-full min-w-[560px] text-left text-xs">
+        <table className="w-full min-w-[720px] text-left text-xs">
           <thead className="text-[10px] uppercase tracking-wider text-muted-foreground">
             <tr>
               <th className="py-1.5 pr-2 font-medium">Specification</th>
@@ -86,7 +86,7 @@ export function CoverageFreshness({ items }: { items: EvidenceItem[] }) {
                   </td>
                 ))}
                 <td className="py-2 pr-2 font-mono">{stamp(r.latest)}</td>
-                <td className="py-2 text-muted-foreground">{r.policy}</td>
+                <td className="min-w-[180px] py-2 text-muted-foreground">{r.policy}</td>
               </tr>
             ))}
           </tbody>

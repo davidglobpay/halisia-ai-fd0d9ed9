@@ -18,6 +18,9 @@ const clean = (s: string) =>
     .replace(/\u00B7/g, "-")
     .replace(/[^\x20-\x7E\u00A0-\u00FF]/g, "");
 
+const ts = (v: string | null | undefined) =>
+  !v ? "-" : /^\d{4}-\d{2}-\d{2}T/.test(v) ? `${v.slice(0, 10)} ${v.slice(11, 16)} UTC` : v;
+
 const STATUS: Record<LedgerEntry["status"], string> = {
   ok: "Returned data",
   no_data: "No data for this point",
@@ -110,7 +113,7 @@ export function downloadPassportPdf(opts: {
   y += 4;
   for (const r of cov.rows) {
     text(
-      `${r.title} - sourced ${r.counts.sourced}, estimates ${r.counts.estimate}, AI ${r.counts.ai}, unavailable ${r.counts.unavailable}. Last retrieved: ${r.latest ?? "-"}. Stays current: ${r.policy}.`,
+      `${r.title} - sourced ${r.counts.sourced}, estimates ${r.counts.estimate}, AI ${r.counts.ai}, unavailable ${r.counts.unavailable}. Last retrieved: ${ts(r.latest)}. Stays current: ${r.policy}.`,
       8.5,
     );
   }
@@ -125,7 +128,7 @@ export function downloadPassportPdf(opts: {
   for (const c of CHAPTERS) {
     const list = opts.items.filter((i) => i.chapter === c.id);
     if (!list.length) continue;
-    need(40);
+    need(110);
     text(c.title, 13, ink, "bold");
     text(c.blurb, 8.5, muted);
     y += 4;
@@ -133,7 +136,7 @@ export function downloadPassportPdf(opts: {
       need(60);
       text(`${it.label}: ${it.value ?? "Not available"}`, 10, ink, "bold");
       text(
-        `Type: ${CLASS_LABEL[it.cls]} (${BUCKET_META[bucketOf(it.cls)].label})   |   Confidence: ${CONFIDENCE_LABEL[it.confidence]}   |   Retrieved: ${it.value == null ? "-" : (it.retrieved ?? "-")}`,
+        `Type: ${CLASS_LABEL[it.cls]} (${BUCKET_META[bucketOf(it.cls)].label})   |   Confidence: ${CONFIDENCE_LABEL[it.confidence]}   |   Retrieved: ${it.value == null ? "-" : ts(it.retrieved)}`,
         8,
         green,
       );
