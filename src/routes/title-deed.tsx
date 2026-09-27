@@ -26,6 +26,51 @@ import { generateLocationDossier } from "@/lib/pdf-dossier";
 import { useDeedHistory, type DeedHistoryEntry } from "@/hooks/use-deed-history";
 import { useVoiceInput } from "@/hooks/use-voice-input";
 import { Link } from "@tanstack/react-router";
+import {
+  classifyGeocode,
+  compareCounty,
+  validateCoordinate,
+  type Discrepancy,
+  type LocationStatus,
+} from "@/lib/location-validation";
+import { LocationStatusCard } from "@/components/halisia/land-passport/location-status";
+import { PassportLinks } from "@/components/halisia/land-passport/passport-links";
+
+type DeedLoc = {
+  lat: number;
+  lng: number;
+  address: string;
+  status: LocationStatus;
+  gt: string;
+  county: string | null;
+  discrepancy: Discrepancy | null;
+  issues: string[];
+};
+
+/** Validate a geocode hit for a deed. Never upgrades it past "approximate". */
+function buildDeedLoc(
+  res: { lat: number; lng: number; address: string; locationType?: string; types?: string[] },
+  deedCounty: string | null | undefined,
+): { loc: DeedLoc } | { issue: string } {
+  const check = validateCoordinate(res.lat, res.lng);
+  if (!check.ok || check.lat == null || check.lng == null)
+    return { issue: `Pin withheld: ${check.issues[0]}` };
+  const types = res.types ?? [];
+  if (types.includes("country"))
+    return { issue: "Only “Kenya” matched the location text — too vague to place a pin." };
+  return {
+    loc: {
+      lat: check.lat,
+      lng: check.lng,
+      address: res.address,
+      status: classifyGeocode(types),
+      gt: res.locationType ?? "APPROXIMATE",
+      county: deedCounty ?? null,
+      discrepancy: compareCounty({ lat: check.lat, lng: check.lng }, deedCounty, "Geocoded pin"),
+      issues: check.issues,
+    },
+  };
+}
 
 export const Route = createFileRoute("/title-deed")({
   head: () => ({
@@ -59,7 +104,8 @@ function TitleDeedPage() {
   const [progressMsg, setProgressMsg] = useState("");
   const [ocrText, setOcrText] = useState("");
   const [fields, setFields] = useState<DeedFields | null>(null);
-  const [loc, setLoc] = useState<{ lat: number; lng: number; address: string } | null>(null);
+  const [loc, setLoc] = useState<DeedLoc | null>(null);
+  const [locIssue, setLocIssue] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -95,18 +141,22 @@ function TitleDeedPage() {
           .filter(Boolean)
           .join(", ");
         const geoQuery = parts || extracted.county || extracted.registry || "";
-        let located: { lat: number; lng: number; address: string } | null = null;
+        let located: DeedLoc | null = null;
+        setLoc(null);
+        setLocIssue(null);
         if (geoQuery) {
           try {
             const res = await geocodeAddress({ data: { query: geoQuery } });
-            if (res.ok) {
-              located = { lat: res.lat, lng: res.lng, address: res.address };
+            const built = res.ok ? buildDeedLoc(res, extracted.county) : null;
+            if (built && "loc" in built) {
+              located = built.loc;
               setLoc(located);
-            }
+            } else setLocIssue(built?.issue ?? "No place matched the location text on this record.");
           } catch (err) {
             console.warn("locate failed", err);
+            setLocIssue("Location service unavailable — try again shortly.");
           }
-        }
+        } else setLocIssue("The record has no location text, so no pin is shown.");
         setStage("done");
         history.add({
           mode: "query",
@@ -204,12 +254,20 @@ function TitleDeedPage() {
     setProgress(0);
     const parts = [f.locationHint, f.registry, f.county].filter(Boolean).join(", ");
     const query = parts || f.county || f.registry || "";
-    if (!query) return;
+    setLoc(null);
+    setLocIssue(null);
+    if (!query) {
+      setLocIssue("The document has no readable location text, so no pin is shown.");
+      return;
+    }
     try {
       const res = await geocodeAddress({ data: { query } });
-      if (res.ok) setLoc({ lat: res.lat, lng: res.lng, address: res.address });
+      const built = res.ok ? buildDeedLoc(res, f.county) : null;
+      if (built && "loc" in built) setLoc(built.loc);
+      else setLocIssue(built?.issue ?? "No place matched the location text on this document.");
     } catch (e) {
       console.warn("locate failed", e);
+      setLocIssue("Location service unavailable — try again shortly.");
     }
   }, []);
 
@@ -660,9 +718,10 @@ function TitleDeedPage() {
                 className="rounded-[22px] h-[340px]"
               />
               {!loc && (
-                <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                  <div className="glass rounded-full px-4 py-2 text-xs text-muted-foreground inline-flex items-center gap-2">
-                    <MapPin className="h-3.5 w-3.5 text-accent" /> Parcel location will appear here
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-4">
+                  <div className="glass rounded-full px-4 py-2 text-xs text-muted-foreground inline-flex items-center gap-2 text-center">
+                    <MapPin className="h-3.5 w-3.5 text-accent" />{" "}
+                    {locIssue ?? "Parcel location will appear here"}
                   </div>
                 </div>
               )}
@@ -675,6 +734,26 @@ function TitleDeedPage() {
                   </span>
                   {loc.address}
                 </div>
+                <LocationStatusCard
+                  status={loc.status}
+                  geocodeType={loc.gt}
+                  source="Google Geocoding of the location text on the record"
+                  reason="No surveyed parcel geometry is available for this title, so the pin marks the matched place, not the plot."
+                  discrepancies={loc.discrepancy ? [loc.discrepancy] : []}
+                  issues={loc.issues}
+                />
+                <PassportLinks
+                  target={{
+                    lat: loc.lat,
+                    lng: loc.lng,
+                    ref: fields?.titleNumber || fields?.lrNumber || fields?.parcelNumber || queryValue || "",
+                    label: loc.address,
+                    source: "Google Geocoding of title record text",
+                    status: loc.status,
+                    gt: loc.gt,
+                    county: loc.county ?? "",
+                  }}
+                />
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={downloadReport}
