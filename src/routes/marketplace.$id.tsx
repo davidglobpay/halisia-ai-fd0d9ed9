@@ -267,8 +267,7 @@ function ListingDetail() {
                 recommendation. Expand any card for possible limitations.
               </p>
             </div>
-            {p.latitude != null && p.longitude != null ? (
-              <PassportLinks
+            <PassportLinks
                 className="mb-3"
                 target={{
                   lat: p.latitude == null ? null : Number(p.latitude),
@@ -280,11 +279,6 @@ function ListingDetail() {
                   county: p.county ?? "",
                 }}
               />
-            ) : (
-              <p className="mb-3 text-[11px] text-muted-foreground">
-                Land Passport unavailable: the seller has not added coordinates.
-              </p>
-            )}
             <LandIntelligenceScore
               address={p.address ?? p.title}
               lat={p.latitude ?? undefined}
