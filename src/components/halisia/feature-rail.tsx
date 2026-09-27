@@ -126,7 +126,10 @@ export function FeatureRail() {
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className="text-[11px] uppercase tracking-[0.25em] text-accent">Start here</p>
-            <h2 id="tools-heading" className="mt-2 text-2xl md:text-4xl font-semibold tracking-tight">
+            <h2
+              id="tools-heading"
+              className="mt-2 text-2xl md:text-4xl font-semibold tracking-tight"
+            >
               Eight ways into a place.
             </h2>
             <p className="mt-2 max-w-xl text-sm text-muted-foreground">

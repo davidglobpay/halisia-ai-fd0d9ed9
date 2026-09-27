@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
 
-test("Passport links into all five Design Studio concepts and generated massing", async ({ page }) => {
+test("Passport links into all five Design Studio concepts and generated massing", async ({
+  page,
+}) => {
   await page.goto(
     "/passport?lat=-1.286389&lng=36.817223&label=Nairobi&source=Test&status=approximate",
   );

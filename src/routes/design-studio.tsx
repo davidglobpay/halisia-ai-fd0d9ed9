@@ -128,8 +128,14 @@ function DesignStudioPage() {
           </p>
         </div>
         <div className="text-xs text-muted-foreground lg:text-right" data-testid="studio-context">
-          <div className="font-semibold text-foreground">{contextLabel || "Unlinked simulation"}</div>
-          <div>{hasPoint ? `${search.lat.toFixed(5)}, ${search.lng.toFixed(5)}` : "No map point supplied"}</div>
+          <div className="font-semibold text-foreground">
+            {contextLabel || "Unlinked simulation"}
+          </div>
+          <div>
+            {hasPoint
+              ? `${search.lat.toFixed(5)}, ${search.lng.toFixed(5)}`
+              : "No map point supplied"}
+          </div>
           <div>{search.status || "Position class not supplied"}</div>
         </div>
       </header>
@@ -162,7 +168,9 @@ function DesignStudioPage() {
           )}
           <div className="pointer-events-none absolute inset-x-3 top-3 flex justify-between gap-3">
             <div className="rounded-lg bg-background/85 px-3 py-2 text-xs shadow-sm backdrop-blur">
-              <div className="font-semibold">{generated ? "Generated concept massing" : concept.name}</div>
+              <div className="font-semibold">
+                {generated ? "Generated concept massing" : concept.name}
+              </div>
               <div className="text-muted-foreground">
                 {generated ? `${generatedUse} · ${generatedFloors} floors` : concept.use}
               </div>
@@ -186,7 +194,10 @@ function DesignStudioPage() {
 
         <aside className="min-w-0 space-y-5">
           <section aria-labelledby="concept-heading">
-            <h2 id="concept-heading" className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            <h2
+              id="concept-heading"
+              className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+            >
               Five concept scenes
             </h2>
             <div className="mt-2 grid gap-2">
@@ -244,7 +255,11 @@ function DesignStudioPage() {
                       <option value="commercial">Commercial</option>
                     </select>
                   </label>
-                  <NumberField label="Floors" value={generatedFloors} onChange={(value) => setGeneratedFloors(Math.max(1, Math.min(12, value)))} />
+                  <NumberField
+                    label="Floors"
+                    value={generatedFloors}
+                    onChange={(value) => setGeneratedFloors(Math.max(1, Math.min(12, value)))}
+                  />
                   <p className="col-span-2 text-[11px] text-muted-foreground">
                     Deterministic massing only. It is not an AI-generated architectural drawing.
                   </p>
@@ -257,7 +272,8 @@ function DesignStudioPage() {
             <NumberField label="Width (m)" value={widthM} onChange={setWidthM} />
             <NumberField label="Depth (m)" value={depthM} onChange={setDepthM} />
             <p className="col-span-2 text-[11px] text-muted-foreground">
-              These dimensions are simulation inputs only; they are not derived from a title or map pin.
+              These dimensions are simulation inputs only; they are not derived from a title or map
+              pin.
             </p>
           </section>
 
@@ -314,7 +330,8 @@ function DesignStudioPage() {
                 {showParking ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />} Parking
               </KitButton>
               <KitButton size="sm" onClick={() => setShowLandscape((value) => !value)}>
-                {showLandscape ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />} Landscape
+                {showLandscape ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}{" "}
+                Landscape
               </KitButton>
               <KitButton size="sm" onClick={() => setFitToken((value) => value + 1)}>
                 <Box className="h-4 w-4" /> Fit
@@ -334,10 +351,13 @@ function DesignStudioPage() {
           </section>
 
           <section className="border-t border-foreground/10 pt-4 text-xs leading-relaxed text-muted-foreground">
-            <h2 className="font-semibold uppercase tracking-[0.18em] text-foreground">Evidence boundary</h2>
+            <h2 className="font-semibold uppercase tracking-[0.18em] text-foreground">
+              Evidence boundary
+            </h2>
             <p className="mt-2">
-              The map point is context only. Building fit, setbacks, zoning, utilities, ground conditions,
-              drainage capacity and approvals remain unknown until supported by the relevant evidence.
+              The map point is context only. Building fit, setbacks, zoning, utilities, ground
+              conditions, drainage capacity and approvals remain unknown until supported by the
+              relevant evidence.
             </p>
           </section>
         </aside>

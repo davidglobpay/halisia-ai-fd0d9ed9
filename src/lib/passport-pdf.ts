@@ -145,7 +145,11 @@ export function downloadPassportPdf(opts: {
       }
     }
     if (ai.unknownIds.length) {
-      text(`Unmatched citation codes: ${ai.unknownIds.map((id) => `[${id}]`).join(", ")}.`, 8.5, muted);
+      text(
+        `Unmatched citation codes: ${ai.unknownIds.map((id) => `[${id}]`).join(", ")}.`,
+        8.5,
+        muted,
+      );
     }
     text(
       "Limitations: generated only from the current evidence rows. It is not a title search, survey, legal opinion, valuation, planning approval or independent verification.",

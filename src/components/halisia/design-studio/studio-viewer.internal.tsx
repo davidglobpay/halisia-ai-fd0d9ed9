@@ -5,11 +5,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { disposeSubtree, hasRenderableMesh } from "@/components/halisia/model-lab/disposal";
 import { framingFromObject } from "@/components/halisia/model-lab/framing";
 import { loadGlbBytes } from "@/components/halisia/model-lab/loader";
-import type {
-  StudioConcept,
-  StudioEnvironment,
-  StudioTopology,
-} from "./catalog";
+import type { StudioConcept, StudioEnvironment, StudioTopology } from "./catalog";
 
 export type StudioViewerProps = {
   concept: StudioConcept;
@@ -63,10 +59,7 @@ function addTree(root: THREE.Group, x: number, z: number, scale: number) {
   );
   trunk.position.y = 0.85 * scale;
   trunk.castShadow = true;
-  const crown = new THREE.Mesh(
-    new THREE.IcosahedronGeometry(0.85 * scale, 1),
-    material(C.leaf, 1),
-  );
+  const crown = new THREE.Mesh(new THREE.IcosahedronGeometry(0.85 * scale, 1), material(C.leaf, 1));
   crown.position.y = 2 * scale;
   crown.castShadow = true;
   tree.add(trunk, crown);
@@ -150,7 +143,10 @@ function makeGeneratedMassing(
   const root = new THREE.Group();
   root.name = "generated-concept-massing";
   const count = use === "residential" ? 2 : 1;
-  const buildingWidth = Math.min(widthM * (count === 2 ? 0.28 : 0.5), use === "commercial" ? 30 : 20);
+  const buildingWidth = Math.min(
+    widthM * (count === 2 ? 0.28 : 0.5),
+    use === "commercial" ? 30 : 20,
+  );
   const buildingDepth = Math.min(depthM * (count === 2 ? 0.34 : 0.46), 24);
   const height = Math.max(3, floors * 3.1);
   const facade = use === "commercial" ? 0xb78952 : use === "mixed" ? 0xd1b875 : 0xd9d1bd;
@@ -282,13 +278,7 @@ export default function StudioViewerInternal(props: StudioViewerProps) {
     onState?.({ loading: true, error: null });
     disposeSubtree(engine.content);
     engine.content.clear();
-    const site = makeSite(
-      widthM,
-      depthM,
-      topology,
-      showParking,
-      showLandscape,
-    );
+    const site = makeSite(widthM, depthM, topology, showParking, showLandscape);
     engine.content.add(site);
     if (generated) {
       const massing = makeGeneratedMassing(widthM, depthM, generated.use, generated.floors);
@@ -313,7 +303,8 @@ export default function StudioViewerInternal(props: StudioViewerProps) {
           disposeSubtree(model);
           return;
         }
-        if (!hasRenderableMesh(model)) throw new Error("This concept file contains no visible mesh.");
+        if (!hasRenderableMesh(model))
+          throw new Error("This concept file contains no visible mesh.");
         model.traverse((object) => {
           const mesh = object as THREE.Mesh;
           if (mesh.isMesh) {

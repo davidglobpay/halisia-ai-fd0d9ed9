@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 import { resolveAiEvidence } from "@/lib/passport-ai-evidence";
 import type { EvidenceItem } from "@/lib/passport-evidence";
 
-const row = (id: string, confidence: EvidenceItem["confidence"], value = "Known"): EvidenceItem => ({
+const row = (
+  id: string,
+  confidence: EvidenceItem["confidence"],
+  value = "Known",
+): EvidenceItem => ({
   id,
   chapter: "physical",
   label: id,
