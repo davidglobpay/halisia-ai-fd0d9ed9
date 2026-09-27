@@ -68,18 +68,20 @@ export function GlobeIntro({
         window.setTimeout(() => setPhase("done"), DURATION_MS),
       );
     };
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry?.isIntersecting) return;
-        observer.disconnect();
-        play();
-      },
-      { threshold: 0.35 },
-    );
-    observer.observe(root);
+    const isVisible = () => {
+      const rect = root.getBoundingClientRect();
+      if (rect.bottom <= 0 || rect.top >= window.innerHeight) return;
+      window.removeEventListener("scroll", isVisible);
+      window.removeEventListener("resize", isVisible);
+      play();
+    };
+    window.addEventListener("scroll", isVisible, { passive: true });
+    window.addEventListener("resize", isVisible, { passive: true });
+    isVisible();
     return () => {
       timers.forEach(window.clearTimeout);
-      observer.disconnect();
+      window.removeEventListener("scroll", isVisible);
+      window.removeEventListener("resize", isVisible);
     };
   }, []);
 
