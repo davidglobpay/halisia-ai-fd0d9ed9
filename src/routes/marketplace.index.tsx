@@ -644,16 +644,16 @@ function ListingRow({
         <Link to="/marketplace/$id" params={{ id: p.id }} className="font-medium text-sm">
           {p.title}
         </Link>
-        {p.latitude != null && p.longitude != null && (
+        {(
           <PassportLinks
             compact
             className="mt-1.5"
             target={{
-              lat: Number(p.latitude),
-              lng: Number(p.longitude),
+              lat: p.latitude == null ? null : Number(p.latitude),
+              lng: p.longitude == null ? null : Number(p.longitude),
               ref: p.title,
               label: p.address ?? p.title,
-              source: "Seller-provided listing location",
+              source: p.latitude != null ? "Seller-provided listing location" : "Seller listing (no coordinates)",
               status: "user_provided",
               county: p.county ?? "",
             }}

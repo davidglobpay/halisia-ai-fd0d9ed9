@@ -17,6 +17,7 @@ import { fetchFeed, relativeTime } from "@/lib/pulse";
 import {
   STATUS_META,
   compareCounty,
+  countyByName,
   countyForPoint,
   locationConfidence,
   validateCoordinate,
@@ -41,6 +42,7 @@ const searchSchema = z.object({
   status: fallback(z.enum(STATUSES), "approximate").default("approximate"),
   gt: fallback(z.string(), "").default(""),
   county: fallback(z.string(), "").default(""),
+  noloc: fallback(z.string(), "").default(""),
 });
 
 export const Route = createFileRoute("/passport")({
@@ -201,6 +203,41 @@ function PassportPage() {
     enabled: !!county,
     staleTime: 15 * 60_000,
   });
+
+  if (!ok && (s.ref || s.label || s.county)) {
+    const named = countyByName(s.county);
+    return (
+      <div className="mx-auto max-w-xl px-4 py-12" data-testid="passport-limited">
+        <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">Land Passport · limited</p>
+        <h1 className="mt-1 font-display text-2xl">{s.label || s.ref || "Unnamed listing"}</h1>
+        {s.ref && s.ref !== s.label && <p className="mt-1 font-mono text-xs text-muted-foreground">{s.ref}</p>}
+        <div role="status" className="mt-4 rounded-2xl border border-white/10 bg-card/70 p-4 text-sm">
+          <p className="font-semibold">Location not available</p>
+          <p className="mt-1 text-muted-foreground">{s.noloc || check.issues[0]}</p>
+          <p className="mt-2 text-muted-foreground">
+            Without a map position HALISIA cannot show the map, Street View, terrain, access,
+            habitability, nearby services or investment signals for this listing. Nothing here
+            confirms the parcel's position, boundary or ownership.
+          </p>
+          {s.source && <p className="mt-2 text-xs text-muted-foreground">Listing source: {s.source}</p>}
+          <p className="mt-2 text-xs text-muted-foreground">
+            County stated by the listing: {s.county || "not stated"}
+            {s.county && !named ? " (not matched to a Kenyan county)" : ""}
+          </p>
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {named && (
+            <Link to="/county/$code" params={{ code: String(named.code) }} className="rounded-full bg-primary px-4 py-2 text-xs text-primary-foreground">
+              County Intelligence · {named.name}
+            </Link>
+          )}
+          <Link to="/explore" className="rounded-full border border-foreground/20 px-4 py-2 text-xs">
+            Pick the point on a map
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (!ok) {
     return (

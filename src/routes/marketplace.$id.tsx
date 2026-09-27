@@ -271,11 +271,11 @@ function ListingDetail() {
               <PassportLinks
                 className="mb-3"
                 target={{
-                  lat: Number(p.latitude),
-                  lng: Number(p.longitude),
+                  lat: p.latitude == null ? null : Number(p.latitude),
+                  lng: p.longitude == null ? null : Number(p.longitude),
                   ref: p.title,
                   label: p.address ?? p.title,
-                  source: "Seller-provided listing location",
+                  source: p.latitude != null ? "Seller-provided listing location" : "Seller listing (no coordinates)",
                   status: "user_provided",
                   county: p.county ?? "",
                 }}
