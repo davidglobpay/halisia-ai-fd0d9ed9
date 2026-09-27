@@ -557,14 +557,24 @@ function PassportPage() {
               <div className="mt-3 space-y-3">
                 <div className="text-xs font-medium">Indicative development concepts</div>
                 {ideas.map((c) => (
-                  <div key={c.name} className="rounded-xl border border-foreground/10 p-3 text-xs">
-                    <div className="font-medium text-foreground">{c.name}</div>
-                    <Row k="Why it may fit" v={c.why.join("; ")} />
-                    <Row k="Assumes" v={c.assume} />
-                    <Row k="Constraints" v={c.constraints} />
-                    <Row k="Infrastructure" v={c.infra} />
-                    <Row k="Still needed" v="Zoning letter, survey, soil test" />
-                  </div>
+                  <details
+                    key={c.name}
+                    className="group rounded-xl border border-foreground/10 text-xs"
+                  >
+                    <summary className="flex min-h-[48px] cursor-pointer list-none items-center justify-between gap-3 rounded-xl px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                      <span className="font-medium text-foreground">{c.name}</span>
+                      <ChevronDown className="h-4 w-4 shrink-0 transition group-open:rotate-180" />
+                    </summary>
+                    <div className="border-t border-foreground/10 px-3 py-2">
+                      <Row k="Supporting evidence" v={c.why.join("; ")} />
+                      <Row k="Sources" v="Google Places nearby-place counts" />
+                      <Row k="Confidence" v="Indicative only — no planning or parcel evidence" />
+                      <Row k="Assumes" v={c.assume} />
+                      <Row k="Limitations" v={c.constraints} />
+                      <Row k="Infrastructure" v={c.infra} />
+                      <Row k="Still needed" v="Zoning letter, survey, soil test" />
+                    </div>
+                  </details>
                 ))}
                 <p className="text-[11px] text-muted-foreground">
                   Suggestions only — not planning approval.

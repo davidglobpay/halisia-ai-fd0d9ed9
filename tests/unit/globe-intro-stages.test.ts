@@ -30,4 +30,11 @@ describe("GlobeIntro stage timeline", () => {
   it("plays only once per session via sessionStorage", () => {
     expect(source).toMatch(/sessionStorage/);
   });
+
+  it("provides deliberate replay and skip controls", () => {
+    expect(source).toMatch(/Replay/);
+    expect(source).toMatch(/Skip/);
+    expect(source).toMatch(/onClick=\{play\}/);
+    expect(source).toMatch(/onClick=\{finish\}/);
+  });
 });

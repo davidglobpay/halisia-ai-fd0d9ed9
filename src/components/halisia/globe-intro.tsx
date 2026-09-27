@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { RotateCcw, SkipForward } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const SESSION_KEY = "halisia:globe-intro:v1";
 const DURATION_MS = 3500;
@@ -33,6 +35,34 @@ export function GlobeIntro({
   const [playing, setPlaying] = useState(false);
   const [stageIndex, setStageIndex] = useState(0);
   const timersRef = useRef<number[]>([]);
+
+  const clearTimers = useCallback(() => {
+    timersRef.current.forEach(window.clearTimeout);
+    timersRef.current = [];
+  }, []);
+
+  const finish = useCallback(() => {
+    clearTimers();
+    try {
+      window.sessionStorage.setItem(SESSION_KEY, "1");
+    } catch {
+      /* Session storage is optional. */
+    }
+    setPlaying(false);
+  }, [clearTimers]);
+
+  const play = useCallback(() => {
+    clearTimers();
+    setStageIndex(0);
+    setPlaying(true);
+    timersRef.current = [
+      ...STAGES.slice(1).map((stage, i) =>
+        window.setTimeout(() => setStageIndex(i + 1), Math.round(stage.at * DURATION_MS)),
+      ),
+      window.setTimeout(finish, DURATION_MS),
+    ];
+  }, [clearTimers, finish]);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
@@ -41,41 +71,23 @@ export function GlobeIntro({
     } catch {
       if (reduced) return;
     }
-    setPlaying(true);
-    timersRef.current = [
-      ...STAGES.slice(1).map((stage, i) =>
-        window.setTimeout(() => setStageIndex(i + 1), Math.round(stage.at * DURATION_MS)),
-      ),
-      window.setTimeout(() => {
-        try {
-          window.sessionStorage.setItem(SESSION_KEY, "1");
-        } catch {
-          /* Session storage is optional. */
-        }
-        setPlaying(false);
-      }, DURATION_MS),
-    ];
-    return () => {
-      timersRef.current.forEach(window.clearTimeout);
-    };
-  }, []);
+    play();
+    return clearTimers;
+  }, [clearTimers, play]);
 
   const currentLabel =
     STAGES[stageIndex].label === finalLabel ? finalLabel : (label ?? STAGES[stageIndex].label);
 
-  if (!playing) {
-    return null;
-  }
-
   return (
-    <div
-      aria-hidden="true"
-      data-testid="globe-intro"
-      data-stage={STAGES[stageIndex].label}
-      className="halisia-globe-scene pointer-events-none absolute inset-0 z-[600] grid place-items-center overflow-hidden rounded-[22px] bg-background"
-    >
-      <div className="halisia-globe-stars absolute inset-0" />
-      <svg
+    <>
+      {playing && (
+        <div
+          data-testid="globe-intro"
+          data-stage={STAGES[stageIndex].label}
+          className="halisia-globe-scene pointer-events-none absolute inset-0 z-[600] grid place-items-center overflow-hidden rounded-[22px] bg-background"
+        >
+          <div className="halisia-globe-stars absolute inset-0" aria-hidden="true" />
+          <svg
         viewBox="0 0 200 200"
         className="halisia-globe-intro h-[70%] w-[70%]"
         role="presentation"
@@ -153,14 +165,39 @@ export function GlobeIntro({
             </g>
           )}
         </g>
-      </svg>
-      <span
-        key={stageIndex}
-        data-testid="globe-intro-label"
-        className="halisia-globe-intro-label absolute bottom-6 font-display text-[11px] uppercase tracking-[0.4em] text-muted-foreground"
-      >
-        {currentLabel}
-      </span>
-    </div>
+          </svg>
+          <span
+            key={stageIndex}
+            data-testid="globe-intro-label"
+            aria-live="polite"
+            className="halisia-globe-intro-label absolute bottom-6 font-display text-[11px] uppercase tracking-[0.4em] text-muted-foreground"
+          >
+            {currentLabel}
+          </span>
+        </div>
+      )}
+      <div className="absolute right-3 top-3 z-[610] flex gap-2" data-testid="globe-controls">
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={play}
+          className="min-h-11 border border-foreground/15 bg-card/90 shadow-sm"
+        >
+          <RotateCcw aria-hidden="true" /> Replay
+        </Button>
+        {playing && (
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={finish}
+            className="min-h-11 border border-foreground/15 bg-card/90 shadow-sm"
+          >
+            <SkipForward aria-hidden="true" /> Skip
+          </Button>
+        )}
+      </div>
+    </>
   );
 }
