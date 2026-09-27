@@ -4,7 +4,7 @@ import { fallback, zodValidator } from "@tanstack/zod-adapter";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState, type ReactNode } from "react";
-import { ArrowLeft, ChevronDown, Loader2, Newspaper } from "lucide-react";
+import { ArrowLeft, ChevronDown, Download, Loader2, Newspaper } from "lucide-react";
 import { MapView } from "@/components/halisia/map-view";
 import { StreetViewPanel } from "@/components/halisia/land-passport/street-view-panel";
 import { LocationStatusCard } from "@/components/halisia/land-passport/location-status";
@@ -13,6 +13,7 @@ import { EvidenceRow } from "@/components/halisia/land-passport/evidence-row";
 import { EvidenceLedger } from "@/components/halisia/land-passport/evidence-ledger";
 import { PassportSummaryStrip } from "@/components/halisia/land-passport/summary-strip";
 import { AiInterpretation } from "@/components/halisia/land-passport/ai-interpretation";
+import { CoverageFreshness } from "@/components/halisia/land-passport/coverage-freshness";
 import { getGeotechIntel } from "@/lib/geotech.functions";
 import { getWave4Intel } from "@/lib/wave4-intel.functions";
 import {
@@ -437,6 +438,33 @@ function PassportPage() {
           place={placeName}
           coveragePct={ev.summary.coveragePct}
         />
+        <button
+          type="button"
+          data-testid="passport-pdf"
+          onClick={async () => {
+            const { downloadPassportPdf } = await import("@/lib/passport-pdf");
+            downloadPassportPdf({
+              place: placeName,
+              locationLine: [
+                admin?.ward,
+                admin?.subCounty,
+                county ? `${county.name} County` : null,
+                "Kenya",
+              ]
+                .filter(Boolean)
+                .join(", "),
+              positionLabel: STATUS_META[status].label,
+              items: ev.items,
+              ledger: ev.ledger,
+              coveragePct: ev.summary.coveragePct,
+              generatedAt: `${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC`,
+            });
+          }}
+          className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground"
+        >
+          <Download className="h-4 w-4" /> Download Passport PDF
+        </button>
+        <CoverageFreshness items={ev.items} />
         <EvidenceLedger entries={ev.ledger} />
         <Section n={1} title="Identity & position" tag="source" open>
           <Row k="Location status" v={STATUS_META[status].label} />
