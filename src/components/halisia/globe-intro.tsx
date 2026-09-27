@@ -33,6 +33,8 @@ export function GlobeIntro({
   const [playing, setPlaying] = useState(false);
   const [stageIndex, setStageIndex] = useState(0);
   const timersRef = useRef<number[]>([]);
+  const frameRef = useRef<number>();
+  const startedRef = useRef(false);
 
   const start = useCallback((node: HTMLDivElement | null) => {
     if (!node || typeof window === "undefined") return;
@@ -42,11 +44,13 @@ export function GlobeIntro({
     } catch {
       if (reduced) return;
     }
+    if (startedRef.current) return;
     const host = node.parentElement ?? node;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry?.isIntersecting) return;
-        observer.disconnect();
+    const beginWhenVisible = () => {
+      const bounds = host.getBoundingClientRect();
+      const visible = bounds.bottom > 0 && bounds.top < window.innerHeight;
+      if (visible) {
+        startedRef.current = true;
         setPlaying(true);
         setStageIndex(0);
         timersRef.current = [
@@ -62,15 +66,17 @@ export function GlobeIntro({
             setPlaying(false);
           }, DURATION_MS),
         ];
-      },
-      { threshold: 0.35 },
-    );
-    observer.observe(host);
+        return;
+      }
+      frameRef.current = window.requestAnimationFrame(beginWhenVisible);
+    };
+    frameRef.current = window.requestAnimationFrame(beginWhenVisible);
   }, []);
 
   useEffect(() => {
     return () => {
       timersRef.current.forEach(window.clearTimeout);
+      if (frameRef.current !== undefined) window.cancelAnimationFrame(frameRef.current);
     };
   }, []);
 
