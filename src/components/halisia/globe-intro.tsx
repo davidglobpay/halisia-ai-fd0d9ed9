@@ -33,7 +33,7 @@ export function GlobeIntro({
   const [playing, setPlaying] = useState(false);
   const [stageIndex, setStageIndex] = useState(0);
   const timersRef = useRef<number[]>([]);
-  const frameRef = useRef<number>();
+  const frameRef = useRef<number | undefined>(undefined);
   const startedRef = useRef(false);
 
   const start = useCallback((node: HTMLDivElement | null) => {
