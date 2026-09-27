@@ -20,7 +20,7 @@ export function CoverageFreshness({ items }: { items: EvidenceItem[] }) {
   return (
     <section
       className="rounded-2xl border border-foreground/10 bg-card p-4"
-      data-testid="passport-coverage"
+      data-testid="passport-coverage-freshness"
       aria-labelledby="coverage-h"
     >
       <h2 id="coverage-h" className="font-display text-base">
