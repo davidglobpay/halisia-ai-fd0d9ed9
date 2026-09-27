@@ -49,10 +49,23 @@ describe("buildPassportEvidence", () => {
 
   it("withholds low-confidence scores and shows medium ones with formula", () => {
     const wave4 = {
-      admin: { county: null, constituency: null, ward: null, town: null, village: null, displayName: null },
+      admin: {
+        county: null,
+        constituency: null,
+        ward: null,
+        town: null,
+        village: null,
+        displayName: null,
+      },
       facilities: {},
       climate: { annualRainfallMm: 900, meanTempC: 19, tempMinC: 12, tempMaxC: 26 },
-      scores: { accessibility: 72, infrastructure: 72, environment: 72, development: 72, investment: 72 },
+      scores: {
+        accessibility: 72,
+        infrastructure: 72,
+        environment: 72,
+        development: 72,
+        investment: 72,
+      },
       breakdown: {
         accessibility: scoreExplain("low"),
         infrastructure: scoreExplain("medium"),
