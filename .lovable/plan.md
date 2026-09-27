@@ -1,68 +1,31 @@
-## Scope
+# Land Passport, pin accuracy, county link and hero map
 
-Three connected additions to the existing marketplace, all scoped to authenticated users and RLS-protected. No redesign, no changes to branding or existing intelligence engine.
+## What the audit found
+- **Title-deed pin:** the pin comes from turning text read off the deed (location name) into a place with Google, then dropping a pin as if it were exact. That is the main cause of wrong pins. There is no county/Kenya range check and no "approximate" label.
+- **Ardhisasa / eCitizen:** not connected. The app already says so honestly. The passport will show "Official search not connected — run it on Ardhisasa" rather than pretend.
+- **Land Passport:** one exists, but only inside the 3D Spatial page and only for stored survey parcels. That page is protected, so it stays untouched.
+- **Intelligence engine, county facts, Pulse news, confidence badges, geotech, amenities:** all exist and will be reused, not rebuilt.
+- **Landing page:** there is no hero map today — only the county map lower down. A search box sends people to Explore.
+- **Marketplace:** listing pages have coordinates and an intelligence panel, but no passport or county link.
 
-## 1. Professional matching — bid requests
+## What I will build (smallest set)
+1. **One location checker** — checks number ranges, Kenya bounds, swapped lat/lng, zero/blank values, the "default Nairobi centre" trap, and compares two sources (e.g. deed location vs geocode). Gives each pin a status: Verified geometry / Verified coordinate / Approximate (geocoded) / Administrative area / User-placed / AI-inferred, with a reason, source and confidence. Shows "Location discrepancy detected" with both sources and the distance when they disagree by more than ~2 km.
+2. **Title-deed page** — pin now carries that status; approximate pins shown as a soft circle, not a sharp point; no Nairobi fallback.
+3. **One Land Passport page** (`/passport?lat=&lng=&ref=&source=`) — one link that works from title-deed, Explore, map clicks, marketplace, saved items and shared links. Sections: Identity, Location verification, County intelligence, Physical land, Accessibility, Habitability, Investment (opportunities / risks / drivers / unknowns), Development concepts, Construction notes, Finance readiness ("Indicative AI analysis — not a bank loan approval"), Legal/ownership (clearly "not connected"), Local news, Confidence broken into six parts, and "What Halisia does not yet know". Every section is labelled Source data vs AI interpretation. Built from the existing engine and panels.
+4. **County Intelligence button** — works out ward → sub-county → county from the coordinate (existing reverse lookup), then opens the existing county page with the place pre-selected, plus a short county card inside the passport.
+5. **"View Land Passport" buttons** on title-deed results, Explore results, marketplace cards and listing pages, and saved items.
+6. **Hero map on the landing page** — reuse the existing Google map with Map / Satellite / Street View buttons, search, pan/zoom, a pin that opens the passport. Street View shows "Street View unavailable at this location" when Google has none; if Google fails, the existing street-map fallback appears with a clear note.
+7. **Tests** for the location checker and one browser run on phone width covering search → pin → passport → county, marketplace → passport, and the hero map toggles.
 
-**New tables**
+## Decision needed: colours
+Your brief asks for a Kenyan-flag red/green/black palette with neon glow. The approved Halisia look (saved earlier) is the ivory / deep-forest / green / sparing-gold style, with red kept only for real risk warnings, and explicitly "no dark Kenyan-flag theme". **I will keep the approved look** so nothing already built changes. Tell me if you want the flag palette instead — that would be a separate re-skin.
 
-- `bid_requests` — id, property_id, owner_id, scope (text), category (enum: construction, architecture, surveying, legal, other), budget_min, budget_max, currency, timeline (text), status (enum: open, awarded, closed), created_at, updated_at.
-- `bid_proposals` — id, bid_request_id, provider_id (auth.users), company_name, contact_email, contact_phone, amount, currency, timeline_days, message, status (enum: submitted, shortlisted, accepted, rejected, withdrawn), created_at, updated_at.
-
-RLS:
-
-- Owner reads/writes their own `bid_requests`; providers read `open` requests.
-- Providers manage their own `bid_proposals`; owners read proposals on their requests and can update `status`.
-
-**UI**
-
-- On `marketplace/$id` (owner only): "Request bids from professionals" panel → opens dialog to create a `bid_request`, then lists received proposals with shortlist / accept / reject controls.
-- New `/_authenticated/dashboard` section: "My bid requests" table with proposal counts and status.
-- New public-ish `/_authenticated/pros` route: providers see open requests and submit a proposal.
-
-## 2. Financing application tracker
-
-**New table**
-
-- `financing_applications` — id, applicant_id, property_id (nullable), borrower_name, borrower_email, borrower_phone, monthly_income, employment_status, requested_amount, currency, purpose (enum: purchase, construction, refinance, bridge, other), tenure_months, property_value, property_address, notes, ai_summary (jsonb), status (enum: draft, submitted, under_review, approved, rejected, funded, withdrawn), lender_name, created_at, updated_at.
-
-RLS: applicant manages their own rows only.
-
-**UI**
-
-- `/_authenticated/financing` — list + create + status kanban-lite (grouped by status), status-change buttons, and a "Generate lender summary" action that calls a new `generateLenderSummary` server fn (Lovable AI, `google/gemini-3.6-flash`) producing a structured JSON brief (loan snapshot, borrower profile, property overview, risk flags, DTI estimate, recommended documents) stored in `ai_summary`. Preview + copy + download as text.
-- Optional link from `marketplace/$id` "Explore financing" CTA that pre-fills property fields.
-
-## 3. Insurance & risk brief per listing
-
-**New table**
-
-- `insurance_briefs` — id, property_id (unique), generated_by, ai_output (jsonb: keyRisks[], confidencePct, recommendedCoverage[], questionsForInsurer[], disclaimers[], generatedAt), created_at, updated_at.
-
-RLS: owner of the parent property manages; anyone authenticated can read (matches marketplace visibility).
-
-**UI**
-
-- `marketplace/$id`: new "Insurance & risk brief" card. Owner sees "Generate / regenerate" button; everyone sees the brief with confidence chips, risk list, recommended coverage, and questions to ask insurers. Downloadable as text.
-
-**Server fn**
-
-- `generateInsuranceBrief` (Lovable AI, `google/gemini-3.6-flash`) — inputs: property row + existing geotech/wave4 hints if present in `ai_summary`. Outputs structured JSON above with per-risk confidence.
+## Honest limits
+- Exact parcel boundaries can only appear where a surveyed parcel already exists in the database; for any deed without one, the pin stays "Approximate".
+- Street View works only on the published halisia site address and where Google has imagery.
+- Scores are never invented; missing data shows as a data gap.
 
 ## Technical notes
-
-- All new server logic uses `createServerFn` + `requireSupabaseAuth` in `src/lib/*.functions.ts` (bids, financing, insurance).
-- New client libs: `src/lib/bids.ts`, `src/lib/financing.ts`, `src/lib/insurance.ts` for typed CRUD via the browser client.
-- AI calls reuse the existing Lovable AI gateway helper used by `ai-listing.functions.ts` / `ai-narrative.functions.ts`. Handle 402/429 with a visible toast.
-- All new tables include GRANTs to `authenticated` + `service_role`, RLS enabled, and an `updated_at` trigger via existing `public.set_updated_at()`.
-- Routes: `src/routes/_authenticated/pros.tsx`, `src/routes/_authenticated/financing.tsx`; edits to `src/routes/marketplace.$id.tsx`, `src/routes/_authenticated/dashboard.tsx`, `src/components/halisia/navbar.tsx`.
-- No changes to Kenyan-flag palette, hero, or existing intelligence modules.
-
-## Verification
-
-- Typecheck + lint pass (`bun run fix && bun run typecheck && bun run lint`).
-- Manual smoke: create bid request → submit proposal from a second account → shortlist/accept. Create financing app → generate lender summary → change status. Generate insurance brief on a listing → confirm it renders for a visitor.
-
-## Out of scope (this pass)
-
-- Provider verification workflow, payments/escrow, messaging threads, notifications, actual lender API integrations, and insurer quotes. These can follow as a separate slice once the data models above are in production.
+- New: `src/lib/location-validation.ts`, `src/components/halisia/land-passport/*` (named to avoid the Spatial one), `src/routes/passport.tsx`, `src/components/halisia/hero-map.tsx`, unit tests.
+- Edits: `title-deed.tsx`, `explore.tsx`, `marketplace.$id.tsx`, `marketplace.index.tsx`, saved page, `index.tsx`, `map-view.tsx` (add optional Street View pano via Maps JS `StreetViewService`, browser key only).
+- No database changes, no new packages. Protected Spatial/Model Lab/Konza/massing untouched.
