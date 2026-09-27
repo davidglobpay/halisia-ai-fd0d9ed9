@@ -19,7 +19,7 @@ export function CoverageFreshness({ items }: { items: EvidenceItem[] }) {
   const { rows, totals } = buildCoverage(items);
   return (
     <section
-      className="rounded-2xl border border-foreground/10 bg-card p-4"
+      className="min-w-0 rounded-2xl border border-foreground/10 bg-card p-4"
       data-testid="passport-coverage-freshness"
       aria-labelledby="coverage-h"
     >
