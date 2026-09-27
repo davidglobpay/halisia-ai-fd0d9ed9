@@ -22,6 +22,7 @@ export type StudioViewerProps = {
   showParking: boolean;
   showLandscape: boolean;
   fitToken: number;
+  generated: { use: "residential" | "commercial" | "mixed"; floors: number } | null;
   onState?: (state: { loading: boolean; error: string | null }) => void;
 };
 
@@ -140,6 +141,38 @@ function makeSite(
   return root;
 }
 
+function makeGeneratedMassing(
+  widthM: number,
+  depthM: number,
+  use: "residential" | "commercial" | "mixed",
+  floors: number,
+): THREE.Group {
+  const root = new THREE.Group();
+  root.name = "generated-concept-massing";
+  const count = use === "residential" ? 2 : 1;
+  const buildingWidth = Math.min(widthM * (count === 2 ? 0.28 : 0.5), use === "commercial" ? 30 : 20);
+  const buildingDepth = Math.min(depthM * (count === 2 ? 0.34 : 0.46), 24);
+  const height = Math.max(3, floors * 3.1);
+  const facade = use === "commercial" ? 0xb78952 : use === "mixed" ? 0xd1b875 : 0xd9d1bd;
+  for (let i = 0; i < count; i += 1) {
+    const building = box(buildingWidth, height, buildingDepth, facade);
+    building.position.set((i - (count - 1) / 2) * (buildingWidth + 3), height / 2, -depthM * 0.05);
+    building.castShadow = true;
+    building.receiveShadow = true;
+    root.add(building);
+    for (let floor = 1; floor <= floors; floor += 1) {
+      const band = box(buildingWidth + 0.12, 0.1, buildingDepth + 0.12, 0x365844);
+      band.position.set(building.position.x, floor * 3.1 - 0.15, building.position.z);
+      root.add(band);
+    }
+    const roof = box(buildingWidth * 0.86, 0.45, buildingDepth * 0.86, 0x6a5540);
+    roof.position.set(building.position.x, height + 0.22, building.position.z);
+    roof.castShadow = true;
+    root.add(roof);
+  }
+  return root;
+}
+
 function applyEnvironment(engine: Engine, mode: StudioEnvironment) {
   const bg = mode === "night" ? 0x26352d : mode === "neutral" ? 0xe7e0d2 : 0xc7d6c5;
   engine.scene.background = new THREE.Color(bg);
@@ -173,6 +206,7 @@ export default function StudioViewerInternal(props: StudioViewerProps) {
     showParking,
     showLandscape,
     fitToken,
+    generated,
     onState,
   } = props;
   const hostRef = useRef<HTMLDivElement>(null);
@@ -256,6 +290,15 @@ export default function StudioViewerInternal(props: StudioViewerProps) {
       showLandscape,
     );
     engine.content.add(site);
+    if (generated) {
+      const massing = makeGeneratedMassing(widthM, depthM, generated.use, generated.floors);
+      massing.rotation.y = THREE.MathUtils.degToRad(rotationDeg);
+      massing.scale.setScalar(scalePct / 100);
+      engine.content.add(massing);
+      frame(engine);
+      onState?.({ loading: false, error: null });
+      return () => controller.abort();
+    }
     frame(engine);
 
     loadGlbBytes(concept.modelUrl, { signal: controller.signal, retries: 1 })
@@ -314,6 +357,7 @@ export default function StudioViewerInternal(props: StudioViewerProps) {
     scalePct,
     showParking,
     showLandscape,
+    generated,
     onState,
   ]);
 

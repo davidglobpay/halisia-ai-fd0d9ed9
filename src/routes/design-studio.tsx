@@ -80,6 +80,11 @@ function DesignStudioPage() {
   const [showParking, setShowParking] = useState(true);
   const [showLandscape, setShowLandscape] = useState(true);
   const [fitToken, setFitToken] = useState(0);
+  const [generated, setGenerated] = useState(false);
+  const [generatedUse, setGeneratedUse] = useState<"residential" | "commercial" | "mixed">(
+    "residential",
+  );
+  const [generatedFloors, setGeneratedFloors] = useState(3);
   const [viewerState, setViewerState] = useState({ loading: true, error: null as string | null });
   const concept = useMemo(
     () => STUDIO_CONCEPTS.find((item) => item.id === conceptId) ?? STUDIO_CONCEPTS[0],
@@ -147,6 +152,7 @@ function DesignStudioPage() {
               showParking={showParking}
               showLandscape={showLandscape}
               fitToken={fitToken}
+              generated={generated ? { use: generatedUse, floors: generatedFloors } : null}
               onState={setViewerState}
             />
           ) : (
@@ -156,8 +162,10 @@ function DesignStudioPage() {
           )}
           <div className="pointer-events-none absolute inset-x-3 top-3 flex justify-between gap-3">
             <div className="rounded-lg bg-background/85 px-3 py-2 text-xs shadow-sm backdrop-blur">
-              <div className="font-semibold">{concept.name}</div>
-              <div className="text-muted-foreground">{concept.use}</div>
+              <div className="font-semibold">{generated ? "Generated concept massing" : concept.name}</div>
+              <div className="text-muted-foreground">
+                {generated ? `${generatedUse} · ${generatedFloors} floors` : concept.use}
+              </div>
             </div>
             <div
               role={viewerState.error ? "alert" : "status"}
@@ -189,6 +197,7 @@ function DesignStudioPage() {
                   data-testid={`studio-concept-${item.id}`}
                   aria-pressed={item.id === concept.id}
                   onClick={() => {
+                    setGenerated(false);
                     setConceptId(item.id);
                     setTopology(item.defaultTopology);
                     setRotationDeg(0);
@@ -207,6 +216,41 @@ function DesignStudioPage() {
             </div>
             <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{concept.context}</p>
             <p className="mt-1 text-xs text-muted-foreground">Site cues: {concept.landscape}.</p>
+            <div className="mt-3 rounded-xl border border-foreground/10 bg-card/70 p-3">
+              <button
+                type="button"
+                aria-pressed={generated}
+                onClick={() => setGenerated((value) => !value)}
+                className={`min-h-11 w-full rounded-lg px-3 text-sm font-semibold ${
+                  generated ? "bg-primary text-primary-foreground" : "border border-primary/40"
+                }`}
+                data-testid="studio-generate"
+              >
+                {generated ? "Using generated massing" : "Generate concept massing"}
+              </button>
+              {generated ? (
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <label className="grid gap-1 text-xs">
+                    Intended use
+                    <select
+                      value={generatedUse}
+                      onChange={(event) =>
+                        setGeneratedUse(event.target.value as typeof generatedUse)
+                      }
+                      className="min-h-11 rounded-lg border border-foreground/15 bg-background px-2"
+                    >
+                      <option value="residential">Residential</option>
+                      <option value="mixed">Mixed use</option>
+                      <option value="commercial">Commercial</option>
+                    </select>
+                  </label>
+                  <NumberField label="Floors" value={generatedFloors} onChange={(value) => setGeneratedFloors(Math.max(1, Math.min(12, value)))} />
+                  <p className="col-span-2 text-[11px] text-muted-foreground">
+                    Deterministic massing only. It is not an AI-generated architectural drawing.
+                  </p>
+                </div>
+              ) : null}
+            </div>
           </section>
 
           <section className="grid grid-cols-2 gap-3" aria-label="Simulation dimensions">
