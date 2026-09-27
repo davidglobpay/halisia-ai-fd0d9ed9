@@ -1,18 +1,31 @@
 import { useEffect, useState } from "react";
 
 const SESSION_KEY = "halisia:globe-intro:v1";
+const DURATION_MS = 3500;
+
+/** Stage labels shown as the globe animation flies in, in timeline order. */
+const STAGES = [
+  { at: 0, label: "World" },
+  { at: 0.24, label: "Africa" },
+  { at: 0.48, label: "Kenya" },
+  { at: 0.7, label: "Kenya · counties" },
+  { at: 0.88, label: "Nairobi" },
+] as const;
 
 /**
- * Globe → Africa → Kenya fly-in.
+ * Globe → continents → Africa → Kenya → counties → Nairobi fly-in.
  *
  * Plays once per browser session, the first time a map view mounts: a gold
- * graticule globe rotates toward Africa, then the camera pushes through to
- * the Kenya silhouette before handing over to the live map underneath.
- * Purely decorative — it never blocks pointer input for long and is skipped
- * entirely under Reduce Motion.
+ * graticule globe rotates and the camera pushes in through a fixed sequence
+ * of labelled stages (World, Africa, Kenya, Kenya's counties, Nairobi)
+ * before handing over to the live map underneath. Purely decorative — it
+ * never blocks pointer input for long, is a single lightweight inline SVG
+ * (no extra assets, no WebGL) so it costs nothing extra on mobile, and is
+ * skipped entirely under Reduce Motion.
  */
-export function GlobeIntro({ label = "Kenya" }: { label?: string }) {
+export function GlobeIntro({ label, finalLabel = "Kenya" }: { label?: string; finalLabel?: string }) {
   const [playing, setPlaying] = useState(false);
+  const [stageIndex, setStageIndex] = useState(0);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -25,16 +38,26 @@ export function GlobeIntro({ label = "Kenya" }: { label?: string }) {
       /* private mode — play once anyway */
     }
     setPlaying(true);
-    const t = window.setTimeout(() => setPlaying(false), 3500);
-    return () => window.clearTimeout(t);
+    setStageIndex(0);
+    const timers = STAGES.slice(1).map((stage, i) =>
+      window.setTimeout(() => setStageIndex(i + 1), Math.round(stage.at * DURATION_MS)),
+    );
+    const end = window.setTimeout(() => setPlaying(false), DURATION_MS);
+    return () => {
+      timers.forEach(window.clearTimeout);
+      window.clearTimeout(end);
+    };
   }, []);
 
   if (!playing) return null;
+
+  const currentLabel = STAGES[stageIndex].label === finalLabel ? finalLabel : label ?? STAGES[stageIndex].label;
 
   return (
     <div
       aria-hidden="true"
       data-testid="globe-intro"
+      data-stage={STAGES[stageIndex].label}
       className="pointer-events-none absolute inset-0 z-[600] grid place-items-center overflow-hidden rounded-[22px] bg-[var(--h-ivory,#f7f3ea)]"
     >
       <svg
@@ -94,10 +117,18 @@ export function GlobeIntro({ label = "Kenya" }: { label?: string }) {
             stroke="var(--h-green, #147b35)"
             strokeWidth="0.9"
           />
+          {/* Nairobi marker — only visible once the camera reaches the city stage */}
+          {stageIndex >= STAGES.length - 1 && (
+            <circle cx="116" cy="98" r="1.6" fill="var(--h-gold, #c08a2e)" />
+          )}
         </g>
       </svg>
-      <span className="absolute bottom-6 font-display text-[11px] uppercase tracking-[0.4em] text-muted-foreground">
-        {label}
+      <span
+        key={stageIndex}
+        data-testid="globe-intro-label"
+        className="halisia-globe-intro-label absolute bottom-6 font-display text-[11px] uppercase tracking-[0.4em] text-muted-foreground"
+      >
+        {currentLabel}
       </span>
     </div>
   );

@@ -973,6 +973,20 @@ html[data-reduced-motion="1"] *::after {
     animation: none !important;
   }
 }
+@keyframes halisia-globe-intro-label-fade {
+  0% { opacity: 0; transform: translateY(2px); }
+  20% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 1; }
+}
+.halisia-globe-intro-label {
+  animation: halisia-globe-intro-label-fade 260ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .halisia-globe-intro-label {
+    animation: none !important;
+  }
+}
+
 
 /*
  * Smooth layered elevation (opt-in). Five eased layers read as real depth on
