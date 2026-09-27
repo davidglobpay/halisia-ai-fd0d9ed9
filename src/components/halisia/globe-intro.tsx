@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const SESSION_KEY = "halisia:globe-intro:v1";
 const DURATION_MS = 3500;
@@ -30,32 +30,60 @@ export function GlobeIntro({
   label?: string;
   finalLabel?: string;
 }) {
-  const [playing, setPlaying] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [phase, setPhase] = useState<"waiting" | "playing" | "done">("waiting");
   const [stageIndex, setStageIndex] = useState(0);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) return;
-    try {
-      if (window.sessionStorage.getItem(SESSION_KEY)) return;
-      window.sessionStorage.setItem(SESSION_KEY, "1");
-    } catch {
-      /* private mode — play once anyway */
+    if (reduced) {
+      setPhase("done");
+      return;
     }
-    setPlaying(true);
-    setStageIndex(0);
-    const timers = STAGES.slice(1).map((stage, i) =>
-      window.setTimeout(() => setStageIndex(i + 1), Math.round(stage.at * DURATION_MS)),
+    try {
+      if (window.sessionStorage.getItem(SESSION_KEY)) {
+        setPhase("done");
+        return;
+      }
+    } catch {
+      /* Private mode — play when visible anyway. */
+    }
+
+    const root = rootRef.current;
+    if (!root) return;
+    const timers: number[] = [];
+    const play = () => {
+      try {
+        window.sessionStorage.setItem(SESSION_KEY, "1");
+      } catch {
+        /* Session storage is optional. */
+      }
+      setPhase("playing");
+      setStageIndex(0);
+      timers.push(
+        ...STAGES.slice(1).map((stage, i) =>
+          window.setTimeout(() => setStageIndex(i + 1), Math.round(stage.at * DURATION_MS)),
+        ),
+        window.setTimeout(() => setPhase("done"), DURATION_MS),
+      );
+    };
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return;
+        observer.disconnect();
+        play();
+      },
+      { threshold: 0.35 },
     );
-    const end = window.setTimeout(() => setPlaying(false), DURATION_MS);
+    observer.observe(root);
     return () => {
       timers.forEach(window.clearTimeout);
-      window.clearTimeout(end);
+      observer.disconnect();
     };
   }, []);
 
-  if (!playing) return null;
+  if (phase === "done") return null;
 
   const currentLabel =
     STAGES[stageIndex].label === finalLabel ? finalLabel : (label ?? STAGES[stageIndex].label);
@@ -63,12 +91,13 @@ export function GlobeIntro({
   return (
     <div
       aria-hidden="true"
+      ref={rootRef}
       data-testid="globe-intro"
-      data-stage={STAGES[stageIndex].label}
+      data-stage={phase === "playing" ? STAGES[stageIndex].label : "Waiting"}
       className="halisia-globe-scene pointer-events-none absolute inset-0 z-[600] grid place-items-center overflow-hidden rounded-[22px] bg-background"
     >
       <div className="halisia-globe-stars absolute inset-0" />
-      <svg
+      {phase === "playing" && <svg
         viewBox="0 0 200 200"
         className="halisia-globe-intro h-[70%] w-[70%]"
         role="presentation"
@@ -146,14 +175,14 @@ export function GlobeIntro({
             </g>
           )}
         </g>
-      </svg>
-      <span
+      </svg>}
+      {phase === "playing" && <span
         key={stageIndex}
         data-testid="globe-intro-label"
         className="halisia-globe-intro-label absolute bottom-6 font-display text-[11px] uppercase tracking-[0.4em] text-muted-foreground"
       >
         {currentLabel}
-      </span>
+      </span>}
     </div>
   );
 }
