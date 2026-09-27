@@ -4,7 +4,7 @@ import { fallback, zodValidator } from "@tanstack/zod-adapter";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState, type ReactNode } from "react";
-import { ArrowLeft, ChevronDown, Download, Loader2, Newspaper } from "lucide-react";
+import { ArrowLeft, Boxes, ChevronDown, Download, Loader2, Newspaper } from "lucide-react";
 import { MapView } from "@/components/halisia/map-view";
 import { StreetViewPanel } from "@/components/halisia/land-passport/street-view-panel";
 import { LocationStatusCard } from "@/components/halisia/land-passport/location-status";
@@ -26,6 +26,7 @@ import { getLocationIntel, type LocationIntel } from "@/lib/location-intel.funct
 import { reverseGeocode } from "@/lib/reverse-geocode.functions";
 import { runIntelligenceEngine } from "@/lib/intelligence-engine";
 import { getCountyFacts } from "@/lib/kenya-county-facts";
+import type { PassportAiExport } from "@/lib/passport-ai-evidence";
 import { fetchFeed, relativeTime } from "@/lib/pulse";
 import {
   STATUS_META,
@@ -200,6 +201,7 @@ function PassportPage() {
   const fetchIntel = useServerFn(getLocationIntel);
   const fetchRev = useServerFn(reverseGeocode);
   const [mode, setMode] = useState<"map" | "satellite" | "street">("satellite");
+  const [aiSummary, setAiSummary] = useState<PassportAiExport | null>(null);
   const ok = check.ok && check.lat != null && check.lng != null;
   const lat = check.lat ?? 0;
   const lng = check.lng ?? 0;
@@ -389,6 +391,14 @@ function PassportPage() {
             .join(" → ")}
         </p>
         <PassportLinks className="mt-3" target={{ lat, lng, ref: s.ref, status }} />
+        <Link
+          to="/design-studio"
+          search={{ lat, lng, ref: s.ref, label: s.label, status }}
+          className="mt-2 inline-flex min-h-10 items-center gap-2 rounded-full border border-accent/50 px-4 text-xs font-semibold text-foreground hover:bg-accent/10"
+          data-testid="open-design-studio"
+        >
+          <Boxes className="h-4 w-4 text-accent" /> Place a 3D development concept
+        </Link>
       </header>
 
       <PassportSummaryStrip
@@ -437,6 +447,7 @@ function PassportPage() {
           digest={evidenceDigest(ev.items)}
           place={placeName}
           coveragePct={ev.summary.coveragePct}
+          onSummary={setAiSummary}
         />
         <button
           type="button"
@@ -458,6 +469,7 @@ function PassportPage() {
               ledger: ev.ledger,
               coveragePct: ev.summary.coveragePct,
               generatedAt: `${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC`,
+              aiSummary,
             });
           }}
           className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground"

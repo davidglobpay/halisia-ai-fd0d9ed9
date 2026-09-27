@@ -29,6 +29,7 @@ const LINKS: Array<{ to: string; label: string }> = [
 
 // Finished public pages that previously had no menu entry.
 const MORE_LINKS: Array<{ to: string; label: string }> = [
+  { to: "/design-studio", label: "3D Design Studio" },
   { to: "/model-lab", label: "Model Lab" },
   { to: "/pulse", label: "Pulse news" },
   { to: "/compare-locations", label: "Compare locations" },
@@ -211,11 +212,7 @@ export function Navbar() {
           }`}
         >
           <ul className="flex flex-col gap-1 max-h-[calc(100vh-120px)] overflow-y-auto">
-            {[
-              ...LINKS,
-              ...MORE_LINKS,
-              ...(!loading && user ? MEMBER_LINKS : []),
-            ].map((l, idx) => {
+            {[...LINKS, ...MORE_LINKS, ...(!loading && user ? MEMBER_LINKS : [])].map((l, idx) => {
               const active = isActive(pathname, l.to);
               const groupStart =
                 idx === LINKS.length

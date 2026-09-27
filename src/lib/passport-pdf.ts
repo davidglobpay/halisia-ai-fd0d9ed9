@@ -7,6 +7,7 @@ import {
   type LedgerEntry,
 } from "./passport-evidence";
 import { BUCKET_META, buildCoverage, bucketOf } from "./passport-coverage";
+import { resolveAiEvidence, type PassportAiExport } from "./passport-ai-evidence";
 
 // Built-in Helvetica only covers WinAnsi; strip anything else.
 const clean = (s: string) =>
@@ -47,6 +48,7 @@ export function downloadPassportPdf(opts: {
   ledger: LedgerEntry[];
   coveragePct: number;
   generatedAt: string;
+  aiSummary?: PassportAiExport | null;
 }): string {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const W = doc.internal.pageSize.getWidth();
@@ -115,6 +117,44 @@ export function downloadPassportPdf(opts: {
     text(
       `${r.title} - sourced ${r.counts.sourced}, estimates ${r.counts.estimate}, AI ${r.counts.ai}, unavailable ${r.counts.unavailable}. Last retrieved: ${ts(r.latest)}. Stays current: ${r.policy}.`,
       8.5,
+    );
+  }
+  rule();
+
+  // Generated interpretation — only an already-completed user-requested summary.
+  text("HALISIA evidence interpretation", 13, ink, "bold");
+  if (!opts.aiSummary) {
+    text("AI interpretation was not generated for this Passport.", 9, muted);
+  } else {
+    const ai = resolveAiEvidence(opts.aiSummary.text, opts.items);
+    text(opts.aiSummary.text, 9);
+    y += 4;
+    text(
+      `Type: AI interpretation - not source data   |   Confidence: ${CONFIDENCE_LABEL[ai.confidence]}   |   Generated: ${ts(opts.aiSummary.generatedAt)}`,
+      8,
+      green,
+    );
+    text(`Confidence basis: ${ai.limitation}`, 8.5, muted);
+    if (ai.cited.length) {
+      text("Supporting evidence cited", 10, ink, "bold");
+      for (const item of ai.cited) {
+        text(
+          `[${item.id}] ${item.label} - ${item.source}; confidence ${CONFIDENCE_LABEL[item.confidence]}; retrieved ${ts(item.retrieved)}.`,
+          8.5,
+        );
+      }
+    }
+    if (ai.unknownIds.length) {
+      text(
+        `Unmatched citation codes: ${ai.unknownIds.map((id) => `[${id}]`).join(", ")}.`,
+        8.5,
+        muted,
+      );
+    }
+    text(
+      "Limitations: generated only from the current evidence rows. It is not a title search, survey, legal opinion, valuation, planning approval or independent verification.",
+      8.5,
+      muted,
     );
   }
   rule();

@@ -55,7 +55,7 @@ export function AIOrb({ context }: { context?: string }) {
         <button
           onClick={() => setOpen(true)}
           aria-label="Open HALISIA AI assistant"
-          className="fixed bottom-6 right-6 z-40 h-16 w-16 rounded-full animate-pulse-glow"
+          className="fixed bottom-5 right-4 z-40 h-12 w-12 rounded-full shadow-sm sm:right-5"
           style={{
             background: "radial-gradient(circle at 30% 30%, #37BD63, #147B35 55%, #102D1A)",
           }}
@@ -69,7 +69,7 @@ export function AIOrb({ context }: { context?: string }) {
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
             <div className="flex items-center gap-2">
               <div
-                className="h-8 w-8 rounded-full animate-pulse-glow"
+                className="h-8 w-8 rounded-full"
                 style={{
                   background: "radial-gradient(circle at 30% 30%, #37BD63, #147B35)",
                 }}
@@ -101,7 +101,7 @@ export function AIOrb({ context }: { context?: string }) {
             ))}
             {loading && (
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
+                <span className="h-1.5 w-1.5 rounded-full bg-accent" />
                 Analyzing signals…
               </div>
             )}

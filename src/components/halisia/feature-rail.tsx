@@ -48,6 +48,13 @@ const TOOLS: Tool[] = [
     Icon: MapPin,
   },
   {
+    to: "/design-studio",
+    label: "3D Design Studio",
+    blurb: "Place five Kenyan-context development concepts on dimensions you control.",
+    action: "Open Design Studio",
+    Icon: Boxes,
+  },
+  {
     to: "/model-lab",
     label: "3D Model Lab",
     blurb: "Place building massing on the plot and check the shadows it casts.",
@@ -119,8 +126,11 @@ export function FeatureRail() {
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className="text-[11px] uppercase tracking-[0.25em] text-accent">Start here</p>
-            <h2 id="tools-heading" className="mt-2 text-2xl md:text-4xl font-semibold tracking-tight">
-              Seven ways into a place.
+            <h2
+              id="tools-heading"
+              className="mt-2 text-2xl md:text-4xl font-semibold tracking-tight"
+            >
+              Eight ways into a place.
             </h2>
             <p className="mt-2 max-w-xl text-sm text-muted-foreground">
               Search above, or pick the tool that matches what you already have: a deed, a

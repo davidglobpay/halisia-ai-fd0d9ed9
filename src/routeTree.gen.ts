@@ -21,6 +21,7 @@ import { Route as ModelLabRouteImport } from './routes/model-lab'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as LogoQaRouteImport } from './routes/logo-qa'
 import { Route as ExploreRouteImport } from './routes/explore'
+import { Route as DesignStudioRouteImport } from './routes/design-studio'
 import { Route as ConnectionsRouteImport } from './routes/connections'
 import { Route as CompareLocationsRouteImport } from './routes/compare-locations'
 import { Route as CompareRouteImport } from './routes/compare'
@@ -109,6 +110,11 @@ const LogoQaRoute = LogoQaRouteImport.update({
 const ExploreRoute = ExploreRouteImport.update({
   id: '/explore',
   path: '/explore',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DesignStudioRoute = DesignStudioRouteImport.update({
+  id: '/design-studio',
+  path: '/design-studio',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConnectionsRoute = ConnectionsRouteImport.update({
@@ -266,6 +272,7 @@ export interface FileRoutesByFullPath {
   '/compare': typeof CompareRoute
   '/compare-locations': typeof CompareLocationsRoute
   '/connections': typeof ConnectionsRoute
+  '/design-studio': typeof DesignStudioRoute
   '/explore': typeof ExploreRoute
   '/logo-qa': typeof LogoQaRoute
   '/marketplace': typeof MarketplaceRouteWithChildren
@@ -308,6 +315,7 @@ export interface FileRoutesByTo {
   '/compare': typeof CompareRoute
   '/compare-locations': typeof CompareLocationsRoute
   '/connections': typeof ConnectionsRoute
+  '/design-studio': typeof DesignStudioRoute
   '/explore': typeof ExploreRoute
   '/logo-qa': typeof LogoQaRoute
   '/model-lab': typeof ModelLabRoute
@@ -351,6 +359,7 @@ export interface FileRoutesById {
   '/compare': typeof CompareRoute
   '/compare-locations': typeof CompareLocationsRoute
   '/connections': typeof ConnectionsRoute
+  '/design-studio': typeof DesignStudioRoute
   '/explore': typeof ExploreRoute
   '/logo-qa': typeof LogoQaRoute
   '/marketplace': typeof MarketplaceRouteWithChildren
@@ -395,6 +404,7 @@ export interface FileRouteTypes {
     | '/compare'
     | '/compare-locations'
     | '/connections'
+    | '/design-studio'
     | '/explore'
     | '/logo-qa'
     | '/marketplace'
@@ -437,6 +447,7 @@ export interface FileRouteTypes {
     | '/compare'
     | '/compare-locations'
     | '/connections'
+    | '/design-studio'
     | '/explore'
     | '/logo-qa'
     | '/model-lab'
@@ -479,6 +490,7 @@ export interface FileRouteTypes {
     | '/compare'
     | '/compare-locations'
     | '/connections'
+    | '/design-studio'
     | '/explore'
     | '/logo-qa'
     | '/marketplace'
@@ -523,6 +535,7 @@ export interface RootRouteChildren {
   CompareRoute: typeof CompareRoute
   CompareLocationsRoute: typeof CompareLocationsRoute
   ConnectionsRoute: typeof ConnectionsRoute
+  DesignStudioRoute: typeof DesignStudioRoute
   ExploreRoute: typeof ExploreRoute
   LogoQaRoute: typeof LogoQaRoute
   MarketplaceRoute: typeof MarketplaceRouteWithChildren
@@ -628,6 +641,13 @@ declare module '@tanstack/react-router' {
       path: '/explore'
       fullPath: '/explore'
       preLoaderRoute: typeof ExploreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/design-studio': {
+      id: '/design-studio'
+      path: '/design-studio'
+      fullPath: '/design-studio'
+      preLoaderRoute: typeof DesignStudioRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/connections': {
@@ -894,6 +914,7 @@ const rootRouteChildren: RootRouteChildren = {
   CompareRoute: CompareRoute,
   CompareLocationsRoute: CompareLocationsRoute,
   ConnectionsRoute: ConnectionsRoute,
+  DesignStudioRoute: DesignStudioRoute,
   ExploreRoute: ExploreRoute,
   LogoQaRoute: LogoQaRoute,
   MarketplaceRoute: MarketplaceRouteWithChildren,
