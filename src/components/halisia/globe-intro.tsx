@@ -97,11 +97,12 @@ export function GlobeIntro({
       className="halisia-globe-scene pointer-events-none absolute inset-0 z-[600] grid place-items-center overflow-hidden rounded-[22px] bg-background"
     >
       <div className="halisia-globe-stars absolute inset-0" />
-      {phase === "playing" && <svg
-        viewBox="0 0 200 200"
-        className="halisia-globe-intro h-[70%] w-[70%]"
-        role="presentation"
-      >
+      {phase === "playing" && (
+        <svg
+          viewBox="0 0 200 200"
+          className="halisia-globe-intro h-[70%] w-[70%]"
+          role="presentation"
+        >
         <g className="halisia-globe-intro-spin" style={{ transformOrigin: "100px 100px" }}>
           <circle
             cx="100"
@@ -175,14 +176,17 @@ export function GlobeIntro({
             </g>
           )}
         </g>
-      </svg>}
-      {phase === "playing" && <span
-        key={stageIndex}
-        data-testid="globe-intro-label"
-        className="halisia-globe-intro-label absolute bottom-6 font-display text-[11px] uppercase tracking-[0.4em] text-muted-foreground"
-      >
-        {currentLabel}
-      </span>}
+        </svg>
+      )}
+      {phase === "playing" && (
+        <span
+          key={stageIndex}
+          data-testid="globe-intro-label"
+          className="halisia-globe-intro-label absolute bottom-6 font-display text-[11px] uppercase tracking-[0.4em] text-muted-foreground"
+        >
+          {currentLabel}
+        </span>
+      )}
     </div>
   );
 }
