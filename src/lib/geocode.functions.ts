@@ -28,8 +28,9 @@ export const geocodeAddress = createServerFn({ method: "POST" })
       status: string;
       results: Array<{
         formatted_address: string;
-        geometry: { location: { lat: number; lng: number } };
+        geometry: { location: { lat: number; lng: number }; location_type?: string };
         place_id: string;
+        types?: string[];
       }>;
     };
     if (json.status !== "OK" || !json.results.length) {
@@ -42,5 +43,8 @@ export const geocodeAddress = createServerFn({ method: "POST" })
       lat: top.geometry.location.lat,
       lng: top.geometry.location.lng,
       placeId: top.place_id,
+      /** Google precision class: ROOFTOP | RANGE_INTERPOLATED | GEOMETRIC_CENTER | APPROXIMATE */
+      locationType: top.geometry.location_type ?? "APPROXIMATE",
+      types: top.types ?? [],
     };
   });

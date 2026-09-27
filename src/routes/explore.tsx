@@ -17,6 +17,7 @@ import { geocodeAddress } from "@/lib/geocode.functions";
 import { reverseGeocode } from "@/lib/reverse-geocode.functions";
 import { generateLocationDossier } from "@/lib/pdf-dossier";
 import { classifyMapError } from "@/lib/static-map-cache";
+import { PassportLinks } from "@/components/halisia/land-passport/passport-links";
 import {
   Layers,
   Satellite,
@@ -513,6 +514,22 @@ function Explore() {
             )}
             {pdfError && <div className="mb-2 text-xs text-amber-glow">{pdfError}</div>}
             <ShareLinkButton lat={active.lat} lng={active.lng} address={active.address} />
+            {loc ? (
+              <PassportLinks
+                className="mb-3"
+                target={{
+                  lat: loc.lat,
+                  lng: loc.lng,
+                  label: loc.address,
+                  source: "Explore search / map selection",
+                  status: "approximate",
+                }}
+              />
+            ) : (
+              <p className="mb-3 text-[11px] text-muted-foreground">
+                Showing the default Nairobi view. Search or pick a point to open a Land Passport.
+              </p>
+            )}
             <IntelligenceDashboard lat={active.lat} lng={active.lng} address={active.address} />
           </div>
         </div>

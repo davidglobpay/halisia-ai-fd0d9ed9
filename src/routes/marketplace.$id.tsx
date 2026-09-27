@@ -31,6 +31,7 @@ import {
 } from "@/lib/listing-brochure";
 import { ListingEditor, type ListingAiWithMeta } from "@/components/halisia/listing-editor";
 import { ListingServices } from "@/components/halisia/listing-services";
+import { PassportLinks } from "@/components/halisia/land-passport/passport-links";
 
 export const Route = createFileRoute("/marketplace/$id")({
   validateSearch: (s: Record<string, unknown>): { preview?: "1" } =>
@@ -266,6 +267,24 @@ function ListingDetail() {
                 recommendation. Expand any card for possible limitations.
               </p>
             </div>
+            {p.latitude != null && p.longitude != null ? (
+              <PassportLinks
+                className="mb-3"
+                target={{
+                  lat: Number(p.latitude),
+                  lng: Number(p.longitude),
+                  ref: p.title,
+                  label: p.address ?? p.title,
+                  source: "Seller-provided listing location",
+                  status: "user_provided",
+                  county: p.county ?? "",
+                }}
+              />
+            ) : (
+              <p className="mb-3 text-[11px] text-muted-foreground">
+                Land Passport unavailable: the seller has not added coordinates.
+              </p>
+            )}
             <LandIntelligenceScore
               address={p.address ?? p.title}
               lat={p.latitude ?? undefined}

@@ -16,6 +16,7 @@ import { Route as StyleGuideRouteImport } from './routes/style-guide'
 import { Route as SpatialRouteImport } from './routes/spatial'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ReportRouteImport } from './routes/report'
+import { Route as PassportRouteImport } from './routes/passport'
 import { Route as ModelLabRouteImport } from './routes/model-lab'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as LogoQaRouteImport } from './routes/logo-qa'
@@ -83,6 +84,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const ReportRoute = ReportRouteImport.update({
   id: '/report',
   path: '/report',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PassportRoute = PassportRouteImport.update({
+  id: '/passport',
+  path: '/passport',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ModelLabRoute = ModelLabRouteImport.update({
@@ -264,6 +270,7 @@ export interface FileRoutesByFullPath {
   '/logo-qa': typeof LogoQaRoute
   '/marketplace': typeof MarketplaceRouteWithChildren
   '/model-lab': typeof ModelLabRoute
+  '/passport': typeof PassportRoute
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/spatial': typeof SpatialRoute
@@ -304,6 +311,7 @@ export interface FileRoutesByTo {
   '/explore': typeof ExploreRoute
   '/logo-qa': typeof LogoQaRoute
   '/model-lab': typeof ModelLabRoute
+  '/passport': typeof PassportRoute
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/spatial': typeof SpatialRoute
@@ -347,6 +355,7 @@ export interface FileRoutesById {
   '/logo-qa': typeof LogoQaRoute
   '/marketplace': typeof MarketplaceRouteWithChildren
   '/model-lab': typeof ModelLabRoute
+  '/passport': typeof PassportRoute
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/spatial': typeof SpatialRoute
@@ -390,6 +399,7 @@ export interface FileRouteTypes {
     | '/logo-qa'
     | '/marketplace'
     | '/model-lab'
+    | '/passport'
     | '/report'
     | '/reset-password'
     | '/spatial'
@@ -430,6 +440,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/logo-qa'
     | '/model-lab'
+    | '/passport'
     | '/report'
     | '/reset-password'
     | '/spatial'
@@ -472,6 +483,7 @@ export interface FileRouteTypes {
     | '/logo-qa'
     | '/marketplace'
     | '/model-lab'
+    | '/passport'
     | '/report'
     | '/reset-password'
     | '/spatial'
@@ -515,6 +527,7 @@ export interface RootRouteChildren {
   LogoQaRoute: typeof LogoQaRoute
   MarketplaceRoute: typeof MarketplaceRouteWithChildren
   ModelLabRoute: typeof ModelLabRoute
+  PassportRoute: typeof PassportRoute
   ReportRoute: typeof ReportRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SpatialRoute: typeof SpatialRoute
@@ -580,6 +593,13 @@ declare module '@tanstack/react-router' {
       path: '/report'
       fullPath: '/report'
       preLoaderRoute: typeof ReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/passport': {
+      id: '/passport'
+      path: '/passport'
+      fullPath: '/passport'
+      preLoaderRoute: typeof PassportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/model-lab': {
@@ -878,6 +898,7 @@ const rootRouteChildren: RootRouteChildren = {
   LogoQaRoute: LogoQaRoute,
   MarketplaceRoute: MarketplaceRouteWithChildren,
   ModelLabRoute: ModelLabRoute,
+  PassportRoute: PassportRoute,
   ReportRoute: ReportRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SpatialRoute: SpatialRoute,

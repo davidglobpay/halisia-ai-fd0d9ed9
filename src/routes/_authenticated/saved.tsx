@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Star, StarOff, Trash2, MapPin, Building2 } from "lucide-react";
 import { listSavedItems, removeSavedItem, toggleFavorite, type SavedItem } from "@/lib/saved-items";
+import { PassportLinks } from "@/components/halisia/land-passport/passport-links";
 
 export const Route = createFileRoute("/_authenticated/saved")({
   head: () => ({
@@ -161,6 +162,18 @@ function Section({
                     >
                       Open
                     </Link>
+                  )}
+                  {i.kind !== "county" && i.latitude != null && i.longitude != null && (
+                    <PassportLinks
+                      compact
+                      target={{
+                        lat: i.latitude,
+                        lng: i.longitude,
+                        label: i.label,
+                        source: "Saved location",
+                        status: "user_provided",
+                      }}
+                    />
                   )}
                   <button
                     type="button"
