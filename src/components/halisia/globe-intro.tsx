@@ -42,6 +42,7 @@ export function GlobeIntro({
     } catch {
       if (reduced) return;
     }
+    const host = node.parentElement ?? node;
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (!entry?.isIntersecting) return;
@@ -64,7 +65,7 @@ export function GlobeIntro({
       },
       { threshold: 0.35 },
     );
-    observer.observe(node);
+    observer.observe(host);
   }, []);
 
   useEffect(() => {
