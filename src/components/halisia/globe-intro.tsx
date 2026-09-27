@@ -103,7 +103,7 @@ export function GlobeIntro({
           className="halisia-globe-intro h-[70%] w-[70%]"
           role="presentation"
         >
-        <g className="halisia-globe-intro-spin" style={{ transformOrigin: "100px 100px" }}>
+          <g className="halisia-globe-intro-spin" style={{ transformOrigin: "100px 100px" }}>
           <circle
             cx="100"
             cy="100"
@@ -175,7 +175,7 @@ export function GlobeIntro({
               <circle cx="116" cy="103" r="5" fill="none" />
             </g>
           )}
-        </g>
+          </g>
         </svg>
       )}
       {phase === "playing" && (
