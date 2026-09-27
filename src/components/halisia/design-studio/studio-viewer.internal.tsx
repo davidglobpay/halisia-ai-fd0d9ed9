@@ -162,6 +162,19 @@ function frame(engine: Engine) {
 }
 
 export default function StudioViewerInternal(props: StudioViewerProps) {
+  const {
+    concept,
+    widthM,
+    depthM,
+    topology,
+    environment,
+    rotationDeg,
+    scalePct,
+    showParking,
+    showLandscape,
+    fitToken,
+    onState,
+  } = props;
   const hostRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<Engine | null>(null);
   const requestRef = useRef(0);
@@ -194,7 +207,7 @@ export default function StudioViewerInternal(props: StudioViewerProps) {
     scene.add(hemi, sun, content);
     const engine = { renderer, scene, camera, controls, content, sun, hemi };
     engineRef.current = engine;
-    applyEnvironment(engine, props.environment);
+    applyEnvironment(engine, "day");
 
     const resize = () => {
       const width = host.clientWidth || 640;
@@ -224,28 +237,28 @@ export default function StudioViewerInternal(props: StudioViewerProps) {
 
   useEffect(() => {
     const engine = engineRef.current;
-    if (engine) applyEnvironment(engine, props.environment);
-  }, [props.environment]);
+    if (engine) applyEnvironment(engine, environment);
+  }, [environment]);
 
   useEffect(() => {
     const engine = engineRef.current;
     if (!engine) return;
     const token = ++requestRef.current;
     const controller = new AbortController();
-    props.onState?.({ loading: true, error: null });
+    onState?.({ loading: true, error: null });
     disposeSubtree(engine.content);
     engine.content.clear();
     const site = makeSite(
-      props.widthM,
-      props.depthM,
-      props.topology,
-      props.showParking,
-      props.showLandscape,
+      widthM,
+      depthM,
+      topology,
+      showParking,
+      showLandscape,
     );
     engine.content.add(site);
     frame(engine);
 
-    loadGlbBytes(props.concept.modelUrl, { signal: controller.signal, retries: 1 })
+    loadGlbBytes(concept.modelUrl, { signal: controller.signal, retries: 1 })
       .then(
         (bytes) =>
           new Promise<THREE.Group>((resolve, reject) => {
@@ -271,42 +284,43 @@ export default function StudioViewerInternal(props: StudioViewerProps) {
         const bounds = new THREE.Box3().setFromObject(model);
         const size = bounds.getSize(new THREE.Vector3());
         const centre = bounds.getCenter(new THREE.Vector3());
-        const targetWidth = Math.min(props.widthM * 0.52, Math.sqrt(props.concept.authoredFootprintSqm) * 1.2);
-        const targetDepth = Math.min(props.depthM * 0.52, props.concept.authoredFootprintSqm / targetWidth);
+        const targetWidth = Math.min(widthM * 0.52, Math.sqrt(concept.authoredFootprintSqm) * 1.2);
+        const targetDepth = Math.min(depthM * 0.52, concept.authoredFootprintSqm / targetWidth);
         const authored = Math.max(size.x || 1, size.z || 1);
         const target = Math.max(targetWidth, targetDepth);
-        const scale = (target / authored) * (props.scalePct / 100);
+        const scale = (target / authored) * (scalePct / 100);
         wrapper.scale.setScalar(scale);
         model.position.set(-centre.x, -bounds.min.y, -centre.z);
-        wrapper.rotation.y = THREE.MathUtils.degToRad(props.rotationDeg);
-        wrapper.position.set(props.widthM * 0.04, 0.08, -props.depthM * 0.06);
+        wrapper.rotation.y = THREE.MathUtils.degToRad(rotationDeg);
+        wrapper.position.set(widthM * 0.04, 0.08, -depthM * 0.06);
         engine.content.add(wrapper);
         frame(engine);
-        props.onState?.({ loading: false, error: null });
+        onState?.({ loading: false, error: null });
       })
       .catch((error: unknown) => {
         if ((error as Error)?.name === "AbortError" || token !== requestRef.current) return;
-        props.onState?.({
+        onState?.({
           loading: false,
           error: (error as Error)?.message || "The concept model could not be opened.",
         });
       });
     return () => controller.abort();
   }, [
-    props.concept,
-    props.widthM,
-    props.depthM,
-    props.topology,
-    props.rotationDeg,
-    props.scalePct,
-    props.showParking,
-    props.showLandscape,
+    concept,
+    widthM,
+    depthM,
+    topology,
+    rotationDeg,
+    scalePct,
+    showParking,
+    showLandscape,
+    onState,
   ]);
 
   useEffect(() => {
     const engine = engineRef.current;
     if (engine && engine.content.children.length) frame(engine);
-  }, [props.fitToken]);
+  }, [fitToken]);
 
   return <div ref={hostRef} className="h-full w-full" data-testid="design-studio-canvas" />;
 }
