@@ -29,6 +29,7 @@ const LINKS: Array<{ to: string; label: string }> = [
 
 // Finished public pages that previously had no menu entry.
 const MORE_LINKS: Array<{ to: string; label: string }> = [
+  { to: "/design-studio", label: "3D Design Studio" },
   { to: "/model-lab", label: "Model Lab" },
   { to: "/pulse", label: "Pulse news" },
   { to: "/compare-locations", label: "Compare locations" },

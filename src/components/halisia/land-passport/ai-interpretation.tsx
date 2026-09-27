@@ -2,16 +2,19 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Sparkles } from "lucide-react";
 import { summarisePassport } from "@/lib/passport-ai.functions";
+import type { PassportAiExport } from "@/lib/passport-ai-evidence";
 
 /** Optional AI reading of the evidence rows, kept apart from source data. */
 export function AiInterpretation({
   digest,
   place,
   coveragePct,
+  onSummary,
 }: {
   digest: string;
   place: string;
   coveragePct: number;
+  onSummary?: (summary: PassportAiExport | null) => void;
 }) {
   const run = useServerFn(summarisePassport);
   const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
@@ -28,9 +31,11 @@ export function AiInterpretation({
     if (r.ok) {
       setText(r.text);
       setState("done");
+      onSummary?.({ text: r.text, generatedAt: new Date().toISOString() });
     } else {
       setText(r.message);
       setState("error");
+      onSummary?.(null);
     }
   };
 

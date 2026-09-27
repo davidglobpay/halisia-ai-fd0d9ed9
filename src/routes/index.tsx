@@ -93,26 +93,14 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
             transition={{ duration: 0.9, ease: "easeOut" }}
             className="mx-auto flex max-w-3xl flex-col items-center text-center"
           >
-            {/* Cinematic 3D hero logo — layered halo, chromatic aberration
-                shadows, and a slow parallax tilt for depth. */}
+            {/* Static brand mark with restrained depth. */}
             <div className="relative mb-4 flex items-center justify-center [perspective:1200px]">
-              {/* Outer halo */}
               <div
                 aria-hidden="true"
-                className="absolute inset-0 -z-10 blur-3xl opacity-90 animate-pulse"
+                className="absolute inset-0 -z-10 blur-3xl opacity-50"
                 style={{
                   background:
                     "radial-gradient(closest-side, rgba(192,138,46,0.35), rgba(20,123,53,0.18) 55%, transparent 75%)",
-                }}
-              />
-              {/* Rotating conic aura */}
-              <div
-                aria-hidden="true"
-                className="absolute inset-0 -z-10 blur-2xl opacity-40 animate-[spin_18s_linear_infinite]"
-                style={{
-                  background:
-                    "conic-gradient(from 0deg, rgba(192,138,46,0.35), rgba(20,123,53,0.28), rgba(16,45,26,0.18), rgba(192,138,46,0.35))",
-                  borderRadius: "50%",
                 }}
               />
               <img
@@ -434,7 +422,7 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
       <Link
         to="/explore"
         preload="intent"
-        className="fixed z-50 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground px-5 py-3 text-sm font-semibold shadow-[0_8px_32px_-8px_rgba(20,123,53,0.55)] hover:brightness-110 hover:scale-105 transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background left-4 sm:left-6 bottom-[max(1rem,env(safe-area-inset-bottom))] sm:bottom-6"
+        className="fixed z-50 inline-flex min-h-9 items-center gap-1.5 rounded-full bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background left-3 sm:left-5 bottom-[max(0.75rem,env(safe-area-inset-bottom))] sm:bottom-5"
         aria-label="Launch HALISIA intelligence workspace"
         title="Launch HALISIA app"
       >
