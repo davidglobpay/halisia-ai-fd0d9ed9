@@ -51,15 +51,17 @@ export function GlobeIntro({ label, finalLabel = "Kenya" }: { label?: string; fi
 
   if (!playing) return null;
 
-  const currentLabel = STAGES[stageIndex].label === finalLabel ? finalLabel : label ?? STAGES[stageIndex].label;
+  const currentLabel =
+    STAGES[stageIndex].label === finalLabel ? finalLabel : (label ?? STAGES[stageIndex].label);
 
   return (
     <div
       aria-hidden="true"
       data-testid="globe-intro"
       data-stage={STAGES[stageIndex].label}
-      className="pointer-events-none absolute inset-0 z-[600] grid place-items-center overflow-hidden rounded-[22px] bg-[var(--h-ivory,#f7f3ea)]"
+      className="halisia-globe-scene pointer-events-none absolute inset-0 z-[600] grid place-items-center overflow-hidden rounded-[22px] bg-background"
     >
+      <div className="halisia-globe-stars absolute inset-0" />
       <svg
         viewBox="0 0 200 200"
         className="halisia-globe-intro h-[70%] w-[70%]"
@@ -75,6 +77,13 @@ export function GlobeIntro({ label, finalLabel = "Kenya" }: { label?: string; fi
             strokeOpacity="0.55"
             strokeWidth="0.8"
           />
+          {/* Simplified continent silhouettes establish a whole-world view. */}
+          <g className="halisia-globe-continents">
+            <path d="M47 58l14-14 22-6 10 9-7 12-12 4-5 17-14 8-10-12z" />
+            <path d="M72 91l14 8 4 22-8 31-10-10-5-28z" />
+            <path d="M107 45l18-8 31 12 8 16-18 9-14 18-18-8-10-19z" />
+            <path d="M147 122l16 4 8 14-11 13-17-8z" />
+          </g>
           {[18, 36, 54, 68].map((r) => (
             <ellipse
               key={r}
@@ -117,9 +126,18 @@ export function GlobeIntro({ label, finalLabel = "Kenya" }: { label?: string; fi
             stroke="var(--h-green, #147b35)"
             strokeWidth="0.9"
           />
+          {/* County-like subdivisions appear only during the Kenya stages. */}
+          {stageIndex >= 3 && (
+            <g className="halisia-kenya-counties" aria-hidden="true">
+              <path d="M106 99l17 2M104 105l19 2M108 112l12-17M114 116l2-21" />
+            </g>
+          )}
           {/* Nairobi marker — only visible once the camera reaches the city stage */}
           {stageIndex >= STAGES.length - 1 && (
-            <circle cx="116" cy="98" r="1.6" fill="var(--h-gold, #c08a2e)" />
+            <g className="halisia-nairobi-marker">
+              <circle cx="116" cy="103" r="2.4" />
+              <circle cx="116" cy="103" r="5" fill="none" />
+            </g>
           )}
         </g>
       </svg>
