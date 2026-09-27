@@ -75,13 +75,16 @@ export function GlobeIntro({
       if (rect.bottom <= 0 || rect.top >= window.innerHeight) return;
       window.removeEventListener("scroll", isVisible);
       window.removeEventListener("resize", isVisible);
+      window.clearInterval(visibilityTimer);
       play();
     };
+    const visibilityTimer = window.setInterval(isVisible, 120);
     window.addEventListener("scroll", isVisible, { passive: true });
     window.addEventListener("resize", isVisible, { passive: true });
     isVisible();
     return () => {
       timers.forEach(window.clearTimeout);
+      window.clearInterval(visibilityTimer);
       window.removeEventListener("scroll", isVisible);
       window.removeEventListener("resize", isVisible);
     };
