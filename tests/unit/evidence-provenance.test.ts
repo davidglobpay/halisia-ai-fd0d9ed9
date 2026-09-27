@@ -46,6 +46,39 @@ describe("evidence provenance taxonomy", () => {
     ).toBe(true);
   });
 
+  it("rejects malformed official provenance without claiming authenticity", () => {
+    const malformed: EvidenceProvenance = {
+      evidenceClass: "OFFICIAL_REGISTRY",
+      sourceLabel: "  ",
+      sourceUrl: "javascript:alert(1)",
+      sourceRecordId: " ",
+      retrievedAt: "not-a-timestamp",
+      licenceOrAuthority: "",
+    };
+
+    expect(canUseVerifiedLanguage(malformed)).toBe(false);
+    expect(provenanceGaps(malformed)).toEqual([
+      "sourceLabel",
+      "sourceUrl",
+      "sourceRecordId",
+      "retrievedAt",
+      "licenceOrAuthority",
+    ]);
+  });
+
+  it("requires a timestamped professional observation", () => {
+    const attestation: EvidenceProvenance = {
+      evidenceClass: "LICENSED_PROFESSIONAL",
+      sourceLabel: "Surveyor submission",
+      sourceRecordId: "TEST-ATTESTATION",
+      observedAt: "2026-09-15",
+      licenceOrAuthority: "TEST-LICENCE",
+    };
+
+    expect(canUseVerifiedLanguage(attestation)).toBe(false);
+    expect(provenanceGaps(attestation)).toEqual(["observedAt"]);
+  });
+
   it.each(["PUBLIC_OPEN_DATA", "USER_SUBMISSION", "MODEL_INFERENCE"] as const)(
     "never upgrades %s to verified language",
     (evidenceClass) => {
