@@ -145,7 +145,7 @@ function DesignStudioPage() {
       </p>
 
       <div className="mt-5 grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <section className="relative min-h-[52vh] overflow-hidden rounded-2xl border border-foreground/10 bg-black/20 xl:min-h-[720px]">
+        <section className="relative h-[58vh] min-h-[420px] max-h-[760px] overflow-hidden rounded-2xl border border-foreground/10 bg-black/20 sm:h-[68vh] xl:h-[720px]">
           {dimensionsValid ? (
             <StudioViewer
               concept={concept}

@@ -190,6 +190,18 @@ function frame(engine: Engine) {
   engine.controls.update();
 }
 
+function frameSite(engine: Engine, widthM: number, depthM: number) {
+  const extent = Math.max(widthM, depthM);
+  engine.controls.target.set(0, Math.max(2, extent * 0.04), 0);
+  engine.camera.position.set(extent * 0.72, extent * 0.62, extent * 0.82);
+  engine.camera.near = Math.max(0.05, extent / 1000);
+  engine.camera.far = Math.max(1000, extent * 30);
+  engine.camera.updateProjectionMatrix();
+  engine.controls.minDistance = Math.max(4, extent * 0.15);
+  engine.controls.maxDistance = extent * 8;
+  engine.controls.update();
+}
+
 export default function StudioViewerInternal(props: StudioViewerProps) {
   const {
     concept,
@@ -285,11 +297,11 @@ export default function StudioViewerInternal(props: StudioViewerProps) {
       massing.rotation.y = THREE.MathUtils.degToRad(rotationDeg);
       massing.scale.setScalar(scalePct / 100);
       engine.content.add(massing);
-      frame(engine);
+      frameSite(engine, widthM, depthM);
       onState?.({ loading: false, error: null });
       return () => controller.abort();
     }
-    frame(engine);
+    frameSite(engine, widthM, depthM);
 
     loadGlbBytes(concept.modelUrl, { signal: controller.signal, retries: 1 })
       .then(
@@ -328,7 +340,7 @@ export default function StudioViewerInternal(props: StudioViewerProps) {
         wrapper.rotation.y = THREE.MathUtils.degToRad(rotationDeg);
         wrapper.position.set(widthM * 0.04, 0.08, -depthM * 0.06);
         engine.content.add(wrapper);
-        frame(engine);
+        frameSite(engine, widthM, depthM);
         onState?.({ loading: false, error: null });
       })
       .catch((error: unknown) => {
