@@ -5,6 +5,7 @@ import { StreetViewPanel } from "@/components/halisia/land-passport/street-view-
 import { PassportLinks } from "@/components/halisia/land-passport/passport-links";
 import { geocodeAddress } from "@/lib/geocode.functions";
 import { classifyGeocode, STATUS_META, type LocationStatus } from "@/lib/location-validation";
+import { GlobeIntro } from "@/components/halisia/globe-intro";
 
 type Mode = "map" | "satellite" | "street";
 type Picked = { lat: number; lng: number; label: string; status: LocationStatus; gt?: string; source: string };
@@ -81,6 +82,7 @@ export function HeroMap() {
       </form>
       {err && <p className="mb-2 text-xs text-amber-glow">{err}</p>}
       <div className="relative h-[360px] sm:h-[440px] overflow-hidden rounded-3xl border border-foreground/10">
+        <GlobeIntro finalLabel="Nairobi" />
         {mode === "street" ? (
           picked ? (
             <StreetViewPanel lat={picked.lat} lng={picked.lng} className="absolute inset-0" />
