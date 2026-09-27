@@ -32,7 +32,11 @@ export function CoverageFreshness({ items }: { items: EvidenceItem[] }) {
       </p>
       <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
         {BUCKETS.map((b) => (
-          <li key={b} className="rounded-xl border border-foreground/10 p-2" title={BUCKET_META[b].hint}>
+          <li
+            key={b}
+            className="rounded-xl border border-foreground/10 p-2"
+            title={BUCKET_META[b].hint}
+          >
             <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
               <span className={`h-2 w-2 rounded-full ${TONE[b]}`} aria-hidden />
               {BUCKET_META[b].label}
@@ -61,7 +65,10 @@ export function CoverageFreshness({ items }: { items: EvidenceItem[] }) {
               <tr key={r.id} className="border-t border-foreground/5 align-top">
                 <td className="py-2 pr-2 font-medium">{r.title}</td>
                 <td className="py-2 pr-2">
-                  <div className="flex h-2 w-24 overflow-hidden rounded-full bg-foreground/5" aria-hidden>
+                  <div
+                    className="flex h-2 w-24 overflow-hidden rounded-full bg-foreground/5"
+                    aria-hidden
+                  >
                     {BUCKETS.map((b) =>
                       r.counts[b] ? (
                         <span
@@ -89,10 +96,14 @@ export function CoverageFreshness({ items }: { items: EvidenceItem[] }) {
         <summary className="cursor-pointer text-xs font-semibold">Show every specification</summary>
         <ul className="mt-2 grid gap-1 text-xs">
           {items.map((it) => (
-            <li key={it.id} className="flex flex-wrap justify-between gap-2 border-t border-foreground/5 py-1">
+            <li
+              key={it.id}
+              className="flex flex-wrap justify-between gap-2 border-t border-foreground/5 py-1"
+            >
               <span>{it.label}</span>
               <span className="text-muted-foreground">
-                {BUCKET_META[bucketOf(it.cls)].label} · {stamp(it.value == null ? null : it.retrieved)}
+                {BUCKET_META[bucketOf(it.cls)].label} ·{" "}
+                {stamp(it.value == null ? null : it.retrieved)}
               </span>
             </li>
           ))}

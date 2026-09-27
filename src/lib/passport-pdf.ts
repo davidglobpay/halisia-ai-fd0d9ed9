@@ -157,13 +157,20 @@ export function downloadPassportPdf(opts: {
     doc.setFontSize(7.5);
     doc.setTextColor(...muted);
     doc.text(
-      clean(`HALISIA Land Passport - not a title search, survey or valuation - page ${p} of ${pages}`),
+      clean(
+        `HALISIA Land Passport - not a title search, survey or valuation - page ${p} of ${pages}`,
+      ),
       M,
       H - 24,
     );
   }
 
-  const filename = `halisia-land-passport-${opts.place.replace(/[^a-z0-9]+/gi, "-").slice(0, 40).toLowerCase() || "location"}.pdf`;
+  const filename = `halisia-land-passport-${
+    opts.place
+      .replace(/[^a-z0-9]+/gi, "-")
+      .slice(0, 40)
+      .toLowerCase() || "location"
+  }.pdf`;
   doc.save(filename);
   return filename;
 }

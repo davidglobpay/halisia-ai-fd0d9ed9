@@ -4,7 +4,12 @@
  * provider. It is deliberately NOT called "verified": no row here has been
  * checked by a surveyor, registry or lawyer.
  */
-import { CHAPTERS, type ChapterId, type EvidenceClass, type EvidenceItem } from "./passport-evidence";
+import {
+  CHAPTERS,
+  type ChapterId,
+  type EvidenceClass,
+  type EvidenceItem,
+} from "./passport-evidence";
 
 export type Bucket = "sourced" | "estimate" | "ai" | "unavailable";
 
