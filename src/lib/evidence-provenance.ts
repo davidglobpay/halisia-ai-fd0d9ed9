@@ -2,7 +2,8 @@
  * Evidence provenance taxonomy for land-intelligence claims.
  *
  * Provenance and confidence are deliberately separate: a high-confidence
- * model output is still not an official registry fact.
+ * model output is still not an official registry fact. These checks establish
+ * structural completeness only; they do not authenticate a record or source.
  */
 export const EVIDENCE_CLASSES = [
   "OFFICIAL_REGISTRY",
@@ -39,30 +40,55 @@ const LABELS: Record<EvidenceClass, VerificationLabel> = {
   MODEL_INFERENCE: "Model estimate",
 };
 
+const ISO_TIMESTAMP =
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
+
+function isNonBlank(value: string | undefined): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function isHttpUrl(value: string | undefined): value is string {
+  if (!isNonBlank(value)) return false;
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "https:" || parsed.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
+function isIsoTimestamp(value: string | undefined): value is string {
+  return (
+    isNonBlank(value) &&
+    ISO_TIMESTAMP.test(value) &&
+    Number.isFinite(Date.parse(value))
+  );
+}
+
 export function verificationLabel(evidenceClass: EvidenceClass): VerificationLabel {
   return LABELS[evidenceClass];
 }
 
 export function provenanceGaps(p: EvidenceProvenance): string[] {
   const gaps: string[] = [];
-  if (!p.sourceLabel.trim()) gaps.push("sourceLabel");
+  if (!isNonBlank(p.sourceLabel)) gaps.push("sourceLabel");
 
   if (p.evidenceClass === "OFFICIAL_REGISTRY") {
-    if (!p.sourceUrl) gaps.push("sourceUrl");
-    if (!p.sourceRecordId) gaps.push("sourceRecordId");
-    if (!p.retrievedAt) gaps.push("retrievedAt");
-    if (!p.licenceOrAuthority) gaps.push("licenceOrAuthority");
+    if (!isHttpUrl(p.sourceUrl)) gaps.push("sourceUrl");
+    if (!isNonBlank(p.sourceRecordId)) gaps.push("sourceRecordId");
+    if (!isIsoTimestamp(p.retrievedAt)) gaps.push("retrievedAt");
+    if (!isNonBlank(p.licenceOrAuthority)) gaps.push("licenceOrAuthority");
   }
 
   if (p.evidenceClass === "LICENSED_PROFESSIONAL") {
-    if (!p.sourceRecordId) gaps.push("sourceRecordId");
-    if (!p.observedAt) gaps.push("observedAt");
-    if (!p.licenceOrAuthority) gaps.push("licenceOrAuthority");
+    if (!isNonBlank(p.sourceRecordId)) gaps.push("sourceRecordId");
+    if (!isIsoTimestamp(p.observedAt)) gaps.push("observedAt");
+    if (!isNonBlank(p.licenceOrAuthority)) gaps.push("licenceOrAuthority");
   }
 
   if (p.evidenceClass === "PUBLIC_OPEN_DATA") {
-    if (!p.sourceUrl) gaps.push("sourceUrl");
-    if (!p.retrievedAt) gaps.push("retrievedAt");
+    if (!isHttpUrl(p.sourceUrl)) gaps.push("sourceUrl");
+    if (!isIsoTimestamp(p.retrievedAt)) gaps.push("retrievedAt");
   }
 
   return gaps;
