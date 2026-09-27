@@ -8,7 +8,14 @@ import { classifyGeocode, STATUS_META, type LocationStatus } from "@/lib/locatio
 import { GlobeIntro } from "@/components/halisia/globe-intro";
 
 type Mode = "map" | "satellite" | "street";
-type Picked = { lat: number; lng: number; label: string; status: LocationStatus; gt?: string; source: string };
+type Picked = {
+  lat: number;
+  lng: number;
+  label: string;
+  status: LocationStatus;
+  gt?: string;
+  source: string;
+};
 
 /** Landing hero map: search, pan/zoom, click a point, Map / Satellite / Street View. */
 export function HeroMap() {
@@ -52,7 +59,11 @@ export function HeroMap() {
           <div className="text-[11px] uppercase tracking-[0.25em] text-accent">Live map</div>
           <h2 className="font-display text-2xl">Pick any point in Kenya</h2>
         </div>
-        <div role="tablist" aria-label="Map mode" className="inline-flex rounded-full border border-foreground/15 p-1">
+        <div
+          role="tablist"
+          aria-label="Map mode"
+          className="inline-flex rounded-full border border-foreground/15 p-1"
+        >
           {(["map", "satellite", "street"] as Mode[]).map((m) => (
             <button
               key={m}
@@ -60,7 +71,9 @@ export function HeroMap() {
               aria-selected={mode === m}
               onClick={() => setMode(m)}
               className={`min-h-[40px] rounded-full px-4 text-xs font-semibold capitalize transition ${
-                mode === m ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-foreground/5"
+                mode === m
+                  ? "bg-primary text-primary-foreground"
+                  : "text-foreground hover:bg-foreground/5"
               }`}
             >
               {m === "street" ? "Street View" : m}
@@ -76,7 +89,10 @@ export function HeroMap() {
           aria-label="Search map"
           className="min-h-[44px] flex-1 min-w-0 rounded-full border border-foreground/15 bg-card px-4 text-sm"
         />
-        <button className="min-h-[44px] rounded-full bg-primary px-4 text-primary-foreground" aria-label="Search">
+        <button
+          className="min-h-[44px] rounded-full bg-primary px-4 text-primary-foreground"
+          aria-label="Search"
+        >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
         </button>
       </form>
@@ -99,13 +115,21 @@ export function HeroMap() {
             mapType={mapType}
             theme="light"
             onMapClick={(p) =>
-              setPicked({ ...p, label: `${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}`, status: "user_provided", source: "Point you chose on the map" })
+              setPicked({
+                ...p,
+                label: `${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}`,
+                status: "user_provided",
+                source: "Point you chose on the map",
+              })
             }
           />
         )}
       </div>
       {picked && (
-        <div className="mt-3 rounded-2xl border border-foreground/10 bg-card/80 p-3 text-xs" data-testid="hero-map-selection">
+        <div
+          className="mt-3 rounded-2xl border border-foreground/10 bg-card/80 p-3 text-xs"
+          data-testid="hero-map-selection"
+        >
           <div className="font-medium text-foreground">{picked.label}</div>
           <div className="mt-0.5 font-mono text-[11px] text-muted-foreground">
             {picked.lat.toFixed(5)}, {picked.lng.toFixed(5)} · {STATUS_META[picked.status].label}
@@ -113,7 +137,14 @@ export function HeroMap() {
           <PassportLinks
             className="mt-2"
             compact
-            target={{ lat: picked.lat, lng: picked.lng, label: picked.label, source: picked.source, status: picked.status, gt: picked.gt }}
+            target={{
+              lat: picked.lat,
+              lng: picked.lng,
+              label: picked.label,
+              source: picked.source,
+              status: picked.status,
+              gt: picked.gt,
+            }}
           />
         </div>
       )}

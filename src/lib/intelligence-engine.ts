@@ -48,6 +48,7 @@
  */
 import type { LocationIntel, ProviderStatus } from "@/lib/location-intel.functions";
 import type { NarrativeOutput } from "@/lib/ai-narrative.functions";
+import type { Wave4Intel, ScoreExplain } from "@/lib/wave4-intel.functions";
 
 export type Persona = "investor" | "home-buyer" | "farmer" | "developer" | "business";
 
@@ -441,6 +442,55 @@ function notAssessed(
   };
 }
 
+const WAVE4_SOURCE = "OpenStreetMap via Overpass API";
+
+function wave4ConfidencePct(confidence: ScoreExplain["confidence"]): number | null {
+  if (confidence === "high") return 80;
+  if (confidence === "medium") return 60;
+  return null;
+}
+
+/**
+ * A public-data context signal, deliberately narrower than an investment
+ * return. It is published only when mapped-feature coverage is medium/high.
+ * It does not use prices, rents, sales, titles or approved plans.
+ */
+function scoreDevelopmentContext(wave4?: Wave4Intel): ModuleOutput | null {
+  const explanation = wave4?.breakdown.investment;
+  if (!wave4 || !explanation) return null;
+  const confidencePct = wave4ConfidencePct(explanation.confidence);
+  if (confidencePct == null) return null;
+
+  const usedSources = wave4.sources.filter((source) => source.used).map((source) => source.label);
+  const sources = usedSources.length > 0 ? usedSources : [WAVE4_SOURCE];
+  return {
+    id: "investment",
+    label: "Development context",
+    status: "measured",
+    score: explanation.score,
+    confidencePct,
+    grade: grade(explanation.score),
+    trend: null,
+    reasons: [
+      `Context indicator ${explanation.score}/100 from mapped access, services, climate and settlement anchors`,
+      "This describes present public-data context; it does not predict price, demand, yield or appreciation",
+    ],
+    sources,
+    missing: [
+      "Comparable sales and asking prices",
+      "Rents, yields and time-to-sell",
+      "Approved or funded future projects",
+    ],
+    limitations: [
+      explanation.note,
+      "OpenStreetMap completeness varies by location",
+      "Not a valuation, return forecast or investment recommendation",
+    ],
+    nextStep:
+      "Use a registered valuer and current comparable transactions before committing capital.",
+  };
+}
+
 /**
  * The seven questions this engine is asked but cannot answer. Each one used to
  * carry a score built from an unrelated proxy — most often a count of nearby
@@ -543,14 +593,19 @@ export function runIntelligenceEngine(
   intel?: LocationIntel,
   narrative?: NarrativeOutput,
   persona: Persona = "investor",
+  wave4?: Wave4Intel,
 ): DecisionOutput {
   void narrative; // The narrative is an LLM reading, never an input to a score.
 
+  const unavailable = unassessableModules();
+  const developmentContext = scoreDevelopmentContext(wave4);
   const modules: ModuleOutput[] = [
     scoreConstruction(intel),
     scoreEnvironment(intel),
     scoreInfrastructure(intel),
-    ...unassessableModules(),
+    ...unavailable.map((module) =>
+      module.id === "investment" && developmentContext ? developmentContext : module,
+    ),
   ];
 
   const measured = modules.filter(
@@ -581,7 +636,7 @@ export function runIntelligenceEngine(
     : "Nothing could be read for this point — every provider returned empty.";
 
   const headline = hasComposite
-    ? `Terrain and amenity reading ${reading}/100 for ${labelForPersona(persona).toLowerCase()}`
+    ? `Evidence-backed context reading ${reading}/100 for ${labelForPersona(persona).toLowerCase()}`
     : measured.length === 1
       ? `One reading available: ${measured[0].label.toLowerCase()} ${measured[0].score}/100`
       : "No readings available for this point";
@@ -612,7 +667,7 @@ export function runIntelligenceEngine(
 
   return {
     reading,
-    readingLabel: "Terrain and amenity reading",
+    readingLabel: "Evidence-backed context reading",
     grade: reading != null ? grade(reading) : null,
     confidencePct,
     scopeNote,
@@ -660,4 +715,4 @@ export const PERSONAS: { id: Persona; label: string; hint: string }[] = [
 
 /** Stated once, wherever a dossier is shown or exported. */
 export const DOSSIER_SCOPE =
-  "HALISIA reads three services for a location: the Google Maps Elevation API, the Google Air Quality API and Google Places. It holds no title, price, utility, crime or planning data, does not assert title, boundary or ownership, and publishes no recommendation to buy or not to buy.";
+  "HALISIA reads the Google Maps Elevation API, Google Air Quality API and Google Places for location readings; public-context readings list any additional runtime sources. It holds no title, transaction-price, utility-connection, crime or planning-approval data, does not assert title, boundary or ownership, and publishes no recommendation to buy or not to buy.";

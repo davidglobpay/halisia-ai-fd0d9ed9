@@ -32,6 +32,7 @@ import {
 import { useUserPersona } from "@/hooks/use-user-persona";
 import type { LocationIntel } from "@/lib/location-intel.functions";
 import type { NarrativeOutput } from "@/lib/ai-narrative.functions";
+import type { Wave4Intel } from "@/lib/wave4-intel.functions";
 import { getFeedback, setRating, flagIssue, type ModuleFeedback } from "@/lib/feedback-store";
 import { generateIntelligencePdf } from "@/lib/pdf-intelligence";
 
@@ -387,17 +388,19 @@ export function LandIntelligenceScore({
   address,
   lat,
   lng,
+  wave4,
 }: {
   intel?: LocationIntel;
   narrative?: NarrativeOutput;
   address?: string;
   lat?: number;
   lng?: number;
+  wave4?: Wave4Intel;
 }) {
   const [persona, setPersona] = useUserPersona();
   const decision = useMemo(
-    () => runIntelligenceEngine(intel, narrative, persona),
-    [intel, narrative, persona],
+    () => runIntelligenceEngine(intel, narrative, persona, wave4),
+    [intel, narrative, persona, wave4],
   );
   const hasReading = decision.reading != null;
   const t = hasReading ? tone(decision.reading!) : NEUTRAL_TONE;
@@ -559,8 +562,8 @@ export function LandIntelligenceScore({
           data-testid="due-diligence"
         >
           <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-amber-glow">
-            <ClipboardCheck className="h-3 w-3" /> HALISIA cannot assess these —{" "}
-            {decision.notAssessedCount} checks to run yourself
+            <ClipboardCheck className="h-3 w-3" /> Evidence still needed —{" "}
+            {decision.notAssessedCount} checks remain
           </div>
           <ul className="mt-2 grid gap-2 sm:grid-cols-2">
             {decision.dueDiligence.map((d) => (

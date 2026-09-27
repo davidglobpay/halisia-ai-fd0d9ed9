@@ -967,16 +967,62 @@ html[data-reduced-motion="1"] *::after {
 .halisia-globe-intro-spin {
   animation: halisia-globe-spin 3400ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
 }
+.halisia-globe-scene {
+  background:
+    radial-gradient(circle at 50% 48%, color-mix(in srgb, var(--h-green) 13%, transparent), transparent 38%),
+    var(--h-ivory);
+}
+.halisia-globe-stars {
+  opacity: 0.38;
+  background-image:
+    radial-gradient(circle at 12% 20%, var(--h-gold) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 76% 18%, var(--h-forest) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 88% 68%, var(--h-gold) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 24% 78%, var(--h-green) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 58% 10%, var(--h-forest) 0 0.8px, transparent 1.3px);
+}
+.halisia-globe-continents path {
+  fill: var(--h-forest);
+  fill-opacity: 0.09;
+  stroke: var(--h-forest);
+  stroke-opacity: 0.28;
+  stroke-width: 0.65;
+}
+.halisia-kenya-counties path {
+  fill: none;
+  stroke: var(--h-ivory);
+  stroke-opacity: 0.8;
+  stroke-width: 0.45;
+}
+.halisia-nairobi-marker circle:first-child {
+  fill: var(--h-gold);
+}
+.halisia-nairobi-marker circle:last-child {
+  stroke: var(--h-gold);
+  stroke-width: 0.7;
+  animation: halisia-nairobi-arrival 520ms ease-out forwards;
+}
+@keyframes halisia-nairobi-arrival {
+  from { opacity: 0.9; transform: scale(0.45); transform-origin: 116px 103px; }
+  to { opacity: 0; transform: scale(1.8); transform-origin: 116px 103px; }
+}
 @media (prefers-reduced-motion: reduce) {
   .halisia-globe-intro,
-  .halisia-globe-intro-spin {
+  .halisia-globe-intro-spin,
+  .halisia-nairobi-marker circle:last-child {
     animation: none !important;
   }
 }
 @keyframes halisia-globe-intro-label-fade {
-  0% { opacity: 0; transform: translateY(2px); }
-  20% { opacity: 1; transform: translateY(0); }
-  100% { opacity: 1; }
+  0% {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  20%,
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .halisia-globe-intro-label {
   animation: halisia-globe-intro-label-fade 260ms ease-out;

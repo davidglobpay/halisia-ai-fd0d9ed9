@@ -3,11 +3,8 @@ import { motion } from "framer-motion";
 import { Sparkles, MapPin, CircleSlash } from "lucide-react";
 import type { LocationIntel } from "@/lib/location-intel.functions";
 import type { NarrativeOutput } from "@/lib/ai-narrative.functions";
-import {
-  runIntelligenceEngine,
-  DOSSIER_SCOPE,
-  type ModuleOutput,
-} from "@/lib/intelligence-engine";
+import type { Wave4Intel } from "@/lib/wave4-intel.functions";
+import { runIntelligenceEngine, DOSSIER_SCOPE, type ModuleOutput } from "@/lib/intelligence-engine";
 import { useUserPersona } from "@/hooks/use-user-persona";
 
 /**
@@ -144,15 +141,17 @@ export function HeroSummary({
   lng,
   intel,
   narrative,
+  wave4,
 }: {
   address: string;
   lat: number;
   lng: number;
   intel?: LocationIntel;
   narrative?: NarrativeOutput;
+  wave4?: Wave4Intel;
 }) {
   const [persona] = useUserPersona();
-  const decision = runIntelligenceEngine(intel, narrative, persona);
+  const decision = runIntelligenceEngine(intel, narrative, persona, wave4);
   const reading = decision.reading;
   const tone = reading != null ? toneFor(reading) : NEUTRAL;
   const readingCount = useCountUp(reading ?? 0, 1100);
@@ -163,9 +162,7 @@ export function HeroSummary({
   // The narrative is a written read, not a measurement. It is shown as prose
   // and never converted into a number anywhere on this surface.
   const summary =
-    narrative?.paragraphs?.[0] ??
-    narrative?.overview ??
-    "HALISIA is reading this location…";
+    narrative?.paragraphs?.[0] ?? narrative?.overview ?? "HALISIA is reading this location…";
 
   return (
     <motion.section
