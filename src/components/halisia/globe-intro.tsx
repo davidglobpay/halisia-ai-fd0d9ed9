@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const SESSION_KEY = "halisia:globe-intro:v1";
 const DURATION_MS = 3500;
@@ -33,50 +33,30 @@ export function GlobeIntro({
   const [playing, setPlaying] = useState(false);
   const [stageIndex, setStageIndex] = useState(0);
   const timersRef = useRef<number[]>([]);
-  const frameRef = useRef<number | undefined>(undefined);
-  const startedRef = useRef(false);
-
-  const start = useCallback((node: HTMLDivElement | null) => {
-    if (!node || typeof window === "undefined") return;
+  useEffect(() => {
+    if (typeof window === "undefined") return;
     const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     try {
       if (reduced || window.sessionStorage.getItem(SESSION_KEY)) return;
     } catch {
       if (reduced) return;
     }
-    if (startedRef.current) return;
-    const host = node.parentElement ?? node;
-    const beginWhenVisible = () => {
-      const bounds = host.getBoundingClientRect();
-      const visible = bounds.bottom > 0 && bounds.top < window.innerHeight;
-      if (visible) {
-        startedRef.current = true;
-        setPlaying(true);
-        setStageIndex(0);
-        timersRef.current = [
-          ...STAGES.slice(1).map((stage, i) =>
-            window.setTimeout(() => setStageIndex(i + 1), Math.round(stage.at * DURATION_MS)),
-          ),
-          window.setTimeout(() => {
-            try {
-              window.sessionStorage.setItem(SESSION_KEY, "1");
-            } catch {
-              /* Session storage is optional. */
-            }
-            setPlaying(false);
-          }, DURATION_MS),
-        ];
-        return;
-      }
-      frameRef.current = window.requestAnimationFrame(beginWhenVisible);
-    };
-    frameRef.current = window.requestAnimationFrame(beginWhenVisible);
-  }, []);
-
-  useEffect(() => {
+    setPlaying(true);
+    timersRef.current = [
+      ...STAGES.slice(1).map((stage, i) =>
+        window.setTimeout(() => setStageIndex(i + 1), Math.round(stage.at * DURATION_MS)),
+      ),
+      window.setTimeout(() => {
+        try {
+          window.sessionStorage.setItem(SESSION_KEY, "1");
+        } catch {
+          /* Session storage is optional. */
+        }
+        setPlaying(false);
+      }, DURATION_MS),
+    ];
     return () => {
       timersRef.current.forEach(window.clearTimeout);
-      if (frameRef.current !== undefined) window.cancelAnimationFrame(frameRef.current);
     };
   }, []);
 
@@ -84,12 +64,11 @@ export function GlobeIntro({
     STAGES[stageIndex].label === finalLabel ? finalLabel : (label ?? STAGES[stageIndex].label);
 
   if (!playing) {
-    return <div ref={start} aria-hidden="true" className="pointer-events-none absolute inset-0" />;
+    return null;
   }
 
   return (
     <div
-      ref={start}
       aria-hidden="true"
       data-testid="globe-intro"
       data-stage={STAGES[stageIndex].label}
