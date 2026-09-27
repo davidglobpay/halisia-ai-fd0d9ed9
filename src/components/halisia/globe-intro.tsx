@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 const SESSION_KEY = "halisia:globe-intro:v1";
 const DURATION_MS = 3500;
@@ -30,67 +30,41 @@ export function GlobeIntro({
   label?: string;
   finalLabel?: string;
 }) {
-  const rootRef = useRef<HTMLDivElement>(null);
-  const [phase, setPhase] = useState<"waiting" | "playing" | "done">("waiting");
+  const [playing, setPlaying] = useState(false);
   const [stageIndex, setStageIndex] = useState(0);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     if (reduced) {
-      setPhase("done");
       return;
     }
     try {
       if (window.sessionStorage.getItem(SESSION_KEY)) {
-        setPhase("done");
         return;
       }
     } catch {
       /* Private mode — play when visible anyway. */
     }
 
-    const timers: number[] = [];
-    const play = () => {
-      setPhase("playing");
-      setStageIndex(0);
-      timers.push(
-        ...STAGES.slice(1).map((stage, i) =>
-          window.setTimeout(() => setStageIndex(i + 1), Math.round(stage.at * DURATION_MS)),
-        ),
-        window.setTimeout(() => {
-          try {
-            window.sessionStorage.setItem(SESSION_KEY, "1");
-          } catch {
-            /* Session storage is optional. */
-          }
-          setPhase("done");
-        }, DURATION_MS),
-      );
-    };
-    const isVisible = () => {
-      const currentRoot = rootRef.current;
-      if (!currentRoot) return;
-      const rect = (currentRoot.parentElement ?? currentRoot).getBoundingClientRect();
-      if (rect.bottom <= 0 || rect.top >= window.innerHeight) return;
-      window.removeEventListener("scroll", isVisible);
-      window.removeEventListener("resize", isVisible);
-      window.clearInterval(visibilityTimer);
-      play();
-    };
-    const visibilityTimer = window.setInterval(isVisible, 120);
-    window.addEventListener("scroll", isVisible, { passive: true });
-    window.addEventListener("resize", isVisible, { passive: true });
-    isVisible();
+    try {
+      window.sessionStorage.setItem(SESSION_KEY, "1");
+    } catch {
+      /* Session storage is optional. */
+    }
+    setPlaying(true);
+    setStageIndex(0);
+    const timers = STAGES.slice(1).map((stage, i) =>
+      window.setTimeout(() => setStageIndex(i + 1), Math.round(stage.at * DURATION_MS)),
+    );
+    const end = window.setTimeout(() => setPlaying(false), DURATION_MS);
     return () => {
       timers.forEach(window.clearTimeout);
-      window.clearInterval(visibilityTimer);
-      window.removeEventListener("scroll", isVisible);
-      window.removeEventListener("resize", isVisible);
+      window.clearTimeout(end);
     };
   }, []);
 
-  if (phase === "done") return null;
+  if (!playing) return null;
 
   const currentLabel =
     STAGES[stageIndex].label === finalLabel ? finalLabel : (label ?? STAGES[stageIndex].label);
@@ -98,14 +72,12 @@ export function GlobeIntro({
   return (
     <div
       aria-hidden="true"
-      ref={rootRef}
       data-testid="globe-intro"
-      data-stage={phase === "playing" ? STAGES[stageIndex].label : "Waiting"}
+      data-stage={STAGES[stageIndex].label}
       className="halisia-globe-scene pointer-events-none absolute inset-0 z-[600] grid place-items-center overflow-hidden rounded-[22px] bg-background"
     >
       <div className="halisia-globe-stars absolute inset-0" />
-      {phase === "playing" && (
-        <svg
+      <svg
           viewBox="0 0 200 200"
           className="halisia-globe-intro h-[70%] w-[70%]"
           role="presentation"
@@ -183,17 +155,14 @@ export function GlobeIntro({
               </g>
             )}
           </g>
-        </svg>
-      )}
-      {phase === "playing" && (
-        <span
+      </svg>
+      <span
           key={stageIndex}
           data-testid="globe-intro-label"
           className="halisia-globe-intro-label absolute bottom-6 font-display text-[11px] uppercase tracking-[0.4em] text-muted-foreground"
         >
           {currentLabel}
-        </span>
-      )}
+      </span>
     </div>
   );
 }
