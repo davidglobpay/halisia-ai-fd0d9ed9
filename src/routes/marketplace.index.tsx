@@ -644,8 +644,7 @@ function ListingRow({
         <Link to="/marketplace/$id" params={{ id: p.id }} className="font-medium text-sm">
           {p.title}
         </Link>
-        {(
-          <PassportLinks
+        <PassportLinks
             compact
             className="mt-1.5"
             target={{
@@ -657,8 +656,7 @@ function ListingRow({
               status: "user_provided",
               county: p.county ?? "",
             }}
-          />
-        )}
+          />}
         <div className="mt-1 text-[11px] text-muted-foreground flex flex-wrap items-center gap-1">
           <MapPin className="h-3 w-3" /> {p.address ?? p.county ?? "Kenya"}
           <span>·</span>
@@ -758,6 +756,19 @@ function ListingCard({
             <span className="text-[11px] text-muted-foreground">Open for readings</span>
           )}
         </div>
+        <PassportLinks
+            compact
+            
+            target={{
+              lat: p.latitude == null ? null : Number(p.latitude),
+              lng: p.longitude == null ? null : Number(p.longitude),
+              ref: p.title,
+              label: p.address ?? p.title,
+              source: p.latitude != null ? "Seller-provided listing location" : "Seller listing (no coordinates)",
+              status: "user_provided",
+              county: p.county ?? "",
+            }}
+          />
         <Actions p={p} compared={compared} onCompare={onCompare} />
         {reasons?.length ? (
           <div>

@@ -268,17 +268,20 @@ function ListingDetail() {
               </p>
             </div>
             <PassportLinks
-                className="mb-3"
-                target={{
-                  lat: p.latitude == null ? null : Number(p.latitude),
-                  lng: p.longitude == null ? null : Number(p.longitude),
-                  ref: p.title,
-                  label: p.address ?? p.title,
-                  source: p.latitude != null ? "Seller-provided listing location" : "Seller listing (no coordinates)",
-                  status: "user_provided",
-                  county: p.county ?? "",
-                }}
-              />
+              className="mb-3"
+              target={{
+                lat: p.latitude == null ? null : Number(p.latitude),
+                lng: p.longitude == null ? null : Number(p.longitude),
+                ref: p.title,
+                label: p.address ?? p.title,
+                source:
+                  p.latitude != null
+                    ? "Seller-provided listing location"
+                    : "Seller listing (no coordinates)",
+                status: "user_provided",
+                county: p.county ?? "",
+              }}
+            />
             <LandIntelligenceScore
               address={p.address ?? p.title}
               lat={p.latitude ?? undefined}

@@ -1,6 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { IdCard, Landmark } from "lucide-react";
-import { countyByName, countyForPoint, validateCoordinate, type LocationStatus } from "@/lib/location-validation";
+import {
+  countyByName,
+  countyForPoint,
+  validateCoordinate,
+  type LocationStatus,
+} from "@/lib/location-validation";
 
 export type PassportTarget = {
   lat: number | null | undefined;
@@ -57,7 +62,10 @@ export function PassportLinks({
             <Landmark className="h-3.5 w-3.5 text-accent" /> County Intelligence · {named.name}
           </Link>
         )}
-        <span className="basis-full text-[11px] text-muted-foreground" data-testid="passport-location-limit">
+        <span
+          className="basis-full text-[11px] text-muted-foreground"
+          data-testid="passport-location-limit"
+        >
           No map position: {check.issues[0]} Location-based sections will be unavailable.
         </span>
       </div>
