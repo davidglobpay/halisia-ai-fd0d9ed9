@@ -15,12 +15,20 @@ export function StreetViewPanel({ lat, lng, className = "" }: { lat: number; lng
     let cancelled = false;
     let pano: google.maps.StreetViewPanorama | null = null;
     setState("loading");
+    const onAuthFail = () => {
+      if (cancelled) return;
+      if (pano) pano.setVisible(false);
+      setState("error");
+      setMsg(
+        "Street View unavailable: Google Maps has not authorised this web address yet. Map and satellite views still work.",
+      );
+    };
+    window.addEventListener("halisia:maps-auth-failed", onAuthFail);
     loadGoogleMaps()
       .then((g) => {
         if (cancelled) return;
         if (window.__halisiaMapsAuthFailed) {
-          setState("error");
-          setMsg("Google Maps is not authorised on this web address, so Street View cannot load.");
+          onAuthFail();
           return;
         }
         new g.maps.StreetViewService().getPanorama(
@@ -49,6 +57,7 @@ export function StreetViewPanel({ lat, lng, className = "" }: { lat: number; lng
       });
     return () => {
       cancelled = true;
+      window.removeEventListener("halisia:maps-auth-failed", onAuthFail);
       if (pano) {
         window.google?.maps?.event?.clearInstanceListeners(pano);
         pano.setVisible(false);
