@@ -23,6 +23,7 @@ import {
   type ModuleId,
 } from "@/lib/intelligence-engine";
 import type { LocationIntel } from "@/lib/location-intel.functions";
+import type { Wave4Intel } from "@/lib/wave4-intel.functions";
 
 const read = (p: string) => readFileSync(resolve(process.cwd(), p), "utf8");
 
@@ -95,6 +96,17 @@ const EMPTY = intel({ elevation: null, aqi: null, counts: 0 });
  */
 const SPREAD = intel({ elevation: 10, aqi: 20, counts: 8 });
 
+const WAVE4 = {
+  breakdown: {
+    investment: {
+      score: 71,
+      confidence: "medium",
+      note: "Composite view — not a valuation.",
+    },
+  },
+  sources: [{ label: "OpenStreetMap", url: "https://www.openstreetmap.org", used: true }],
+} as Wave4Intel;
+
 describe("a module scores only when its data arrived", () => {
   it("measures terrain, environment and amenity access when every provider answers", () => {
     const d = runIntelligenceEngine(FULL, undefined, "investor");
@@ -128,6 +140,31 @@ describe("a module scores only when its data arrived", () => {
         expect(m.confidencePct).toBeNull();
       }
     }
+  });
+
+  it("publishes a sourced development-context indicator when public-data coverage supports it", () => {
+    const d = runIntelligenceEngine(FULL, undefined, "investor", WAVE4);
+    const context = d.modules.find((module) => module.id === "investment");
+    expect(context).toMatchObject({
+      label: "Development context",
+      status: "measured",
+      score: 71,
+      confidencePct: 60,
+    });
+    expect(context?.sources).toEqual(["OpenStreetMap"]);
+    expect(context?.limitations.join(" ")).toContain("not a valuation");
+  });
+
+  it("withholds the context indicator when public-data coverage is low", () => {
+    const low = {
+      ...WAVE4,
+      breakdown: {
+        ...WAVE4.breakdown,
+        investment: { ...WAVE4.breakdown.investment, confidence: "low" as const },
+      },
+    };
+    const d = runIntelligenceEngine(FULL, undefined, "investor", low);
+    expect(d.modules.find((module) => module.id === "investment")?.status).toBe("not-assessed");
   });
 
   it("drops a module to not-assessed when only its provider fails", () => {

@@ -14,6 +14,7 @@ import { EvidenceLedger } from "@/components/halisia/land-passport/evidence-ledg
 import { PassportSummaryStrip } from "@/components/halisia/land-passport/summary-strip";
 import { AiInterpretation } from "@/components/halisia/land-passport/ai-interpretation";
 import { CoverageFreshness } from "@/components/halisia/land-passport/coverage-freshness";
+import { LandIntelligenceScore } from "@/components/halisia/land-intelligence-score";
 import { getGeotechIntel } from "@/lib/geotech.functions";
 import { getWave4Intel } from "@/lib/wave4-intel.functions";
 import {
@@ -318,7 +319,7 @@ function PassportPage() {
 
   const status = s.status as LocationStatus;
   const intel = intelQ.data;
-  const engine = runIntelligenceEngine(intel);
+  const engine = runIntelligenceEngine(intel, undefined, "investor", w4Q.data);
   const mod = (id: string) => engine.modules.find((m) => m.id === id);
   const admin = revQ.data?.admin;
   const discrepancy = compareCounty({ lat, lng }, s.county, s.source || "Pin");
@@ -477,6 +478,13 @@ function PassportPage() {
           <Download className="h-4 w-4" /> Download Passport PDF
         </button>
         <CoverageFreshness items={ev.items} />
+        <LandIntelligenceScore
+          intel={intel}
+          wave4={w4Q.data}
+          address={placeName}
+          lat={lat}
+          lng={lng}
+        />
         <EvidenceLedger entries={ev.ledger} />
         <Section n={1} title="Identity & position" tag="source" open>
           <Row k="Location status" v={STATUS_META[status].label} />

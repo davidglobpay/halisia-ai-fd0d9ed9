@@ -48,6 +48,7 @@ import { GeotechRisksInline } from "@/components/halisia/geotech-risks-inline";
 import { HeroSummary } from "@/components/halisia/hero-summary";
 import { ExecutiveSummary } from "@/components/halisia/executive-summary";
 import { LandIntelligenceScore } from "@/components/halisia/land-intelligence-score";
+import { getWave4Intel, type Wave4Intel } from "@/lib/wave4-intel.functions";
 
 type TabId =
   | "overview"
@@ -129,6 +130,11 @@ export function IntelligenceDashboard({
     queryFn: () => getLocationIntel({ data: { lat, lng } }),
     staleTime: 5 * 60 * 1000,
   });
+  const wave4Q = useQuery<Wave4Intel>({
+    queryKey: ["wave4", lat.toFixed(3), lng.toFixed(3)],
+    queryFn: () => getWave4Intel({ data: { lat, lng } }),
+    staleTime: 15 * 60 * 1000,
+  });
   const devMode = useDevMode();
 
   const counts = intelQ.data
@@ -176,6 +182,7 @@ export function IntelligenceDashboard({
         lng={lng}
         intel={intelQ.data}
         narrative={narrativeQ.data}
+        wave4={wave4Q.data}
       />
 
       {/* AI Executive Summary — simple / professional / technical */}
@@ -188,6 +195,7 @@ export function IntelligenceDashboard({
         address={address}
         lat={lat}
         lng={lng}
+        wave4={wave4Q.data}
       />
 
       {/* Header card */}

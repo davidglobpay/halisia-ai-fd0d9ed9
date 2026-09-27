@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Sparkles, MapPin, CircleSlash } from "lucide-react";
 import type { LocationIntel } from "@/lib/location-intel.functions";
 import type { NarrativeOutput } from "@/lib/ai-narrative.functions";
+import type { Wave4Intel } from "@/lib/wave4-intel.functions";
 import {
   runIntelligenceEngine,
   DOSSIER_SCOPE,
@@ -144,15 +145,17 @@ export function HeroSummary({
   lng,
   intel,
   narrative,
+  wave4,
 }: {
   address: string;
   lat: number;
   lng: number;
   intel?: LocationIntel;
   narrative?: NarrativeOutput;
+  wave4?: Wave4Intel;
 }) {
   const [persona] = useUserPersona();
-  const decision = runIntelligenceEngine(intel, narrative, persona);
+  const decision = runIntelligenceEngine(intel, narrative, persona, wave4);
   const reading = decision.reading;
   const tone = reading != null ? toneFor(reading) : NEUTRAL;
   const readingCount = useCountUp(reading ?? 0, 1100);
