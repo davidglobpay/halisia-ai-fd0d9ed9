@@ -15,7 +15,12 @@ import { PassportSummaryStrip } from "@/components/halisia/land-passport/summary
 import { AiInterpretation } from "@/components/halisia/land-passport/ai-interpretation";
 import { getGeotechIntel } from "@/lib/geotech.functions";
 import { getWave4Intel } from "@/lib/wave4-intel.functions";
-import { CHAPTERS, buildPassportEvidence, evidenceDigest, type ChapterId } from "@/lib/passport-evidence";
+import {
+  CHAPTERS,
+  buildPassportEvidence,
+  evidenceDigest,
+  type ChapterId,
+} from "@/lib/passport-evidence";
 import { getLocationIntel, type LocationIntel } from "@/lib/location-intel.functions";
 import { reverseGeocode } from "@/lib/reverse-geocode.functions";
 import { runIntelligenceEngine } from "@/lib/intelligence-engine";
@@ -347,7 +352,9 @@ function PassportPage() {
     locationConfidencePct: locConf,
     sourceLabel: s.source,
     countyName: county?.name ?? null,
-    admin: admin ? { subCounty: admin.subCounty, ward: admin.ward, locality: admin.locality } : null,
+    admin: admin
+      ? { subCounty: admin.subCounty, ward: admin.ward, locality: admin.locality }
+      : null,
     facts,
     intel,
     intelState: qs(intelQ),
@@ -389,7 +396,10 @@ function PassportPage() {
         available={ev.summary.available}
         total={ev.summary.total}
         coveragePct={ev.summary.coveragePct}
-        refreshed={new Date(openedAt).toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" })}
+        refreshed={new Date(openedAt).toLocaleTimeString("en-KE", {
+          hour: "2-digit",
+          minute: "2-digit",
+        })}
       />
 
       <div className="mt-5 overflow-hidden rounded-3xl border border-foreground/10">
@@ -424,16 +434,13 @@ function PassportPage() {
       </div>
 
       <div className="mt-4 grid gap-3">
+        <AiInterpretation
+          digest={evidenceDigest(ev.items)}
+          place={placeName}
+          coveragePct={ev.summary.coveragePct}
+        />
+        <EvidenceLedger entries={ev.ledger} />
         <Section n={1} title="Identity & position" tag="source" open>
-          <Row k="Reference" v={s.ref || "None supplied"} />
-          <Row
-            k="Coordinates"
-            v={
-              <span className="font-mono">
-                {lat.toFixed(6)}, {lng.toFixed(6)}
-              </span>
-            }
-          />
           <Row k="Location status" v={STATUS_META[status].label} />
           <Row k="County" v={county ? `${county.name} (code ${county.code})` : "No county match"} />
           <Row
@@ -451,9 +458,6 @@ function PassportPage() {
               <EvidenceRow key={it.id} item={it} />
             ))}
           </ul>
-        </Section>
-
-        <Section n={1} title="Location verification" tag="source" open>
           <LocationStatusCard
             status={status}
             geocodeType={s.gt || null}
@@ -492,7 +496,9 @@ function PassportPage() {
             key={ch.id}
             n={idx + 3}
             title={ch.title}
-            tag={ch.id === "trust" ? "gap" : ch.id === "build" || ch.id === "market" ? "ai" : "source"}
+            tag={
+              ch.id === "trust" ? "gap" : ch.id === "build" || ch.id === "market" ? "ai" : "source"
+            }
             open={ch.id === "trust"}
           >
             <p className="text-[11px] text-muted-foreground">{ch.blurb}</p>
@@ -514,7 +520,9 @@ function PassportPage() {
                     <Row k="Still needed" v="Zoning letter, survey, soil test" />
                   </div>
                 ))}
-                <p className="text-[11px] text-muted-foreground">Suggestions only — not planning approval.</p>
+                <p className="text-[11px] text-muted-foreground">
+                  Suggestions only — not planning approval.
+                </p>
               </div>
             )}
             {ch.id === "build" && geoQ.data?.disclaimer && (
@@ -530,30 +538,50 @@ function PassportPage() {
               <>
                 <div className="mt-3 text-xs">
                   <div className="font-medium">Verification ladder</div>
-                  <ul className="mt-1 space-y-0.5 text-muted-foreground" data-testid="verification-ladder">
+                  <ul
+                    className="mt-1 space-y-0.5 text-muted-foreground"
+                    data-testid="verification-ladder"
+                  >
                     <li>Source listed: {s.source ? "yes — " + s.source : "no source stated"}</li>
-                    <li>Data completeness: {ev.summary.coveragePct}% of passport facts available</li>
+                    <li>
+                      Data completeness: {ev.summary.coveragePct}% of passport facts available
+                    </li>
                     <li>Documents reviewed: no</li>
                     <li>Evidence verified: no</li>
                     <li>Regulator verified: no</li>
                   </ul>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-3 text-xs">
-                  <a href="https://ardhisasa.lands.go.ke" target="_blank" rel="noopener noreferrer" className="text-accent">
+                  <a
+                    href="https://ardhisasa.lands.go.ke"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-accent"
+                  >
                     Open Ardhisasa (official) →
                   </a>
-                  <Link to="/financing" className="text-accent">Open financing tools →</Link>
+                  <Link to="/financing" className="text-accent">
+                    Open financing tools →
+                  </Link>
                 </div>
-                <div className="mt-4 text-xs font-medium">Local news ({county?.name ?? "county"})</div>
+                <div className="mt-4 text-xs font-medium">
+                  Local news ({county?.name ?? "county"})
+                </div>
                 {newsQ.isLoading ? (
                   <Loading />
                 ) : !newsQ.data?.length ? (
-                  <p className="text-xs text-muted-foreground">No recent stories in HALISIA Pulse.</p>
+                  <p className="text-xs text-muted-foreground">
+                    No recent stories in HALISIA Pulse.
+                  </p>
                 ) : (
                   <ul className="mt-1 space-y-2">
                     {newsQ.data.map((a) => (
                       <li key={a.id}>
-                        <Link to="/pulse/$id" params={{ id: a.id }} className="flex gap-2 text-xs hover:text-accent">
+                        <Link
+                          to="/pulse/$id"
+                          params={{ id: a.id }}
+                          className="flex gap-2 text-xs hover:text-accent"
+                        >
                           <Newspaper className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                           <span>
                             {a.title}{" "}

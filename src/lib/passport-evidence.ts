@@ -23,13 +23,37 @@ export type ChapterId =
   | "trust";
 
 export const CHAPTERS: Array<{ id: ChapterId; title: string; blurb: string }> = [
-  { id: "identity", title: "Identity & position", blurb: "What this is and how sure we are where it is." },
-  { id: "admin", title: "Administrative context", blurb: "County, sub-county, ward and county facts." },
-  { id: "physical", title: "Physical land", blurb: "Elevation, slope, landform and soil by depth." },
-  { id: "climate", title: "Climate & environment", blurb: "Long-term rainfall and temperature, air, water." },
+  {
+    id: "identity",
+    title: "Identity & position",
+    blurb: "What this is and how sure we are where it is.",
+  },
+  {
+    id: "admin",
+    title: "Administrative context",
+    blurb: "County, sub-county, ward and county facts.",
+  },
+  {
+    id: "physical",
+    title: "Physical land",
+    blurb: "Elevation, slope, landform and soil by depth.",
+  },
+  {
+    id: "climate",
+    title: "Climate & environment",
+    blurb: "Long-term rainfall and temperature, air, water.",
+  },
   { id: "access", title: "Access & services", blurb: "Roads, schools, health, shops, transport." },
-  { id: "build", title: "Build & develop", blurb: "Foundations, groundwater, bedrock — indicative only." },
-  { id: "market", title: "Market & investment", blurb: "Coverage-gated scores with formulas. No return predictions." },
+  {
+    id: "build",
+    title: "Build & develop",
+    blurb: "Foundations, groundwater, bedrock — indicative only.",
+  },
+  {
+    id: "market",
+    title: "Market & investment",
+    blurb: "Coverage-gated scores with formulas. No return predictions.",
+  },
   { id: "trust", title: "Legal, finance & trust", blurb: "What has and has not been checked." },
 ];
 
@@ -67,12 +91,7 @@ export type EvidenceItem = {
   note?: string;
 };
 
-export type LedgerStatus =
-  | "ok"
-  | "no_data"
-  | "failed"
-  | "loading"
-  | "not_connected";
+export type LedgerStatus = "ok" | "no_data" | "failed" | "loading" | "not_connected";
 
 export type LedgerEntry = {
   id: string;
@@ -112,7 +131,8 @@ function srcUsed(list: Array<{ label: string; used: boolean }> | undefined, need
 
 function stateGap(state: FetchState, what: string): string {
   if (state === "loading") return `${what}: still loading`;
-  if (state === "error") return `${what}: provider request failed on this visit (not a zero result)`;
+  if (state === "error")
+    return `${what}: provider request failed on this visit (not a zero result)`;
   return `${what}: provider returned no data for this point`;
 }
 
@@ -124,7 +144,11 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
   const items: EvidenceItem[] = [];
   const t = i.retrievedAt;
   const add = (it: Omit<EvidenceItem, "retrieved"> & { retrieved?: string | null }) =>
-    items.push({ retrieved: t, ...it, ...(it.value == null ? { cls: "gap", confidence: "not_assessed" } : {}) } as EvidenceItem);
+    items.push({
+      retrieved: t,
+      ...it,
+      ...(it.value == null ? { cls: "gap", confidence: "not_assessed" } : {}),
+    } as EvidenceItem);
 
   // ---------- 1. Identity ----------
   add({
@@ -147,7 +171,8 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
     method: `Position class: ${i.positionLabel}. Validated for range, Kenya bounds and known default points.`,
     usedFor: ["Every location-based chapter"],
     cls: i.positionExact ? "measured" : "user",
-    confidence: i.locationConfidencePct >= 80 ? "high" : i.locationConfidencePct >= 50 ? "medium" : "low",
+    confidence:
+      i.locationConfidencePct >= 80 ? "high" : i.locationConfidencePct >= 50 ? "medium" : "low",
   });
   add({
     id: "boundary",
@@ -236,7 +261,10 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
     usedFor: ["Terrain", "Construction notes"],
     cls: "measured",
     confidence: "high",
-    note: el == null ? stateGap(i.intelState, "Elevation") : "Elevation alone is not a flood assessment.",
+    note:
+      el == null
+        ? stateGap(i.intelState, "Elevation")
+        : "Elevation alone is not a flood assessment.",
   });
   const g = i.geotech;
   const terrainOk = !!g && (srcUsed(g.sources, "Topo") || srcUsed(g.sources, "Elevation"));
@@ -244,7 +272,8 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
     id: "slope",
     chapter: "physical",
     label: "Slope & aspect",
-    value: terrainOk && g ? `${r(g.terrain.slopePct, 1)}% slope, faces ${g.terrain.aspectLabel}` : null,
+    value:
+      terrainOk && g ? `${r(g.terrain.slopePct, 1)}% slope, faces ${g.terrain.aspectLabel}` : null,
     source: "OpenTopoData ASTER 30 m grid",
     method: "5×5 elevation grid around the point, finite-difference slope.",
     usedFor: ["Erosion risk", "Foundation guidance", "Drainage index"],
@@ -256,7 +285,10 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
     id: "landform",
     chapter: "physical",
     label: "Landform & erosion risk",
-    value: terrainOk && g ? `${g.terrain.landform}, erosion ${g.terrain.erosionRisk.toLowerCase()}, relief ${r(g.terrain.reliefM)} m` : null,
+    value:
+      terrainOk && g
+        ? `${g.terrain.landform}, erosion ${g.terrain.erosionRisk.toLowerCase()}, relief ${r(g.terrain.reliefM)} m`
+        : null,
     source: "Derived from ASTER 30 m grid",
     method: "Rule-based classification of relief, slope and roughness.",
     usedFor: ["Construction considerations"],
@@ -268,7 +300,9 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
     id: "soil",
     chapter: "physical",
     label: "Topsoil (0–5 cm)",
-    value: top ? `${top.texture}: clay ${r(top.clayPct)}%, sand ${r(top.sandPct)}%, silt ${r(top.siltPct)}%` : null,
+    value: top
+      ? `${top.texture}: clay ${r(top.clayPct)}%, sand ${r(top.sandPct)}%, silt ${r(top.siltPct)}%`
+      : null,
     source: "ISRIC SoilGrids v2.0 (250 m model)",
     method: "Global machine-learning soil model sampled at the point. Not a lab test.",
     usedFor: ["Drainage", "Bearing capacity", "Shrink-swell"],
@@ -309,7 +343,10 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
     id: "temp",
     chapter: "climate",
     label: "Mean temperature",
-    value: cl?.meanTempC != null ? `${r(cl.meanTempC, 1)} °C (range ${r(cl.tempMinC ?? NaN, 1)}–${r(cl.tempMaxC ?? NaN, 1)} °C)` : null,
+    value:
+      cl?.meanTempC != null
+        ? `${r(cl.meanTempC, 1)} °C (range ${r(cl.tempMinC ?? NaN, 1)}–${r(cl.tempMaxC ?? NaN, 1)} °C)`
+        : null,
     source: "Open-Meteo Climate API",
     method: "Modelled daily means, 2010–2020.",
     usedFor: ["Habitability", "Environment score"],
@@ -321,7 +358,9 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
     id: "aqi",
     chapter: "climate",
     label: "Air quality now",
-    value: aq?.category ? `${aq.category} (AQI ${aq.universalAqi ?? "—"}${aq.dominant ? `, main pollutant ${aq.dominant}` : ""})` : null,
+    value: aq?.category
+      ? `${aq.category} (AQI ${aq.universalAqi ?? "—"}${aq.dominant ? `, main pollutant ${aq.dominant}` : ""})`
+      : null,
     source: "Google Air Quality API",
     method: "Current-conditions lookup; changes hourly.",
     usedFor: ["Habitability"],
@@ -333,7 +372,8 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
     id: "water",
     chapter: "climate",
     label: "Nearest mapped water",
-    value: g?.groundwater.nearestWaterKm != null ? `${r(g.groundwater.nearestWaterKm, 1)} km` : null,
+    value:
+      g?.groundwater.nearestWaterKm != null ? `${r(g.groundwater.nearestWaterKm, 1)} km` : null,
     source: "OpenStreetMap",
     method: "Nearest mapped river / lake / water feature. Riparian reserve not surveyed.",
     usedFor: ["Riparian caution", "Groundwater"],
@@ -346,7 +386,8 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
     label: "Flood risk",
     value: null,
     source: "Hydrological flood model",
-    method: "HALISIA does not run a flood model. Elevation and rainfall alone cannot assess flood risk.",
+    method:
+      "HALISIA does not run a flood model. Elevation and rainfall alone cannot assess flood risk.",
     usedFor: [],
     cls: "gap",
     confidence: "not_assessed",
@@ -367,7 +408,8 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
           : "None found in search radius"
         : null,
       source: "Google Places API (New)",
-      method: "Nearby search around the point; straight-line distance, drive time from Routes where available.",
+      method:
+        "Nearby search around the point; straight-line distance, drive time from Routes where available.",
       usedFor: used,
       cls: "measured",
       confidence: list.length ? "high" : "medium",
@@ -386,7 +428,12 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
       id: "osm-fac",
       chapter: "access",
       label: "OSM facilities within 3 km",
-      value: `${n} mapped (${Object.entries(w4f).filter(([, l]) => l.length).map(([k, l]) => `${k} ${l.length}`).join(", ") || "none"})`,
+      value: `${n} mapped (${
+        Object.entries(w4f)
+          .filter(([, l]) => l.length)
+          .map(([k, l]) => `${k} ${l.length}`)
+          .join(", ") || "none"
+      })`,
       source: "OpenStreetMap Overpass",
       method: "Tag query, 3 km radius. OSM coverage in Kenya is uneven.",
       usedFor: ["Accessibility & infrastructure scores"],
@@ -411,12 +458,16 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
 
   // ---------- 6. Build ----------
   if (g) {
-    const pref = g.foundations.filter((f) => f.suitability === "Preferred" || f.suitability === "Possible");
+    const pref = g.foundations.filter(
+      (f) => f.suitability === "Preferred" || f.suitability === "Possible",
+    );
     add({
       id: "foundation",
       chapter: "build",
       label: "Indicative foundation types",
-      value: pref.length ? pref.map((f) => `${f.type} (${f.suitability.toLowerCase()})`).join(", ") : "None rated preferred",
+      value: pref.length
+        ? pref.map((f) => `${f.type} (${f.suitability.toLowerCase()})`).join(", ")
+        : "None rated preferred",
       source: "HALISIA rules on SoilGrids + ASTER terrain",
       method: "Rule-based guidance. Requires a site geotechnical investigation.",
       usedFor: ["Construction cost drivers"],
@@ -494,11 +545,17 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
       label,
       value: withheld ? null : `${Math.round(s.score)}/100`,
       source: "HALISIA Wave 4 scoring (OSM + Open-Meteo)",
-      method: s ? `${s.formula}. Factors: ${s.factors.map((f) => `${f.label} ${Math.round(f.value)} (${f.weight})`).join(", ")}` : "Needs OSM and climate data.",
+      method: s
+        ? `${s.formula}. Factors: ${s.factors.map((f) => `${f.label} ${Math.round(f.value)} (${f.weight})`).join(", ")}`
+        : "Needs OSM and climate data.",
       usedFor: ["Investment composite"],
       cls: "ai",
       confidence: s?.confidence ?? "not_assessed",
-      note: withheld ? (s ? "Insufficient coverage — score withheld." : stateGap(i.w4State, "Scoring")) : s.note,
+      note: withheld
+        ? s
+          ? "Insufficient coverage — score withheld."
+          : stateGap(i.w4State, "Scoring")
+        : s.note,
     });
   };
   scoreRow("accessibility", "Accessibility score");
@@ -558,20 +615,103 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
     state === "loading" ? "loading" : state === "error" ? "failed" : has ? "ok" : "no_data";
   const ph = i.intel?.providers;
   const phStatus = (p?: { status: string; reason?: string }): LedgerStatus =>
-    i.intelState !== "ok" ? st(i.intelState, false) : !p ? "no_data" : p.status === "ok" ? "ok" : p.status === "degraded" ? "no_data" : "failed";
+    i.intelState !== "ok"
+      ? st(i.intelState, false)
+      : !p
+        ? "no_data"
+        : p.status === "ok"
+          ? "ok"
+          : p.status === "degraded"
+            ? "no_data"
+            : "failed";
   const ledger: LedgerEntry[] = [
-    { id: "g-elev", provider: "Google Elevation", status: phStatus(ph?.elevation), detail: ph?.elevation?.reason ?? "", chapters: ["physical"] },
-    { id: "g-aq", provider: "Google Air Quality", status: phStatus(ph?.airQuality), detail: ph?.airQuality?.reason ?? "", chapters: ["climate"] },
-    { id: "g-places", provider: "Google Places (New)", status: phStatus(ph?.places), detail: ph?.places?.reason ?? "", chapters: ["access"] },
-    { id: "g-routes", provider: "Google Routes", status: phStatus(ph?.routes), detail: ph?.routes?.reason ?? "", chapters: ["access"] },
-    { id: "soil", provider: "ISRIC SoilGrids v2.0", status: st(i.geoState, srcUsed(g?.sources, "SoilGrids")), detail: "", chapters: ["physical", "build"] },
-    { id: "aster", provider: "OpenTopoData ASTER 30 m", status: st(i.geoState, terrainOk), detail: "", chapters: ["physical", "build"] },
-    { id: "om", provider: "Open-Meteo Climate", status: st(i.w4State, srcUsed(i.wave4?.sources, "Open-Meteo")), detail: "", chapters: ["climate", "market"] },
-    { id: "nom", provider: "OSM Nominatim", status: st(i.w4State, srcUsed(i.wave4?.sources, "Nominatim")), detail: "", chapters: ["admin"] },
-    { id: "ovp", provider: "OSM Overpass", status: st(i.w4State, srcUsed(i.wave4?.sources, "Overpass")), detail: i.w4State === "ok" && !srcUsed(i.wave4?.sources, "Overpass") ? "Busy or rate-limited — facility scores withheld" : "", chapters: ["access", "market"] },
-    { id: "knbs", provider: "KNBS census (reference file)", status: i.facts ? "ok" : "no_data", detail: "", chapters: ["admin"] },
-    { id: "ardhisasa", provider: "Ardhisasa land registry", status: "not_connected", detail: "No integration", chapters: ["trust"] },
-    { id: "planning", provider: "County planning / zoning", status: "not_connected", detail: "No integration", chapters: ["build"] },
+    {
+      id: "g-elev",
+      provider: "Google Elevation",
+      status: phStatus(ph?.elevation),
+      detail: ph?.elevation?.reason ?? "",
+      chapters: ["physical"],
+    },
+    {
+      id: "g-aq",
+      provider: "Google Air Quality",
+      status: phStatus(ph?.airQuality),
+      detail: ph?.airQuality?.reason ?? "",
+      chapters: ["climate"],
+    },
+    {
+      id: "g-places",
+      provider: "Google Places (New)",
+      status: phStatus(ph?.places),
+      detail: ph?.places?.reason ?? "",
+      chapters: ["access"],
+    },
+    {
+      id: "g-routes",
+      provider: "Google Routes",
+      status: phStatus(ph?.routes),
+      detail: ph?.routes?.reason ?? "",
+      chapters: ["access"],
+    },
+    {
+      id: "soil",
+      provider: "ISRIC SoilGrids v2.0",
+      status: st(i.geoState, srcUsed(g?.sources, "SoilGrids")),
+      detail: "",
+      chapters: ["physical", "build"],
+    },
+    {
+      id: "aster",
+      provider: "OpenTopoData ASTER 30 m",
+      status: st(i.geoState, terrainOk),
+      detail: "",
+      chapters: ["physical", "build"],
+    },
+    {
+      id: "om",
+      provider: "Open-Meteo Climate",
+      status: st(i.w4State, srcUsed(i.wave4?.sources, "Open-Meteo")),
+      detail: "",
+      chapters: ["climate", "market"],
+    },
+    {
+      id: "nom",
+      provider: "OSM Nominatim",
+      status: st(i.w4State, srcUsed(i.wave4?.sources, "Nominatim")),
+      detail: "",
+      chapters: ["admin"],
+    },
+    {
+      id: "ovp",
+      provider: "OSM Overpass",
+      status: st(i.w4State, srcUsed(i.wave4?.sources, "Overpass")),
+      detail:
+        i.w4State === "ok" && !srcUsed(i.wave4?.sources, "Overpass")
+          ? "Busy or rate-limited — facility scores withheld"
+          : "",
+      chapters: ["access", "market"],
+    },
+    {
+      id: "knbs",
+      provider: "KNBS census (reference file)",
+      status: i.facts ? "ok" : "no_data",
+      detail: "",
+      chapters: ["admin"],
+    },
+    {
+      id: "ardhisasa",
+      provider: "Ardhisasa land registry",
+      status: "not_connected",
+      detail: "No integration",
+      chapters: ["trust"],
+    },
+    {
+      id: "planning",
+      provider: "County planning / zoning",
+      status: "not_connected",
+      detail: "No integration",
+      chapters: ["build"],
+    },
   ];
 
   const available = items.filter((x) => x.value != null).length;
@@ -590,7 +730,10 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
 /** Compact, citation-keyed text of the evidence for the AI summary prompt. */
 export function evidenceDigest(items: EvidenceItem[]): string {
   return items
-    .map((x) => `[${x.id}] ${x.label}: ${x.value ?? "NOT AVAILABLE"} | source: ${x.source} | class: ${x.cls} | confidence: ${x.confidence}`)
+    .map(
+      (x) =>
+        `[${x.id}] ${x.label}: ${x.value ?? "NOT AVAILABLE"} | source: ${x.source} | class: ${x.cls} | confidence: ${x.confidence}`,
+    )
     .join("\n")
     .slice(0, 12_000);
 }

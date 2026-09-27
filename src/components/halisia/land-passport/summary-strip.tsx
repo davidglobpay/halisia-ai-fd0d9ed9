@@ -22,14 +22,18 @@ export function PassportSummaryStrip({
       <div className={cell}>
         <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Position</div>
         <div className="mt-0.5 text-sm">{positionLabel}</div>
-        <div className="font-mono text-[11px] text-muted-foreground">{locationPct}% location confidence</div>
+        <div className="font-mono text-[11px] text-muted-foreground">
+          {locationPct}% location confidence
+        </div>
       </div>
       <div className={cell}>
         <div className="text-[10px] uppercase tracking-widest text-muted-foreground">County</div>
         <div className="mt-0.5 text-sm">{county ?? "No match"}</div>
       </div>
       <div className={cell}>
-        <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Data coverage</div>
+        <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+          Data coverage
+        </div>
         <div className="mt-0.5 font-mono text-sm" data-testid="passport-coverage">
           {available}/{total} facts
         </div>
@@ -38,7 +42,9 @@ export function PassportSummaryStrip({
         </div>
       </div>
       <div className={cell}>
-        <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Verification</div>
+        <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+          Verification
+        </div>
         <div className="mt-0.5 text-sm">Not verified</div>
         <div className="font-mono text-[11px] text-muted-foreground">Refreshed {refreshed}</div>
       </div>

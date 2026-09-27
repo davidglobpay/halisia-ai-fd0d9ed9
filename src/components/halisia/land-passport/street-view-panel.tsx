@@ -6,7 +6,15 @@ import { loadGoogleMaps } from "@/lib/google-maps-loader";
 type State = "loading" | "ready" | "none" | "error";
 
 /** Google Street View at a point, or an honest "unavailable" message. */
-export function StreetViewPanel({ lat, lng, className = "" }: { lat: number; lng: number; className?: string }) {
+export function StreetViewPanel({
+  lat,
+  lng,
+  className = "",
+}: {
+  lat: number;
+  lng: number;
+  className?: string;
+}) {
   const el = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<State>("loading");
   const [msg, setMsg] = useState("");

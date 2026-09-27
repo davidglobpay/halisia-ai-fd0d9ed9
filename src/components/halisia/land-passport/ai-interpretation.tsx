@@ -35,12 +35,17 @@ export function AiInterpretation({
   };
 
   return (
-    <section className="rounded-2xl border border-accent/30 bg-card/80 p-4" data-testid="passport-ai">
+    <section
+      className="rounded-2xl border border-accent/30 bg-card/80 p-4"
+      data-testid="passport-ai"
+    >
       <div className="flex items-center justify-between gap-2">
         <h2 className="flex items-center gap-2 font-display text-base">
           <Sparkles className="h-4 w-4 text-accent" /> HALISIA interpretation
         </h2>
-        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">AI · not source data</span>
+        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+          AI · not source data
+        </span>
       </div>
       {tooThin ? (
         <p className="mt-2 text-xs text-muted-foreground">
@@ -58,7 +63,9 @@ export function AiInterpretation({
           <Loader2 className="h-3.5 w-3.5 animate-spin" /> Reading the evidence…
         </p>
       ) : state === "error" ? (
-        <p className="mt-2 text-xs text-destructive" role="alert">{text}</p>
+        <p className="mt-2 text-xs text-destructive" role="alert">
+          {text}
+        </p>
       ) : (
         <div className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">{text}</div>
       )}

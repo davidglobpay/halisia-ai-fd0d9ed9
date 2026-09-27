@@ -21,7 +21,9 @@ export function EvidenceRow({ item }: { item: EvidenceItem }) {
           </span>
         </span>
       </div>
-      <div className={`mt-0.5 text-sm break-words ${gap ? "text-muted-foreground italic" : "text-foreground"}`}>
+      <div
+        className={`mt-0.5 text-sm break-words ${gap ? "text-muted-foreground italic" : "text-foreground"}`}
+      >
         {gap ? "Not available" : item.value}
       </div>
       <details className="mt-1 text-[11px] text-muted-foreground">

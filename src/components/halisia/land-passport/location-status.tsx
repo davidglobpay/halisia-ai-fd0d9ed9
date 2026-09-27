@@ -47,13 +47,15 @@ export function LocationStatusCard({
         <p className="mt-2 text-muted-foreground">
           Source: {source}
           {geocodeType ? ` · precision class ${geocodeType}` : ""}
-          {radius ? ` · may be off by ~${radius >= 1000 ? `${radius / 1000} km` : `${radius} m`}` : ""}
+          {radius
+            ? ` · may be off by ~${radius >= 1000 ? `${radius / 1000} km` : `${radius} m`}`
+            : ""}
         </p>
         {reason && <p className="mt-1 text-muted-foreground">{reason}</p>}
         {!meta.exact && (
           <p className="mt-1 text-[11px] text-foreground/80">
-            This is not a surveyed parcel position or boundary. Indicative confidence, not a measured
-            error.
+            This is not a surveyed parcel position or boundary. Indicative confidence, not a
+            measured error.
           </p>
         )}
         {issues.map((i) => (
