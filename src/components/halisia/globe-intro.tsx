@@ -54,22 +54,24 @@ export function GlobeIntro({
     if (!root) return;
     const timers: number[] = [];
     const play = () => {
-      try {
-        window.sessionStorage.setItem(SESSION_KEY, "1");
-      } catch {
-        /* Session storage is optional. */
-      }
       setPhase("playing");
       setStageIndex(0);
       timers.push(
         ...STAGES.slice(1).map((stage, i) =>
           window.setTimeout(() => setStageIndex(i + 1), Math.round(stage.at * DURATION_MS)),
         ),
-        window.setTimeout(() => setPhase("done"), DURATION_MS),
+        window.setTimeout(() => {
+          try {
+            window.sessionStorage.setItem(SESSION_KEY, "1");
+          } catch {
+            /* Session storage is optional. */
+          }
+          setPhase("done");
+        }, DURATION_MS),
       );
     };
     const isVisible = () => {
-      const rect = root.getBoundingClientRect();
+      const rect = (root.parentElement ?? root).getBoundingClientRect();
       if (rect.bottom <= 0 || rect.top >= window.innerHeight) return;
       window.removeEventListener("scroll", isVisible);
       window.removeEventListener("resize", isVisible);
