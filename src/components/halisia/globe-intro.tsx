@@ -50,8 +50,6 @@ export function GlobeIntro({
       /* Private mode — play when visible anyway. */
     }
 
-    const root = rootRef.current;
-    if (!root) return;
     const timers: number[] = [];
     const play = () => {
       setPhase("playing");
@@ -71,7 +69,9 @@ export function GlobeIntro({
       );
     };
     const isVisible = () => {
-      const rect = (root.parentElement ?? root).getBoundingClientRect();
+      const currentRoot = rootRef.current;
+      if (!currentRoot) return;
+      const rect = (currentRoot.parentElement ?? currentRoot).getBoundingClientRect();
       if (rect.bottom <= 0 || rect.top >= window.innerHeight) return;
       window.removeEventListener("scroll", isVisible);
       window.removeEventListener("resize", isVisible);
