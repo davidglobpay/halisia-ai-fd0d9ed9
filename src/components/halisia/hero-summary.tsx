@@ -161,7 +161,8 @@ export function HeroSummary({
 
   // The narrative is a written read, not a measurement. It is shown as prose
   // and never converted into a number anywhere on this surface.
-  const summary = narrative?.paragraphs?.[0] ?? narrative?.overview ?? "HALISIA is reading this location…";
+  const summary =
+    narrative?.paragraphs?.[0] ?? narrative?.overview ?? "HALISIA is reading this location…";
 
   return (
     <motion.section
