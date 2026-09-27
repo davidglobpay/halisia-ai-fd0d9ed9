@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, MapPin, CircleSlash } from "lucide-react";
+import { Sparkles, MapPin, CircleSlash, ChevronDown } from "lucide-react";
 import type { LocationIntel } from "@/lib/location-intel.functions";
 import type { NarrativeOutput } from "@/lib/ai-narrative.functions";
 import type { Wave4Intel } from "@/lib/wave4-intel.functions";
@@ -105,20 +105,35 @@ function Gauge({
 function ModuleTile({ m }: { m: ModuleOutput }) {
   const tone = m.score != null ? toneFor(m.score) : NEUTRAL;
   return (
-    <div className="glass rounded-2xl p-3 flex items-center gap-3">
-      <Gauge score={m.score} />
-      <div className="min-w-0 flex-1">
-        <div className="text-[10px] uppercase tracking-widest text-muted-foreground truncate">
-          {m.label}
-        </div>
-        <div className={`mt-0.5 text-xs font-medium ${tone.text}`}>{tone.label}</div>
-        {m.confidencePct != null && m.confidencePct < 100 && (
-          <div className="text-[10px] text-muted-foreground">
-            Partly measured · {m.confidencePct}%
+    <details className="group glass rounded-2xl">
+      <summary className="flex min-h-[96px] cursor-pointer list-none items-center gap-3 rounded-2xl p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        <Gauge score={m.score} />
+        <div className="min-w-0 flex-1">
+          <div className="text-[10px] uppercase tracking-widest text-muted-foreground truncate">
+            {m.label}
           </div>
-        )}
+          <div className={`mt-0.5 text-xs font-medium ${tone.text}`}>{tone.label}</div>
+          <div className="text-[10px] text-muted-foreground">
+            Confidence {m.confidencePct ?? 0}%
+          </div>
+        </div>
+        <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
+      </summary>
+      <div className="border-t border-foreground/10 px-3 pb-3 pt-2 text-[11px] leading-relaxed">
+        <div className="font-medium text-foreground">Evidence</div>
+        <div className="mt-1 text-muted-foreground">
+          Sources: {m.sources.length > 0 ? m.sources.join(", ") : "No source available"}
+        </div>
+        <div className="text-muted-foreground">Confidence: {m.confidencePct ?? 0}%</div>
+        <div className="mt-2 font-medium text-foreground">Limitations</div>
+        <ul className="mt-1 list-disc space-y-1 pl-4 text-muted-foreground">
+          {m.limitations.map((limitation) => (
+            <li key={limitation}>{limitation}</li>
+          ))}
+        </ul>
+        <div className="mt-2 text-muted-foreground">Next: {m.nextStep}</div>
       </div>
-    </div>
+    </details>
   );
 }
 
