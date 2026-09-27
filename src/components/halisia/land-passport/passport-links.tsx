@@ -1,10 +1,15 @@
 import { Link } from "@tanstack/react-router";
 import { IdCard, Landmark } from "lucide-react";
-import { countyForPoint, validateCoordinate, type LocationStatus } from "@/lib/location-validation";
+import {
+  countyByName,
+  countyForPoint,
+  validateCoordinate,
+  type LocationStatus,
+} from "@/lib/location-validation";
 
 export type PassportTarget = {
-  lat: number;
-  lng: number;
+  lat: number | null | undefined;
+  lng: number | null | undefined;
   ref?: string;
   label?: string;
   source?: string;
@@ -23,16 +28,50 @@ export function PassportLinks({
   compact?: boolean;
   className?: string;
 }) {
-  const check = validateCoordinate(target.lat, target.lng);
+  const pill = compact ? "px-3 py-1.5 text-[11px]" : "px-4 py-2.5 text-xs";
+  const hasPoint = target.lat != null && target.lng != null;
+  const check = hasPoint
+    ? validateCoordinate(Number(target.lat), Number(target.lng))
+    : { ok: false, lat: null, lng: null, issues: ["No coordinates were provided."] };
   if (!check.ok || check.lat == null || check.lng == null) {
+    // Limited passport: identity + county only, with the location gap explained.
+    const named = countyByName(target.county);
     return (
-      <p className={`text-[11px] text-muted-foreground ${className}`} data-testid="passport-unavailable">
-        Land Passport unavailable: {check.issues[0]}
-      </p>
+      <div className={`flex flex-wrap items-center gap-2 ${className}`}>
+        <Link
+          to="/passport"
+          search={{
+            ref: target.ref ?? "",
+            label: target.label ?? "",
+            source: target.source ?? "",
+            county: target.county ?? "",
+            noloc: check.issues[0] ?? "No usable coordinates.",
+          }}
+          data-testid="view-land-passport"
+          className={`inline-flex min-h-[40px] items-center gap-1.5 rounded-full border border-primary/40 font-semibold uppercase tracking-wider text-primary hover:bg-primary/5 transition ${pill}`}
+        >
+          <IdCard className="h-3.5 w-3.5" /> Land Passport (limited)
+        </Link>
+        {named && (
+          <Link
+            to="/county/$code"
+            params={{ code: String(named.code) }}
+            data-testid="county-intelligence"
+            className={`inline-flex min-h-[40px] items-center gap-1.5 rounded-full border border-foreground/20 font-semibold uppercase tracking-wider text-foreground hover:bg-foreground/5 transition ${pill}`}
+          >
+            <Landmark className="h-3.5 w-3.5 text-accent" /> County Intelligence · {named.name}
+          </Link>
+        )}
+        <span
+          className="basis-full text-[11px] text-muted-foreground"
+          data-testid="passport-location-limit"
+        >
+          No map position: {check.issues[0]} Location-based sections will be unavailable.
+        </span>
+      </div>
     );
   }
   const county = countyForPoint(check.lat, check.lng);
-  const pill = compact ? "px-3 py-1.5 text-[11px]" : "px-4 py-2.5 text-xs";
   return (
     <div className={`flex flex-wrap gap-2 ${className}`}>
       <Link

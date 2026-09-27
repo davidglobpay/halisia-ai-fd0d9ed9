@@ -146,9 +146,9 @@ function MarketplaceIndex() {
           <div className="text-[11px] uppercase tracking-[0.25em] text-accent">Halisia AI</div>
           <h1 className="text-3xl sm:text-4xl font-display font-semibold mt-1">AI Marketplace</h1>
           <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-            Buy, sell, rent, lease, invest, develop and connect. Every listing shows its source
-            and how complete its details are. Open one with coordinates to read the site's terrain,
-            air quality and nearby amenities — and what HALISIA cannot assess.
+            Buy, sell, rent, lease, invest, develop and connect. Every listing shows its source and
+            how complete its details are. Open one with coordinates to read the site's terrain, air
+            quality and nearby amenities — and what HALISIA cannot assess.
           </p>
         </div>
         <Link
@@ -644,21 +644,22 @@ function ListingRow({
         <Link to="/marketplace/$id" params={{ id: p.id }} className="font-medium text-sm">
           {p.title}
         </Link>
-        {p.latitude != null && p.longitude != null && (
-          <PassportLinks
-            compact
-            className="mt-1.5"
-            target={{
-              lat: Number(p.latitude),
-              lng: Number(p.longitude),
-              ref: p.title,
-              label: p.address ?? p.title,
-              source: "Seller-provided listing location",
-              status: "user_provided",
-              county: p.county ?? "",
-            }}
-          />
-        )}
+        <PassportLinks
+          compact
+          className="mt-1.5"
+          target={{
+            lat: p.latitude == null ? null : Number(p.latitude),
+            lng: p.longitude == null ? null : Number(p.longitude),
+            ref: p.title,
+            label: p.address ?? p.title,
+            source:
+              p.latitude != null
+                ? "Seller-provided listing location"
+                : "Seller listing (no coordinates)",
+            status: "user_provided",
+            county: p.county ?? "",
+          }}
+        />
         <div className="mt-1 text-[11px] text-muted-foreground flex flex-wrap items-center gap-1">
           <MapPin className="h-3 w-3" /> {p.address ?? p.county ?? "Kenya"}
           <span>·</span>
@@ -758,6 +759,21 @@ function ListingCard({
             <span className="text-[11px] text-muted-foreground">Open for readings</span>
           )}
         </div>
+        <PassportLinks
+          compact
+          target={{
+            lat: p.latitude == null ? null : Number(p.latitude),
+            lng: p.longitude == null ? null : Number(p.longitude),
+            ref: p.title,
+            label: p.address ?? p.title,
+            source:
+              p.latitude != null
+                ? "Seller-provided listing location"
+                : "Seller listing (no coordinates)",
+            status: "user_provided",
+            county: p.county ?? "",
+          }}
+        />
         <Actions p={p} compared={compared} onCompare={onCompare} />
         {reasons?.length ? (
           <div>

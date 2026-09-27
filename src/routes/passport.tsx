@@ -17,6 +17,7 @@ import { fetchFeed, relativeTime } from "@/lib/pulse";
 import {
   STATUS_META,
   compareCounty,
+  countyByName,
   countyForPoint,
   locationConfidence,
   validateCoordinate,
@@ -41,6 +42,7 @@ const searchSchema = z.object({
   status: fallback(z.enum(STATUSES), "approximate").default("approximate"),
   gt: fallback(z.string(), "").default(""),
   county: fallback(z.string(), "").default(""),
+  noloc: fallback(z.string(), "").default(""),
 });
 
 export const Route = createFileRoute("/passport")({
@@ -56,7 +58,8 @@ export const Route = createFileRoute("/passport")({
       { property: "og:title", content: "Land Passport — HALISIA AI" },
       {
         property: "og:description",
-        content: "Evidence-labelled land intelligence for any point in Kenya, with honest data gaps.",
+        content:
+          "Evidence-labelled land intelligence for any point in Kenya, with honest data gaps.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -91,7 +94,9 @@ function Section({
     <details open={open} className="group rounded-2xl border border-foreground/10 bg-card/80">
       <summary className="flex min-h-[52px] cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
         <span className="flex items-center gap-3">
-          <span className="font-mono text-[11px] text-muted-foreground">{String(n).padStart(2, "0")}</span>
+          <span className="font-mono text-[11px] text-muted-foreground">
+            {String(n).padStart(2, "0")}
+          </span>
           <span className="font-display text-base">{title}</span>
         </span>
         <span className="flex items-center gap-2">
@@ -121,7 +126,14 @@ function nearest(list: { name: string; distanceKm?: number }[] | undefined) {
   return `${p.name}${p.distanceKm != null ? ` · ${p.distanceKm.toFixed(1)} km` : ""}`;
 }
 
-type Concept = { name: string; why: string[]; assume: string; constraints: string; infra: string; users: string };
+type Concept = {
+  name: string;
+  why: string[];
+  assume: string;
+  constraints: string;
+  infra: string;
+  users: string;
+};
 
 function concepts(intel: LocationIntel | undefined): Concept[] {
   if (!intel) return [];
@@ -202,6 +214,57 @@ function PassportPage() {
     staleTime: 15 * 60_000,
   });
 
+  if (!ok && (s.ref || s.label || s.county)) {
+    const named = countyByName(s.county);
+    return (
+      <div className="mx-auto max-w-xl px-4 py-12" data-testid="passport-limited">
+        <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+          Land Passport · limited
+        </p>
+        <h1 className="mt-1 font-display text-2xl">{s.label || s.ref || "Unnamed listing"}</h1>
+        {s.ref && s.ref !== s.label && (
+          <p className="mt-1 font-mono text-xs text-muted-foreground">{s.ref}</p>
+        )}
+        <div
+          role="status"
+          className="mt-4 rounded-2xl border border-white/10 bg-card/70 p-4 text-sm"
+        >
+          <p className="font-semibold">Location not available</p>
+          <p className="mt-1 text-muted-foreground">{s.noloc || check.issues[0]}</p>
+          <p className="mt-2 text-muted-foreground">
+            Without a map position HALISIA cannot show the map, Street View, terrain, access,
+            habitability, nearby services or investment signals for this listing. Nothing here
+            confirms the parcel's position, boundary or ownership.
+          </p>
+          {s.source && (
+            <p className="mt-2 text-xs text-muted-foreground">Listing source: {s.source}</p>
+          )}
+          <p className="mt-2 text-xs text-muted-foreground">
+            County stated by the listing: {s.county || "not stated"}
+            {s.county && !named ? " (not matched to a Kenyan county)" : ""}
+          </p>
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {named && (
+            <Link
+              to="/county/$code"
+              params={{ code: String(named.code) }}
+              className="rounded-full bg-primary px-4 py-2 text-xs text-primary-foreground"
+            >
+              County Intelligence · {named.name}
+            </Link>
+          )}
+          <Link
+            to="/explore"
+            className="rounded-full border border-foreground/20 px-4 py-2 text-xs"
+          >
+            Pick the point on a map
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   if (!ok) {
     return (
       <div className="mx-auto max-w-xl px-4 py-16 text-center" data-testid="passport-invalid">
@@ -210,7 +273,10 @@ function PassportPage() {
         <p className="mt-1 text-sm text-muted-foreground">
           Search a place or pick a point on the map to create a passport.
         </p>
-        <Link to="/explore" className="mt-4 inline-block rounded-full bg-primary px-4 py-2 text-xs text-primary-foreground">
+        <Link
+          to="/explore"
+          className="mt-4 inline-block rounded-full bg-primary px-4 py-2 text-xs text-primary-foreground"
+        >
           Go to Explore
         </Link>
       </div>
@@ -248,7 +314,10 @@ function PassportPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 pb-28 pt-6" data-testid="land-passport-page">
-      <Link to="/explore" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+      <Link
+        to="/explore"
+        className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+      >
         <ArrowLeft className="h-3.5 w-3.5" /> Back to Explore
       </Link>
       <header className="mt-3">
@@ -298,10 +367,20 @@ function PassportPage() {
       <div className="mt-4 grid gap-3">
         <Section n={1} title="Identity" tag="source" open>
           <Row k="Reference" v={s.ref || "None supplied"} />
-          <Row k="Coordinates" v={<span className="font-mono">{lat.toFixed(6)}, {lng.toFixed(6)}</span>} />
+          <Row
+            k="Coordinates"
+            v={
+              <span className="font-mono">
+                {lat.toFixed(6)}, {lng.toFixed(6)}
+              </span>
+            }
+          />
           <Row k="Location status" v={STATUS_META[status].label} />
           <Row k="County" v={county ? `${county.name} (code ${county.code})` : "No county match"} />
-          <Row k="Sub-county" v={admin?.subCounty ?? (revQ.isLoading ? "Loading…" : "Not reported")} />
+          <Row
+            k="Sub-county"
+            v={admin?.subCounty ?? (revQ.isLoading ? "Loading…" : "Not reported")}
+          />
           <Row k="Ward / area" v={admin?.ward ?? "Not reported"} />
           <Row k="Nearest town / centre" v={admin?.locality ?? "Not reported"} />
           <Row k="Parcel polygon" v={STATUS_META[status].exact ? "See source" : "Not available"} />
@@ -330,8 +409,8 @@ function PassportPage() {
               <Row k="Constituencies / wards" v={`${facts.constituencies} / ${facts.wards}`} />
               <Row k="Main economic activities" v={facts.economy.join(", ")} />
               <p className="mt-2 text-[11px] text-muted-foreground">
-                Sources: KNBS 2019 census, IEBC boundaries, county records. Projects, budgets and security
-                data are not held yet — open the county page for everything HALISIA has.
+                Sources: KNBS 2019 census, IEBC boundaries, county records. Projects, budgets and
+                security data are not held yet — open the county page for everything HALISIA has.
               </p>
             </>
           ) : (
@@ -346,73 +425,129 @@ function PassportPage() {
             <Failed />
           ) : (
             <>
-              <Row k="Elevation" v={intel?.elevation?.meters != null ? `${Math.round(intel.elevation.meters)} m (Google Elevation)` : "Unavailable"} />
-              <Row k="Air quality" v={intel?.airQuality?.category ? `${intel.airQuality.category} (AQI ${intel.airQuality.universalAqi})` : "Unavailable"} />
+              <Row
+                k="Elevation"
+                v={
+                  intel?.elevation?.meters != null
+                    ? `${Math.round(intel.elevation.meters)} m (Google Elevation)`
+                    : "Unavailable"
+                }
+              />
+              <Row
+                k="Air quality"
+                v={
+                  intel?.airQuality?.category
+                    ? `${intel.airQuality.category} (AQI ${intel.airQuality.universalAqi})`
+                    : "Unavailable"
+                }
+              />
               {[mod("construction"), mod("environment")].map(
                 (m) =>
                   m && (
                     <div key={m.id} className="mt-2 text-xs">
-                      <div className="font-medium">{m.label}: {m.status === "measured" ? `${m.score}/100` : "Not assessed"}</div>
+                      <div className="font-medium">
+                        {m.label}: {m.status === "measured" ? `${m.score}/100` : "Not assessed"}
+                      </div>
                       <ul className="mt-0.5 list-disc pl-4 text-muted-foreground">
-                        {m.reasons.slice(0, 3).map((r) => <li key={r}>{r}</li>)}
+                        {m.reasons.slice(0, 3).map((r) => (
+                          <li key={r}>{r}</li>
+                        ))}
                       </ul>
                     </div>
                   ),
               )}
               <p className="mt-2 text-[11px] text-muted-foreground">
-                Soil, geology, protected-area, forest and flood layers are on the Explore map and title-deed
-                geotech panel; they are not summarised here yet.
+                Soil, geology, protected-area, forest and flood layers are on the Explore map and
+                title-deed geotech panel; they are not summarised here yet.
               </p>
             </>
           )}
         </Section>
 
         <Section n={5} title="Accessibility" tag="source">
-          {intelQ.isLoading ? <Loading /> : intelFailed ? <Failed /> : (
+          {intelQ.isLoading ? (
+            <Loading />
+          ) : intelFailed ? (
+            <Failed />
+          ) : (
             <>
               <Row k="Nearest transit" v={nearest(cats?.transit) ?? "None found"} />
               <Row k="Nearest school" v={nearest(cats?.schools) ?? "None found"} />
               <Row k="Nearest health facility" v={nearest(cats?.hospitals) ?? "None found"} />
               <Row k="Nearest shop / market" v={nearest(cats?.groceries) ?? "None found"} />
               <Row k="Nearest bank" v={nearest(cats?.banks) ?? "None found"} />
-              <p className="mt-2 text-[11px] text-muted-foreground">Straight-line distances from Google Places. Road travel times not computed.</p>
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                Straight-line distances from Google Places. Road travel times not computed.
+              </p>
             </>
           )}
         </Section>
 
         <Section n={6} title="Habitability insights" tag="ai">
-          {intelQ.isLoading ? <Loading /> : intelFailed ? <Failed /> : (
+          {intelQ.isLoading ? (
+            <Loading />
+          ) : intelFailed ? (
+            <Failed />
+          ) : (
             <ul className="space-y-1 text-xs">
-              <li>Education: {cats?.schools.length ?? 0} schools nearby — {cats && cats.schools.length >= 2 ? "good choice" : "limited choice"}.</li>
-              <li>Healthcare: {cats?.hospitals.length ?? 0} facilities — {cats && cats.hospitals.length >= 1 ? "care within reach" : "no facility found nearby"}.</li>
-              <li>Daily needs: {(cats?.groceries.length ?? 0) + (cats?.banks.length ?? 0)} shops and banks.</li>
+              <li>
+                Education: {cats?.schools.length ?? 0} schools nearby —{" "}
+                {cats && cats.schools.length >= 2 ? "good choice" : "limited choice"}.
+              </li>
+              <li>
+                Healthcare: {cats?.hospitals.length ?? 0} facilities —{" "}
+                {cats && cats.hospitals.length >= 1
+                  ? "care within reach"
+                  : "no facility found nearby"}
+                .
+              </li>
+              <li>
+                Daily needs: {(cats?.groceries.length ?? 0) + (cats?.banks.length ?? 0)} shops and
+                banks.
+              </li>
               <li>Air: {intel?.airQuality?.category ?? "no reading"}.</li>
-              <li className="text-muted-foreground">Safety, utilities and connectivity: no data held — not assessed.</li>
+              <li className="text-muted-foreground">
+                Safety, utilities and connectivity: no data held — not assessed.
+              </li>
             </ul>
           )}
         </Section>
 
         <Section n={7} title="Investment intelligence" tag="ai">
           <div className="grid gap-3 sm:grid-cols-2 text-xs">
-            <List title="Opportunity indicators" items={[
-              cats && cats.transit.length >= 2 && "Several transit stops nearby",
-              cats && cats.groceries.length + cats.restaurants.length >= 6 && "Active local commerce",
-              facts && facts.population2019 > 1_000_000 && "Large county population",
-            ]} />
-            <List title="Risk indicators" items={[
-              !STATUS_META[status].exact && "Position is approximate — boundary unknown",
-              discrepancy && "Location sources disagree",
-              cats && cats.schools.length + cats.hospitals.length === 0 && "Few services nearby",
-            ]} />
+            <List
+              title="Opportunity indicators"
+              items={[
+                cats && cats.transit.length >= 2 && "Several transit stops nearby",
+                cats &&
+                  cats.groceries.length + cats.restaurants.length >= 6 &&
+                  "Active local commerce",
+                facts && facts.population2019 > 1_000_000 && "Large county population",
+              ]}
+            />
+            <List
+              title="Risk indicators"
+              items={[
+                !STATUS_META[status].exact && "Position is approximate — boundary unknown",
+                discrepancy && "Location sources disagree",
+                cats && cats.schools.length + cats.hospitals.length === 0 && "Few services nearby",
+              ]}
+            />
             <List title="Key drivers" items={[engine.headline]} />
             <List title="Key unknowns" items={["Title status", "Zoning", "Comparable sales"]} />
           </div>
-          <p className="mt-2 text-[11px] text-muted-foreground">Not a forecast. HALISIA does not predict prices or guarantee returns.</p>
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            Not a forecast. HALISIA does not predict prices or guarantee returns.
+          </p>
         </Section>
 
         <Section n={8} title="Development potential" tag="ai">
           {ideas.length === 0 ? (
-            <p className="text-xs text-muted-foreground">{intelQ.isLoading ? "Waiting for location data…" : "Not enough data to suggest a use."}</p>
+            <p className="text-xs text-muted-foreground">
+              {intelQ.isLoading
+                ? "Waiting for location data…"
+                : "Not enough data to suggest a use."}
+            </p>
           ) : (
             <div className="space-y-3">
               {ideas.map((c) => (
@@ -426,17 +561,25 @@ function PassportPage() {
                   <Row k="Still needed" v="Zoning letter, survey, soil test" />
                 </div>
               ))}
-              <p className="text-[11px] text-muted-foreground">Suggestions only — not planning approval.</p>
+              <p className="text-[11px] text-muted-foreground">
+                Suggestions only — not planning approval.
+              </p>
             </div>
           )}
         </Section>
 
         <Section n={9} title="Construction intelligence" tag="ai">
           <ul className="list-disc pl-4 text-xs text-muted-foreground">
-            {(mod("construction")?.reasons ?? []).slice(0, 4).map((r) => <li key={r}>{r}</li>)}
+            {(mod("construction")?.reasons ?? []).slice(0, 4).map((r) => (
+              <li key={r}>{r}</li>
+            ))}
             <li>Confirm drainage paths and road access on site before design.</li>
           </ul>
-          <Link to="/spatial" search={{ parcel: "" }} className="mt-2 inline-block text-xs text-accent">
+          <Link
+            to="/spatial"
+            search={{ parcel: "" }}
+            className="mt-2 inline-block text-xs text-accent"
+          >
             Explore a potential development concept in 3D →
           </Link>
         </Section>
@@ -447,31 +590,56 @@ function PassportPage() {
           </p>
           <ul className="mt-1 list-disc pl-4 text-xs text-muted-foreground">
             <li>Lenders will need a clean official search, approved plans and a valuation.</li>
-            <li>Location evidence here: {locConf}% location confidence, {measured} measured modules.</li>
+            <li>
+              Location evidence here: {locConf}% location confidence, {measured} measured modules.
+            </li>
           </ul>
-          <Link to="/financing" className="mt-2 inline-block text-xs text-accent">Open financing tools →</Link>
+          <Link to="/financing" className="mt-2 inline-block text-xs text-accent">
+            Open financing tools →
+          </Link>
         </Section>
 
         <Section n={11} title="Legal / ownership" tag="gap">
           <Row k="Official title search" v="Not connected — run it on Ardhisasa" />
           <Row k="Ownership" v="Unknown. HALISIA never infers ownership from location." />
-          <Row k="Reference supplied" v={s.ref ? `${s.ref} (user-provided / document-read)` : "None"} />
+          <Row
+            k="Reference supplied"
+            v={s.ref ? `${s.ref} (user-provided / document-read)` : "None"}
+          />
           <Row k="Verification status" v="Unverified" />
-          <a href="https://ardhisasa.lands.go.ke" target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-xs text-accent">
+          <a
+            href="https://ardhisasa.lands.go.ke"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 inline-block text-xs text-accent"
+          >
             Open Ardhisasa (official) →
           </a>
         </Section>
 
         <Section n={12} title="News & local context" tag="source">
-          {newsQ.isLoading ? <Loading /> : !newsQ.data?.length ? (
-            <p className="text-xs text-muted-foreground">No recent {county?.name ?? ""} stories in HALISIA Pulse.</p>
+          {newsQ.isLoading ? (
+            <Loading />
+          ) : !newsQ.data?.length ? (
+            <p className="text-xs text-muted-foreground">
+              No recent {county?.name ?? ""} stories in HALISIA Pulse.
+            </p>
           ) : (
             <ul className="space-y-2">
               {newsQ.data.map((a) => (
                 <li key={a.id}>
-                  <Link to="/pulse/$id" params={{ id: a.id }} className="flex gap-2 text-xs hover:text-accent">
+                  <Link
+                    to="/pulse/$id"
+                    params={{ id: a.id }}
+                    className="flex gap-2 text-xs hover:text-accent"
+                  >
                     <Newspaper className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                    <span>{a.title} <span className="text-muted-foreground">· {a.sourceName ?? "Source"} · {relativeTime(a.publishedAt)}</span></span>
+                    <span>
+                      {a.title}{" "}
+                      <span className="text-muted-foreground">
+                        · {a.sourceName ?? "Source"} · {relativeTime(a.publishedAt)}
+                      </span>
+                    </span>
                   </Link>
                 </li>
               ))}
@@ -482,16 +650,26 @@ function PassportPage() {
         <Section n={13} title="HALISIA intelligence confidence" tag="ai" open>
           <Row k="Location confidence" v={`${locConf}%`} />
           <Row k="Data completeness" v={`${completeness}% of modules measured`} />
-          <Row k="Source reliability" v={intel ? `${providersOk}/4 live providers answered` : "—"} />
+          <Row
+            k="Source reliability"
+            v={intel ? `${providersOk}/4 live providers answered` : "—"}
+          />
           <Row k="Recency" v={intel?.snapshot ? "Live or cached this session" : "—"} />
           <Row k="Verification status" v="Not verified" />
-          <Row k="Intelligence confidence" v={engine.confidencePct != null ? `${engine.confidencePct}%` : "Not assessed"} />
-          <p className="mt-2 text-[11px] text-muted-foreground">Shown separately on purpose — no single combined score.</p>
+          <Row
+            k="Intelligence confidence"
+            v={engine.confidencePct != null ? `${engine.confidencePct}%` : "Not assessed"}
+          />
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            Shown separately on purpose — no single combined score.
+          </p>
         </Section>
 
         <Section n={14} title="What HALISIA does not yet know" tag="gap" open>
           <ul className="list-disc pl-4 text-xs" data-testid="passport-gaps">
-            {gaps.map((g) => <li key={g}>{g}</li>)}
+            {gaps.map((g) => (
+              <li key={g}>{g}</li>
+            ))}
           </ul>
         </Section>
       </div>
@@ -499,13 +677,23 @@ function PassportPage() {
   );
 }
 
-function List({ title, items }: { title: string; items: (string | false | null | undefined | 0)[] }) {
+function List({
+  title,
+  items,
+}: {
+  title: string;
+  items: (string | false | null | undefined | 0)[];
+}) {
   const real = items.filter(Boolean) as string[];
   return (
     <div>
       <div className="font-medium">{title}</div>
       <ul className="mt-0.5 list-disc pl-4 text-muted-foreground">
-        {real.length ? real.map((i) => <li key={i}>{i}</li>) : <li>None identified from available data</li>}
+        {real.length ? (
+          real.map((i) => <li key={i}>{i}</li>)
+        ) : (
+          <li>None identified from available data</li>
+        )}
       </ul>
     </div>
   );

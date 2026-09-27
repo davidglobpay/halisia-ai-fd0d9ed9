@@ -267,24 +267,21 @@ function ListingDetail() {
                 recommendation. Expand any card for possible limitations.
               </p>
             </div>
-            {p.latitude != null && p.longitude != null ? (
-              <PassportLinks
-                className="mb-3"
-                target={{
-                  lat: Number(p.latitude),
-                  lng: Number(p.longitude),
-                  ref: p.title,
-                  label: p.address ?? p.title,
-                  source: "Seller-provided listing location",
-                  status: "user_provided",
-                  county: p.county ?? "",
-                }}
-              />
-            ) : (
-              <p className="mb-3 text-[11px] text-muted-foreground">
-                Land Passport unavailable: the seller has not added coordinates.
-              </p>
-            )}
+            <PassportLinks
+              className="mb-3"
+              target={{
+                lat: p.latitude == null ? null : Number(p.latitude),
+                lng: p.longitude == null ? null : Number(p.longitude),
+                ref: p.title,
+                label: p.address ?? p.title,
+                source:
+                  p.latitude != null
+                    ? "Seller-provided listing location"
+                    : "Seller listing (no coordinates)",
+                status: "user_provided",
+                county: p.county ?? "",
+              }}
+            />
             <LandIntelligenceScore
               address={p.address ?? p.title}
               lat={p.latitude ?? undefined}
