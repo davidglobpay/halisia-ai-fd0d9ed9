@@ -46,6 +46,7 @@ import {
 import { SaveButton } from "@/components/halisia/save-button";
 import { PartnerListings } from "@/components/halisia/partner-listings";
 import { LeafletLayersMap } from "@/components/halisia/leaflet-layers-map";
+import { PassportLinks } from "@/components/halisia/land-passport/passport-links";
 
 const searchSchema = z.object({
   category: z.string().optional(),
@@ -643,6 +644,21 @@ function ListingRow({
         <Link to="/marketplace/$id" params={{ id: p.id }} className="font-medium text-sm">
           {p.title}
         </Link>
+        {p.latitude != null && p.longitude != null && (
+          <PassportLinks
+            compact
+            className="mt-1.5"
+            target={{
+              lat: Number(p.latitude),
+              lng: Number(p.longitude),
+              ref: p.title,
+              label: p.address ?? p.title,
+              source: "Seller-provided listing location",
+              status: "user_provided",
+              county: p.county ?? "",
+            }}
+          />
+        )}
         <div className="mt-1 text-[11px] text-muted-foreground flex flex-wrap items-center gap-1">
           <MapPin className="h-3 w-3" /> {p.address ?? p.county ?? "Kenya"}
           <span>·</span>

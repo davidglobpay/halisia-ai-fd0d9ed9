@@ -35,6 +35,7 @@ import {
 import { recordSearchConversion } from "@/lib/analytics";
 import halisiaSymbol from "@/assets/brand/halisia-mark.png.asset.json";
 import halisiaWordmark from "@/assets/brand/halisia-lockup.png.asset.json";
+import { HeroMap } from "@/components/halisia/hero-map";
 
 export const Route = createFileRoute("/")({
   validateSearch: (s) => z.object({ compare: fallback(z.string(), "").default("") }).parse(s),
@@ -216,6 +217,9 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
           </motion.div>
         </HeroStage>
       </section>
+
+      {/* HERO MAP — interactive map / satellite / Street View → Land Passport */}
+      <HeroMap />
 
       {/* TOOLS RAIL — the paid entry points, straight after the search bar */}
       <FeatureRail />
