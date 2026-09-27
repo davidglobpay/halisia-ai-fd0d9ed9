@@ -293,8 +293,7 @@ export default function StudioViewerInternal(props: StudioViewerProps) {
     const token = ++requestRef.current;
     const controller = new AbortController();
     onStateRef.current?.({ loading: true, error: null });
-    disposeSubtree(engine.content);
-    engine.content.clear();
+    for (const child of [...engine.content.children]) disposeSubtree(child);
     const site = makeSite(widthM, depthM, topology, showParking, showLandscape);
     engine.content.add(site);
     if (generatedUse && generatedFloors) {
