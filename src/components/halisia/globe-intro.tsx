@@ -23,7 +23,13 @@ const STAGES = [
  * (no extra assets, no WebGL) so it costs nothing extra on mobile, and is
  * skipped entirely under Reduce Motion.
  */
-export function GlobeIntro({ label, finalLabel = "Kenya" }: { label?: string; finalLabel?: string }) {
+export function GlobeIntro({
+  label,
+  finalLabel = "Kenya",
+}: {
+  label?: string;
+  finalLabel?: string;
+}) {
   const [playing, setPlaying] = useState(false);
   const [stageIndex, setStageIndex] = useState(0);
 

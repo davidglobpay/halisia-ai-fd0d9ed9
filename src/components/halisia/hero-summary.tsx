@@ -4,11 +4,7 @@ import { Sparkles, MapPin, CircleSlash } from "lucide-react";
 import type { LocationIntel } from "@/lib/location-intel.functions";
 import type { NarrativeOutput } from "@/lib/ai-narrative.functions";
 import type { Wave4Intel } from "@/lib/wave4-intel.functions";
-import {
-  runIntelligenceEngine,
-  DOSSIER_SCOPE,
-  type ModuleOutput,
-} from "@/lib/intelligence-engine";
+import { runIntelligenceEngine, DOSSIER_SCOPE, type ModuleOutput } from "@/lib/intelligence-engine";
 import { useUserPersona } from "@/hooks/use-user-persona";
 
 /**
@@ -165,10 +161,7 @@ export function HeroSummary({
 
   // The narrative is a written read, not a measurement. It is shown as prose
   // and never converted into a number anywhere on this surface.
-  const summary =
-    narrative?.paragraphs?.[0] ??
-    narrative?.overview ??
-    "HALISIA is reading this location…";
+  const summary = narrative?.paragraphs?.[0] ?? narrative?.overview ?? "HALISIA is reading this location…";
 
   return (
     <motion.section

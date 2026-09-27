@@ -486,7 +486,8 @@ function scoreDevelopmentContext(wave4?: Wave4Intel): ModuleOutput | null {
       "OpenStreetMap completeness varies by location",
       "Not a valuation, return forecast or investment recommendation",
     ],
-    nextStep: "Use a registered valuer and current comparable transactions before committing capital.",
+    nextStep:
+      "Use a registered valuer and current comparable transactions before committing capital.",
   };
 }
 
@@ -714,4 +715,4 @@ export const PERSONAS: { id: Persona; label: string; hint: string }[] = [
 
 /** Stated once, wherever a dossier is shown or exported. */
 export const DOSSIER_SCOPE =
-  "HALISIA reads location and public-context services available for this point. It holds no title, transaction-price, utility-connection, crime or planning-approval data, does not assert title, boundary or ownership, and publishes no recommendation to buy or not to buy.";
+  "HALISIA reads the Google Maps Elevation API, Google Air Quality API and Google Places for location readings; public-context readings list any additional runtime sources. It holds no title, transaction-price, utility-connection, crime or planning-approval data, does not assert title, boundary or ownership, and publishes no recommendation to buy or not to buy.";
