@@ -104,77 +104,77 @@ export function GlobeIntro({
           role="presentation"
         >
           <g className="halisia-globe-intro-spin" style={{ transformOrigin: "100px 100px" }}>
-          <circle
-            cx="100"
-            cy="100"
-            r="78"
-            fill="none"
-            stroke="var(--h-gold, #c08a2e)"
-            strokeOpacity="0.55"
-            strokeWidth="0.8"
-          />
-          {/* Simplified continent silhouettes establish a whole-world view. */}
-          <g className="halisia-globe-continents">
-            <path d="M47 58l14-14 22-6 10 9-7 12-12 4-5 17-14 8-10-12z" />
-            <path d="M72 91l14 8 4 22-8 31-10-10-5-28z" />
-            <path d="M107 45l18-8 31 12 8 16-18 9-14 18-18-8-10-19z" />
-            <path d="M147 122l16 4 8 14-11 13-17-8z" />
-          </g>
-          {[18, 36, 54, 68].map((r) => (
-            <ellipse
-              key={r}
+            <circle
               cx="100"
               cy="100"
-              rx={r}
-              ry="78"
+              r="78"
               fill="none"
               stroke="var(--h-gold, #c08a2e)"
-              strokeOpacity="0.28"
-              strokeWidth="0.6"
+              strokeOpacity="0.55"
+              strokeWidth="0.8"
             />
-          ))}
-          {[-52, -26, 0, 26, 52].map((dy) => (
-            <ellipse
-              key={dy}
-              cx="100"
-              cy={100 + dy}
-              rx={Math.sqrt(Math.max(1, 78 * 78 - dy * dy))}
-              ry="4"
-              fill="none"
-              stroke="var(--h-gold, #c08a2e)"
-              strokeOpacity="0.2"
-              strokeWidth="0.6"
+            {/* Simplified continent silhouettes establish a whole-world view. */}
+            <g className="halisia-globe-continents">
+              <path d="M47 58l14-14 22-6 10 9-7 12-12 4-5 17-14 8-10-12z" />
+              <path d="M72 91l14 8 4 22-8 31-10-10-5-28z" />
+              <path d="M107 45l18-8 31 12 8 16-18 9-14 18-18-8-10-19z" />
+              <path d="M147 122l16 4 8 14-11 13-17-8z" />
+            </g>
+            {[18, 36, 54, 68].map((r) => (
+              <ellipse
+                key={r}
+                cx="100"
+                cy="100"
+                rx={r}
+                ry="78"
+                fill="none"
+                stroke="var(--h-gold, #c08a2e)"
+                strokeOpacity="0.28"
+                strokeWidth="0.6"
+              />
+            ))}
+            {[-52, -26, 0, 26, 52].map((dy) => (
+              <ellipse
+                key={dy}
+                cx="100"
+                cy={100 + dy}
+                rx={Math.sqrt(Math.max(1, 78 * 78 - dy * dy))}
+                ry="4"
+                fill="none"
+                stroke="var(--h-gold, #c08a2e)"
+                strokeOpacity="0.2"
+                strokeWidth="0.6"
+              />
+            ))}
+            {/* Africa mass, then the Kenya lozenge the camera lands on */}
+            <path
+              d="M96 46c10 2 18 8 22 16 5 10 2 20-2 29-4 10-4 20-9 29-5 10-13 18-19 27-4 6-11 7-15 2-5-6-3-15-6-22-4-9-12-16-13-26-1-11 6-21 13-29 8-9 17-19 29-26z"
+              fill="var(--h-forest, #102d1a)"
+              fillOpacity="0.1"
+              stroke="var(--h-forest, #102d1a)"
+              strokeOpacity="0.35"
+              strokeWidth="0.7"
             />
-          ))}
-          {/* Africa mass, then the Kenya lozenge the camera lands on */}
-          <path
-            d="M96 46c10 2 18 8 22 16 5 10 2 20-2 29-4 10-4 20-9 29-5 10-13 18-19 27-4 6-11 7-15 2-5-6-3-15-6-22-4-9-12-16-13-26-1-11 6-21 13-29 8-9 17-19 29-26z"
-            fill="var(--h-forest, #102d1a)"
-            fillOpacity="0.1"
-            stroke="var(--h-forest, #102d1a)"
-            strokeOpacity="0.35"
-            strokeWidth="0.7"
-          />
-          <path
-            d="M112 92l10 3 4 8-6 9-9 6-8-4-3-9 4-9z"
-            fill="var(--h-green, #147b35)"
-            fillOpacity="0.35"
-            stroke="var(--h-green, #147b35)"
-            strokeWidth="0.9"
-          />
-          {/* County-like subdivisions appear only during the Kenya stages. */}
-          {stageIndex >= 3 && (
-            <g className="halisia-kenya-counties" aria-hidden="true">
-              <path d="M106 99l17 2M104 105l19 2M108 112l12-17M114 116l2-21" />
-            </g>
-          )}
-          {/* Nairobi marker — only visible once the camera reaches the city stage */}
-          {stageIndex >= STAGES.length - 1 && (
-            <g className="halisia-nairobi-marker">
-              <circle cx="116" cy="103" r="2.4" />
-              <circle cx="116" cy="103" r="5" fill="none" />
-            </g>
-          )}
+            <path
+              d="M112 92l10 3 4 8-6 9-9 6-8-4-3-9 4-9z"
+              fill="var(--h-green, #147b35)"
+              fillOpacity="0.35"
+              stroke="var(--h-green, #147b35)"
+              strokeWidth="0.9"
+            />
+            {/* County-like subdivisions appear only during the Kenya stages. */}
+            {stageIndex >= 3 && (
+              <g className="halisia-kenya-counties" aria-hidden="true">
+                <path d="M106 99l17 2M104 105l19 2M108 112l12-17M114 116l2-21" />
+              </g>
+            )}
+            {/* Nairobi marker — only visible once the camera reaches the city stage */}
+            {stageIndex >= STAGES.length - 1 && (
+              <g className="halisia-nairobi-marker">
+                <circle cx="116" cy="103" r="2.4" />
+                <circle cx="116" cy="103" r="5" fill="none" />
+              </g>
+            )}
           </g>
         </svg>
       )}
