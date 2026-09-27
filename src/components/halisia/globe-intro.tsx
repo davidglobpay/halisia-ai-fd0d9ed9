@@ -47,17 +47,19 @@ export function GlobeIntro({
       /* Private mode — play when visible anyway. */
     }
 
-    try {
-      window.sessionStorage.setItem(SESSION_KEY, "1");
-    } catch {
-      /* Session storage is optional. */
-    }
     setPlaying(true);
     setStageIndex(0);
     const timers = STAGES.slice(1).map((stage, i) =>
       window.setTimeout(() => setStageIndex(i + 1), Math.round(stage.at * DURATION_MS)),
     );
-    const end = window.setTimeout(() => setPlaying(false), DURATION_MS);
+    const end = window.setTimeout(() => {
+      try {
+        window.sessionStorage.setItem(SESSION_KEY, "1");
+      } catch {
+        /* Session storage is optional. */
+      }
+      setPlaying(false);
+    }, DURATION_MS);
     return () => {
       timers.forEach(window.clearTimeout);
       window.clearTimeout(end);
