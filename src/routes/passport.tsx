@@ -397,10 +397,7 @@ function PassportPage() {
         available={ev.summary.available}
         total={ev.summary.total}
         coveragePct={ev.summary.coveragePct}
-        refreshed={new Date(openedAt).toLocaleTimeString("en-KE", {
-          hour: "2-digit",
-          minute: "2-digit",
-        })}
+        refreshed={openedAt ? `${openedAt.slice(11, 16)} UTC` : "—"}
       />
 
       <div className="mt-5 overflow-hidden rounded-3xl border border-foreground/10">
