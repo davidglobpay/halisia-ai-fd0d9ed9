@@ -220,6 +220,10 @@ export default function StudioViewerInternal(props: StudioViewerProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<Engine | null>(null);
   const requestRef = useRef(0);
+  const onStateRef = useRef(onState);
+  onStateRef.current = onState;
+  const generatedUse = generated?.use;
+  const generatedFloors = generated?.floors;
 
   useEffect(() => {
     const host = hostRef.current;
@@ -287,18 +291,18 @@ export default function StudioViewerInternal(props: StudioViewerProps) {
     if (!engine) return;
     const token = ++requestRef.current;
     const controller = new AbortController();
-    onState?.({ loading: true, error: null });
+    onStateRef.current?.({ loading: true, error: null });
     disposeSubtree(engine.content);
     engine.content.clear();
     const site = makeSite(widthM, depthM, topology, showParking, showLandscape);
     engine.content.add(site);
-    if (generated) {
-      const massing = makeGeneratedMassing(widthM, depthM, generated.use, generated.floors);
+    if (generatedUse && generatedFloors) {
+      const massing = makeGeneratedMassing(widthM, depthM, generatedUse, generatedFloors);
       massing.rotation.y = THREE.MathUtils.degToRad(rotationDeg);
       massing.scale.setScalar(scalePct / 100);
       engine.content.add(massing);
       frameSite(engine, widthM, depthM);
-      onState?.({ loading: false, error: null });
+      onStateRef.current?.({ loading: false, error: null });
       return () => controller.abort();
     }
     frameSite(engine, widthM, depthM);
@@ -341,11 +345,11 @@ export default function StudioViewerInternal(props: StudioViewerProps) {
         wrapper.position.set(widthM * 0.04, 0.08, -depthM * 0.06);
         engine.content.add(wrapper);
         frameSite(engine, widthM, depthM);
-        onState?.({ loading: false, error: null });
+        onStateRef.current?.({ loading: false, error: null });
       })
       .catch((error: unknown) => {
         if ((error as Error)?.name === "AbortError" || token !== requestRef.current) return;
-        onState?.({
+        onStateRef.current?.({
           loading: false,
           error: (error as Error)?.message || "The concept model could not be opened.",
         });
@@ -360,8 +364,8 @@ export default function StudioViewerInternal(props: StudioViewerProps) {
     scalePct,
     showParking,
     showLandscape,
-    generated,
-    onState,
+    generatedUse,
+    generatedFloors,
   ]);
 
   useEffect(() => {
