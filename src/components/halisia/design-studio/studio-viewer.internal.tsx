@@ -261,6 +261,7 @@ export default function StudioViewerInternal(props: StudioViewerProps) {
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
+      renderer.render(scene, camera);
     };
     const ro = new ResizeObserver(resize);
     ro.observe(host);
@@ -302,6 +303,7 @@ export default function StudioViewerInternal(props: StudioViewerProps) {
       massing.scale.setScalar(scalePct / 100);
       engine.content.add(massing);
       frameSite(engine, widthM, depthM);
+      engine.renderer.render(engine.scene, engine.camera);
       onStateRef.current?.({ loading: false, error: null });
       return () => controller.abort();
     }
@@ -345,6 +347,7 @@ export default function StudioViewerInternal(props: StudioViewerProps) {
         wrapper.position.set(widthM * 0.04, 0.08, -depthM * 0.06);
         engine.content.add(wrapper);
         frameSite(engine, widthM, depthM);
+        engine.renderer.render(engine.scene, engine.camera);
         onStateRef.current?.({ loading: false, error: null });
       })
       .catch((error: unknown) => {
