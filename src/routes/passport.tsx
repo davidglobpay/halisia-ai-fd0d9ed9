@@ -3,7 +3,7 @@ import { z } from "zod";
 import { fallback, zodValidator } from "@tanstack/zod-adapter";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { ArrowLeft, ChevronDown, Loader2, Newspaper } from "lucide-react";
 import { MapView } from "@/components/halisia/map-view";
 import { StreetViewPanel } from "@/components/halisia/land-passport/street-view-panel";
@@ -233,7 +233,8 @@ function PassportPage() {
     staleTime: 15 * 60_000,
     retry: 1,
   });
-  const [openedAt] = useState(() => new Date().toISOString());
+  const [openedAt, setOpenedAt] = useState("");
+  useEffect(() => setOpenedAt(new Date().toISOString()), [lat, lng]);
   const county = ok ? countyForPoint(lat, lng) : null;
   const facts = county ? getCountyFacts(county.code) : null;
   const newsQ = useQuery({
@@ -362,7 +363,7 @@ function PassportPage() {
     geoState: qs(geoQ),
     wave4: w4Q.data,
     w4State: qs(w4Q),
-    retrievedAt: openedAt,
+    retrievedAt: openedAt || "This visit",
   });
   const byChapter = (id: ChapterId) => ev.items.filter((x) => x.chapter === id);
   const placeName =
@@ -452,7 +453,7 @@ function PassportPage() {
           <Row k="Parcel polygon" v={STATUS_META[status].exact ? "See source" : "Not available"} />
           <Row k="Area" v="Not available without survey data" />
           <Row k="Source" v={s.source || "Not stated"} />
-          <Row k="Opened" v={openedAt} />
+          <Row k="Opened" v={openedAt || "—"} />
           <ul className="mt-2">
             {byChapter("identity").map((it) => (
               <EvidenceRow key={it.id} item={it} />
