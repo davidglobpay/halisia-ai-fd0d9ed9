@@ -145,7 +145,7 @@ function DesignStudioPage() {
       </p>
 
       <div className="mt-5 grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <section className="relative h-[58vh] min-h-[420px] max-h-[760px] overflow-hidden rounded-2xl border border-foreground/10 bg-black/20 sm:h-[68vh] xl:h-[720px]">
+        <section className="relative h-[58vh] min-h-[420px] min-w-0 max-h-[760px] overflow-hidden rounded-2xl border border-foreground/10 bg-black/20 sm:h-[68vh] xl:h-[720px]">
           {dimensionsValid ? (
             <StudioViewer
               concept={concept}
@@ -299,6 +299,8 @@ function DesignStudioPage() {
                 step={15}
                 value={rotationDeg}
                 onChange={(event) => setRotationDeg(Number(event.target.value))}
+                className="h-11 w-full cursor-pointer accent-primary"
+                data-testid="studio-rotation"
               />
             </label>
             <label className="grid gap-1 text-xs font-medium">
@@ -310,6 +312,8 @@ function DesignStudioPage() {
                 step={5}
                 value={scalePct}
                 onChange={(event) => setScalePct(Number(event.target.value))}
+                className="h-11 w-full cursor-pointer accent-primary"
+                data-testid="studio-scale"
               />
             </label>
             <div className="flex flex-wrap gap-2">
@@ -326,18 +330,35 @@ function DesignStudioPage() {
               ))}
             </div>
             <div className="flex flex-wrap gap-2">
-              <KitButton size="sm" onClick={() => setShowParking((value) => !value)}>
+               <KitButton
+                 size="sm"
+                 variant={showParking ? "primary" : "secondary"}
+                 aria-pressed={showParking}
+                 data-testid="studio-parking"
+                 onClick={() => setShowParking((value) => !value)}
+               >
                 {showParking ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />} Parking
               </KitButton>
-              <KitButton size="sm" onClick={() => setShowLandscape((value) => !value)}>
+               <KitButton
+                 size="sm"
+                 variant={showLandscape ? "primary" : "secondary"}
+                 aria-pressed={showLandscape}
+                 data-testid="studio-landscape"
+                 onClick={() => setShowLandscape((value) => !value)}
+               >
                 {showLandscape ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}{" "}
                 Landscape
               </KitButton>
-              <KitButton size="sm" onClick={() => setFitToken((value) => value + 1)}>
+               <KitButton
+                 size="sm"
+                 data-testid="studio-fit"
+                 onClick={() => setFitToken((value) => value + 1)}
+               >
                 <Box className="h-4 w-4" /> Fit
               </KitButton>
               <KitButton
                 size="sm"
+                 data-testid="studio-reset"
                 onClick={() => {
                   setRotationDeg(0);
                   setScalePct(100);
