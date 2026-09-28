@@ -191,15 +191,9 @@ function frame(engine: Engine) {
 }
 
 function frameSite(engine: Engine, widthM: number, depthM: number) {
-  const extent = Math.max(widthM, depthM);
-  engine.controls.target.set(0, Math.max(2, extent * 0.04), 0);
-  engine.camera.position.set(extent * 0.72, extent * 0.62, extent * 0.82);
-  engine.camera.near = Math.max(0.05, extent / 1000);
-  engine.camera.far = Math.max(1000, extent * 30);
-  engine.camera.updateProjectionMatrix();
-  engine.controls.minDistance = Math.max(4, extent * 0.15);
-  engine.controls.maxDistance = extent * 8;
-  engine.controls.update();
+  void widthM;
+  void depthM;
+  frame(engine);
 }
 
 export default function StudioViewerInternal(props: StudioViewerProps) {
@@ -261,6 +255,7 @@ export default function StudioViewerInternal(props: StudioViewerProps) {
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
+      if (content.children.length > 0) frame(engine);
       renderer.render(scene, camera);
     };
     const ro = new ResizeObserver(resize);

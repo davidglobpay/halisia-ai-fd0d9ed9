@@ -31,6 +31,7 @@ function slugify(s: string) {
  * "Verified", because it judged by confidence and source count alone.
  */
 function provenanceOf(m: ModuleOutput): { label: string; color: [number, number, number] } {
+  if (m.status === "projected") return { label: "Indicative projection", color: [138, 94, 18] };
   if (m.status === "not-assessed") return { label: "Not assessed", color: [140, 150, 168] };
   if ((m.confidencePct ?? 0) >= 100) return { label: "Measured", color: [34, 197, 94] };
   return { label: "Partly measured", color: [212, 160, 23] };
@@ -146,7 +147,7 @@ export async function generateIntelligencePdf(
   doc.setFontSize(10);
   doc.text(
     `${decision.measuredCount} of ${decision.modules.length} modules measured  ·  ` +
-      `${decision.notAssessedCount} not assessed  ·  ` +
+      `${decision.projectedCount} projected  ·  ${decision.notAssessedCount} not assessed  ·  ` +
       `Read ${new Date(decision.freshness).toLocaleString()}`,
     M,
     y,
@@ -251,8 +252,8 @@ export async function generateIntelligencePdf(
     setColor(MUTED);
     doc.setFont("helvetica", "normal");
     const meta =
-      m.status === "measured"
-        ? `  ·  Confidence ${m.confidencePct}%  ·  ${m.sources.length === 1 ? "1 source" : `${m.sources.length} sources`}`
+      m.status !== "not-assessed"
+        ? `  ·  ${m.status === "projected" ? "Projection confidence" : "Confidence"} ${m.confidencePct}%  ·  ${m.sources.length === 1 ? "1 source" : `${m.sources.length} sources`}`
         : "  ·  no data held for this location";
     doc.text(meta, M + doc.getTextWidth(v.label.toUpperCase()), y);
     y += 12;
@@ -260,7 +261,15 @@ export async function generateIntelligencePdf(
     setColor(INK);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
-    doc.text(m.status === "measured" ? "Why this reading" : "Why there is no reading", M, y + 12);
+    doc.text(
+      m.status === "measured"
+        ? "Why this reading"
+        : m.status === "projected"
+          ? "Projection and evidence"
+          : "Why there is no reading",
+      M,
+      y + 12,
+    );
     y += 18;
     doc.setFont("helvetica", "normal");
     m.reasons.forEach((r) => {

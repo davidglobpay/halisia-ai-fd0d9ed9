@@ -93,11 +93,23 @@ const EMPTY = intel({ elevation: null, aqi: null, counts: 0 });
 const SPREAD = intel({ elevation: 10, aqi: 20, counts: 8 });
 
 const WAVE4 = {
+  facilities: {
+    schools: places(4),
+    hospitals: places(3),
+    markets: places(2),
+    transit: places(5),
+    worship: places(2),
+  },
   breakdown: {
     investment: {
       score: 71,
       confidence: "medium",
       note: "Composite view — not a valuation.",
+    },
+    development: {
+      score: 68,
+      confidence: "medium",
+      note: "Mapped settlement anchors only.",
     },
   },
   sources: [{ label: "OpenStreetMap", url: "https://www.openstreetmap.org", used: true }],
@@ -163,6 +175,36 @@ describe("a module scores only when its data arrived", () => {
     expect(d.modules.find((module) => module.id === "investment")?.status).toBe("not-assessed");
   });
 
+  it("shows community and development proxies only with sufficient mapped coverage", () => {
+    const d = runIntelligenceEngine(FULL, undefined, "investor", WAVE4);
+    for (const id of ["community", "futureGrowth"] as const) {
+      const module = d.modules.find((item) => item.id === id);
+      expect(module).toMatchObject({ status: "projected", score: null, confidencePct: 60 });
+      expect(module?.sources).toEqual(["OpenStreetMap"]);
+      expect(module?.projectionBasis?.length).toBeGreaterThan(0);
+    }
+    expect(d.projectedCount).toBe(2);
+    expect(d.measuredCount).toBe(4);
+  });
+
+  it("never lets proxy projections affect the composite reading", () => {
+    const withoutProjections = runIntelligenceEngine(FULL, undefined, "investor");
+    const proxyOnlyWave4 = {
+      ...WAVE4,
+      breakdown: {
+        ...WAVE4.breakdown,
+        investment: { ...WAVE4.breakdown.investment, confidence: "low" as const },
+      },
+    };
+    const withProjections = runIntelligenceEngine(FULL, undefined, "investor", proxyOnlyWave4);
+    expect(
+      withProjections.modules
+        .filter((item) => item.status === "projected")
+        .every((item) => item.score == null),
+    ).toBe(true);
+    expect(withProjections.reading).toBe(withoutProjections.reading);
+  });
+
   it("drops a module to not-assessed when only its provider fails", () => {
     const noElevation = intel({ elevation: null, aqi: 62, counts: 3 });
     const d = runIntelligenceEngine(noElevation, undefined, "developer");
@@ -192,10 +234,13 @@ describe("confidence follows the providers", () => {
     expect(d.modules.find((m) => m.id === "construction")!.confidencePct).toBeLessThan(100);
   });
 
-  it("never publishes a confidence without a score, or a score without one", () => {
+  it("publishes score confidence only for measured modules", () => {
     for (const fixture of [FULL, EMPTY]) {
       for (const m of runIntelligenceEngine(fixture, undefined, "farmer").modules) {
-        expect(m.score == null).toBe(m.confidencePct == null);
+        if (m.status === "measured") {
+          expect(m.score).not.toBeNull();
+          expect(m.confidencePct).not.toBeNull();
+        }
       }
     }
   });

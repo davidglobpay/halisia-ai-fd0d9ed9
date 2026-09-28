@@ -81,6 +81,11 @@ function TrendIcon({ trend }: { trend: ModuleOutput["trend"] }) {
  * provider did not answer, or not assessed at all.
  */
 function provenanceBadge(m: ModuleOutput): { label: string; cls: string } {
+  if (m.status === "projected")
+    return {
+      label: "Indicative projection",
+      cls: "text-amber-glow border-amber-400/30 bg-amber-500/10",
+    };
   if (m.status === "not-assessed")
     return {
       label: "Not assessed",
@@ -114,6 +119,7 @@ function sourceUrl(label: string): string | null {
 
 function ModuleCard({ m, freshness }: { m: ModuleOutput; freshness: string }) {
   const assessed = m.status === "measured" && m.score != null;
+  const projected = m.status === "projected";
   const t = assessed ? tone(m.score!) : NEUTRAL_TONE;
   const v = provenanceBadge(m);
   const [fb, setFb] = useState<ModuleFeedback | undefined>(undefined);
@@ -182,7 +188,7 @@ function ModuleCard({ m, freshness }: { m: ModuleOutput; freshness: string }) {
             >
               <BadgeCheck className="h-2.5 w-2.5" /> {v.label}
             </span>
-            {assessed ? (
+            {assessed || projected ? (
               <>
                 <span className="inline-flex items-center gap-1">
                   <Database className="h-2.5 w-2.5" />{" "}
@@ -191,7 +197,11 @@ function ModuleCard({ m, freshness }: { m: ModuleOutput; freshness: string }) {
                 <span className="inline-flex items-center gap-1" title={formatDateTime(freshness)}>
                   <Clock className="h-2.5 w-2.5" /> {formatDate(freshness)}
                 </span>
-                {m.confidencePct != null && <span>· Confidence {m.confidencePct}%</span>}
+                {m.confidencePct != null && (
+                  <span>
+                    · {projected ? "Projection confidence" : "Confidence"} {m.confidencePct}%
+                  </span>
+                )}
               </>
             ) : (
               <span>HALISIA holds no data for this — see what to check</span>
@@ -206,7 +216,12 @@ function ModuleCard({ m, freshness }: { m: ModuleOutput; freshness: string }) {
       <div className="px-3 pb-3 space-y-2.5 text-sm text-foreground/90">
         <div>
           <div className="text-[10px] uppercase tracking-widest text-accent flex items-center gap-1">
-            <Info className="h-3 w-3" /> {assessed ? "Why this reading" : "Why there is no reading"}
+            <Info className="h-3 w-3" />{" "}
+            {assessed
+              ? "Why this reading"
+              : projected
+                ? "Projection and evidence"
+                : "Why there is no reading"}
           </div>
           <ul className="mt-1 space-y-1">
             {m.reasons.map((r, i) => (
@@ -251,6 +266,19 @@ function ModuleCard({ m, freshness }: { m: ModuleOutput; freshness: string }) {
             </div>
           </div>
         )}
+
+        {m.projectionBasis?.length ? (
+          <div className="rounded-lg border border-amber-400/25 bg-amber-500/[0.06] px-2.5 py-1.5">
+            <div className="text-[10px] uppercase tracking-widest text-amber-glow">
+              Projection basis
+            </div>
+            <ul className="mt-1 space-y-0.5 text-[12px] text-foreground/85">
+              {m.projectionBasis.map((basis) => (
+                <li key={basis}>• {basis}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
 
         {m.missing.length > 0 && (
           <div

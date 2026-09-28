@@ -151,7 +151,8 @@ function TitleDeedPage() {
             if (built && "loc" in built) {
               located = built.loc;
               setLoc(located);
-            } else setLocIssue(built?.issue ?? "No place matched the location text on this record.");
+            } else
+              setLocIssue(built?.issue ?? "No place matched the location text on this record.");
           } catch (err) {
             console.warn("locate failed", err);
             setLocIssue("Location service unavailable — try again shortly.");
@@ -350,8 +351,8 @@ function TitleDeedPage() {
 
   return (
     <div className="min-h-screen">
-      <div className="pt-24 pb-16 mx-auto max-w-[1400px] px-4">
-        <header className="max-w-3xl">
+      <div className="mx-auto min-w-0 max-w-[1400px] px-4 pb-16 pt-24">
+        <header className="min-w-0 max-w-3xl">
           <div className="inline-flex items-center gap-2 glass rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-accent">
             <Sparkles className="h-3 w-3" /> Title Deed Intelligence
           </div>
@@ -382,9 +383,9 @@ function TitleDeedPage() {
           ))}
         </div>
 
-        <div className="mt-4 grid lg:grid-cols-[1fr_420px] gap-4">
+        <div className="mt-4 grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_420px]">
           {/* LEFT: Input surface */}
-          <div className="glass-strong rounded-3xl p-5">
+          <div className="glass-strong min-w-0 overflow-hidden rounded-3xl p-4 sm:p-5">
             {mode === "query" ? (
               <div className="space-y-3">
                 <div className="flex flex-wrap gap-2">
@@ -409,7 +410,7 @@ function TitleDeedPage() {
                     </button>
                   ))}
                 </div>
-                <div className="flex gap-2">
+                <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2 sm:flex">
                   <input
                     value={queryValue}
                     onChange={(e) => setQueryValue(e.target.value)}
@@ -423,7 +424,7 @@ function TitleDeedPage() {
                             ? "e.g. Nairobi Registry"
                             : "e.g. Title No. IR 123456"
                     }
-                    className="flex-1 rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm focus:outline-none focus:border-accent/60"
+                    className="min-w-0 rounded-2xl bg-black/30 border border-white/10 px-4 py-3 text-sm focus:outline-none focus:border-accent/60 sm:flex-1"
                   />
                   {voice.supported && (
                     <button
@@ -447,7 +448,7 @@ function TitleDeedPage() {
                   <button
                     onClick={processQuery}
                     disabled={!queryValue.trim() || busy}
-                    className="rounded-2xl px-4 py-3 text-sm bg-gradient-to-r from-primary to-accent text-primary-foreground font-medium inline-flex items-center gap-2 disabled:opacity-60"
+                    className="col-span-2 min-h-12 justify-center rounded-2xl px-4 py-3 text-sm bg-gradient-to-r from-primary to-accent text-primary-foreground font-medium inline-flex items-center gap-2 disabled:opacity-60 sm:col-span-1"
                   >
                     {busy ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -707,8 +708,8 @@ function TitleDeedPage() {
           </div>
 
           {/* RIGHT: Map + intelligence */}
-          <div className="space-y-4">
-            <div className="glass-strong rounded-3xl p-2 relative">
+          <div className="min-w-0 space-y-4">
+            <div className="glass-strong relative min-w-0 overflow-hidden rounded-3xl p-2">
               <MapView
                 center={loc ? { lat: loc.lat, lng: loc.lng } : undefined}
                 marker={loc ? { lat: loc.lat, lng: loc.lng, label: loc.address } : null}
@@ -746,7 +747,12 @@ function TitleDeedPage() {
                   target={{
                     lat: loc.lat,
                     lng: loc.lng,
-                    ref: fields?.titleNumber || fields?.lrNumber || fields?.parcelNumber || queryValue || "",
+                    ref:
+                      fields?.titleNumber ||
+                      fields?.lrNumber ||
+                      fields?.parcelNumber ||
+                      queryValue ||
+                      "",
                     label: loc.address,
                     source: "Google Geocoding of title record text",
                     status: loc.status,
@@ -805,7 +811,9 @@ function TitleDeedPage() {
                 >
                   <ExternalLink className="h-3 w-3" /> Open shareable view
                 </Link>
-                <IntelligenceDashboard lat={loc.lat} lng={loc.lng} address={loc.address} />
+                <div className="min-w-0 overflow-hidden">
+                  <IntelligenceDashboard lat={loc.lat} lng={loc.lng} address={loc.address} />
+                </div>
               </>
             )}
 
