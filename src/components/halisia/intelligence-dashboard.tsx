@@ -397,7 +397,9 @@ function StatTile({
         <div className="min-w-0 truncate text-[11px] text-muted-foreground">{label}</div>
       </div>
       <div className="mt-2 min-w-0 truncate text-xl font-semibold tracking-tight">{value}</div>
-      {sub && <div className="mt-0.5 min-w-0 truncate text-[11px] text-muted-foreground">{sub}</div>}
+      {sub && (
+        <div className="mt-0.5 min-w-0 truncate text-[11px] text-muted-foreground">{sub}</div>
+      )}
     </div>
   );
 }

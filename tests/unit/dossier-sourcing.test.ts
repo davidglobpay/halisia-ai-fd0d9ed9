@@ -93,11 +93,23 @@ const EMPTY = intel({ elevation: null, aqi: null, counts: 0 });
 const SPREAD = intel({ elevation: 10, aqi: 20, counts: 8 });
 
 const WAVE4 = {
+  facilities: {
+    schools: places(4),
+    hospitals: places(3),
+    markets: places(2),
+    transit: places(5),
+    worship: places(2),
+  },
   breakdown: {
     investment: {
       score: 71,
       confidence: "medium",
       note: "Composite view — not a valuation.",
+    },
+    development: {
+      score: 68,
+      confidence: "medium",
+      note: "Mapped settlement anchors only.",
     },
   },
   sources: [{ label: "OpenStreetMap", url: "https://www.openstreetmap.org", used: true }],
@@ -180,7 +192,11 @@ describe("a module scores only when its data arrived", () => {
     const withProjections = runIntelligenceEngine(FULL, undefined, "investor", WAVE4);
     const measuredDevelopment = withProjections.modules.find((item) => item.id === "investment");
     expect(measuredDevelopment?.status).toBe("measured");
-    expect(withProjections.modules.filter((item) => item.status === "projected").every((item) => item.score == null)).toBe(true);
+    expect(
+      withProjections.modules
+        .filter((item) => item.status === "projected")
+        .every((item) => item.score == null),
+    ).toBe(true);
     expect(withProjections.reading).not.toBe(withoutProjections.reading);
   });
 

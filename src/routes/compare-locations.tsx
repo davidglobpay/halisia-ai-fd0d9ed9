@@ -175,8 +175,8 @@ function CompareLocationsPage() {
               Compare two locations
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Reads each location and compares the modules HALISIA can measure. Modules with no
-              data behind them are shown as not assessed for both, never as a score.
+              Reads each location and compares the modules HALISIA can measure. Modules with no data
+              behind them are shown as not assessed for both, never as a score.
             </p>
           </div>
           <div
@@ -383,7 +383,8 @@ function LocationColumn({
                 {decision.readingLabel}
               </div>
               <div className="text-[11px] text-muted-foreground">
-                 {decision.measuredCount} measured · {decision.projectedCount} projected · {decision.notAssessedCount} not assessed
+                {decision.measuredCount} measured · {decision.projectedCount} projected ·{" "}
+                {decision.notAssessedCount} not assessed
                 {decision.confidencePct != null && ` · confidence ${decision.confidencePct}%`}
               </div>
               <div className="text-[10px] text-muted-foreground">
@@ -403,7 +404,11 @@ function LocationColumn({
               >
                 <span className="truncate">{m.label}</span>
                 <span className="tabular-nums font-medium">
-                  {m.score != null ? m.score : m.status === "projected" ? "Projected" : "Not assessed"}
+                  {m.score != null
+                    ? m.score
+                    : m.status === "projected"
+                      ? "Projected"
+                      : "Not assessed"}
                 </span>
               </li>
             ))}
@@ -514,8 +519,8 @@ function DeltaTable({ a, b, persona }: { a: DecisionOutput; b: DecisionOutput; p
       {notComparable.length > 0 && (
         <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
           <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-            Not comparable — HALISIA holds no data for {notComparable.length} of{" "}
-            {a.modules.length} modules at one or both locations
+            Not comparable — HALISIA holds no data for {notComparable.length} of {a.modules.length}{" "}
+            modules at one or both locations
           </div>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {notComparable.map((m) => (
@@ -536,8 +541,7 @@ function DeltaTable({ a, b, persona }: { a: DecisionOutput; b: DecisionOutput; p
       <p className="mt-3 text-[10px] text-muted-foreground">
         Δ = A − B across the {rows.length} module{rows.length === 1 ? "" : "s"} measured at both
         locations. A higher reading is not a recommendation to buy. Read A:{" "}
-        {new Date(a.freshness).toLocaleString()} · Read B:{" "}
-        {new Date(b.freshness).toLocaleString()}.
+        {new Date(a.freshness).toLocaleString()} · Read B: {new Date(b.freshness).toLocaleString()}.
       </p>
     </section>
   );

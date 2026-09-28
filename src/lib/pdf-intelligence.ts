@@ -147,7 +147,7 @@ export async function generateIntelligencePdf(
   doc.setFontSize(10);
   doc.text(
     `${decision.measuredCount} of ${decision.modules.length} modules measured  ·  ` +
-       `${decision.projectedCount} projected  ·  ${decision.notAssessedCount} not assessed  ·  ` +
+      `${decision.projectedCount} projected  ·  ${decision.notAssessedCount} not assessed  ·  ` +
       `Read ${new Date(decision.freshness).toLocaleString()}`,
     M,
     y,
@@ -261,7 +261,15 @@ export async function generateIntelligencePdf(
     setColor(INK);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
-     doc.text(m.status === "measured" ? "Why this reading" : m.status === "projected" ? "Projection and evidence" : "Why there is no reading", M, y + 12);
+    doc.text(
+      m.status === "measured"
+        ? "Why this reading"
+        : m.status === "projected"
+          ? "Projection and evidence"
+          : "Why there is no reading",
+      M,
+      y + 12,
+    );
     y += 18;
     doc.setFont("helvetica", "normal");
     m.reasons.forEach((r) => {

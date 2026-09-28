@@ -33,12 +33,12 @@ test("Passport links into all five Design Studio concepts and generated massing"
   await page.getByTestId("studio-rotation").fill("45");
   await expect(page.getByText("Rotation · 45°")).toBeVisible();
   await page.getByTestId("studio-scale").fill("120");
-  await expect(page.getByText("Concept scale · 120%" )).toBeVisible();
+  await expect(page.getByText("Concept scale · 120%")).toBeVisible();
 
   await page.getByTestId("studio-fit").click();
   await page.getByTestId("studio-reset").click();
   await expect(page.getByText("Rotation · 0°")).toBeVisible();
-  await expect(page.getByText("Concept scale · 100%" )).toBeVisible();
+  await expect(page.getByText("Concept scale · 100%")).toBeVisible();
 });
 
 test("Passport PDF downloads when no AI interpretation was generated", async ({ page }) => {

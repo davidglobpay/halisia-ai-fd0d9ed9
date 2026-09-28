@@ -503,7 +503,10 @@ function projectPublicContext(
   const confidencePct = wave4ConfidencePct(explanation.confidence);
   if (confidencePct == null) return null;
 
-  const facilityCount = Object.values(wave4.facilities).reduce((total, items) => total + items.length, 0);
+  const facilityCount = Object.values(wave4.facilities).reduce(
+    (total, items) => total + items.length,
+    0,
+  );
   const anchors = [
     ["schools", "education"],
     ["hospitals", "healthcare"],
@@ -533,12 +536,17 @@ function projectPublicContext(
       ],
       sources: sources.length ? sources : [WAVE4_SOURCE],
       projectionBasis: ["Mapped public facilities within 3 km", "Development-context coverage"],
-      missing: ["Resident reports", "Neighbourhood association records", "Service quality and capacity"],
+      missing: [
+        "Resident reports",
+        "Neighbourhood association records",
+        "Service quality and capacity",
+      ],
       limitations: [
         "OpenStreetMap completeness varies by location",
         "Facility presence does not prove operating status, capacity or community sentiment",
       ],
-      nextStep: "Visit at different times and speak with immediate neighbours and local service operators.",
+      nextStep:
+        "Visit at different times and speak with immediate neighbours and local service operators.",
     };
   }
 
@@ -555,7 +563,10 @@ function projectPublicContext(
       "This may indicate existing development pressure, but it does not predict growth, approvals, demand, price or returns.",
     ],
     sources: sources.length ? sources : [WAVE4_SOURCE],
-    projectionBasis: ["Mapped public facilities within 3 km", "Current access and settlement anchors"],
+    projectionBasis: [
+      "Mapped public facilities within 3 km",
+      "Current access and settlement anchors",
+    ],
     missing: [
       "Ward-level CIDP commitments",
       "Gazetted road, rail and bypass alignments",
@@ -565,7 +576,8 @@ function projectPublicContext(
       explanation.note,
       "Current mapped activity is not evidence of a future public project or appreciation",
     ],
-    nextStep: "Check the latest ward CIDP, gazetted alignments and approved applications with the county.",
+    nextStep:
+      "Check the latest ward CIDP, gazetted alignments and approved applications with the county.",
   };
 }
 

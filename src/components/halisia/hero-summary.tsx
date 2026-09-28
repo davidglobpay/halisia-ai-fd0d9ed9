@@ -116,7 +116,8 @@ function ModuleTile({ m }: { m: ModuleOutput }) {
             {m.status === "projected" ? "Indicative projection" : tone.label}
           </div>
           <div className="text-[10px] text-muted-foreground">
-            {m.status === "projected" ? "Projection confidence" : "Confidence"} {m.confidencePct ?? 0}%
+            {m.status === "projected" ? "Projection confidence" : "Confidence"}{" "}
+            {m.confidencePct ?? 0}%
           </div>
         </div>
         <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
@@ -173,9 +174,9 @@ export function HeroSummary({
   const tone = reading != null ? toneFor(reading) : NEUTRAL;
   const readingCount = useCountUp(reading ?? 0, 1100);
 
-   const measured = decision.modules.filter((m) => m.status === "measured");
-   const projected = decision.modules.filter((m) => m.status === "projected");
-   const notAssessed = decision.modules.filter((m) => m.status === "not-assessed");
+  const measured = decision.modules.filter((m) => m.status === "measured");
+  const projected = decision.modules.filter((m) => m.status === "projected");
+  const notAssessed = decision.modules.filter((m) => m.status === "not-assessed");
 
   // The narrative is a written read, not a measurement. It is shown as prose
   // and never converted into a number anywhere on this surface.

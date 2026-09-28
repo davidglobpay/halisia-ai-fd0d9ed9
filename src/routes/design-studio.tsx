@@ -330,35 +330,35 @@ function DesignStudioPage() {
               ))}
             </div>
             <div className="flex flex-wrap gap-2">
-               <KitButton
-                 size="sm"
-                 variant={showParking ? "primary" : "secondary"}
-                 aria-pressed={showParking}
-                 data-testid="studio-parking"
-                 onClick={() => setShowParking((value) => !value)}
-               >
+              <KitButton
+                size="sm"
+                variant={showParking ? "primary" : "secondary"}
+                aria-pressed={showParking}
+                data-testid="studio-parking"
+                onClick={() => setShowParking((value) => !value)}
+              >
                 {showParking ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />} Parking
               </KitButton>
-               <KitButton
-                 size="sm"
-                 variant={showLandscape ? "primary" : "secondary"}
-                 aria-pressed={showLandscape}
-                 data-testid="studio-landscape"
-                 onClick={() => setShowLandscape((value) => !value)}
-               >
+              <KitButton
+                size="sm"
+                variant={showLandscape ? "primary" : "secondary"}
+                aria-pressed={showLandscape}
+                data-testid="studio-landscape"
+                onClick={() => setShowLandscape((value) => !value)}
+              >
                 {showLandscape ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}{" "}
                 Landscape
               </KitButton>
-               <KitButton
-                 size="sm"
-                 data-testid="studio-fit"
-                 onClick={() => setFitToken((value) => value + 1)}
-               >
+              <KitButton
+                size="sm"
+                data-testid="studio-fit"
+                onClick={() => setFitToken((value) => value + 1)}
+              >
                 <Box className="h-4 w-4" /> Fit
               </KitButton>
               <KitButton
                 size="sm"
-                 data-testid="studio-reset"
+                data-testid="studio-reset"
                 onClick={() => {
                   setRotationDeg(0);
                   setScalePct(100);

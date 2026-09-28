@@ -198,7 +198,9 @@ function ModuleCard({ m, freshness }: { m: ModuleOutput; freshness: string }) {
                   <Clock className="h-2.5 w-2.5" /> {formatDate(freshness)}
                 </span>
                 {m.confidencePct != null && (
-                  <span>· {projected ? "Projection confidence" : "Confidence"} {m.confidencePct}%</span>
+                  <span>
+                    · {projected ? "Projection confidence" : "Confidence"} {m.confidencePct}%
+                  </span>
                 )}
               </>
             ) : (
@@ -214,7 +216,12 @@ function ModuleCard({ m, freshness }: { m: ModuleOutput; freshness: string }) {
       <div className="px-3 pb-3 space-y-2.5 text-sm text-foreground/90">
         <div>
           <div className="text-[10px] uppercase tracking-widest text-accent flex items-center gap-1">
-             <Info className="h-3 w-3" /> {assessed ? "Why this reading" : projected ? "Projection and evidence" : "Why there is no reading"}
+            <Info className="h-3 w-3" />{" "}
+            {assessed
+              ? "Why this reading"
+              : projected
+                ? "Projection and evidence"
+                : "Why there is no reading"}
           </div>
           <ul className="mt-1 space-y-1">
             {m.reasons.map((r, i) => (

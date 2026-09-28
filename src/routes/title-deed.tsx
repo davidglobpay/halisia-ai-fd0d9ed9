@@ -151,7 +151,8 @@ function TitleDeedPage() {
             if (built && "loc" in built) {
               located = built.loc;
               setLoc(located);
-            } else setLocIssue(built?.issue ?? "No place matched the location text on this record.");
+            } else
+              setLocIssue(built?.issue ?? "No place matched the location text on this record.");
           } catch (err) {
             console.warn("locate failed", err);
             setLocIssue("Location service unavailable — try again shortly.");
@@ -746,7 +747,12 @@ function TitleDeedPage() {
                   target={{
                     lat: loc.lat,
                     lng: loc.lng,
-                    ref: fields?.titleNumber || fields?.lrNumber || fields?.parcelNumber || queryValue || "",
+                    ref:
+                      fields?.titleNumber ||
+                      fields?.lrNumber ||
+                      fields?.parcelNumber ||
+                      queryValue ||
+                      "",
                     label: loc.address,
                     source: "Google Geocoding of title record text",
                     status: loc.status,
