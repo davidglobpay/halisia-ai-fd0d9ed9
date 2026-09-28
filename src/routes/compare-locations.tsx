@@ -383,7 +383,7 @@ function LocationColumn({
                 {decision.readingLabel}
               </div>
               <div className="text-[11px] text-muted-foreground">
-                {decision.measuredCount} measured · {decision.notAssessedCount} not assessed
+                 {decision.measuredCount} measured · {decision.projectedCount} projected · {decision.notAssessedCount} not assessed
                 {decision.confidencePct != null && ` · confidence ${decision.confidencePct}%`}
               </div>
               <div className="text-[10px] text-muted-foreground">
@@ -403,7 +403,7 @@ function LocationColumn({
               >
                 <span className="truncate">{m.label}</span>
                 <span className="tabular-nums font-medium">
-                  {m.score != null ? m.score : "Not assessed"}
+                  {m.score != null ? m.score : m.status === "projected" ? "Projected" : "Not assessed"}
                 </span>
               </li>
             ))}

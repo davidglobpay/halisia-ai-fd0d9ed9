@@ -101,7 +101,7 @@ function Gauge({
   );
 }
 
-/** A tile per measured module. Modules with no data never reach this. */
+/** A tile per measured or explicitly projected module. */
 function ModuleTile({ m }: { m: ModuleOutput }) {
   const tone = m.score != null ? toneFor(m.score) : NEUTRAL;
   return (
@@ -112,9 +112,11 @@ function ModuleTile({ m }: { m: ModuleOutput }) {
           <div className="text-[10px] uppercase tracking-widest text-muted-foreground truncate">
             {m.label}
           </div>
-          <div className={`mt-0.5 text-xs font-medium ${tone.text}`}>{tone.label}</div>
+          <div className={`mt-0.5 text-xs font-medium ${tone.text}`}>
+            {m.status === "projected" ? "Indicative projection" : tone.label}
+          </div>
           <div className="text-[10px] text-muted-foreground">
-            Confidence {m.confidencePct ?? 0}%
+            {m.status === "projected" ? "Projection confidence" : "Confidence"} {m.confidencePct ?? 0}%
           </div>
         </div>
         <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
@@ -171,8 +173,9 @@ export function HeroSummary({
   const tone = reading != null ? toneFor(reading) : NEUTRAL;
   const readingCount = useCountUp(reading ?? 0, 1100);
 
-  const measured = decision.modules.filter((m) => m.score != null);
-  const notAssessed = decision.modules.filter((m) => m.score == null);
+   const measured = decision.modules.filter((m) => m.status === "measured");
+   const projected = decision.modules.filter((m) => m.status === "projected");
+   const notAssessed = decision.modules.filter((m) => m.status === "not-assessed");
 
   // The narrative is a written read, not a measurement. It is shown as prose
   // and never converted into a number anywhere on this surface.
@@ -257,6 +260,19 @@ export function HeroSummary({
           {measured.map((m) => (
             <ModuleTile key={m.id} m={m} />
           ))}
+        </div>
+      )}
+
+      {projected.length > 0 && (
+        <div className="relative mt-3">
+          <div className="mb-2 text-[10px] uppercase tracking-widest text-amber-glow">
+            Evidence-based proxy projections · excluded from the score
+          </div>
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+            {projected.map((m) => (
+              <ModuleTile key={m.id} m={m} />
+            ))}
+          </div>
         </div>
       )}
 

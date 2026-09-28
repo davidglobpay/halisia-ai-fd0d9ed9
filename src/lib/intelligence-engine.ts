@@ -71,7 +71,7 @@ export type Grade = "AAA" | "AA" | "A" | "BBB" | "BB" | "B" | "C";
  * that answered on this run. "not-assessed" means HALISIA holds no data that
  * answers the question, and says so instead of estimating.
  */
-export type ModuleStatus = "measured" | "not-assessed";
+export type ModuleStatus = "measured" | "projected" | "not-assessed";
 
 export interface ModuleOutput {
   id: ModuleId;
@@ -86,6 +86,8 @@ export interface ModuleOutput {
   reasons: string[];
   /** Datasets actually queried for this module on this run. */
   sources: string[];
+  /** Exact runtime fields used when status is projected. */
+  projectionBasis?: string[];
   /** Named data that would answer this module, which HALISIA does not hold. */
   missing: string[];
   limitations: string[];
@@ -112,6 +114,7 @@ export interface DecisionOutput {
   /** One sentence naming exactly which modules fed the composite. */
   scopeNote: string;
   measuredCount: number;
+  projectedCount: number;
   notAssessedCount: number;
   headline: string;
   reasons: string[];
@@ -491,6 +494,81 @@ function scoreDevelopmentContext(wave4?: Wave4Intel): ModuleOutput | null {
   };
 }
 
+function projectPublicContext(
+  id: "community" | "futureGrowth",
+  wave4?: Wave4Intel,
+): ModuleOutput | null {
+  const explanation = wave4?.breakdown.development;
+  if (!wave4 || !explanation) return null;
+  const confidencePct = wave4ConfidencePct(explanation.confidence);
+  if (confidencePct == null) return null;
+
+  const facilityCount = Object.values(wave4.facilities).reduce((total, items) => total + items.length, 0);
+  const anchors = [
+    ["schools", "education"],
+    ["hospitals", "healthcare"],
+    ["markets", "markets"],
+    ["transit", "public transport"],
+    ["worship", "places of worship"],
+  ]
+    .map(([key, label]) => ({ label, count: wave4.facilities[key]?.length ?? 0 }))
+    .filter((item) => item.count > 0);
+  const anchorSummary = anchors.length
+    ? anchors.map((item) => `${item.count} ${item.label}`).join(" · ")
+    : `${facilityCount} mapped facilities`;
+  const sources = wave4.sources.filter((source) => source.used).map((source) => source.label);
+
+  if (id === "community") {
+    return {
+      id,
+      label: "Community context",
+      status: "projected",
+      score: null,
+      confidencePct,
+      grade: null,
+      trend: null,
+      reasons: [
+        `${anchorSummary} within the public-data search area indicate an existing settlement-service pattern.`,
+        "This is an indicative mapped-facility proxy, not a measure of community quality, cohesion or resident experience.",
+      ],
+      sources: sources.length ? sources : [WAVE4_SOURCE],
+      projectionBasis: ["Mapped public facilities within 3 km", "Development-context coverage"],
+      missing: ["Resident reports", "Neighbourhood association records", "Service quality and capacity"],
+      limitations: [
+        "OpenStreetMap completeness varies by location",
+        "Facility presence does not prove operating status, capacity or community sentiment",
+      ],
+      nextStep: "Visit at different times and speak with immediate neighbours and local service operators.",
+    };
+  }
+
+  return {
+    id,
+    label: "Development pressure proxy",
+    status: "projected",
+    score: null,
+    confidencePct,
+    grade: null,
+    trend: null,
+    reasons: [
+      `${anchorSummary} produce a mapped settlement-context signal for the area today.`,
+      "This may indicate existing development pressure, but it does not predict growth, approvals, demand, price or returns.",
+    ],
+    sources: sources.length ? sources : [WAVE4_SOURCE],
+    projectionBasis: ["Mapped public facilities within 3 km", "Current access and settlement anchors"],
+    missing: [
+      "Ward-level CIDP commitments",
+      "Gazetted road, rail and bypass alignments",
+      "Approved development applications nearby",
+    ],
+    limitations: [
+      explanation.note,
+      "Current mapped activity is not evidence of a future public project or appreciation",
+    ],
+    nextStep: "Check the latest ward CIDP, gazetted alignments and approved applications with the county.",
+  };
+}
+
 /**
  * The seven questions this engine is asked but cannot answer. Each one used to
  * carry a score built from an unrelated proxy — most often a count of nearby
@@ -599,12 +677,20 @@ export function runIntelligenceEngine(
 
   const unavailable = unassessableModules();
   const developmentContext = scoreDevelopmentContext(wave4);
+  const communityProjection = projectPublicContext("community", wave4);
+  const growthProjection = projectPublicContext("futureGrowth", wave4);
   const modules: ModuleOutput[] = [
     scoreConstruction(intel),
     scoreEnvironment(intel),
     scoreInfrastructure(intel),
     ...unavailable.map((module) =>
-      module.id === "investment" && developmentContext ? developmentContext : module,
+      module.id === "investment" && developmentContext
+        ? developmentContext
+        : module.id === "community" && communityProjection
+          ? communityProjection
+          : module.id === "futureGrowth" && growthProjection
+            ? growthProjection
+            : module,
     ),
   ];
 
@@ -613,6 +699,7 @@ export function runIntelligenceEngine(
       m.status === "measured" && m.score != null && m.confidencePct != null,
   );
   const notAssessedList = modules.filter((m) => m.status === "not-assessed");
+  const projected = modules.filter((m) => m.status === "projected");
 
   const w = WEIGHTS[persona];
   const weightTotal = measured.reduce((acc, m) => acc + (w[m.id] ?? 0.1), 0);
@@ -632,7 +719,8 @@ export function runIntelligenceEngine(
     ? `Built from ${listPhrase(measuredNames)} — the ${measured.length} of ${modules.length} module${
         measured.length === 1 ? "" : "s"
       } with data behind ${measured.length === 1 ? "it" : "them"} at this point. ` +
-      `The other ${notAssessedList.length} are listed below as checks to run, not as scores.`
+      `${projected.length ? `${projected.length} proxy projection${projected.length === 1 ? " is" : "s are"} shown separately and ` : ""}` +
+      `the other ${notAssessedList.length} are listed below as checks to run, not as scores.`
     : "Nothing could be read for this point — every provider returned empty.";
 
   const headline = hasComposite
@@ -672,6 +760,7 @@ export function runIntelligenceEngine(
     confidencePct,
     scopeNote,
     measuredCount: measured.length,
+    projectedCount: projected.length,
     notAssessedCount: notAssessedList.length,
     headline,
     reasons,

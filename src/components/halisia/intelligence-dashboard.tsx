@@ -230,7 +230,7 @@ export function IntelligenceDashboard({
 
         {/* Photo strip */}
         {intelQ.data?.photos && intelQ.data.photos.length > 0 && (
-          <div className="mt-3 -mx-1 flex gap-1.5 overflow-x-auto pb-1">
+          <div className="mt-3 flex max-w-full gap-1.5 overflow-x-auto pb-1">
             {intelQ.data.photos.slice(0, 6).map((src, i) => (
               <img
                 key={i}
@@ -386,18 +386,18 @@ function StatTile({
   tone: string;
 }) {
   return (
-    <div className="glass rounded-2xl p-3 relative overflow-hidden">
+    <div className="glass relative min-w-0 overflow-hidden rounded-2xl p-3">
       <div
         className={`absolute -top-6 -right-6 h-20 w-20 rounded-full opacity-30 blur-2xl bg-gradient-to-br ${tone}`}
       />
-      <div className="flex items-center gap-2">
+      <div className="flex min-w-0 items-center gap-2">
         <div className="h-8 w-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
           <Icon className="h-4 w-4 text-accent" />
         </div>
-        <div className="text-[11px] text-muted-foreground">{label}</div>
+        <div className="min-w-0 truncate text-[11px] text-muted-foreground">{label}</div>
       </div>
-      <div className="mt-2 text-xl font-semibold tracking-tight">{value}</div>
-      {sub && <div className="mt-0.5 text-[11px] text-muted-foreground">{sub}</div>}
+      <div className="mt-2 min-w-0 truncate text-xl font-semibold tracking-tight">{value}</div>
+      {sub && <div className="mt-0.5 min-w-0 truncate text-[11px] text-muted-foreground">{sub}</div>}
     </div>
   );
 }
