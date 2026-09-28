@@ -469,37 +469,12 @@ const PILLARS = [
   },
 ];
 
-const PILLARS = [
-  {
-    icon: Layers,
-    title: "Amenity access",
-    body: "Schools, health facilities, shops and transit stops mapped within about 3 km, counted from Google Places.",
-  },
-  {
-    icon: Waves,
-    title: "Environment",
-    body: "A live air-quality reading, plus ground elevation as a coarse flood proxy. Not a flood study.",
-  },
-  {
-    icon: MapPinned,
-    title: "Construction context",
-    body: "Elevation banded into a drainage and water-table signal. Bearing capacity still needs a soil test.",
-  },
-  {
-    icon: Brain,
-    title: "Reasoning shown",
-    body: "Every reading explains why, names the API it came from, and states how confident it is.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "What it will not say",
-    body: "Title, zoning, utilities, safety and price are named as gaps — never scored from a proxy that happens to be nearby.",
-  },
-  {
-    icon: Users,
-    title: "Who to ask next",
-    body: "Each gap comes with the office that closes it: Ardhisasa, Kenya Power, the county water board, your surveyor.",
-  },
+const TRUST = [
+  { stat: "Cited", label: "every score names its sources" },
+  { stat: "Ranked", label: "confidence stated on every output" },
+  { stat: "Kenya", label: "first · global by design" },
+  { stat: "Never", label: "we do not assert title, boundary or ownership" },
+];
 ];
 
 const STEPS = [
