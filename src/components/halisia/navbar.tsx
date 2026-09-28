@@ -28,13 +28,16 @@ const LINKS: Array<{ to: string; label: string }> = [
 ];
 
 // Finished public pages that previously had no menu entry.
-const MORE_LINKS: Array<{ to: string; label: string }> = [
-  { to: "/design-studio", label: "3D Design Studio" },
-  { to: "/model-lab", label: "Model Lab" },
-  { to: "/pulse", label: "Pulse news" },
-  { to: "/compare-locations", label: "Compare locations" },
-];
-
+{
+    icon: Layers,
+    title: "Map layers on Explore",
+    body: "Tap Layers to overlay traffic, transit, bicycling, slope/hillshade and drainage/rivers. Hillshade comes from Esri World Hillshade, drainage from Esri Hydro Reference. Switch the base map between Map, Satellite, Hybrid and Terrain.",
+  },
+  {
+    icon: GitCompareArrows,
+    title: "Compare two locations",
+    body: "Compare lives in the top navigation, not on the map. Open Compare locations to run two places side by side and see which readings differ.",
+  },
 // Tools behind sign-in; only listed once the user is signed in.
 const MEMBER_LINKS: Array<{ to: string; label: string }> = [
   { to: "/sell/new", label: "Sell land" },
