@@ -419,7 +419,7 @@ function scoreInfrastructure(intel?: LocationIntel): ModuleOutput {
   };
 }
 
-/* ---------------- modules HALISIA cannot assess ---------------- */
+/* ---------------- evidence gaps and narrowly bounded projections ---------------- */
 
 function notAssessed(
   id: ModuleId,
@@ -582,9 +582,10 @@ function projectPublicContext(
 }
 
 /**
- * The seven questions this engine is asked but cannot answer. Each one used to
+ * Questions this engine cannot answer directly. Each one used to
  * carry a score built from an unrelated proxy — most often a count of nearby
- * banks. They now state the gap and name who closes it.
+ * banks. They now state the gap and name who closes it. Community and planned
+ * development may later be replaced by non-scoring public-context projections.
  */
 function unassessableModules(): ModuleOutput[] {
   return [

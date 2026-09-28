@@ -89,7 +89,7 @@ export function Navbar() {
             alt=""
             className="h-9 w-9 shrink-0 object-contain drop-shadow-[0_0_14px_rgba(0,143,85,0.35)]"
           />
-          <span className="font-display font-semibold tracking-tight text-[15px] sm:text-[16px] whitespace-nowrap">
+          <span className="min-w-0 truncate font-display font-semibold tracking-tight text-[15px] sm:text-[16px]">
             HALISIA<span className="text-accent">·</span>AI
           </span>
         </Link>
@@ -207,7 +207,7 @@ export function Navbar() {
         />
         <nav
           aria-label="Mobile"
-          className={`absolute top-[64px] inset-x-3 rounded-2xl glass-strong border border-white/10 p-3 transition-all ${
+          className={`absolute inset-x-3 top-[64px] box-border max-w-[calc(100vw-1.5rem)] rounded-2xl border border-white/10 p-3 glass-strong transition-all ${
             open ? "translate-y-0 opacity-100" : "-translate-y-3 opacity-0"
           }`}
         >

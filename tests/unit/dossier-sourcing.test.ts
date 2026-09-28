@@ -189,15 +189,20 @@ describe("a module scores only when its data arrived", () => {
 
   it("never lets proxy projections affect the composite reading", () => {
     const withoutProjections = runIntelligenceEngine(FULL, undefined, "investor");
-    const withProjections = runIntelligenceEngine(FULL, undefined, "investor", WAVE4);
-    const measuredDevelopment = withProjections.modules.find((item) => item.id === "investment");
-    expect(measuredDevelopment?.status).toBe("measured");
+    const proxyOnlyWave4 = {
+      ...WAVE4,
+      breakdown: {
+        ...WAVE4.breakdown,
+        investment: { ...WAVE4.breakdown.investment, confidence: "low" as const },
+      },
+    };
+    const withProjections = runIntelligenceEngine(FULL, undefined, "investor", proxyOnlyWave4);
     expect(
       withProjections.modules
         .filter((item) => item.status === "projected")
         .every((item) => item.score == null),
     ).toBe(true);
-    expect(withProjections.reading).not.toBe(withoutProjections.reading);
+    expect(withProjections.reading).toBe(withoutProjections.reading);
   });
 
   it("drops a module to not-assessed when only its provider fails", () => {
