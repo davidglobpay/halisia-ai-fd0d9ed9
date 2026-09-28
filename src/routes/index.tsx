@@ -243,8 +243,7 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
             Every location, translated into{" "}
             <span className="text-gradient">signals you can trust</span>.
           </>
-        }
-        intro="Satellite data, infrastructure records, environmental models and community observations — structured by AI with reasoning and uncertainty."
+        }intro="Three things HALISIA can measure from public APIs, and the seven it names as gaps rather than guessing. Each reading carries its source and its confidence."
         items={PILLARS.map((p) => ({
           key: p.title,
           title: p.title,
@@ -339,10 +338,11 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
             <h2 className="mt-4 text-3xl md:text-5xl font-semibold tracking-tight">
               Start with any place in Kenya.
             </h2>
-            <p className="mt-4 text-muted-foreground max-w-xl mx-auto">
-              Free intelligence profile for every location. Premium reports include deeper
-              environmental, legal-context and construction feasibility signals with cited sources.
-            </p>
+           <p className="mt-4 text-muted-foreground max-w-xl mx-auto">
+                  Every location profile is free while HALISIA is in beta. Premium reports — deeper
+                  environmental, legal-context and construction feasibility, each with its source
+                  named — are in development.
+                </p>
             <div className="mt-8 flex items-center justify-center gap-3">
               <Link
                 to="/explore"
@@ -439,41 +439,67 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
 const PILLARS = [
   {
     icon: Layers,
-    title: "Infrastructure",
-    body: "Roads, water, power, fibre — mapped and scored with source confidence.",
+    title: "Amenity access",
+    body: "Schools, health facilities, shops and transit stops mapped within about 3 km, counted from Google Places.",
   },
   {
     icon: Waves,
-    title: "Environmental risk",
-    body: "Flooding, terrain, elevation and long-rain vulnerability, modelled per parcel.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Safety & stability",
-    body: "Perceived safety and community context, weighted by contributor reputation.",
-  },
-  {
-    icon: Users,
-    title: "Community intelligence",
-    body: "Photos, voice notes, and stories from people who actually live nearby.",
-  },
-  {
-    icon: Brain,
-    title: "AI reasoning",
-    body: "Every score explains why. Uncertainty is a first-class citizen.",
+    title: "Environment",
+    body: "A live air-quality reading, plus ground elevation as a coarse flood proxy. Not a flood study.",
   },
   {
     icon: MapPinned,
-    title: "Investment signals",
-    body: "Growth corridors, price trend, development pipeline — never as absolute truth.",
+    title: "Construction context",
+    body: "Elevation banded into a drainage and water-table signal. Bearing capacity still needs a soil test.",
+  },
+  {
+    icon: Brain,
+    title: "Reasoning shown",
+    body: "Every reading explains why, names the API it came from, and states how confident it is.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "What it will not say",
+    body: "Title, zoning, utilities, safety and price are named as gaps — never scored from a proxy that happens to be nearby.",
+  },
+  {
+    icon: Users,
+    title: "Who to ask next",
+    body: "Each gap comes with the office that closes it: Ardhisasa, Kenya Power, the county water board, your surveyor.",
   },
 ];
 
-const TRUST = [
-  { stat: "Cited", label: "every score names its sources" },
-  { stat: "Ranked", label: "confidence stated on every output" },
-  { stat: "Kenya", label: "first · global by design" },
-  { stat: "Never", label: "we do not assert title, boundary or ownership" },
+const PILLARS = [
+  {
+    icon: Layers,
+    title: "Amenity access",
+    body: "Schools, health facilities, shops and transit stops mapped within about 3 km, counted from Google Places.",
+  },
+  {
+    icon: Waves,
+    title: "Environment",
+    body: "A live air-quality reading, plus ground elevation as a coarse flood proxy. Not a flood study.",
+  },
+  {
+    icon: MapPinned,
+    title: "Construction context",
+    body: "Elevation banded into a drainage and water-table signal. Bearing capacity still needs a soil test.",
+  },
+  {
+    icon: Brain,
+    title: "Reasoning shown",
+    body: "Every reading explains why, names the API it came from, and states how confident it is.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "What it will not say",
+    body: "Title, zoning, utilities, safety and price are named as gaps — never scored from a proxy that happens to be nearby.",
+  },
+  {
+    icon: Users,
+    title: "Who to ask next",
+    body: "Each gap comes with the office that closes it: Ardhisasa, Kenya Power, the county water board, your surveyor.",
+  },
 ];
 
 const STEPS = [
