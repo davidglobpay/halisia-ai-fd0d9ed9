@@ -243,8 +243,9 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
             Every location, translated into{" "}
             <span className="text-gradient">signals you can trust</span>.
           </>
-        }intro="Three things HALISIA can measure from public APIs, and the seven it names as gaps rather than guessing. Each reading carries its source and its confidence."
-        items={PILLARS.map((p) => ({
+        } 
+                intro="Three things HALISIA can measure from public APIs, and the seven it names as gaps rather than guessing. Each reading carries its source and its confidence."
+                items={PILLARS.map((p) => ({
           key: p.title,
           title: p.title,
           body: p.body,
@@ -474,9 +475,8 @@ const TRUST = [
   { stat: "Ranked", label: "confidence stated on every output" },
   { stat: "Kenya", label: "first · global by design" },
   { stat: "Never", label: "we do not assert title, boundary or ownership" },
-];
-];
 
+];
 const STEPS = [
   {
     icon: Search,
