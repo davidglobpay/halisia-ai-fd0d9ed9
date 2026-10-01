@@ -78,9 +78,8 @@ export default function KenyaCountyLeaflet({
       <TileLayer
         attribution="&copy; OpenStreetMap contributors &copy; CARTO"
         url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-        detectRetina
         maxNativeZoom={20}
-        maxZoom={22}
+        maxZoom={21}
       />
       <ZoomControl position="topright" />
       <ScaleControl position="bottomleft" />

@@ -45,6 +45,8 @@ export default function PinPickerInternal({
       <TileLayer
         url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
         attribution="© OpenStreetMap · © CARTO"
+        maxNativeZoom={20}
+        maxZoom={21}
       />
       <ClickCatcher onPick={onPick} />
       {lat != null && lng != null && (

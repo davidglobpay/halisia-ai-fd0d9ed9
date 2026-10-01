@@ -51,6 +51,14 @@ export default function MapFallback({
   onMapClick?: (loc: { lat: number; lng: number }) => void;
   onTileError?: () => void;
 }) {
+  // Each provider stops serving real tiles at a different level. One shared
+  // cap meant OpenTopoMap (which ends at 17) was asked for 19, every request
+  // 404'd, and the tile-error alert fired as soon as a user zoomed in. The
+  // cap now follows the provider; Leaflet upscales beyond it instead of
+  // requesting tiles that do not exist.
+  const maxNative =
+    mapType === "satellite" || mapType === "hybrid" ? 19 : mapType === "terrain" ? 17 : 20;
+
   const url =
     mapType === "satellite" || mapType === "hybrid"
       ? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
@@ -78,9 +86,8 @@ export default function MapFallback({
         key={`${tileRetryKey}-${url}`}
         url={url}
         attribution={attribution}
-        detectRetina
-        maxNativeZoom={19}
-        maxZoom={22}
+        maxNativeZoom={maxNative}
+        maxZoom={21}
         eventHandlers={{ tileerror: () => onTileError?.() }}
       />
       <ScaleControl position="bottomleft" />

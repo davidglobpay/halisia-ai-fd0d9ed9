@@ -69,6 +69,8 @@ export default function HeatmapMap({
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
           attribution="© OpenStreetMap · © CARTO"
+          maxNativeZoom={20}
+          maxZoom={21}
         />
         {points.length > 0 && <HeatOverlay points={points} />}
         <Marker position={[lat, lng]}>

@@ -42,18 +42,21 @@ const BASEMAPS: Array<{
     name: "OpenStreetMap",
     url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
     attribution: "© OpenStreetMap contributors",
+    max: 19,
   },
   {
     id: "carto-dark",
     name: "Carto Dark",
     url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
     attribution: "© OpenStreetMap · © CARTO",
+    max: 20,
   },
   {
     id: "carto-light",
     name: "Carto Light",
     url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
     attribution: "© OpenStreetMap · © CARTO",
+    max: 20,
   },
   {
     id: "esri-sat",
@@ -107,9 +110,8 @@ export default function LeafletLayersMap({
               <TileLayer
                 url={b.url}
                 attribution={b.attribution}
-                detectRetina
                 maxNativeZoom={b.max ?? 19}
-                maxZoom={22}
+                maxZoom={21}
               />
             </LayersControl.BaseLayer>
           ))}
@@ -117,6 +119,8 @@ export default function LeafletLayersMap({
             <TileLayer
               url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png"
               attribution="Labels © CARTO"
+              maxNativeZoom={20}
+              maxZoom={21}
               eventHandlers={{ add: () => setShowLabels(true), remove: () => setShowLabels(false) }}
             />
           </LayersControl.Overlay>
@@ -124,7 +128,8 @@ export default function LeafletLayersMap({
             <TileLayer
               url="https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}"
               attribution="Hillshade © Esri"
-              detectRetina
+              maxNativeZoom={16}
+              maxZoom={21}
               opacity={0.28}
             />
           </LayersControl.Overlay>
@@ -132,6 +137,8 @@ export default function LeafletLayersMap({
             <TileLayer
               url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Hydro_Reference_Overlay/MapServer/tile/{z}/{y}/{x}"
               attribution="Hydro © Esri"
+              maxNativeZoom={13}
+              maxZoom={21}
             />
           </LayersControl.Overlay>
           {overlays && (
@@ -221,12 +228,16 @@ export default function LeafletLayersMap({
             <TileLayer
               url="https://{s}.tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png"
               attribution="© OpenRailwayMap"
+                maxNativeZoom={19}
+                maxZoom={21}
             />
           </LayersControl.Overlay>
           <LayersControl.Overlay name="OpenSeaMap">
             <TileLayer
               url="https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png"
               attribution="© OpenSeaMap"
+                maxNativeZoom={18}
+                maxZoom={21}
             />
           </LayersControl.Overlay>
         </LayersControl>
