@@ -40,6 +40,11 @@ async function ensureGoogleMapsReady(): Promise<typeof google> {
   if (typeof g.maps.importLibrary === "function") {
     await g.maps.importLibrary("maps");
     await g.maps.importLibrary("marker").catch(() => undefined);
+    // Street View is a separate library under the dynamic bootstrap. Without
+    // this, g.maps.StreetViewService and g.maps.StreetViewSource are
+    // undefined, and the panel's attempt to read StreetViewSource.OUTDOOR
+    // throws a TypeError that gets reported to the user as a missing API key.
+    await g.maps.importLibrary("streetView").catch(() => undefined);
   }
 
   return waitForMapConstructor(g);
