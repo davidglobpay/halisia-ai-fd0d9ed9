@@ -20,6 +20,7 @@ import { Route as PassportRouteImport } from './routes/passport'
 import { Route as ModelLabRouteImport } from './routes/model-lab'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as LogoQaRouteImport } from './routes/logo-qa'
+import { Route as LandTransferRouteImport } from './routes/land-transfer'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as DesignStudioRouteImport } from './routes/design-studio'
 import { Route as ConnectionsRouteImport } from './routes/connections'
@@ -105,6 +106,11 @@ const MarketplaceRoute = MarketplaceRouteImport.update({
 const LogoQaRoute = LogoQaRouteImport.update({
   id: '/logo-qa',
   path: '/logo-qa',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LandTransferRoute = LandTransferRouteImport.update({
+  id: '/land-transfer',
+  path: '/land-transfer',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExploreRoute = ExploreRouteImport.update({
@@ -274,6 +280,7 @@ export interface FileRoutesByFullPath {
   '/connections': typeof ConnectionsRoute
   '/design-studio': typeof DesignStudioRoute
   '/explore': typeof ExploreRoute
+  '/land-transfer': typeof LandTransferRoute
   '/logo-qa': typeof LogoQaRoute
   '/marketplace': typeof MarketplaceRouteWithChildren
   '/model-lab': typeof ModelLabRoute
@@ -317,6 +324,7 @@ export interface FileRoutesByTo {
   '/connections': typeof ConnectionsRoute
   '/design-studio': typeof DesignStudioRoute
   '/explore': typeof ExploreRoute
+  '/land-transfer': typeof LandTransferRoute
   '/logo-qa': typeof LogoQaRoute
   '/model-lab': typeof ModelLabRoute
   '/passport': typeof PassportRoute
@@ -361,6 +369,7 @@ export interface FileRoutesById {
   '/connections': typeof ConnectionsRoute
   '/design-studio': typeof DesignStudioRoute
   '/explore': typeof ExploreRoute
+  '/land-transfer': typeof LandTransferRoute
   '/logo-qa': typeof LogoQaRoute
   '/marketplace': typeof MarketplaceRouteWithChildren
   '/model-lab': typeof ModelLabRoute
@@ -406,6 +415,7 @@ export interface FileRouteTypes {
     | '/connections'
     | '/design-studio'
     | '/explore'
+    | '/land-transfer'
     | '/logo-qa'
     | '/marketplace'
     | '/model-lab'
@@ -449,6 +459,7 @@ export interface FileRouteTypes {
     | '/connections'
     | '/design-studio'
     | '/explore'
+    | '/land-transfer'
     | '/logo-qa'
     | '/model-lab'
     | '/passport'
@@ -492,6 +503,7 @@ export interface FileRouteTypes {
     | '/connections'
     | '/design-studio'
     | '/explore'
+    | '/land-transfer'
     | '/logo-qa'
     | '/marketplace'
     | '/model-lab'
@@ -537,6 +549,7 @@ export interface RootRouteChildren {
   ConnectionsRoute: typeof ConnectionsRoute
   DesignStudioRoute: typeof DesignStudioRoute
   ExploreRoute: typeof ExploreRoute
+  LandTransferRoute: typeof LandTransferRoute
   LogoQaRoute: typeof LogoQaRoute
   MarketplaceRoute: typeof MarketplaceRouteWithChildren
   ModelLabRoute: typeof ModelLabRoute
@@ -634,6 +647,13 @@ declare module '@tanstack/react-router' {
       path: '/logo-qa'
       fullPath: '/logo-qa'
       preLoaderRoute: typeof LogoQaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/land-transfer': {
+      id: '/land-transfer'
+      path: '/land-transfer'
+      fullPath: '/land-transfer'
+      preLoaderRoute: typeof LandTransferRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/explore': {
@@ -916,6 +936,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConnectionsRoute: ConnectionsRoute,
   DesignStudioRoute: DesignStudioRoute,
   ExploreRoute: ExploreRoute,
+  LandTransferRoute: LandTransferRoute,
   LogoQaRoute: LogoQaRoute,
   MarketplaceRoute: MarketplaceRouteWithChildren,
   ModelLabRoute: ModelLabRoute,
