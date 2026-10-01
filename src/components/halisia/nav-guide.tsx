@@ -30,13 +30,13 @@ const STEPS = [
   },
   {
     icon: Layers,
-    title: "Geotech & environmental layers",
-    body: "Inside Explore, switch tabs for terrain, soil profile, flood risk, and construction cost impact. Toggle GIS overlays on the map.",
+    title: "Map layers on Explore",
+    body: "Tap Layers to overlay traffic, transit, bicycling, slope/hillshade and drainage/rivers. Hillshade comes from Esri World Hillshade, drainage from Esri Hydro Reference. Switch the base map between Map, Satellite, Hybrid and Terrain.",
   },
   {
     icon: GitCompareArrows,
     title: "Compare two locations",
-    body: "On the LIOS panel, hit Compare to run two locations side-by-side and see which factors drive the difference.",
+    body: "Compare lives in the top navigation, not on the map. Open Compare locations to run two places side by side and see which readings differ.",
   },
   {
     icon: FileDown,
