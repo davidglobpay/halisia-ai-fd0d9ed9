@@ -13,6 +13,16 @@ import {
   type ElevationGrid,
 } from "@/lib/terrain-grid";
 import { startTerrainTimer, recordTerrainEvent } from "@/lib/terrain-telemetry";
+import halisiaMark from "@/assets/brand/halisia-mark.png.asset.json";
+import { PDF, prepareMark, drawWatermark } from "@/lib/pdf-chrome";
+import type { BrandImage } from "@/lib/brand-asset";
+
+/**
+ * The brand mark for this run. Resolved once in generateLocationDossier and
+ * read by drawHeader, whose signature is shared by eleven call sites and so
+ * cannot take another argument without touching all of them.
+ */
+let runMark: BrandImage | null = null;
 
 // jsPDF's built-in Helvetica only covers WinAnsi. Characters outside it
 // (arrows, Greek letters) render as garbage, so none are used in this file.
@@ -99,22 +109,38 @@ export async function generateLocationDossier(opts: {
   const H = doc.internal.pageSize.getHeight();
   const M = 40;
 
-  // Palette
-  const ink: [number, number, number] = [15, 23, 42];
-  const muted: [number, number, number] = [100, 116, 139];
-  const accent: [number, number, number] = [45, 140, 255];
-  const bg: [number, number, number] = [247, 249, 252];
+  // Palette - the app's own tokens. This file painted itself in the retired
+  // Deep Space Blue scheme, so a downloaded dossier looked like it came from a
+  // different product than the page that produced it.
+  const ink: [number, number, number] = PDF.forest;
+  const muted: [number, number, number] = PDF.stone2;
+  const accent: [number, number, number] = PDF.goldInk;
+  const bg: [number, number, number] = PDF.ivory;
+
+  // Decode the mark before any page is drawn. Never throws; a logo that will
+  // not load must not cost the user their download.
+  runMark = await prepareMark(halisiaMark.url);
 
   // ---------- Page 1: cover ----------
   doc.setFillColor(...bg);
   doc.rect(0, 0, W, H, "F");
-  doc.setFillColor(...accent);
+  drawWatermark(doc, runMark);
+  doc.setFillColor(...PDF.green);
   doc.rect(0, 0, W, 6, "F");
+
+  if (runMark) {
+    const mh = 34;
+    doc.addImage(runMark.dataUrl, "PNG", M, 18, mh * runMark.ratio, mh, undefined, "FAST");
+  }
 
   doc.setTextColor(...muted);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
-  doc.text("HALISIA.AI · LOCATION INTELLIGENCE DOSSIER", M, 40);
+  doc.text(
+    "HALISIA.AI · LOCATION INTELLIGENCE DOSSIER",
+    runMark ? M + 34 * runMark.ratio + 10 : M,
+    40,
+  );
 
   doc.setTextColor(...ink);
   doc.setFont("helvetica", "bold");
@@ -597,6 +623,11 @@ export async function generateLocationDossier(opts: {
   };
 }
 
+/**
+ * Page header. Called immediately after every addPage and before any content,
+ * which makes it the right place for the watermark too - it has to be painted
+ * first to sit behind everything else.
+ */
 function drawHeader(
   doc: jsPDF,
   M: number,
@@ -604,10 +635,24 @@ function drawHeader(
   ink: [number, number, number],
   muted: [number, number, number],
 ) {
+  const W = doc.internal.pageSize.getWidth();
+  drawWatermark(doc, runMark);
+
+  doc.setFillColor(...PDF.green);
+  doc.rect(0, 0, W, 4, "F");
+
+  let x = M;
+  if (runMark) {
+    const mh = 18;
+    doc.addImage(runMark.dataUrl, "PNG", M, 24, mh * runMark.ratio, mh, undefined, "FAST");
+    x = M + mh * runMark.ratio + 8;
+  }
+
   doc.setTextColor(...muted);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
-  doc.text("HALISIA.AI · DOSSIER", M, 40);
+  doc.text("HALISIA.AI · DOSSIER", x, 40);
+
   doc.setTextColor(...ink);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
@@ -615,14 +660,27 @@ function drawHeader(
 }
 
 function drawFooter(doc: jsPDF, W: number, H: number, M: number, muted: [number, number, number]) {
+  doc.setDrawColor(...PDF.stone2);
+  doc.setLineWidth(0.5);
+  doc.line(M, H - 44, W - M, H - 44);
+
+  let x = M;
+  if (runMark) {
+    const mh = 11;
+    doc.addImage(runMark.dataUrl, "PNG", M, H - 38, mh * runMark.ratio, mh, undefined, "FAST");
+    x = M + mh * runMark.ratio + 6;
+  }
+
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   doc.setTextColor(...muted);
   doc.text(
     "Informational only — verify title, survey and zoning with a licensed professional.",
-    M,
+    x,
     H - 30,
   );
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...PDF.goldInk);
   doc.text("halisia.ai", W - M, H - 30, { align: "right" });
 }
 
