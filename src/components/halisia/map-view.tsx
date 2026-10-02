@@ -58,6 +58,7 @@ export function MapView({
   onMapClick,
   markerDraggable = false,
   onMarkerDrag,
+  accuracyRadiusM = null,
 }: {
   center?: MapLocation;
   zoom?: number;
@@ -69,10 +70,17 @@ export function MapView({
   onMapClick?: (loc: { lat: number; lng: number }) => void;
   markerDraggable?: boolean;
   onMarkerDrag?: (loc: { lat: number; lng: number }) => void;
+  /**
+   * Draws an uncertainty ring around the marker, in metres. A pin on its own
+   * reads as "a surveyor stood here"; a ring reads as "somewhere in this".
+   * Null or omitted draws nothing, so every existing caller is unaffected.
+   */
+  accuracyRadiusM?: number | null;
 }) {
   const el = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const markerRef = useRef<google.maps.Marker | null>(null);
+  const accuracyRef = useRef<google.maps.Circle | null>(null);
   const markerDragListenerRef = useRef<google.maps.MapsEventListener | null>(null);
   const clickListenerRef = useRef<google.maps.MapsEventListener | null>(null);
   const overlayRefs = useRef<
@@ -132,6 +140,8 @@ export function MapView({
         activeMarker.setMap(null);
       }
       markerRef.current = null;
+      accuracyRef.current?.setMap(null);
+      accuracyRef.current = null;
       Object.values(overlayRefs.current).forEach((layer) => layer?.setMap(null));
       overlayRefs.current = {};
       const map = mapRef.current;
@@ -281,6 +291,31 @@ export function MapView({
       markerRef.current = null;
     };
   }, [mapReady, marker?.lat, marker?.lng, marker?.label, markerDraggable, onMarkerDrag]);
+
+  // Uncertainty ring. Drawn around the marker when a caller supplies a radius,
+  // removed the moment it stops. A geocoded pin is the centre of an area, and
+  // showing only the centre invites a buyer to treat it as a boundary.
+  useEffect(() => {
+    if (!mapReady || !mapRef.current || !window.google?.maps) return;
+    accuracyRef.current?.setMap(null);
+    accuracyRef.current = null;
+    if (!marker || accuracyRadiusM == null || !(accuracyRadiusM > 0)) return;
+    accuracyRef.current = new window.google.maps.Circle({
+      map: mapRef.current,
+      center: { lat: marker.lat, lng: marker.lng },
+      radius: accuracyRadiusM,
+      strokeColor: "#c08a2e",
+      strokeOpacity: 0.7,
+      strokeWeight: 1.5,
+      fillColor: "#c08a2e",
+      fillOpacity: 0.1,
+      clickable: false,
+    });
+    return () => {
+      accuracyRef.current?.setMap(null);
+      accuracyRef.current = null;
+    };
+  }, [mapReady, marker?.lat, marker?.lng, accuracyRadiusM]);
 
   return (
     <div
