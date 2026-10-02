@@ -45,8 +45,7 @@ export type EvidenceDisplayLabel =
   | "User-submitted"
   | "Model inference";
 
-const ISO_TIMESTAMP =
-  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
+const ISO_TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
 
 function nonBlank(value: string | undefined): value is string {
   return typeof value === "string" && value.trim().length > 0;
