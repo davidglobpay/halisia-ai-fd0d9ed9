@@ -1,4 +1,5 @@
 import { CLASS_LABEL, CONFIDENCE_LABEL, type EvidenceItem } from "@/lib/passport-evidence";
+import { ListenButton } from "@/components/halisia/listen-button";
 
 /** One fact with its value, source, method, uses and confidence. */
 export function EvidenceRow({ item }: { item: EvidenceItem }) {
@@ -19,6 +20,9 @@ export function EvidenceRow({ item }: { item: EvidenceItem }) {
           <span className="rounded-full border border-foreground/15 px-2 py-0.5 text-muted-foreground">
             {CONFIDENCE_LABEL[item.confidence]}
           </span>
+          <ListenButton
+            text={`${item.label}: ${gap ? "not available" : item.value}. Source: ${item.source}. Confidence: ${CONFIDENCE_LABEL[item.confidence]}.`}
+          />
         </span>
       </div>
       <div
