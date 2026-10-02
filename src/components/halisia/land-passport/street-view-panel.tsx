@@ -106,7 +106,7 @@ export function StreetViewPanel({
           };
           // StreetViewSource may be absent on an older bootstrap; omitting the
           // key is the same as asking for the default source.
-          if (pass.outdoor && g.maps.StreetViewSource?.OUTDOOR) {
+          if (pass.outdoor && (g.maps as { StreetViewSource?: { OUTDOOR?: unknown } }).StreetViewSource?.OUTDOOR) {
             request.source = g.maps.StreetViewSource.OUTDOOR;
           }
 
