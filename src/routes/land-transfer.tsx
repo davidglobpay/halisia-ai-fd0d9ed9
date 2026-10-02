@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState, type ReactNode } from "react";
+import { ReadAloud } from "@/components/halisia/read-aloud";
 import {
   ArrowRight,
   Banknote,
@@ -66,6 +67,20 @@ const ksh = new Intl.NumberFormat("en-KE", { maximumFractionDigits: 0 });
 const fmt = (n: number) => `KES ${ksh.format(Math.round(n))}`;
 
 type Zone = "urban" | "rural";
+
+/**
+ * What the Listen button reads. Written to be heard rather than skimmed: no
+ * tables, no abbreviations, and the two numbers that matter said out loud.
+ */
+const SPOKEN_SUMMARY = [
+  "Transferring land in Kenya. Here is what it costs and how long it really takes.",
+  "The official fees are small. A search certificate is one thousand shillings. The government valuation is free. Registration is one thousand, and a new title deed is two thousand five hundred. Land Control Board consent, needed for agricultural land, is three thousand for an ordinary meeting.",
+  "Stamp duty is the real cost. Four percent of the assessed value in urban areas, two percent in rural ones, paid through iTax within thirty days of assessment. Unpaid stamp duty makes the transaction null, void and inadmissible in court, with a five percent penalty every quarter.",
+  "On timing, the Service Charter and reality disagree. The charter promises registration in three days. Practitioners observe two to twelve weeks. It promises Land Control Board consent in thirty days. In practice that is two to twelve weeks or longer, and it is the single largest bottleneck in the chain.",
+  "End to end, expect four to eight weeks for a simple urban residential transfer, and two to six months or more where agricultural consent is involved.",
+  "Four things stop a transfer dead. A title never converted to the twenty twelve system is frozen and cannot be transacted. A seller who will not approve the search on Ardhisasa blocks due diligence entirely. A Land Control Board that has not met holds up everything downstream. And most importantly, a clean official search is not a clean title. A search reports what the register says. It does not open the physical file behind the registration, and it does not look at court judgments or gazette notices.",
+  "This is not legal advice. Fees change. Use an advocate for the transaction itself.",
+].join(" ");
 
 /* ---------------- the chain ---------------- */
 
@@ -167,6 +182,11 @@ function LandTransferPage() {
           of April 2025. Every timeline is given twice — what the charter commits to, and what
           practitioners observe. Most guides publish only the first.
         </p>
+
+        {/* Spoken for anyone who would rather hear it than read it on a phone. */}
+        <div className="mt-4">
+          <ReadAloud text={SPOKEN_SUMMARY} label="Listen to this page" />
+        </div>
 
         {/* Calculator */}
         <section
