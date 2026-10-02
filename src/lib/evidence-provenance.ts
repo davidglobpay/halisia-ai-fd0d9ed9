@@ -119,7 +119,9 @@ export function canUseProfessionalAttestationLanguage(
   );
 }
 
-export function evidenceDisplayLabel(p: EvidenceProvenance): EvidenceDisplayLabel {
+export function evidenceDisplayLabel(
+  p: EvidenceProvenance,
+): EvidenceDisplayLabel {
   switch (p.evidenceClass) {
     case "OFFICIAL_REGISTRY":
       return canUseOfficialRecordLanguage(p)
