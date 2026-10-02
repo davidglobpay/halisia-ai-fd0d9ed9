@@ -63,11 +63,7 @@ function httpUrl(value: string | undefined): value is string {
 }
 
 function isoTimestamp(value: string | undefined): value is string {
-  return (
-    nonBlank(value) &&
-    ISO_TIMESTAMP.test(value) &&
-    Number.isFinite(Date.parse(value))
-  );
+  return nonBlank(value) && ISO_TIMESTAMP.test(value) && Number.isFinite(Date.parse(value));
 }
 
 /** Structural gaps only. An empty result does not prove that a source is false or authentic. */
@@ -109,9 +105,7 @@ export function canUseOfficialRecordLanguage(p: EvidenceProvenance): boolean {
 }
 
 /** Professional evidence is attested, not upgraded to an official registry fact. */
-export function canUseProfessionalAttestationLanguage(
-  p: EvidenceProvenance,
-): boolean {
+export function canUseProfessionalAttestationLanguage(p: EvidenceProvenance): boolean {
   return (
     p.evidenceClass === "LICENSED_PROFESSIONAL" &&
     p.assurance === "PROFESSIONAL_ATTESTED" &&
@@ -119,9 +113,7 @@ export function canUseProfessionalAttestationLanguage(
   );
 }
 
-export function evidenceDisplayLabel(
-  p: EvidenceProvenance,
-): EvidenceDisplayLabel {
+export function evidenceDisplayLabel(p: EvidenceProvenance): EvidenceDisplayLabel {
   switch (p.evidenceClass) {
     case "OFFICIAL_REGISTRY":
       return canUseOfficialRecordLanguage(p)
