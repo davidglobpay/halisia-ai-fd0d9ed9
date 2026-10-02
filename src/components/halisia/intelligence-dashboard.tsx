@@ -372,18 +372,47 @@ export function IntelligenceDashboard({
 
 /* ----------------- TABS ----------------- */
 
+/**
+ * Magnitude as pips, one per item.
+ *
+ * A count of nearby schools has no maximum, so a progress bar would have to
+ * invent a denominator and every bar would then be asserting a target nobody
+ * set. Pips show how many there are and imply no ceiling. Past twelve the row
+ * stops and says how many more, because a hundred dots is not information.
+ */
+function Pips({ n }: { n: number }) {
+  const shown = Math.min(n, 12);
+  if (n <= 0) {
+    return <span className="text-[10px] text-muted-foreground">none mapped</span>;
+  }
+  return (
+    <span className="inline-flex items-center gap-[3px]" aria-hidden="true">
+      {Array.from({ length: shown }).map((_, i) => (
+        <span key={i} className="h-1.5 w-1.5 rounded-full bg-accent/70" />
+      ))}
+      {n > shown && <span className="ml-1 text-[10px] text-muted-foreground">+{n - shown}</span>}
+    </span>
+  );
+}
+
 function StatTile({
   label,
   value,
   sub,
   icon: Icon,
   tone,
+  count,
+  source,
 }: {
   label: string;
   value: string;
   sub?: string;
   icon: React.ElementType;
   tone: string;
+  /** When the value is a count of things, draw it as pips as well. */
+  count?: number;
+  /** Where the number came from. Printed in small caps under the tile. */
+  source?: string;
 }) {
   return (
     <div className="glass relative min-w-0 overflow-hidden rounded-2xl p-3">
@@ -396,9 +425,21 @@ function StatTile({
         </div>
         <div className="min-w-0 truncate text-[11px] text-muted-foreground">{label}</div>
       </div>
-      <div className="mt-2 min-w-0 truncate text-xl font-semibold tracking-tight">{value}</div>
+      <div className="mt-2 min-w-0 truncate text-xl font-semibold tabular-nums tracking-tight">
+        {value}
+      </div>
+      {count != null && (
+        <div className="mt-1.5 min-w-0">
+          <Pips n={count} />
+        </div>
+      )}
       {sub && (
         <div className="mt-0.5 min-w-0 truncate text-[11px] text-muted-foreground">{sub}</div>
+      )}
+      {source && (
+        <div className="mt-1.5 truncate text-[9px] uppercase tracking-[0.12em] text-accent/80">
+          {source}
+        </div>
       )}
     </div>
   );
@@ -421,44 +462,54 @@ function OverviewTab({
         <StatTile
           label="Schools ≤3km"
           value={String(c.schools.length)}
+          count={c.schools.length}
           sub={c.schools[0]?.name}
           icon={GraduationCap}
           tone="from-primary to-accent"
+          source="Google Places"
         />
         <StatTile
           label="Healthcare ≤3km"
           value={String(c.hospitals.length)}
+          count={c.hospitals.length}
           sub={c.hospitals[0]?.name}
           icon={HeartPulse}
-          tone="from-cyan-glow to-emerald-glow"
+          tone="from-destructive to-accent"
+          source="Google Places"
         />
         <StatTile
           label="Groceries ≤3km"
           value={String(c.groceries.length)}
+          count={c.groceries.length}
           sub={c.groceries[0]?.name}
           icon={ShoppingBasket}
           tone="from-emerald-glow to-primary"
+          source="Google Places"
         />
         <StatTile
           label="Transit ≤3km"
           value={String(c.transit.length)}
+          count={c.transit.length}
           sub={c.transit[0]?.name}
           icon={TrainFront}
-          tone="from-accent to-cyan-glow"
+          tone="from-accent to-amber-glow"
+          source="Google Places"
         />
         <StatTile
           label="Elevation"
           value={intel.elevation?.meters != null ? `${intel.elevation.meters.toFixed(0)} m` : "—"}
-          sub="Google Elevation API"
+          sub="Height above sea level"
           icon={Mountain}
           tone="from-amber-glow to-primary"
+          source="Google Elevation API"
         />
         <StatTile
           label="Air quality"
           value={intel.airQuality?.universalAqi != null ? `${intel.airQuality.universalAqi}` : "—"}
           sub={intel.airQuality?.category ?? "Universal AQI"}
           icon={Wind}
-          tone="from-cyan-glow to-primary"
+          tone="from-primary to-emerald-glow"
+          source="Google Air Quality API \u00b7 read now"
         />
       </div>
       {narrative && narrative.paragraphs[0] && (
@@ -515,6 +566,7 @@ function EnvironmentTab({ intel, loading }: { intel?: LocationIntel; loading: bo
           }
           icon={Mountain}
           tone="from-amber-glow to-primary"
+          source="Google Elevation API"
         />
         <StatTile
           label="Flood proxy"
@@ -530,6 +582,7 @@ function EnvironmentTab({ intel, loading }: { intel?: LocationIntel; loading: bo
           sub="Derived from elevation only"
           icon={ShieldAlert}
           tone="from-destructive to-amber-glow"
+          source="Not a flood study"
         />
       </div>
       <div className="text-[11px] text-muted-foreground px-1">
