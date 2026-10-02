@@ -45,11 +45,23 @@ type DeedLoc = {
   county: string | null;
   discrepancy: Discrepancy | null;
   issues: string[];
+  /** Half-diagonal of Google's own viewport for the match, in metres. */
+  radiusM: number | null;
+  /** Google had to guess at part of the query. */
+  partialMatch: boolean;
 };
 
 /** Validate a geocode hit for a deed. Never upgrades it past "approximate". */
 function buildDeedLoc(
-  res: { lat: number; lng: number; address: string; locationType?: string; types?: string[] },
+  res: {
+    lat: number;
+    lng: number;
+    address: string;
+    locationType?: string;
+    types?: string[];
+    radiusM?: number | null;
+    partialMatch?: boolean;
+  },
   deedCounty: string | null | undefined,
 ): { loc: DeedLoc } | { issue: string } {
   const check = validateCoordinate(res.lat, res.lng);
@@ -68,6 +80,8 @@ function buildDeedLoc(
       county: deedCounty ?? null,
       discrepancy: compareCounty({ lat: check.lat, lng: check.lng }, deedCounty, "Geocoded pin"),
       issues: check.issues,
+      radiusM: res.radiusM ?? null,
+      partialMatch: Boolean(res.partialMatch),
     },
   };
 }
@@ -713,6 +727,7 @@ function TitleDeedPage() {
               <MapView
                 center={loc ? { lat: loc.lat, lng: loc.lng } : undefined}
                 marker={loc ? { lat: loc.lat, lng: loc.lng, label: loc.address } : null}
+                accuracyRadiusM={loc?.radiusM ?? null}
                 zoom={loc ? 14 : 6}
                 mapType="hybrid"
                 theme="dark"
@@ -734,6 +749,22 @@ function TitleDeedPage() {
                     Approx. locality
                   </span>
                   {loc.address}
+                  {loc.radiusM != null && (
+                    <span className="mt-1.5 block text-[11px]">
+                      The gold ring is how far this match could be out:{" "}
+                      <span className="tabular-nums text-foreground">
+                        {loc.radiusM >= 1000
+                          ? `${(loc.radiusM / 1000).toFixed(1)} km`
+                          : `${loc.radiusM} m`}
+                      </span>{" "}
+                      from the pin. The parcel is somewhere inside it, not at its centre.
+                    </span>
+                  )}
+                  {loc.partialMatch && (
+                    <span className="mt-1 block text-[11px] text-destructive">
+                      Google matched only part of the location text on this record.
+                    </span>
+                  )}
                 </div>
                 <LocationStatusCard
                   status={loc.status}
