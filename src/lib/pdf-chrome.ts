@@ -52,10 +52,14 @@ const SUBS: Record<string, string> = {
   "✓": "+", // ✓
   "✔": "+",
   "✗": "x",
-  "•": "·", // bullet -> middot, which IS WinAnsi
-  " ": " ",
-  " ": " ",
-  " ": " ",
+  "\u2022": "\u00b7", // bullet -> middot, which IS WinAnsi
+  // Exotic spaces, written as escapes. Spelled with the literal characters
+  // these three keys are visually identical, and a transcription that flattens
+  // them to ASCII makes them duplicate keys — which is exactly what happened
+  // the first time this file was written. TS1117, caught by typecheck.
+  "\u2009": " ", // thin space
+  "\u202f": " ", // narrow no-break space
+  "\u00a0": " ", // no-break space
 };
 
 /**
