@@ -15,6 +15,7 @@ import {
 import { startTerrainTimer, recordTerrainEvent } from "@/lib/terrain-telemetry";
 import halisiaMark from "@/assets/brand/halisia-mark.png.asset.json";
 import { PDF, prepareMark, drawWatermark } from "@/lib/pdf-chrome";
+import { runIntelligenceEngine } from "@/lib/intelligence-engine";
 import type { BrandImage } from "@/lib/brand-asset";
 
 /**
@@ -442,7 +443,95 @@ export async function generateLocationDossier(opts: {
 
   drawFooter(doc, W, H, M, muted);
 
-  // ---------- Page 5: Climate normals & terrain ----------
+  // ---------- Page 5: What HALISIA does not know ----------
+  //
+  // The seven questions the engine refuses to score. Every other page in this
+  // document reports a reading; this one reports an absence, and names the
+  // office that closes it. Running the engine with no location returns exactly
+  // these seven with their constant copy, so the page cannot drift from what
+  // the app tells the user on screen.
+  doc.addPage();
+  doc.setFillColor(...bg);
+  doc.rect(0, 0, W, H, "F");
+  drawHeader(doc, M, "What this report does not know", ink, muted);
+
+  const gaps = runIntelligenceEngine().modules.filter((m) => m.status === "not-assessed");
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(...muted);
+  doc.text(
+    doc.splitTextToSize(
+      "Seven questions carry no score. That is deliberate: a number built from an unrelated proxy reads as knowledge and is not. Each one below names what would answer it and who holds that answer. Take this page to your advocate.",
+      W - M * 2,
+    ),
+    M,
+    98,
+  );
+
+  let gy = 132;
+  gaps.forEach((g) => {
+    const why = g.reasons[0] ?? "";
+    const holder = g.missing[0] ?? "An official source outside HALISIA";
+    const whyLines = doc.splitTextToSize(why, W - M * 2 - 40) as string[];
+    const blockH = 56 + whyLines.length * 11;
+
+    if (gy + blockH > H - 70) {
+      drawFooter(doc, W, H, M, muted);
+      doc.addPage();
+      doc.setFillColor(...bg);
+      doc.rect(0, 0, W, H, "F");
+      drawHeader(doc, M, "What this report does not know", ink, muted);
+      gy = 98;
+    }
+
+    // Card with a gold spine, matching the on-screen gap cards.
+    doc.setFillColor(255, 253, 248);
+    doc.roundedRect(M, gy, W - M * 2, blockH, 8, 8, "F");
+    doc.setFillColor(...PDF.gold);
+    doc.rect(M, gy, 3, blockH, "F");
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11.5);
+    doc.setTextColor(...ink);
+    doc.text(g.label, M + 16, gy + 20);
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7.2);
+    doc.setTextColor(...PDF.red);
+    doc.text("NOT SCORED", W - M - 16, gy + 20, { align: "right" });
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.6);
+    doc.setTextColor(...muted);
+    doc.text(whyLines, M + 16, gy + 34);
+
+    let ly = gy + 34 + whyLines.length * 11 + 4;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7.2);
+    doc.setTextColor(...PDF.green);
+    doc.text("WHO HOLDS IT", M + 16, ly);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.6);
+    doc.setTextColor(...ink);
+    doc.text(doc.splitTextToSize(holder, W - M * 2 - 120) as string[], M + 100, ly);
+
+    ly += 12;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7.2);
+    doc.setTextColor(...accent);
+    doc.text("DO THIS", M + 16, ly);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.6);
+    doc.setTextColor(...muted);
+    doc.text(doc.splitTextToSize(g.nextStep, W - M * 2 - 120) as string[], M + 100, ly);
+
+    gy += blockH + 10;
+  });
+
+  drawFooter(doc, W, H, M, muted);
+
+  // ---------- Page 6: Climate normals & terrain ----------
   if (wave4 || terrainGrid) {
     doc.addPage();
     doc.setFillColor(...bg);
