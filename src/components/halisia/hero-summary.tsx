@@ -1,11 +1,28 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, MapPin, CircleSlash, ChevronDown } from "lucide-react";
+import {
+  Sparkles,
+  MapPin,
+  CircleSlash,
+  ChevronDown,
+  Trees,
+  Route,
+  Building2,
+  ShieldCheck,
+  Landmark,
+  Users,
+  Store,
+  PlugZap,
+  HeartPulse,
+  TrendingUp,
+  type LucideIcon,
+} from "lucide-react";
 import type { LocationIntel } from "@/lib/location-intel.functions";
 import type { NarrativeOutput } from "@/lib/ai-narrative.functions";
 import type { Wave4Intel } from "@/lib/wave4-intel.functions";
 import { runIntelligenceEngine, DOSSIER_SCOPE, type ModuleOutput } from "@/lib/intelligence-engine";
 import { useUserPersona } from "@/hooks/use-user-persona";
+import { ListenButton } from "@/components/halisia/listen-button";
 
 /**
  * The hero read for a location.
@@ -102,15 +119,33 @@ function Gauge({
 }
 
 /** A tile per measured or explicitly projected module. */
+const MODULE_ICONS: Record<ModuleOutput["id"], LucideIcon> = {
+  investment: Landmark,
+  construction: Building2,
+  legal: ShieldCheck,
+  environment: Trees,
+  infrastructure: Route,
+  community: Users,
+  market: Store,
+  utilities: PlugZap,
+  safety: HeartPulse,
+  futureGrowth: TrendingUp,
+};
+
 function ModuleTile({ m }: { m: ModuleOutput }) {
   const tone = m.score != null ? toneFor(m.score) : NEUTRAL;
+  const Icon = MODULE_ICONS[m.id];
+  const narration = `${m.label}. ${m.status === "projected" ? "Indicative projection" : tone.label}. Confidence ${m.confidencePct ?? 0} percent. ${m.reasons.join(" ")} Sources: ${m.sources.join(", ") || "No source available"}. Limitations: ${m.limitations.join(" ")}. Next: ${m.nextStep}`;
   return (
     <details className="group glass rounded-2xl">
       <summary className="flex min-h-[96px] cursor-pointer list-none items-center gap-3 rounded-2xl p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
         <Gauge score={m.score} />
         <div className="min-w-0 flex-1">
-          <div className="text-[10px] uppercase tracking-widest text-muted-foreground truncate">
-            {m.label}
+          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">
+            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-lg border border-foreground/10 bg-background/35">
+              <Icon className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
+            </span>
+            <span className="truncate">{m.label}</span>
           </div>
           <div className={`mt-0.5 text-xs font-medium ${tone.text}`}>
             {m.status === "projected" ? "Indicative projection" : tone.label}
@@ -135,6 +170,9 @@ function ModuleTile({ m }: { m: ModuleOutput }) {
           ))}
         </ul>
         <div className="mt-2 text-muted-foreground">Next: {m.nextStep}</div>
+        <div className="mt-2">
+          <ListenButton text={narration} label={`Listen to ${m.label}`} />
+        </div>
       </div>
     </details>
   );
@@ -241,8 +279,14 @@ export function HeroSummary({
           )}
 
           <div className="mt-3 rounded-2xl border border-white/10 bg-black/15 p-3">
-            <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-accent">
+            <div className="flex flex-wrap items-center gap-1.5 text-[10px] uppercase tracking-widest text-accent">
               <Sparkles className="h-3 w-3" /> Written read
+              <span className="ml-auto">
+                <ListenButton
+                  text={`${summary} This is a written interpretation. HALISIA holds no price or transaction data for this location and publishes no valuation.`}
+                  label="Listen to written read"
+                />
+              </span>
             </div>
             <p className="mt-1 text-sm leading-relaxed text-foreground/90 line-clamp-3">
               {summary}

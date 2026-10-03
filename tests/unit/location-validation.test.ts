@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   classifyGeocode,
+  assessDeedLocationMatch,
   compareCounty,
   comparePoints,
   countyForPoint,
   locationConfidence,
+  deedLocationQuery,
   validateCoordinate,
 } from "@/lib/location-validation";
 
@@ -51,5 +53,34 @@ describe("confidence model", () => {
     expect(locationConfidence("approximate", "ROOFTOP")).toBeLessThan(locationConfidence("verified_geometry"));
     expect(classifyGeocode(["locality", "political"])).toBe("administrative");
     expect(classifyGeocode(["route"])).toBe("approximate");
+  });
+
+  it("keeps title and parcel identifiers out of the geocoding query", () => {
+    expect(deedLocationQuery({ locationHint: "Ruiru", county: "Kiambu" })).toBe("Ruiru, Kiambu");
+    expect(deedLocationQuery({ county: "Kiambu" })).toBe("Kiambu");
+  });
+
+  it("reduces match confidence for partial, broad and conflicting matches", () => {
+    const clear = assessDeedLocationMatch({
+      status: "approximate",
+      geocodeType: "ROOFTOP",
+      locationText: "Ruiru, Kiambu",
+      locationTextConfidence: 80,
+      countyNamed: "Kiambu",
+      radiusM: 90,
+    });
+    const conflicted = assessDeedLocationMatch({
+      status: "administrative",
+      geocodeType: "APPROXIMATE",
+      locationText: "Ruiru, Kiambu",
+      locationTextConfidence: 80,
+      countyNamed: "Kiambu",
+      countyConflict: true,
+      partialMatch: true,
+      radiusM: 8_000,
+    });
+    expect(clear.confidencePct).toBeGreaterThan(conflicted.confidencePct);
+    expect(conflicted.confidencePct).toBeLessThanOrEqual(20);
+    expect(conflicted.limitations.join(" ")).toContain("disagree");
   });
 });

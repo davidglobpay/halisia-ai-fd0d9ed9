@@ -47,8 +47,11 @@ export function MetricCard({
     >
       <header className="flex items-start gap-3">
         {Icon && (
-          <div className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-white/5 border border-white/10">
-            <Icon className="h-4 w-4 text-accent" aria-hidden="true" />
+          <div className="relative grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-xl border border-foreground/10 bg-background/40">
+            <Icon className="relative z-10 h-5 w-5 text-accent" aria-hidden="true" />
+            <span className="absolute inset-x-1 bottom-1 h-px bg-accent/35" aria-hidden="true" />
+            <span className="absolute bottom-1 left-1 h-2 w-px bg-primary/45" aria-hidden="true" />
+            <span className="absolute bottom-1 left-2.5 h-3 w-px bg-accent/45" aria-hidden="true" />
           </div>
         )}
         <div className="min-w-0 flex-1">

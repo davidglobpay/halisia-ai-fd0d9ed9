@@ -6,3 +6,6 @@
 - [x] Add focused tests and complete validation
 - [x] Correct title-deed mobile overflow and Design Studio framing/control affordances
 - [x] Add non-scoring evidence-based community and development proxy projections
+- [x] Strengthen title-deed location-match evidence and confidence
+- [x] Extend source-aware read-aloud controls to key intelligence outputs
+- [x] Add calm contextual icons and compact graphics to information cards

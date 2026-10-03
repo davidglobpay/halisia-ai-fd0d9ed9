@@ -29,12 +29,15 @@ import { Link } from "@tanstack/react-router";
 import {
   classifyGeocode,
   compareCounty,
+  assessDeedLocationMatch,
+  deedLocationQuery,
   validateCoordinate,
   type Discrepancy,
   type LocationStatus,
 } from "@/lib/location-validation";
 import { LocationStatusCard } from "@/components/halisia/land-passport/location-status";
 import { PassportLinks } from "@/components/halisia/land-passport/passport-links";
+import { ListenButton } from "@/components/halisia/listen-button";
 
 type DeedLoc = {
   lat: number;
@@ -151,10 +154,7 @@ function TitleDeedPage() {
         setStage("locate");
         setProgressMsg("Geolocating parcel…");
         setProgress(0);
-        const parts = [extracted.locationHint, extracted.registry, extracted.county]
-          .filter(Boolean)
-          .join(", ");
-        const geoQuery = parts || extracted.county || extracted.registry || "";
+        const geoQuery = deedLocationQuery(extracted);
         let located: DeedLoc | null = null;
         setLoc(null);
         setLocIssue(null);
@@ -267,8 +267,7 @@ function TitleDeedPage() {
     setStage("locate");
     setProgressMsg("Geolocating parcel…");
     setProgress(0);
-    const parts = [f.locationHint, f.registry, f.county].filter(Boolean).join(", ");
-    const query = parts || f.county || f.registry || "";
+    const query = deedLocationQuery(f);
     setLoc(null);
     setLocIssue(null);
     if (!query) {
@@ -285,6 +284,21 @@ function TitleDeedPage() {
       setLocIssue("Location service unavailable — try again shortly.");
     }
   }, []);
+
+  const locationMatch = useMemo(() => {
+    if (!loc) return null;
+    const locationText = deedLocationQuery(fields ?? {});
+    return assessDeedLocationMatch({
+      status: loc.status,
+      geocodeType: loc.gt,
+      locationText: locationText || "No readable place text",
+      locationTextConfidence: fields?.fieldConfidence?.locationHint ?? fields?.fieldConfidence?.county,
+      countyNamed: fields?.county,
+      countyConflict: Boolean(loc.discrepancy),
+      partialMatch: loc.partialMatch,
+      radiusM: loc.radiusM,
+    });
+  }, [fields, loc]);
 
   const processUpload = async () => {
     if (!file) return;
@@ -774,6 +788,50 @@ function TitleDeedPage() {
                   discrepancies={loc.discrepancy ? [loc.discrepancy] : []}
                   issues={loc.issues}
                 />
+                {locationMatch && (
+                  <details
+                    className="group rounded-2xl border border-foreground/10 bg-card/70 px-4 py-3 text-xs"
+                    data-testid="deed-location-evidence"
+                    open
+                  >
+                    <summary className="flex min-h-8 cursor-pointer list-none items-center gap-2 font-medium text-foreground">
+                      <ScanSearch className="h-4 w-4 text-accent" aria-hidden="true" />
+                      Place-match evidence
+                      <span className="ml-auto font-mono text-accent">
+                        {locationMatch.confidencePct}% · {locationMatch.band}
+                      </span>
+                    </summary>
+                    <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                          Evidence used
+                        </div>
+                        <ul className="mt-1 list-disc space-y-1 pl-4 text-foreground/85">
+                          {locationMatch.evidence.map((item) => (
+                            <li key={item}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                          Limits and next check
+                        </div>
+                        <ul className="mt-1 list-disc space-y-1 pl-4 text-muted-foreground">
+                          {locationMatch.limitations.map((item) => (
+                            <li key={item}>{item}</li>
+                          ))}
+                          <li>Confirm the parcel through an official search and a licensed surveyor.</li>
+                        </ul>
+                      </div>
+                    </div>
+                    <div className="mt-3">
+                      <ListenButton
+                        label="Listen to match evidence"
+                        text={`Place match confidence ${locationMatch.confidencePct} percent, ${locationMatch.band}. Evidence: ${locationMatch.evidence.join(" ")} Limitations: ${locationMatch.limitations.join(" ")} Next: confirm the parcel through an official search and a licensed surveyor.`}
+                      />
+                    </div>
+                  </details>
+                )}
                 <PassportLinks
                   target={{
                     lat: loc.lat,

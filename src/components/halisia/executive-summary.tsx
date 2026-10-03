@@ -13,6 +13,7 @@ import {
 import type { NarrativeOutput } from "@/lib/ai-narrative.functions";
 import type { LocationIntel } from "@/lib/location-intel.functions";
 import { usePersistedState } from "@/hooks/use-persisted-state";
+import { ListenButton } from "@/components/halisia/listen-button";
 
 type ViewMode = "simple" | "professional" | "technical";
 
@@ -160,6 +161,7 @@ export function ExecutiveSummary({
   );
 
   const confPct = narrative.confidencePct ?? 65;
+  const narration = `${narrative.headline}. ${narrative.overview ?? narrative.paragraphs?.[0] ?? ""} Confidence ${confPct} percent, ${narrative.confidence}. Sources: ${sources.join(", ")}. Limitations: predictions and value ranges are indicative and are not a licensed appraisal or legal opinion.`;
 
   return (
     <section
@@ -172,6 +174,7 @@ export function ExecutiveSummary({
         <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-accent">
           <Sparkles className="h-3 w-3" /> HALISIA AI · Executive summary
         </div>
+        <ListenButton text={narration} label="Listen to summary" />
         <div
           role="tablist"
           aria-label="Summary detail level"
