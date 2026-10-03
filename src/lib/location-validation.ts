@@ -179,6 +179,89 @@ export function locationConfidence(status: LocationStatus, geocodeType?: string 
   }
 }
 
+export type DeedLocationMatchAssessment = {
+  confidencePct: number;
+  band: "strong" | "moderate" | "weak";
+  evidence: string[];
+  limitations: string[];
+};
+
+/**
+ * Confidence that document location text matched the displayed place.
+ * This never measures title validity, ownership, parcel identity or boundary accuracy.
+ */
+export function assessDeedLocationMatch(input: {
+  status: LocationStatus;
+  geocodeType?: string | null;
+  locationText: string;
+  locationTextConfidence?: number | null;
+  countyNamed?: string | null;
+  countyConflict?: boolean;
+  partialMatch?: boolean;
+  radiusM?: number | null;
+}): DeedLocationMatchAssessment {
+  const evidence: string[] = [];
+  const limitations: string[] = [
+    "A place-name match does not identify a legal parcel, surveyed boundary or owner.",
+  ];
+  const textConfidence = Math.max(0, Math.min(100, input.locationTextConfidence ?? 50));
+  let confidence = Math.min(locationConfidence(input.status, input.geocodeType), textConfidence);
+
+  evidence.push(`Location text used: ${input.locationText}`);
+  evidence.push(`Provider precision class: ${input.geocodeType ?? "not supplied"}`);
+
+  if (input.countyNamed) {
+    evidence.push(
+      input.countyConflict
+        ? `County conflict: the matched point falls outside ${input.countyNamed} County.`
+        : `County check: the matched point agrees with ${input.countyNamed} County.`,
+    );
+  } else {
+    limitations.push("No county was readable from the record for an administrative cross-check.");
+    confidence = Math.min(confidence, 45);
+  }
+
+  if (input.partialMatch) {
+    limitations.push("The provider matched only part of the submitted location text.");
+    confidence = Math.min(confidence, 35);
+  }
+  if (input.countyConflict) {
+    limitations.push("The document county and matched point disagree.");
+    confidence = Math.min(confidence, 20);
+  }
+  if (input.radiusM != null) {
+    evidence.push(`Provider uncertainty radius: approximately ${Math.round(input.radiusM)} metres.`);
+    if (input.radiusM > 5_000) {
+      limitations.push("The returned area is too broad for parcel-level use.");
+      confidence = Math.min(confidence, 25);
+    } else if (input.radiusM > 1_500) {
+      confidence = Math.min(confidence, 35);
+    }
+  } else {
+    limitations.push("The provider supplied no uncertainty viewport for this result.");
+  }
+
+  const confidencePct = Math.max(0, Math.round(confidence));
+  return {
+    confidencePct,
+    band: confidencePct >= 60 ? "strong" : confidencePct >= 35 ? "moderate" : "weak",
+    evidence,
+    limitations,
+  };
+}
+
+/** Title/LR/parcel identifiers are deliberately excluded: they are not geocodable evidence. */
+export function deedLocationQuery(input: {
+  locationHint?: string | null;
+  county?: string | null;
+}): string {
+  return [input.locationHint, input.county]
+    .map((value) => value?.trim())
+    .filter((value): value is string => Boolean(value))
+    .filter((value, index, all) => all.findIndex((item) => item.toLowerCase() === value.toLowerCase()) === index)
+    .join(", ");
+}
+
 /** Approximate radius (m) to draw around a non-exact pin. */
 export function uncertaintyRadiusM(status: LocationStatus, geocodeType?: string | null): number {
   if (STATUS_META[status].exact) return 0;

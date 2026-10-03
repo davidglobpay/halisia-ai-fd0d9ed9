@@ -27,6 +27,7 @@ import {
   foundationScore,
 } from "@/lib/geotech-derive";
 import { usePersistedState } from "@/hooks/use-persisted-state";
+import { ListenButton } from "@/components/halisia/listen-button";
 
 /**
  * Wave 3 · AI Geotechnical Intelligence Module.
@@ -56,6 +57,8 @@ export function GeotechPanel({ lat, lng, address }: { lat: number; lng: number; 
     );
   }
   const g = q.data;
+  const usedSources = g.sources.filter((source) => source.used).map((source) => source.label);
+  const narration = `Preliminary geotechnical intelligence for ${address}. ${g.geology.dominant}, ${g.terrain.landform}, at ${g.terrain.elevationM} metres elevation. Confidence ${g.confidence} percent. Sources used: ${usedSources.join(", ") || "none available"}. Limitation: ${g.disclaimer}`;
   const exportPdf = async () => {
     setExporting(true);
     try {
@@ -82,6 +85,9 @@ export function GeotechPanel({ lat, lng, address }: { lat: number; lng: number; 
         </div>
         <div className="mt-1 text-sm font-semibold">
           {g.geology.dominant} · {g.terrain.landform} at {g.terrain.elevationM} m
+        </div>
+        <div className="mt-2">
+          <ListenButton text={narration} label="Listen to geotech summary" />
         </div>
         <div className="mt-2 h-1.5 rounded-full bg-white/5 overflow-hidden">
           <div
