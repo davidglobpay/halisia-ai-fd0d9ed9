@@ -1,5 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Bot, CheckCircle2, ExternalLink, Map, ShieldCheck, Smartphone } from "lucide-react";
+import {
+  Bot,
+  CheckCircle2,
+  Database,
+  ExternalLink,
+  Map,
+  ShieldCheck,
+  Smartphone,
+} from "lucide-react";
 import { SectionHeading, StatusBadge, Surface } from "@/components/halisia/ds";
 
 export const Route = createFileRoute("/system-status")({
@@ -48,6 +56,15 @@ const checks = [
     detail: "Keyboard-aware desktop navigation and an inert, focus-safe mobile menu.",
     to: "/explore",
     test: "Test at 360px, 768px and desktop widths, including keyboard navigation.",
+  },
+  {
+    icon: Database,
+    title: "Resource Intelligence",
+    status: "M0-A",
+    detail:
+      "Evidence-first foundation for LAND, LIMAR, MADINI and ENERGY with server-side verification guards.",
+    to: "/resource-intelligence",
+    test: "Confirm database connection, feature flags, evidence counts and truth rules.",
   },
 ];
 
