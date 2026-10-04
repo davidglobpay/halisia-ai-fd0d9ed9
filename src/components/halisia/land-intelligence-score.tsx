@@ -583,31 +583,11 @@ export function LandIntelligenceScore({
         </p>
       )}
 
-      {/* Due diligence — what HALISIA cannot assess, and who can */}
-      {decision.dueDiligence.length > 0 && (
-        <div
-          className="mt-4 rounded-2xl border border-amber-400/25 bg-amber-500/[0.06] p-3"
-          data-testid="due-diligence"
-        >
-          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-amber-glow">
-            <ClipboardCheck className="h-3 w-3" /> Evidence still needed —{" "}
-            {decision.notAssessedCount} checks remain
-          </div>
-          <ul className="mt-2 grid gap-2 sm:grid-cols-2">
-            {decision.dueDiligence.map((d) => (
-              <li key={d.label} className="rounded-xl bg-white/5 border border-white/10 p-2.5">
-                <div className="text-[12px] font-medium">{d.label}</div>
-                <div className="mt-0.5 text-[11px] leading-snug text-muted-foreground">{d.why}</div>
-                <div className="mt-1 text-[11px] leading-snug text-foreground/85">{d.who}</div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
       {/* Module breakdown */}
       <div className="mt-4 grid gap-2 sm:grid-cols-2">
-        {decision.modules.map((m) => (
+        {decision.modules
+          .filter((m) => m.status !== "not-assessed")
+          .map((m) => (
           <ModuleCard key={m.id} m={m} freshness={decision.freshness} />
         ))}
       </div>
