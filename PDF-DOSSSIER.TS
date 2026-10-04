@@ -125,7 +125,11 @@ export async function generateLocationDossier(opts: {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
   doc.setTextColor(...muted);
-  doc.text(`${lat.toFixed(5)}, ${lng.toFixed(5)}  ·  Generated ${nairobiStamp(new Date())}`, M, 100);
+  doc.text(
+    `${lat.toFixed(5)}, ${lng.toFixed(5)}  ·  Generated ${nairobiStamp(new Date())}`,
+    M,
+    100,
+  );
 
   if (shareUrl) {
     doc.setFontSize(9);
@@ -647,4 +651,3 @@ function renderTerrainToPngDataUrl(grid: ElevationGrid, w: number, h: number): s
     return null;
   }
 }
-

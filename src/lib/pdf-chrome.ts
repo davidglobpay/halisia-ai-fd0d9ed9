@@ -106,7 +106,10 @@ export function ink(doc: jsPDF, c: RGB) {
 
 /** Run a block at reduced opacity, restoring afterwards. */
 function faint(doc: jsPDF, opacity: number, draw: () => void) {
-  const d = doc as unknown as { GState?: new (o: { opacity: number }) => unknown; setGState?: (g: unknown) => void };
+  const d = doc as unknown as {
+    GState?: new (o: { opacity: number }) => unknown;
+    setGState?: (g: unknown) => void;
+  };
   let applied = false;
   try {
     if (d.GState && d.setGState) {

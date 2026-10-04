@@ -93,9 +93,12 @@ RULES:
         const body = await res.text();
         console.error("design brief gateway error", res.status, body);
         if (res.status === 402)
-          return unavailable("AI credits are exhausted for this workspace — add credits to re-enable.");
+          return unavailable(
+            "AI credits are exhausted for this workspace — add credits to re-enable.",
+          );
         if (res.status === 403) return unavailable("AI is disabled by workspace policy.");
-        if (res.status === 429) return unavailable("AI is rate limited right now — try again shortly.");
+        if (res.status === 429)
+          return unavailable("AI is rate limited right now — try again shortly.");
         return unavailable(`AI provider returned ${res.status}.`);
       }
       const j = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
@@ -105,13 +108,16 @@ RULES:
       };
       const patches: AiOptionPatch[] = Array.isArray(parsed.patches)
         ? (parsed.patches as Array<Record<string, unknown>>).slice(0, 3).map((p) => ({
-            id: String(p["id"] ?? "").toUpperCase().slice(0, 1),
+            id: String(p["id"] ?? "")
+              .toUpperCase()
+              .slice(0, 1),
             name: typeof p["name"] === "string" ? p["name"].slice(0, 90) : undefined,
             useType: typeof p["useType"] === "string" ? p["useType"].slice(0, 90) : undefined,
             floors: Number(p["floors"]) || undefined,
             footprintSqm: Number(p["footprintSqm"]) || undefined,
             unitCount: Number(p["unitCount"]) || undefined,
-            rationale: typeof p["rationale"] === "string" ? p["rationale"].slice(0, 400) : undefined,
+            rationale:
+              typeof p["rationale"] === "string" ? p["rationale"].slice(0, 400) : undefined,
           }))
         : [];
 

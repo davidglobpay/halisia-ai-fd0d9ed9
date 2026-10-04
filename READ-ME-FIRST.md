@@ -94,9 +94,9 @@ Supabase `ai_score` column stays exactly where it is, with nothing reading it.
 It's already in `styles.css`. One dial, near the top of the appended block:
 
 ```css
-  --tile-glow-strength: 0.65;   /* 0.5 = subtle, 0.85 = vivid */
-  --tile-glow-spread: 18px;     /* thickness of the ring */
-  --tile-glow-speed: 14s;       /* one full turn */
+--tile-glow-strength: 0.65; /* 0.5 = subtle, 0.85 = vivid */
+--tile-glow-spread: 18px; /* thickness of the ring */
+--tile-glow-speed: 14s; /* one full turn */
 ```
 
 `preview-tile-glow.png` in this folder is the real Chromium render, not a

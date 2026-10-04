@@ -106,7 +106,10 @@ export function StreetViewPanel({
           };
           // StreetViewSource may be absent on an older bootstrap; omitting the
           // key is the same as asking for the default source.
-          if (pass.outdoor && (g.maps as { StreetViewSource?: { OUTDOOR?: unknown } }).StreetViewSource?.OUTDOOR) {
+          if (
+            pass.outdoor &&
+            (g.maps as { StreetViewSource?: { OUTDOOR?: unknown } }).StreetViewSource?.OUTDOOR
+          ) {
             request.source = g.maps.StreetViewSource.OUTDOOR;
           }
 
@@ -166,9 +169,7 @@ export function StreetViewPanel({
           ) : (
             <span className="inline-flex max-w-xs flex-col items-center gap-2" role="status">
               <EyeOff className="h-5 w-5" />
-              {state === "none"
-                ? (msg ?? "Street View unavailable at this location")
-                : msg}
+              {state === "none" ? (msg ?? "Street View unavailable at this location") : msg}
             </span>
           )}
         </div>

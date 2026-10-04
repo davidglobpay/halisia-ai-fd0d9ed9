@@ -32,8 +32,7 @@ export const METRIC_UNITS: Record<CountyMetric, string> = {
 
 /** Where each metric comes from, in words a reader can check. */
 export const METRIC_SOURCES: Record<CountyMetric, string> = {
-  population:
-    "KNBS 2019 Kenya Population and Housing Census, divided by the gazetted county area.",
+  population: "KNBS 2019 Kenya Population and Housing Census, divided by the gazetted county area.",
 };
 
 /** Short provenance line for the one metric on the map and in exports. */
