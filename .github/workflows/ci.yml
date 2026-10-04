@@ -33,10 +33,30 @@ jobs:
         run: bunx vite build --mode production
 
   e2e:
-    name: Playwright E2E
+    name: Playwright E2E · shard ${{ matrix.index }}/8
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: quality
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - index: 1
+            shard: 1/8
+          - index: 2
+            shard: 2/8
+          - index: 3
+            shard: 3/8
+          - index: 4
+            shard: 4/8
+          - index: 5
+            shard: 5/8
+          - index: 6
+            shard: 6/8
+          - index: 7
+            shard: 7/8
+          - index: 8
+            shard: 8/8
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
@@ -45,14 +65,14 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bunx playwright install --with-deps chromium
       - name: Run Playwright tests
-        run: bunx playwright test
+        run: bunx playwright test --shard=${{ matrix.shard }} --max-failures=5
         env:
           CI: "1"
       - name: Upload Playwright report (on failure)
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
+          name: playwright-report-shard-${{ matrix.index }}
           path: |
             playwright-report
             test-results
@@ -62,7 +82,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-failure-media
+          name: playwright-failure-media-shard-${{ matrix.index }}
           path: |
             test-results/**/*.png
             test-results/**/*.webm
@@ -73,7 +93,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: county-logo-snapshot-diffs
+          name: county-logo-snapshot-diffs-shard-${{ matrix.index }}
           path: |
             test-results/**/*-diff.png
             test-results/**/*-actual.png
