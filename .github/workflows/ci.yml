@@ -33,7 +33,7 @@ jobs:
         run: bunx vite build --mode production
 
   e2e:
-    name: Playwright E2E · shard ${{ matrix.index }}/4
+    name: Playwright E2E · shard ${{ matrix.index }}/8
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: quality
@@ -42,13 +42,21 @@ jobs:
       matrix:
         include:
           - index: 1
-            shard: 1/4
+            shard: 1/8
           - index: 2
-            shard: 2/4
+            shard: 2/8
           - index: 3
-            shard: 3/4
+            shard: 3/8
           - index: 4
-            shard: 4/4
+            shard: 4/8
+          - index: 5
+            shard: 5/8
+          - index: 6
+            shard: 6/8
+          - index: 7
+            shard: 7/8
+          - index: 8
+            shard: 8/8
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
