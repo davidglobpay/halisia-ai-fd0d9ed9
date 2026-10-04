@@ -1,3 +1,7 @@
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { getWebFindings } from "@/lib/web-findings.functions";
+import { ListenButton } from "@/components/halisia/listen-button";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Sparkles,
@@ -410,6 +414,38 @@ function ModuleCard({ m, freshness }: { m: ModuleOutput; freshness: string }) {
   );
 }
 
+function WebFindings({ place, topics }: { place?: string; topics: string[] }) {
+  const fetchFindings = useServerFn(getWebFindings);
+  const key = topics.join("|");
+  const { data } = useQuery({
+    queryKey: ["web-findings", place, key],
+    enabled: !!place && topics.length > 0,
+    staleTime: 1000 * 60 * 60 * 24,
+    queryFn: () => fetchFindings({ data: { place: place!, topics } }),
+  });
+  if (!data?.length) return null;
+  return (
+    <div className="mt-4 grid gap-2 sm:grid-cols-2" data-testid="web-findings">
+      {data.map((f) => (
+        <div key={f.topic} className="rounded-2xl border border-white/10 bg-card/70 p-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="text-[13px] font-medium">{f.topic}</div>
+            <ListenButton text={`${f.topic}. ${f.summary}. Source: ${f.sourceTitle}. Public web finding, not verified by HALISIA.`} />
+          </div>
+          <p className="mt-1 text-[12px] leading-snug text-foreground/85">{f.summary}</p>
+          <div className="mt-1.5 flex flex-wrap items-center gap-1 text-[10px] text-muted-foreground">
+            <span className="rounded-full border border-foreground/15 px-1.5 py-0.5">Public web finding</span>
+            <a href={f.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline break-all">
+              {f.sourceTitle}
+            </a>
+            <span>· {formatDate(f.retrievedAt)}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function LandIntelligenceScore({
   intel,
   narrative,
@@ -591,6 +627,11 @@ export function LandIntelligenceScore({
           <ModuleCard key={m.id} m={m} freshness={decision.freshness} />
         ))}
       </div>
+
+      <WebFindings
+        place={address}
+        topics={decision.modules.filter((m) => m.status === "not-assessed").map((m) => m.label)}
+      />
 
       {/* Professional recommendations */}
       <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-3">
