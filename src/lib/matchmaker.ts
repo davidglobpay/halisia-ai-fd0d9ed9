@@ -14,11 +14,53 @@ export type MatchCriteria = {
 };
 
 const COUNTIES = [
-  "Nairobi","Kiambu","Machakos","Kajiado","Nakuru","Mombasa","Kisumu","Uasin Gishu","Kilifi","Kwale",
-  "Murang'a","Nyeri","Meru","Embu","Kirinyaga","Laikipia","Nyandarua","Narok","Kericho","Bomet",
-  "Kakamega","Bungoma","Busia","Vihiga","Siaya","Homa Bay","Migori","Kisii","Nyamira","Trans Nzoia",
-  "Nandi","Baringo","Elgeyo-Marakwet","West Pokot","Turkana","Samburu","Isiolo","Marsabit","Mandera",
-  "Wajir","Garissa","Tana River","Lamu","Taita-Taveta","Makueni","Kitui","Tharaka-Nithi",
+  "Nairobi",
+  "Kiambu",
+  "Machakos",
+  "Kajiado",
+  "Nakuru",
+  "Mombasa",
+  "Kisumu",
+  "Uasin Gishu",
+  "Kilifi",
+  "Kwale",
+  "Murang'a",
+  "Nyeri",
+  "Meru",
+  "Embu",
+  "Kirinyaga",
+  "Laikipia",
+  "Nyandarua",
+  "Narok",
+  "Kericho",
+  "Bomet",
+  "Kakamega",
+  "Bungoma",
+  "Busia",
+  "Vihiga",
+  "Siaya",
+  "Homa Bay",
+  "Migori",
+  "Kisii",
+  "Nyamira",
+  "Trans Nzoia",
+  "Nandi",
+  "Baringo",
+  "Elgeyo-Marakwet",
+  "West Pokot",
+  "Turkana",
+  "Samburu",
+  "Isiolo",
+  "Marsabit",
+  "Mandera",
+  "Wajir",
+  "Garissa",
+  "Tana River",
+  "Lamu",
+  "Taita-Taveta",
+  "Makueni",
+  "Kitui",
+  "Tharaka-Nithi",
 ];
 
 const KIND_WORDS: [RegExp, PropertyKind][] = [
@@ -39,7 +81,9 @@ const WANTS: [RegExp, string][] = [
 ];
 
 function parseMoney(t: string): number | null {
-  const m = t.match(/(?:ksh|kes|under|below|budget|max|up to)?\s*([\d.,]+)\s*(m|million|k|thousand)?\b/i);
+  const m = t.match(
+    /(?:ksh|kes|under|below|budget|max|up to)?\s*([\d.,]+)\s*(m|million|k|thousand)?\b/i,
+  );
   const all = [...t.matchAll(/([\d.,]+)\s*(m|million|k|thousand)\b/gi)];
   const hit = all[0] ?? (m && /ksh|kes|under|below|budget/i.test(t) ? m : null);
   if (!hit) return null;
@@ -74,7 +118,12 @@ export function parseRequest(text: string): MatchCriteria {
   };
 }
 
-export type MatchExplanation = { row: PropertyRow; matched: string[]; unmet: string[]; score: number };
+export type MatchExplanation = {
+  row: PropertyRow;
+  matched: string[];
+  unmet: string[];
+  score: number;
+};
 
 const NEAR_NAIROBI = new Set(["Nairobi", "Kiambu", "Machakos", "Kajiado", "Murang'a"]);
 

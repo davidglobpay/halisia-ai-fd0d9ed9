@@ -77,8 +77,7 @@ export const FIXTURE_DISCLAIMER =
 export const IMAGERY_CAPTION =
   "Location imagery centred on the user-supplied test coordinate. Not cadastral evidence and not a title boundary.";
 
-const SOURCE_BASE =
-  "https://raw.githubusercontent.com/SpectraStudios/SourceCityToolkit_glb/main";
+const SOURCE_BASE = "https://raw.githubusercontent.com/SpectraStudios/SourceCityToolkit_glb/main";
 
 /**
  * Fixture model cohort — referenced read-only at their public source URLs.
@@ -130,8 +129,7 @@ export const FIXTURE_MODELS: readonly FixtureModel[] = Object.freeze([
   },
 ]);
 
-export const HARNESS_LABEL =
-  "Compatibility harness — not the production Spatial renderer.";
+export const HARNESS_LABEL = "Compatibility harness — not the production Spatial renderer.";
 
 /** Environment/sky controls can never unlock a building-fit status. */
 export function canEnableBuildingFit(model: FixtureModel | null): false {

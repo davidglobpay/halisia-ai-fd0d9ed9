@@ -23,4 +23,3 @@ Suggested free tools:
 - Poly Haven: CC0 textures and HDRIs.
 - ambientCG: CC0 materials and textures.
 - Sketchfab: only assets whose individual licence allows the intended use.
-

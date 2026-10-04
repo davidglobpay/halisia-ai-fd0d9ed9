@@ -2,7 +2,12 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-type OAuthResult = { data: any; error: { message: string } | null };
+type OAuthData = {
+  redirect_url?: string;
+  redirect_to?: string;
+  client?: { name?: string };
+};
+type OAuthResult = { data: OAuthData | null; error: { message: string } | null };
 type OAuthApi = {
   getAuthorizationDetails: (id: string) => Promise<OAuthResult>;
   approveAuthorization: (id: string) => Promise<OAuthResult>;

@@ -217,11 +217,7 @@ export function computeEnvelope(b: SimulationBoundary | null, c: Constraints): E
       "PROPOSED",
       `${b.widthM} − 2 × ${side} m side setback = ${w} m (setbacks are PROPOSED assumptions).`,
     ),
-    depthM: valued(
-      d,
-      "PROPOSED",
-      `${b.depthM} − ${front} m front − ${rear} m rear = ${d} m.`,
-    ),
+    depthM: valued(d, "PROPOSED", `${b.depthM} − ${front} m front − ${rear} m rear = ${d} m.`),
     buildableAreaSqm: valued(buildable, "PROPOSED", `${w} m × ${d} m = ${buildable} m².`),
     siteAreaSqm: site,
     maxFootprintSqm: valued(
@@ -340,9 +336,12 @@ export function generateOptions(env: Envelope, c: Constraints): DevelopmentOptio
     const parkingNeeded = c.parkingPerUnit === null ? 0 : Math.ceil(units * c.parkingPerUnit);
     const open = round(Math.max(0, site - footprint), 2);
     const parkingPossible = Math.floor(open / PARKING_BAY_SQM);
-    const parking = c.parkingPerUnit === null ? parkingPossible : Math.min(parkingNeeded, parkingPossible);
+    const parking =
+      c.parkingPerUnit === null ? parkingPossible : Math.min(parkingNeeded, parkingPossible);
     if (c.parkingPerUnit === null)
-      warnings.push("Parking requirement UNKNOWN — showing what the open space could physically hold.");
+      warnings.push(
+        "Parking requirement UNKNOWN — showing what the open space could physically hold.",
+      );
     else if (parkingNeeded > parkingPossible)
       warnings.push(
         `Parking conflict: ${parkingNeeded} bays required, only ~${parkingPossible} fit on grade.`,
@@ -350,7 +349,9 @@ export function generateOptions(env: Envelope, c: Constraints): DevelopmentOptio
     if (c.maxCoveragePct !== null && (footprint / site) * 100 > c.maxCoveragePct + 0.01)
       warnings.push("Footprint exceeds the stated coverage limit.");
     if (c.intendedUse === "commercial" && s.id === "A")
-      warnings.push("Intended use is commercial — this low-density residential option is off-brief.");
+      warnings.push(
+        "Intended use is commercial — this low-density residential option is off-brief.",
+      );
 
     return {
       id: s.id,
@@ -577,7 +578,7 @@ export function computeFeasibility(
   option: DevelopmentOption | null,
   f: FeasibilityInputs,
 ): Feasibility {
-  const none = <T,>(m: string) => unknown<T>(m);
+  const none = <T>(m: string) => unknown<T>(m);
   if (!option)
     return {
       buildCostKes: none("Select an option."),
@@ -604,7 +605,8 @@ export function computeFeasibility(
       : round(option.unitCount * f.monthlyRentPerUnitKes * 12, 2);
 
   const margin = sales === null || total === null ? null : round(sales - total, 2);
-  const yieldPct = rent === null || total === null || total <= 0 ? null : round((rent / total) * 100, 2);
+  const yieldPct =
+    rent === null || total === null || total <= 0 ? null : round((rent / total) * 100, 2);
 
   return {
     buildCostKes: valued(
@@ -641,12 +643,16 @@ export function computeFeasibility(
     grossMarginKes: valued(
       margin,
       margin === null ? "UNKNOWN" : "ESTIMATED",
-      margin === null ? "Requires sales value and total cost." : "Gross sales − total cost, before financing and tax.",
+      margin === null
+        ? "Requires sales value and total cost."
+        : "Gross sales − total cost, before financing and tax.",
     ),
     grossYieldPct: valued(
       yieldPct,
       yieldPct === null ? "UNKNOWN" : "ESTIMATED",
-      yieldPct === null ? "Requires annual rent and total cost." : "Annual gross rent ÷ total cost × 100.",
+      yieldPct === null
+        ? "Requires annual rent and total cost."
+        : "Annual gross rent ÷ total cost × 100.",
     ),
     disclaimer: FEASIBILITY_DISCLAIMER,
   };

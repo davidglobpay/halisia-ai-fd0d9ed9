@@ -371,9 +371,9 @@ function LandTransferPage() {
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             <Blocker title="The title was never converted">
               Since 16 May 2022 no transaction can proceed on land still registered under the
-              repealed regimes unless the title has been converted to the Land Registration Act
-              2012 system. Conversion lists are gazetted with 90-day objection windows.
-              Unconverted titles are frozen and sit outside Ardhisasa entirely.
+              repealed regimes unless the title has been converted to the Land Registration Act 2012
+              system. Conversion lists are gazetted with 90-day objection windows. Unconverted
+              titles are frozen and sit outside Ardhisasa entirely.
             </Blocker>
 
             <Blocker title="The seller will not approve the search">
@@ -388,8 +388,8 @@ function LandTransferPage() {
             </Blocker>
 
             <Blocker title="A clean search is not a clean title">
-              A search reports what the register says. It does not open the physical file behind
-              the registration, and it does not look at court judgments or gazette notices. Titles
+              A search reports what the register says. It does not open the physical file behind the
+              registration, and it does not look at court judgments or gazette notices. Titles
               registered on forged instruments return clean searches.
             </Blocker>
           </div>

@@ -36,11 +36,7 @@ export const FIXTURE_CHECK_LABELS: Record<FixtureCheckId, string> = {
   "model-fit": "Model fit against legal boundary",
 };
 
-export function check(
-  id: FixtureCheckId,
-  verdict: FixtureVerdict,
-  detail: string,
-): FixtureCheck {
+export function check(id: FixtureCheckId, verdict: FixtureVerdict, detail: string): FixtureCheck {
   return { id, label: FIXTURE_CHECK_LABELS[id], verdict, detail };
 }
 

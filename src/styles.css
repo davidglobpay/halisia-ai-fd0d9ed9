@@ -314,11 +314,7 @@
 @utility glass {
   /* Layered so it reads as glass over the moving sky: a vertical falloff,
      a bright top edge, and depth built from several soft shadows. */
-  background: linear-gradient(
-    180deg,
-    rgba(255, 253, 248, 0.74) 0%,
-    rgba(255, 253, 248, 0.56) 100%
-  );
+  background: linear-gradient(180deg, rgba(255, 253, 248, 0.74) 0%, rgba(255, 253, 248, 0.56) 100%);
   backdrop-filter: blur(24px) saturate(140%);
   -webkit-backdrop-filter: blur(24px) saturate(140%);
   border: 1px solid rgba(255, 253, 248, 0.6);
@@ -331,11 +327,7 @@
 }
 
 @utility glass-strong {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 253, 248, 0.92) 0%,
-    rgba(255, 253, 248, 0.8) 100%
-  );
+  background: linear-gradient(180deg, rgba(255, 253, 248, 0.92) 0%, rgba(255, 253, 248, 0.8) 100%);
   backdrop-filter: blur(32px) saturate(150%);
   -webkit-backdrop-filter: blur(32px) saturate(150%);
   border: 1px solid rgba(255, 253, 248, 0.72);
@@ -969,7 +961,11 @@ html[data-reduced-motion="1"] *::after {
 }
 .halisia-globe-scene {
   background:
-    radial-gradient(circle at 50% 48%, color-mix(in srgb, var(--h-green) 13%, transparent), transparent 38%),
+    radial-gradient(
+      circle at 50% 48%,
+      color-mix(in srgb, var(--h-green) 13%, transparent),
+      transparent 38%
+    ),
     var(--h-ivory);
 }
 .halisia-globe-stars {
@@ -1003,8 +999,16 @@ html[data-reduced-motion="1"] *::after {
   animation: halisia-nairobi-arrival 520ms ease-out forwards;
 }
 @keyframes halisia-nairobi-arrival {
-  from { opacity: 0.9; transform: scale(0.45); transform-origin: 116px 103px; }
-  to { opacity: 0; transform: scale(1.8); transform-origin: 116px 103px; }
+  from {
+    opacity: 0.9;
+    transform: scale(0.45);
+    transform-origin: 116px 103px;
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.8);
+    transform-origin: 116px 103px;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .halisia-globe-intro,
@@ -1033,7 +1037,6 @@ html[data-reduced-motion="1"] *::after {
   }
 }
 
-
 /*
  * Smooth layered elevation (opt-in). Five eased layers read as real depth on
  * ivory glass without the muddy halo of a single large blur.
@@ -1054,8 +1057,7 @@ html[data-reduced-motion="1"] *::after {
  */
 @utility glass-card {
   position: relative;
-  background:
-    linear-gradient(180deg, rgba(255, 253, 248, 0.86) 0%, rgba(255, 253, 248, 0.62) 100%);
+  background: linear-gradient(180deg, rgba(255, 253, 248, 0.86) 0%, rgba(255, 253, 248, 0.62) 100%);
   border: 1px solid rgba(255, 253, 248, 0.7);
   box-shadow:
     0 1px 1px rgba(16, 45, 26, 0.03),

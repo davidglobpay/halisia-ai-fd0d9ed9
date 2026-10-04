@@ -43,14 +43,26 @@ describe("county + discrepancy", () => {
     expect(d?.sourceA).toContain("Mombasa");
   });
   it("flags points more than 2 km apart", () => {
-    expect(comparePoints({ lat: -1.29, lng: 36.82, source: "A" }, { lat: -1.35, lng: 36.82, source: "B" })?.distanceKm).toBeGreaterThan(2);
-    expect(comparePoints({ lat: -1.29, lng: 36.82, source: "A" }, { lat: -1.291, lng: 36.82, source: "B" })).toBeNull();
+    expect(
+      comparePoints(
+        { lat: -1.29, lng: 36.82, source: "A" },
+        { lat: -1.35, lng: 36.82, source: "B" },
+      )?.distanceKm,
+    ).toBeGreaterThan(2);
+    expect(
+      comparePoints(
+        { lat: -1.29, lng: 36.82, source: "A" },
+        { lat: -1.291, lng: 36.82, source: "B" },
+      ),
+    ).toBeNull();
   });
 });
 
 describe("confidence model", () => {
   it("never rates a geocode as highly as verified geometry", () => {
-    expect(locationConfidence("approximate", "ROOFTOP")).toBeLessThan(locationConfidence("verified_geometry"));
+    expect(locationConfidence("approximate", "ROOFTOP")).toBeLessThan(
+      locationConfidence("verified_geometry"),
+    );
     expect(classifyGeocode(["locality", "political"])).toBe("administrative");
     expect(classifyGeocode(["route"])).toBe("approximate");
   });

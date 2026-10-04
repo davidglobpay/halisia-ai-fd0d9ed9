@@ -280,7 +280,6 @@ const TURNOUT_2022: Record<number, number> = {
   47: 55,
 };
 
-
 // Which coalition/party historically won the gubernatorial seat in each
 // county — 2013/2017 based on IEBC gazette notices at party level.
 const HISTORY_PARTY: Record<number, { y2013: string; y2017: string }> = {

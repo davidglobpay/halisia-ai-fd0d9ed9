@@ -40,8 +40,7 @@ export function buildCountyProfile(
   if (!facts) return null;
 
   const metrics = countyMetrics(code);
-  const density =
-    facts.areaKm2 > 0 ? Math.round(facts.population2019 / facts.areaKm2) : null;
+  const density = facts.areaKm2 > 0 ? Math.round(facts.population2019 / facts.areaKm2) : null;
 
   // Region is omitted when it merely repeats the county's own name, as it does
   // for Nairobi and Mombasa. Economic activities keep their published casing

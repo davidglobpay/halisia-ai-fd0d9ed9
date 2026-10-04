@@ -65,7 +65,11 @@ function buildPlan(plan: MassingPlan): THREE.Group {
   return root;
 }
 
-export default function MassingViewerInternal({ plan, fitToken = 0, className }: MassingViewerProps) {
+export default function MassingViewerInternal({
+  plan,
+  fitToken = 0,
+  className,
+}: MassingViewerProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef<{
     renderer: THREE.WebGLRenderer;
