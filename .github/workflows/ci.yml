@@ -68,6 +68,11 @@ jobs:
         run: bunx playwright test --shard=${{ matrix.shard }} --max-failures=5
         env:
           CI: "1"
+          SUPABASE_URL: "http://127.0.0.1:9"
+          SUPABASE_PUBLISHABLE_KEY: "ci_publishable_test_only"
+          SUPABASE_SERVICE_ROLE_KEY: "ci_service_role_test_only"
+          VITE_SUPABASE_URL: "http://127.0.0.1:9"
+          VITE_SUPABASE_PUBLISHABLE_KEY: "ci_publishable_test_only"
       - name: Upload Playwright report (on failure)
         if: failure()
         uses: actions/upload-artifact@v4
