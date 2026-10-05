@@ -76,10 +76,7 @@ function download(blob: Blob, filename: string) {
 
 export function downloadSellerCsv(rows: ListingInsight[]): string {
   const filename = `halisia-seller-analytics-${new Date().toISOString().slice(0, 10)}.csv`;
-  download(
-    new Blob([insightsToCsv(rows)], { type: "text/csv;charset=utf-8" }),
-    filename,
-  );
+  download(new Blob([insightsToCsv(rows)], { type: "text/csv;charset=utf-8" }), filename);
   return filename;
 }
 
@@ -150,11 +147,7 @@ export function downloadSellerPdf(rows: ListingInsight[]): string {
     y += 16;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
-    doc.text(
-      doc.splitTextToSize(r.property.title, W - M * 2)[0] ?? "Listing",
-      M,
-      y,
-    );
+    doc.text(doc.splitTextToSize(r.property.title, W - M * 2)[0] ?? "Listing", M, y);
     y += 14;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
@@ -172,11 +165,7 @@ export function downloadSellerPdf(rows: ListingInsight[]): string {
       y,
     );
     y += 13;
-    doc.text(
-      `Lead quality: ${r.quality.toUpperCase()} — ${r.qualityReason}`,
-      M,
-      y,
-    );
+    doc.text(`Lead quality: ${r.quality.toUpperCase()} — ${r.qualityReason}`, M, y);
     y += 13;
     doc.text(
       `7-day trend ${r.trendPct > 0 ? "+" : ""}${r.trendPct}% (${r.leadsLast7} vs ${r.leadsPrev7}) · save rate ${r.saveRate}% · enquiry rate ${r.enquiryRate}%`,
