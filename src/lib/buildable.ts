@@ -242,6 +242,60 @@ export function fitFootprint(
   };
 }
 
+export type OrientedExtent = {
+  /**
+   * Measured along the longest boundary.
+   *
+   * Named for what it measures rather than "width", which silently assumes
+   * where the road is — an assumption that produced a backwards reading the
+   * first time this was used.
+   */
+  alongM: number;
+  /** Measured at right angles to that boundary. */
+  acrossM: number;
+  /** The bearing the long axis runs on, in degrees from north. */
+  bearingDeg: number;
+};
+
+/**
+ * How much room there actually is, measured along the plot's own grain.
+ *
+ * An area on its own does not tell a person whether their house fits: 213 m2
+ * is a comfortable bungalow on one plot and an unusable 2 m strip on another.
+ * This measures the envelope's extent along its longest boundary and across
+ * it, which is the frame a builder already thinks in.
+ *
+ * It is a bounding box, so for anything but a rectangle it is the outside
+ * measurement rather than a guarantee that a rectangle of that size fits
+ * inside. Use fitFootprint for that question.
+ */
+export function orientedExtent(envelope: LocalXY[]): OrientedExtent | null {
+  if (envelope.length < 3) return null;
+  const es = edges(envelope);
+  const longest = es.reduce((best, e, i) => (e.lengthM > es[best].lengthM ? i : best), 0);
+  const t = (es[longest].bearingDeg * Math.PI) / 180;
+  const ux = Math.sin(t);
+  const uy = Math.cos(t);
+
+  let minU = Infinity;
+  let maxU = -Infinity;
+  let minV = Infinity;
+  let maxV = -Infinity;
+  for (const p of envelope) {
+    const u = p.x * ux + p.y * uy;
+    const v = -p.x * uy + p.y * ux;
+    if (u < minU) minU = u;
+    if (u > maxU) maxU = u;
+    if (v < minV) minV = v;
+    if (v > maxV) maxV = v;
+  }
+  return {
+    alongM: maxU - minU,
+    acrossM: maxV - minV,
+    bearingDeg: es[longest].bearingDeg,
+  };
+}
+
 /**
  * Ground coverage as a percentage of the plot.
  *
