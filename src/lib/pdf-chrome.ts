@@ -78,7 +78,13 @@ export function sanitize(s: string): string {
       continue;
     }
     const code = ch.codePointAt(0) ?? 0;
-    if (code < 0x100 || code === 0x2018 || code === 0x2019 || code === 0x201c || code === 0x201d) {
+    if (
+      code < 0x100 ||
+      code === 0x2018 ||
+      code === 0x2019 ||
+      code === 0x201c ||
+      code === 0x201d
+    ) {
       out += ch;
     } else if (code === 0x2013 || code === 0x2014) {
       out += ch; // en/em dash are both in WinAnsi
@@ -106,7 +112,10 @@ export function ink(doc: jsPDF, c: RGB) {
 
 /** Run a block at reduced opacity, restoring afterwards. */
 function faint(doc: jsPDF, opacity: number, draw: () => void) {
-  const d = doc as unknown as { GState?: new (o: { opacity: number }) => unknown; setGState?: (g: unknown) => void };
+  const d = doc as unknown as {
+    GState?: new (o: { opacity: number }) => unknown;
+    setGState?: (g: unknown) => void;
+  };
   let applied = false;
   try {
     if (d.GState && d.setGState) {
@@ -183,7 +192,11 @@ export function getMarkSync(): BrandImage | null {
  * texture rather than decoration, and it survives printing on a mono laser
  * without turning into a grey slab.
  */
-export function drawWatermark(doc: jsPDF, mark: BrandImage | null, opacity = 0.04) {
+export function drawWatermark(
+  doc: jsPDF,
+  mark: BrandImage | null,
+  opacity = 0.04,
+) {
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
   if (!mark) return;
@@ -191,7 +204,16 @@ export function drawWatermark(doc: jsPDF, mark: BrandImage | null, opacity = 0.0
   const w = mark.ratio >= 1 ? size : size * mark.ratio;
   const h = mark.ratio >= 1 ? size / mark.ratio : size;
   faint(doc, opacity, () => {
-    doc.addImage(mark.dataUrl, "PNG", (W - w) / 2, (H - h) / 2, w, h, undefined, "FAST");
+    doc.addImage(
+      mark.dataUrl,
+      "PNG",
+      (W - w) / 2,
+      (H - h) / 2,
+      w,
+      h,
+      undefined,
+      "FAST",
+    );
   });
 }
 
@@ -219,7 +241,16 @@ export function drawHeader(doc: jsPDF, o: ChromeOptions) {
 
   if (o.mark) {
     const h = 20;
-    doc.addImage(o.mark.dataUrl, "PNG", M, 20, h * o.mark.ratio, h, undefined, "FAST");
+    doc.addImage(
+      o.mark.dataUrl,
+      "PNG",
+      M,
+      20,
+      h * o.mark.ratio,
+      h,
+      undefined,
+      "FAST",
+    );
   }
 
   const textX = o.mark ? M + 26 : M;
@@ -265,7 +296,16 @@ export function drawFooter(doc: jsPDF, o: FooterOptions) {
 
   if (o.mark) {
     const h = 12;
-    doc.addImage(o.mark.dataUrl, "PNG", M, H - 46, h * o.mark.ratio, h, undefined, "FAST");
+    doc.addImage(
+      o.mark.dataUrl,
+      "PNG",
+      M,
+      H - 46,
+      h * o.mark.ratio,
+      h,
+      undefined,
+      "FAST",
+    );
   }
 
   doc.setFont("helvetica", "normal");
@@ -273,7 +313,10 @@ export function drawFooter(doc: jsPDF, o: FooterOptions) {
   ink(doc, PDF.stone2);
   doc.text("halisia.ai  ·  Nairobi", o.mark ? M + 16 : M, H - 38);
   doc.text(
-    sanitize(o.note ?? "Informational only. Not a title search, survey or legal advice."),
+    sanitize(
+      o.note ??
+        "Informational only. Not a title search, survey or legal advice.",
+    ),
     W / 2,
     H - 38,
     { align: "center" },
@@ -290,7 +333,13 @@ export function drawFooter(doc: jsPDF, o: FooterOptions) {
 /* ---------------- drawing primitives ---------------- */
 
 /** Small gold label above a block. */
-export function eyebrow(doc: jsPDF, x: number, y: number, text: string, color: RGB = PDF.goldInk) {
+export function eyebrow(
+  doc: jsPDF,
+  x: number,
+  y: number,
+  text: string,
+  color: RGB = PDF.goldInk,
+) {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7.5);
   ink(doc, color);
@@ -298,7 +347,14 @@ export function eyebrow(doc: jsPDF, x: number, y: number, text: string, color: R
 }
 
 /** A soft panel. jsPDF's y runs downward, unlike the PDF spec's own origin. */
-export function card(doc: jsPDF, x: number, y: number, w: number, h: number, bg: RGB = PDF.paper) {
+export function card(
+  doc: jsPDF,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  bg: RGB = PDF.paper,
+) {
   fill(doc, bg);
   stroke(doc, PDF.forest);
   doc.setLineWidth(0.7);
@@ -368,7 +424,9 @@ export function ring(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(r * 0.58);
   ink(doc, pct != null ? PDF.forest : PDF.stone2);
-  doc.text(pct != null ? String(Math.round(pct)) : "—", cx, cy + r * 0.2, { align: "center" });
+  doc.text(pct != null ? String(Math.round(pct)) : "—", cx, cy + r * 0.2, {
+    align: "center",
+  });
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.4);
@@ -439,7 +497,11 @@ function unit(doc: jsPDF): (pt: number) => number {
  * watermark added afterwards would sit on top of the text instead of behind
  * it. There is no z-index to fall back on.
  */
-export function brandPage(doc: jsPDF, mark: BrandImage | null, tone: Tone = "light") {
+export function brandPage(
+  doc: jsPDF,
+  mark: BrandImage | null,
+  tone: Tone = "light",
+) {
   if (!mark) return;
   // Lower on dark than on light. The mark is a coloured illustration, and on a
   // dark panel even a few percent reads as a murky shape rather than texture —
@@ -470,7 +532,11 @@ export type BrandFooterOptions = {
  * `pdf-county-compare.ts` is landscape throughout — gets each footer placed
  * against that page's own edges.
  */
-export function brandFooters(doc: jsPDF, mark: BrandImage | null, o: BrandFooterOptions = {}) {
+export function brandFooters(
+  doc: jsPDF,
+  mark: BrandImage | null,
+  o: BrandFooterOptions = {},
+) {
   const u = unit(doc);
   const tone = o.tone ?? "light";
   const inkColor: RGB = tone === "dark" ? [150, 165, 200] : PDF.stone2;
@@ -494,7 +560,16 @@ export function brandFooters(doc: jsPDF, mark: BrandImage | null, o: BrandFooter
 
     if (mark) {
       const h = u(11);
-      doc.addImage(mark.dataUrl, "PNG", M, baseline - u(8.5), h * mark.ratio, h, undefined, "FAST");
+      doc.addImage(
+        mark.dataUrl,
+        "PNG",
+        M,
+        baseline - u(8.5),
+        h * mark.ratio,
+        h,
+        undefined,
+        "FAST",
+      );
     }
 
     doc.setFont("helvetica", "normal");
@@ -502,7 +577,10 @@ export function brandFooters(doc: jsPDF, mark: BrandImage | null, o: BrandFooter
     ink(doc, inkColor);
     doc.text("halisia.ai  ·  Nairobi", mark ? M + u(15) : M, baseline);
     doc.text(
-      sanitize(o.note ?? "Informational only. Not a title search, survey or legal advice."),
+      sanitize(
+        o.note ??
+          "Informational only. Not a title search, survey or legal advice.",
+      ),
       W / 2,
       baseline,
       { align: "center" },
@@ -517,7 +595,9 @@ export function brandFooters(doc: jsPDF, mark: BrandImage | null, o: BrandFooter
       doc.setFont("helvetica", "bold");
       doc.setFontSize(6.8);
       ink(doc, tone === "dark" ? PDF.gold : PDF.goldInk);
-      doc.text(sanitize(`Issued ${o.issued}`), W - M, baseline + u(9), { align: "right" });
+      doc.text(sanitize(`Issued ${o.issued}`), W - M, baseline + u(9), {
+        align: "right",
+      });
     }
   }
 
