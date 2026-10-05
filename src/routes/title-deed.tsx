@@ -22,6 +22,8 @@ import { MapView } from "@/components/halisia/map-view";
 import { ParcelPin, type PinnedPoint } from "@/components/halisia/parcel-pin";
 import { MutationUpload } from "@/components/halisia/mutation-upload";
 import { ParcelDraw } from "@/components/halisia/parcel-draw";
+import { BuildBrief } from "@/components/halisia/build-brief";
+import type { LatLng } from "@/lib/parcel-geometry";
 import { IntelligenceDashboard } from "@/components/halisia/intelligence-dashboard";
 import { extractDeedFields, type DeedFields } from "@/lib/deed-extract.functions";
 import { geocodeAddress } from "@/lib/geocode.functions";
@@ -138,11 +140,14 @@ function TitleDeedPage() {
    * most useful number on this screen.
    */
   const [pinned, setPinned] = useState<PinnedPoint | null>(null);
+  /** The boundary sketched in Step 3, lifted here so Step 4 can measure it. */
+  const [boundary, setBoundary] = useState<LatLng[]>([]);
 
   // A new search means a new parcel. Carrying a pin across would silently
   // attach the last plot's position to this one.
   useEffect(() => {
     setPinned(null);
+    setBoundary([]);
   }, [loc?.lat, loc?.lng]);
   const [error, setError] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
@@ -865,7 +870,9 @@ function TitleDeedPage() {
                   // is much the better centre when it exists.
                   center={{ lat: pinned?.lat ?? loc.lat, lng: pinned?.lng ?? loc.lng }}
                   deedAreaText={fields?.registeredArea ?? null}
+                  onBoundaryChange={setBoundary}
                 />
+                <BuildBrief boundary={boundary} />
                 <LocationStatusCard
                   status={loc.status}
                   geocodeType={loc.gt}
