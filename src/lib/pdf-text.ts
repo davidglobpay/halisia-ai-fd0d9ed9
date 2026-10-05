@@ -52,7 +52,11 @@ export async function extractPdfText(file: File | Blob, pageNumber = 1): Promise
     pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
   } catch (e) {
     console.error("pdf.js failed to load", e);
-    return { ok: false, reason: "The PDF reader could not be loaded. Try again, or upload a photo of the plan instead." };
+    return {
+      ok: false,
+      reason:
+        "The PDF reader could not be loaded. Try again, or upload a photo of the plan instead.",
+    };
   }
 
   try {
