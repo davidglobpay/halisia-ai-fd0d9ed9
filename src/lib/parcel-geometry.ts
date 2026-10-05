@@ -205,40 +205,177 @@ export function translate(ring: LocalXY[], dx: number, dy: number): LocalXY[] {
 export const ACRE_M2 = 4046.8564224;
 export const HECTARE_M2 = 10_000;
 
+export type ParsedArea = {
+  m2: number;
+  unit: string;
+  /**
+   * True when the text gave dimensions without saying which unit they are in.
+   * "50 x 100" is an eighth-acre plot in feet and half a hectare in metres,
+   * and nothing in the string decides. The caller must ask.
+   */
+  ambiguous?: boolean;
+  /** The alternative reading, when ambiguous. */
+  alternativeM2?: number;
+};
+
 /**
- * Read an area the way it appears on a title: "0.045 Ha", "1/8 acre",
- * "50 x 100", "0.25 acres", "506 sqm".
+ * Read an area the way it appears on a title or a mutation plan.
+ *
+ * Handles "0.044Ha" with no space, which is how every plot on a real Kenyan
+ * subdivision sheet is labelled — the first version of this function required
+ * a word boundary before the unit and refused that format outright, because
+ * "4" and "h" are both word characters. Number and unit are now matched as one
+ * token, which is the only way the two reliably stay together.
  *
  * Returns null rather than guessing. An area read wrongly is worse than an
  * area not read at all, because everything downstream scales to it.
  */
-export function parseArea(text: string): { m2: number; unit: string } | null {
+export function parseArea(text: string): ParsedArea | null {
   const s = (text ?? "").trim().toLowerCase();
   if (!s) return null;
 
-  // "50 x 100" — a plot quoted by its dimensions, almost always in feet in
-  // Kenyan practice. Feet, not metres: a 50x100 is an eighth of an acre.
-  const dims = s.match(/^(\d+(?:\.\d+)?)\s*(?:x|by|\*)\s*(\d+(?:\.\d+)?)$/);
+  // Dimensions. A mutation plan states these in metres and says so; a plot
+  // advertisement states them in feet and does not. Both readings are returned
+  // and the caller decides — see ParsedArea.ambiguous.
+  const dims = s.match(/^(\d+(?:\.\d+)?)\s*(?:x|by|\*)\s*(\d+(?:\.\d+)?)\s*(m|ft|feet|metres?|meters?)?$/);
   if (dims) {
-    const ft2 = parseFloat(dims[1]) * parseFloat(dims[2]);
-    return { m2: ft2 * 0.09290304, unit: "ft" };
+    const a = parseFloat(dims[1]);
+    const b = parseFloat(dims[2]);
+    if (!(a > 0 && b > 0)) return null;
+    const metric = a * b;
+    const imperial = metric * 0.09290304;
+    const stated = dims[3];
+    if (stated && /^(m|metres?|meters?)$/.test(stated)) return { m2: metric, unit: "m" };
+    if (stated) return { m2: imperial, unit: "ft" };
+    return { m2: imperial, unit: "ft", ambiguous: true, alternativeM2: metric };
   }
 
-  const num = s.match(/(\d+(?:\.\d+)?)/);
-  const frac = s.match(/(\d+)\s*\/\s*(\d+)/);
-  const value = frac
-    ? parseInt(frac[1], 10) / parseInt(frac[2], 10)
-    : num
-      ? parseFloat(num[1])
-      : NaN;
-  if (!Number.isFinite(value) || value <= 0) return null;
+  // A fraction with a unit: "1/8 acre".
+  const frac = s.match(/(\d+)\s*\/\s*(\d+)\s*(ha|hectares?|acres?|ac)\b/);
+  if (frac) {
+    const value = parseInt(frac[1], 10) / parseInt(frac[2], 10);
+    if (!(value > 0)) return null;
+    return /^h/.test(frac[3])
+      ? { m2: value * HECTARE_M2, unit: "ha" }
+      : { m2: value * ACRE_M2, unit: "acre" };
+  }
 
-  if (/\b(ha|hectare|hectares)\b/.test(s)) return { m2: value * HECTARE_M2, unit: "ha" };
-  if (/\b(acre|acres|ac)\b/.test(s)) return { m2: value * ACRE_M2, unit: "acre" };
-  if (/\b(sqm|sq\.?\s*m|m2|m²|square\s*met(er|re)s?)\b/.test(s)) return { m2: value, unit: "m2" };
-  // No unit named. Refuse rather than assume — "0.045" is a hectare reading
-  // and "450" is a square-metre reading, and nothing in the string says which.
-  return null;
+  // Number and unit as one token, so "0.044Ha" and "0.044 Ha" both read.
+  const m = s.match(
+    // The trailing guard is a lookahead, not \\b: "m\u00b2" ends in a superscript
+    // two, which is not a word character, so a word boundary after it never
+    // matches and "443.7 m\u00b2" was refused outright.
+    /(\d+(?:\.\d+)?)\s*(hectares?|ha|acres?|ac|sq\.?\s*m(?:etres?|eters?)?|sqm|m2|m\u00b2|square\s*met(?:er|re)s?)(?![a-z0-9])/,
+  );
+  if (!m) return null;
+  const value = parseFloat(m[1]);
+  if (!Number.isFinite(value) || value <= 0) return null;
+  const unit = m[2].replace(/\s+/g, "");
+
+  if (/^(hectares?|ha)$/.test(unit)) return { m2: value * HECTARE_M2, unit: "ha" };
+  if (/^(acres?|ac)$/.test(unit)) return { m2: value * ACRE_M2, unit: "acre" };
+  return { m2: value, unit: "m2" };
+}
+
+/* ---------------- reading a subdivision plan ---------------- */
+
+/**
+ * A rectangular plot as a ring, centred on the origin, long axis north.
+ *
+ * Most plots on a Kenyan subdivision sheet are rectangles stated by width and
+ * depth — "15.3" across and "29.0" deep. There is no need to trace a drawing
+ * or parse vector paths to reproduce one: the numbers on the plan define it
+ * exactly. The caller rotates and positions it over the imagery.
+ */
+export function rectangleRing(widthM: number, depthM: number): LocalXY[] | null {
+  if (!(widthM > 0) || !(depthM > 0)) return null;
+  const w = widthM / 2;
+  const d = depthM / 2;
+  return [
+    { x: -w, y: -d },
+    { x: w, y: -d },
+    { x: w, y: d },
+    { x: -w, y: d },
+  ];
+}
+
+/**
+ * A plot bounded by two parallel widths — the trapezoid at the end of a row,
+ * where a road or a boundary cuts the block at an angle.
+ */
+export function trapezoidRing(
+  frontM: number,
+  backM: number,
+  depthM: number,
+): LocalXY[] | null {
+  if (!(frontM > 0) || !(backM > 0) || !(depthM > 0)) return null;
+  const d = depthM / 2;
+  return [
+    { x: -frontM / 2, y: -d },
+    { x: frontM / 2, y: -d },
+    { x: backM / 2, y: d },
+    { x: -backM / 2, y: d },
+  ];
+}
+
+export type PlanCheck = {
+  /** Area implied by the dimensions printed on the plan. */
+  computedM2: number;
+  /** Area printed on the plan for that plot. */
+  statedM2: number;
+  /** Signed difference as a percentage of the stated area. */
+  errorPct: number;
+  /** Within the rounding a plan's own printed precision allows. */
+  consistent: boolean;
+};
+
+/**
+ * Cross-check a plot's printed dimensions against its printed area.
+ *
+ * A subdivision sheet states both, which makes it self-checking: on the Konza
+ * South sheet, 15.3 x 29.0 m is 443.7 m2 against a printed 0.044 Ha, which is
+ * 0.8% out and entirely explained by rounding the area to three decimals.
+ *
+ * A plot whose numbers disagree by more than rounding can explain is worth
+ * stopping on. It may be a typo on the plan, a misread by OCR, or a figure
+ * that has been altered — this function does not say which, only that the two
+ * numbers do not agree.
+ *
+ * The tolerance is derived, not guessed: an area printed to three decimals of
+ * a hectare is quantised to 10 m2, so a 440 m2 plot carries up to ~1.1% of
+ * rounding before anything is wrong. 2% leaves room for the dimensions being
+ * rounded to one decimal too.
+ */
+export function checkPlanConsistency(
+  widthM: number,
+  depthM: number,
+  statedM2: number,
+  tolerancePct = 2,
+): PlanCheck | null {
+  if (!(widthM > 0) || !(depthM > 0) || !(statedM2 > 0)) return null;
+  const computed = widthM * depthM;
+  const errorPct = ((computed - statedM2) / statedM2) * 100;
+  return {
+    computedM2: computed,
+    statedM2,
+    errorPct,
+    consistent: Math.abs(errorPct) <= tolerancePct,
+  };
+}
+
+/**
+ * Metres on the ground per millimetre on the paper, from a stated scale.
+ *
+ * "Scale 1:1000" means one millimetre of paper is one metre of ground. Used to
+ * turn a measured distance on the sheet into a ground distance when a plot's
+ * dimensions are not printed.
+ */
+export function parseScale(text: string): { ratio: number; metresPerMm: number } | null {
+  const m = (text ?? "").match(/1\s*[:\/]\s*(\d{2,6})/);
+  if (!m) return null;
+  const ratio = parseInt(m[1], 10);
+  if (!(ratio > 0)) return null;
+  return { ratio, metresPerMm: ratio / 1000 };
 }
 
 /** Area in the phrasing a Kenyan buyer would recognise. */
