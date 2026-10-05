@@ -49,6 +49,7 @@ import { HeroSummary } from "@/components/halisia/hero-summary";
 import { ExecutiveSummary } from "@/components/halisia/executive-summary";
 import { LandIntelligenceScore } from "@/components/halisia/land-intelligence-score";
 import { getWave4Intel, type Wave4Intel } from "@/lib/wave4-intel.functions";
+import { ReadAloud } from "@/components/halisia/read-aloud";
 
 type TabId =
   | "overview"
@@ -100,6 +101,84 @@ function aqiTone(aqi: number | null | undefined) {
 function fmtDist(km?: number) {
   if (km == null) return "";
   return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
+}
+
+/**
+ * Build what the Listen button reads out.
+ *
+ * Every sentence here is assembled from a value that is actually on screen.
+ * Nothing is rounded up into a claim the tiles do not make: where a reading is
+ * missing the summary says so rather than skipping it silently, because "no
+ * measurement" is itself the honest finding and the tiles already show it that
+ * way. The result is capped below the 4,000-character limit the speech server
+ * function enforces, so a long narrative is trimmed at a sentence boundary
+ * instead of being refused outright.
+ */
+function spokenSummary(args: {
+  address: string;
+  lat: number;
+  lng: number;
+  intel: LocationIntel | undefined;
+  narrative: NarrativeOutput | undefined;
+  counts: { [k: string]: number } | null;
+}): string {
+  const { address, lat, lng, intel, narrative, counts } = args;
+  const parts: string[] = [];
+
+  parts.push(`Location intelligence for ${address}.`);
+  parts.push(`Coordinates ${lat.toFixed(4)}, ${lng.toFixed(4)}.`);
+
+  const elev = intel?.elevation?.meters;
+  if (elev != null) parts.push(`Ground elevation ${Math.round(elev)} metres, from the Google Elevation API.`);
+  else parts.push("Ground elevation has not been measured for this point.");
+
+  const aq = intel?.airQuality;
+  if (aq?.universalAqi != null) {
+    parts.push(
+      `Air quality index ${aq.universalAqi}${aq.category ? `, ${aq.category}` : ""}` +
+        `${aq.dominant ? `, with ${aq.dominant} the dominant pollutant` : ""}, read live from the Google Air Quality API.`,
+    );
+  } else {
+    parts.push("No live air quality reading is available for this point.");
+  }
+
+  if (counts) {
+    const named = [
+      [counts.schools, "schools"],
+      [counts.hospitals, "health facilities"],
+      [counts.groceries, "shops"],
+      [counts.transit, "transit stops"],
+      [counts.restaurants, "restaurants"],
+      [counts.banks, "banks"],
+    ] as const;
+    const found = named.filter(([n]) => n > 0).map(([n, label]) => `${n} ${label}`);
+    const none = named.filter(([n]) => n === 0).map(([, label]) => label);
+    if (found.length) parts.push(`Within about three kilometres: ${found.join(", ")}.`);
+    if (none.length) parts.push(`None mapped nearby for ${none.join(", ")}.`);
+  }
+
+  if (narrative?.headline) parts.push(narrative.headline);
+  if (narrative?.overview) parts.push(narrative.overview);
+  if (narrative?.keyFindings?.length) {
+    parts.push(`Key findings. ${narrative.keyFindings.slice(0, 6).join(". ")}.`);
+  }
+  if (narrative?.watchouts?.length) {
+    parts.push(`Watch outs. ${narrative.watchouts.slice(0, 4).join(". ")}.`);
+  }
+  if (narrative?.confidencePct != null) {
+    parts.push(`Overall confidence in this written read, ${narrative.confidencePct} percent.`);
+  }
+
+  parts.push(
+    "This is a reading of public data. It is not a title search, a survey, or legal advice, and it asserts nothing about ownership or boundaries.",
+  );
+
+  const text = parts.join(" ").replace(/\s+/g, " ").trim();
+  if (text.length <= 3900) return text;
+  // Trim to the last complete sentence inside the limit.
+  const cut = text.slice(0, 3900);
+  const stop = cut.lastIndexOf(". ");
+  return stop > 0 ? cut.slice(0, stop + 1) : cut;
 }
 
 export function IntelligenceDashboard({
@@ -226,6 +305,17 @@ export function IntelligenceDashboard({
             {narrativeReady ? "Written read ready" : "Reading this location…"}
           </span>
           {intelQ.isFetching && <Loader2 className="h-3.5 w-3.5 animate-spin text-accent" />}
+          <ReadAloud
+            text={spokenSummary({
+              address,
+              lat,
+              lng,
+              intel: intelQ.data,
+              narrative: narrativeQ.data,
+              counts,
+            })}
+            label="Listen to this read"
+          />
         </div>
 
         {/* Photo strip */}

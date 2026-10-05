@@ -15,6 +15,13 @@ type Picked = {
   status: LocationStatus;
   gt?: string;
   source: string;
+  /**
+   * How far out the match could be, in metres. Carried only for a geocoded
+   * result, where Google returns a viewport we can measure. A point clicked on
+   * the map is exactly where the user put it, so it has no radius and draws
+   * no ring.
+   */
+  radiusM?: number | null;
 };
 
 /** Landing hero map: search, pan/zoom, click a point, Map / Satellite / Street View. */
@@ -41,6 +48,7 @@ export function HeroMap() {
           status: classifyGeocode(r.types),
           gt: r.locationType,
           source: "Google Geocoding",
+          radiusM: r.radiusM,
         });
     } catch {
       setErr("Search is unavailable right now. You can still click the map to choose a point.");
@@ -112,6 +120,7 @@ export function HeroMap() {
             center={center}
             zoom={picked ? 14 : 11}
             marker={picked ? { lat: picked.lat, lng: picked.lng, label: picked.label } : null}
+            accuracyRadiusM={picked?.radiusM ?? null}
             mapType={mapType}
             theme="light"
             onMapClick={(p) =>
