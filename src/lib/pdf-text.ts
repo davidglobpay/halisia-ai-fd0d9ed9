@@ -43,10 +43,7 @@ export type PdfTextResult =
  */
 const MIN_WORDS = 12;
 
-export async function extractPdfText(
-  file: File | Blob,
-  pageNumber = 1,
-): Promise<PdfTextResult> {
+export async function extractPdfText(file: File | Blob, pageNumber = 1): Promise<PdfTextResult> {
   if (typeof window === "undefined") {
     return {
       ok: false,
@@ -74,12 +71,9 @@ export async function extractPdfText(
   try {
     const buf = await file.arrayBuffer();
     const doc = await pdfjs.getDocument({ data: new Uint8Array(buf) }).promise;
-    if (doc.numPages < 1)
-      return { ok: false, reason: "That PDF has no pages." };
+    if (doc.numPages < 1) return { ok: false, reason: "That PDF has no pages." };
 
-    const page = await doc.getPage(
-      Math.min(Math.max(1, pageNumber), doc.numPages),
-    );
+    const page = await doc.getPage(Math.min(Math.max(1, pageNumber), doc.numPages));
     const viewport = page.getViewport({ scale: 1 });
     const content = await page.getTextContent();
 
