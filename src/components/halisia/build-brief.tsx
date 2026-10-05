@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Building2, CheckCircle2, Info, Ruler, XCircle } from "lucide-react";
 import { MapView } from "@/components/halisia/map-view";
 import { ReadAloud } from "@/components/halisia/read-aloud";
@@ -44,10 +44,13 @@ type UseId = (typeof USES)[number]["id"];
 
 export function BuildBrief({
   boundary,
+  onBriefChange,
   className = "",
 }: {
   /** The ring drawn in Step 3. Fewer than three points renders a prompt. */
   boundary: LatLng[];
+  /** Reports the setbacks and the assembled brief so the report can carry them. */
+  onBriefChange?: (v: { setbacks: { frontM: number; sideM: number }; briefText: string }) => void;
   className?: string;
 }) {
   const [frontM, setFrontM] = useState(6);
@@ -189,6 +192,15 @@ export function BuildBrief({
       `  Any planning approval`,
     ].filter((l): l is string => l !== null)
   ).join("\n");
+
+  // Reported from an effect, never during render: calling a parent's setState
+  // inside this component's render pass is the classic cross-component update
+  // warning, and in a loop it is a hang.
+  const onBriefChangeRef = useRef(onBriefChange);
+  onBriefChangeRef.current = onBriefChange;
+  useEffect(() => {
+    onBriefChangeRef.current?.({ setbacks: { frontM, sideM }, briefText: brief });
+  }, [frontM, sideM, brief]);
 
   return (
     <div className={`rounded-2xl glass border border-white/10 p-4 ${className}`}>

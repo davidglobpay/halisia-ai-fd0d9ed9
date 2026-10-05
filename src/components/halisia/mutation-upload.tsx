@@ -33,10 +33,13 @@ import { ReadAloud } from "@/components/halisia/read-aloud";
 
 export function MutationUpload({
   deed,
+  onPlanChange,
   className = "",
 }: {
   /** Fields already read from the title deed, for the cross-check. */
   deed?: { sheet?: string | null; areaText?: string | null; block?: string | null };
+  /** Reports the parsed plan upward so the parcel report can carry it. */
+  onPlanChange?: (plan: MutationPlan | null, agreement: DeedPlanAgreement | null) => void;
   className?: string;
 }) {
   const [busy, setBusy] = useState(false);
@@ -57,6 +60,7 @@ export function MutationUpload({
         const res = await extractPdfText(file);
         if (!res.ok) {
           setError(res.reason);
+          onPlanChange?.(null, null);
           return;
         }
         const parsed = parseMutationPlan(res.items);
@@ -67,9 +71,12 @@ export function MutationUpload({
           return;
         }
         setPlan(parsed);
-        if (deed && (deed.sheet || deed.areaText || deed.block)) {
-          setAgreement(checkDeedAgainstPlan(deed, parsed));
-        }
+        const agreed =
+          deed && (deed.sheet || deed.areaText || deed.block)
+            ? checkDeedAgainstPlan(deed, parsed)
+            : null;
+        setAgreement(agreed);
+        onPlanChange?.(parsed, agreed);
       } catch (e) {
         console.error(e);
         setError("That file could not be read.");
@@ -77,7 +84,7 @@ export function MutationUpload({
         setBusy(false);
       }
     },
-    [deed],
+    [deed, onPlanChange],
   );
 
   const spoken = plan
