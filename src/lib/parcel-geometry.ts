@@ -369,7 +369,7 @@ export function checkPlanConsistency(
  * dimensions are not printed.
  */
 export function parseScale(text: string): { ratio: number; metresPerMm: number } | null {
-  const m = (text ?? "").match(/1\s*[:\/]\s*(\d{2,6})/);
+  const m = (text ?? "").match(/1\s*[:/]\s*(\d{2,6})/);
   if (!m) return null;
   const ratio = parseInt(m[1], 10);
   if (!(ratio > 0)) return null;
