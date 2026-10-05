@@ -293,7 +293,8 @@ function TitleDeedPage() {
       status: loc.status,
       geocodeType: loc.gt,
       locationText: locationText || "No readable place text",
-      locationTextConfidence: fields?.fieldConfidence?.locationHint ?? fields?.fieldConfidence?.county,
+      locationTextConfidence:
+        fields?.fieldConfidence?.locationHint ?? fields?.fieldConfidence?.county,
       countyNamed: fields?.county,
       countyConflict: Boolean(loc.discrepancy),
       partialMatch: loc.partialMatch,
@@ -611,27 +612,43 @@ function TitleDeedPage() {
 
             {/* Extracted fields */}
             {mode === "upload" && (
-              <div className="mt-6 rounded-2xl border border-white/10 bg-card/70 p-4 text-xs" data-testid="official-search-guide">
-                <div className="font-semibold text-foreground">Most accurate: upload your official Ardhisasa search</div>
+              <div
+                className="mt-6 rounded-2xl border border-white/10 bg-card/70 p-4 text-xs"
+                data-testid="official-search-guide"
+              >
+                <div className="font-semibold text-foreground">
+                  Most accurate: upload your official Ardhisasa search
+                </div>
                 <ol className="mt-1 list-decimal pl-4 space-y-0.5 text-muted-foreground">
-                  <li>Sign in to ardhisasa.lands.go.ke yourself (the SMS code goes only to you).</li>
+                  <li>
+                    Sign in to ardhisasa.lands.go.ke yourself (the SMS code goes only to you).
+                  </li>
                   <li>Request an official search for the parcel and download the result.</li>
                   <li>Upload a photo or screenshot of it here.</li>
                 </ol>
                 <label className="mt-2 flex min-h-[44px] items-center gap-2 text-foreground">
-                  <input type="checkbox" checked={officialSearch} onChange={(e) => setOfficialSearch(e.target.checked)} />
+                  <input
+                    type="checkbox"
+                    checked={officialSearch}
+                    onChange={(e) => setOfficialSearch(e.target.checked)}
+                  />
                   This upload is an official Ardhisasa search result
                 </label>
                 <p className="mt-1 text-[11px] text-muted-foreground">
-                  HALISIA never asks for your Ardhisasa login or SMS code. Details read from the document are marked
-                  “Documents reviewed”, not government-verified, until a licensed surveyor or advocate confirms them.
+                  HALISIA never asks for your Ardhisasa login or SMS code. Details read from the
+                  document are marked “Documents reviewed”, not government-verified, until a
+                  licensed surveyor or advocate confirms them.
                 </p>
               </div>
             )}
             {fields && officialSearch && mode === "upload" && (
-              <div className="mt-4 rounded-2xl border border-primary/30 bg-primary/5 px-4 py-2 text-xs" data-testid="official-search-badge">
-                Documents reviewed — read from an uploaded official search. Owner, size and parcel details below come from
-                that document; confirm with a licensed surveyor before relying on them.
+              <div
+                className="mt-4 rounded-2xl border border-primary/30 bg-primary/5 px-4 py-2 text-xs"
+                data-testid="official-search-badge"
+              >
+                Documents reviewed — read from an uploaded official search. Owner, size and parcel
+                details below come from that document; confirm with a licensed surveyor before
+                relying on them.
               </div>
             )}
             {fields && (
@@ -845,7 +862,9 @@ function TitleDeedPage() {
                           {locationMatch.limitations.map((item) => (
                             <li key={item}>{item}</li>
                           ))}
-                          <li>Confirm the parcel through an official search and a licensed surveyor.</li>
+                          <li>
+                            Confirm the parcel through an official search and a licensed surveyor.
+                          </li>
                         </ul>
                       </div>
                     </div>

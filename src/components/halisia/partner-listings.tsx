@@ -79,7 +79,10 @@ export function PartnerListings() {
 
   if (query.isError) {
     return (
-      <section className="mt-10 glass rounded-2xl border border-white/10 p-4" data-testid="partner-listings">
+      <section
+        className="mt-10 glass rounded-2xl border border-white/10 p-4"
+        data-testid="partner-listings"
+      >
         <h2 className="text-sm font-semibold">Partner listings</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           These could not be loaded just now. Your own listings above are unaffected.

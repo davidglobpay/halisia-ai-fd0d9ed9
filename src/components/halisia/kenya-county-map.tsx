@@ -261,7 +261,6 @@ export function KenyaCountyMap() {
       const code = feature.getProperty("code") as number;
       return styleFor(code, hoverCode === code, selected.includes(code));
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapReady, hoverCode, selected]);
 
   function toggleSelect(code: number) {

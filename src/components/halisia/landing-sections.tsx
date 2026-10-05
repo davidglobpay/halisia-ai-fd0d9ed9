@@ -173,7 +173,9 @@ function NewListingsStrip() {
               <span className="mt-1 text-[11px] text-muted-foreground">
                 {[l.locality, l.county].filter(Boolean).join(", ") || "Kenya"}
               </span>
-              <span className="mt-auto pt-2 text-[12px] font-semibold">{formatPartnerPrice(l)}</span>
+              <span className="mt-auto pt-2 text-[12px] font-semibold">
+                {formatPartnerPrice(l)}
+              </span>
             </Link>
           </li>
         ))}

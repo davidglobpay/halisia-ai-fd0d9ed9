@@ -397,8 +397,8 @@ function CountyPage() {
         </Section>
 
         <div className="mt-10 text-center text-xs text-muted-foreground">
-          HALISIA AI · county record · code {facts.code} ·{" "}
-          <MapPin className="inline h-3 w-3" /> {latLng.lat.toFixed(3)}°, {latLng.lng.toFixed(3)}°
+          HALISIA AI · county record · code {facts.code} · <MapPin className="inline h-3 w-3" />{" "}
+          {latLng.lat.toFixed(3)}°, {latLng.lng.toFixed(3)}°
         </div>
       </div>
     </div>

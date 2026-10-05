@@ -40,9 +40,9 @@ export function CountyPoliticsPanel({ code }: { code: number }) {
           <CoalitionCard coalition={politics.coalition} />
         </div>
         <p className="mt-3 text-[11px] text-muted-foreground">
-          {TERM_CAVEAT} Deputy Governor, Woman Representative and Members of Parliament are
-          matters of public record but are not held here — look them up in the IEBC candidate
-          register and the Parliament of Kenya directories linked below.
+          {TERM_CAVEAT} Deputy Governor, Woman Representative and Members of Parliament are matters
+          of public record but are not held here — look them up in the IEBC candidate register and
+          the Parliament of Kenya directories linked below.
         </p>
       </div>
 
@@ -122,10 +122,9 @@ function Disclaimer({ needsVerification }: { needsVerification: boolean }) {
       <ShieldAlert className="h-4 w-4 text-amber-glow shrink-0 mt-0.5" />
       <div>
         <span className="text-foreground font-medium">The 2022 record, not today's roll.</span>{" "}
-        Names, parties, winning cycles and turnout come from IEBC gazette notices and the
-        Parliament and Senate directories, as they stood after the August 2022 election. HALISIA
-        holds no polling, no sentiment estimate and no forecast for any county, and publishes
-        none.
+        Names, parties, winning cycles and turnout come from IEBC gazette notices and the Parliament
+        and Senate directories, as they stood after the August 2022 election. HALISIA holds no
+        polling, no sentiment estimate and no forecast for any county, and publishes none.
         {needsVerification && (
           <>
             {" "}

@@ -7,14 +7,7 @@
 export type TrustState = "confirmed" | "pending" | "unavailable" | "not_applicable";
 
 export type TrustStep = {
-  key:
-    | "identity"
-    | "documents"
-    | "official_search"
-    | "location"
-    | "boundary"
-    | "legal"
-    | "listing";
+  key: "identity" | "documents" | "official_search" | "location" | "boundary" | "legal" | "listing";
   label: string;
   state: TrustState;
   detail: string;

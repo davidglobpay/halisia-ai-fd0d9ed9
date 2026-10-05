@@ -71,10 +71,22 @@ export function validateCoordinate(
   const lat = typeof latIn === "string" ? parseFloat(latIn) : (latIn as number);
   const lng = typeof lngIn === "string" ? parseFloat(lngIn) : (lngIn as number);
   if (latIn == null || lngIn == null || latIn === "" || lngIn === "") {
-    return { ok: false, lat: null, lng: null, swapped: false, issues: ["No coordinates supplied."] };
+    return {
+      ok: false,
+      lat: null,
+      lng: null,
+      swapped: false,
+      issues: ["No coordinates supplied."],
+    };
   }
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-    return { ok: false, lat: null, lng: null, swapped: false, issues: ["Coordinates are not numbers."] };
+    return {
+      ok: false,
+      lat: null,
+      lng: null,
+      swapped: false,
+      issues: ["Coordinates are not numbers."],
+    };
   }
   if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
     return {
@@ -92,7 +104,9 @@ export function validateCoordinate(
         lat,
         lng,
         swapped: false,
-        issues: [`This coordinate equals ${d.name}, which usually means the real location is missing.`],
+        issues: [
+          `This coordinate equals ${d.name}, which usually means the real location is missing.`,
+        ],
       };
     }
   }
@@ -116,7 +130,9 @@ export function validateCoordinate(
 type Ring = number[][];
 type Feat = {
   properties: { code: number; name: string; lat: number; lng: number };
-  geometry: { type: "Polygon"; coordinates: Ring[] } | { type: "MultiPolygon"; coordinates: Ring[][] };
+  geometry:
+    | { type: "Polygon"; coordinates: Ring[] }
+    | { type: "MultiPolygon"; coordinates: Ring[][] };
 };
 const FEATURES = (countiesData as unknown as { features: Feat[] }).features;
 
@@ -142,7 +158,9 @@ export function countyForPoint(lat: number, lng: number): { code: number; name: 
   return null;
 }
 
-export function countyByName(name: string | null | undefined): { code: number; name: string } | null {
+export function countyByName(
+  name: string | null | undefined,
+): { code: number; name: string } | null {
   if (!name) return null;
   const n = name.toLowerCase().replace(/county|city|\W/g, "");
   if (!n) return null;
@@ -230,7 +248,9 @@ export function assessDeedLocationMatch(input: {
     confidence = Math.min(confidence, 20);
   }
   if (input.radiusM != null) {
-    evidence.push(`Provider uncertainty radius: approximately ${Math.round(input.radiusM)} metres.`);
+    evidence.push(
+      `Provider uncertainty radius: approximately ${Math.round(input.radiusM)} metres.`,
+    );
     if (input.radiusM > 5_000) {
       limitations.push("The returned area is too broad for parcel-level use.");
       confidence = Math.min(confidence, 25);
@@ -258,7 +278,10 @@ export function deedLocationQuery(input: {
   return [input.locationHint, input.county]
     .map((value) => value?.trim())
     .filter((value): value is string => Boolean(value))
-    .filter((value, index, all) => all.findIndex((item) => item.toLowerCase() === value.toLowerCase()) === index)
+    .filter(
+      (value, index, all) =>
+        all.findIndex((item) => item.toLowerCase() === value.toLowerCase()) === index,
+    )
     .join(", ");
 }
 
@@ -310,7 +333,8 @@ export function comparePoints(
     sourceB: b.source,
     distanceKm: Math.round(d * 10) / 10,
     detail: `The two sources are ${d.toFixed(1)} km apart.`,
-    action: "Confirm the beacons on site with a licensed surveyor and an official Ardhisasa search.",
+    action:
+      "Confirm the beacons on site with a licensed surveyor and an official Ardhisasa search.",
   };
 }
 

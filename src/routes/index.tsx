@@ -243,9 +243,9 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
             Every location, translated into{" "}
             <span className="text-gradient">signals you can trust</span>.
           </>
-        } 
-                intro="Three things HALISIA can measure from public APIs, and the seven it names as gaps rather than guessing. Each reading carries its source and its confidence."
-                items={PILLARS.map((p) => ({
+        }
+        intro="Three things HALISIA can measure from public APIs, and the seven it names as gaps rather than guessing. Each reading carries its source and its confidence."
+        items={PILLARS.map((p) => ({
           key: p.title,
           title: p.title,
           body: p.body,
@@ -339,11 +339,11 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
             <h2 className="mt-4 text-3xl md:text-5xl font-semibold tracking-tight">
               Start with any place in Kenya.
             </h2>
-           <p className="mt-4 text-muted-foreground max-w-xl mx-auto">
-                  Every location profile is free while HALISIA is in beta. Premium reports — deeper
-                  environmental, legal-context and construction feasibility, each with its source
-                  named — are in development.
-                </p>
+            <p className="mt-4 text-muted-foreground max-w-xl mx-auto">
+              Every location profile is free while HALISIA is in beta. Premium reports — deeper
+              environmental, legal-context and construction feasibility, each with its source named
+              — are in development.
+            </p>
             <div className="mt-8 flex items-center justify-center gap-3">
               <Link
                 to="/explore"
@@ -475,7 +475,6 @@ const TRUST = [
   { stat: "Ranked", label: "confidence stated on every output" },
   { stat: "Kenya", label: "first · global by design" },
   { stat: "Never", label: "we do not assert title, boundary or ownership" },
-
 ];
 const STEPS = [
   {

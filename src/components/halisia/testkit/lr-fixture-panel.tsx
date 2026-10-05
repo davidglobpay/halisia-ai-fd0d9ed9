@@ -171,8 +171,8 @@ export function LrFixturePanel() {
               {KONZA_FIXTURE.physicalTestCoordinate.source}
             </p>
             <p className="text-muted-foreground mt-3 text-xs">
-              Separate test-location field. It is not the resolution result of the land reference and
-              does not establish that reference&apos;s boundary.
+              Separate test-location field. It is not the resolution result of the land reference
+              and does not establish that reference&apos;s boundary.
             </p>
           </Surface>
 
@@ -231,7 +231,10 @@ export function LrFixturePanel() {
           description={`${HARNESS_LABEL} Models load read-only from their public source URLs; authored scale only, parcel fit UNKNOWN because there is no evidence-backed parcel polygon.`}
         />
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[720px] text-left text-xs" data-testid="fixture-model-matrix">
+          <table
+            className="w-full min-w-[720px] text-left text-xs"
+            data-testid="fixture-model-matrix"
+          >
             <thead className="text-muted-foreground">
               <tr>
                 <th className="py-1 pr-3 font-medium">Model</th>
@@ -253,7 +256,9 @@ export function LrFixturePanel() {
                     <span className="font-data break-all">{m.file}</span>
                   </td>
                   <td className="py-2 pr-3">
-                    {m.role === "environment-control" ? "environment-control" : "building-candidate"}
+                    {m.role === "environment-control"
+                      ? "environment-control"
+                      : "building-candidate"}
                   </td>
                   <td className="py-2 pr-3">
                     <VerdictChip verdict={reach[m.file] ?? "UNKNOWN"} />
