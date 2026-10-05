@@ -101,11 +101,7 @@ export async function generateCountyComparePdf(counties: County[]) {
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
       doc.setTextColor(...muted);
-      doc.text(
-        METRIC_UNITS[mk],
-        x + 16 + doc.getTextWidth(formatMetric(mk, m[mk])) + 4,
-        yy + 30,
-      );
+      doc.text(METRIC_UNITS[mk], x + 16 + doc.getTextWidth(formatMetric(mk, m[mk])) + 4, yy + 30);
       doc.setFontSize(7);
       doc.setTextColor(...muted);
       doc.text("KNBS 2019", x + colW - 60, yy + 14);
@@ -165,16 +161,7 @@ export async function generateCountyComparePdf(counties: County[]) {
       const dataUrl = m && "ok" in m && m.ok ? m.dataUrl : null;
       if (dataUrl) {
         try {
-          doc.addImage(
-            dataUrl,
-            "PNG",
-            x + 8,
-            mTop + 8,
-            colW - 16,
-            imgH,
-            undefined,
-            "FAST",
-          );
+          doc.addImage(dataUrl, "PNG", x + 8, mTop + 8, colW - 16, imgH, undefined, "FAST");
         } catch {
           /* ignore image errors */
         }
