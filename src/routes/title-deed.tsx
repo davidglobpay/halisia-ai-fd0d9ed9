@@ -24,6 +24,8 @@ import { MutationUpload } from "@/components/halisia/mutation-upload";
 import { ParcelDraw } from "@/components/halisia/parcel-draw";
 import { BuildBrief } from "@/components/halisia/build-brief";
 import type { LatLng } from "@/lib/parcel-geometry";
+import { generateParcelReport } from "@/lib/pdf-parcel-report";
+import type { MutationPlan, DeedPlanAgreement } from "@/lib/mutation-plan";
 import { IntelligenceDashboard } from "@/components/halisia/intelligence-dashboard";
 import { extractDeedFields, type DeedFields } from "@/lib/deed-extract.functions";
 import { geocodeAddress } from "@/lib/geocode.functions";
@@ -142,12 +144,23 @@ function TitleDeedPage() {
   const [pinned, setPinned] = useState<PinnedPoint | null>(null);
   /** The boundary sketched in Step 3, lifted here so Step 4 can measure it. */
   const [boundary, setBoundary] = useState<LatLng[]>([]);
+  /** Everything Steps 2 and 4 established, held here so the report can carry it. */
+  const [planRead, setPlanRead] = useState<{
+    plan: MutationPlan | null;
+    agreement: DeedPlanAgreement | null;
+  } | null>(null);
+  const [briefState, setBriefState] = useState<{
+    setbacks: { frontM: number; sideM: number };
+    briefText: string;
+  } | null>(null);
+  const [reporting, setReporting] = useState(false);
 
   // A new search means a new parcel. Carrying a pin across would silently
   // attach the last plot's position to this one.
   useEffect(() => {
     setPinned(null);
     setBoundary([]);
+    setPlanRead(null);
   }, [loc?.lat, loc?.lng]);
   const [error, setError] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
@@ -854,6 +867,7 @@ function TitleDeedPage() {
                   onChange={setPinned}
                 />
                 <MutationUpload
+                  onPlanChange={(plan, agreement) => setPlanRead({ plan, agreement })}
                   deed={{
                     // Whatever OCR already read off the deed, handed straight
                     // to the cross-check. Each is optional: a check only runs
@@ -872,7 +886,52 @@ function TitleDeedPage() {
                   deedAreaText={fields?.registeredArea ?? null}
                   onBoundaryChange={setBoundary}
                 />
-                <BuildBrief boundary={boundary} />
+                <BuildBrief boundary={boundary} onBriefChange={setBriefState} />
+                <button
+                  type="button"
+                  disabled={reporting}
+                  onClick={async () => {
+                    setReporting(true);
+                    try {
+                      await generateParcelReport({
+                        reference:
+                          fields?.titleNumber ||
+                          fields?.lrNumber ||
+                          fields?.parcelNumber ||
+                          queryValue ||
+                          null,
+                        matchedAddress: loc.address,
+                        geocoded: { lat: loc.lat, lng: loc.lng, radiusM: loc.radiusM },
+                        pinned: pinned
+                          ? { lat: pinned.lat, lng: pinned.lng, movedM: pinned.movedM }
+                          : null,
+                        boundary,
+                        deedAreaText: fields?.registeredArea ?? null,
+                        plan: planRead?.plan ?? null,
+                        agreement: planRead?.agreement ?? null,
+                        // Only sent once Step 4 has reported real figures. The
+                        // report must never print setbacks nobody entered.
+                        setbacks: briefState?.setbacks ?? null,
+                        briefText: briefState?.briefText ?? null,
+                      });
+                    } catch (e) {
+                      console.error(e);
+                    } finally {
+                      setReporting(false);
+                    }
+                  }}
+                  className="w-full rounded-2xl bg-gradient-to-r from-primary to-accent px-4 py-3 text-sm font-medium text-primary-foreground inline-flex items-center justify-center gap-2 disabled:opacity-60"
+                >
+                  {reporting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" /> Building the parcel report…
+                    </>
+                  ) : (
+                    <>
+                      <FileDown className="h-4 w-4" /> Download the parcel report
+                    </>
+                  )}
+                </button>
                 <LocationStatusCard
                   status={loc.status}
                   geocodeType={loc.gt}
