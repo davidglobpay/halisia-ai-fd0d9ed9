@@ -106,10 +106,7 @@ export function ink(doc: jsPDF, c: RGB) {
 
 /** Run a block at reduced opacity, restoring afterwards. */
 function faint(doc: jsPDF, opacity: number, draw: () => void) {
-  const d = doc as unknown as {
-    GState?: new (o: { opacity: number }) => unknown;
-    setGState?: (g: unknown) => void;
-  };
+  const d = doc as unknown as { GState?: new (o: { opacity: number }) => unknown; setGState?: (g: unknown) => void };
   let applied = false;
   try {
     if (d.GState && d.setGState) {
@@ -190,7 +187,7 @@ export function drawWatermark(doc: jsPDF, mark: BrandImage | null, opacity = 0.0
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
   if (!mark) return;
-  const size = Math.min(W, H) * 0.62;
+  const size = Math.min(W, H) * 0.44;
   const w = mark.ratio >= 1 ? size : size * mark.ratio;
   const h = mark.ratio >= 1 ? size / mark.ratio : size;
   faint(doc, opacity, () => {
@@ -371,9 +368,7 @@ export function ring(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(r * 0.58);
   ink(doc, pct != null ? PDF.forest : PDF.stone2);
-  doc.text(pct != null ? String(Math.round(pct)) : "—", cx, cy + r * 0.2, {
-    align: "center",
-  });
+  doc.text(pct != null ? String(Math.round(pct)) : "—", cx, cy + r * 0.2, { align: "center" });
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.4);
@@ -446,7 +441,10 @@ function unit(doc: jsPDF): (pt: number) => number {
  */
 export function brandPage(doc: jsPDF, mark: BrandImage | null, tone: Tone = "light") {
   if (!mark) return;
-  drawWatermark(doc, mark, tone === "dark" ? 0.07 : 0.04);
+  // Lower on dark than on light. The mark is a coloured illustration, and on a
+  // dark panel even a few percent reads as a murky shape rather than texture —
+  // the first printed run came out with a visible blob across the cover.
+  drawWatermark(doc, mark, tone === "dark" ? 0.03 : 0.035);
 }
 
 export type BrandFooterOptions = {
@@ -489,7 +487,9 @@ export function brandFooters(doc: jsPDF, mark: BrandImage | null, o: BrandFooter
     if (o.rule !== false) {
       stroke(doc, ruleColor);
       doc.setLineWidth(u(0.6));
-      faint(doc, tone === "dark" ? 0.5 : 0.16, () => doc.line(M, H - u(40), W - M, H - u(40)));
+      faint(doc, tone === "dark" ? 0.5 : 0.16, () =>
+        doc.line(M, H - u(40), W - M, H - u(40)),
+      );
     }
 
     if (mark) {
@@ -510,12 +510,14 @@ export function brandFooters(doc: jsPDF, mark: BrandImage | null, o: BrandFooter
     doc.text(`${p} / ${total}`, W - M, baseline, { align: "right" });
 
     if (o.issued) {
+      // BELOW the footer row, not above it. Above, at baseline - 10pt, the
+      // 6.8pt capitals reached H - 40.8 and the hairline at H - 40 ran
+      // straight through the words — invisible on the dark cover, obvious on
+      // every light page.
       doc.setFont("helvetica", "bold");
       doc.setFontSize(6.8);
       ink(doc, tone === "dark" ? PDF.gold : PDF.goldInk);
-      doc.text(sanitize(`Issued ${o.issued}`), W - M, baseline - u(10), {
-        align: "right",
-      });
+      doc.text(sanitize(`Issued ${o.issued}`), W - M, baseline + u(9), { align: "right" });
     }
   }
 

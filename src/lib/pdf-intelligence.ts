@@ -32,10 +32,7 @@ function slugify(s: string) {
  * direct elevation reading "AI-Estimated" and a pair of invented inputs
  * "Verified", because it judged by confidence and source count alone.
  */
-function provenanceOf(m: ModuleOutput): {
-  label: string;
-  color: [number, number, number];
-} {
+function provenanceOf(m: ModuleOutput): { label: string; color: [number, number, number] } {
   if (m.status === "projected") return { label: "Indicative projection", color: [138, 94, 18] };
   if (m.status === "not-assessed") return { label: "Not assessed", color: [140, 150, 168] };
   if ((m.confidencePct ?? 0) >= 100) return { label: "Measured", color: [34, 197, 94] };
@@ -125,9 +122,15 @@ export async function generateIntelligencePdf(
   doc.text(scopeLine, M, coverY);
 
   if (shareUrl) {
-    doc.setFontSize(9);
+    // Wrapped, not a single line. These URLs carry lat, lng and a
+    // percent-encoded address, so the first printed run ran the link clean off
+    // the right edge of the cover and lost the end of it.
+    doc.setFontSize(8);
     setColor([160, 175, 200]);
-    doc.text(`Shareable report · ${shareUrl}`, M, H - 60);
+    const shareLines = wrap(`Shareable report · ${shareUrl}`, W - M * 2);
+    shareLines.slice(0, 3).forEach((line, i) => {
+      doc.text(line, M, H - 76 + i * 10);
+    });
   }
 
   // ---------- Summary page ----------
@@ -369,11 +372,7 @@ export async function generateIntelligencePdf(
 
   brandFooters(doc, mark, {
     note: "Location readings. Not a title search, survey or valuation.",
-    issued: new Date().toLocaleDateString("en-KE", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    }),
+    issued: new Date().toLocaleDateString("en-KE", { day: "numeric", month: "long", year: "numeric" }),
   });
 
   const stamp = new Date().toISOString().replace(/[-:T]/g, "").slice(0, 13);
