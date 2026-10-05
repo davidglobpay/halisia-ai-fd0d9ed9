@@ -276,6 +276,7 @@
   }
 
   p {
+    font-family: var(--font-sans);
     line-height: 1.7;
   }
 
