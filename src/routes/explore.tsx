@@ -43,6 +43,7 @@ import {
 const searchSchema = z.object({ q: z.string().optional() });
 
 export const Route = createFileRoute("/explore")({
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Explore — HALISIA AI" },
