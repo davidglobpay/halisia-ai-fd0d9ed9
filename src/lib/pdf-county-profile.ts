@@ -71,7 +71,10 @@ export async function generateCountyProfilePdf(
         layer: t.layer,
         zoom: t.zoom,
       })
-        .then((r) => ({ label: t.label, dataUrl: r && "ok" in r && r.ok ? r.dataUrl : null }))
+        .then((r) => ({
+          label: t.label,
+          dataUrl: r && "ok" in r && r.ok ? r.dataUrl : null,
+        }))
         .catch(() => ({ label: t.label, dataUrl: null })),
     ),
   );
@@ -112,7 +115,16 @@ export async function generateCountyProfilePdf(
   doc.roundedRect(M, mapY, W - M * 2, mapH, 10, 10, "F");
   if (coverMap && "ok" in coverMap && coverMap.ok) {
     try {
-      doc.addImage(coverMap.dataUrl, "PNG", M, mapY, W - M * 2, mapH, undefined, "FAST");
+      doc.addImage(
+        coverMap.dataUrl,
+        "PNG",
+        M,
+        mapY,
+        W - M * 2,
+        mapH,
+        undefined,
+        "FAST",
+      );
     } catch {
       /* ignore */
     }
@@ -133,7 +145,10 @@ export async function generateCountyProfilePdf(
   const fY = mapY + mapH + 24;
   const facts6: Array<[string, string]> = [
     ["Population (2019)", facts.population2019.toLocaleString()],
-    ["Density", density != null ? `${density.toLocaleString()} /km²` : "Not recorded"],
+    [
+      "Density",
+      density != null ? `${density.toLocaleString()} /km²` : "Not recorded",
+    ],
     ["Area", `${facts.areaKm2.toLocaleString()} km²`],
     ["Constituencies", String(facts.constituencies)],
     ["Wards", String(facts.wards)],
@@ -173,7 +188,6 @@ export async function generateCountyProfilePdf(
     W - M * 2 - 24,
   );
   doc.text(scope, M + 12, noteY + 20);
-
 
   // ---------- Page 2: The record ----------
   onProgress(60, "Rendering the record");
@@ -259,14 +273,19 @@ export async function generateCountyProfilePdf(
   y += 18;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(20);
-  doc.text(density != null ? `${density.toLocaleString()} people / km²` : "Not recorded", M, y);
+  doc.text(
+    density != null
+      ? `${density.toLocaleString()} people / km²`
+      : "Not recorded",
+    M,
+    y,
+  );
   y += 18;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.setTextColor(...MUTED);
   const prov = doc.splitTextToSize(DENSITY_PROVENANCE, W - M * 2);
   doc.text(prov, M, y);
-
 
   // ---------- Page 3: Map evidence ----------
   onProgress(80, "Rendering map evidence");
@@ -326,7 +345,11 @@ export async function generateCountyProfilePdf(
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.setTextColor(...MUTED);
-  doc.text("Every figure in this document comes from one of these three.", M, 94);
+  doc.text(
+    "Every figure in this document comes from one of these three.",
+    M,
+    94,
+  );
 
   let sy = 118;
   COUNTY_DATA_SOURCES.forEach((s) => {
@@ -363,7 +386,11 @@ export async function generateCountyProfilePdf(
     `-${String(d.getHours()).padStart(2, "0")}${String(d.getMinutes()).padStart(2, "0")}`;
   brandFooters(doc, mark, {
     note: "County record. Published sources only.",
-    issued: new Date().toLocaleDateString("en-KE", { day: "numeric", month: "long", year: "numeric" }),
+    issued: new Date().toLocaleDateString("en-KE", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }),
   });
   doc.save(`halisia-county-${slug}-${stamp}.pdf`);
   onProgress(100, "Done");
