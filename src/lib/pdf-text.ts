@@ -24,7 +24,13 @@ export type PdfTextItem = {
 };
 
 export type PdfTextResult =
-  | { ok: true; items: PdfTextItem[]; pages: number; pageWidth: number; pageHeight: number }
+  | {
+      ok: true;
+      items: PdfTextItem[];
+      pages: number;
+      pageWidth: number;
+      pageHeight: number;
+    }
   | { ok: false; reason: string };
 
 /**
@@ -37,9 +43,15 @@ export type PdfTextResult =
  */
 const MIN_WORDS = 12;
 
-export async function extractPdfText(file: File | Blob, pageNumber = 1): Promise<PdfTextResult> {
+export async function extractPdfText(
+  file: File | Blob,
+  pageNumber = 1,
+): Promise<PdfTextResult> {
   if (typeof window === "undefined") {
-    return { ok: false, reason: "PDF reading is only available in the browser." };
+    return {
+      ok: false,
+      reason: "PDF reading is only available in the browser.",
+    };
   }
 
   let pdfjs: typeof import("pdfjs-dist");
@@ -52,15 +64,22 @@ export async function extractPdfText(file: File | Blob, pageNumber = 1): Promise
     pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
   } catch (e) {
     console.error("pdf.js failed to load", e);
-    return { ok: false, reason: "The PDF reader could not be loaded. Try again, or upload a photo of the plan instead." };
+    return {
+      ok: false,
+      reason:
+        "The PDF reader could not be loaded. Try again, or upload a photo of the plan instead.",
+    };
   }
 
   try {
     const buf = await file.arrayBuffer();
     const doc = await pdfjs.getDocument({ data: new Uint8Array(buf) }).promise;
-    if (doc.numPages < 1) return { ok: false, reason: "That PDF has no pages." };
+    if (doc.numPages < 1)
+      return { ok: false, reason: "That PDF has no pages." };
 
-    const page = await doc.getPage(Math.min(Math.max(1, pageNumber), doc.numPages));
+    const page = await doc.getPage(
+      Math.min(Math.max(1, pageNumber), doc.numPages),
+    );
     const viewport = page.getViewport({ scale: 1 });
     const content = await page.getTextContent();
 
