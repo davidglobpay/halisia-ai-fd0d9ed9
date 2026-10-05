@@ -193,6 +193,29 @@ export function parseMutationPlan(items: TextItem[]): MutationPlan {
   };
 }
 
+/**
+ * The block a reference belongs to: its place name and its block number,
+ * without the parcel number that follows.
+ *
+ * Comparing the whole reference is wrong, and wrong in the direction that
+ * does the most damage. A deed reads "KONZA SOUTH/KONZA SOUTH BLOCK
+ * 5(KONZA)/14726" while its own mutation plan reads "KONZA SOUTH_KONZA SOUTH
+ * BLOCK 5/1492" — the trailing numbers differ because one is the parent parcel
+ * and the other is the plot it became. A substring test on the full strings
+ * flags that genuine pair as a conflict, which teaches a buyer to ignore the
+ * warning. A check that cries wolf on real documents is worse than no check.
+ *
+ * The block number is captured with \d+ against the raw text, so it stops at
+ * the separator: "BLOCK 5/1492" yields 5, not 51492.
+ */
+function blockIdentity(ref: string): { place: string; number: string } | null {
+  const m = ref.match(/^([\s\S]*?)\bBLOCK\s*(\d+)/i);
+  if (!m) return null;
+  const place = m[1].toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (!place) return null;
+  return { place, number: m[2] };
+}
+
 export type DeedPlanAgreement = {
   /** Checks that both documents answered, and whether they agreed. */
   checks: Array<{ name: string; deed: string; plan: string; agrees: boolean }>;
@@ -250,14 +273,17 @@ export function checkDeedAgainstPlan(
   }
 
   if (deed.block && plan.block) {
-    const norm = (s: string) => s.toUpperCase().replace(/[^A-Z0-9]/g, "");
-    const d = norm(deed.block);
-    const p = norm(plan.block);
+    const d = blockIdentity(deed.block);
+    const p = blockIdentity(plan.block);
     checks.push({
       name: "Block",
       deed: deed.block,
       plan: plan.block,
-      agrees: d.includes(p) || p.includes(d),
+      agrees:
+        d !== null &&
+        p !== null &&
+        d.number === p.number &&
+        (d.place.includes(p.place) || p.place.includes(d.place)),
     });
   }
 
