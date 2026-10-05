@@ -1,12 +1,5 @@
 import { useCallback, useState } from "react";
-import {
-  AlertTriangle,
-  CheckCircle2,
-  FileUp,
-  Loader2,
-  Ruler,
-  X,
-} from "lucide-react";
+import { AlertTriangle, CheckCircle2, FileUp, Loader2, Ruler, X } from "lucide-react";
 import { extractPdfText } from "@/lib/pdf-text";
 import {
   parseMutationPlan,
@@ -114,9 +107,7 @@ export function MutationUpload({
     : "";
 
   return (
-    <div
-      className={`rounded-2xl glass border border-white/10 p-4 ${className}`}
-    >
+    <div className={`rounded-2xl glass border border-white/10 p-4 ${className}`}>
       <div className="flex flex-wrap items-start gap-2">
         <div className="min-w-0 flex-1">
           <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
@@ -126,8 +117,8 @@ export function MutationUpload({
             Read the surveyor&rsquo;s plan
           </h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            Upload the mutation PDF the surveyor produced. Plot sizes,
-            dimensions and the scale are read from the sheet itself.
+            Upload the mutation PDF the surveyor produced. Plot sizes, dimensions and the scale are
+            read from the sheet itself.
           </p>
         </div>
         {plan && <ReadAloud text={spoken} label="Listen" />}
@@ -135,10 +126,7 @@ export function MutationUpload({
 
       <label className="mt-3 flex min-h-[44px] cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-white/15 bg-white/5 px-4 py-3 text-sm transition hover:bg-white/10">
         {busy ? (
-          <Loader2
-            className="h-4 w-4 animate-spin text-accent"
-            aria-hidden="true"
-          />
+          <Loader2 className="h-4 w-4 animate-spin text-accent" aria-hidden="true" />
         ) : (
           <FileUp className="h-4 w-4 text-accent" aria-hidden="true" />
         )}
@@ -156,9 +144,7 @@ export function MutationUpload({
       </label>
 
       {fileName && !busy && (
-        <p className="mt-1.5 truncate text-[11px] text-muted-foreground">
-          {fileName}
-        </p>
+        <p className="mt-1.5 truncate text-[11px] text-muted-foreground">{fileName}</p>
       )}
 
       {error && (
@@ -166,10 +152,7 @@ export function MutationUpload({
           role="alert"
           className="mt-3 flex items-start gap-2 rounded-xl border border-amber-glow/30 bg-amber-glow/5 p-3 text-xs text-amber-glow"
         >
-          <AlertTriangle
-            className="mt-0.5 h-4 w-4 flex-none"
-            aria-hidden="true"
-          />
+          <AlertTriangle className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
           <span>{error}</span>
         </div>
       )}
@@ -187,9 +170,9 @@ export function MutationUpload({
                 This plan is provisional
               </div>
               <p className="mt-1 text-xs leading-relaxed text-foreground">
-                The sheet states it is subject to a final ground survey. The
-                beacons are not fixed and these plot numbers are not registered
-                titles. What is drawn here is an intention, not a parcel.
+                The sheet states it is subject to a final ground survey. The beacons are not fixed
+                and these plot numbers are not registered titles. What is drawn here is an
+                intention, not a parcel.
               </p>
               {plan.provisionalNote && (
                 <p className="mt-1 text-[11px] italic text-muted-foreground">
@@ -254,8 +237,7 @@ export function MutationUpload({
             <div>
               <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
                 <Ruler className="mr-1 inline h-3 w-3" aria-hidden="true" />
-                Dimensions{" "}
-                {plan.metricDimensions ? "(metres, as the sheet states)" : ""}
+                Dimensions {plan.metricDimensions ? "(metres, as the sheet states)" : ""}
               </div>
               <p className="mt-1 font-mono text-[11px] text-foreground/85">
                 {plan.dimensionsM.join(" · ")}
@@ -272,9 +254,8 @@ export function MutationUpload({
                 {plan.neighbours.join(" · ")}
               </p>
               <p className="mt-1 text-[11px] text-muted-foreground">
-                Ask the seller to walk you to a boundary these numbers share. A
-                neighbour who does not recognise the plot is the cheapest check
-                there is.
+                Ask the seller to walk you to a boundary these numbers share. A neighbour who does
+                not recognise the plot is the cheapest check there is.
               </p>
             </div>
           )}
@@ -291,21 +272,14 @@ export function MutationUpload({
               <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest">
                 {agreement.conflicts.length ? (
                   <>
-                    <AlertTriangle
-                      className="h-3 w-3 text-destructive"
-                      aria-hidden="true"
-                    />
+                    <AlertTriangle className="h-3 w-3 text-destructive" aria-hidden="true" />
                     <span className="text-destructive">
-                      Deed and plan disagree ({agreement.agreed}/
-                      {agreement.total})
+                      Deed and plan disagree ({agreement.agreed}/{agreement.total})
                     </span>
                   </>
                 ) : (
                   <>
-                    <CheckCircle2
-                      className="h-3 w-3 text-primary"
-                      aria-hidden="true"
-                    />
+                    <CheckCircle2 className="h-3 w-3 text-primary" aria-hidden="true" />
                     <span className="text-primary">
                       Deed and plan agree ({agreement.agreed}/{agreement.total})
                     </span>
@@ -321,10 +295,7 @@ export function MutationUpload({
                         aria-hidden="true"
                       />
                     ) : (
-                      <X
-                        className="mt-0.5 h-3 w-3 flex-none text-destructive"
-                        aria-hidden="true"
-                      />
+                      <X className="mt-0.5 h-3 w-3 flex-none text-destructive" aria-hidden="true" />
                     )}
                     <span>
                       <span className="font-medium">{c.name}:</span>{" "}
@@ -336,18 +307,17 @@ export function MutationUpload({
                 ))}
               </ul>
               <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-                Agreement does not make a title genuine — two documents prepared
-                together will always agree. What it rules out is a plan being
-                shown beside a deed it does not belong to.
+                Agreement does not make a title genuine — two documents prepared together will
+                always agree. What it rules out is a plan being shown beside a deed it does not
+                belong to.
               </p>
             </div>
           )}
 
           <p className="border-t border-white/10 pt-2 text-[11px] leading-relaxed text-muted-foreground">
-            Read from the sheet you uploaded. HALISIA does not survey land, does
-            not confirm a boundary, and reads nothing about ownership from this
-            document. A licensed surveyor fixes beacons; an advocate confirms
-            title.
+            Read from the sheet you uploaded. HALISIA does not survey land, does not confirm a
+            boundary, and reads nothing about ownership from this document. A licensed surveyor
+            fixes beacons; an advocate confirms title.
           </p>
         </div>
       )}
