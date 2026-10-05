@@ -28,12 +28,7 @@ export type PinnedPoint = {
   method: "geocoded" | "landmark" | "placed";
 };
 
-function haversine(
-  aLat: number,
-  aLng: number,
-  bLat: number,
-  bLng: number,
-): number {
+function haversine(aLat: number, aLng: number, bLat: number, bLng: number): number {
   const R = 6_371_000;
   const p1 = (aLat * Math.PI) / 180;
   const p2 = (bLat * Math.PI) / 180;
@@ -115,9 +110,7 @@ export function ParcelPin({
         setResults(res.results);
       }
     } catch {
-      setNote(
-        "Landmark search is unavailable right now. You can still drag the pin.",
-      );
+      setNote("Landmark search is unavailable right now. You can still drag the pin.");
     } finally {
       setBusy(false);
     }
@@ -134,22 +127,17 @@ export function ParcelPin({
     `and it says nothing about who owns the land.`;
 
   return (
-    <div
-      className={`rounded-2xl glass border border-white/10 p-4 ${className}`}
-    >
+    <div className={`rounded-2xl glass border border-white/10 p-4 ${className}`}>
       <div className="flex flex-wrap items-start gap-2">
         <div className="min-w-0 flex-1">
           <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
             Step 1 · Place the pin
           </div>
-          <h3 className="mt-0.5 text-base font-semibold leading-tight">
-            Put the pin on your plot
-          </h3>
+          <h3 className="mt-0.5 text-base font-semibold leading-tight">Put the pin on your plot</h3>
           <p className="mt-1 text-xs text-muted-foreground">
             {originLabel ? (
               <>
-                The search matched{" "}
-                <span className="text-foreground">{originLabel}</span> — the
+                The search matched <span className="text-foreground">{originLabel}</span> — the
                 centre of that place, not your parcel.{" "}
               </>
             ) : null}
@@ -209,9 +197,7 @@ export function ParcelPin({
                   setZoom(17);
                   commit({ lat: r.lat, lng: r.lng }, "landmark");
                   setResults(null);
-                  setNote(
-                    `Moved to ${r.name}. Now drag the pin from the landmark onto your plot.`,
-                  );
+                  setNote(`Moved to ${r.name}. Now drag the pin from the landmark onto your plot.`);
                 }}
                 className="flex w-full items-start gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left transition hover:bg-white/10"
               >
@@ -220,9 +206,7 @@ export function ParcelPin({
                   aria-hidden="true"
                 />
                 <span className="min-w-0">
-                  <span className="block truncate text-sm font-medium">
-                    {r.name}
-                  </span>
+                  <span className="block truncate text-sm font-medium">{r.name}</span>
                   <span className="block truncate text-[11px] text-muted-foreground">
                     {distanceLabel(r.distanceM)} {r.bearing}
                     {r.address ? ` · ${r.address}` : ""}
@@ -279,9 +263,8 @@ export function ParcelPin({
       </div>
 
       <p className="mt-3 border-t border-white/10 pt-2 text-[11px] leading-relaxed text-muted-foreground">
-        The pin is a mark you placed. HALISIA does not survey it, does not treat
-        it as a boundary, and reads nothing about ownership from it. A licensed
-        surveyor sets boundaries and beacons.
+        The pin is a mark you placed. HALISIA does not survey it, does not treat it as a boundary,
+        and reads nothing about ownership from it. A licensed surveyor sets boundaries and beacons.
       </p>
     </div>
   );
