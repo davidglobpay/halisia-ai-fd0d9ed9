@@ -194,7 +194,11 @@ export function downloadSellerPdf(rows: ListingInsight[]): string {
 
   brandFooters(doc, mark, {
     note: "Indicative analytics. Not a valuation or a guarantee of sale.",
-    issued: new Date().toLocaleDateString("en-KE", { day: "numeric", month: "long", year: "numeric" }),
+    issued: new Date().toLocaleDateString("en-KE", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }),
   });
 
   const filename = `halisia-seller-analytics-${new Date().toISOString().slice(0, 10)}.pdf`;

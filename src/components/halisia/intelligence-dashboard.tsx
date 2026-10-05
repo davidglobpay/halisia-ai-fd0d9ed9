@@ -74,7 +74,12 @@ const WAVE_META: Record<WaveId, { label: string; hint: string }> = {
   wave3: { label: "Wave 3", hint: "AI Geotechnical" },
   wave4: { label: "Wave 4", hint: "Open public data · Kenya" },
 };
-const TABS: Array<{ id: TabId; label: string; icon: React.ElementType; wave: WaveId }> = [
+const TABS: Array<{
+  id: TabId;
+  label: string;
+  icon: React.ElementType;
+  wave: WaveId;
+}> = [
   { id: "overview", label: "Overview", icon: Activity, wave: "core" },
   { id: "environment", label: "Environment", icon: Leaf, wave: "core" },
   { id: "amenities", label: "Amenities", icon: Store, wave: "core" },
@@ -129,7 +134,8 @@ function spokenSummary(args: {
   parts.push(`Coordinates ${lat.toFixed(4)}, ${lng.toFixed(4)}.`);
 
   const elev = intel?.elevation?.meters;
-  if (elev != null) parts.push(`Ground elevation ${Math.round(elev)} metres, from the Google Elevation API.`);
+  if (elev != null)
+    parts.push(`Ground elevation ${Math.round(elev)} metres, from the Google Elevation API.`);
   else parts.push("Ground elevation has not been measured for this point.");
 
   const aq = intel?.airQuality;

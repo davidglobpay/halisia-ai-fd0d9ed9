@@ -96,7 +96,9 @@ export async function downloadGeotechPdf(g: GeotechIntel, address: string) {
   doc.text("HALISIA · WAVE 3", 40, 26);
   setText(C.dim);
   doc.setFont("helvetica", "normal");
-  doc.text(new Date().toISOString().slice(0, 10), W - 40, 26, { align: "right" });
+  doc.text(new Date().toISOString().slice(0, 10), W - 40, 26, {
+    align: "right",
+  });
 
   // Hero
   heading(40, 70, "AI Geotechnical Assessment", 22);
@@ -457,7 +459,11 @@ export async function downloadGeotechPdf(g: GeotechIntel, address: string) {
   brandFooters(doc, brandMark, {
     tone: "dark",
     note: "Preliminary planning use only. Not a geotechnical investigation.",
-    issued: new Date().toLocaleDateString("en-KE", { day: "numeric", month: "long", year: "numeric" }),
+    issued: new Date().toLocaleDateString("en-KE", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }),
   });
 
   const slug =

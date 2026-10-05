@@ -71,7 +71,10 @@ export async function generateCountyProfilePdf(
         layer: t.layer,
         zoom: t.zoom,
       })
-        .then((r) => ({ label: t.label, dataUrl: r && "ok" in r && r.ok ? r.dataUrl : null }))
+        .then((r) => ({
+          label: t.label,
+          dataUrl: r && "ok" in r && r.ok ? r.dataUrl : null,
+        }))
         .catch(() => ({ label: t.label, dataUrl: null })),
     ),
   );
@@ -174,7 +177,6 @@ export async function generateCountyProfilePdf(
   );
   doc.text(scope, M + 12, noteY + 20);
 
-
   // ---------- Page 2: The record ----------
   onProgress(60, "Rendering the record");
   doc.addPage("a4", "portrait");
@@ -266,7 +268,6 @@ export async function generateCountyProfilePdf(
   doc.setTextColor(...MUTED);
   const prov = doc.splitTextToSize(DENSITY_PROVENANCE, W - M * 2);
   doc.text(prov, M, y);
-
 
   // ---------- Page 3: Map evidence ----------
   onProgress(80, "Rendering map evidence");
@@ -363,7 +364,11 @@ export async function generateCountyProfilePdf(
     `-${String(d.getHours()).padStart(2, "0")}${String(d.getMinutes()).padStart(2, "0")}`;
   brandFooters(doc, mark, {
     note: "County record. Published sources only.",
-    issued: new Date().toLocaleDateString("en-KE", { day: "numeric", month: "long", year: "numeric" }),
+    issued: new Date().toLocaleDateString("en-KE", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }),
   });
   doc.save(`halisia-county-${slug}-${stamp}.pdf`);
   onProgress(100, "Done");

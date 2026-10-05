@@ -121,9 +121,12 @@ export async function generateCountyComparePdf(counties: County[]) {
   // ---- Page 2: Map data evidence ----
   const maps = await Promise.all(
     counties.map((c) =>
-      fetchStaticMapCached({ lat: c.lat, lng: c.lng, layer: "roadmap-light", zoom: 9 }).catch(
-        () => null,
-      ),
+      fetchStaticMapCached({
+        lat: c.lat,
+        lng: c.lng,
+        layer: "roadmap-light",
+        zoom: 9,
+      }).catch(() => null),
     ),
   );
   if (maps.some(Boolean)) {
@@ -180,7 +183,11 @@ export async function generateCountyComparePdf(counties: County[]) {
 
   brandFooters(doc, mark, {
     note: "County comparison. Published figures, each traced to its source.",
-    issued: new Date().toLocaleDateString("en-KE", { day: "numeric", month: "long", year: "numeric" }),
+    issued: new Date().toLocaleDateString("en-KE", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }),
   });
 
   const safe =
