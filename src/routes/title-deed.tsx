@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   FileUp,
   Loader2,
@@ -19,6 +19,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { MapView } from "@/components/halisia/map-view";
+import { ParcelPin, type PinnedPoint } from "@/components/halisia/parcel-pin";
 import { IntelligenceDashboard } from "@/components/halisia/intelligence-dashboard";
 import { extractDeedFields, type DeedFields } from "@/lib/deed-extract.functions";
 import { geocodeAddress } from "@/lib/geocode.functions";
@@ -29,15 +30,12 @@ import { Link } from "@tanstack/react-router";
 import {
   classifyGeocode,
   compareCounty,
-  assessDeedLocationMatch,
-  deedLocationQuery,
   validateCoordinate,
   type Discrepancy,
   type LocationStatus,
 } from "@/lib/location-validation";
 import { LocationStatusCard } from "@/components/halisia/land-passport/location-status";
 import { PassportLinks } from "@/components/halisia/land-passport/passport-links";
-import { ListenButton } from "@/components/halisia/listen-button";
 
 type DeedLoc = {
   lat: number;
@@ -90,7 +88,6 @@ function buildDeedLoc(
 }
 
 export const Route = createFileRoute("/title-deed")({
-  ssr: false,
   head: () => ({
     meta: [
       { title: "Title Deed Search — HALISIA AI" },
@@ -122,9 +119,24 @@ function TitleDeedPage() {
   const [progressMsg, setProgressMsg] = useState("");
   const [ocrText, setOcrText] = useState("");
   const [fields, setFields] = useState<DeedFields | null>(null);
-  const [officialSearch, setOfficialSearch] = useState(false);
   const [loc, setLoc] = useState<DeedLoc | null>(null);
   const [locIssue, setLocIssue] = useState<string | null>(null);
+  /**
+   * The point the user placed by hand, if they have placed one.
+   *
+   * Kept separate from `loc` rather than overwriting it: the geocoded match is
+   * evidence of what the record's text resolves to, and the pin is evidence of
+   * what a person recognised on the ground. Both belong in the record, and
+   * collapsing them would lose the distance between them, which is the single
+   * most useful number on this screen.
+   */
+  const [pinned, setPinned] = useState<PinnedPoint | null>(null);
+
+  // A new search means a new parcel. Carrying a pin across would silently
+  // attach the last plot's position to this one.
+  useEffect(() => {
+    setPinned(null);
+  }, [loc?.lat, loc?.lng]);
   const [error, setError] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -156,7 +168,10 @@ function TitleDeedPage() {
         setStage("locate");
         setProgressMsg("Geolocating parcel…");
         setProgress(0);
-        const geoQuery = deedLocationQuery(extracted);
+        const parts = [extracted.locationHint, extracted.registry, extracted.county]
+          .filter(Boolean)
+          .join(", ");
+        const geoQuery = parts || extracted.county || extracted.registry || "";
         let located: DeedLoc | null = null;
         setLoc(null);
         setLocIssue(null);
@@ -269,7 +284,8 @@ function TitleDeedPage() {
     setStage("locate");
     setProgressMsg("Geolocating parcel…");
     setProgress(0);
-    const query = deedLocationQuery(f);
+    const parts = [f.locationHint, f.registry, f.county].filter(Boolean).join(", ");
+    const query = parts || f.county || f.registry || "";
     setLoc(null);
     setLocIssue(null);
     if (!query) {
@@ -286,22 +302,6 @@ function TitleDeedPage() {
       setLocIssue("Location service unavailable — try again shortly.");
     }
   }, []);
-
-  const locationMatch = useMemo(() => {
-    if (!loc) return null;
-    const locationText = deedLocationQuery(fields ?? {});
-    return assessDeedLocationMatch({
-      status: loc.status,
-      geocodeType: loc.gt,
-      locationText: locationText || "No readable place text",
-      locationTextConfidence:
-        fields?.fieldConfidence?.locationHint ?? fields?.fieldConfidence?.county,
-      countyNamed: fields?.county,
-      countyConflict: Boolean(loc.discrepancy),
-      partialMatch: loc.partialMatch,
-      radiusM: loc.radiusM,
-    });
-  }, [fields, loc]);
 
   const processUpload = async () => {
     if (!file) return;
@@ -612,46 +612,6 @@ function TitleDeedPage() {
             )}
 
             {/* Extracted fields */}
-            {mode === "upload" && (
-              <div
-                className="mt-6 rounded-2xl border border-white/10 bg-card/70 p-4 text-xs"
-                data-testid="official-search-guide"
-              >
-                <div className="font-semibold text-foreground">
-                  Most accurate: upload your official Ardhisasa search
-                </div>
-                <ol className="mt-1 list-decimal pl-4 space-y-0.5 text-muted-foreground">
-                  <li>
-                    Sign in to ardhisasa.lands.go.ke yourself (the SMS code goes only to you).
-                  </li>
-                  <li>Request an official search for the parcel and download the result.</li>
-                  <li>Upload a photo or screenshot of it here.</li>
-                </ol>
-                <label className="mt-2 flex min-h-[44px] items-center gap-2 text-foreground">
-                  <input
-                    type="checkbox"
-                    checked={officialSearch}
-                    onChange={(e) => setOfficialSearch(e.target.checked)}
-                  />
-                  This upload is an official Ardhisasa search result
-                </label>
-                <p className="mt-1 text-[11px] text-muted-foreground">
-                  HALISIA never asks for your Ardhisasa login or SMS code. Details read from the
-                  document are marked “Documents reviewed”, not government-verified, until a
-                  licensed surveyor or advocate confirms them.
-                </p>
-              </div>
-            )}
-            {fields && officialSearch && mode === "upload" && (
-              <div
-                className="mt-4 rounded-2xl border border-primary/30 bg-primary/5 px-4 py-2 text-xs"
-                data-testid="official-search-badge"
-              >
-                Documents reviewed — read from an uploaded official search. Owner, size and parcel
-                details below come from that document; confirm with a licensed surveyor before
-                relying on them.
-              </div>
-            )}
             {fields && (
               <div className="mt-6">
                 <div className="flex items-center justify-between mb-3">
@@ -823,6 +783,12 @@ function TitleDeedPage() {
                     </span>
                   )}
                 </div>
+                <ParcelPin
+                  origin={{ lat: loc.lat, lng: loc.lng }}
+                  originLabel={loc.address}
+                  originRadiusM={loc.radiusM}
+                  onChange={setPinned}
+                />
                 <LocationStatusCard
                   status={loc.status}
                   geocodeType={loc.gt}
@@ -831,56 +797,14 @@ function TitleDeedPage() {
                   discrepancies={loc.discrepancy ? [loc.discrepancy] : []}
                   issues={loc.issues}
                 />
-                {locationMatch && (
-                  <details
-                    className="group rounded-2xl border border-foreground/10 bg-card/70 px-4 py-3 text-xs"
-                    data-testid="deed-location-evidence"
-                    open
-                  >
-                    <summary className="flex min-h-8 cursor-pointer list-none items-center gap-2 font-medium text-foreground">
-                      <ScanSearch className="h-4 w-4 text-accent" aria-hidden="true" />
-                      Place-match evidence
-                      <span className="ml-auto font-mono text-accent">
-                        {locationMatch.confidencePct}% · {locationMatch.band}
-                      </span>
-                    </summary>
-                    <div className="mt-2 grid gap-3 sm:grid-cols-2">
-                      <div>
-                        <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                          Evidence used
-                        </div>
-                        <ul className="mt-1 list-disc space-y-1 pl-4 text-foreground/85">
-                          {locationMatch.evidence.map((item) => (
-                            <li key={item}>{item}</li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div>
-                        <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                          Limits and next check
-                        </div>
-                        <ul className="mt-1 list-disc space-y-1 pl-4 text-muted-foreground">
-                          {locationMatch.limitations.map((item) => (
-                            <li key={item}>{item}</li>
-                          ))}
-                          <li>
-                            Confirm the parcel through an official search and a licensed surveyor.
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-                    <div className="mt-3">
-                      <ListenButton
-                        label="Listen to match evidence"
-                        text={`Place match confidence ${locationMatch.confidencePct} percent, ${locationMatch.band}. Evidence: ${locationMatch.evidence.join(" ")} Limitations: ${locationMatch.limitations.join(" ")} Next: confirm the parcel through an official search and a licensed surveyor.`}
-                      />
-                    </div>
-                  </details>
-                )}
                 <PassportLinks
                   target={{
-                    lat: loc.lat,
-                    lng: loc.lng,
+                    // Once the user has placed a pin, everything downstream
+                    // reads from the pin. It is the better point by a wide
+                    // margin, and the source line below says where it came
+                    // from so the distinction survives into the record.
+                    lat: pinned?.lat ?? loc.lat,
+                    lng: pinned?.lng ?? loc.lng,
                     ref:
                       fields?.titleNumber ||
                       fields?.lrNumber ||
@@ -888,8 +812,10 @@ function TitleDeedPage() {
                       queryValue ||
                       "",
                     label: loc.address,
-                    source: "Google Geocoding of title record text",
-                    status: loc.status,
+                    source: pinned
+                      ? "Pin placed by the user on satellite imagery"
+                      : "Google Geocoding of title record text",
+                    status: pinned ? "user_provided" : loc.status,
                     gt: loc.gt,
                     county: loc.county ?? "",
                   }}
