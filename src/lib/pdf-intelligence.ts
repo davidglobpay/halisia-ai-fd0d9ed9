@@ -36,12 +36,9 @@ function provenanceOf(m: ModuleOutput): {
   label: string;
   color: [number, number, number];
 } {
-  if (m.status === "projected")
-    return { label: "Indicative projection", color: [138, 94, 18] };
-  if (m.status === "not-assessed")
-    return { label: "Not assessed", color: [140, 150, 168] };
-  if ((m.confidencePct ?? 0) >= 100)
-    return { label: "Measured", color: [34, 197, 94] };
+  if (m.status === "projected") return { label: "Indicative projection", color: [138, 94, 18] };
+  if (m.status === "not-assessed") return { label: "Not assessed", color: [140, 150, 168] };
+  if ((m.confidencePct ?? 0) >= 100) return { label: "Measured", color: [34, 197, 94] };
   return { label: "Partly measured", color: [212, 160, 23] };
 }
 
@@ -77,8 +74,7 @@ export async function generateIntelligencePdf(
   const MUTED: [number, number, number] = [140, 150, 168];
   const INK: [number, number, number] = [22, 30, 46];
 
-  const setColor = (c: [number, number, number]) =>
-    doc.setTextColor(c[0], c[1], c[2]);
+  const setColor = (c: [number, number, number]) => doc.setTextColor(c[0], c[1], c[2]);
   const wrap = (t: string, w: number) => doc.splitTextToSize(t, w) as string[];
 
   // ---------- Cover page ----------
@@ -93,11 +89,7 @@ export async function generateIntelligencePdf(
   doc.text("HALISIA.AI · LOCATION READINGS", M, 64);
 
   doc.setFontSize(28);
-  doc.text(
-    decision.reading != null ? `${decision.reading} / 100` : "No reading",
-    M,
-    130,
-  );
+  doc.text(decision.reading != null ? `${decision.reading} / 100` : "No reading", M, 130);
   doc.setFontSize(13);
   setColor(ACCENT);
   doc.text(decision.readingLabel, M, 152);
@@ -105,18 +97,13 @@ export async function generateIntelligencePdf(
   setColor([200, 210, 224]);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
-  const addrLines = wrap(
-    address || `${lat.toFixed(5)}, ${lng.toFixed(5)}`,
-    W - M * 2,
-  );
+  const addrLines = wrap(address || `${lat.toFixed(5)}, ${lng.toFixed(5)}`, W - M * 2);
   doc.text(addrLines, M, 180);
   let coverY = 198 + (addrLines.length - 1) * 14;
   doc.text(
     `Coordinates ${lat.toFixed(5)}, ${lng.toFixed(5)}` +
       (decision.grade ? `  ·  Grade ${decision.grade}` : "") +
-      (decision.confidencePct != null
-        ? `  ·  Confidence ${decision.confidencePct}%`
-        : ""),
+      (decision.confidencePct != null ? `  ·  Confidence ${decision.confidencePct}%` : ""),
     M,
     coverY,
   );
@@ -262,11 +249,7 @@ export async function generateIntelligencePdf(
       doc.roundedRect(W - M - 80, y - 2, 80, 22, 6, 6, "F");
       setColor([7, 30, 61]);
       doc.setFontSize(11);
-      doc.text(
-        `${m.score}/100${m.grade ? ` · ${m.grade}` : ""}`,
-        W - M - 74,
-        y + 12,
-      );
+      doc.text(`${m.score}/100${m.grade ? ` · ${m.grade}` : ""}`, W - M - 74, y + 12);
     } else {
       doc.setDrawColor(200, 208, 220);
       doc.roundedRect(W - M - 80, y - 2, 80, 22, 6, 6, "S");
