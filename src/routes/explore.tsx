@@ -85,7 +85,16 @@ function parseCoordQuery(value: string) {
 function Explore() {
   const { q } = Route.useSearch();
   const navigate = useNavigate();
-  const [loc, setLoc] = useState<{ lat: number; lng: number; address: string } | null>(null);
+  // radiusM is how far out this position could be, in metres. It is set only
+  // where a real uncertainty exists — a geocoder match, or a GPS fix carrying
+  // its own accuracy. A point the user clicked on the map has no uncertainty
+  // to show, so it stays undefined and no ring is drawn.
+  const [loc, setLoc] = useState<{
+    lat: number;
+    lng: number;
+    address: string;
+    radiusM?: number | null;
+  } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mapType, setMapType] = useState<MapTypeId>("roadmap");
@@ -161,7 +170,7 @@ function Explore() {
         if (!res.ok) {
           setError(`Couldn't find “${query}” in Kenya. Try a nearby town or road.`);
         } else {
-          setLoc({ lat: res.lat, lng: res.lng, address: res.address });
+          setLoc({ lat: res.lat, lng: res.lng, address: res.address, radiusM: res.radiusM });
         }
       } catch (e) {
         console.error(e);
@@ -213,6 +222,7 @@ function Explore() {
         lat: next.lat,
         lng: next.lng,
         address: `My live location${next.accuracy ? ` · ±${Math.round(next.accuracy)} m` : ""}`,
+        radiusM: next.accuracy ?? null,
       });
     });
     stopWatchRef.current = stop;
@@ -361,6 +371,7 @@ function Explore() {
                 mapType={mapType}
                 theme={theme}
                 overlays={overlays}
+                accuracyRadiusM={loc?.radiusM ?? null}
                 onMapClick={({ lat, lng }) => void selectCoordinates(lat, lng)}
                 markerDraggable={simulationEnabled}
                 onMarkerDrag={handleMarkerDrag}

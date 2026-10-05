@@ -20,6 +20,7 @@ import { NavGuide } from "../components/halisia/nav-guide";
 import { Navbar } from "../components/halisia/navbar";
 import { supabase } from "../integrations/supabase/client";
 import { takePostAuthRedirect } from "../lib/post-auth";
+import { primeMark } from "../lib/pdf-chrome";
 
 function NotFoundComponent() {
   return (
@@ -173,6 +174,15 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
+
+  // Decode the brand mark once, early, so a PDF generated later has a logo.
+  // Four of the ten generators are synchronous and read the mark from this
+  // cache rather than awaiting it. Deliberately inside an effect: the decode
+  // runs through an <img> and a canvas, neither of which exists during SSR,
+  // and a server-side call would cache a null for the life of that module.
+  useEffect(() => {
+    primeMark(halisiaLogo.url);
+  }, []);
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
