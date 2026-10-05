@@ -28,14 +28,8 @@ import {
   HardHat,
   Database,
 } from "lucide-react";
-import {
-  getLocationIntel,
-  type LocationIntel,
-} from "@/lib/location-intel.functions";
-import {
-  generateNarrative,
-  type NarrativeOutput,
-} from "@/lib/ai-narrative.functions";
+import { getLocationIntel, type LocationIntel } from "@/lib/location-intel.functions";
+import { generateNarrative, type NarrativeOutput } from "@/lib/ai-narrative.functions";
 import { WeatherPanel } from "@/components/halisia/weather-panel";
 import { LeafletLayersMap } from "@/components/halisia/leaflet-layers-map";
 import { CesiumGlobe } from "@/components/halisia/cesium-globe";
@@ -141,9 +135,7 @@ function spokenSummary(args: {
 
   const elev = intel?.elevation?.meters;
   if (elev != null)
-    parts.push(
-      `Ground elevation ${Math.round(elev)} metres, from the Google Elevation API.`,
-    );
+    parts.push(`Ground elevation ${Math.round(elev)} metres, from the Google Elevation API.`);
   else parts.push("Ground elevation has not been measured for this point.");
 
   const aq = intel?.airQuality;
@@ -165,29 +157,22 @@ function spokenSummary(args: {
       [counts.restaurants, "restaurants"],
       [counts.banks, "banks"],
     ] as const;
-    const found = named
-      .filter(([n]) => n > 0)
-      .map(([n, label]) => `${n} ${label}`);
+    const found = named.filter(([n]) => n > 0).map(([n, label]) => `${n} ${label}`);
     const none = named.filter(([n]) => n === 0).map(([, label]) => label);
-    if (found.length)
-      parts.push(`Within about three kilometres: ${found.join(", ")}.`);
+    if (found.length) parts.push(`Within about three kilometres: ${found.join(", ")}.`);
     if (none.length) parts.push(`None mapped nearby for ${none.join(", ")}.`);
   }
 
   if (narrative?.headline) parts.push(narrative.headline);
   if (narrative?.overview) parts.push(narrative.overview);
   if (narrative?.keyFindings?.length) {
-    parts.push(
-      `Key findings. ${narrative.keyFindings.slice(0, 6).join(". ")}.`,
-    );
+    parts.push(`Key findings. ${narrative.keyFindings.slice(0, 6).join(". ")}.`);
   }
   if (narrative?.watchouts?.length) {
     parts.push(`Watch outs. ${narrative.watchouts.slice(0, 4).join(". ")}.`);
   }
   if (narrative?.confidencePct != null) {
-    parts.push(
-      `Overall confidence in this written read, ${narrative.confidencePct} percent.`,
-    );
+    parts.push(`Overall confidence in this written read, ${narrative.confidencePct} percent.`);
   }
 
   parts.push(
@@ -313,9 +298,7 @@ export function IntelligenceDashboard({
             />
           </div>
         </div>
-        <div className="mt-1 text-lg font-semibold leading-tight line-clamp-2">
-          {address}
-        </div>
+        <div className="mt-1 text-lg font-semibold leading-tight line-clamp-2">{address}</div>
         <div className="text-xs text-muted-foreground mt-0.5">
           {lat.toFixed(4)}, {lng.toFixed(4)}
           {intelQ.data?.elevation?.meters != null && (
@@ -327,9 +310,7 @@ export function IntelligenceDashboard({
             <span className="h-1.5 w-1.5 rounded-full bg-accent" />
             {narrativeReady ? "Written read ready" : "Reading this location…"}
           </span>
-          {intelQ.isFetching && (
-            <Loader2 className="h-3.5 w-3.5 animate-spin text-accent" />
-          )}
+          {intelQ.isFetching && <Loader2 className="h-3.5 w-3.5 animate-spin text-accent" />}
           <ReadAloud
             text={spokenSummary({
               address,
@@ -423,9 +404,7 @@ export function IntelligenceDashboard({
           </>
         )}
         {tab === "weather" && <WeatherPanel lat={lat} lng={lng} />}
-        {tab === "environment" && (
-          <EnvironmentTab intel={intelQ.data} loading={intelQ.isLoading} />
-        )}
+        {tab === "environment" && <EnvironmentTab intel={intelQ.data} loading={intelQ.isLoading} />}
         {tab === "amenities" && (
           <>
             <AmenitiesTab intel={intelQ.data} loading={intelQ.isLoading} />
@@ -436,9 +415,9 @@ export function IntelligenceDashboard({
           <div className="space-y-2">
             <LeafletLayersMap lat={lat} lng={lng} label={address} />
             <div className="text-[11px] text-muted-foreground px-1">
-              Multi-source GIS: Esri satellite, OpenStreetMap, Carto dark/light,
-              OpenTopoMap relief, OpenRailway & OpenSeaMap overlays. Toggle
-              basemaps and overlays via the top right control.
+              Multi-source GIS: Esri satellite, OpenStreetMap, Carto dark/light, OpenTopoMap relief,
+              OpenRailway & OpenSeaMap overlays. Toggle basemaps and overlays via the top right
+              control.
             </div>
           </div>
         )}
@@ -446,8 +425,8 @@ export function IntelligenceDashboard({
           <div className="space-y-2">
             <HeatmapMap lat={lat} lng={lng} intel={intelQ.data} />
             <div className="text-[11px] text-muted-foreground px-1">
-              Density heatmap of nearby amenities (Google Places). Warmer
-              colours = more services concentrated within a short walk.
+              Density heatmap of nearby amenities (Google Places). Warmer colours = more services
+              concentrated within a short walk.
             </div>
           </div>
         )}
@@ -455,8 +434,8 @@ export function IntelligenceDashboard({
           <div className="space-y-2">
             <CesiumGlobe lat={lat} lng={lng} label={address} />
             <div className="text-[11px] text-muted-foreground px-1">
-              True 3D globe rendered with CesiumJS. Drag to orbit, scroll to
-              zoom, right-click to tilt.
+              True 3D globe rendered with CesiumJS. Drag to orbit, scroll to zoom, right-click to
+              tilt.
             </div>
           </div>
         )}
@@ -464,17 +443,14 @@ export function IntelligenceDashboard({
           <div className="space-y-2">
             <Terrain3D lat={lat} lng={lng} height="h-72" variant="expanded" />
             <div className="text-[11px] text-muted-foreground px-1">
-              Isometric 3D slope &amp; contour projection over a 9×9 elevation
-              grid (~18 km²) sampled from Open-Topo-Data ASTER 30m. Hover any
-              tile to inspect its elevation and precise coordinates; use Refresh
-              to re-sample.
+              Isometric 3D slope &amp; contour projection over a 9×9 elevation grid (~18 km²)
+              sampled from Open-Topo-Data ASTER 30m. Hover any tile to inspect its elevation and
+              precise coordinates; use Refresh to re-sample.
             </div>
           </div>
         )}
         {tab === "timeline" && <TimelinePanel lat={lat} lng={lng} />}
-        {tab === "geotech" && (
-          <GeotechPanel lat={lat} lng={lng} address={address} />
-        )}
+        {tab === "geotech" && <GeotechPanel lat={lat} lng={lng} address={address} />}
         {tab === "wave4" && <Wave4Panel lat={lat} lng={lng} />}
         {tab === "evidence" && (
           <div className="space-y-3">
@@ -483,10 +459,7 @@ export function IntelligenceDashboard({
           </div>
         )}
         {tab === "ai" && (
-          <AITab
-            narrative={narrativeQ.data}
-            loading={narrativeQ.isLoading || intelQ.isLoading}
-          />
+          <AITab narrative={narrativeQ.data} loading={narrativeQ.isLoading || intelQ.isLoading} />
         )}
       </motion.div>
     </div>
@@ -506,20 +479,14 @@ export function IntelligenceDashboard({
 function Pips({ n }: { n: number }) {
   const shown = Math.min(n, 12);
   if (n <= 0) {
-    return (
-      <span className="text-[10px] text-muted-foreground">none mapped</span>
-    );
+    return <span className="text-[10px] text-muted-foreground">none mapped</span>;
   }
   return (
     <span className="inline-flex items-center gap-[3px]" aria-hidden="true">
       {Array.from({ length: shown }).map((_, i) => (
         <span key={i} className="h-1.5 w-1.5 rounded-full bg-accent/70" />
       ))}
-      {n > shown && (
-        <span className="ml-1 text-[10px] text-muted-foreground">
-          +{n - shown}
-        </span>
-      )}
+      {n > shown && <span className="ml-1 text-[10px] text-muted-foreground">+{n - shown}</span>}
     </span>
   );
 }
@@ -552,9 +519,7 @@ function StatTile({
         <div className="h-8 w-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
           <Icon className="h-4 w-4 text-accent" />
         </div>
-        <div className="min-w-0 truncate text-[11px] text-muted-foreground">
-          {label}
-        </div>
+        <div className="min-w-0 truncate text-[11px] text-muted-foreground">{label}</div>
       </div>
       <div className="mt-2 min-w-0 truncate text-xl font-semibold tabular-nums tracking-tight">
         {value}
@@ -565,9 +530,7 @@ function StatTile({
         </div>
       )}
       {sub && (
-        <div className="mt-0.5 min-w-0 truncate text-[11px] text-muted-foreground">
-          {sub}
-        </div>
+        <div className="mt-0.5 min-w-0 truncate text-[11px] text-muted-foreground">{sub}</div>
       )}
       {source && (
         <div className="mt-1.5 truncate text-[9px] uppercase tracking-[0.12em] text-accent/80">
@@ -630,11 +593,7 @@ function OverviewTab({
         />
         <StatTile
           label="Elevation"
-          value={
-            intel.elevation?.meters != null
-              ? `${intel.elevation.meters.toFixed(0)} m`
-              : "—"
-          }
+          value={intel.elevation?.meters != null ? `${intel.elevation.meters.toFixed(0)} m` : "—"}
           sub="Height above sea level"
           icon={Mountain}
           tone="from-amber-glow to-primary"
@@ -642,11 +601,7 @@ function OverviewTab({
         />
         <StatTile
           label="Air quality"
-          value={
-            intel.airQuality?.universalAqi != null
-              ? `${intel.airQuality.universalAqi}`
-              : "—"
-          }
+          value={intel.airQuality?.universalAqi != null ? `${intel.airQuality.universalAqi}` : "—"}
           sub={intel.airQuality?.category ?? "Universal AQI"}
           icon={Wind}
           tone="from-primary to-emerald-glow"
@@ -655,9 +610,7 @@ function OverviewTab({
       </div>
       {narrative && narrative.paragraphs[0] && (
         <div className="glass rounded-2xl p-4">
-          <div className="text-[10px] uppercase tracking-widest text-accent">
-            AI read
-          </div>
+          <div className="text-[10px] uppercase tracking-widest text-accent">AI read</div>
           <p className="mt-1.5 text-sm leading-relaxed text-foreground/90">
             {narrative.paragraphs[0]}
           </p>
@@ -667,17 +620,10 @@ function OverviewTab({
   );
 }
 
-function EnvironmentTab({
-  intel,
-  loading,
-}: {
-  intel?: LocationIntel;
-  loading: boolean;
-}) {
+function EnvironmentTab({ intel, loading }: { intel?: LocationIntel; loading: boolean }) {
   if (loading || !intel) return <SkeletonGrid n={3} />;
   const aqi = intel.airQuality?.universalAqi;
-  const aqiText =
-    aqi != null ? `${aqi} · ${intel.airQuality?.category ?? "—"}` : "No data";
+  const aqiText = aqi != null ? `${aqi} · ${intel.airQuality?.category ?? "—"}` : "No data";
   return (
     <div className="space-y-3">
       <div className="glass rounded-2xl p-4">
@@ -685,9 +631,7 @@ function EnvironmentTab({
           <Wind className={`h-4 w-4 ${aqiTone(aqi)}`} />
           <div className="text-sm font-medium">Air quality (Universal AQI)</div>
         </div>
-        <div
-          className={`mt-2 text-3xl font-semibold tracking-tight ${aqiTone(aqi)}`}
-        >
+        <div className={`mt-2 text-3xl font-semibold tracking-tight ${aqiTone(aqi)}`}>
           {aqiText}
         </div>
         {intel.airQuality?.dominant && (
@@ -710,11 +654,7 @@ function EnvironmentTab({
       <div className="grid grid-cols-2 gap-2.5">
         <StatTile
           label="Elevation"
-          value={
-            intel.elevation?.meters != null
-              ? `${intel.elevation.meters.toFixed(0)} m`
-              : "—"
-          }
+          value={intel.elevation?.meters != null ? `${intel.elevation.meters.toFixed(0)} m` : "—"}
           sub={
             intel.elevation?.resolution
               ? `±${intel.elevation.resolution.toFixed(0)} m resolution`
@@ -742,9 +682,8 @@ function EnvironmentTab({
         />
       </div>
       <div className="text-[11px] text-muted-foreground px-1">
-        Live from Google Maps Platform (Air Quality + Elevation APIs). Flood
-        proxy is a rough elevation-based hint — field verification in long rains
-        still recommended.
+        Live from Google Maps Platform (Air Quality + Elevation APIs). Flood proxy is a rough
+        elevation-based hint — field verification in long rains still recommended.
       </div>
     </div>
   );
@@ -771,9 +710,7 @@ function CategoryList({
           <Icon className="h-3.5 w-3.5 text-accent" />
         </div>
         <div className="text-xs font-medium">{title}</div>
-        <div className="ml-auto text-[10px] text-muted-foreground">
-          {items.length}
-        </div>
+        <div className="ml-auto text-[10px] text-muted-foreground">{items.length}</div>
       </div>
       <ul className="space-y-2">
         {items.slice(0, 6).map((p) => (
@@ -784,13 +721,7 @@ function CategoryList({
   );
 }
 
-function AmenitiesTab({
-  intel,
-  loading,
-}: {
-  intel?: LocationIntel;
-  loading: boolean;
-}) {
+function AmenitiesTab({ intel, loading }: { intel?: LocationIntel; loading: boolean }) {
   if (loading || !intel) return <SkeletonGrid n={4} />;
   const c = intel.categories;
   const empty =
@@ -803,25 +734,17 @@ function AmenitiesTab({
   if (empty)
     return (
       <div className="glass rounded-2xl p-4 text-sm text-muted-foreground">
-        No amenities returned by Google Places for this area. Try zooming out or
-        picking a nearby town.
+        No amenities returned by Google Places for this area. Try zooming out or picking a nearby
+        town.
       </div>
     );
   return (
     <div className="space-y-2.5">
       <CategoryList title="Schools" icon={GraduationCap} items={c.schools} />
       <CategoryList title="Healthcare" icon={HeartPulse} items={c.hospitals} />
-      <CategoryList
-        title="Groceries"
-        icon={ShoppingBasket}
-        items={c.groceries}
-      />
+      <CategoryList title="Groceries" icon={ShoppingBasket} items={c.groceries} />
       <CategoryList title="Transit" icon={TrainFront} items={c.transit} />
-      <CategoryList
-        title="Restaurants & cafés"
-        icon={Store}
-        items={c.restaurants}
-      />
+      <CategoryList title="Restaurants & cafés" icon={Store} items={c.restaurants} />
       <CategoryList title="Banks & ATMs" icon={Landmark} items={c.banks} />
     </div>
   );
@@ -830,15 +753,13 @@ function AmenitiesTab({
 function EvidenceTab({ intel }: { intel?: LocationIntel }) {
   if (!intel)
     return (
-      <div className="glass rounded-2xl p-4 text-sm text-muted-foreground">
-        Loading photos…
-      </div>
+      <div className="glass rounded-2xl p-4 text-sm text-muted-foreground">Loading photos…</div>
     );
   if (!intel.photos.length)
     return (
       <div className="glass rounded-2xl p-4 text-sm text-muted-foreground">
-        No Google Places photos are available for the amenities near this point.
-        The map itself is your best visual reference.
+        No Google Places photos are available for the amenities near this point. The map itself is
+        your best visual reference.
       </div>
     );
   return (
@@ -856,20 +777,14 @@ function EvidenceTab({ intel }: { intel?: LocationIntel }) {
         ))}
       </div>
       <div className="mt-2 text-[11px] text-muted-foreground">
-        Photos courtesy of Google Places contributors. They depict venues near
-        this point, not the parcel itself.
+        Photos courtesy of Google Places contributors. They depict venues near this point, not the
+        parcel itself.
       </div>
     </div>
   );
 }
 
-function AITab({
-  narrative,
-  loading,
-}: {
-  narrative?: NarrativeOutput;
-  loading: boolean;
-}) {
+function AITab({ narrative, loading }: { narrative?: NarrativeOutput; loading: boolean }) {
   if (loading || !narrative)
     return (
       <div className="glass rounded-2xl p-6 text-center text-sm text-muted-foreground">
@@ -878,11 +793,8 @@ function AITab({
       </div>
     );
 
-  const updatedStamp = narrative.lastUpdated
-    ? formatDateTime(narrative.lastUpdated)
-    : "—";
-  const updatedLabel =
-    updatedStamp === "—" ? "Timestamp unavailable" : `Updated ${updatedStamp}`;
+  const updatedStamp = narrative.lastUpdated ? formatDateTime(narrative.lastUpdated) : "—";
+  const updatedLabel = updatedStamp === "—" ? "Timestamp unavailable" : `Updated ${updatedStamp}`;
 
   return (
     <div className="space-y-3">
@@ -893,17 +805,11 @@ function AITab({
           <div className="text-[10px] uppercase tracking-widest text-accent">
             HALISIA AI · Executive summary
           </div>
-          <span className="ml-auto text-[10px] text-muted-foreground">
-            {updatedLabel}
-          </span>
+          <span className="ml-auto text-[10px] text-muted-foreground">{updatedLabel}</span>
         </div>
-        <div className="mt-1 text-base font-semibold tracking-tight">
-          {narrative.headline}
-        </div>
+        <div className="mt-1 text-base font-semibold tracking-tight">{narrative.headline}</div>
         {narrative.overview && (
-          <p className="mt-2 text-sm leading-relaxed text-foreground/90">
-            {narrative.overview}
-          </p>
+          <p className="mt-2 text-sm leading-relaxed text-foreground/90">{narrative.overview}</p>
         )}
 
         {/* Confidence bar */}
@@ -928,10 +834,7 @@ function AITab({
         <SectionCard title="Key findings" icon={Sparkles} tone="text-accent">
           <ul className="space-y-1.5">
             {narrative.keyFindings.map((f, i) => (
-              <li
-                key={i}
-                className="flex items-start gap-2 text-sm text-foreground/90"
-              >
+              <li key={i} className="flex items-start gap-2 text-sm text-foreground/90">
                 <span className="mt-2 h-1 w-1 rounded-full bg-accent" />
                 <span className="flex-1">{f}</span>
               </li>
@@ -972,52 +875,23 @@ function AITab({
 
       {/* Advice columns */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <SectionCard
-          title="Recommendations"
-          icon={ArrowRight}
-          tone="text-cyan-glow"
-        >
+        <SectionCard title="Recommendations" icon={ArrowRight} tone="text-cyan-glow">
           <BulletList items={narrative.recommendations} tone="bg-cyan-glow" />
         </SectionCard>
-        <SectionCard
-          title="Construction advice"
-          icon={HardHat}
-          tone="text-amber-glow"
-        >
-          <BulletList
-            items={narrative.constructionAdvice}
-            tone="bg-amber-glow"
-          />
+        <SectionCard title="Construction advice" icon={HardHat} tone="text-amber-glow">
+          <BulletList items={narrative.constructionAdvice} tone="bg-amber-glow" />
         </SectionCard>
-        <SectionCard
-          title="Investment advice"
-          icon={Landmark}
-          tone="text-emerald-glow"
-        >
-          <BulletList
-            items={narrative.investmentAdvice}
-            tone="bg-emerald-glow"
-          />
+        <SectionCard title="Investment advice" icon={Landmark} tone="text-emerald-glow">
+          <BulletList items={narrative.investmentAdvice} tone="bg-emerald-glow" />
         </SectionCard>
       </div>
 
       {/* Environmental notes + Future outlook */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <SectionCard
-          title="Environmental notes"
-          icon={Leaf}
-          tone="text-emerald-glow"
-        >
-          <BulletList
-            items={narrative.environmentalNotes}
-            tone="bg-emerald-glow"
-          />
+        <SectionCard title="Environmental notes" icon={Leaf} tone="text-emerald-glow">
+          <BulletList items={narrative.environmentalNotes} tone="bg-emerald-glow" />
         </SectionCard>
-        <SectionCard
-          title="Future outlook"
-          icon={Activity}
-          tone="text-cyan-glow"
-        >
+        <SectionCard title="Future outlook" icon={Activity} tone="text-cyan-glow">
           <p className="text-sm leading-relaxed text-foreground/90">
             {narrative.futureOutlook || "—"}
           </p>
@@ -1026,29 +900,17 @@ function AITab({
 
       {/* Watch-outs & Verify-next kept for backward-compat */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <SectionCard
-          title="Watch-outs"
-          icon={ShieldAlert}
-          tone="text-amber-glow"
-        >
+        <SectionCard title="Watch-outs" icon={ShieldAlert} tone="text-amber-glow">
           <BulletList items={narrative.watchouts} tone="bg-amber-glow" />
         </SectionCard>
-        <SectionCard
-          title="Verify next"
-          icon={ArrowRight}
-          tone="text-cyan-glow"
-        >
+        <SectionCard title="Verify next" icon={ArrowRight} tone="text-cyan-glow">
           <BulletList items={narrative.nextSteps} tone="bg-cyan-glow" />
         </SectionCard>
       </div>
 
       {/* Data sources */}
       {narrative.dataSources.length > 0 && (
-        <SectionCard
-          title="Data sources used"
-          icon={Database}
-          tone="text-muted-foreground"
-        >
+        <SectionCard title="Data sources used" icon={Database} tone="text-muted-foreground">
           <div className="flex flex-wrap gap-1.5">
             {narrative.dataSources.map((s, i) => (
               <span
@@ -1063,8 +925,8 @@ function AITab({
       )}
 
       <div className="text-[11px] text-muted-foreground px-1">
-        AI narrative is informational, not legal advice. Always verify title,
-        survey, and zoning with a licensed professional.
+        AI narrative is informational, not legal advice. Always verify title, survey, and zoning
+        with a licensed professional.
       </div>
     </div>
   );
@@ -1093,18 +955,11 @@ function SectionCard({
 
 function BulletList({ items, tone }: { items: string[]; tone: string }) {
   if (!items?.length)
-    return (
-      <div className="text-[11px] text-muted-foreground">
-        No items provided.
-      </div>
-    );
+    return <div className="text-[11px] text-muted-foreground">No items provided.</div>;
   return (
     <ul className="space-y-1.5">
       {items.map((x, i) => (
-        <li
-          key={i}
-          className="flex items-start gap-2 text-sm text-foreground/90"
-        >
+        <li key={i} className="flex items-start gap-2 text-sm text-foreground/90">
           <span className={`mt-2 h-1 w-1 rounded-full ${tone}`} />
           <span className="flex-1">{x}</span>
         </li>
@@ -1147,22 +1002,12 @@ function WhyList({
   );
 }
 
-function ScoreCard({
-  title,
-  score,
-  note,
-}: {
-  title: string;
-  score: number;
-  note: string;
-}) {
+function ScoreCard({ title, score, note }: { title: string; score: number; note: string }) {
   const pct = Math.max(0, Math.min(100, score));
   return (
     <div className="glass rounded-2xl p-4">
       <div className="flex items-center justify-between">
-        <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-          {title}
-        </div>
+        <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{title}</div>
         <div className="text-lg font-semibold tracking-tight">{pct}</div>
       </div>
       <div className="mt-2 h-1.5 rounded-full bg-white/10 overflow-hidden">
@@ -1171,11 +1016,7 @@ function ScoreCard({
           style={{ width: `${pct}%` }}
         />
       </div>
-      {note && (
-        <div className="mt-2 text-[12px] text-muted-foreground leading-snug">
-          {note}
-        </div>
-      )}
+      {note && <div className="mt-2 text-[12px] text-muted-foreground leading-snug">{note}</div>}
     </div>
   );
 }
