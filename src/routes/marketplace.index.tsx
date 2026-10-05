@@ -710,7 +710,7 @@ function ListingCard({
 }) {
   const cats = categoriesOf(p);
   return (
-    <li className="glass rounded-2xl border border-white/10 overflow-hidden flex flex-col">
+    <article className="glass rounded-2xl border border-white/10 overflow-hidden flex flex-col">
       <Link to="/marketplace/$id" params={{ id: p.id }} className="block">
         <div className="aspect-[16/10] bg-gradient-to-br from-primary/30 via-accent/10 to-emerald-500/20 relative">
           {p.cover_image ? (
@@ -801,7 +801,7 @@ function ListingCard({
           <BadgeCheck className="h-3 w-3" /> Contact & full intelligence
         </Link>
       </div>
-    </li>
+    </article>
   );
 }
 
