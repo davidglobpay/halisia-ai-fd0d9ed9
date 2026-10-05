@@ -139,12 +139,16 @@ export function parseMutationPlan(items: TextItem[]): MutationPlan {
     const t = it.text.trim();
     if (!t) continue;
 
-    if (/\d\s*(ha|m2|m²|sqm)\b/i.test(t) || /\d(?:Ha|HA|ha)$/.test(t)) {
-      const parsed: ParsedArea | null = parseArea(t);
-      if (parsed && !parsed.ambiguous) {
-        plots.push({ areaM2: parsed.m2, label: t, x: it.x, y: it.y, dimsM: [] });
-        continue;
-      }
+    // Let parseArea decide whether this is an area label. The first version
+    // guarded it with its own unit regex, and that regex repeated the exact
+    // trap parseArea documents: a \b after "m\u00b2" can never match, because
+    // a superscript two is not a word character. A plot printed "443.7 m\u00b2"
+    // was dropped silently, and so was "440 sq m". One parser for units, used
+    // everywhere, is the only way that stays fixed.
+    const parsed: ParsedArea | null = parseArea(t);
+    if (parsed && !parsed.ambiguous) {
+      plots.push({ areaM2: parsed.m2, label: t, x: it.x, y: it.y, dimsM: [] });
+      continue;
     }
     if (DIMENSION.test(t)) {
       // "0.0" appears on the measured sheet as a tick annotation. A zero-length
