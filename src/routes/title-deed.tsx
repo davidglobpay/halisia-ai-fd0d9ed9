@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { MapView } from "@/components/halisia/map-view";
 import { ParcelPin, type PinnedPoint } from "@/components/halisia/parcel-pin";
+import { MutationUpload } from "@/components/halisia/mutation-upload";
 import { IntelligenceDashboard } from "@/components/halisia/intelligence-dashboard";
 import { extractDeedFields, type DeedFields } from "@/lib/deed-extract.functions";
 import { geocodeAddress } from "@/lib/geocode.functions";
@@ -845,6 +846,16 @@ function TitleDeedPage() {
                   originLabel={loc.address}
                   originRadiusM={loc.radiusM}
                   onChange={setPinned}
+                />
+                <MutationUpload
+                  deed={{
+                    // Whatever OCR already read off the deed, handed straight
+                    // to the cross-check. Each is optional: a check only runs
+                    // where both documents actually answered.
+                    sheet: fields?.surveyNumber ?? null,
+                    areaText: fields?.registeredArea ?? null,
+                    block: fields?.titleNumber ?? fields?.lrNumber ?? null,
+                  }}
                 />
                 <LocationStatusCard
                   status={loc.status}
