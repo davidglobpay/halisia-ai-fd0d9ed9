@@ -228,16 +228,16 @@ export default function LeafletLayersMap({
             <TileLayer
               url="https://{s}.tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png"
               attribution="© OpenRailwayMap"
-                maxNativeZoom={19}
-                maxZoom={21}
+              maxNativeZoom={19}
+              maxZoom={21}
             />
           </LayersControl.Overlay>
           <LayersControl.Overlay name="OpenSeaMap">
             <TileLayer
               url="https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png"
               attribution="© OpenSeaMap"
-                maxNativeZoom={18}
-                maxZoom={21}
+              maxNativeZoom={18}
+              maxZoom={21}
             />
           </LayersControl.Overlay>
         </LayersControl>

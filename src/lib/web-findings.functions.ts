@@ -56,7 +56,9 @@ export const getWebFindings = createServerFn({ method: "POST" })
           return null;
         }
         const j = (await res.json()) as {
-          data?: { web?: Array<{ url?: string; title?: string; description?: string }> } | Array<{ url?: string; title?: string; description?: string }>;
+          data?:
+            | { web?: Array<{ url?: string; title?: string; description?: string }> }
+            | Array<{ url?: string; title?: string; description?: string }>;
         };
         const list = Array.isArray(j.data) ? j.data : (j.data?.web ?? []);
         const hit = list.find((r) => r.url && r.description && r.description.length > 30);

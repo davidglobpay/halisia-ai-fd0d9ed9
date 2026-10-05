@@ -136,8 +136,7 @@ export function categoriesOf(row: PropertyRow): MarketplaceCategory[] {
   // asset is an investment listing, and undeveloped or mixed-use land is a
   // development one.
   if (rental || kind === "commercial" || kind === "industrial") out.push("investment");
-  if (kind === "land" || kind === "agricultural" || kind === "mixed_use")
-    out.push("development");
+  if (kind === "land" || kind === "agricultural" || kind === "mixed_use") out.push("development");
 
   return Array.from(new Set(out));
 }

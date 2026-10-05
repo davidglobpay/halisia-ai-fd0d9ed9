@@ -240,10 +240,7 @@ function SummaryTable({ codes }: { codes: number[] }) {
                     {f.areaKm2.toLocaleString()}
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums">
-                    {formatMetric(
-                      "population",
-                      Math.round(populationDensity(f.code) ?? 0),
-                    )}
+                    {formatMetric("population", Math.round(populationDensity(f.code) ?? 0))}
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums">
                     {pol?.history.find((h) => h.year === 2022)?.turnoutPct != null
