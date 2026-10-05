@@ -77,7 +77,7 @@ export function ParcelDraw({
       setRing(next);
       setFitted(null);
     },
-    [ring],
+    [ring, setRing],
   );
 
   const addPoint = useCallback(
@@ -95,14 +95,14 @@ export function ParcelDraw({
       setFitted(null);
       return h.slice(0, -1);
     });
-  }, []);
+  }, [setRing]);
 
   const clear = useCallback(() => {
     setHistory((h) => [...h.slice(-19), ring]);
     setRing([]);
     setMode("idle");
     setFitted(null);
-  }, [ring]);
+  }, [ring, setRing]);
 
   const applyFit = useCallback(() => {
     if (!deedArea || ring.length < 3) return;
