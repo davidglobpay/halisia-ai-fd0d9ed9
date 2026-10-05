@@ -59,6 +59,10 @@ export function MapView({
   markerDraggable = false,
   onMarkerDrag,
   accuracyRadiusM = null,
+  polygon = null,
+  polygonEditable = false,
+  onPolygonChange,
+  overlayPolygons = null,
 }: {
   center?: MapLocation;
   zoom?: number;
@@ -76,11 +80,38 @@ export function MapView({
    * Null or omitted draws nothing, so every existing caller is unaffected.
    */
   accuracyRadiusM?: number | null;
+  /**
+   * A boundary the user has drawn, as a ring of points. Null draws nothing,
+   * so every existing caller is unaffected.
+   *
+   * This is a sketch, never a survey. The styling says so deliberately: a
+   * dashed-looking thin stroke and a light fill, nothing like the solid
+   * confident line a cadastral layer would use.
+   */
+  polygon?: MapLocation[] | null;
+  /** Lets the user drag vertices and midpoints. */
+  polygonEditable?: boolean;
+  /** Fires whenever the user moves, adds or deletes a vertex. */
+  onPolygonChange?: (ring: { lat: number; lng: number }[]) => void;
+  /**
+   * Extra rings drawn under the editable one and never interactive — a
+   * setback envelope, a tested building footprint. Each carries its own
+   * colour so the three can be told apart at a glance.
+   */
+  overlayPolygons?: { ring: MapLocation[]; color: string; fillOpacity?: number }[] | null;
 }) {
   const el = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const markerRef = useRef<google.maps.Marker | null>(null);
   const accuracyRef = useRef<google.maps.Circle | null>(null);
+  const polygonRef = useRef<google.maps.Polygon | null>(null);
+  const overlayPolyRefs = useRef<google.maps.Polygon[]>([]);
+  const polygonListenersRef = useRef<google.maps.MapsEventListener[]>([]);
+  // Held in a ref so the path listeners always call the newest callback
+  // without having to tear the polygon down and rebuild it on every render —
+  // rebuilding mid-drag would drop the vertex the user is holding.
+  const onPolygonChangeRef = useRef(onPolygonChange);
+  onPolygonChangeRef.current = onPolygonChange;
   const markerDragListenerRef = useRef<google.maps.MapsEventListener | null>(null);
   const clickListenerRef = useRef<google.maps.MapsEventListener | null>(null);
   const overlayRefs = useRef<
@@ -316,6 +347,89 @@ export function MapView({
       accuracyRef.current = null;
     };
   }, [mapReady, marker?.lat, marker?.lng, accuracyRadiusM]);
+
+  // Read-only rings: the setback envelope and any tested footprint. Drawn at a
+  // lower zIndex than the editable boundary so a vertex handle is never hidden
+  // beneath a fill.
+  useEffect(() => {
+    if (!mapReady || !mapRef.current || !window.google?.maps) return;
+    for (const p of overlayPolyRefs.current) p.setMap(null);
+    overlayPolyRefs.current = [];
+    if (!overlayPolygons?.length) return;
+    for (const spec of overlayPolygons) {
+      if (!spec.ring || spec.ring.length < 3) continue;
+      overlayPolyRefs.current.push(
+        new window.google.maps.Polygon({
+          map: mapRef.current,
+          paths: spec.ring.map((p) => ({ lat: p.lat, lng: p.lng })),
+          editable: false,
+          clickable: false,
+          strokeColor: spec.color,
+          strokeOpacity: 0.9,
+          strokeWeight: 1.5,
+          fillColor: spec.color,
+          fillOpacity: spec.fillOpacity ?? 0.1,
+          zIndex: 1,
+        }),
+      );
+    }
+    return () => {
+      for (const p of overlayPolyRefs.current) p.setMap(null);
+      overlayPolyRefs.current = [];
+    };
+  }, [mapReady, JSON.stringify(overlayPolygons)]);
+
+  // The drawn boundary. Rebuilt when the ring identity changes, not on every
+  // render: a rebuild while the user is dragging a vertex would snatch it from
+  // under the pointer.
+  useEffect(() => {
+    if (!mapReady || !mapRef.current || !window.google?.maps) return;
+    for (const l of polygonListenersRef.current) l.remove();
+    polygonListenersRef.current = [];
+    polygonRef.current?.setMap(null);
+    polygonRef.current = null;
+    if (!polygon || polygon.length < 3) return;
+
+    const poly = new window.google.maps.Polygon({
+      map: mapRef.current,
+      paths: polygon.map((p) => ({ lat: p.lat, lng: p.lng })),
+      editable: polygonEditable,
+      strokeColor: "#c08a2e",
+      strokeOpacity: 0.95,
+      strokeWeight: 2,
+      fillColor: "#c08a2e",
+      fillOpacity: 0.12,
+      clickable: false,
+      zIndex: 2,
+    });
+    polygonRef.current = poly;
+
+    if (polygonEditable) {
+      const path = poly.getPath();
+      const report = () => {
+        const ring: { lat: number; lng: number }[] = [];
+        for (let i = 0; i < path.getLength(); i++) {
+          const pt = path.getAt(i);
+          ring.push({ lat: pt.lat(), lng: pt.lng() });
+        }
+        onPolygonChangeRef.current?.(ring);
+      };
+      polygonListenersRef.current = [
+        window.google.maps.event.addListener(path, "set_at", report),
+        window.google.maps.event.addListener(path, "insert_at", report),
+        window.google.maps.event.addListener(path, "remove_at", report),
+      ];
+    }
+
+    return () => {
+      for (const l of polygonListenersRef.current) l.remove();
+      polygonListenersRef.current = [];
+      polygonRef.current?.setMap(null);
+      polygonRef.current = null;
+    };
+    // The ring is compared by value: a caller that rebuilds the array every
+    // render would otherwise tear the polygon down on each one.
+  }, [mapReady, polygonEditable, JSON.stringify(polygon)]);
 
   return (
     <div
