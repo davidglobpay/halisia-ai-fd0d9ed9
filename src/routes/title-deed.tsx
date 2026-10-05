@@ -90,6 +90,7 @@ function buildDeedLoc(
 }
 
 export const Route = createFileRoute("/title-deed")({
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Title Deed Search — HALISIA AI" },
