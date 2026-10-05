@@ -36,12 +36,9 @@ export async function downloadGeotechPdf(g: GeotechIntel, address: string) {
     sand: [240, 210, 130] as [number, number, number],
   };
   const rgb = (c: [number, number, number]) => c;
-  const setFill = (c: [number, number, number]) =>
-    doc.setFillColor(c[0], c[1], c[2]);
-  const setDraw = (c: [number, number, number]) =>
-    doc.setDrawColor(c[0], c[1], c[2]);
-  const setText = (c: [number, number, number]) =>
-    doc.setTextColor(c[0], c[1], c[2]);
+  const setFill = (c: [number, number, number]) => doc.setFillColor(c[0], c[1], c[2]);
+  const setDraw = (c: [number, number, number]) => doc.setDrawColor(c[0], c[1], c[2]);
+  const setText = (c: [number, number, number]) => doc.setTextColor(c[0], c[1], c[2]);
   const levelColor = (l: string) =>
     l === "Low" || l === "Preferred" || l === "Easy" || l === "High"
       ? C.good
@@ -76,12 +73,7 @@ export async function downloadGeotechPdf(g: GeotechIntel, address: string) {
     doc.text(parts, x, y);
     return parts.length * (size + 2);
   };
-  const chip = (
-    x: number,
-    y: number,
-    label: string,
-    color: [number, number, number],
-  ) => {
+  const chip = (x: number, y: number, label: string, color: [number, number, number]) => {
     const w = doc.getTextWidth(label) + 14;
     setFill(color);
     doc.roundedRect(x, y - 9, w, 13, 6, 6, "F");
@@ -258,11 +250,7 @@ export async function downloadGeotechPdf(g: GeotechIntel, address: string) {
   setText(C.dim);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
-  doc.text(
-    "Source: FAO SoilGrids v2.0 (250m) · derived interpretation",
-    40,
-    56,
-  );
+  doc.text("Source: FAO SoilGrids v2.0 (250m) · derived interpretation", 40, 56);
 
   // Soil layers stacked bars
   const sy = 80,
@@ -303,21 +291,13 @@ export async function downloadGeotechPdf(g: GeotechIntel, address: string) {
     doc.rect(bx, by, bw2, bh, "S");
     setText(C.dim);
     doc.setFontSize(7);
-    doc.text(
-      `C ${L.clayPct}% · S ${L.siltPct}% · Sa ${L.sandPct}%`,
-      bx,
-      by + bh + 9,
-    );
+    doc.text(`C ${L.clayPct}% · S ${L.siltPct}% · Sa ${L.sandPct}%`, bx, by + bh + 9);
   });
 
   // Legend
   const ly = sy + g.soilLayers.length * (slh + 8) + 6;
   const lx0 = 40;
-  const legendItem = (
-    x: number,
-    label: string,
-    col: [number, number, number],
-  ) => {
+  const legendItem = (x: number, label: string, col: [number, number, number]) => {
     setFill(col);
     doc.rect(x, ly - 8, 10, 10, "F");
     setText(C.dim);
@@ -397,12 +377,7 @@ export async function downloadGeotechPdf(g: GeotechIntel, address: string) {
     wh = 90;
   panel(40, wy, W - 80, wh);
   heading(52, wy + 20, "Groundwater indicators");
-  const gwRow = (
-    x: number,
-    label: string,
-    val: string,
-    col: [number, number, number],
-  ) => {
+  const gwRow = (x: number, label: string, val: string, col: [number, number, number]) => {
     setText(C.dim);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
@@ -425,9 +400,7 @@ export async function downloadGeotechPdf(g: GeotechIntel, address: string) {
   gwRow(
     52 + cellW * 2,
     "Nearest water",
-    g.groundwater.nearestWaterKm != null
-      ? `${g.groundwater.nearestWaterKm} km`
-      : "—",
+    g.groundwater.nearestWaterKm != null ? `${g.groundwater.nearestWaterKm} km` : "—",
     C.accent,
   );
 
