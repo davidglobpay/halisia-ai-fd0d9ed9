@@ -21,6 +21,7 @@ import {
 import { MapView } from "@/components/halisia/map-view";
 import { ParcelPin, type PinnedPoint } from "@/components/halisia/parcel-pin";
 import { MutationUpload } from "@/components/halisia/mutation-upload";
+import { ParcelDraw } from "@/components/halisia/parcel-draw";
 import { IntelligenceDashboard } from "@/components/halisia/intelligence-dashboard";
 import { extractDeedFields, type DeedFields } from "@/lib/deed-extract.functions";
 import { geocodeAddress } from "@/lib/geocode.functions";
@@ -856,6 +857,14 @@ function TitleDeedPage() {
                     areaText: fields?.registeredArea ?? null,
                     block: fields?.titleNumber ?? fields?.lrNumber ?? null,
                   }}
+                />
+                <ParcelDraw
+                  // Opens on the pin the user placed in Step 1 where there is
+                  // one, falling back to the geocoded point. Drawing a
+                  // boundary around a town centroid is not useful, so the pin
+                  // is much the better centre when it exists.
+                  center={{ lat: pinned?.lat ?? loc.lat, lng: pinned?.lng ?? loc.lng }}
+                  deedAreaText={fields?.registeredArea ?? null}
                 />
                 <LocationStatusCard
                   status={loc.status}
