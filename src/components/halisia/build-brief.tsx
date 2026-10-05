@@ -9,12 +9,7 @@ import {
   toLocalMetres,
   type LatLng,
 } from "@/lib/parcel-geometry";
-import {
-  buildableEnvelope,
-  fitFootprint,
-  groundCoveragePct,
-  isConvex,
-} from "@/lib/buildable";
+import { buildableEnvelope, fitFootprint, groundCoveragePct, isConvex } from "@/lib/buildable";
 
 /**
  * What can be built here, and a brief to take to an architect.
@@ -60,10 +55,7 @@ export function BuildBrief({
   const [notes, setNotes] = useState("");
 
   const origin = boundary.length ? boundary[0] : null;
-  const local = useMemo(
-    () => (origin ? toLocalMetres(boundary, origin) : []),
-    [boundary, origin],
-  );
+  const local = useMemo(() => (origin ? toLocalMetres(boundary, origin) : []), [boundary, origin]);
 
   const plotArea = local.length >= 3 ? areaM2(local) : 0;
 
@@ -88,9 +80,7 @@ export function BuildBrief({
 
   const env = useMemo(
     () =>
-      local.length >= 3
-        ? buildableEnvelope(local, { allM: sideM, frontM, frontEdgeIndex })
-        : null,
+      local.length >= 3 ? buildableEnvelope(local, { allM: sideM, frontM, frontEdgeIndex }) : null,
     [local, sideM, frontM, frontEdgeIndex],
   );
 
@@ -158,37 +148,37 @@ export function BuildBrief({
   // Omitted lines are null; an empty string is a real blank line. Filtering on
   // "" alone strips the section breaks too, and the brief comes out as one
   // undifferentiated block.
-  const brief = (
-    [
-      `PLOT`,
-      `  Area as drawn: ${describeArea(plotArea)}`,
-      `  Shape: ${isConvex(local) ? "convex" : "has an inward corner"}, ${boundary.length} corners`,
-      ``,
-      `SETBACKS USED (to be confirmed with the county)`,
-      `  Front, on the longest boundary: ${frontM} m`,
-      `  All other boundaries: ${sideM} m`,
-      `  Buildable area: ${env?.buildable ? describeArea(env.areaM2) : "none at these setbacks"}`,
-      env && !env.exact ? `  Note: an under-estimate, the plot has an inward corner` : null,
-      ``,
-      `WHAT I WANT TO BUILD`,
-      `  Use: ${USES.find((u) => u.id === use)?.label}`,
-      use === "home" || use === "rental" ? `  Bedrooms: ${bedrooms}` : null,
-      `  Storeys: ${storeys}`,
-      `  Footprint tested: ${widthM} m x ${depthM} m = ${footprintM2.toFixed(0)} m2`,
-      `  Gross floor area at ${storeys} storey(s): ${floorArea.toFixed(0)} m2`,
-      coverage != null ? `  Ground coverage: ${coverage.toFixed(1)}%` : null,
-      fit ? `  Fit test: ${fit.fits ? "fits" : "does not fit"} - ${fit.method}` : null,
-      notes.trim() ? `` : null,
-      notes.trim() ? `NOTES` : null,
-      notes.trim() ? `  ${notes.trim()}` : null,
-      ``,
-      `NOT ESTABLISHED BY THIS DOCUMENT`,
-      `  Title, ownership and encumbrances`,
-      `  The legal boundary position - the plot above is a sketch, not a survey`,
-      `  Plot ratio, height limits, parking and services for this zone`,
-      `  Any planning approval`,
-    ].filter((l): l is string => l !== null)
-  ).join("\n");
+  const brief = [
+    `PLOT`,
+    `  Area as drawn: ${describeArea(plotArea)}`,
+    `  Shape: ${isConvex(local) ? "convex" : "has an inward corner"}, ${boundary.length} corners`,
+    ``,
+    `SETBACKS USED (to be confirmed with the county)`,
+    `  Front, on the longest boundary: ${frontM} m`,
+    `  All other boundaries: ${sideM} m`,
+    `  Buildable area: ${env?.buildable ? describeArea(env.areaM2) : "none at these setbacks"}`,
+    env && !env.exact ? `  Note: an under-estimate, the plot has an inward corner` : null,
+    ``,
+    `WHAT I WANT TO BUILD`,
+    `  Use: ${USES.find((u) => u.id === use)?.label}`,
+    use === "home" || use === "rental" ? `  Bedrooms: ${bedrooms}` : null,
+    `  Storeys: ${storeys}`,
+    `  Footprint tested: ${widthM} m x ${depthM} m = ${footprintM2.toFixed(0)} m2`,
+    `  Gross floor area at ${storeys} storey(s): ${floorArea.toFixed(0)} m2`,
+    coverage != null ? `  Ground coverage: ${coverage.toFixed(1)}%` : null,
+    fit ? `  Fit test: ${fit.fits ? "fits" : "does not fit"} - ${fit.method}` : null,
+    notes.trim() ? `` : null,
+    notes.trim() ? `NOTES` : null,
+    notes.trim() ? `  ${notes.trim()}` : null,
+    ``,
+    `NOT ESTABLISHED BY THIS DOCUMENT`,
+    `  Title, ownership and encumbrances`,
+    `  The legal boundary position - the plot above is a sketch, not a survey`,
+    `  Plot ratio, height limits, parking and services for this zone`,
+    `  Any planning approval`,
+  ]
+    .filter((l): l is string => l !== null)
+    .join("\n");
 
   return (
     <div className={`rounded-2xl glass border border-white/10 p-4 ${className}`}>
@@ -217,8 +207,22 @@ export function BuildBrief({
       <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Num label="Front setback" unit="m" value={frontM} onChange={setFrontM} min={0} max={30} />
         <Num label="Other sides" unit="m" value={sideM} onChange={setSideM} min={0} max={30} />
-        <Num label="Footprint width" unit="m" value={widthM} onChange={setWidthM} min={1} max={200} />
-        <Num label="Footprint depth" unit="m" value={depthM} onChange={setDepthM} min={1} max={200} />
+        <Num
+          label="Footprint width"
+          unit="m"
+          value={widthM}
+          onChange={setWidthM}
+          min={1}
+          max={200}
+        />
+        <Num
+          label="Footprint depth"
+          unit="m"
+          value={depthM}
+          onChange={setDepthM}
+          min={1}
+          max={200}
+        />
       </div>
 
       <div className="relative mt-3 h-[320px] overflow-hidden rounded-xl border border-white/10">
@@ -247,10 +251,7 @@ export function BuildBrief({
           tone={env?.buildable ? "good" : "warn"}
         />
         <Stat label="Footprint" value={`${footprintM2.toFixed(0)} m²`} />
-        <Stat
-          label="Ground coverage"
-          value={coverage != null ? `${coverage.toFixed(1)}%` : "—"}
-        />
+        <Stat label="Ground coverage" value={coverage != null ? `${coverage.toFixed(1)}%` : "—"} />
       </div>
 
       {env && !env.exact && (
@@ -336,9 +337,9 @@ export function BuildBrief({
       </details>
 
       <p className="mt-3 border-t border-white/10 pt-2 text-[11px] leading-relaxed text-muted-foreground">
-        Geometry only. This does not design a building, does not check plot ratio, height, parking or
-        services, and is not a planning approval. It works out what the plot you drew allows, so the
-        first conversation with an architect starts from real numbers.
+        Geometry only. This does not design a building, does not check plot ratio, height, parking
+        or services, and is not a planning approval. It works out what the plot you drew allows, so
+        the first conversation with an architect starts from real numbers.
       </p>
     </div>
   );

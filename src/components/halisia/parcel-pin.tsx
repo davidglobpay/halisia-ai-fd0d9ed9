@@ -131,9 +131,7 @@ export function ParcelPin({
           <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
             Step 1 · Place the pin
           </div>
-          <h3 className="mt-0.5 text-base font-semibold leading-tight">
-            Put the pin on your plot
-          </h3>
+          <h3 className="mt-0.5 text-base font-semibold leading-tight">Put the pin on your plot</h3>
           <p className="mt-1 text-xs text-muted-foreground">
             {originLabel ? (
               <>
@@ -197,13 +195,14 @@ export function ParcelPin({
                   setZoom(17);
                   commit({ lat: r.lat, lng: r.lng }, "landmark");
                   setResults(null);
-                  setNote(
-                    `Moved to ${r.name}. Now drag the pin from the landmark onto your plot.`,
-                  );
+                  setNote(`Moved to ${r.name}. Now drag the pin from the landmark onto your plot.`);
                 }}
                 className="flex w-full items-start gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left transition hover:bg-white/10"
               >
-                <Navigation className="mt-0.5 h-3.5 w-3.5 flex-none text-accent" aria-hidden="true" />
+                <Navigation
+                  className="mt-0.5 h-3.5 w-3.5 flex-none text-accent"
+                  aria-hidden="true"
+                />
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-medium">{r.name}</span>
                   <span className="block truncate text-[11px] text-muted-foreground">

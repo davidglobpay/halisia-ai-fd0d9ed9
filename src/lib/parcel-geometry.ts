@@ -237,7 +237,9 @@ export function parseArea(text: string): ParsedArea | null {
   // Dimensions. A mutation plan states these in metres and says so; a plot
   // advertisement states them in feet and does not. Both readings are returned
   // and the caller decides — see ParsedArea.ambiguous.
-  const dims = s.match(/^(\d+(?:\.\d+)?)\s*(?:x|by|\*)\s*(\d+(?:\.\d+)?)\s*(m|ft|feet|metres?|meters?)?$/);
+  const dims = s.match(
+    /^(\d+(?:\.\d+)?)\s*(?:x|by|\*)\s*(\d+(?:\.\d+)?)\s*(m|ft|feet|metres?|meters?)?$/,
+  );
   if (dims) {
     const a = parseFloat(dims[1]);
     const b = parseFloat(dims[2]);
@@ -303,11 +305,7 @@ export function rectangleRing(widthM: number, depthM: number): LocalXY[] | null 
  * A plot bounded by two parallel widths — the trapezoid at the end of a row,
  * where a road or a boundary cuts the block at an angle.
  */
-export function trapezoidRing(
-  frontM: number,
-  backM: number,
-  depthM: number,
-): LocalXY[] | null {
+export function trapezoidRing(frontM: number, backM: number, depthM: number): LocalXY[] | null {
   if (!(frontM > 0) || !(backM > 0) || !(depthM > 0)) return null;
   const d = depthM / 2;
   return [
@@ -371,7 +369,7 @@ export function checkPlanConsistency(
  * dimensions are not printed.
  */
 export function parseScale(text: string): { ratio: number; metresPerMm: number } | null {
-  const m = (text ?? "").match(/1\s*[:\/]\s*(\d{2,6})/);
+  const m = (text ?? "").match(/1\s*[:/]\s*(\d{2,6})/);
   if (!m) return null;
   const ratio = parseInt(m[1], 10);
   if (!(ratio > 0)) return null;
