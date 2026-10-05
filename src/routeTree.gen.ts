@@ -9,145 +9,56 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as CompareRouteImport } from './routes/compare'
-import { Route as CompareLocationsRouteImport } from './routes/compare-locations'
-import { Route as ConnectionsRouteImport } from './routes/connections'
-import { Route as DesignStudioRouteImport } from './routes/design-studio'
-import { Route as ExploreRouteImport } from './routes/explore'
-import { Route as LandTransferRouteImport } from './routes/land-transfer'
-import { Route as LogoQaRouteImport } from './routes/logo-qa'
-import { Route as MarketplaceRouteImport } from './routes/marketplace'
-import { Route as McpRouteImport } from './routes/mcp'
-import { Route as ModelLabRouteImport } from './routes/model-lab'
-import { Route as PassportRouteImport } from './routes/passport'
-import { Route as ReportRouteImport } from './routes/report'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as SpatialRouteImport } from './routes/spatial'
-import { Route as StyleGuideRouteImport } from './routes/style-guide'
-import { Route as SystemStatusRouteImport } from './routes/system-status'
-import { Route as TitleDeedRouteImport } from './routes/title-deed'
 import { Route as TokenAuditRouteImport } from './routes/token-audit'
-import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
-import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
-import { Route as AuthenticatedContributionsRouteImport } from './routes/_authenticated/contributions'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedFinancingRouteImport } from './routes/_authenticated/financing'
-import { Route as AuthenticatedProProfileRouteImport } from './routes/_authenticated/pro-profile'
-import { Route as AuthenticatedProsRouteImport } from './routes/_authenticated/pros'
-import { Route as AuthenticatedRentalsRouteImport } from './routes/_authenticated/rentals'
-import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
-import { Route as AuthenticatedSavedRouteImport } from './routes/_authenticated/saved'
-import { Route as AuthenticatedSellerToolsRouteImport } from './routes/_authenticated/seller-tools'
-import { Route as ApiChatRouteImport } from './routes/api/chat'
-import { Route as CountyCodeRouteImport } from './routes/county.$code'
-import { Route as MarketplaceIndexRouteImport } from './routes/marketplace.index'
-import { Route as MarketplaceIdRouteImport } from './routes/marketplace.$id'
-import { Route as PartnerListingIdRouteImport } from './routes/partner-listing.$id'
+import { Route as TitleDeedRouteImport } from './routes/title-deed'
+import { Route as SystemStatusRouteImport } from './routes/system-status'
+import { Route as StyleGuideRouteImport } from './routes/style-guide'
+import { Route as SpatialRouteImport } from './routes/spatial'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as ReportRouteImport } from './routes/report'
+import { Route as PassportRouteImport } from './routes/passport'
+import { Route as ModelLabRouteImport } from './routes/model-lab'
+import { Route as McpRouteImport } from './routes/mcp'
+import { Route as MarketplaceRouteImport } from './routes/marketplace'
+import { Route as LogoQaRouteImport } from './routes/logo-qa'
+import { Route as LandTransferRouteImport } from './routes/land-transfer'
+import { Route as ExploreRouteImport } from './routes/explore'
+import { Route as DesignStudioRouteImport } from './routes/design-studio'
+import { Route as ConnectionsRouteImport } from './routes/connections'
+import { Route as CompareLocationsRouteImport } from './routes/compare-locations'
+import { Route as CompareRouteImport } from './routes/compare'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as PulseIndexRouteImport } from './routes/pulse.index'
-import { Route as PulseIdRouteImport } from './routes/pulse.$id'
+import { Route as MarketplaceIndexRouteImport } from './routes/marketplace.index'
 import { Route as PulseAdminRouteImport } from './routes/pulse.admin'
-import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
-import { Route as AuthenticatedDevelopIdRouteImport } from './routes/_authenticated/develop.$id'
-import { Route as AuthenticatedSellNewRouteImport } from './routes/_authenticated/sell.new'
+import { Route as PulseIdRouteImport } from './routes/pulse.$id'
+import { Route as PartnerListingIdRouteImport } from './routes/partner-listing.$id'
+import { Route as MarketplaceIdRouteImport } from './routes/marketplace.$id'
+import { Route as CountyCodeRouteImport } from './routes/county.$code'
+import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as AuthenticatedSellerToolsRouteImport } from './routes/_authenticated/seller-tools'
+import { Route as AuthenticatedSavedRouteImport } from './routes/_authenticated/saved'
+import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
+import { Route as AuthenticatedRentalsRouteImport } from './routes/_authenticated/rentals'
+import { Route as AuthenticatedProsRouteImport } from './routes/_authenticated/pros'
+import { Route as AuthenticatedProProfileRouteImport } from './routes/_authenticated/pro-profile'
+import { Route as AuthenticatedFinancingRouteImport } from './routes/_authenticated/financing'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedContributionsRouteImport } from './routes/_authenticated/contributions'
+import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as AuthenticatedSharedReportTokenRouteImport } from './routes/_authenticated/shared-report.$token'
-import { Route as AuthenticatedSellEditIdRouteImport } from './routes/_authenticated/sell.edit.$id'
+import { Route as AuthenticatedSellNewRouteImport } from './routes/_authenticated/sell.new'
+import { Route as AuthenticatedDevelopIdRouteImport } from './routes/_authenticated/develop.$id'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiPublicHooksPulseRefreshRouteImport } from './routes/api/public/hooks/pulse-refresh'
+import { Route as AuthenticatedSellEditIdRouteImport } from './routes/_authenticated/sell.edit.$id'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CompareRoute = CompareRouteImport.update({
-  id: '/compare',
-  path: '/compare',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CompareLocationsRoute = CompareLocationsRouteImport.update({
-  id: '/compare-locations',
-  path: '/compare-locations',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ConnectionsRoute = ConnectionsRouteImport.update({
-  id: '/connections',
-  path: '/connections',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DesignStudioRoute = DesignStudioRouteImport.update({
-  id: '/design-studio',
-  path: '/design-studio',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ExploreRoute = ExploreRouteImport.update({
-  id: '/explore',
-  path: '/explore',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LandTransferRoute = LandTransferRouteImport.update({
-  id: '/land-transfer',
-  path: '/land-transfer',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LogoQaRoute = LogoQaRouteImport.update({
-  id: '/logo-qa',
-  path: '/logo-qa',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MarketplaceRoute = MarketplaceRouteImport.update({
-  id: '/marketplace',
-  path: '/marketplace',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const McpRoute = McpRouteImport.update({
-  id: '/mcp',
-  path: '/mcp',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ModelLabRoute = ModelLabRouteImport.update({
-  id: '/model-lab',
-  path: '/model-lab',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PassportRoute = PassportRouteImport.update({
-  id: '/passport',
-  path: '/passport',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ReportRoute = ReportRouteImport.update({
-  id: '/report',
-  path: '/report',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SpatialRoute = SpatialRouteImport.update({
-  id: '/spatial',
-  path: '/spatial',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const StyleGuideRoute = StyleGuideRouteImport.update({
-  id: '/style-guide',
-  path: '/style-guide',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SystemStatusRoute = SystemStatusRouteImport.update({
-  id: '/system-status',
-  path: '/system-status',
+const TokenAuditRoute = TokenAuditRouteImport.update({
+  id: '/token-audit',
+  path: '/token-audit',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TitleDeedRoute = TitleDeedRouteImport.update({
@@ -155,20 +66,179 @@ const TitleDeedRoute = TitleDeedRouteImport.update({
   path: '/title-deed',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TokenAuditRoute = TokenAuditRouteImport.update({
-  id: '/token-audit',
-  path: '/token-audit',
+const SystemStatusRoute = SystemStatusRouteImport.update({
+  id: '/system-status',
+  path: '/system-status',
   getParentRoute: () => rootRouteImport,
 } as any)
-const Char91DotwellKnownChar93OauthProtectedResourceRoute =
-  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
-    id: '/.well-known/oauth-protected-resource',
-    path: '/.well-known/oauth-protected-resource',
-    getParentRoute: () => rootRouteImport,
+const StyleGuideRoute = StyleGuideRouteImport.update({
+  id: '/style-guide',
+  path: '/style-guide',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SpatialRoute = SpatialRouteImport.update({
+  id: '/spatial',
+  path: '/spatial',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportRoute = ReportRouteImport.update({
+  id: '/report',
+  path: '/report',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PassportRoute = PassportRouteImport.update({
+  id: '/passport',
+  path: '/passport',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ModelLabRoute = ModelLabRouteImport.update({
+  id: '/model-lab',
+  path: '/model-lab',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketplaceRoute = MarketplaceRouteImport.update({
+  id: '/marketplace',
+  path: '/marketplace',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LogoQaRoute = LogoQaRouteImport.update({
+  id: '/logo-qa',
+  path: '/logo-qa',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LandTransferRoute = LandTransferRouteImport.update({
+  id: '/land-transfer',
+  path: '/land-transfer',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExploreRoute = ExploreRouteImport.update({
+  id: '/explore',
+  path: '/explore',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DesignStudioRoute = DesignStudioRouteImport.update({
+  id: '/design-studio',
+  path: '/design-studio',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConnectionsRoute = ConnectionsRouteImport.update({
+  id: '/connections',
+  path: '/connections',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompareLocationsRoute = CompareLocationsRouteImport.update({
+  id: '/compare-locations',
+  path: '/compare-locations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompareRoute = CompareRouteImport.update({
+  id: '/compare',
+  path: '/compare',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PulseIndexRoute = PulseIndexRouteImport.update({
+  id: '/pulse/',
+  path: '/pulse/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketplaceIndexRoute = MarketplaceIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => MarketplaceRoute,
+} as any)
+const PulseAdminRoute = PulseAdminRouteImport.update({
+  id: '/pulse/admin',
+  path: '/pulse/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PulseIdRoute = PulseIdRouteImport.update({
+  id: '/pulse/$id',
+  path: '/pulse/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PartnerListingIdRoute = PartnerListingIdRouteImport.update({
+  id: '/partner-listing/$id',
+  path: '/partner-listing/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketplaceIdRoute = MarketplaceIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => MarketplaceRoute,
+} as any)
+const CountyCodeRoute = CountyCodeRouteImport.update({
+  id: '/county/$code',
+  path: '/county/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiChatRoute = ApiChatRouteImport.update({
+  id: '/api/chat',
+  path: '/api/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedSellerToolsRoute =
+  AuthenticatedSellerToolsRouteImport.update({
+    id: '/seller-tools',
+    path: '/seller-tools',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
-  id: '/account',
-  path: '/account',
+const AuthenticatedSavedRoute = AuthenticatedSavedRouteImport.update({
+  id: '/saved',
+  path: '/saved',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRentalsRoute = AuthenticatedRentalsRouteImport.update({
+  id: '/rentals',
+  path: '/rentals',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedProsRoute = AuthenticatedProsRouteImport.update({
+  id: '/pros',
+  path: '/pros',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedProProfileRoute = AuthenticatedProProfileRouteImport.update({
+  id: '/pro-profile',
+  path: '/pro-profile',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFinancingRoute = AuthenticatedFinancingRouteImport.update({
+  id: '/financing',
+  path: '/financing',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedContributionsRoute =
@@ -177,112 +247,37 @@ const AuthenticatedContributionsRoute =
     path: '/contributions',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedFinancingRoute = AuthenticatedFinancingRouteImport.update({
-  id: '/financing',
-  path: '/financing',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedProProfileRoute = AuthenticatedProProfileRouteImport.update({
-  id: '/pro-profile',
-  path: '/pro-profile',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedProsRoute = AuthenticatedProsRouteImport.update({
-  id: '/pros',
-  path: '/pros',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedRentalsRoute = AuthenticatedRentalsRouteImport.update({
-  id: '/rentals',
-  path: '/rentals',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
-  id: '/reports',
-  path: '/reports',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedSavedRoute = AuthenticatedSavedRouteImport.update({
-  id: '/saved',
-  path: '/saved',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedSellerToolsRoute =
-  AuthenticatedSellerToolsRouteImport.update({
-    id: '/seller-tools',
-    path: '/seller-tools',
-    getParentRoute: () => AuthenticatedRouteRoute,
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
   } as any)
-const ApiChatRoute = ApiChatRouteImport.update({
-  id: '/api/chat',
-  path: '/api/chat',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CountyCodeRoute = CountyCodeRouteImport.update({
-  id: '/county/$code',
-  path: '/county/$code',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MarketplaceIndexRoute = MarketplaceIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => MarketplaceRoute,
-} as any)
-const MarketplaceIdRoute = MarketplaceIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => MarketplaceRoute,
-} as any)
-const PartnerListingIdRoute = PartnerListingIdRouteImport.update({
-  id: '/partner-listing/$id',
-  path: '/partner-listing/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PulseIndexRoute = PulseIndexRouteImport.update({
-  id: '/pulse/',
-  path: '/pulse/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PulseIdRoute = PulseIdRouteImport.update({
-  id: '/pulse/$id',
-  path: '/pulse/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PulseAdminRoute = PulseAdminRouteImport.update({
-  id: '/pulse/admin',
-  path: '/pulse/admin',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
-  id: '/.lovable/oauth/consent',
-  path: '/.lovable/oauth/consent',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedDevelopIdRoute = AuthenticatedDevelopIdRouteImport.update({
-  id: '/develop/$id',
-  path: '/develop/$id',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedSellNewRoute = AuthenticatedSellNewRouteImport.update({
-  id: '/sell/new',
-  path: '/sell/new',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedSharedReportTokenRoute =
   AuthenticatedSharedReportTokenRouteImport.update({
     id: '/shared-report/$token',
     path: '/shared-report/$token',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedSellEditIdRoute = AuthenticatedSellEditIdRouteImport.update({
-  id: '/sell/edit/$id',
-  path: '/sell/edit/$id',
+const AuthenticatedSellNewRoute = AuthenticatedSellNewRouteImport.update({
+  id: '/sell/new',
+  path: '/sell/new',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDevelopIdRoute = AuthenticatedDevelopIdRouteImport.update({
+  id: '/develop/$id',
+  path: '/develop/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicHooksPulseRefreshRoute =
   ApiPublicHooksPulseRefreshRouteImport.update({
@@ -290,6 +285,11 @@ const ApiPublicHooksPulseRefreshRoute =
     path: '/api/public/hooks/pulse-refresh',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedSellEditIdRoute = AuthenticatedSellEditIdRouteImport.update({
+  id: '/sell/edit/$id',
+  path: '/sell/edit/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -612,137 +612,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/compare': {
-      id: '/compare'
-      path: '/compare'
-      fullPath: '/compare'
-      preLoaderRoute: typeof CompareRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/compare-locations': {
-      id: '/compare-locations'
-      path: '/compare-locations'
-      fullPath: '/compare-locations'
-      preLoaderRoute: typeof CompareLocationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/connections': {
-      id: '/connections'
-      path: '/connections'
-      fullPath: '/connections'
-      preLoaderRoute: typeof ConnectionsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/design-studio': {
-      id: '/design-studio'
-      path: '/design-studio'
-      fullPath: '/design-studio'
-      preLoaderRoute: typeof DesignStudioRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/explore': {
-      id: '/explore'
-      path: '/explore'
-      fullPath: '/explore'
-      preLoaderRoute: typeof ExploreRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/land-transfer': {
-      id: '/land-transfer'
-      path: '/land-transfer'
-      fullPath: '/land-transfer'
-      preLoaderRoute: typeof LandTransferRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/logo-qa': {
-      id: '/logo-qa'
-      path: '/logo-qa'
-      fullPath: '/logo-qa'
-      preLoaderRoute: typeof LogoQaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/marketplace': {
-      id: '/marketplace'
-      path: '/marketplace'
-      fullPath: '/marketplace'
-      preLoaderRoute: typeof MarketplaceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/mcp': {
-      id: '/mcp'
-      path: '/mcp'
-      fullPath: '/mcp'
-      preLoaderRoute: typeof McpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/model-lab': {
-      id: '/model-lab'
-      path: '/model-lab'
-      fullPath: '/model-lab'
-      preLoaderRoute: typeof ModelLabRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/passport': {
-      id: '/passport'
-      path: '/passport'
-      fullPath: '/passport'
-      preLoaderRoute: typeof PassportRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/report': {
-      id: '/report'
-      path: '/report'
-      fullPath: '/report'
-      preLoaderRoute: typeof ReportRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/spatial': {
-      id: '/spatial'
-      path: '/spatial'
-      fullPath: '/spatial'
-      preLoaderRoute: typeof SpatialRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/style-guide': {
-      id: '/style-guide'
-      path: '/style-guide'
-      fullPath: '/style-guide'
-      preLoaderRoute: typeof StyleGuideRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/system-status': {
-      id: '/system-status'
-      path: '/system-status'
-      fullPath: '/system-status'
-      preLoaderRoute: typeof SystemStatusRouteImport
+    '/token-audit': {
+      id: '/token-audit'
+      path: '/token-audit'
+      fullPath: '/token-audit'
+      preLoaderRoute: typeof TokenAuditRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/title-deed': {
@@ -752,123 +626,137 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TitleDeedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/token-audit': {
-      id: '/token-audit'
-      path: '/token-audit'
-      fullPath: '/token-audit'
-      preLoaderRoute: typeof TokenAuditRouteImport
+    '/system-status': {
+      id: '/system-status'
+      path: '/system-status'
+      fullPath: '/system-status'
+      preLoaderRoute: typeof SystemStatusRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/.well-known/oauth-protected-resource': {
-      id: '/.well-known/oauth-protected-resource'
-      path: '/.well-known/oauth-protected-resource'
-      fullPath: '/.well-known/oauth-protected-resource'
-      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+    '/style-guide': {
+      id: '/style-guide'
+      path: '/style-guide'
+      fullPath: '/style-guide'
+      preLoaderRoute: typeof StyleGuideRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/account': {
-      id: '/_authenticated/account'
-      path: '/account'
-      fullPath: '/account'
-      preLoaderRoute: typeof AuthenticatedAccountRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/contributions': {
-      id: '/_authenticated/contributions'
-      path: '/contributions'
-      fullPath: '/contributions'
-      preLoaderRoute: typeof AuthenticatedContributionsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/financing': {
-      id: '/_authenticated/financing'
-      path: '/financing'
-      fullPath: '/financing'
-      preLoaderRoute: typeof AuthenticatedFinancingRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/pro-profile': {
-      id: '/_authenticated/pro-profile'
-      path: '/pro-profile'
-      fullPath: '/pro-profile'
-      preLoaderRoute: typeof AuthenticatedProProfileRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/pros': {
-      id: '/_authenticated/pros'
-      path: '/pros'
-      fullPath: '/pros'
-      preLoaderRoute: typeof AuthenticatedProsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/rentals': {
-      id: '/_authenticated/rentals'
-      path: '/rentals'
-      fullPath: '/rentals'
-      preLoaderRoute: typeof AuthenticatedRentalsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/reports': {
-      id: '/_authenticated/reports'
-      path: '/reports'
-      fullPath: '/reports'
-      preLoaderRoute: typeof AuthenticatedReportsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/saved': {
-      id: '/_authenticated/saved'
-      path: '/saved'
-      fullPath: '/saved'
-      preLoaderRoute: typeof AuthenticatedSavedRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/seller-tools': {
-      id: '/_authenticated/seller-tools'
-      path: '/seller-tools'
-      fullPath: '/seller-tools'
-      preLoaderRoute: typeof AuthenticatedSellerToolsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/api/chat': {
-      id: '/api/chat'
-      path: '/api/chat'
-      fullPath: '/api/chat'
-      preLoaderRoute: typeof ApiChatRouteImport
+    '/spatial': {
+      id: '/spatial'
+      path: '/spatial'
+      fullPath: '/spatial'
+      preLoaderRoute: typeof SpatialRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/county/$code': {
-      id: '/county/$code'
-      path: '/county/$code'
-      fullPath: '/county/$code'
-      preLoaderRoute: typeof CountyCodeRouteImport
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/marketplace/': {
-      id: '/marketplace/'
+    '/report': {
+      id: '/report'
+      path: '/report'
+      fullPath: '/report'
+      preLoaderRoute: typeof ReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/passport': {
+      id: '/passport'
+      path: '/passport'
+      fullPath: '/passport'
+      preLoaderRoute: typeof PassportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/model-lab': {
+      id: '/model-lab'
+      path: '/model-lab'
+      fullPath: '/model-lab'
+      preLoaderRoute: typeof ModelLabRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketplace': {
+      id: '/marketplace'
+      path: '/marketplace'
+      fullPath: '/marketplace'
+      preLoaderRoute: typeof MarketplaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/logo-qa': {
+      id: '/logo-qa'
+      path: '/logo-qa'
+      fullPath: '/logo-qa'
+      preLoaderRoute: typeof LogoQaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/land-transfer': {
+      id: '/land-transfer'
+      path: '/land-transfer'
+      fullPath: '/land-transfer'
+      preLoaderRoute: typeof LandTransferRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/explore': {
+      id: '/explore'
+      path: '/explore'
+      fullPath: '/explore'
+      preLoaderRoute: typeof ExploreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/design-studio': {
+      id: '/design-studio'
+      path: '/design-studio'
+      fullPath: '/design-studio'
+      preLoaderRoute: typeof DesignStudioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/connections': {
+      id: '/connections'
+      path: '/connections'
+      fullPath: '/connections'
+      preLoaderRoute: typeof ConnectionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/compare-locations': {
+      id: '/compare-locations'
+      path: '/compare-locations'
+      fullPath: '/compare-locations'
+      preLoaderRoute: typeof CompareLocationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/compare': {
+      id: '/compare'
+      path: '/compare'
+      fullPath: '/compare'
+      preLoaderRoute: typeof CompareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
       path: '/'
-      fullPath: '/marketplace/'
-      preLoaderRoute: typeof MarketplaceIndexRouteImport
-      parentRoute: typeof MarketplaceRoute
-    }
-    '/marketplace/$id': {
-      id: '/marketplace/$id'
-      path: '/$id'
-      fullPath: '/marketplace/$id'
-      preLoaderRoute: typeof MarketplaceIdRouteImport
-      parentRoute: typeof MarketplaceRoute
-    }
-    '/partner-listing/$id': {
-      id: '/partner-listing/$id'
-      path: '/partner-listing/$id'
-      fullPath: '/partner-listing/$id'
-      preLoaderRoute: typeof PartnerListingIdRouteImport
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pulse/': {
@@ -878,12 +766,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PulseIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/pulse/$id': {
-      id: '/pulse/$id'
-      path: '/pulse/$id'
-      fullPath: '/pulse/$id'
-      preLoaderRoute: typeof PulseIdRouteImport
-      parentRoute: typeof rootRouteImport
+    '/marketplace/': {
+      id: '/marketplace/'
+      path: '/'
+      fullPath: '/marketplace/'
+      preLoaderRoute: typeof MarketplaceIndexRouteImport
+      parentRoute: typeof MarketplaceRoute
     }
     '/pulse/admin': {
       id: '/pulse/admin'
@@ -892,18 +780,123 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PulseAdminRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/.lovable/oauth/consent': {
-      id: '/.lovable/oauth/consent'
-      path: '/.lovable/oauth/consent'
-      fullPath: '/.lovable/oauth/consent'
-      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+    '/pulse/$id': {
+      id: '/pulse/$id'
+      path: '/pulse/$id'
+      fullPath: '/pulse/$id'
+      preLoaderRoute: typeof PulseIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/develop/$id': {
-      id: '/_authenticated/develop/$id'
-      path: '/develop/$id'
-      fullPath: '/develop/$id'
-      preLoaderRoute: typeof AuthenticatedDevelopIdRouteImport
+    '/partner-listing/$id': {
+      id: '/partner-listing/$id'
+      path: '/partner-listing/$id'
+      fullPath: '/partner-listing/$id'
+      preLoaderRoute: typeof PartnerListingIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketplace/$id': {
+      id: '/marketplace/$id'
+      path: '/$id'
+      fullPath: '/marketplace/$id'
+      preLoaderRoute: typeof MarketplaceIdRouteImport
+      parentRoute: typeof MarketplaceRoute
+    }
+    '/county/$code': {
+      id: '/county/$code'
+      path: '/county/$code'
+      fullPath: '/county/$code'
+      preLoaderRoute: typeof CountyCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/chat': {
+      id: '/api/chat'
+      path: '/api/chat'
+      fullPath: '/api/chat'
+      preLoaderRoute: typeof ApiChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/seller-tools': {
+      id: '/_authenticated/seller-tools'
+      path: '/seller-tools'
+      fullPath: '/seller-tools'
+      preLoaderRoute: typeof AuthenticatedSellerToolsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/saved': {
+      id: '/_authenticated/saved'
+      path: '/saved'
+      fullPath: '/saved'
+      preLoaderRoute: typeof AuthenticatedSavedRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/reports': {
+      id: '/_authenticated/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof AuthenticatedReportsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/rentals': {
+      id: '/_authenticated/rentals'
+      path: '/rentals'
+      fullPath: '/rentals'
+      preLoaderRoute: typeof AuthenticatedRentalsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/pros': {
+      id: '/_authenticated/pros'
+      path: '/pros'
+      fullPath: '/pros'
+      preLoaderRoute: typeof AuthenticatedProsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/pro-profile': {
+      id: '/_authenticated/pro-profile'
+      path: '/pro-profile'
+      fullPath: '/pro-profile'
+      preLoaderRoute: typeof AuthenticatedProProfileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/financing': {
+      id: '/_authenticated/financing'
+      path: '/financing'
+      fullPath: '/financing'
+      preLoaderRoute: typeof AuthenticatedFinancingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/contributions': {
+      id: '/_authenticated/contributions'
+      path: '/contributions'
+      fullPath: '/contributions'
+      preLoaderRoute: typeof AuthenticatedContributionsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/account': {
+      id: '/_authenticated/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AuthenticatedAccountRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/shared-report/$token': {
+      id: '/_authenticated/shared-report/$token'
+      path: '/shared-report/$token'
+      fullPath: '/shared-report/$token'
+      preLoaderRoute: typeof AuthenticatedSharedReportTokenRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/sell/new': {
@@ -913,19 +906,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSellNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/shared-report/$token': {
-      id: '/_authenticated/shared-report/$token'
-      path: '/shared-report/$token'
-      fullPath: '/shared-report/$token'
-      preLoaderRoute: typeof AuthenticatedSharedReportTokenRouteImport
+    '/_authenticated/develop/$id': {
+      id: '/_authenticated/develop/$id'
+      path: '/develop/$id'
+      fullPath: '/develop/$id'
+      preLoaderRoute: typeof AuthenticatedDevelopIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/sell/edit/$id': {
-      id: '/_authenticated/sell/edit/$id'
-      path: '/sell/edit/$id'
-      fullPath: '/sell/edit/$id'
-      preLoaderRoute: typeof AuthenticatedSellEditIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/pulse-refresh': {
       id: '/api/public/hooks/pulse-refresh'
@@ -933,6 +926,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/hooks/pulse-refresh'
       preLoaderRoute: typeof ApiPublicHooksPulseRefreshRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/sell/edit/$id': {
+      id: '/_authenticated/sell/edit/$id'
+      path: '/sell/edit/$id'
+      fullPath: '/sell/edit/$id'
+      preLoaderRoute: typeof AuthenticatedSellEditIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
