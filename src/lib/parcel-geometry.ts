@@ -161,10 +161,7 @@ export type AreaFit = {
  * is a sketch whose area agrees with the deed. It is NOT a survey, and the
  * caller must not present it as one.
  */
-export function fitToArea(
-  ring: LocalXY[],
-  targetAreaM2: number,
-): AreaFit | null {
+export function fitToArea(ring: LocalXY[], targetAreaM2: number): AreaFit | null {
   if (ring.length < 3 || !(targetAreaM2 > 0)) return null;
   const drawn = areaM2(ring);
   if (!(drawn > 0)) return null;
@@ -184,11 +181,7 @@ export function fitToArea(
 }
 
 /** Rotate a ring about a point, degrees clockwise. For placing a plan. */
-export function rotate(
-  ring: LocalXY[],
-  degrees: number,
-  about: LocalXY,
-): LocalXY[] {
+export function rotate(ring: LocalXY[], degrees: number, about: LocalXY): LocalXY[] {
   const t = -degrees * D2R; // clockwise on screen is negative in maths convention
   const cos = Math.cos(t);
   const sin = Math.sin(t);
@@ -254,8 +247,7 @@ export function parseArea(text: string): ParsedArea | null {
     const metric = a * b;
     const imperial = metric * 0.09290304;
     const stated = dims[3];
-    if (stated && /^(m|metres?|meters?)$/.test(stated))
-      return { m2: metric, unit: "m" };
+    if (stated && /^(m|metres?|meters?)$/.test(stated)) return { m2: metric, unit: "m" };
     if (stated) return { m2: imperial, unit: "ft" };
     return { m2: imperial, unit: "ft", ambiguous: true, alternativeM2: metric };
   }
@@ -282,8 +274,7 @@ export function parseArea(text: string): ParsedArea | null {
   if (!Number.isFinite(value) || value <= 0) return null;
   const unit = m[2].replace(/\s+/g, "");
 
-  if (/^(hectares?|ha)$/.test(unit))
-    return { m2: value * HECTARE_M2, unit: "ha" };
+  if (/^(hectares?|ha)$/.test(unit)) return { m2: value * HECTARE_M2, unit: "ha" };
   if (/^(acres?|ac)$/.test(unit)) return { m2: value * ACRE_M2, unit: "acre" };
   return { m2: value, unit: "m2" };
 }
@@ -298,10 +289,7 @@ export function parseArea(text: string): ParsedArea | null {
  * or parse vector paths to reproduce one: the numbers on the plan define it
  * exactly. The caller rotates and positions it over the imagery.
  */
-export function rectangleRing(
-  widthM: number,
-  depthM: number,
-): LocalXY[] | null {
+export function rectangleRing(widthM: number, depthM: number): LocalXY[] | null {
   if (!(widthM > 0) || !(depthM > 0)) return null;
   const w = widthM / 2;
   const d = depthM / 2;
@@ -317,11 +305,7 @@ export function rectangleRing(
  * A plot bounded by two parallel widths — the trapezoid at the end of a row,
  * where a road or a boundary cuts the block at an angle.
  */
-export function trapezoidRing(
-  frontM: number,
-  backM: number,
-  depthM: number,
-): LocalXY[] | null {
+export function trapezoidRing(frontM: number, backM: number, depthM: number): LocalXY[] | null {
   if (!(frontM > 0) || !(backM > 0) || !(depthM > 0)) return null;
   const d = depthM / 2;
   return [
@@ -384,9 +368,7 @@ export function checkPlanConsistency(
  * turn a measured distance on the sheet into a ground distance when a plot's
  * dimensions are not printed.
  */
-export function parseScale(
-  text: string,
-): { ratio: number; metresPerMm: number } | null {
+export function parseScale(text: string): { ratio: number; metresPerMm: number } | null {
   const m = (text ?? "").match(/1\s*[:\/]\s*(\d{2,6})/);
   if (!m) return null;
   const ratio = parseInt(m[1], 10);
@@ -397,9 +379,7 @@ export function parseScale(
 /** Area in the phrasing a Kenyan buyer would recognise. */
 export function describeArea(m2: number): string {
   const acres = m2 / ACRE_M2;
-  if (m2 < 2000)
-    return `${Math.round(m2)} m² (about ${acres.toFixed(3)} acres)`;
-  if (m2 < HECTARE_M2)
-    return `${Math.round(m2)} m² (about ${acres.toFixed(2)} acres)`;
+  if (m2 < 2000) return `${Math.round(m2)} m² (about ${acres.toFixed(3)} acres)`;
+  if (m2 < HECTARE_M2) return `${Math.round(m2)} m² (about ${acres.toFixed(2)} acres)`;
   return `${(m2 / HECTARE_M2).toFixed(2)} ha (about ${acres.toFixed(2)} acres)`;
 }
