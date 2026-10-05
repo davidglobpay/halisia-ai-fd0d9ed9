@@ -9,3 +9,4 @@ routeTree.gen.ts
 src/integrations/supabase/types.ts
 src/integrations/supabase/previewAuthStorage.ts
 src/lib/testfixtures/konza-lr-fixture.ts
+.lovable/mcp/manifest.json
