@@ -21,22 +21,30 @@ import {
   type CountyMetric,
 } from "@/lib/county-metrics";
 import { fetchStaticMapCached } from "@/lib/static-map-cache";
+import { PDF, brandPage, brandFooters, prepareMark } from "@/lib/pdf-chrome";
+import halisiaMark from "@/assets/brand/halisia-mark.png.asset.json";
 
 type County = { code: number; name: string; lat: number; lng: number };
 
 export async function generateCountyComparePdf(counties: County[]) {
   const doc = new jsPDF({ unit: "pt", format: "a4", orientation: "landscape" });
+  const mark = await prepareMark(halisiaMark.url);
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
   const M = 36;
 
-  const ink: [number, number, number] = [15, 23, 42];
-  const muted: [number, number, number] = [100, 116, 139];
-  const accent: [number, number, number] = [45, 140, 255];
-  const bg: [number, number, number] = [247, 249, 252];
+  // Brand tokens, not the retired Deep Space Blue this file shipped with.
+  // Brand tokens, not the retired Deep Space Blue this file shipped with.
+  // Assigned directly, never spread: [...PDF.forest] widens a readonly tuple
+  // to number[] and stops satisfying the three-argument colour setters.
+  const ink = PDF.forest;
+  const muted = PDF.stone2;
+  const accent = PDF.green;
+  const bg = PDF.ivory;
 
   doc.setFillColor(...bg);
   doc.rect(0, 0, W, H, "F");
+  brandPage(doc, mark);
   doc.setFillColor(...accent);
   doc.rect(0, 0, W, 6, "F");
 
@@ -122,6 +130,7 @@ export async function generateCountyComparePdf(counties: County[]) {
     doc.addPage("a4", "landscape");
     doc.setFillColor(...bg);
     doc.rect(0, 0, W, H, "F");
+    brandPage(doc, mark);
     doc.setFillColor(...accent);
     doc.rect(0, 0, W, 6, "F");
     doc.setTextColor(...muted);
@@ -167,10 +176,12 @@ export async function generateCountyComparePdf(counties: County[]) {
         mTop + imgH + 46,
       );
     });
-    doc.setFontSize(8);
-    doc.setTextColor(...muted);
-    doc.text("halisia.ai · map data evidence", M, H - 20);
   }
+
+  brandFooters(doc, mark, {
+    note: "County comparison. Published figures, each traced to its source.",
+    issued: new Date().toLocaleDateString("en-KE", { day: "numeric", month: "long", year: "numeric" }),
+  });
 
   const safe =
     counties

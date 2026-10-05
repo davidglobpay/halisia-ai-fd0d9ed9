@@ -8,6 +8,7 @@ import {
 } from "./passport-evidence";
 import { BUCKET_META, buildCoverage, bucketOf } from "./passport-coverage";
 import { resolveAiEvidence, type PassportAiExport } from "./passport-ai-evidence";
+import { brandPage, brandFooters, getMarkSync } from "@/lib/pdf-chrome";
 
 // Built-in Helvetica only covers WinAnsi; strip anything else.
 const clean = (s: string) =>
@@ -51,6 +52,9 @@ export function downloadPassportPdf(opts: {
   aiSummary?: PassportAiExport | null;
 }): string {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
+  // Synchronous by contract, so the mark comes from the primed cache.
+  const mark = getMarkSync();
+  brandPage(doc, mark);
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
   const M = 40;
@@ -62,6 +66,7 @@ export function downloadPassportPdf(opts: {
   const need = (h: number) => {
     if (y + h > H - 50) {
       doc.addPage();
+      brandPage(doc, mark);
       y = M;
     }
   };
@@ -193,20 +198,10 @@ export function downloadPassportPdf(opts: {
   text("Evidence sources queried on this visit", 13, ink, "bold");
   for (const e of opts.ledger) text(`${e.provider} - ${STATUS[e.status]}. ${e.detail}`, 8.5);
 
-  const pages = doc.getNumberOfPages();
-  for (let p = 1; p <= pages; p++) {
-    doc.setPage(p);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7.5);
-    doc.setTextColor(...muted);
-    doc.text(
-      clean(
-        `HALISIA Land Passport - not a title search, survey or valuation - page ${p} of ${pages}`,
-      ),
-      M,
-      H - 24,
-    );
-  }
+  brandFooters(doc, mark, {
+    note: "Land Passport. Not a title search, survey or valuation.",
+    issued: opts.generatedAt,
+  });
 
   const filename = `halisia-land-passport-${
     opts.place

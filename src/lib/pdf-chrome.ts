@@ -106,10 +106,7 @@ export function ink(doc: jsPDF, c: RGB) {
 
 /** Run a block at reduced opacity, restoring afterwards. */
 function faint(doc: jsPDF, opacity: number, draw: () => void) {
-  const d = doc as unknown as {
-    GState?: new (o: { opacity: number }) => unknown;
-    setGState?: (g: unknown) => void;
-  };
+  const d = doc as unknown as { GState?: new (o: { opacity: number }) => unknown; setGState?: (g: unknown) => void };
   let applied = false;
   try {
     if (d.GState && d.setGState) {
@@ -132,14 +129,51 @@ function faint(doc: jsPDF, opacity: number, draw: () => void) {
 /* ---------------- the mark ---------------- */
 
 let markPromise: Promise<BrandImage | null> | null = null;
+let markReady: BrandImage | null = null;
 
 /**
  * Preload the brand mark before a PDF run. Call once and await it, then pass
  * the result to drawHeader / drawWatermark on every page.
  */
 export function prepareMark(url: string): Promise<BrandImage | null> {
-  if (!markPromise) markPromise = loadBrandImage(url);
+  if (!markPromise) {
+    markPromise = loadBrandImage(url).then((m: BrandImage | null) => {
+      markReady = m;
+      return m;
+    });
+  }
   return markPromise;
+}
+
+/**
+ * Start loading the mark without waiting for it.
+ *
+ * Four of the ten generators are synchronous — `downloadPassportPdf`,
+ * `downloadSellerPdf`, `downloadBrochurePDF` and `buildConceptStudyPdf` all
+ * return a filename rather than a promise, and every one of their call sites
+ * treats them that way. Making them async to await an image would change four
+ * signatures and every button that calls them, which is a far larger change
+ * than putting a logo on a page is worth.
+ *
+ * So the app primes the mark early and the synchronous generators read
+ * whatever has finished decoding by the time the user clicks. Call this once
+ * at app start; it is safe to call repeatedly.
+ */
+export function primeMark(url: string): void {
+  void prepareMark(url).catch(() => null);
+}
+
+/**
+ * The mark, if it has finished decoding. Never blocks, never throws.
+ *
+ * Returns null until the image is ready, which is the same value every chrome
+ * function already accepts for "no logo available" — so a PDF generated in the
+ * first instants of a session is unbranded rather than broken. In practice the
+ * mark is a 512px PNG primed at app start and the user has to find a download
+ * button before this can return null.
+ */
+export function getMarkSync(): BrandImage | null {
+  return markReady;
 }
 
 /**
@@ -366,4 +400,120 @@ export function wrap(
     yy += leading;
   }
   return yy;
+}
+
+/* ---------------- whole-document branding ---------------- */
+
+/**
+ * Light paper or dark panel. The watermark and footer ink both have to flip,
+ * or the mark disappears on one and glares on the other.
+ *
+ * `geotech-pdf.ts` is the only dark document in the codebase — it renders a
+ * Deep Space Blue dashboard with light text. That palette is retired from the
+ * UI, but recolouring a 468-line infographic to ivory means inverting every
+ * panel fill and every text colour in it, which is a redesign rather than a
+ * branding pass. It gets dark-tone chrome here and keeps its own colours.
+ */
+export type Tone = "light" | "dark";
+
+/**
+ * Document unit scale. jsPDF coordinates are in whatever unit the document was
+ * created with; font sizes are always points.
+ *
+ * `pdf-concept-study.ts` is built in mm and the other nine in pt, so every
+ * piece of geometry below is written in points and converted. Without this a
+ * footer meant to sit 24pt above the bottom edge would land 24mm up on that
+ * one document — most of an inch out, overlapping the content.
+ */
+function unit(doc: jsPDF): (pt: number) => number {
+  const k = (doc.internal as unknown as { scaleFactor?: number }).scaleFactor;
+  const scale = typeof k === "number" && k > 0 ? k : 1;
+  return (pt: number) => pt / scale;
+}
+
+/**
+ * Open a page with the brand behind it.
+ *
+ * Call immediately after `new jsPDF(...)` and immediately after every
+ * `doc.addPage()`. Order matters: PDF content streams paint in sequence, so a
+ * watermark added afterwards would sit on top of the text instead of behind
+ * it. There is no z-index to fall back on.
+ */
+export function brandPage(doc: jsPDF, mark: BrandImage | null, tone: Tone = "light") {
+  if (!mark) return;
+  drawWatermark(doc, mark, tone === "dark" ? 0.07 : 0.04);
+}
+
+export type BrandFooterOptions = {
+  /** Replaces the standard scope line. Keep it short; it is centred. */
+  note?: string;
+  /** Printed right-aligned above the page number, e.g. "2 October 2026". */
+  issued?: string;
+  tone?: Tone;
+  /** Skip the hairline where a document already draws its own band. */
+  rule?: boolean;
+};
+
+/**
+ * Stamp the same footer onto every page, after the document is complete.
+ *
+ * A footer is the one piece of chrome that is safe to add last: it lives in
+ * the bottom margin, below where any generator lays out content, so painting
+ * it over a finished page cannot cover anything. That is what makes this a
+ * post-pass rather than nine separate edits to nine layout routines.
+ *
+ * Page geometry is read per page, so a document that mixes portrait and
+ * landscape — `pdf-county-profile.ts` adds portrait pages, and
+ * `pdf-county-compare.ts` is landscape throughout — gets each footer placed
+ * against that page's own edges.
+ */
+export function brandFooters(doc: jsPDF, mark: BrandImage | null, o: BrandFooterOptions = {}) {
+  const u = unit(doc);
+  const tone = o.tone ?? "light";
+  const inkColor: RGB = tone === "dark" ? [150, 165, 200] : PDF.stone2;
+  const ruleColor: RGB = tone === "dark" ? [60, 78, 120] : PDF.forest;
+  const total = doc.getNumberOfPages();
+
+  for (let p = 1; p <= total; p++) {
+    doc.setPage(p);
+    const W = doc.internal.pageSize.getWidth();
+    const H = doc.internal.pageSize.getHeight();
+    const M = u(MARGIN);
+    const baseline = H - u(26);
+
+    if (o.rule !== false) {
+      stroke(doc, ruleColor);
+      doc.setLineWidth(u(0.6));
+      faint(doc, tone === "dark" ? 0.5 : 0.16, () =>
+        doc.line(M, H - u(40), W - M, H - u(40)),
+      );
+    }
+
+    if (mark) {
+      const h = u(11);
+      doc.addImage(mark.dataUrl, "PNG", M, baseline - u(8.5), h * mark.ratio, h, undefined, "FAST");
+    }
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.2);
+    ink(doc, inkColor);
+    doc.text("halisia.ai  ·  Nairobi", mark ? M + u(15) : M, baseline);
+    doc.text(
+      sanitize(o.note ?? "Informational only. Not a title search, survey or legal advice."),
+      W / 2,
+      baseline,
+      { align: "center" },
+    );
+    doc.text(`${p} / ${total}`, W - M, baseline, { align: "right" });
+
+    if (o.issued) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(6.8);
+      ink(doc, tone === "dark" ? PDF.gold : PDF.goldInk);
+      doc.text(sanitize(`Issued ${o.issued}`), W - M, baseline - u(10), { align: "right" });
+    }
+  }
+
+  // Leave the cursor where the caller left it, not on the last page.
+  doc.setPage(total);
 }

@@ -2,6 +2,7 @@ import type { PropertyRow } from "@/lib/properties";
 import type { ListingAiOutput } from "@/lib/ai-listing.functions";
 import jsPDF from "jspdf";
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from "docx";
+import { brandPage, brandFooters, getMarkSync } from "@/lib/pdf-chrome";
 
 function fmtPriceRange(ai: ListingAiOutput): string {
   const { min, max, currency } = ai.priceEstimate;
@@ -97,11 +98,11 @@ export function formatPriceEstimate(ai: ListingAiOutput): string {
 // ---------- PDF brochure ----------
 
 const BRAND = {
-  primary: "#0b1e3a",
-  accent: "#00c2e8",
-  gold: "#d4a017",
-  ink: "#0e1526",
-  mute: "#5b6a86",
+  primary: "#102d1a",
+  accent: "#147b35",
+  gold: "#c08a2e",
+  ink: "#102d1a",
+  mute: "#5f6e62",
 };
 
 function hexToRgb(hex: string): [number, number, number] {
@@ -132,6 +133,9 @@ function slug(s: string) {
 
 export function downloadBrochurePDF(p: PropertyRow, ai: ListingAiOutput) {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
+  // Synchronous by contract, so the mark comes from the primed cache.
+  const mark = getMarkSync();
+  brandPage(doc, mark);
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
   const M = 40;
@@ -162,6 +166,7 @@ export function downloadBrochurePDF(p: PropertyRow, ai: ListingAiOutput) {
   const section = (label: string) => {
     if (y > H - 90) {
       doc.addPage();
+      brandPage(doc, mark);
       y = M;
     }
     setText(doc, BRAND.accent);
@@ -181,6 +186,7 @@ export function downloadBrochurePDF(p: PropertyRow, ai: ListingAiOutput) {
     for (const ln of lines) {
       if (y > H - 60) {
         doc.addPage();
+        brandPage(doc, mark);
         y = M;
       }
       doc.text(ln, M, y);
@@ -192,6 +198,7 @@ export function downloadBrochurePDF(p: PropertyRow, ai: ListingAiOutput) {
       const lines = doc.splitTextToSize(it, W - M * 2 - 12);
       if (y > H - 60) {
         doc.addPage();
+        brandPage(doc, mark);
         y = M;
       }
       setFill(doc, BRAND.gold);
@@ -201,6 +208,7 @@ export function downloadBrochurePDF(p: PropertyRow, ai: ListingAiOutput) {
       for (let i = 1; i < lines.length; i++) {
         if (y > H - 60) {
           doc.addPage();
+          brandPage(doc, mark);
           y = M;
         }
         doc.text(lines[i], M + 12, y);
@@ -268,11 +276,13 @@ export function downloadBrochurePDF(p: PropertyRow, ai: ListingAiOutput) {
 
   if (ai.concepts.length) {
     doc.addPage();
+    brandPage(doc, mark);
     y = M;
     section("Conceptual development options (conceptual only)");
     ai.concepts.forEach((c) => {
       if (y > H - 120) {
         doc.addPage();
+        brandPage(doc, mark);
         y = M;
       }
       doc.setFont("helvetica", "bold");
@@ -290,6 +300,7 @@ export function downloadBrochurePDF(p: PropertyRow, ai: ListingAiOutput) {
   }
 
   doc.addPage();
+  brandPage(doc, mark);
   y = M;
   section("Disclaimers");
   bullets(ai.disclaimers);
@@ -298,18 +309,9 @@ export function downloadBrochurePDF(p: PropertyRow, ai: ListingAiOutput) {
   doc.setFontSize(9);
   para(`Overall AI confidence: ${ai.confidencePct}%`);
 
-  // Footer band on every page
-  const pages = doc.getNumberOfPages();
-  for (let i = 1; i <= pages; i++) {
-    doc.setPage(i);
-    setFill(doc, BRAND.primary);
-    doc.rect(0, H - 22, W, 22, "F");
-    setText(doc, "#cdd8ea");
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.text("halisia.ai · AI Land Intelligence", M, H - 8);
-    doc.text(`Page ${i} / ${pages}`, W - M, H - 8, { align: "right" });
-  }
+  brandFooters(doc, mark, {
+    note: "Marketing brochure. Figures are the seller's, not a valuation.",
+  });
 
   doc.save(`halisia-brochure-${slug(p.title) || p.id}.pdf`);
 }

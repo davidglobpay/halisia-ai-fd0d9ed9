@@ -8,15 +8,16 @@ import type { PropertyRow } from "@/lib/properties";
 import { CONCEPT_DISCLAIMER, type ConceptOutput } from "@/lib/development-studio";
 import type { EvidenceBundle } from "@/lib/evidence";
 import type { ReadinessResult } from "@/lib/investment-readiness";
+import { PDF, brandPage, brandFooters, getMarkSync } from "@/lib/pdf-chrome";
 
 export const CONCEPT_STUDY_DISCLAIMER =
   "Conceptual AI Study — Not an Approved Architectural, Planning, Engineering or Investment Document. " +
   CONCEPT_DISCLAIMER;
 
 const M = 14;
-const INK = [8, 14, 30] as const;
-const ACCENT = [0, 194, 232] as const;
-const MUTED = [110, 122, 140] as const;
+const INK = PDF.forest;
+const ACCENT = PDF.green;
+const MUTED = PDF.stone2;
 
 export function conceptStudyFilename(p: PropertyRow): string {
   const slug = (p.title || "site")
@@ -37,25 +38,30 @@ export function buildConceptStudyPdf(input: {
 }): jsPDF {
   const { property: p, concept, evidence, readiness } = input;
   const doc = new jsPDF({ unit: "mm", format: "a4" });
+  // Returns a jsPDF synchronously, so the mark comes from the primed cache.
+  const mark = getMarkSync();
+  brandPage(doc, mark);
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
   let y = 0;
 
   const footer = () => {
+    // The long disclaimer sits above the shared footer band. brandFooters
+    // draws its rule at H - 14.1mm on this document, so H - 22mm leaves the
+    // paragraph two clear lines before it.
     const pages = doc.getNumberOfPages();
     for (let i = 1; i <= pages; i++) {
       doc.setPage(i);
-      doc.setDrawColor(220);
-      doc.line(M, H - 16, W - M, H - 16);
       doc.setFontSize(6.5);
       doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-      doc.text(doc.splitTextToSize(CONCEPT_STUDY_DISCLAIMER, W - M * 2), M, H - 12);
-      doc.text(`Page ${i} of ${pages}`, W - M, H - 5, { align: "right" });
+      doc.text(doc.splitTextToSize(CONCEPT_STUDY_DISCLAIMER, W - M * 2), M, H - 22);
     }
+    brandFooters(doc, mark, { note: "Conceptual study. Not an approved planning document." });
   };
 
   const page = () => {
     doc.addPage();
+    brandPage(doc, mark);
     y = M + 6;
   };
   const need = (h: number) => {

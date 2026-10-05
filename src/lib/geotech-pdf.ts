@@ -1,4 +1,6 @@
 import type { GeotechIntel } from "@/lib/geotech.functions";
+import { brandPage, brandFooters, prepareMark } from "@/lib/pdf-chrome";
+import halisiaMark from "@/assets/brand/halisia-mark.png.asset.json";
 
 /**
  * Infographic-style PDF for the AI Geotechnical Intelligence Module.
@@ -9,6 +11,10 @@ import type { GeotechIntel } from "@/lib/geotech.functions";
 export async function downloadGeotechPdf(g: GeotechIntel, address: string) {
   const { jsPDF } = await import("jspdf");
   const doc = new jsPDF({ unit: "pt", format: "a4" });
+  // Named brandMark, not mark: the sources list below declares its own `mark`
+  // for the filled/hollow bullet, and shadowing it here would be a trap for
+  // whoever next adds a chrome call inside that loop.
+  const brandMark = await prepareMark(halisiaMark.url);
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
 
@@ -43,6 +49,9 @@ export async function downloadGeotechPdf(g: GeotechIntel, address: string) {
   const paintBg = () => {
     setFill(C.bg);
     doc.rect(0, 0, W, H, "F");
+    // After the fill, never before: this document paints a full-page dark
+    // background, which would bury a watermark drawn first.
+    brandPage(doc, brandMark, "dark");
   };
   const panel = (x: number, y: number, w: number, h: number, r = 10) => {
     setFill(C.panel);
@@ -445,16 +454,11 @@ export async function downloadGeotechPdf(g: GeotechIntel, address: string) {
     syy += 10;
   });
 
-  // Footer
-  setText(C.dim);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
-  doc.text(
-    "HALISIA · AI Geotechnical Intelligence · Preliminary planning use only · Not a substitute for professional geotechnical investigation",
-    W / 2,
-    H - 20,
-    { align: "center" },
-  );
+  brandFooters(doc, brandMark, {
+    tone: "dark",
+    note: "Preliminary planning use only. Not a geotechnical investigation.",
+    issued: new Date().toLocaleDateString("en-KE", { day: "numeric", month: "long", year: "numeric" }),
+  });
 
   const slug =
     address

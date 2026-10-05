@@ -25,6 +25,8 @@ import { COUNTY_DATA_SOURCES } from "@/lib/county-profile";
 import { DENSITY_PROVENANCE } from "@/lib/county-metrics";
 import { TERM_CAVEAT } from "@/lib/county-politics";
 import { fetchStaticMapCached } from "@/lib/static-map-cache";
+import { brandPage, brandFooters, prepareMark } from "@/lib/pdf-chrome";
+import halisiaMark from "@/assets/brand/halisia-mark.png.asset.json";
 
 type Progress = (pct: number, stage: string) => void;
 
@@ -41,6 +43,7 @@ export async function generateCountyProfilePdf(
 ) {
   onProgress(2, "Initialising document");
   const doc = new jsPDF({ unit: "pt", format: "a4", orientation: "portrait" });
+  const mark = await prepareMark(halisiaMark.url);
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
   const M = 40;
@@ -77,6 +80,7 @@ export async function generateCountyProfilePdf(
   onProgress(45, "Rendering cover");
   doc.setFillColor(...BG);
   doc.rect(0, 0, W, H, "F");
+  brandPage(doc, mark);
   doc.setFillColor(...ACCENT);
   doc.rect(0, 0, W, 8, "F");
   doc.setFillColor(...GOLD);
@@ -170,12 +174,12 @@ export async function generateCountyProfilePdf(
   );
   doc.text(scope, M + 12, noteY + 20);
 
-  footer(doc, W, H, M);
 
   // ---------- Page 2: The record ----------
   onProgress(60, "Rendering the record");
   doc.addPage("a4", "portrait");
   pageChrome(doc, W, M, `${facts.name} · The record`);
+  brandPage(doc, mark);
 
   doc.setTextColor(...INK);
   doc.setFont("helvetica", "bold");
@@ -263,12 +267,12 @@ export async function generateCountyProfilePdf(
   const prov = doc.splitTextToSize(DENSITY_PROVENANCE, W - M * 2);
   doc.text(prov, M, y);
 
-  footer(doc, W, H, M);
 
   // ---------- Page 3: Map evidence ----------
   onProgress(80, "Rendering map evidence");
   doc.addPage("a4", "portrait");
   pageChrome(doc, W, M, `${facts.name} · Map evidence`);
+  brandPage(doc, mark);
   doc.setTextColor(...INK);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
@@ -309,12 +313,12 @@ export async function generateCountyProfilePdf(
     doc.setTextColor(...MUTED);
     doc.text(t.label.toUpperCase(), x, yy + tileH + 16);
   });
-  footer(doc, W, H, M);
 
   // ---------- Page 4: Sources ----------
   onProgress(92, "Rendering sources");
   doc.addPage("a4", "portrait");
   pageChrome(doc, W, M, `${facts.name} · Sources`);
+  brandPage(doc, mark);
   doc.setTextColor(...INK);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
@@ -346,7 +350,6 @@ export async function generateCountyProfilePdf(
     W - M * 2,
   );
   doc.text(disc, M, sy + 8);
-  footer(doc, W, H, M);
 
   // ---------- Save ----------
   onProgress(98, "Writing PDF");
@@ -358,6 +361,10 @@ export async function generateCountyProfilePdf(
   const stamp =
     `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}` +
     `-${String(d.getHours()).padStart(2, "0")}${String(d.getMinutes()).padStart(2, "0")}`;
+  brandFooters(doc, mark, {
+    note: "County record. Published sources only.",
+    issued: new Date().toLocaleDateString("en-KE", { day: "numeric", month: "long", year: "numeric" }),
+  });
   doc.save(`halisia-county-${slug}-${stamp}.pdf`);
   onProgress(100, "Done");
 }
@@ -372,11 +379,4 @@ function pageChrome(doc: jsPDF, W: number, M: number, title: string) {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.text("HALISIA AI · " + title, M, 24);
-}
-
-function footer(doc: jsPDF, W: number, H: number, M: number) {
-  doc.setFontSize(8);
-  doc.setTextColor(...MUTED);
-  doc.text("halisia.ai · county record · published sources only", M, H - 20);
-  doc.text(new Date().toLocaleDateString(), W - M, H - 20, { align: "right" });
 }

@@ -4,6 +4,7 @@
  */
 import jsPDF from "jspdf";
 import type { ListingInsight } from "@/lib/seller-tools";
+import { PDF, brandPage, brandFooters, getMarkSync } from "@/lib/pdf-chrome";
 
 function csvCell(v: unknown): string {
   const s = String(v ?? "");
@@ -81,6 +82,11 @@ export function downloadSellerCsv(rows: ListingInsight[]): string {
 
 export function downloadSellerPdf(rows: ListingInsight[]): string {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
+  // Synchronous by contract — every caller treats the return as a filename,
+  // not a promise — so the mark is read from the cache the app primed at
+  // start-up rather than awaited here. Null simply means no logo this once.
+  const mark = getMarkSync();
+  brandPage(doc, mark);
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
   const M = 40;
@@ -89,11 +95,12 @@ export function downloadSellerPdf(rows: ListingInsight[]): string {
   const ensure = (need: number) => {
     if (y + need > H - M) {
       doc.addPage();
+      brandPage(doc, mark);
       y = M;
     }
   };
 
-  doc.setFillColor(7, 30, 61);
+  doc.setFillColor(PDF.forest[0], PDF.forest[1], PDF.forest[2]);
   doc.rect(0, 0, W, 86, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
@@ -101,7 +108,7 @@ export function downloadSellerPdf(rows: ListingInsight[]): string {
   doc.text("Seller analytics report", M, 46);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
-  doc.setTextColor(160, 190, 215);
+  doc.setTextColor(PDF.greenLight[0], PDF.greenLight[1], PDF.greenLight[2]);
   doc.text(
     `HALISIA AI · generated ${new Date().toLocaleString("en-KE")} · ${rows.length} listing(s)`,
     M,
@@ -185,14 +192,10 @@ export function downloadSellerPdf(rows: ListingInsight[]): string {
     block("Suggested improvements", r.improvements);
   }
 
-  ensure(40);
-  doc.setFontSize(8);
-  doc.setTextColor(140, 150, 168);
-  doc.text(
-    "Indicative analytics from listing activity on HALISIA AI. Not a valuation or a guarantee of sale.",
-    M,
-    H - 28,
-  );
+  brandFooters(doc, mark, {
+    note: "Indicative analytics. Not a valuation or a guarantee of sale.",
+    issued: new Date().toLocaleDateString("en-KE", { day: "numeric", month: "long", year: "numeric" }),
+  });
 
   const filename = `halisia-seller-analytics-${new Date().toISOString().slice(0, 10)}.pdf`;
   doc.save(filename);

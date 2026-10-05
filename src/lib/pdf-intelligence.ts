@@ -16,6 +16,8 @@
 import jsPDF from "jspdf";
 import type { DecisionOutput, ModuleOutput } from "@/lib/intelligence-engine";
 import { labelForPersona, DOSSIER_SCOPE } from "@/lib/intelligence-engine";
+import { PDF, brandPage, brandFooters, prepareMark } from "@/lib/pdf-chrome";
+import halisiaMark from "@/assets/brand/halisia-mark.png.asset.json";
 
 function slugify(s: string) {
   return s
@@ -60,6 +62,8 @@ export async function generateIntelligencePdf(
   tick(4, "Preparing document…");
 
   const doc = new jsPDF({ unit: "pt", format: "a4" });
+  // Async generator, so the mark can be awaited rather than read from cache.
+  const mark = await prepareMark(halisiaMark.url);
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
   const M = 40;
@@ -71,8 +75,11 @@ export async function generateIntelligencePdf(
   const wrap = (t: string, w: number) => doc.splitTextToSize(t, w) as string[];
 
   // ---------- Cover page ----------
-  doc.setFillColor(7, 30, 61);
+  doc.setFillColor(PDF.forest[0], PDF.forest[1], PDF.forest[2]);
   doc.rect(0, 0, W, H, "F");
+  // After the full-page fill, never before it — a watermark painted first
+  // would be buried under the cover colour.
+  brandPage(doc, mark, "dark");
   setColor([255, 255, 255]);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
@@ -124,6 +131,7 @@ export async function generateIntelligencePdf(
   doc.addPage();
   doc.setFillColor(255, 255, 255);
   doc.rect(0, 0, W, H, "F");
+  brandPage(doc, mark);
   setColor(INK);
 
   let y = M;
@@ -174,6 +182,7 @@ export async function generateIntelligencePdf(
     decision.dueDiligence.forEach((d) => {
       if (y > H - M - 70) {
         doc.addPage();
+        brandPage(doc, mark);
         y = M;
       }
       setColor(INK);
@@ -198,6 +207,7 @@ export async function generateIntelligencePdf(
   // ---------- Professionals ----------
   if (y > H - M - 120) {
     doc.addPage();
+    brandPage(doc, mark);
     y = M;
   }
   doc.setFont("helvetica", "bold");
@@ -217,6 +227,7 @@ export async function generateIntelligencePdf(
     const need = 240;
     if (y + need > H - M) {
       doc.addPage();
+      brandPage(doc, mark);
       y = M;
     }
     const v = provenanceOf(m);
@@ -334,6 +345,7 @@ export async function generateIntelligencePdf(
   };
 
   doc.addPage();
+  brandPage(doc, mark);
   y = M;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
@@ -346,18 +358,16 @@ export async function generateIntelligencePdf(
     drawModule(m);
   });
 
-  // ---------- Footer & scope ----------
-  const pages = doc.getNumberOfPages();
-  for (let i = 1; i <= pages; i++) {
-    doc.setPage(i);
-    doc.setFontSize(8);
-    setColor(MUTED);
-    doc.text(`HALISIA.AI  ·  Location readings  ·  Page ${i} of ${pages}`, M, H - 20);
-  }
-  doc.setPage(pages);
+  // ---------- Scope, then the branded footer on every page ----------
+  doc.setPage(doc.getNumberOfPages());
   setColor(MUTED);
   doc.setFontSize(8);
-  doc.text(DOSSIER_SCOPE, M, H - 40, { maxWidth: W - M * 2 });
+  doc.text(DOSSIER_SCOPE, M, H - 62, { maxWidth: W - M * 2 });
+
+  brandFooters(doc, mark, {
+    note: "Location readings. Not a title search, survey or valuation.",
+    issued: new Date().toLocaleDateString("en-KE", { day: "numeric", month: "long", year: "numeric" }),
+  });
 
   const stamp = new Date().toISOString().replace(/[-:T]/g, "").slice(0, 13);
   const filename = `halisia-readings-${slugify(address) || "location"}-${lat.toFixed(4)}-${lng.toFixed(4)}-${stamp}.pdf`;
