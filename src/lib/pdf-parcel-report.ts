@@ -22,14 +22,15 @@ import {
 } from "@/lib/parcel-geometry";
 import { buildableEnvelope, orientedExtent, groundCoveragePct } from "@/lib/buildable";
 import type { MutationPlan, DeedPlanAgreement } from "@/lib/mutation-plan";
+import { frontEdgeIndexOf, type MassingStudy } from "@/lib/house-brief";
 
 /**
- * The parcel report: everything the four steps established, in one document.
+ * The parcel report: everything the steps established, in one document.
  *
  * This is where the work stops being a session in a browser and becomes
  * something a person can hand to a surveyor, an advocate or a bank. It carries
  * the pin they placed, the plan they uploaded, the boundary they drew with its
- * measurements, and what the plot allows them to build.
+ * measurements, what the plot allows them to build, and the brief they wrote.
  *
  * Every page states its own provenance. The rule the whole document is built
  * on: a drawn boundary is a sketch, and this says so on the page that shows
@@ -54,11 +55,35 @@ export type ParcelReportInput = {
   agreement?: DeedPlanAgreement | null;
   /** Setbacks the user entered. Never defaults invented here. */
   setbacks?: { frontM: number; sideM: number } | null;
-  /** The brief, already assembled by the UI. */
+  /** The step 4 brief, already assembled by the UI. */
   briefText?: string | null;
+  /** Step 6's massing study, if the household answered the questionnaire. */
+  massing?: MassingStudy | null;
+  /** Step 6's brief for an architect. */
+  massingBriefText?: string | null;
 };
 
 const M = 48;
+
+/**
+ * The envelope, computed the one way the whole product computes it.
+ *
+ * Getting the front edge wrong here is not cosmetic. Until this helper
+ * existed, both call sites below invoked buildableEnvelope WITHOUT a front
+ * edge index, so `setbacks.frontEdgeIndex === i` was never true and the front
+ * setback was silently dropped — every boundary got the side figure. On a real
+ * 15.3 x 28.8 m Konza plot with a 6 m front and 3 m sides, the screen showed
+ * 144 m2 buildable and this document printed 212 m2: the same plot, the same
+ * inputs, two different answers, with the paid document being both the wrong
+ * one and the more generous one.
+ */
+function envelopeFor(local: LocalXY[], setbacks: { frontM: number; sideM: number }) {
+  return buildableEnvelope(local, {
+    allM: setbacks.sideM,
+    frontM: setbacks.frontM,
+    frontEdgeIndex: frontEdgeIndexOf(local),
+  });
+}
 
 function heading(doc: jsPDF, text: string, y: number): number {
   doc.setFont("helvetica", "bold");
@@ -98,10 +123,10 @@ function drawPlan(
   doc: jsPDF,
   ring: LocalXY[],
   box: { x: number; y: number; w: number; h: number },
-  opts: { envelope?: LocalXY[] | null } = {},
+  opts: { envelope?: LocalXY[] | null; footprint?: LocalXY[] | null } = {},
 ) {
   if (ring.length < 3) return;
-  const all = [...ring, ...(opts.envelope ?? [])];
+  const all = [...ring, ...(opts.envelope ?? []), ...(opts.footprint ?? [])];
   const minX = Math.min(...all.map((p) => p.x));
   const maxX = Math.max(...all.map((p) => p.x));
   const minY = Math.min(...all.map((p) => p.y));
@@ -138,8 +163,12 @@ function drawPlan(
     doc.setFillColor(PDF.greenLight[0], PDF.greenLight[1], PDF.greenLight[2]);
     stroke(opts.envelope, PDF.green, 0.1, 0.8);
   }
+  if (opts.footprint && opts.footprint.length >= 3) {
+    doc.setFillColor(PDF.gold[0], PDF.gold[1], PDF.gold[2]);
+    stroke(opts.footprint, PDF.goldInk, 0.1, 0.8);
+  }
   doc.setFillColor(250, 243, 226);
-  stroke(ring, PDF.gold, 0.1, 1.4);
+  stroke(ring, PDF.gold, opts.footprint ? 0 : 0.1, 1.4);
 
   // Corner numbers, so the side table below can be read against the drawing.
   doc.setFont("helvetica", "bold");
@@ -273,10 +302,7 @@ export async function generateParcelReport(input: ParcelReportInput): Promise<st
     brandPage(doc, mark);
 
     y = heading(doc, "The boundary as drawn", 86);
-    const env =
-      input.setbacks && local.length >= 3
-        ? buildableEnvelope(local, { allM: input.setbacks.sideM, frontM: input.setbacks.frontM })
-        : null;
+    const env = input.setbacks ? envelopeFor(local, input.setbacks) : null;
 
     drawPlan(doc, local, { x: M, y: y, w: W - M * 2, h: 250 }, { envelope: env?.ring ?? null });
     y += 262;
@@ -401,10 +427,7 @@ export async function generateParcelReport(input: ParcelReportInput): Promise<st
 
   /* ---------------- page 4: what can be built ---------------- */
   if (local.length >= 3 && input.setbacks) {
-    const env = buildableEnvelope(local, {
-      allM: input.setbacks.sideM,
-      frontM: input.setbacks.frontM,
-    });
+    const env = envelopeFor(local, input.setbacks);
     doc.addPage();
     doc.setFillColor(PDF.ivory[0], PDF.ivory[1], PDF.ivory[2]);
     doc.rect(0, 0, W, H, "F");
@@ -474,6 +497,130 @@ export async function generateParcelReport(input: ParcelReportInput): Promise<st
         doc.text(sanitize(line), M, y);
         y += 10;
       }
+    }
+  }
+
+  /* ---------------- page 5: the massing study ---------------- */
+  if (input.massing && input.massing.grossM2 > 0) {
+    const ms = input.massing;
+    doc.addPage();
+    doc.setFillColor(PDF.ivory[0], PDF.ivory[1], PDF.ivory[2]);
+    doc.rect(0, 0, W, H, "F");
+    brandPage(doc, mark);
+    y = heading(doc, "The brief, against the ground", 86);
+
+    y = wrap(
+      doc,
+      "A massing study: how much floor area this brief needs, and whether that much fits inside " +
+        "the setbacks entered. It is not a design. No room is laid out, no stair is placed, " +
+        "nothing is oriented, and nothing is positioned on the parcel.",
+      M,
+      y,
+      W - M * 2,
+      { size: 9, leading: 12, color: PDF.stone },
+    );
+    y += 10;
+
+    y = label(doc, "Accommodation asked for", y);
+    doc.setFontSize(8.5);
+    for (const l of ms.schedule) {
+      if (y > H - 200) break;
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(PDF.stone2[0], PDF.stone2[1], PDF.stone2[2]);
+      doc.text(
+        sanitize(l.eachM2 != null ? `${l.count} x ${l.label} at ${l.eachM2} m2` : l.label),
+        M,
+        y,
+      );
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(PDF.forest[0], PDF.forest[1], PDF.forest[2]);
+      doc.text(`${Math.round(l.totalM2)} m2`, W - M, y, { align: "right" });
+      y += 12;
+    }
+
+    y += 8;
+    y = row(doc, "Total floor area", `${Math.round(ms.grossM2)} m2`, y, W);
+    y = row(
+      doc,
+      "Over",
+      `${ms.storeysRequested} ${ms.storeysRequested === 1 ? "floor" : "floors"}`,
+      y,
+      W,
+    );
+    y = row(doc, "Ground floor footprint", `${Math.round(ms.footprintM2)} m2`, y, W);
+    if (ms.envelopeM2 != null) {
+      y = row(doc, "Buildable area after setbacks", `${Math.round(ms.envelopeM2)} m2`, y, W);
+    }
+    if (ms.coveragePct != null) {
+      y = row(doc, "Ground coverage", `${ms.coveragePct.toFixed(0)}% of the plot`, y, W);
+    }
+    if (ms.fitsByArea != null) {
+      y = row(
+        doc,
+        "Fits by area",
+        ms.fitsByArea
+          ? "yes"
+          : ms.storeysNeeded
+            ? `no — needs ${ms.storeysNeeded} floors, or a smaller brief`
+            : "no",
+        y,
+        W,
+      );
+    }
+    if (ms.fitsAsRectangle != null && ms.rect) {
+      y = row(
+        doc,
+        `A ${ms.rect.widthM.toFixed(1)} x ${ms.rect.depthM.toFixed(1)} m block`,
+        ms.fitsAsRectangle ? "fits centred and square" : "does not fit centred and square",
+        y,
+        W,
+      );
+    }
+    y = row(doc, "Massing height", `about ${ms.heightM.toFixed(1)} m to the top floor level`, y, W);
+
+    y += 10;
+    y = label(doc, "What this page does not do", y, PDF.red);
+    for (const l of ms.limits) {
+      if (y > H - 90) break;
+      y = wrap(doc, `- ${l}`, M, y, W - M * 2, { size: 8.5, leading: 11, color: PDF.stone2 });
+      y += 2;
+    }
+  }
+
+  /* ---------------- page 6: the brief for an architect ---------------- */
+  if (input.massingBriefText && input.massingBriefText.trim()) {
+    doc.addPage();
+    doc.setFillColor(PDF.ivory[0], PDF.ivory[1], PDF.ivory[2]);
+    doc.rect(0, 0, W, H, "F");
+    brandPage(doc, mark);
+    y = heading(doc, "Brief for an architect", 86);
+    y = wrap(
+      doc,
+      "Hand this page to whoever designs the building. It is the household's own brief and the " +
+        "numbers it implies — a starting point for a conversation, not a specification.",
+      M,
+      y,
+      W - M * 2,
+      { size: 9, leading: 12, color: PDF.stone },
+    );
+    y += 8;
+
+    doc.setFont("courier", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(PDF.stone[0], PDF.stone[1], PDF.stone[2]);
+    for (const line of input.massingBriefText.split("\n")) {
+      if (y > H - 76) {
+        doc.addPage();
+        doc.setFillColor(PDF.ivory[0], PDF.ivory[1], PDF.ivory[2]);
+        doc.rect(0, 0, W, H, "F");
+        brandPage(doc, mark);
+        doc.setFont("courier", "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(PDF.stone[0], PDF.stone[1], PDF.stone[2]);
+        y = 86;
+      }
+      doc.text(sanitize(line), M, y);
+      y += 10;
     }
   }
 
