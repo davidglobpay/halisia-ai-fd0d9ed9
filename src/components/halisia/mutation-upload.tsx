@@ -29,6 +29,12 @@ import { ReadAloud } from "@/components/halisia/read-aloud";
  *
  * Neither check makes a title genuine. Two documents forged together agree
  * perfectly, and this says so rather than implying otherwise.
+ *
+ * Every exit from the upload handler reports upward, including the failures.
+ * A second upload that cannot be read must not leave the parcel report
+ * carrying the FIRST plan: a surveyor's plan printed beside a parcel it does
+ * not belong to is precisely the error this component exists to catch, and it
+ * would be inexcusable to introduce it here.
  */
 
 export function MutationUpload({
@@ -68,6 +74,10 @@ export function MutationUpload({
           setError(
             "No plot sizes or dimensions were found on that sheet. It may be a different kind of drawing.",
           );
+          // The sheet was readable but is not a plan we understood. The parent
+          // must drop whatever it was holding, or the report prints the last
+          // plan that DID parse against this parcel.
+          onPlanChange?.(null, null);
           return;
         }
         setPlan(parsed);
@@ -80,6 +90,9 @@ export function MutationUpload({
       } catch (e) {
         console.error(e);
         setError("That file could not be read.");
+        // Same reasoning as above: a thrown read must not leave a stale plan
+        // attached to this parcel.
+        onPlanChange?.(null, null);
       } finally {
         setBusy(false);
       }
