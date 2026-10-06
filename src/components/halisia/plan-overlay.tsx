@@ -143,7 +143,7 @@ export function PlanOverlay({
     ? "Upload the surveyor's plan in step two first."
     : [
         shape
-          ? `The plot from the sheet is ${shape.widthM.toFixed(1)} by ${shape.depthM.toFixed(1)} metres.`
+          ? `The inferred candidate rectangle is ${shape.widthM.toFixed(1)} by ${shape.depthM.toFixed(1)} metres.`
           : "No plot size could be read from the sheet.",
         here ? "It is drawn on the map at that size." : "Place your pin or draw the plot first.",
         reading ? reading.text : "Draw your boundary in step three to compare the two.",
@@ -178,8 +178,8 @@ export function PlanOverlay({
             Lay the plot over the land
           </h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            The plot from the sheet, drawn at its true size. Tap the map to move it, turn it to face
-            the right way, then see how well it agrees with the boundary you drew.
+            A candidate rectangle based on extracted figures. Tap the map to move it, rotate it,
+            then compare it with your drawn outline.
           </p>
         </div>
         <ReadAloud text={spoken} label="Listen" />
@@ -205,7 +205,7 @@ export function PlanOverlay({
         <>
           <div className="mt-3">
             <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-              Which plot on the sheet is yours?
+              Choose an extracted area group (not a parcel identity)
             </div>
             <ul className="mt-1.5 flex flex-wrap gap-1.5">
               {sizes.map((s) => (
@@ -235,7 +235,7 @@ export function PlanOverlay({
                 </span>
                 <span className="text-[11px] text-muted-foreground">
                   {shape.basis === "dimensions"
-                    ? "both sides printed on the sheet"
+                    ? "rectangle inferred from extracted dimensions; parcel association unverified"
                     : "area from the sheet, proportions chosen by you"}
                 </span>
               </div>
@@ -256,8 +256,9 @@ export function PlanOverlay({
                     <>
                       The sides multiply to {Math.round(shape.check.computedM2)} m&sup2; but the
                       sheet prints {Math.round(shape.check.statedM2)} m&sup2; &mdash;{" "}
-                      {Math.abs(shape.check.errorPct).toFixed(1)}% apart. The sheet disagrees with
-                      itself; ask the surveyor which figure is right.
+                      {Math.abs(shape.check.errorPct).toFixed(1)}% apart. The selected dimensions
+                      and extracted area differ; ask the surveyor to check the OCR and parcel
+                      association.
                     </>
                   )}
                 </p>
@@ -307,7 +308,7 @@ export function PlanOverlay({
               <p className="mt-1.5 text-[11px] text-muted-foreground">
                 <Move className="mr-1 inline h-3 w-3" aria-hidden="true" />
                 Tap anywhere on the map to move the plot there. The green outline is the boundary
-                you drew; the gold one is the plot from the sheet.
+                you drew; the gold one is an inferred candidate rectangle.
               </p>
 
               <div className="mt-3">
@@ -409,10 +410,11 @@ export function PlanOverlay({
       )}
 
       <p className="mt-3 border-t border-white/10 pt-2 text-[11px] leading-relaxed text-muted-foreground">
-        The size comes from the sheet. The position and the angle come from you. Agreement between
-        the two outlines means the shape you drew matches the shape the surveyor drew &mdash; it
-        says nothing about whether either one is on the right land, and nothing about ownership. A
-        licensed surveyor fixes beacons; an advocate confirms title.
+        The rectangle uses OCR-extracted area and dimensions, sometimes pooled across equal-area
+        plots or drawn from elsewhere on the sheet. It is an inferred shape, not the surveyor's
+        confirmed parcel outline. Position and angle are chosen by you. A close fit proves neither
+        parcel identity, legal boundaries nor ownership. Ask a licensed surveyor to confirm the
+        correct plot and beacons, and an advocate to review an official title search.
       </p>
     </div>
   );
