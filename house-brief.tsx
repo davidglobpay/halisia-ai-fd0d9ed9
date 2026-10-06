@@ -132,7 +132,11 @@ export function HouseBrief({
   useEffect(() => {
     const next = pendingRef.current;
     if (!next) return;
-    const key = JSON.stringify({ g: next.study.grossM2, s: next.study.storeysRequested, b: next.briefText });
+    const key = JSON.stringify({
+      g: next.study.grossM2,
+      s: next.study.storeysRequested,
+      b: next.briefText,
+    });
     if (key === lastKeyRef.current) return;
     lastKeyRef.current = key;
     onStudyChangeRef.current?.(next);
@@ -230,7 +234,9 @@ export function HouseBrief({
             return (
               <li key={r.id} className="flex items-center gap-2 py-1.5">
                 <div className="min-w-0 flex-1">
-                  <div className={`truncate text-xs ${n ? "text-foreground" : "text-muted-foreground"}`}>
+                  <div
+                    className={`truncate text-xs ${n ? "text-foreground" : "text-muted-foreground"}`}
+                  >
                     {r.label}
                   </div>
                   {n > 0 && (
@@ -344,7 +350,8 @@ export function HouseBrief({
               <CheckCircle2 className="mt-0.5 h-4 w-4 flex-none text-primary" aria-hidden="true" />
               <span>
                 <span className="font-medium text-primary">
-                  Fits on {study.storeysRequested} {study.storeysRequested === 1 ? "floor" : "floors"}
+                  Fits on {study.storeysRequested}{" "}
+                  {study.storeysRequested === 1 ? "floor" : "floors"}
                 </span>{" "}
                 <span className="text-muted-foreground">
                   by area.{" "}

@@ -4,6 +4,8 @@ import { MapView } from "@/components/halisia/map-view";
 import { ReadAloud } from "@/components/halisia/read-aloud";
 import {
   areaM2,
+  centroid,
+  rotate,
   describeArea,
   edges,
   fitToArea,
@@ -61,7 +63,11 @@ export function ParcelDraw({
   const [history, setHistory] = useState<LatLng[][]>([]);
   const [fitted, setFitted] = useState<{ factor: number; errorPct: number } | null>(null);
 
-  const deedArea = useMemo(() => (deedAreaText ? parseArea(deedAreaText) : null), [deedAreaText]);
+  const parsedDeedArea = useMemo(
+    () => (deedAreaText ? parseArea(deedAreaText) : null),
+    [deedAreaText],
+  );
+  const deedArea = parsedDeedArea?.ambiguous ? null : parsedDeedArea;
 
   // All measurement happens on a local east/north plane centred on the ring
   // itself, so a parcel never straddles a projection seam.
@@ -147,6 +153,13 @@ export function ParcelDraw({
         <ReadAloud text={spoken} label="Listen" />
       </div>
 
+      {parsedDeedArea?.ambiguous && (
+        <p role="status" className="mt-3 text-xs text-amber-glow">
+          The stated dimensions do not specify feet or metres. Area comparison and resizing are
+          withheld until the document's units are confirmed.
+        </p>
+      )}
+
       <div className="mt-3 flex flex-wrap gap-2">
         <button
           type="button"
@@ -175,6 +188,17 @@ export function ParcelDraw({
           <Scaling className="h-3.5 w-3.5" aria-hidden="true" />
           Adjust corners
         </button>
+        {[-5, 5].map((degrees) => (
+          <button
+            key={degrees}
+            type="button"
+            disabled={ring.length < 3 || area <= 0}
+            onClick={() => push(fromLocalMetres(rotate(local, degrees, centroid(local)), origin))}
+            className="inline-flex min-h-9 items-center rounded-full glass border border-white/12 px-3.5 py-1.5 text-xs disabled:opacity-50"
+          >
+            Rotate sketch {degrees > 0 ? "clockwise" : "anticlockwise"} 5°
+          </button>
+        ))}
         <button
           type="button"
           onClick={undo}
