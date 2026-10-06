@@ -109,7 +109,7 @@ export function MutationUpload({
         plan.plots.length ? `${plan.plots.length} plots on this sheet.` : "",
         plan.provisional
           ? "Important. This plan states that it is provisional and subject to final ground survey. " +
-            "That means the beacons are not fixed and these plot numbers are not registered titles yet."
+            "HALISIA cannot establish beacon positions or registration status from this statement."
           : "",
         agreement
           ? agreement.conflicts.length
@@ -186,9 +186,9 @@ export function MutationUpload({
                 This plan is provisional
               </div>
               <p className="mt-1 text-xs leading-relaxed text-foreground">
-                The sheet states it is subject to a final ground survey. The beacons are not fixed
-                and these plot numbers are not registered titles. What is drawn here is an
-                intention, not a parcel.
+                The sheet states it is subject to a final ground survey. This document alone does
+                not establish final boundary positions, beacon status or title registration.
+                Confirm those details through official records and a licensed surveyor.
               </p>
               {plan.provisionalNote && (
                 <p className="mt-1 text-[11px] italic text-muted-foreground">
@@ -323,9 +323,9 @@ export function MutationUpload({
                 ))}
               </ul>
               <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-                Agreement does not make a title genuine — two documents prepared together will
-                always agree. What it rules out is a plan being shown beside a deed it does not
-                belong to.
+                Agreement only means the extracted fields match. It does not authenticate either
+                document, establish ownership or prove that the deed and plan refer to the same
+                parcel. Confirm their relationship through official records and a licensed surveyor.
               </p>
             </div>
           )}
