@@ -35,7 +35,7 @@ export const geocodeAddress = createServerFn({ method: "POST" })
         geometry: {
           location: { lat: number; lng: number };
           location_type?: string;
-          /** Google's own bounding box for the match. The honest radius. */
+          /** Google's suggested display viewport for the match; not an accuracy bound. */
           viewport?: {
             northeast: { lat: number; lng: number };
             southwest: { lat: number; lng: number };
@@ -63,8 +63,8 @@ export const geocodeAddress = createServerFn({ method: "POST" })
         (RANK[b.geometry.location_type ?? "APPROXIMATE"] ?? 3),
     )[0];
 
-    // Half the diagonal of Google's own viewport, in metres. This is a measured
-    // uncertainty rather than a lookup-table guess, and it is what the map
+    // Half the diagonal of Google's display viewport, in metres. This describes
+    // a suggested map extent, not positional uncertainty; it is what the map
     // draws as a circle so nobody reads the pin as a surveyed point.
     const vp = top.geometry.viewport;
     let radiusM: number | null = null;

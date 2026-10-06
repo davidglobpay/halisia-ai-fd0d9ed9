@@ -31,8 +31,9 @@ test("Geotech — soil layer toggles hide/show cells and foundation cards render
   await page.goto("/explore?q=Nairobi");
   await expect(page.getByTestId("active-address")).toContainText(/Nairobi/i, { timeout: 30_000 });
   // Geotech tab (Wave 3)
-  const tab = page.getByRole("tab", { name: /geotech/i }).first();
-  if (await tab.count()) await tab.click();
+  const tab = page.getByRole("checkbox", { name: /Wave 3.*Geotech/i });
+  await expect(tab).toBeVisible();
+  await tab.check();
   const panel = page.getByTestId("geotech-panel");
   await expect(panel).toBeVisible({ timeout: 45_000 });
 
@@ -61,8 +62,9 @@ test("Map tools — distance and area readouts, export downloads geojson", async
   await expect(page.getByTestId("active-address")).toContainText(/Nairobi/i, { timeout: 30_000 });
 
   // Open the multi-source GIS tab which uses leaflet with the tools.
-  const gisTab = page.getByRole("tab", { name: /gis|leaflet|multi-source/i }).first();
-  if (await gisTab.count()) await gisTab.click();
+  const gisTab = page.getByRole("checkbox", { name: /Wave 1.*GIS/i });
+  await expect(gisTab).toBeVisible();
+  await gisTab.check();
 
   const tools = page.getByTestId("map-tools").first();
   await expect(tools).toBeVisible({ timeout: 30_000 });

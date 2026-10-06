@@ -244,7 +244,7 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
             <span className="text-gradient">signals you can trust</span>.
           </>
         }
-        intro="Three things HALISIA can measure from public APIs, and the seven it names as gaps rather than guessing. Each reading carries its source and its confidence."
+        intro="Public-data readings depend on source availability. Check each report for its sources, limitations and gaps before making a decision."
         items={PILLARS.map((p) => ({
           key: p.title,
           title: p.title,
@@ -488,7 +488,7 @@ const STEPS = [
   {
     icon: Search,
     title: "Search or drop a pin",
-    body: "Any town, road, plot number, or lat/lng in Kenya. The 3D map takes you there.",
+    body: "Search a town, road or coordinates in Kenya, or place a pin manually. A plot number alone does not establish its location or boundary.",
   },
   {
     icon: MousePointerClick,

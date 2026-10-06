@@ -35,8 +35,8 @@ function slugify(s: string) {
 function provenanceOf(m: ModuleOutput): { label: string; color: [number, number, number] } {
   if (m.status === "projected") return { label: "Indicative projection", color: [138, 94, 18] };
   if (m.status === "not-assessed") return { label: "Not assessed", color: [140, 150, 168] };
-  if ((m.confidencePct ?? 0) >= 100) return { label: "Measured", color: [34, 197, 94] };
-  return { label: "Partly measured", color: [212, 160, 23] };
+  if ((m.confidencePct ?? 0) >= 100) return { label: "Inputs returned", color: [34, 197, 94] };
+  return { label: "Partial inputs", color: [212, 160, 23] };
 }
 
 export interface IntelligencePdfOptions {
@@ -100,7 +100,7 @@ export async function generateIntelligencePdf(
   doc.text(
     `Coordinates ${lat.toFixed(5)}, ${lng.toFixed(5)}` +
       (decision.grade ? `  ·  Grade ${decision.grade}` : "") +
-      (decision.confidencePct != null ? `  ·  Confidence ${decision.confidencePct}%` : ""),
+      (decision.confidencePct != null ? `  ·  Input availability ${decision.confidencePct}%` : ""),
     M,
     coverY,
   );
@@ -270,7 +270,7 @@ export async function generateIntelligencePdf(
     doc.setFont("helvetica", "normal");
     const meta =
       m.status !== "not-assessed"
-        ? `  ·  ${m.status === "projected" ? "Projection confidence" : "Confidence"} ${m.confidencePct}%  ·  ${m.sources.length === 1 ? "1 source" : `${m.sources.length} sources`}`
+        ? `  ·  ${m.status === "projected" ? "Projection confidence" : "Input availability"} ${m.confidencePct}%  ·  ${m.sources.length === 1 ? "1 source" : `${m.sources.length} sources`}`
         : "  ·  no data held for this location";
     doc.text(meta, M + doc.getTextWidth(v.label.toUpperCase()), y);
     y += 12;
