@@ -23,6 +23,7 @@ import {
 import { buildableEnvelope, orientedExtent, groundCoveragePct } from "@/lib/buildable";
 import type { MutationPlan, DeedPlanAgreement } from "@/lib/mutation-plan";
 import { frontEdgeIndexOf, type MassingStudy } from "@/lib/house-brief";
+import type { PlanFit } from "@/lib/plan-overlay";
 
 /**
  * The parcel report: everything the steps established, in one document.
@@ -61,6 +62,20 @@ export type ParcelReportInput = {
   massing?: MassingStudy | null;
   /** Step 6's brief for an architect. */
   massingBriefText?: string | null;
+  /**
+   * Step 7's placement of the plot from the sheet.
+   *
+   * The size is the surveyor's; the position and angle are the user's. The
+   * page that prints this says so, because a reader who mistakes it for
+   * georeferencing has been actively misled.
+   */
+  placement?: {
+    widthM: number;
+    depthM: number;
+    basis: "dimensions" | "area-and-proportion";
+    rotationDeg: number;
+    fit: PlanFit | null;
+  } | null;
 };
 
 const M = 48;
@@ -417,6 +432,63 @@ export async function generateParcelReport(input: ParcelReportInput): Promise<st
         doc,
         "Agreement does not make a title genuine. Two documents prepared together will always " +
           "agree. What it rules out is a plan shown beside a deed it does not belong to.",
+        M,
+        y,
+        W - M * 2,
+        { size: 8.5, leading: 11.5, color: PDF.stone2 },
+      );
+    }
+
+    if (input.placement) {
+      const pl = input.placement;
+      if (y > H - 200) {
+        doc.addPage();
+        doc.setFillColor(PDF.ivory[0], PDF.ivory[1], PDF.ivory[2]);
+        doc.rect(0, 0, W, H, "F");
+        brandPage(doc, mark);
+        y = 86;
+      }
+      y += 10;
+      y = label(doc, "The plot laid over the land", y);
+      y = row(
+        doc,
+        "Plot from the sheet",
+        `${pl.widthM.toFixed(1)} x ${pl.depthM.toFixed(1)} m`,
+        y,
+        W,
+      );
+      y = row(
+        doc,
+        "Shape taken from",
+        pl.basis === "dimensions"
+          ? "both sides printed on the sheet"
+          : "the printed area, proportions chosen by the user",
+        y,
+        W,
+      );
+      y = row(doc, "Turned to", `${Math.round(pl.rotationDeg)} degrees from north`, y, W);
+      if (pl.fit) {
+        y = row(
+          doc,
+          "Sitting inside the drawn boundary",
+          `${Math.round(pl.fit.overlapPct)}%`,
+          y,
+          W,
+        );
+        y = row(doc, "Centres apart", `${pl.fit.centroidOffsetM.toFixed(1)} m`, y, W);
+      }
+      y += 4;
+      y = wrap(
+        doc,
+        "The size is the sheet's. The position and the angle were set by hand by the person using " +
+          "the app, because a mutation plan carries no coordinates and no north arrow. Nothing here " +
+          "is georeferencing and nothing here is a survey. Agreement between the two outlines means " +
+          "the shape drawn matches the shape the surveyor drew; it says nothing about whether " +
+          "either one is on the right land." +
+          (pl.fit && !pl.fit.exact
+            ? " The drawn boundary has a corner that turns inward, so the overlap above is a " +
+              "cautious under-estimate."
+            : ""),
         M,
         y,
         W - M * 2,
