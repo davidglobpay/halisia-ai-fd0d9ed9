@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 // Validates the landing-page county map: 47-county boundaries render, hover
-// syncs between cards and pins, and clicking selects/highlights the county.
+// syncs between cards and pins, and the dedicated Compare controls toggle selection.
 test.describe("Kenya county map — realistic boundaries + interactions", () => {
   test("renders 47 counties and supports hover + click selection", async ({ page }) => {
     // Sanity-check the underlying data source has all 47 counties.
@@ -24,28 +24,33 @@ test.describe("Kenya county map — realistic boundaries + interactions", () => 
     const cards = page.locator('[data-testid^="county-card-"]');
     await expect(cards).toHaveCount(47);
 
-    // Hover a card → syncs the map's hover state (card gains the hover style).
-    const nairobi = page.getByTestId("county-card-47");
-    await expect(nairobi).toBeVisible();
-    await nairobi.hover();
-    // Not yet selected on hover.
-    await expect(nairobi).toHaveAttribute("aria-pressed", "false");
+    // Hover a card → syncs the map's hover state without selecting it.
+    const nairobiCard = page.getByTestId("county-card-47");
+    const nairobiCompare = nairobiCard.getByRole("button", {
+      name: /Add Nairobi .* comparison/i,
+    });
+    await expect(nairobiCard).toBeVisible();
+    await nairobiCard.hover();
+    await expect(nairobiCompare).toHaveAttribute("aria-pressed", "false");
 
-    // Click → selection propagates: aria-pressed flips, compare grid appears.
-    await nairobi.click();
-    await expect(nairobi).toHaveAttribute("aria-pressed", "true");
+    // The dedicated Compare control toggles selection and reveals the comparison grid.
+    await nairobiCompare.click();
+    await expect(nairobiCompare).toHaveAttribute("aria-pressed", "true");
     await expect(page.getByTestId("compare-grid")).toBeVisible();
     await expect(page.locator('[data-testid="compare-grid"] > div')).toHaveCount(1);
 
-    // A second click on a different county highlights the new area too.
-    const mombasa = page.getByTestId("county-card-1");
-    await mombasa.click();
-    await expect(mombasa).toHaveAttribute("aria-pressed", "true");
+    // A second county can be selected independently.
+    const mombasaCard = page.getByTestId("county-card-1");
+    const mombasaCompare = mombasaCard.getByRole("button", {
+      name: /Add Mombasa .* comparison/i,
+    });
+    await mombasaCompare.click();
+    await expect(mombasaCompare).toHaveAttribute("aria-pressed", "true");
     await expect(page.locator('[data-testid="compare-grid"] > div')).toHaveCount(2);
 
-    // Clicking a selected card again deselects it (toggle behavior).
-    await nairobi.click();
-    await expect(nairobi).toHaveAttribute("aria-pressed", "false");
+    // Activating a selected county's Compare control again deselects it.
+    await nairobiCompare.click();
+    await expect(nairobiCompare).toHaveAttribute("aria-pressed", "false");
     await expect(page.locator('[data-testid="compare-grid"] > div')).toHaveCount(1);
   });
 
