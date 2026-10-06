@@ -27,7 +27,7 @@ test.describe("Kenya county map — realistic boundaries + interactions", () => 
     // Hover a card → syncs the map's hover state without selecting it.
     const nairobiCard = page.getByTestId("county-card-47");
     const nairobiCompare = nairobiCard.getByRole("button", {
-      name: /Add Nairobi .* comparison/i,
+      name: /Nairobi .* comparison/i,
     });
     await expect(nairobiCard).toBeVisible();
     await nairobiCard.hover();
@@ -42,7 +42,7 @@ test.describe("Kenya county map — realistic boundaries + interactions", () => 
     // A second county can be selected independently.
     const mombasaCard = page.getByTestId("county-card-1");
     const mombasaCompare = mombasaCard.getByRole("button", {
-      name: /Add Mombasa .* comparison/i,
+      name: /Mombasa .* comparison/i,
     });
     await mombasaCompare.click();
     await expect(mombasaCompare).toHaveAttribute("aria-pressed", "true");
