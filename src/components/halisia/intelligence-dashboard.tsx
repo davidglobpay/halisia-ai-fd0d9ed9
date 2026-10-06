@@ -665,25 +665,18 @@ function EnvironmentTab({ intel, loading }: { intel?: LocationIntel; loading: bo
           source="Google Elevation API"
         />
         <StatTile
-          label="Flood proxy"
-          value={
-            intel.elevation?.meters != null
-              ? intel.elevation.meters < 20
-                ? "Elevated risk"
-                : intel.elevation.meters < 100
-                  ? "Moderate"
-                  : "Low"
-              : "—"
-          }
-          sub="Derived from elevation only"
+          label="Flood assessment"
+          value="Not assessed"
+          sub="Elevation alone cannot establish flood risk"
           icon={ShieldAlert}
           tone="from-destructive to-amber-glow"
           source="Not a flood study"
         />
       </div>
       <div className="text-[11px] text-muted-foreground px-1">
-        Live from Google Maps Platform (Air Quality + Elevation APIs). Flood proxy is a rough
-        elevation-based hint — field verification in long rains still recommended.
+        Location readings from Google Maps Platform (Air Quality + Elevation APIs). Check current
+        regional weather advisories and obtain a site drainage assessment; these readings do not
+        establish flood safety.
       </div>
     </div>
   );
