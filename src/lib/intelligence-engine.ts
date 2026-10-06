@@ -285,9 +285,9 @@ function scoreConstruction(intel?: LocationIntel): ModuleOutput {
             ? "low relief, so drainage matters"
             : elev > 2400
               ? "high altitude; curing and access need planning"
-              : "elevated, drainage friendlier"
+              : "elevation reading only; drainage unassessed"
       }`,
-      "Reads drainage and water-table risk from height alone",
+      "Height alone does not establish drainage or water-table risk",
       "Says nothing about bearing capacity, soil type or slope at parcel scale",
     ],
     sources: [SRC_ELEVATION],
@@ -296,7 +296,7 @@ function scoreConstruction(intel?: LocationIntel): ModuleOutput {
       "Slope at parcel scale — not computed",
       "Road width and haulage access — not surveyed",
     ],
-    limitations: ["Elevation is a proxy for drainage, not a geotechnical assessment"],
+    limitations: ["Elevation alone does not assess drainage, flood risk, water table or geotechnical suitability"],
     nextStep: "Commission SPT and moisture tests at three points on the parcel.",
   };
 }
