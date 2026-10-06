@@ -29,6 +29,12 @@ describe("validateCoordinate", () => {
     expect(r.swapped).toBe(true);
     expect(r.lat).toBe(-1.2);
   });
+  it("rejects a default coordinate even when latitude and longitude are reversed", () => {
+    const r = validateCoordinate(36.817223, -1.286389);
+    expect(r.ok).toBe(false);
+    expect(r.swapped).toBe(true);
+    expect(r.issues.join(" ")).toContain("real location is missing");
+  });
   it("rejects points outside Kenya", () => {
     expect(validateCoordinate(51.5, -0.12).ok).toBe(false);
   });
