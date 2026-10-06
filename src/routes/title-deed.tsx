@@ -23,8 +23,10 @@ import { ParcelPin, type PinnedPoint } from "@/components/halisia/parcel-pin";
 import { MutationUpload } from "@/components/halisia/mutation-upload";
 import { ParcelDraw } from "@/components/halisia/parcel-draw";
 import { BuildBrief } from "@/components/halisia/build-brief";
+import { HouseBrief } from "@/components/halisia/house-brief";
 import type { LatLng } from "@/lib/parcel-geometry";
 import { generateParcelReport } from "@/lib/pdf-parcel-report";
+import type { MassingStudy } from "@/lib/house-brief";
 import type { MutationPlan, DeedPlanAgreement } from "@/lib/mutation-plan";
 import { IntelligenceDashboard } from "@/components/halisia/intelligence-dashboard";
 import { extractDeedFields, type DeedFields } from "@/lib/deed-extract.functions";
@@ -153,6 +155,8 @@ function TitleDeedPage() {
     setbacks: { frontM: number; sideM: number };
     briefText: string;
   } | null>(null);
+  /** Step 6's massing study and the brief it produced. */
+  const [massing, setMassing] = useState<{ study: MassingStudy; briefText: string } | null>(null);
   const [reporting, setReporting] = useState(false);
 
   // A new search means a new parcel. Carrying a pin across would silently
@@ -161,6 +165,10 @@ function TitleDeedPage() {
     setPinned(null);
     setBoundary([]);
     setPlanRead(null);
+    // Setbacks and a brief belong to the plot they were entered for. Carrying
+    // them to the next parcel is the same class of error as carrying the pin.
+    setBriefState(null);
+    setMassing(null);
   }, [loc?.lat, loc?.lng]);
   const [error, setError] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
@@ -888,6 +896,16 @@ function TitleDeedPage() {
                   onBoundaryChange={setBoundary}
                 />
                 <BuildBrief boundary={boundary} onBriefChange={setBriefState} />
+                <HouseBrief
+                  boundary={boundary}
+                  // Step 4's setbacks, so step 6 measures against the same
+                  // envelope the person just saw rather than one of its own.
+                  setbacks={briefState?.setbacks ?? null}
+                  reference={
+                    fields?.titleNumber || fields?.lrNumber || fields?.parcelNumber || null
+                  }
+                  onStudyChange={setMassing}
+                />
                 <button
                   type="button"
                   disabled={reporting}
@@ -914,6 +932,8 @@ function TitleDeedPage() {
                         // report must never print setbacks nobody entered.
                         setbacks: briefState?.setbacks ?? null,
                         briefText: briefState?.briefText ?? null,
+                        massing: massing?.study ?? null,
+                        massingBriefText: massing?.briefText ?? null,
                       });
                     } catch (e) {
                       console.error(e);
