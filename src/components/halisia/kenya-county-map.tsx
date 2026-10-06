@@ -632,23 +632,19 @@ export function KenyaCountyMap() {
             const hover = hoverCode === c.code;
             const v = metricValue(c.code, METRIC);
             return (
-              <Link
+              <article
                 key={c.code}
-                to="/county/$code"
-                params={{ code: String(c.code) }}
                 ref={(el) => {
                   cardRefs.current[c.code] = el;
                 }}
-                aria-label={`Open ${c.name} County profile. Population density ${formatMetric(
+                aria-label={`${c.name} County. Population density ${formatMetric(
                   METRIC,
                   v,
                 )} from the 2019 census.`}
                 data-testid={`county-card-${c.code}`}
                 onMouseEnter={() => setHoverCode(c.code)}
                 onMouseLeave={() => setHoverCode(null)}
-                onFocus={() => setHoverCode(c.code)}
-                onBlur={() => setHoverCode(null)}
-                className={`block h-full rounded-2xl p-3 transition cursor-pointer outline-none border ${
+                className={`block h-full rounded-2xl p-3 transition outline-none border ${
                   sel
                     ? "bg-accent/10 border-accent/50"
                     : hover
@@ -677,12 +673,17 @@ export function KenyaCountyMap() {
                   Population density · KNBS 2019
                 </div>
                 <div className="mt-3 flex items-center justify-between gap-2">
-                  <span
+                  <Link
+                    to="/county/$code"
+                    params={{ code: String(c.code) }}
                     data-testid={`county-open-${c.code}`}
-                    className="inline-flex items-center gap-1 text-[11px] font-medium text-accent"
+                    aria-label={`Open ${c.name} County profile`}
+                    onFocus={() => setHoverCode(c.code)}
+                    onBlur={() => setHoverCode(null)}
+                    className="inline-flex items-center gap-1 text-[11px] font-medium text-accent rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                   >
                     Open profile <ArrowRight className="h-3 w-3" />
-                  </span>
+                  </Link>
                   <button
                     type="button"
                     onClick={(e) => {
@@ -701,7 +702,7 @@ export function KenyaCountyMap() {
                     {sel ? <Check className="h-3 w-3" /> : null} Compare
                   </button>
                 </div>
-              </Link>
+              </article>
             );
           })}
         </HCarousel>
