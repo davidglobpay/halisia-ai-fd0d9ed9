@@ -116,11 +116,17 @@ const WAVE4 = {
 } as Wave4Intel;
 
 describe("a module scores only when its data arrived", () => {
-  it("measures terrain, environment and amenity access when every provider answers", () => {
+  it("measures environment and amenities but withholds altitude-only construction", () => {
     const d = runIntelligenceEngine(FULL, undefined, "investor");
     const measured = d.modules.filter((m) => m.status === "measured").map((m) => m.id);
-    expect(measured.sort()).toEqual(["construction", "environment", "infrastructure"].sort());
-    expect(d.measuredCount).toBe(3);
+    expect(measured.sort()).toEqual(["environment", "infrastructure"].sort());
+    expect(d.measuredCount).toBe(2);
+    expect(d.modules.find((m) => m.id === "construction")).toMatchObject({
+      status: "not-assessed",
+      score: null,
+      grade: null,
+      confidencePct: null,
+    });
   });
 
   it("measures nothing when no provider answers", () => {
@@ -184,7 +190,7 @@ describe("a module scores only when its data arrived", () => {
       expect(module?.projectionBasis?.length).toBeGreaterThan(0);
     }
     expect(d.projectedCount).toBe(2);
-    expect(d.measuredCount).toBe(4);
+    expect(d.measuredCount).toBe(3);
   });
 
   it("never lets proxy projections affect the composite reading", () => {
@@ -219,7 +225,7 @@ describe("a module scores only when its data arrived", () => {
 describe("confidence follows the providers", () => {
   it("is full when every input for the module arrived cleanly", () => {
     const d = runIntelligenceEngine(FULL, undefined, "investor");
-    expect(d.modules.find((m) => m.id === "construction")!.confidencePct).toBe(100);
+    expect(d.modules.find((m) => m.id === "construction")!.confidencePct).toBeNull();
     expect(d.modules.find((m) => m.id === "environment")!.confidencePct).toBe(100);
   });
 
@@ -231,7 +237,8 @@ describe("confidence follows the providers", () => {
       providers: { elevation: { status: "degraded" } },
     });
     const d = runIntelligenceEngine(degraded, undefined, "investor");
-    expect(d.modules.find((m) => m.id === "construction")!.confidencePct).toBeLessThan(100);
+    expect(d.modules.find((m) => m.id === "construction")!.confidencePct).toBeNull();
+    expect(d.modules.find((m) => m.id === "environment")!.confidencePct).toBeLessThan(100);
   });
 
   it("publishes score confidence only for measured modules", () => {
@@ -296,7 +303,7 @@ describe("the composite is named for its inputs and publishes no verdict", () =>
     const d = runIntelligenceEngine(FULL, undefined, "investor");
     expect(d.reading).not.toBeNull();
     expect(d.readingLabel.toLowerCase()).not.toContain("land intelligence");
-    expect(d.scopeNote).toContain("3 of 10");
+    expect(d.scopeNote).toContain("2 of 10");
   });
 
   it("withholds a composite when fewer than two modules were measured", () => {
