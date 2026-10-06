@@ -372,7 +372,11 @@ export async function generateIntelligencePdf(
 
   brandFooters(doc, mark, {
     note: "Location readings. Not a title search, survey or valuation.",
-    issued: new Date().toLocaleDateString("en-KE", { day: "numeric", month: "long", year: "numeric" }),
+    issued: new Date().toLocaleDateString("en-KE", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }),
   });
 
   const stamp = new Date().toISOString().replace(/[-:T]/g, "").slice(0, 13);

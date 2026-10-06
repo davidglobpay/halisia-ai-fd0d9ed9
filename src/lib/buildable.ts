@@ -158,10 +158,7 @@ export function pointInRing(ring: LocalXY[], p: LocalXY): boolean {
   for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
     const a = ring[i];
     const b = ring[j];
-    if (
-      a.y > p.y !== b.y > p.y &&
-      p.x < ((b.x - a.x) * (p.y - a.y)) / (b.y - a.y) + a.x
-    ) {
+    if (a.y > p.y !== b.y > p.y && p.x < ((b.x - a.x) * (p.y - a.y)) / (b.y - a.y) + a.x) {
       inside = !inside;
     }
   }

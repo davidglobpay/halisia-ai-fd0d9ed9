@@ -371,6 +371,14 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
           }}
         />
         <div className="relative mx-auto max-w-7xl px-4 py-14">
+          <p
+            className="mx-auto mb-8 max-w-2xl text-center text-xs text-muted-foreground"
+            data-testid="not-official-disclaimer"
+          >
+            HALISIA is not a title search, survey, valuation or government system, and has no
+            connection to any land registry. It shows user-submitted information, open-data
+            indicators and model inferences, each labelled with its source.
+          </p>
           <div className="flex flex-col items-center text-center gap-4">
             <div className="relative">
               <div

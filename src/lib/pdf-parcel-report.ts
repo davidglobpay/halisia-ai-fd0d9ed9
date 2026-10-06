@@ -222,12 +222,30 @@ export async function generateParcelReport(input: ParcelReportInput): Promise<st
   y += 14;
   y = label(doc, "Where this parcel is", y);
   if (input.pinned) {
-    y = row(doc, "Pin placed by hand", `${input.pinned.lat.toFixed(6)}, ${input.pinned.lng.toFixed(6)}`, y, W);
+    y = row(
+      doc,
+      "Pin placed by hand",
+      `${input.pinned.lat.toFixed(6)}, ${input.pinned.lng.toFixed(6)}`,
+      y,
+      W,
+    );
     y = row(doc, "Moved from the search match by", `${Math.round(input.pinned.movedM)} m`, y, W);
   } else if (input.geocoded) {
-    y = row(doc, "Search match only, no pin placed", `${input.geocoded.lat.toFixed(6)}, ${input.geocoded.lng.toFixed(6)}`, y, W);
+    y = row(
+      doc,
+      "Search match only, no pin placed",
+      `${input.geocoded.lat.toFixed(6)}, ${input.geocoded.lng.toFixed(6)}`,
+      y,
+      W,
+    );
     if (input.geocoded.radiusM != null) {
-      y = row(doc, "That match could be out by", `up to ${Math.round(input.geocoded.radiusM)} m`, y, W);
+      y = row(
+        doc,
+        "That match could be out by",
+        `up to ${Math.round(input.geocoded.radiusM)} m`,
+        y,
+        W,
+      );
     }
   } else {
     y = wrap(doc, "No position was established.", M, y, W - M * 2, { size: 9, color: PDF.stone2 });
@@ -355,11 +373,18 @@ export async function generateParcelReport(input: ParcelReportInput): Promise<st
         doc.setTextColor(tick[0], tick[1], tick[2]);
         doc.text(c.agrees ? "+" : "x", M, y);
         doc.setTextColor(PDF.stone[0], PDF.stone[1], PDF.stone[2]);
-        y = wrap(doc, `${c.name}: deed "${c.deed}" against plan "${c.plan}"`, M + 12, y, W - M * 2 - 12, {
-          size: 9,
-          leading: 12,
-          color: PDF.stone,
-        });
+        y = wrap(
+          doc,
+          `${c.name}: deed "${c.deed}" against plan "${c.plan}"`,
+          M + 12,
+          y,
+          W - M * 2 - 12,
+          {
+            size: 9,
+            leading: 12,
+            color: PDF.stone,
+          },
+        );
       }
       y += 4;
       y = wrap(
@@ -402,7 +427,13 @@ export async function generateParcelReport(input: ParcelReportInput): Promise<st
       }
       const cov = groundCoveragePct(drawnArea, env.areaM2);
       if (cov != null) {
-        y = row(doc, "If the whole envelope were built on", `${cov.toFixed(0)}% ground coverage`, y, W);
+        y = row(
+          doc,
+          "If the whole envelope were built on",
+          `${cov.toFixed(0)}% ground coverage`,
+          y,
+          W,
+        );
       }
     } else {
       y = row(doc, "Buildable area", "none at these setbacks", y, W);
