@@ -8,6 +8,12 @@ on:
     branches: [main]
   pull_request:
 
+# Validate the latest revision of each PR/branch; superseded runs cannot
+# satisfy release gates and should not keep consuming runner capacity.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   quality:
     name: Typecheck · Lint · Build
