@@ -296,7 +296,9 @@ function scoreConstruction(intel?: LocationIntel): ModuleOutput {
       "Slope at parcel scale — not computed",
       "Road width and haulage access — not surveyed",
     ],
-    limitations: ["Elevation alone does not assess drainage, flood risk, water table or geotechnical suitability"],
+    limitations: [
+      "Elevation alone does not assess drainage, flood risk, water table or geotechnical suitability",
+    ],
     nextStep: "Commission SPT and moisture tests at three points on the parcel.",
   };
 }
