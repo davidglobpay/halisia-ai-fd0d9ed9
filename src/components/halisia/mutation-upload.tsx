@@ -187,8 +187,8 @@ export function MutationUpload({
               </div>
               <p className="mt-1 text-xs leading-relaxed text-foreground">
                 The sheet states it is subject to a final ground survey. This document alone does
-                not establish final boundary positions, beacon status or title registration.
-                Confirm those details through official records and a licensed surveyor.
+                not establish final boundary positions, beacon status or title registration. Confirm
+                those details through official records and a licensed surveyor.
               </p>
               {plan.provisionalNote && (
                 <p className="mt-1 text-[11px] italic text-muted-foreground">
