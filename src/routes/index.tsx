@@ -510,7 +510,7 @@ const SCENARIOS = [
   {
     title: "Before wiring a deposit",
     role: "First-time buyer",
-    body: "Check elevation and long-rains context against the plot's pin before money moves, so a seasonal flood line shows up on screen rather than after the sale.",
+    body: "Review the location indicators and their limits before paying a deposit. Confirm flood exposure with suitable local records and a qualified professional; elevation alone cannot establish a flood boundary.",
   },
   {
     title: "Buying from abroad",
