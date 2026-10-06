@@ -53,6 +53,13 @@ export type CoordCheck = {
   issues: string[];
 };
 
+function matchesDefault(lat: number, lng: number): { name: string } | null {
+  for (const d of DEFAULT_POINTS) {
+    if (Math.abs(lat - d.lat) < 1e-4 && Math.abs(lng - d.lng) < 1e-4) return d;
+  }
+  return null;
+}
+
 function inKenya(lat: number, lng: number) {
   return (
     lat >= KENYA_BBOX.minLat &&
@@ -97,21 +104,39 @@ export function validateCoordinate(
       issues: ["Latitude must be −90…90 and longitude −180…180."],
     };
   }
-  for (const d of DEFAULT_POINTS) {
-    if (Math.abs(lat - d.lat) < 1e-4 && Math.abs(lng - d.lng) < 1e-4) {
-      return {
-        ok: false,
-        lat,
-        lng,
-        swapped: false,
-        issues: [
-          `This coordinate equals ${d.name}, which usually means the real location is missing.`,
-        ],
-      };
-    }
+  const hit = matchesDefault(lat, lng);
+  if (hit) {
+    return {
+      ok: false,
+      lat,
+      lng,
+      swapped: false,
+      issues: [
+        `This coordinate equals ${hit.name}, which usually means the real location is missing.`,
+      ],
+    };
   }
   if (opts.requireKenya !== false && !inKenya(lat, lng)) {
     if (inKenya(lng, lat)) {
+      // Correcting the order must not launder a sentinel. Reversed, the
+      // Nairobi city-centre default does NOT look like a default point, so
+      // the check above passes it; swapping then produces the exact value
+      // that check exists to reject, and it used to be returned ok:true.
+      // Every downstream stage — pin, uncertainty ring, county check, the
+      // report — would then start from a fabricated position in Nairobi.
+      const swappedHit = matchesDefault(lng, lat);
+      if (swappedHit) {
+        return {
+          ok: false,
+          lat: lng,
+          lng: lat,
+          swapped: true,
+          issues: [
+            `Latitude and longitude were reversed, and the corrected point equals ` +
+              `${swappedHit.name}, which usually means the real location is missing.`,
+          ],
+        };
+      }
       return {
         ok: true,
         lat: lng,
