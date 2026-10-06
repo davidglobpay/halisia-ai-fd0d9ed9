@@ -57,7 +57,10 @@ test("reports client hydration and runtime failures", async ({ page }) => {
     await expect(compareButton).toHaveCount(1);
     const before = await compareButton.getAttribute("aria-pressed");
     await compareButton.click();
-    await expect(compareButton).toHaveAttribute("aria-pressed", before === "true" ? "false" : "true");
+    await expect(compareButton).toHaveAttribute(
+      "aria-pressed",
+      before === "true" ? "false" : "true",
+    );
     const after = await compareButton.getAttribute("aria-pressed");
     snapshot.compareButton = { before, after };
     expect(pageErrors, "Client should not throw runtime errors").toEqual([]);
