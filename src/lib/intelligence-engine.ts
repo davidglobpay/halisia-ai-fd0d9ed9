@@ -250,57 +250,23 @@ const SRC_PLACES = "Google Places";
 /* ---------------- measured modules ---------------- */
 
 function scoreConstruction(intel?: LocationIntel): ModuleOutput {
-  const elev = intel?.elevation?.meters ?? null;
-  const confidence = confidenceFrom([
-    { present: elev != null, provider: providerStatus(intel, "elevation") },
-  ]);
-
-  if (elev == null || confidence == null) {
-    return notAssessed(
-      "construction",
-      "Construction",
-      ["Elevation could not be read for this point, so there is no terrain signal at all."],
-      ["Ground elevation", "Parcel soil test (SPT)", "Slope at parcel scale"],
-      "Commission SPT and moisture tests at three points on the parcel.",
-    );
-  }
-
-  // Elevation is a coarse buildability signal and nothing more: it says
-  // something about drainage and water table, not about what the ground can
-  // carry. The score is deliberately banded rather than continuous.
-  const score = clamp(elev < 20 ? 42 : elev < 100 ? 62 : elev > 2400 ? 55 : 78);
-  return {
-    id: "construction",
-    label: "Construction",
-    status: "measured",
-    score,
-    grade: grade(score),
-    trend: "flat",
-    confidencePct: confidence,
-    reasons: [
-      `Elevation ${elev.toFixed(0)} m — ${
-        elev < 20
-          ? "coastal or low-lying; check the water table"
-          : elev < 100
-            ? "low relief, so drainage matters"
-            : elev > 2400
-              ? "high altitude; curing and access need planning"
-              : "elevation reading only; drainage unassessed"
-      }`,
-      "Height alone does not establish drainage or water-table risk",
-      "Says nothing about bearing capacity, soil type or slope at parcel scale",
+  const elev = intel?.elevation?.meters;
+  return notAssessed(
+    "construction",
+    "Construction",
+    [
+      elev != null && Number.isFinite(elev)
+        ? `Provider elevation: ${elev.toFixed(0)} m. Height alone cannot establish buildability, drainage or ground conditions.`
+        : "No usable elevation reading returned.",
+      "Construction suitability has not been assessed for this parcel.",
     ],
-    sources: [SRC_ELEVATION],
-    missing: [
-      "Parcel soil test (SPT) — HALISIA does not hold one",
-      "Slope at parcel scale — not computed",
-      "Road width and haulage access — not surveyed",
+    [
+      "Site-specific soil investigation",
+      "Parcel-scale slope and drainage",
+      "County planning requirements",
     ],
-    limitations: [
-      "Elevation alone does not assess drainage, flood risk, water table or geotechnical suitability",
-    ],
-    nextStep: "Commission SPT and moisture tests at three points on the parcel.",
-  };
+    "Ask a qualified engineer and architect to assess the site before choosing foundations or committing to a build.",
+  );
 }
 
 function scoreEnvironment(intel?: LocationIntel): ModuleOutput {
