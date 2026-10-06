@@ -24,9 +24,11 @@ import { MutationUpload } from "@/components/halisia/mutation-upload";
 import { ParcelDraw } from "@/components/halisia/parcel-draw";
 import { BuildBrief } from "@/components/halisia/build-brief";
 import { HouseBrief } from "@/components/halisia/house-brief";
+import { PlanOverlay } from "@/components/halisia/plan-overlay";
 import type { LatLng } from "@/lib/parcel-geometry";
 import { generateParcelReport } from "@/lib/pdf-parcel-report";
 import type { MassingStudy } from "@/lib/house-brief";
+import type { PlanShape, PlanFit } from "@/lib/plan-overlay";
 import type { MutationPlan, DeedPlanAgreement } from "@/lib/mutation-plan";
 import { IntelligenceDashboard } from "@/components/halisia/intelligence-dashboard";
 import { extractDeedFields, type DeedFields } from "@/lib/deed-extract.functions";
@@ -157,6 +159,13 @@ function TitleDeedPage() {
   } | null>(null);
   /** Step 6's massing study and the brief it produced. */
   const [massing, setMassing] = useState<{ study: MassingStudy; briefText: string } | null>(null);
+  /** Step 7's placement of the surveyor's plot, and how well it agreed. */
+  const [placement, setPlacement] = useState<{
+    ring: LatLng[];
+    shape: PlanShape;
+    rotationDeg: number;
+    fit: PlanFit | null;
+  } | null>(null);
   const [reporting, setReporting] = useState(false);
 
   // A new search means a new parcel. Carrying a pin across would silently
@@ -169,6 +178,8 @@ function TitleDeedPage() {
     // them to the next parcel is the same class of error as carrying the pin.
     setBriefState(null);
     setMassing(null);
+    // A placement is a position on one plot. It means nothing on the next.
+    setPlacement(null);
   }, [loc?.lat, loc?.lng]);
   const [error, setError] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
@@ -906,6 +917,15 @@ function TitleDeedPage() {
                   }
                   onStudyChange={setMassing}
                 />
+                <PlanOverlay
+                  // Step 2's plan, step 3's boundary and step 1's pin. The
+                  // component needs all three to be useful and says plainly
+                  // which are missing rather than guessing at any of them.
+                  plan={planRead?.plan ?? null}
+                  boundary={boundary}
+                  pin={pinned ? { lat: pinned.lat, lng: pinned.lng } : null}
+                  onPlacementChange={setPlacement}
+                />
                 <button
                   type="button"
                   disabled={reporting}
@@ -934,6 +954,15 @@ function TitleDeedPage() {
                         briefText: briefState?.briefText ?? null,
                         massing: massing?.study ?? null,
                         massingBriefText: massing?.briefText ?? null,
+                        placement: placement
+                          ? {
+                              widthM: placement.shape.widthM,
+                              depthM: placement.shape.depthM,
+                              basis: placement.shape.basis,
+                              rotationDeg: placement.rotationDeg,
+                              fit: placement.fit,
+                            }
+                          : null,
                       });
                     } catch (e) {
                       console.error(e);
