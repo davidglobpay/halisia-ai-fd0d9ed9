@@ -61,10 +61,7 @@ export function ParcelDraw({
   const [history, setHistory] = useState<LatLng[][]>([]);
   const [fitted, setFitted] = useState<{ factor: number; errorPct: number } | null>(null);
 
-  const deedArea = useMemo(
-    () => (deedAreaText ? parseArea(deedAreaText) : null),
-    [deedAreaText],
-  );
+  const deedArea = useMemo(() => (deedAreaText ? parseArea(deedAreaText) : null), [deedAreaText]);
 
   // All measurement happens on a local east/north plane centred on the ring
   // itself, so a parcel never straddles a projection seam.
@@ -80,7 +77,7 @@ export function ParcelDraw({
       setRing(next);
       setFitted(null);
     },
-    [ring],
+    [ring, setRing],
   );
 
   const addPoint = useCallback(
@@ -98,14 +95,14 @@ export function ParcelDraw({
       setFitted(null);
       return h.slice(0, -1);
     });
-  }, []);
+  }, [setRing]);
 
   const clear = useCallback(() => {
     setHistory((h) => [...h.slice(-19), ring]);
     setRing([]);
     setMode("idle");
     setFitted(null);
-  }, [ring]);
+  }, [ring, setRing]);
 
   const applyFit = useCallback(() => {
     if (!deedArea || ring.length < 3) return;
@@ -115,8 +112,7 @@ export function ParcelDraw({
     setFitted({ factor: res.factor, errorPct: res.errorPct });
   }, [deedArea, local, origin, push, ring.length]);
 
-  const diffPct =
-    deedArea && area > 0 ? ((area - deedArea.m2) / deedArea.m2) * 100 : null;
+  const diffPct = deedArea && area > 0 ? ((area - deedArea.m2) / deedArea.m2) * 100 : null;
 
   const spoken = [
     ring.length < 3
@@ -236,9 +232,7 @@ export function ParcelDraw({
               <Stat
                 label="Deed says"
                 value={describeArea(deedArea.m2)}
-                tone={
-                  diffPct == null ? undefined : Math.abs(diffPct) <= 5 ? "good" : "warn"
-                }
+                tone={diffPct == null ? undefined : Math.abs(diffPct) <= 5 ? "good" : "warn"}
               />
             )}
           </div>
@@ -326,15 +320,7 @@ export function ParcelDraw({
   );
 }
 
-function Stat({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tone?: "good" | "warn";
-}) {
+function Stat({ label, value, tone }: { label: string; value: string; tone?: "good" | "warn" }) {
   return (
     <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">
       <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>

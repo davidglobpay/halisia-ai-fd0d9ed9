@@ -106,7 +106,10 @@ export function ink(doc: jsPDF, c: RGB) {
 
 /** Run a block at reduced opacity, restoring afterwards. */
 function faint(doc: jsPDF, opacity: number, draw: () => void) {
-  const d = doc as unknown as { GState?: new (o: { opacity: number }) => unknown; setGState?: (g: unknown) => void };
+  const d = doc as unknown as {
+    GState?: new (o: { opacity: number }) => unknown;
+    setGState?: (g: unknown) => void;
+  };
   let applied = false;
   try {
     if (d.GState && d.setGState) {
@@ -487,9 +490,7 @@ export function brandFooters(doc: jsPDF, mark: BrandImage | null, o: BrandFooter
     if (o.rule !== false) {
       stroke(doc, ruleColor);
       doc.setLineWidth(u(0.6));
-      faint(doc, tone === "dark" ? 0.5 : 0.16, () =>
-        doc.line(M, H - u(40), W - M, H - u(40)),
-      );
+      faint(doc, tone === "dark" ? 0.5 : 0.16, () => doc.line(M, H - u(40), W - M, H - u(40)));
     }
 
     if (mark) {

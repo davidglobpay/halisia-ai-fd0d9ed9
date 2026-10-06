@@ -133,7 +133,11 @@ export function MutationUpload({
         ) : (
           <FileUp className="h-4 w-4 text-accent" aria-hidden="true" />
         )}
-        {busy ? "Reading the sheet…" : fileName ? "Choose a different plan" : "Choose the mutation PDF"}
+        {busy
+          ? "Reading the sheet…"
+          : fileName
+            ? "Choose a different plan"
+            : "Choose the mutation PDF"}
         <input
           type="file"
           accept="application/pdf"

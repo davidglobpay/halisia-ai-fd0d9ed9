@@ -655,7 +655,7 @@ function TitleDeedPage() {
                 data-testid="official-search-guide"
               >
                 <div className="font-semibold text-foreground">
-                  Most accurate: upload your official Ardhisasa search
+                  Optional: upload a search result you obtained yourself
                 </div>
                 <ol className="mt-1 list-decimal pl-4 space-y-0.5 text-muted-foreground">
                   <li>
@@ -670,12 +670,12 @@ function TitleDeedPage() {
                     checked={officialSearch}
                     onChange={(e) => setOfficialSearch(e.target.checked)}
                   />
-                  This upload is an official Ardhisasa search result
+                  I obtained this document myself from an official search (user-submitted)
                 </label>
                 <p className="mt-1 text-[11px] text-muted-foreground">
                   HALISIA never asks for your Ardhisasa login or SMS code. Details read from the
-                  document are marked “Documents reviewed”, not government-verified, until a
-                  licensed surveyor or advocate confirms them.
+                  document are user-submitted information read by software. HALISIA cannot confirm
+                  them; only the registry, a licensed surveyor or an advocate can.
                 </p>
               </div>
             )}
@@ -684,9 +684,9 @@ function TitleDeedPage() {
                 className="mt-4 rounded-2xl border border-primary/30 bg-primary/5 px-4 py-2 text-xs"
                 data-testid="official-search-badge"
               >
-                Documents reviewed — read from an uploaded official search. Owner, size and parcel
-                details below come from that document; confirm with a licensed surveyor before
-                relying on them.
+                User-submitted — read by software from a document you uploaded. HALISIA has not
+                checked it against any registry. Confirm owner, size and parcel details with the
+                registry and a licensed surveyor or advocate before relying on them.
               </div>
             )}
             {fields && (
@@ -807,8 +807,9 @@ function TitleDeedPage() {
                 <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-3 text-[11px] text-muted-foreground inline-flex items-start gap-2">
                   <ShieldAlert className="h-4 w-4 mt-0.5 shrink-0 text-amber-glow" />
                   <div>
-                    Ownership and encumbrance status cannot be verified without authorized Ministry
-                    of Lands / Ardhisasa integration. Treat all extracted data as informational.
+                    HALISIA is not a title search, survey, valuation or government system and has no
+                    registry connection. Ownership and encumbrance status are not verified. Treat
+                    all extracted data as informational.
                   </div>
                 </div>
               </div>
