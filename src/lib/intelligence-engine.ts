@@ -243,7 +243,6 @@ const WEIGHTS: Record<Persona, Record<ModuleId, number>> = {
 
 /* ---------------- the three services this engine reads ---------------- */
 
-const SRC_ELEVATION = "Google Maps Elevation API";
 const SRC_AIR = "Google Air Quality API";
 const SRC_PLACES = "Google Places";
 
@@ -270,65 +269,47 @@ function scoreConstruction(intel?: LocationIntel): ModuleOutput {
 }
 
 function scoreEnvironment(intel?: LocationIntel): ModuleOutput {
-  const aqi = intel?.airQuality?.universalAqi ?? null;
-  const elev = intel?.elevation?.meters ?? null;
-  const confidence = confidenceFrom([
-    { present: aqi != null, provider: providerStatus(intel, "airQuality") },
-    { present: elev != null, provider: providerStatus(intel, "elevation") },
-  ]);
-
-  if (confidence == null) {
+  const aqi = intel?.airQuality?.universalAqi;
+  const hasAir = aqi != null && Number.isFinite(aqi) && aqi >= 0 && aqi <= 100;
+  if (!hasAir) {
     return notAssessed(
       "environment",
       "Environment",
-      ["Neither air quality nor elevation could be read for this point."],
-      ["Air quality index", "Ground elevation", "Catchment hydrology", "Rainfall record"],
-      "Walk the parcel during the long rains before committing.",
+      [
+        "No usable air-quality index returned. Elevation alone cannot assess environmental quality or flood risk.",
+      ],
+      ["Current air quality", "Site drainage", "Flood history and catchment hydrology"],
+      "Check current Kenya Meteorological Department advisories and ask a qualified professional to assess site drainage.",
     );
   }
-
-  // Each half is scored only if its input arrived, then averaged over the
-  // halves that exist. Absence lowers confidence; it does not invent a 60.
-  const parts: number[] = [];
-  const sources: string[] = [];
-  if (aqi != null) {
-    parts.push(clamp(aqi));
-    sources.push(SRC_AIR);
-  }
-  if (elev != null) {
-    parts.push(clamp(elev < 20 ? 30 : elev < 100 ? 58 : 82));
-    sources.push(SRC_ELEVATION);
-  }
-  const score = clamp(parts.reduce((a, b) => a + b, 0) / parts.length);
-
+  const score = clamp(aqi);
   return {
     id: "environment",
     label: "Environment",
     status: "measured",
     score,
     grade: grade(score),
-    trend: "flat",
-    confidencePct: confidence,
+    trend: null,
+    confidencePct: confidenceFrom([
+      { present: true, provider: providerStatus(intel, "airQuality") },
+    ]),
     reasons: [
-      aqi != null
-        ? `Air quality index ${aqi}${intel?.airQuality?.category ? ` (${intel.airQuality.category})` : ""}, measured now`
-        : "Air quality not returned for this point",
-      elev != null
-        ? `Elevation ${elev.toFixed(0)} m — a coarse flood proxy only`
-        : "Elevation not returned, so no flood proxy",
-      "Neither input describes this parcel's own drainage",
+      `Provider universal air-quality index ${aqi}${intel?.airQuality?.category ? ` (${intel.airQuality.category})` : ""}.`,
+      "This indicator describes the returned air-quality reading only; it does not assess flood risk, drainage or overall environmental suitability.",
     ],
-    sources,
+    sources: [SRC_AIR],
     missing: [
-      "Micro-catchment hydrology — not modelled",
-      "Rainfall record for this point — not queried",
-      "Historical flood extent — HALISIA holds none",
+      "Site drainage",
+      "Historical flood extent",
+      "Catchment hydrology",
+      "Local rainfall observations",
     ],
     limitations: [
-      "Air quality is a reading at one moment, not an annual average",
-      "Elevation stands in for flood risk; it is not a flood study",
+      "A provider reading is not an annual average or a parcel-specific environmental assessment.",
+      "Input availability is not a probability of accuracy.",
     ],
-    nextStep: "Walk the parcel during the long rains (March–May) before committing.",
+    nextStep:
+      "Check current Kenya Meteorological Department advisories and assess drainage on site before committing.",
   };
 }
 

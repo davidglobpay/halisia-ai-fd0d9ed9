@@ -215,10 +215,10 @@ describe("a module scores only when its data arrived", () => {
     const noElevation = intel({ elevation: null, aqi: 62, counts: 3 });
     const d = runIntelligenceEngine(noElevation, undefined, "developer");
     expect(d.modules.find((m) => m.id === "construction")!.status).toBe("not-assessed");
-    // Environment survives on air quality alone, at reduced confidence.
+    // Air-quality input availability is independent of elevation.
     const env = d.modules.find((m) => m.id === "environment")!;
     expect(env.status).toBe("measured");
-    expect(env.confidencePct).toBeLessThan(100);
+    expect(env.confidencePct).toBe(100);
   });
 });
 
@@ -234,7 +234,7 @@ describe("confidence follows the providers", () => {
       elevation: 1680,
       aqi: 62,
       counts: 3,
-      providers: { elevation: { status: "degraded" } },
+      providers: { airQuality: { status: "degraded" } },
     });
     const d = runIntelligenceEngine(degraded, undefined, "investor");
     expect(d.modules.find((m) => m.id === "construction")!.confidencePct).toBeNull();
@@ -308,8 +308,7 @@ describe("the composite is named for its inputs and publishes no verdict", () =>
 
   it("withholds a composite when fewer than two modules were measured", () => {
     // Air quality alone: environment can be read, construction and amenity
-    // access cannot. Elevation alone would still give two, because the flood
-    // proxy in environment is derived from height.
+    // access cannot. Elevation alone must not produce a suitability score.
     const onlyAir = intel({ elevation: null, aqi: 55, counts: 0 });
     const d = runIntelligenceEngine(onlyAir, undefined, "investor");
     expect(d.measuredCount).toBe(1);
@@ -365,5 +364,28 @@ describe("persona weighting still differentiates", () => {
     const highest = Math.max(...measured.map((m) => m.score!));
     expect(d.reading!).toBeGreaterThanOrEqual(lowest);
     expect(d.reading!).toBeLessThanOrEqual(highest);
+  });
+});
+
+describe("altitude cannot become environmental suitability", () => {
+  it("keeps an air reading unchanged across elevations", () => {
+    const low = runIntelligenceEngine(intel({ elevation: 5, aqi: 62 })).modules.find(
+      (m) => m.id === "environment",
+    )!;
+    const high = runIntelligenceEngine(intel({ elevation: 2500, aqi: 62 })).modules.find(
+      (m) => m.id === "environment",
+    )!;
+    expect(low.score).toBe(62);
+    expect(high.score).toBe(low.score);
+    expect(high.sources).toEqual(["Google Air Quality API"]);
+  });
+  it("withholds environment when only elevation is available or air is invalid", () => {
+    for (const aqi of [null, NaN, Infinity, -1, 101]) {
+      const m = runIntelligenceEngine(intel({ elevation: 1680, aqi })).modules.find(
+        (m) => m.id === "environment",
+      )!;
+      expect(m.status).toBe("not-assessed");
+      expect(m.score).toBeNull();
+    }
   });
 });
