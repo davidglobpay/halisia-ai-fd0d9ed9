@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 type RuntimeSnapshot = {
   url: string;
   readyState: DocumentReadyState;
-  rootChildren: number;
+  bodyChildren: number;
   scriptSources: string[];
   moduleScripts: number;
   pageErrors: string[];
@@ -39,7 +39,7 @@ test("reports client hydration and runtime failures", async ({ page }) => {
   const snapshot: RuntimeSnapshot = await page.evaluate(() => ({
     url: window.location.href,
     readyState: document.readyState,
-    rootChildren: document.querySelector("#root")?.childElementCount ?? -1,
+    bodyChildren: document.body.childElementCount,
     scriptSources: Array.from(document.scripts)
       .map((script) => script.src)
       .filter(Boolean),
@@ -53,21 +53,25 @@ test("reports client hydration and runtime failures", async ({ page }) => {
     name: /Nairobi.*comparison/i,
   });
 
-  if ((await compareButton.count()) > 0) {
-    const before = await compareButton.first().getAttribute("aria-pressed");
-    await compareButton.first().click();
-    await page.waitForTimeout(250);
-    const after = await compareButton.first().getAttribute("aria-pressed");
+  try {
+    await expect(compareButton).toHaveCount(1);
+    const before = await compareButton.getAttribute("aria-pressed");
+    await compareButton.click();
+    await expect(compareButton).toHaveAttribute(
+      "aria-pressed",
+      before === "true" ? "false" : "true",
+    );
+    const after = await compareButton.getAttribute("aria-pressed");
     snapshot.compareButton = { before, after };
+    expect(pageErrors, "Client should not throw runtime errors").toEqual([]);
+  } finally {
+    snapshot.pageErrors = pageErrors;
+    snapshot.consoleErrors = consoleErrors;
+    snapshot.failedRequests = failedRequests;
+
+    // Emit even when interaction fails, so diagnosis survives artifact-quota failures.
+    console.log(`[runtime-diagnostics] ${JSON.stringify(snapshot)}`);
   }
 
-  snapshot.pageErrors = pageErrors;
-  snapshot.consoleErrors = consoleErrors;
-  snapshot.failedRequests = failedRequests;
-
-  // This line is intentionally emitted to stdout so the diagnosis survives
-  // GitHub artifact-quota failures.
-  console.log(`[runtime-diagnostics] ${JSON.stringify(snapshot)}`);
-
-  expect(snapshot.rootChildren, "React root should render at least one child").toBeGreaterThan(0);
+  expect(snapshot.bodyChildren, "Document shell should render body content").toBeGreaterThan(0);
 });
