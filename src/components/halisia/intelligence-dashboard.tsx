@@ -172,7 +172,9 @@ function spokenSummary(args: {
     parts.push(`Watch outs. ${narrative.watchouts.slice(0, 4).join(". ")}.`);
   }
   if (narrative?.confidencePct != null) {
-    parts.push(`Overall confidence in this written read, ${narrative.confidencePct} percent.`);
+    parts.push(
+      `Input coverage for this written read, ${narrative.confidencePct} percent. This is not an accuracy probability.`,
+    );
   }
 
   parts.push(
@@ -808,9 +810,9 @@ function AITab({ narrative, loading }: { narrative?: NarrativeOutput; loading: b
         {/* Confidence bar */}
         <div className="mt-3">
           <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-muted-foreground">
-            <span>Confidence</span>
+            <span>Input coverage</span>
             <span className="text-foreground/80">
-              {narrative.confidencePct}% · {narrative.confidence}
+              {narrative.confidencePct}% · not an accuracy probability
             </span>
           </div>
           <div className="mt-1 h-1.5 rounded-full bg-white/10 overflow-hidden">
