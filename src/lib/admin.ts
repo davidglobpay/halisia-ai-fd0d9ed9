@@ -1,0 +1,111 @@
+import { supabase } from "@/integrations/supabase/client";
+export type AdminRow = Record<string, unknown>;
+export type AdminStatus = { eligible: boolean; ready: boolean };
+export type AdminPage = { rows: AdminRow[]; total: number; offset: number };
+type AdminRpc = (
+  name:
+    | "halisia_admin_status"
+    | "halisia_admin_overview"
+    | "halisia_admin_read"
+    | "halisia_admin_action",
+  args?: Record<string, unknown>,
+) => PromiseLike<{ data: unknown; error: { message: string } | null }>;
+export async function adminRpc<T>(
+  name: Parameters<AdminRpc>[0],
+  args?: Record<string, unknown>,
+): Promise<T> {
+  // Narrow adapter for the newly installed RPCs; existing generated APIs stay typed.
+  const r = await (supabase.rpc as unknown as AdminRpc)(name, args);
+  if (r.error) throw new Error(r.error.message);
+  return r.data as T;
+}
+export const ADMIN_RESOURCES = [
+  ["architectural_prototypes", "Architectural model catalogue"],
+  ["bid_requests", "Project requests"],
+  ["bid_proposals", "Project proposals"],
+  ["listing_versions", "Listing history"],
+  ["location_intel_slices", "Stored location intelligence"],
+  ["marketplace_listing_price_history", "Listing price history"],
+  ["marketplace_partner_agreements", "Partner agreements"],
+  ["marketplace_referral_events", "Referral history"],
+  ["marketplace_referrals", "Referrals"],
+  ["marketplace_source_members", "Partner memberships"],
+  ["marketplace_source_sync_runs", "Partner sync logs"],
+  ["marketplace_verification_evidence", "Partner listing evidence"],
+  ["property_media", "Property media"],
+  ["rental_details", "Rental details"],
+  ["renter_preferences", "Rental preferences"],
+  ["report_collection_items", "Report collection contents"],
+  ["resource_evidence_links", "Resource evidence links"],
+  ["resource_feature_flags", "Resource activation settings"],
+  ["resource_sources", "Agriculture / mining sources"],
+  ["saved_articles", "Saved news"],
+  ["trending_scores", "News trending metrics"],
+  ["vault_document_shares", "Document shares"],
+  ["viewing_slots", "Viewing schedules"],
+  ["parcel_beacons", "Parcel markers"],
+  ["article_media", "News media"],
+  ["news_audio", "News audio"],
+  ["news_categories", "News categories"],
+  ["news_clusters", "News clusters"],
+  ["news_locations", "News locations"],
+  ["news_tags", "News tags"],
+  ["accounts", "User accounts"],
+  ["properties", "Property listings"],
+  ["leads", "Buyer / seller leads"],
+  ["viewings", "Viewings"],
+  ["professional_profiles", "Professional profiles"],
+  ["professional_requests", "Professional requests"],
+  ["professional_reviews", "Professional reviews"],
+  ["contributions", "Contributions"],
+  ["scout_profiles", "Scout profiles"],
+  ["scout_requests", "Scout jobs"],
+  ["scout_evidence", "Scout evidence"],
+  ["scout_payment_receipts", "Scout payment receipts"],
+  ["scout_request_events", "Scout job history"],
+  ["scout_price_catalog", "Scout prices"],
+  ["scout_service_settings", "Scout payment settings"],
+  ["marketplace_transactions", "Marketplace transactions"],
+  ["marketplace_commissions", "Commissions"],
+  ["marketplace_payouts", "Payouts"],
+  ["marketplace_sources", "Marketplace partners"],
+  ["marketplace_external_listings", "Partner listings"],
+  ["marketplace_leads", "Partner leads"],
+  ["marketplace_feature_flags", "Feature controls"],
+  ["financing_applications", "Financing enquiries"],
+  ["insurance_briefs", "Insurance briefs"],
+  ["report_versions", "Report versions"],
+  ["report_collections", "Report collections"],
+  ["report_shares", "Report shares"],
+  ["vault_documents", "Document metadata"],
+  ["saved_items", "Saved locations"],
+  ["saved_searches", "Saved searches"],
+  ["parcels", "Parcel records"],
+  ["parcel_verification_events", "Parcel evidence history"],
+  ["resource_observations", "Agriculture / mining observations"],
+  ["resource_assessments", "Resource assessments"],
+  ["news_provider_health", "Live provider health"],
+  ["news_ingestion_logs", "Ingestion logs"],
+  ["news_sources", "News sources"],
+  ["news_articles", "News articles"],
+  ["admin_allowed_emails", "Administrator allowlist"],
+  ["user_roles", "Account roles"],
+  ["admin_account_controls", "Account restrictions"],
+  ["admin_audit_events", "Administrator audit trail"],
+] as const;
+export const ACCOUNT_RESOURCES = [
+  "accounts",
+  "properties",
+  "leads",
+  "professional_profiles",
+  "contributions",
+  "scout_profiles",
+  "scout_requests",
+  "financing_applications",
+  "saved_items",
+  "saved_searches",
+  "report_versions",
+  "report_collections",
+  "vault_documents",
+  "user_roles",
+];

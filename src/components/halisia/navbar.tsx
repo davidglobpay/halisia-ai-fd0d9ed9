@@ -39,6 +39,7 @@ const MORE_LINKS: Array<{ to: string; label: string }> = [
 
 // Tools behind sign-in; only listed once the user is signed in.
 const MEMBER_LINKS: Array<{ to: string; label: string }> = [
+  { to: "/admin", label: "Admin access" },
   { to: "/sell/new", label: "Sell land" },
   { to: "/seller-tools", label: "Seller tools" },
   { to: "/rentals", label: "Rentals" },
