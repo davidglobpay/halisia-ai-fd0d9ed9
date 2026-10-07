@@ -85,8 +85,22 @@ export function NavGuide() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (suppressed) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "?" && !open) {
+        const target = e.target;
+        if (
+          e.defaultPrevented ||
+          e.ctrlKey ||
+          e.metaKey ||
+          e.altKey ||
+          (target instanceof HTMLElement &&
+            (target.isContentEditable ||
+              target.closest(
+                'input, textarea, select, [contenteditable]:not([contenteditable="false"])',
+              )))
+        )
+          return;
         setStep(0);
         setOpen(true);
       }
@@ -94,7 +108,7 @@ export function NavGuide() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
+  }, [open, suppressed]);
 
   const close = (remember: boolean) => {
     setOpen(false);

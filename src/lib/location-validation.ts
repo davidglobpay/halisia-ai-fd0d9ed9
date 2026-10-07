@@ -53,7 +53,6 @@ export type CoordCheck = {
   issues: string[];
 };
 
-/** The sentinel this pair equals, if any. Used before AND after a swap. */
 function matchesDefault(lat: number, lng: number): { name: string } | null {
   for (const d of DEFAULT_POINTS) {
     if (Math.abs(lat - d.lat) < 1e-4 && Math.abs(lng - d.lng) < 1e-4) return d;
@@ -315,13 +314,6 @@ export function deedLocationQuery(input: {
 export function uncertaintyRadiusM(status: LocationStatus, geocodeType?: string | null): number {
   if (STATUS_META[status].exact) return 0;
   if (status === "administrative") return 5000;
-  // A pin the person dragged onto their own plot is not a provider's guess.
-  // There is no geocoder error to draw: they placed it. What remains is how
-  // precisely anyone can drop a pin on satellite imagery at high zoom, which
-  // is metres, not kilometres. It is deliberately NOT zero, because the pin
-  // is a mark and not a measurement — and the honest caveat lives in words on
-  // the pin card, not in a 3 km circle that states nothing true.
-  if (status === "user_provided") return 25;
   if (geocodeType === "ROOFTOP") return 100;
   if (geocodeType === "RANGE_INTERPOLATED") return 300;
   if (geocodeType === "GEOMETRIC_CENTER") return 1500;

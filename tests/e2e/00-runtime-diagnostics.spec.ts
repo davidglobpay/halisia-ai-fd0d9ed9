@@ -32,6 +32,12 @@ test("reports client hydration and runtime failures", async ({ page }) => {
     );
   });
 
+  page.on("response", (response) => {
+    if (response.status() >= 400) {
+      failedRequests.push(`${response.status()} ${response.url()}`);
+    }
+  });
+
   await page.goto("/");
   await page.waitForLoadState("domcontentloaded");
   await page.waitForTimeout(2_000);
@@ -39,7 +45,7 @@ test("reports client hydration and runtime failures", async ({ page }) => {
   const snapshot: RuntimeSnapshot = await page.evaluate(() => ({
     url: window.location.href,
     readyState: document.readyState,
-    rootChildren: document.querySelector("#root")?.childElementCount ?? -1,
+    rootChildren: document.body.childElementCount,
     scriptSources: Array.from(document.scripts)
       .map((script) => script.src)
       .filter(Boolean),
@@ -49,16 +55,26 @@ test("reports client hydration and runtime failures", async ({ page }) => {
     failedRequests: [],
   }));
 
-  const compareButton = page.getByRole("button", {
-    name: /Nairobi.*comparison/i,
-  });
+  const compareButton = page
+    .getByRole("button", { name: /Nairobi.*comparison/i })
+    .or(page.getByRole("checkbox", { name: /Nairobi.*comparison/i }))
+    .first();
 
-  if ((await compareButton.count()) > 0) {
-    const before = await compareButton.first().getAttribute("aria-pressed");
-    await compareButton.first().click();
-    await page.waitForTimeout(250);
-    const after = await compareButton.first().getAttribute("aria-pressed");
-    snapshot.compareButton = { before, after };
+  try {
+    await expect(compareButton).toBeEnabled();
+    const role = await compareButton.getAttribute("role");
+    const type = await compareButton.getAttribute("type");
+    const attribute = role === "checkbox" || type === "checkbox" ? "aria-checked" : "aria-pressed";
+    const before = await compareButton.getAttribute(attribute);
+    await compareButton.click();
+    if (type === "checkbox") await expect(compareButton).toBeChecked();
+    else await expect(compareButton).toHaveAttribute(attribute, "true");
+    snapshot.compareButton = { before, after: await compareButton.getAttribute(attribute) };
+  } finally {
+    snapshot.pageErrors = pageErrors;
+    snapshot.consoleErrors = consoleErrors;
+    snapshot.failedRequests = failedRequests;
+    console.log(`[runtime-diagnostics] ${JSON.stringify(snapshot)}`);
   }
 
   snapshot.pageErrors = pageErrors;
@@ -69,5 +85,6 @@ test("reports client hydration and runtime failures", async ({ page }) => {
   // GitHub artifact-quota failures.
   console.log(`[runtime-diagnostics] ${JSON.stringify(snapshot)}`);
 
-  expect(snapshot.rootChildren, "React root should render at least one child").toBeGreaterThan(0);
+  expect(pageErrors, "No uncaught browser errors").toEqual([]);
+  expect(snapshot.rootChildren, "Document body should render content").toBeGreaterThan(0);
 });

@@ -58,7 +58,7 @@ export function ParcelPin({
   origin: { lat: number; lng: number };
   /** What the geocoder matched, shown so the gap is visible. */
   originLabel?: string;
-  /** Google's own uncertainty for that match, drawn as a ring. */
+  /** Geocoder display-viewport extent, drawn as a ring; not positional accuracy. */
   originRadiusM?: number | null;
   onChange?: (p: PinnedPoint) => void;
   className?: string;

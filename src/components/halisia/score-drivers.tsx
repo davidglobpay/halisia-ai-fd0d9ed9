@@ -36,11 +36,11 @@ export function ScoreDrivers() {
             <Gauge className="h-3.5 w-3.5" aria-hidden="true" /> Score drivers
           </div>
           <h2 className="mt-3 text-3xl md:text-5xl font-semibold tracking-tight">
-            What actually moves <span className="text-gradient">your score</span>.
+            An illustrative <span className="text-gradient">scoring framework</span>.
           </h2>
           <p className="mt-3 text-sm md:text-base text-muted-foreground leading-relaxed">
-            Each pipeline stage carries a different weight in the final HALISIA Intelligence Score,
-            and each arrives with its own confidence. Hover or tap a row to see why.
+            These fixed example weights and confidence values explain a proposed framework. They are
+            not measured confidence, live source coverage or a score for your land.
           </p>
         </div>
 
@@ -71,7 +71,7 @@ export function ScoreDrivers() {
                     <Info className="h-3.5 w-3.5" aria-hidden="true" />
                   </button>
                   <span className="ml-auto text-xs tabular-nums text-muted-foreground">
-                    {s.weight}% of score
+                    Example weight: {s.weight}%
                   </span>
                 </div>
 
@@ -87,9 +87,9 @@ export function ScoreDrivers() {
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
                   <span className={`inline-flex items-center gap-1 ${b.cls}`}>
                     <span className={`h-1.5 w-1.5 rounded-full ${b.bar}`} aria-hidden="true" />
-                    {b.label} · {s.confidence}%
+                    Example: {b.label} · {s.confidence}%
                   </span>
-                  <span className="text-muted-foreground/80">Updated: {s.freshness}</span>
+                  <span className="text-muted-foreground/80">Expected cadence: {s.freshness}</span>
                 </div>
 
                 {open && (
@@ -109,8 +109,8 @@ export function ScoreDrivers() {
         </ul>
 
         <p className="mt-6 text-[11px] text-muted-foreground/80">
-          Weights are indicative and shift with your persona — a lender, a developer and a renter do
-          not value the same signals equally.
+          Use the evidence and limitations in your individual report. This illustration does not
+          demonstrate an active integration or establish title, value, safety or parcel accuracy.
         </p>
       </div>
     </section>

@@ -555,18 +555,13 @@ export const getGeotechIntel = createServerFn({ method: "POST" })
       fetchElevGrid(lat, lng).catch(() => null),
       fetchClimate(lat, lng),
     ]);
-    // Graceful fallback: if elevation API is unreachable, synthesise a flat
-    // terrain grid so downstream analysis (and the UI) still work. Confidence
-    // is reduced below to reflect the missing data.
-    const effectiveGrid =
-      gridInfo ??
-      (() => {
-        const n = 5;
-        const step = 0.01;
-        const grid: number[][] = Array.from({ length: n }, () => Array(n).fill(1000));
-        return { grid, n, step };
-      })();
-    const terrain = terrainAnalysis(effectiveGrid.grid, effectiveGrid.n, effectiveGrid.step, lat);
+    // Missing terrain must not become a fabricated survey or risk finding.
+    if (!gridInfo || !soil.length) {
+      throw new Error(
+        "Site assessment unavailable: terrain or soil data did not return. No ground conditions or foundation advice have been established. Ask a qualified geotechnical engineer for a site investigation.",
+      );
+    }
+    const terrain = terrainAnalysis(gridInfo.grid, gridInfo.n, gridInfo.step, lat);
     // apply slope-informed drainage back onto soil layers
     for (const l of soil) l.drainage = drainageFromTexture(l.texture, terrain.slopePct);
     const geology = interpretGeology(terrain, soil, terrain.elevationM);
@@ -605,7 +600,7 @@ export const getGeotechIntel = createServerFn({ method: "POST" })
         },
         { label: "OneGeology portal", url: "http://portal.onegeology.org", used: false },
         { label: "USGS Earth Explorer", url: "https://earthexplorer.usgs.gov", used: false },
-        { label: "OpenStreetMap", url: "https://www.openstreetmap.org", used: true },
+        { label: "OpenStreetMap", url: "https://www.openstreetmap.org", used: false },
       ],
       disclaimer:
         "This is an AI-generated preliminary geotechnical assessment based on publicly available datasets. It is intended for planning purposes only and must not be used as a substitute for a professional site-specific geotechnical investigation carried out by a qualified geotechnical engineer.",

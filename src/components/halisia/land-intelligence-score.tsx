@@ -96,9 +96,12 @@ function provenanceBadge(m: ModuleOutput): { label: string; cls: string } {
       cls: "text-muted-foreground border-white/15 bg-white/5",
     };
   if ((m.confidencePct ?? 0) >= 100)
-    return { label: "Measured", cls: "text-emerald-glow border-emerald-400/30 bg-emerald-500/10" };
+    return {
+      label: "Inputs returned",
+      cls: "text-emerald-glow border-emerald-400/30 bg-emerald-500/10",
+    };
   return {
-    label: "Partly measured",
+    label: "Partial inputs",
     cls: "text-amber-glow border-amber-400/30 bg-amber-500/10",
   };
 }
@@ -203,7 +206,8 @@ function ModuleCard({ m, freshness }: { m: ModuleOutput; freshness: string }) {
                 </span>
                 {m.confidencePct != null && (
                   <span>
-                    · {projected ? "Projection confidence" : "Confidence"} {m.confidencePct}%
+                    · {projected ? "Projection confidence" : "Input availability"} {m.confidencePct}
+                    %
                   </span>
                 )}
               </>
@@ -578,7 +582,7 @@ export function LandIntelligenceScore({
           <div className={`text-base sm:text-lg font-semibold ${t.text}`}>{decision.headline}</div>
           <div className="text-[11px] text-muted-foreground">
             Weighted for {labelForPersona(persona)}
-            {decision.confidencePct != null && ` · Confidence ${decision.confidencePct}%`}
+            {decision.confidencePct != null && ` · Input availability ${decision.confidencePct}%`}
           </div>
           <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
             {decision.scopeNote}

@@ -103,6 +103,8 @@ function isNaturalLanguage(q: string) {
 }
 
 export function FloatingSearch() {
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => setHydrated(true), []);
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [q, setQ] = useState("");
@@ -441,7 +443,7 @@ export function FloatingSearch() {
 
   return (
     <div
-      className="fixed z-40 left-1/2 -translate-x-1/2 bottom-4 sm:bottom-auto sm:top-4 w-[min(680px,calc(100vw-1.5rem))]"
+      className="fixed z-40 left-1/2 -translate-x-1/2 bottom-4 w-[min(680px,calc(100vw-1.5rem))]"
       role="search"
       aria-label="Floating intelligent search"
     >
@@ -462,6 +464,7 @@ export function FloatingSearch() {
           <Search className="h-4 w-4 text-accent shrink-0" aria-hidden="true" />
           <input
             ref={inputRef}
+            disabled={!hydrated}
             value={q}
             onChange={(e) => {
               setQ(e.target.value);
@@ -526,7 +529,7 @@ export function FloatingSearch() {
         {open && (
           <div
             id={`${listboxId}-panel`}
-            className="absolute left-0 right-0 sm:top-full sm:mt-2 bottom-full mb-2 sm:bottom-auto sm:mb-0 glass-strong rounded-2xl border border-white/10 overflow-hidden shadow-[0_30px_80px_-30px_rgba(0,0,0,0.7)] max-h-[60vh] overflow-y-auto"
+            className="absolute left-0 right-0 bottom-full mb-2 glass-strong rounded-2xl border border-white/10 overflow-hidden shadow-[0_30px_80px_-30px_rgba(0,0,0,0.7)] max-h-[60vh] overflow-y-auto"
           >
             {(cacheHit || (myLoc?.accuracy && !locating)) && (
               <div
