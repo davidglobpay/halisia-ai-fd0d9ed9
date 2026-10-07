@@ -1,3 +1,4 @@
+import { OutputTools, OutputVisual, OutputIcon } from "@/components/halisia/output-tools";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useState } from "react";
 import {
@@ -44,7 +45,9 @@ import { SaveButton } from "@/components/halisia/save-button";
  * can be followed to a source.
  */
 
-type Feature = { properties: { code: number; name: string; lat: number; lng: number } };
+type Feature = {
+  properties: { code: number; name: string; lat: number; lng: number };
+};
 const FEATURES = (countiesData as { features: Feature[] }).features;
 
 export const Route = createFileRoute("/county/$code")({
@@ -143,7 +146,12 @@ function CountyPage() {
         setPdf({ pct, stage, busy: pct < 100, error: null }),
       );
     } catch (e) {
-      setPdf({ pct: 0, stage: "", busy: false, error: (e as Error).message ?? "Failed" });
+      setPdf({
+        pct: 0,
+        stage: "",
+        busy: false,
+        error: (e as Error).message ?? "Failed",
+      });
     }
   };
 
@@ -409,9 +417,12 @@ function CountyPage() {
 
 function ProfileFact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-[#FFFDF8] px-4 py-3">
+    <div data-output-card className="bg-[#FFFDF8] px-4 py-3">
+      <OutputIcon subject={label} />
       <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
       <div className="mt-1 text-lg font-semibold">{value}</div>
+      <OutputVisual subject={label} value={value} />
+      <OutputTools label={label} />
     </div>
   );
 }
@@ -446,9 +457,12 @@ function Section({
 
 function Definition({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div>
+    <div data-output-card>
+      <OutputIcon subject={label} />
       <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
       <div className="mt-1 text-sm">{children}</div>
+      <OutputVisual subject={label} value={typeof children === "string" ? children : undefined} />
+      <OutputTools label={label} />
     </div>
   );
 }

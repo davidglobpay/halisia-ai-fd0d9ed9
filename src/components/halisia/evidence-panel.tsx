@@ -1,3 +1,4 @@
+import { OutputTools, OutputVisual, OutputIcon } from "@/components/halisia/output-tools";
 import { BookOpen, ExternalLink, ShieldCheck } from "lucide-react";
 import type { Confidence, EvidenceBundle } from "@/lib/evidence";
 
@@ -50,6 +51,7 @@ export function EvidencePanel({
       <ul className="mt-3 grid gap-1.5">
         {bundle.signals.map((s) => (
           <li
+            data-output-card
             key={s.key}
             className="rounded-xl border border-white/10 bg-white/[0.03] p-2.5"
             data-testid="evidence-signal"
@@ -59,6 +61,9 @@ export function EvidencePanel({
               <ConfidencePill level={s.confidence} />
             </div>
             <div className="mt-1 text-[11px] text-foreground/85">{s.value}</div>
+            <OutputIcon subject={s.label} />
+            <OutputVisual subject={s.label} value={String(s.value)} />
+            <OutputTools label={s.label} />
             <div className="text-[10px] text-muted-foreground">Used for: {s.used}</div>
           </li>
         ))}

@@ -1,3 +1,4 @@
+import { OutputTools, OutputVisual, OutputIcon } from "@/components/halisia/output-tools";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -89,6 +90,7 @@ function StatusPill({
 }
 
 export function PlaceCard({ place, isBest }: { place: Place; isBest?: boolean }) {
+  const [failedPhoto, setFailedPhoto] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
 
   const details = useQuery<PlaceDetails>({
@@ -110,22 +112,28 @@ export function PlaceCard({ place, isBest }: { place: Place; isBest?: boolean })
   const weekday = details.data?.weekdayText ?? place.weekdayText;
 
   return (
-    <li className="rounded-xl border border-white/10 bg-white/[0.03] overflow-hidden">
+    <li
+      data-output-card
+      className="rounded-xl border border-white/10 bg-white/[0.03] overflow-hidden"
+    >
       <button
+        data-output-content
         type="button"
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-stretch gap-3 text-left p-2 hover:bg-white/[0.04] transition"
       >
-        {photo ? (
+        {photo && failedPhoto !== photo ? (
           <img
             src={photo}
-            alt=""
+            alt={`Photo of ${place.name} from the place provider`}
             loading="lazy"
             className="h-16 w-16 flex-shrink-0 rounded-lg object-cover border border-white/10"
-            onError={(e) => (e.currentTarget.style.visibility = "hidden")}
+            onError={() => setFailedPhoto(photo ?? null)}
           />
         ) : (
-          <div className="h-16 w-16 flex-shrink-0 rounded-lg bg-white/5 border border-white/10" />
+          <div className="h-16 w-16 flex-shrink-0 rounded-lg bg-white/5 border border-white/10 grid place-items-center">
+            <OutputIcon subject={place.name} />
+          </div>
         )}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
@@ -167,6 +175,14 @@ export function PlaceCard({ place, isBest }: { place: Place; isBest?: boolean })
         />
       </button>
 
+      <div className="px-3 pb-2">
+        <OutputTools label={place.name} />
+        <p className="mt-1 text-[10px] text-muted-foreground">
+          {photo && failedPhoto !== photo
+            ? "Place-provider photo · nearby venue, not the parcel"
+            : "Photo unavailable for this named place"}
+        </p>
+      </div>
       {open && (
         <div className="border-t border-white/10 p-3 space-y-2 text-xs">
           {place.address && <div className="text-muted-foreground">{place.address}</div>}
@@ -251,7 +267,7 @@ export function PlaceCard({ place, isBest }: { place: Place; isBest?: boolean })
                 <img
                   key={i}
                   src={src}
-                  alt=""
+                  alt={`${place.name} — provider photograph ${i + 1}`}
                   loading="lazy"
                   className="h-16 w-24 flex-shrink-0 object-cover rounded-md border border-white/10"
                   onError={(e) => (e.currentTarget.style.display = "none")}

@@ -1,3 +1,4 @@
+import { OutputTools, OutputVisual, OutputIcon } from "@/components/halisia/output-tools";
 import { useId, useState, type ReactNode } from "react";
 import { ChevronDown, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -74,6 +75,7 @@ export function HoloTile({
 
   return (
     <section
+      data-output-card
       id={id}
       data-testid={rest["data-testid"] ?? "holo-tile"}
       data-open={open ? "true" : "false"}
@@ -97,10 +99,12 @@ export function HoloTile({
             </div>
           )}
           <div className="mt-1 flex items-center gap-2">
-            {Icon && (
+            {Icon ? (
               <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-accent/30 bg-accent/10">
                 <Icon className="h-4 w-4 text-accent" aria-hidden="true" />
               </span>
+            ) : (
+              <OutputIcon subject={typeof title === "string" ? title : (eyebrow ?? "output")} />
             )}
             {hero ? (
               <h2 className="intaglio font-display text-2xl font-semibold tracking-tight md:text-4xl">
@@ -132,6 +136,7 @@ export function HoloTile({
               {value}
             </span>
           )}
+          <OutputTools label={typeof title === "string" ? title : (eyebrow ?? "output")} />
           {action}
           {expandable && (
             <button
@@ -158,6 +163,10 @@ export function HoloTile({
         </div>
       </div>
 
+      <OutputVisual
+        subject={typeof title === "string" ? title : (eyebrow ?? "")}
+        value={typeof summary === "string" ? summary : undefined}
+      />
       {typeof meter === "number" && (
         <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-foreground/10">
           <div
@@ -180,9 +189,16 @@ export function HoloTile({
             <ul className="scrollbar-none flex snap-x snap-mandatory gap-2 overflow-x-auto pb-2">
               {(details ?? []).map((d) => (
                 <li key={d.key} className={cn("shrink-0 snap-start", detailClassName)}>
-                  <article className="holo-tile flex h-full flex-col rounded-xl p-3">
+                  <article
+                    data-output-card
+                    className="holo-tile flex h-full flex-col rounded-xl p-3"
+                  >
                     <div className="flex items-center gap-2">
-                      {d.icon && <d.icon className="h-3.5 w-3.5 text-accent" aria-hidden="true" />}
+                      {d.icon ? (
+                        <d.icon className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
+                      ) : (
+                        <OutputIcon subject={d.label} />
+                      )}
                       <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
                         {d.label}
                       </span>
@@ -195,12 +211,19 @@ export function HoloTile({
                         {d.body}
                       </div>
                     )}
+                    <OutputVisual
+                      subject={d.label}
+                      value={typeof d.value === "string" ? d.value : undefined}
+                    />
+                    <OutputTools label={d.label} />
                     {typeof d.meter === "number" && (
                       <div className="mt-auto pt-3">
                         <div className="h-1 w-full overflow-hidden rounded-full bg-foreground/10">
                           <div
                             className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
-                            style={{ width: `${Math.max(0, Math.min(100, d.meter))}%` }}
+                            style={{
+                              width: `${Math.max(0, Math.min(100, d.meter))}%`,
+                            }}
                           />
                         </div>
                       </div>

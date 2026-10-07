@@ -1,3 +1,4 @@
+import { OutputTools, OutputIcon } from "@/components/halisia/output-tools";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -57,7 +58,9 @@ function Empty({ children }: { children: React.ReactNode }) {
 
 function Metric({ label, value }: { label: string; value: number | string }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3" data-output-card>
+      <OutputIcon subject={label} />
+      <OutputTools label={label} />
       <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
       <div className="mt-1 text-2xl font-display font-semibold">{value}</div>
     </div>
@@ -66,13 +69,19 @@ function Metric({ label, value }: { label: string; value: number | string }) {
 
 /** Saved searches, locations, listings, comparisons, reports, alerts, activity. */
 export function GeneralDashboard() {
-  const saved = useQuery({ queryKey: ["saved-items"], queryFn: listSavedItems });
+  const saved = useQuery({
+    queryKey: ["saved-items"],
+    queryFn: listSavedItems,
+  });
   const items = saved.data ?? [];
   const locations = items.filter((i) => i.kind === "location" || i.kind === "county");
   const listings = items.filter((i) => i.kind === "property");
   const matches = items.filter((i) => i.kind === "match");
   const favourites = items.filter((i) => i.is_favorite);
-  const inquiries = useQuery({ queryKey: ["my-pro-requests"], queryFn: listMyRequests });
+  const inquiries = useQuery({
+    queryKey: ["my-pro-requests"],
+    queryFn: listMyRequests,
+  });
 
   return (
     <div className="grid gap-3 md:grid-cols-2">
@@ -155,8 +164,9 @@ export function GeneralDashboard() {
           </Empty>
         ) : (
           <Empty>
-            Based on {favourites.length} favourite{favourites.length === 1 ? "" : "s"}, check the
-            rentals and marketplace rails tuned to those areas.
+            Based on {favourites.length} favourite
+            {favourites.length === 1 ? "" : "s"}, check the rentals and marketplace rails tuned to
+            those areas.
           </Empty>
         )}
       </Panel>
@@ -280,8 +290,14 @@ export function GeneralDashboard() {
 }
 
 export function SellerDashboard() {
-  const listings = useQuery({ queryKey: ["my-properties"], queryFn: listMyProperties });
-  const leads = useQuery({ queryKey: ["my-leads-seller"], queryFn: listMyLeadsAsSeller });
+  const listings = useQuery({
+    queryKey: ["my-properties"],
+    queryFn: listMyProperties,
+  });
+  const leads = useQuery({
+    queryKey: ["my-leads-seller"],
+    queryFn: listMyLeadsAsSeller,
+  });
   const rows = (listings.data ?? []).filter((p) => p.intent === "sale");
   const myLeads = leads.data ?? [];
   const views = rows.reduce((s, p) => s + p.view_count, 0);
@@ -405,7 +421,10 @@ export function SellerDashboard() {
 }
 
 export function LandlordDashboard() {
-  const listings = useQuery({ queryKey: ["my-properties"], queryFn: listMyProperties });
+  const listings = useQuery({
+    queryKey: ["my-properties"],
+    queryFn: listMyProperties,
+  });
   const rentals = (listings.data ?? []).filter((p) => p.intent === "rent" || p.intent === "lease");
   const vacant = rentals.filter((p) => p.status === "published");
 
@@ -465,7 +484,10 @@ export function LandlordDashboard() {
 }
 
 export function BuyerDashboard() {
-  const saved = useQuery({ queryKey: ["saved-items"], queryFn: listSavedItems });
+  const saved = useQuery({
+    queryKey: ["saved-items"],
+    queryFn: listSavedItems,
+  });
   const properties = (saved.data ?? []).filter((i) => i.kind === "property");
 
   return (
@@ -525,7 +547,10 @@ export function BuyerDashboard() {
 }
 
 export function ContributorSummary() {
-  const rows = useQuery({ queryKey: ["my-contributions"], queryFn: listMyContributions });
+  const rows = useQuery({
+    queryKey: ["my-contributions"],
+    queryFn: listMyContributions,
+  });
   const rep = summariseReputation(rows.data ?? []);
   return (
     <div className="grid gap-3">
@@ -551,9 +576,18 @@ export function ContributorSummary() {
 }
 
 export function ProfessionalSummary() {
-  const profiles = useQuery({ queryKey: ["my-pro-profiles"], queryFn: listMyProProfiles });
-  const requests = useQuery({ queryKey: ["pro-requests-mine"], queryFn: listRequestsForMe });
-  const sent = useQuery({ queryKey: ["pro-requests-sent"], queryFn: listMyRequests });
+  const profiles = useQuery({
+    queryKey: ["my-pro-profiles"],
+    queryFn: listMyProProfiles,
+  });
+  const requests = useQuery({
+    queryKey: ["pro-requests-mine"],
+    queryFn: listRequestsForMe,
+  });
+  const sent = useQuery({
+    queryKey: ["pro-requests-sent"],
+    queryFn: listMyRequests,
+  });
   const mine = profiles.data ?? [];
   const leads = requests.data ?? [];
   const published = mine.filter((p) => p.published).length;

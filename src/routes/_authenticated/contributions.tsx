@@ -1,3 +1,4 @@
+import { OutputTools, OutputIcon } from "@/components/halisia/output-tools";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -33,8 +34,16 @@ export const Route = createFileRoute("/_authenticated/contributions")({
 
 function ContributionsPage() {
   const qc = useQueryClient();
-  const rows = useQuery({ queryKey: ["my-contributions"], queryFn: listMyContributions });
-  const [form, setForm] = useState({ kind: "correction", title: "", county: "", body: "" });
+  const rows = useQuery({
+    queryKey: ["my-contributions"],
+    queryFn: listMyContributions,
+  });
+  const [form, setForm] = useState({
+    kind: "correction",
+    title: "",
+    county: "",
+    body: "",
+  });
 
   const submit = useMutation({
     mutationFn: () =>
@@ -225,7 +234,9 @@ function ContributionsPage() {
 
 function Stat({ label, value }: { label: string; value: number | string }) {
   return (
-    <div className="glass rounded-2xl border border-white/10 p-4">
+    <div className="glass rounded-2xl border border-white/10 p-4" data-output-card>
+      <OutputIcon subject={label} />
+      <OutputTools label={label} />
       <div className="text-[11px] uppercase tracking-widest text-muted-foreground">{label}</div>
       <div className="mt-2 text-2xl font-display font-semibold">{value}</div>
     </div>

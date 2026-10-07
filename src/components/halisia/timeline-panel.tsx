@@ -1,3 +1,4 @@
+import { ListenButton } from "./listen-button";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import ReactECharts from "echarts-for-react";
@@ -91,7 +92,11 @@ export function TimelinePanel({ lat, lng }: { lat: number; lng: number }) {
     xAxis: {
       type: "category",
       data: months,
-      axisLabel: { color: "#8FA1C7", fontSize: 10, formatter: (v: string) => v.slice(2) },
+      axisLabel: {
+        color: "#8FA1C7",
+        fontSize: 10,
+        formatter: (v: string) => v.slice(2),
+      },
       axisLine: { lineStyle: { color: "rgba(255,255,255,0.15)" } },
     },
     yAxis: [
@@ -139,7 +144,12 @@ export function TimelinePanel({ lat, lng }: { lat: number; lng: number }) {
     markLine: {
       silent: true,
       symbol: "none",
-      data: [{ xAxis: months[idx], lineStyle: { color: "#5AF0A5", type: "solid", width: 2 } }],
+      data: [
+        {
+          xAxis: months[idx],
+          lineStyle: { color: "#5AF0A5", type: "solid", width: 2 },
+        },
+      ],
     },
   } as const;
 
@@ -195,6 +205,10 @@ export function TimelinePanel({ lat, lng }: { lat: number; lng: number }) {
 function Tile({ label, value, tone }: { label: string; value: string; tone?: string }) {
   return (
     <div className="glass rounded-xl p-3">
+      <ListenButton
+        label={`Listen to ${label}`}
+        text={`${label}: ${value}. Open-Meteo historical weather.`}
+      />
       <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
       <div className={`mt-1 text-lg font-semibold tracking-tight ${tone ?? ""}`}>{value}</div>
     </div>

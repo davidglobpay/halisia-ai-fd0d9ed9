@@ -1,3 +1,4 @@
+import { OutputTools, OutputIcon } from "@/components/halisia/output-tools";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
@@ -206,7 +207,9 @@ function PartnerListingPage() {
 function Fact({ label, value }: { label: string; value: string | null | undefined }) {
   if (!value) return null;
   return (
-    <div>
+    <div data-output-card>
+      <OutputIcon subject={label} />
+      <OutputTools label={label} />
       <dt className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</dt>
       <dd className="mt-0.5">{value}</dd>
     </div>

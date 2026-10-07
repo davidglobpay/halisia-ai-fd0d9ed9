@@ -1,3 +1,4 @@
+import { OutputTools, OutputVisual, OutputIcon } from "@/components/halisia/output-tools";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
@@ -150,7 +151,8 @@ function Card({
   hint?: string;
 }) {
   return (
-    <div className="glass rounded-2xl p-4">
+    <div className="glass rounded-2xl p-4" data-output-card>
+      <OutputTools label={title} />
       <div className="flex items-center gap-2">
         <Icon className="h-4 w-4 text-accent" />
         <div className="text-sm font-medium">{title}</div>
@@ -160,6 +162,7 @@ function Card({
           </span>
         )}
       </div>
+      <OutputVisual subject={title} />
       <div className="mt-2.5">{children}</div>
     </div>
   );
@@ -167,7 +170,9 @@ function Card({
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl bg-black/25 border border-white/5 px-3 py-2">
+    <div className="rounded-xl bg-black/25 border border-white/5 px-3 py-2" data-output-card>
+      <OutputIcon subject={label} />
+      <OutputTools label={label} />
       <div className="text-[10px] text-muted-foreground uppercase tracking-widest">{label}</div>
       <div className="text-sm font-semibold tabular-nums mt-0.5">{value}</div>
     </div>
@@ -323,19 +328,28 @@ function SoilSection({ layers }: { layers: SoilLayer[] }) {
               <div className="mt-2 h-2 rounded-full overflow-hidden flex bg-white/5">
                 {active.clay && (
                   <div
-                    style={{ width: `${L.clayPct}%`, background: SOIL_LAYER_META.clay.color }}
+                    style={{
+                      width: `${L.clayPct}%`,
+                      background: SOIL_LAYER_META.clay.color,
+                    }}
                     title={`Clay ${L.clayPct}%`}
                   />
                 )}
                 {active.silt && (
                   <div
-                    style={{ width: `${L.siltPct}%`, background: SOIL_LAYER_META.silt.color }}
+                    style={{
+                      width: `${L.siltPct}%`,
+                      background: SOIL_LAYER_META.silt.color,
+                    }}
                     title={`Silt ${L.siltPct}%`}
                   />
                 )}
                 {active.sand && (
                   <div
-                    style={{ width: `${L.sandPct}%`, background: SOIL_LAYER_META.sand.color }}
+                    style={{
+                      width: `${L.sandPct}%`,
+                      background: SOIL_LAYER_META.sand.color,
+                    }}
                     title={`Sand ${L.sandPct}%`}
                   />
                 )}
@@ -419,7 +433,9 @@ function SubsurfaceCrossSection({ g }: { g: GeotechIntel }) {
           ))}
           <div
             className="flex-1 flex items-center justify-center text-[10px] text-white/90"
-            style={{ background: "repeating-linear-gradient(45deg,#3a3a3a 0 4px,#4a4a4a 4px 8px)" }}
+            style={{
+              background: "repeating-linear-gradient(45deg,#3a3a3a 0 4px,#4a4a4a 4px 8px)",
+            }}
           >
             Bedrock ~{g.bedrock.minM}-{g.bedrock.maxM} m
           </div>
@@ -486,6 +502,7 @@ function FoundationSection({ g }: { g: GeotechIntel }) {
           const s = foundationScore(f, g);
           return (
             <div
+              data-output-card
               key={f.type}
               className="rounded-xl bg-black/30 border border-white/5 px-3 py-2.5 flex flex-col"
               data-testid={`foundation-card-${f.type.toLowerCase()}`}
@@ -501,6 +518,8 @@ function FoundationSection({ g }: { g: GeotechIntel }) {
               <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed line-clamp-3">
                 {f.note}
               </p>
+              <OutputVisual subject={`${f.type} foundation`} />
+              <OutputTools label={`${f.type} foundation`} />
               <div className="mt-2 space-y-1">
                 <MiniBar label="Load" value={s.loadCapacity} tone="#62e9ff" />
                 <MiniBar label="Cost" value={s.costEfficiency} tone="#22c55e" />

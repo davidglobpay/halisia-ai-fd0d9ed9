@@ -1,3 +1,4 @@
+import { OutputTools, OutputVisual, OutputIcon } from "@/components/halisia/output-tools";
 import { useMemo, useState } from "react";
 import {
   Sparkles,
@@ -19,8 +20,16 @@ type ViewMode = "simple" | "professional" | "technical";
 
 const MODES: { id: ViewMode; label: string; hint: string }[] = [
   { id: "simple", label: "Simple", hint: "Plain language, top signals only" },
-  { id: "professional", label: "Professional", hint: "Full read with key metrics" },
-  { id: "technical", label: "Technical", hint: "Formulas, raw scores, sources" },
+  {
+    id: "professional",
+    label: "Professional",
+    hint: "Full read with key metrics",
+  },
+  {
+    id: "technical",
+    label: "Technical",
+    hint: "Formulas, raw scores, sources",
+  },
 ];
 
 function Section({
@@ -48,8 +57,10 @@ function Section({
           ? "text-destructive"
           : "text-accent";
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.03]">
+    <div className="rounded-2xl border border-white/10 bg-white/[0.03]" data-output-card>
+      <OutputTools label={[title, detail].filter(Boolean).join(". ")} />
       <button
+        data-output-content
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}

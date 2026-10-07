@@ -1,3 +1,4 @@
+import { ListenButton } from "../listen-button";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Sparkles } from "lucide-react";
@@ -72,7 +73,13 @@ export function AiInterpretation({
           {text}
         </p>
       ) : (
-        <div className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">{text}</div>
+        <div className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">
+          {text}
+          <ListenButton
+            label="Listen to interpretation"
+            text={`AI interpretation, not source data. ${text}`}
+          />
+        </div>
       )}
       <p className="mt-2 text-[11px] text-muted-foreground">
         Built only from the evidence rows below; bracketed codes point to the row it came from. Not

@@ -1,3 +1,4 @@
+import { OutputTools, OutputIcon } from "@/components/halisia/output-tools";
 import { useMemo } from "react";
 import { Vote, Users2, Landmark, ExternalLink, ShieldAlert, Timer } from "lucide-react";
 import {
@@ -141,14 +142,19 @@ function Disclaimer({ needsVerification }: { needsVerification: boolean }) {
 function LeaderCard({ leader }: { leader: Leader }) {
   const color = PARTY_COLORS[leader.party as keyof typeof PARTY_COLORS] ?? PARTY_COLORS.Unknown;
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-3" data-output-card>
+      <OutputTools label={leader.role} />
       <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
         {leader.role} elected 2022
       </div>
       <div className="mt-1 text-base font-semibold">{leader.name}</div>
       <div
         className="mt-2 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px]"
-        style={{ background: `${color}22`, color, border: `1px solid ${color}55` }}
+        style={{
+          background: `${color}22`,
+          color,
+          border: `1px solid ${color}55`,
+        }}
       >
         <span className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />
         {leader.party}
@@ -164,7 +170,8 @@ function CoalitionCard({ coalition }: { coalition: string }) {
   const color =
     coalition === "Kenya Kwanza" ? "#f6c94a" : coalition === "Azimio" ? "#ff8a3d" : "#94a3b8";
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-3" data-output-card>
+      <OutputTools label={"Coalition"} />
       <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
         Winning coalition, 2022
       </div>
@@ -182,7 +189,8 @@ function CoalitionCard({ coalition }: { coalition: string }) {
 function ElectionCard({ cycle }: { cycle: ElectionCycle }) {
   const color = PARTY_COLORS[cycle.party as keyof typeof PARTY_COLORS] ?? PARTY_COLORS.Unknown;
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-3" data-output-card>
+      <OutputTools label={`${cycle.year} election`} />
       <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
         {cycle.year} · Gubernatorial
       </div>
@@ -191,7 +199,11 @@ function ElectionCard({ cycle }: { cycle: ElectionCycle }) {
       </div>
       <div
         className="mt-2 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px]"
-        style={{ background: `${color}22`, color, border: `1px solid ${color}55` }}
+        style={{
+          background: `${color}22`,
+          color,
+          border: `1px solid ${color}55`,
+        }}
       >
         <span className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />
         {cycle.party}

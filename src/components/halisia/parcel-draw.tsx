@@ -1,3 +1,4 @@
+import { OutputTools, OutputIcon } from "@/components/halisia/output-tools";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { Pencil, RotateCcw, Ruler, Scaling, Trash2, Undo2 } from "lucide-react";
 import { MapView } from "@/components/halisia/map-view";
@@ -59,7 +60,10 @@ export function ParcelDraw({
   }, []);
   const [mode, setMode] = useState<Mode>("idle");
   const [history, setHistory] = useState<LatLng[][]>([]);
-  const [fitted, setFitted] = useState<{ factor: number; errorPct: number } | null>(null);
+  const [fitted, setFitted] = useState<{
+    factor: number;
+    errorPct: number;
+  } | null>(null);
 
   const deedArea = useMemo(() => (deedAreaText ? parseArea(deedAreaText) : null), [deedAreaText]);
 
@@ -322,7 +326,9 @@ export function ParcelDraw({
 
 function Stat({ label, value, tone }: { label: string; value: string; tone?: "good" | "warn" }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+    <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2" data-output-card>
+      <OutputIcon subject={label} />
+      <OutputTools label={label} />
       <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
       <div
         className={`mt-0.5 text-sm font-semibold tabular-nums ${

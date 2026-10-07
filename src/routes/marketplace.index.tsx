@@ -1,3 +1,4 @@
+import { OutputTools, OutputIcon } from "@/components/halisia/output-tools";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -201,7 +202,9 @@ function MarketplaceIndex() {
         <select
           value={filters.category}
           onChange={(e) =>
-            setFilter({ category: e.target.value === "all" ? undefined : e.target.value })
+            setFilter({
+              category: e.target.value === "all" ? undefined : e.target.value,
+            })
           }
           className="rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-sm"
           aria-label="Listing category"
@@ -216,7 +219,9 @@ function MarketplaceIndex() {
         <select
           value={filters.intent}
           onChange={(e) =>
-            setFilter({ intent: e.target.value === "all" ? undefined : e.target.value })
+            setFilter({
+              intent: e.target.value === "all" ? undefined : e.target.value,
+            })
           }
           className="rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-sm"
           aria-label="Intent"
@@ -710,7 +715,11 @@ function ListingCard({
 }) {
   const cats = categoriesOf(p);
   return (
-    <article className="glass rounded-2xl border border-white/10 overflow-hidden flex flex-col">
+    <article
+      className="glass rounded-2xl border border-white/10 overflow-hidden flex flex-col"
+      data-output-card
+    >
+      <OutputTools label={p.title} />
       <Link to="/marketplace/$id" params={{ id: p.id }} className="block">
         <div className="aspect-[16/10] bg-gradient-to-br from-primary/30 via-accent/10 to-emerald-500/20 relative">
           {p.cover_image ? (

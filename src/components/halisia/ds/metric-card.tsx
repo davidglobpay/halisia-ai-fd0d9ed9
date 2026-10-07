@@ -1,3 +1,4 @@
+import { OutputTools, OutputVisual, OutputIcon } from "@/components/halisia/output-tools";
 import { type ReactNode, useState } from "react";
 import { ChevronDown, ChevronUp, Sparkles, type LucideIcon } from "lucide-react";
 import { StatusBadge, type StatusKind } from "./status-badge";
@@ -42,9 +43,12 @@ export function MetricCard({
 
   return (
     <section
+      data-output-card
       className="glass rounded-2xl p-4 transition-shadow hover:shadow-[0_20px_50px_-20px_oklch(0.68_0.19_249/0.5)]"
       aria-label={title}
     >
+      <OutputTools label={title} />
+      <OutputVisual subject={title} value={typeof primary === "string" ? primary : undefined} />
       <header className="flex items-start gap-3">
         {Icon && (
           <div className="relative grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-xl border border-foreground/10 bg-background/40">

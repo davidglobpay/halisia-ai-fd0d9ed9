@@ -1,3 +1,4 @@
+import { OutputTools, OutputIcon } from "@/components/halisia/output-tools";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
@@ -242,7 +243,9 @@ function SellerTools() {
 
 function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
   return (
-    <div className="glass rounded-2xl border border-white/10 p-4">
+    <div className="glass rounded-2xl border border-white/10 p-4" data-output-card>
+      <OutputIcon subject={label} />
+      <OutputTools label={label} />
       <div className="text-[11px] uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
         {icon} {label}
       </div>

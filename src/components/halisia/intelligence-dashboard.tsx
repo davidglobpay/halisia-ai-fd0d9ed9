@@ -1,3 +1,4 @@
+import { OutputTools, OutputVisual, OutputIcon } from "@/components/halisia/output-tools";
 import { formatDateTime } from "@/lib/format-datetime";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -511,7 +512,8 @@ function StatTile({
   source?: string;
 }) {
   return (
-    <div className="glass relative min-w-0 overflow-hidden rounded-2xl p-3">
+    <div className="glass relative min-w-0 overflow-hidden rounded-2xl p-3" data-output-card>
+      <OutputTools label={label} />
       <div
         className={`absolute -top-6 -right-6 h-20 w-20 rounded-full opacity-30 blur-2xl bg-gradient-to-br ${tone}`}
       />
@@ -704,7 +706,8 @@ function CategoryList({
     .filter((p) => (p.userRatingCount ?? 0) >= 5)
     .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))[0]?.id;
   return (
-    <div className="glass rounded-2xl p-3">
+    <div className="glass rounded-2xl p-3" data-output-card>
+      <OutputTools label={title} />
       <div className="flex items-center gap-2 mb-2">
         <div className="h-6 w-6 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
           <Icon className="h-3.5 w-3.5 text-accent" />
@@ -944,7 +947,8 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="glass rounded-2xl p-4">
+    <div className="glass rounded-2xl p-4" data-output-card>
+      <OutputTools label={title} />
       <div className={`flex items-center gap-2 text-xs font-medium ${tone}`}>
         <Icon className="h-3.5 w-3.5" /> {title}
       </div>
@@ -981,7 +985,8 @@ function WhyList({
 }) {
   if (!items?.length) return null;
   return (
-    <div className="glass rounded-2xl p-4">
+    <div className="glass rounded-2xl p-4" data-output-card>
+      <OutputTools label={title} />
       <div className={`flex items-center gap-2 text-xs font-medium ${tone}`}>
         <Icon className="h-3.5 w-3.5" /> {title}
       </div>
@@ -1005,7 +1010,8 @@ function WhyList({
 function ScoreCard({ title, score, note }: { title: string; score: number; note: string }) {
   const pct = Math.max(0, Math.min(100, score));
   return (
-    <div className="glass rounded-2xl p-4">
+    <div className="glass rounded-2xl p-4" data-output-card>
+      <OutputTools label={title} />
       <div className="flex items-center justify-between">
         <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{title}</div>
         <div className="text-lg font-semibold tracking-tight">{pct}</div>

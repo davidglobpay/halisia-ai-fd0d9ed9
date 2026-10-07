@@ -3,54 +3,107 @@ import { Volume2, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const SPEECH_STOP_EVENT = "halisia:speech-stop";
-
-/** Reads short text aloud with the browser's built-in voice. No server cost. */
-export function ListenButton({ text, label = "Listen" }: { text: string; label?: string }) {
-  const [ok, setOk] = useState(false);
+/** Browser voice, shared across tiles. One reader at a time, no server cost. */
+export function ListenButton({
+  text,
+  label = "Listen",
+}: {
+  text: string | (() => string);
+  label?: string;
+}) {
+  const [supported, setSupported] = useState<boolean | null>(null);
   const [on, setOn] = useState(false);
+  const [notice, setNotice] = useState("");
+  const generation = useRef(0);
   const speakingRef = useRef(false);
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   useEffect(() => {
-    setOk(typeof window !== "undefined" && "speechSynthesis" in window);
+    setSupported("speechSynthesis" in window && "SpeechSynthesisUtterance" in window);
     const stopped = () => {
+      generation.current++;
       speakingRef.current = false;
+      utteranceRef.current = null;
       setOn(false);
     };
     window.addEventListener(SPEECH_STOP_EVENT, stopped);
     return () => {
       window.removeEventListener(SPEECH_STOP_EVENT, stopped);
+      generation.current++;
       if (speakingRef.current && "speechSynthesis" in window) {
         window.speechSynthesis.cancel();
         window.dispatchEvent(new Event(SPEECH_STOP_EVENT));
       }
     };
   }, []);
-  if (!ok) return null;
   const toggle = () => {
     const s = window.speechSynthesis;
-    s.cancel();
+    const stopping = speakingRef.current;
     window.dispatchEvent(new Event(SPEECH_STOP_EVENT));
-    if (on) return;
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = "en-KE";
-    u.onend = u.onerror = () => {
-      speakingRef.current = false;
-      setOn(false);
-    };
-    s.speak(u);
+    s.cancel();
+    if (stopping) return;
+    setNotice("");
+    const clean = (typeof text === "function" ? text() : text).replace(/\s+/g, " ").trim();
+    if (!clean) {
+      setNotice("No output to read yet.");
+      return;
+    }
+    // Short queued passages avoid mobile browsers truncating long utterances.
+    const chunks = clean.match(/.{1,220}(?:\s|$)|.{1,220}/g) ?? [clean];
+    const token = generation.current;
     speakingRef.current = true;
     setOn(true);
+    const next = (index: number) => {
+      if (token !== generation.current) return;
+      if (index >= chunks.length) {
+        speakingRef.current = false;
+        utteranceRef.current = null;
+        setOn(false);
+        return;
+      }
+      const u = new SpeechSynthesisUtterance(chunks[index]);
+      u.lang = "en-KE";
+      const voices = s.getVoices();
+      const voice =
+        voices.find((v) => v.lang.toLowerCase() === "en-ke") ??
+        voices.find((v) => v.lang.startsWith("en"));
+      if (voice) u.voice = voice;
+      utteranceRef.current = u;
+      u.onend = () => next(index + 1);
+      u.onerror = () => {
+        if (token === generation.current) {
+          speakingRef.current = false;
+          setOn(false);
+          setNotice("Voice unavailable. Please try another browser or installed voice.");
+        }
+      };
+      s.speak(u);
+    };
+    next(0);
   };
   return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="sm"
-      onClick={toggle}
-      aria-label={on ? "Stop reading" : `${label}: read aloud`}
-      className="min-h-7 h-7 rounded-full border border-foreground/15 px-2 text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground"
-    >
-      {on ? <Square className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
-      {on ? "Stop" : label}
-    </Button>
+    <span className="inline-flex flex-col items-start gap-1">
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={toggle}
+        disabled={supported !== true}
+        aria-pressed={on}
+        aria-label={on ? `Stop reading ${label}` : `${label}: read aloud`}
+        className="min-h-9 h-auto rounded-full border border-foreground/15 px-2 py-1 text-[10px] text-muted-foreground hover:text-foreground"
+      >
+        {on ? (
+          <Square className="h-3 w-3" aria-hidden="true" />
+        ) : (
+          <Volume2 className="h-3 w-3" aria-hidden="true" />
+        )}
+        {on ? "Stop" : label}
+      </Button>
+      {(supported === false || notice) && (
+        <span role="status" className="text-[10px] text-muted-foreground">
+          {notice || "Voice reading is unavailable in this browser."}
+        </span>
+      )}
+    </span>
   );
 }

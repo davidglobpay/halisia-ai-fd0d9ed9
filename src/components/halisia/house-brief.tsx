@@ -1,3 +1,4 @@
+import { OutputTools, OutputIcon } from "@/components/halisia/output-tools";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Building2, CheckCircle2, Info, Layers, Minus, Plus, XCircle } from "lucide-react";
 import { MapView } from "@/components/halisia/map-view";
@@ -116,8 +117,16 @@ export function HouseBrief({
     const blocks = massingBlocks(study, env);
     if (!blocks.length) return null;
     return [
-      { ring: fromLocalMetres(env.ring, origin), color: "#46C46F", fillOpacity: 0.12 },
-      { ring: fromLocalMetres(blocks[0].ring, origin), color: "#C08A2E", fillOpacity: 0.35 },
+      {
+        ring: fromLocalMetres(env.ring, origin),
+        color: "#46C46F",
+        fillOpacity: 0.12,
+      },
+      {
+        ring: fromLocalMetres(blocks[0].ring, origin),
+        color: "#C08A2E",
+        fillOpacity: 0.35,
+      },
     ];
   }, [origin, env, study]);
 
@@ -132,7 +141,11 @@ export function HouseBrief({
   useEffect(() => {
     const next = pendingRef.current;
     if (!next) return;
-    const key = JSON.stringify({ g: next.study.grossM2, s: next.study.storeysRequested, b: next.briefText });
+    const key = JSON.stringify({
+      g: next.study.grossM2,
+      s: next.study.storeysRequested,
+      b: next.briefText,
+    });
     if (key === lastKeyRef.current) return;
     lastKeyRef.current = key;
     onStudyChangeRef.current?.(next);
@@ -140,7 +153,10 @@ export function HouseBrief({
   pendingRef.current = study.grossM2 > 0 ? { study, briefText: brief } : null;
 
   const bump = (id: RoomId, by: number) =>
-    setCounts((c) => ({ ...c, [id]: Math.max(0, Math.min(20, (c[id] ?? 0) + by)) }));
+    setCounts((c) => ({
+      ...c,
+      [id]: Math.max(0, Math.min(20, (c[id] ?? 0) + by)),
+    }));
 
   const spoken = [
     "Your brief.",
@@ -230,7 +246,9 @@ export function HouseBrief({
             return (
               <li key={r.id} className="flex items-center gap-2 py-1.5">
                 <div className="min-w-0 flex-1">
-                  <div className={`truncate text-xs ${n ? "text-foreground" : "text-muted-foreground"}`}>
+                  <div
+                    className={`truncate text-xs ${n ? "text-foreground" : "text-muted-foreground"}`}
+                  >
                     {r.label}
                   </div>
                   {n > 0 && (
@@ -344,7 +362,8 @@ export function HouseBrief({
               <CheckCircle2 className="mt-0.5 h-4 w-4 flex-none text-primary" aria-hidden="true" />
               <span>
                 <span className="font-medium text-primary">
-                  Fits on {study.storeysRequested} {study.storeysRequested === 1 ? "floor" : "floors"}
+                  Fits on {study.storeysRequested}{" "}
+                  {study.storeysRequested === 1 ? "floor" : "floors"}
                 </span>{" "}
                 <span className="text-muted-foreground">
                   by area.{" "}
@@ -459,7 +478,9 @@ function Num({
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/5 p-2.5">
+    <div className="rounded-xl border border-white/10 bg-white/5 p-2.5" data-output-card>
+      <OutputIcon subject={label} />
+      <OutputTools label={label} />
       <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
       <div className="mt-0.5 truncate text-sm font-semibold">{value}</div>
     </div>

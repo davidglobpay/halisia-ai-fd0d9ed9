@@ -1,3 +1,4 @@
+import { OutputTools, OutputIcon } from "@/components/halisia/output-tools";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Building2, CheckCircle2, Info, Ruler, XCircle } from "lucide-react";
 import { MapView } from "@/components/halisia/map-view";
@@ -100,7 +101,11 @@ export function BuildBrief({
     if (!origin) return null;
     const out: { ring: LatLng[]; color: string; fillOpacity?: number }[] = [];
     if (env?.ring.length) {
-      out.push({ ring: fromLocalMetres(env.ring, origin), color: "#147b35", fillOpacity: 0.12 });
+      out.push({
+        ring: fromLocalMetres(env.ring, origin),
+        color: "#147b35",
+        fillOpacity: 0.12,
+      });
     }
     if (fit?.ring.length) {
       out.push({
@@ -416,7 +421,9 @@ function Num({
 
 function Stat({ label, value, tone }: { label: string; value: string; tone?: "good" | "warn" }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+    <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2" data-output-card>
+      <OutputIcon subject={label} />
+      <OutputTools label={label} />
       <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
       <div
         className={`mt-0.5 text-sm font-semibold tabular-nums ${

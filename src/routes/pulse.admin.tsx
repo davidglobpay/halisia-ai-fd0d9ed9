@@ -1,3 +1,4 @@
+import { OutputTools, OutputIcon } from "@/components/halisia/output-tools";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -28,7 +29,10 @@ export const Route = createFileRoute("/pulse/admin")({
           "Monitor Pulse provider health, RSS and API status, imported articles, duplicates, failures and refresh cadence.",
       },
       { property: "og:title", content: "HALISIA Pulse control room" },
-      { property: "og:description", content: "Operations dashboard for the Pulse news pipeline." },
+      {
+        property: "og:description",
+        content: "Operations dashboard for the Pulse news pipeline.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -37,7 +41,9 @@ export const Route = createFileRoute("/pulse/admin")({
 
 function Stat({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
   return (
-    <div className="elev-1 rounded-2xl border border-white/10 p-4">
+    <div className="elev-1 rounded-2xl border border-white/10 p-4" data-output-card>
+      <OutputIcon subject={label} />
+      <OutputTools label={label} />
       <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
       <div className="mt-1 text-2xl font-semibold text-gradient">{value}</div>
       {hint && <div className="mt-1 text-[11px] text-muted-foreground">{hint}</div>}
@@ -65,7 +71,11 @@ function PulseAdmin() {
   });
   const isAdmin = roles.data?.ready === true;
 
-  const stats = useQuery({ queryKey: ["pulse-stats"], queryFn: fetchPulseStats, enabled: isAdmin });
+  const stats = useQuery({
+    queryKey: ["pulse-stats"],
+    queryFn: fetchPulseStats,
+    enabled: isAdmin,
+  });
   const health = useQuery({
     queryKey: ["pulse-health"],
     queryFn: fetchProviderHealth,
@@ -117,7 +127,9 @@ function PulseAdmin() {
         <p className="mt-2 text-sm text-muted-foreground">
           This dashboard requires an authorized administrator account and verified MFA.
         </p>
-        <Link to="/admin" className="mt-4 block text-sm text-primary underline">Verify access in master admin</Link>
+        <Link to="/admin" className="mt-4 block text-sm text-primary underline">
+          Verify access in master admin
+        </Link>
         <Link to="/pulse" className="mt-4 inline-block text-sm text-accent hover:underline">
           Back to the Pulse feed
         </Link>
@@ -341,4 +353,3 @@ function PulseAdmin() {
     </main>
   );
 }
-

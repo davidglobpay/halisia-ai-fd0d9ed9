@@ -1,3 +1,4 @@
+import { OutputTools } from "./output-tools";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getWebFindings } from "@/lib/web-findings.functions";
@@ -96,7 +97,10 @@ function provenanceBadge(m: ModuleOutput): { label: string; cls: string } {
       cls: "text-muted-foreground border-white/15 bg-white/5",
     };
   if ((m.confidencePct ?? 0) >= 100)
-    return { label: "Measured", cls: "text-emerald-glow border-emerald-400/30 bg-emerald-500/10" };
+    return {
+      label: "Measured",
+      cls: "text-emerald-glow border-emerald-400/30 bg-emerald-500/10",
+    };
   return {
     label: "Partly measured",
     cls: "text-amber-glow border-amber-400/30 bg-amber-500/10",
@@ -149,6 +153,7 @@ function ModuleCard({ m, freshness }: { m: ModuleOutput; freshness: string }) {
 
   return (
     <details
+      data-output-card
       className={`group rounded-2xl border bg-white/[0.03] open:bg-white/[0.05] ${
         assessed ? "border-white/10" : "border-white/10 border-dashed"
       }`}
@@ -217,6 +222,7 @@ function ModuleCard({ m, freshness }: { m: ModuleOutput; freshness: string }) {
           aria-hidden
         />
       </summary>
+      <OutputTools label={m.label} />
       <div className="px-3 pb-3 space-y-2.5 text-sm text-foreground/90">
         <div>
           <div className="text-[10px] uppercase tracking-widest text-accent flex items-center gap-1">

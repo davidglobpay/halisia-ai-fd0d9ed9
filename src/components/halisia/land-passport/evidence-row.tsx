@@ -1,3 +1,4 @@
+import { OutputTools, OutputVisual, OutputIcon } from "@/components/halisia/output-tools";
 import { CLASS_LABEL, CONFIDENCE_LABEL, type EvidenceItem } from "@/lib/passport-evidence";
 import { ListenButton } from "@/components/halisia/listen-button";
 
@@ -12,7 +13,10 @@ export function EvidenceRow({ item }: { item: EvidenceItem }) {
       data-gap={gap ? "1" : "0"}
     >
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <span className="text-xs text-muted-foreground">{item.label}</span>
+        <span className="flex items-center gap-2 text-xs text-muted-foreground">
+          <OutputIcon subject={item.label} />
+          {item.label}
+        </span>
         <span className="flex gap-1.5 text-[10px] uppercase tracking-wider">
           <span className="rounded-full border border-foreground/15 px-2 py-0.5 text-muted-foreground">
             {CLASS_LABEL[item.cls]}
@@ -30,6 +34,7 @@ export function EvidenceRow({ item }: { item: EvidenceItem }) {
       >
         {gap ? "Not available" : item.value}
       </div>
+      <OutputVisual subject={item.label} value={item.value == null ? null : String(item.value)} />
       <details className="mt-1 text-[11px] text-muted-foreground">
         <summary className="cursor-pointer select-none min-h-[28px] inline-flex items-center">
           Evidence & use

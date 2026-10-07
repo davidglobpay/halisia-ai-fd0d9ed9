@@ -1,3 +1,4 @@
+import { OutputTools, OutputIcon } from "@/components/halisia/output-tools";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -56,8 +57,14 @@ export const Route = createFileRoute("/_authenticated/pro-profile")({
 
 function ProDashboard() {
   const qc = useQueryClient();
-  const profiles = useQuery({ queryKey: ["my-pro-profiles"], queryFn: listMyProProfiles });
-  const requests = useQuery({ queryKey: ["pro-requests-mine"], queryFn: listRequestsForMe });
+  const profiles = useQuery({
+    queryKey: ["my-pro-profiles"],
+    queryFn: listMyProProfiles,
+  });
+  const requests = useQuery({
+    queryKey: ["pro-requests-mine"],
+    queryFn: listRequestsForMe,
+  });
   const first = profiles.data?.[0];
 
   const [form, setForm] = useState({
@@ -634,7 +641,9 @@ function ProDashboard() {
 
 function Stat({ label, value }: { label: string; value: number | string }) {
   return (
-    <div className="glass rounded-2xl border border-white/10 p-4">
+    <div className="glass rounded-2xl border border-white/10 p-4" data-output-card>
+      <OutputIcon subject={label} />
+      <OutputTools label={label} />
       <div className="text-[11px] uppercase tracking-widest text-muted-foreground">{label}</div>
       <div className="mt-2 text-3xl font-display font-semibold">{value}</div>
     </div>

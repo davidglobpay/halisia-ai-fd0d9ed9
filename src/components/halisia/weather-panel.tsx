@@ -1,3 +1,4 @@
+import { OutputTools, OutputVisual, OutputIcon } from "@/components/halisia/output-tools";
 import { useQuery } from "@tanstack/react-query";
 import ReactECharts from "echarts-for-react";
 import { Cloud, Droplets, Loader2, Sun, Thermometer, Wind } from "lucide-react";
@@ -41,7 +42,11 @@ export function WeatherPanel({ lat, lng }: { lat: number; lng: number }) {
     },
     yAxis: {
       type: "value",
-      axisLabel: { color: "rgba(255,255,255,0.55)", fontSize: 10, formatter: "{value}°" },
+      axisLabel: {
+        color: "rgba(255,255,255,0.55)",
+        fontSize: 10,
+        formatter: "{value}°",
+      },
       splitLine: { lineStyle: { color: "rgba(255,255,255,0.06)" } },
     },
     series: [
@@ -81,7 +86,11 @@ export function WeatherPanel({ lat, lng }: { lat: number; lng: number }) {
     },
     yAxis: {
       type: "value",
-      axisLabel: { color: "rgba(255,255,255,0.55)", fontSize: 10, formatter: "{value}mm" },
+      axisLabel: {
+        color: "rgba(255,255,255,0.55)",
+        fontSize: 10,
+        formatter: "{value}mm",
+      },
       splitLine: { lineStyle: { color: "rgba(255,255,255,0.06)" } },
     },
     series: [
@@ -159,7 +168,9 @@ export function WeatherPanel({ lat, lng }: { lat: number; lng: number }) {
           {daily.time.map((day, i) => (
             <li key={day} className="flex items-center gap-2 text-xs">
               <span className="w-12 text-muted-foreground">
-                {new Date(day).toLocaleDateString(undefined, { weekday: "short" })}
+                {new Date(day).toLocaleDateString(undefined, {
+                  weekday: "short",
+                })}
               </span>
               <span className="flex-1 truncate">{wmoDescription(daily.weather_code[i])}</span>
               <span className="text-amber-glow">UV {daily.uv_index_max[i]?.toFixed(0) ?? "—"}</span>
@@ -189,7 +200,8 @@ function Stat({
   value: string;
 }) {
   return (
-    <div className="glass rounded-xl p-2">
+    <div className="glass rounded-xl p-2" data-output-card>
+      <OutputTools label={label} />
       <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
         <Icon className="h-3 w-3 text-accent" /> {label}
       </div>

@@ -1,3 +1,4 @@
+import { OutputTools, OutputIcon } from "@/components/halisia/output-tools";
 import { useMemo, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -15,7 +16,12 @@ import {
   type PartnerListing,
 } from "@/lib/marketplace-external";
 
-type Filters = { county: string; category: string; intent: string; sourceId: string };
+type Filters = {
+  county: string;
+  category: string;
+  intent: string;
+  sourceId: string;
+};
 const EMPTY: Filters = { county: "", category: "", intent: "", sourceId: "" };
 
 /**
@@ -209,7 +215,8 @@ function PartnerCard({ listing }: { listing: PartnerListing }) {
       : null;
 
   return (
-    <article className="glass glow-sheen flex h-full flex-col rounded-2xl p-4">
+    <article className="glass glow-sheen flex h-full flex-col rounded-2xl p-4" data-output-card>
+      <OutputTools label={listing.title} />
       <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
         {listing.source?.name ?? "Source unavailable"}
       </p>

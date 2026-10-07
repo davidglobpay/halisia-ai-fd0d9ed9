@@ -1,3 +1,5 @@
+import { ListenButton } from "@/components/halisia/listen-button";
+import { OutputTools, OutputVisual, OutputIcon } from "@/components/halisia/output-tools";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Loader2,
@@ -187,7 +189,8 @@ function ClimateTile({
   icon: React.ElementType;
 }) {
   return (
-    <div className="rounded-xl border border-white/5 bg-black/20 px-3 py-2">
+    <div className="rounded-xl border border-white/5 bg-black/20 px-3 py-2" data-output-card>
+      <OutputTools label={label} />
       <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">
         <Icon className="h-3 w-3" />
         {label}
@@ -212,7 +215,9 @@ function PublicTab({ data }: { data: Wave4Intel }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
       {entries.map(([key, list]) => (
-        <div key={key} className="glass rounded-2xl p-3">
+        <div data-output-card key={key} className="glass rounded-2xl p-3">
+          <OutputIcon subject={OVERPASS_CATEGORY_LABELS[key] ?? key} />
+          <OutputTools label={OVERPASS_CATEGORY_LABELS[key] ?? key} />
           <div className="flex items-center justify-between mb-2">
             <div className="text-xs font-medium">{OVERPASS_CATEGORY_LABELS[key] ?? key}</div>
             <div className="text-[10px] text-muted-foreground">{list.length}</div>
@@ -246,9 +251,10 @@ function InvestTab({ data }: { data: Wave4Intel }) {
     ["Development potential", "development"],
   ];
   const [openKey, setOpenKey] = useState<string | null>(null);
-  const [prov, setProv] = useState<{ key: keyof Wave4Intel["breakdown"]; label: string } | null>(
-    null,
-  );
+  const [prov, setProv] = useState<{
+    key: keyof Wave4Intel["breakdown"];
+    label: string;
+  } | null>(null);
   return (
     <div className="space-y-3">
       <div className="glass rounded-2xl p-4">
@@ -287,7 +293,12 @@ function InvestTab({ data }: { data: Wave4Intel }) {
           const explain = data.breakdown[key];
           const open = openKey === key;
           return (
-            <div key={label} className="glass rounded-2xl p-3">
+            <div data-output-card key={label} className="glass rounded-2xl p-3">
+              <OutputIcon subject={label} />
+              <ListenButton
+                label={`Listen to ${label}`}
+                text={`${label}: ${explain.score} out of 100. ${explain.note}. Confidence ${explain.confidence}. Derived from public datasets, not a valuation.`}
+              />
               <button
                 onClick={() => setOpenKey(open ? null : key)}
                 className="w-full text-left"
