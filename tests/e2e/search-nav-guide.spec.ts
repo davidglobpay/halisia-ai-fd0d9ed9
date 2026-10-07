@@ -22,12 +22,12 @@ test.describe("search panel + nav guide", () => {
   }) => {
     await suppressNavGuide(context);
     await page.goto("/", { waitUntil: "domcontentloaded" });
-    const searchbox = page.getByRole("combobox").first();
+    const searchbox = page.getByRole("textbox", { name: /Search Kenya/i });
     await expect(
       searchbox,
       "floating search combobox should mount on the landing page",
     ).toBeVisible({ timeout: 15_000 });
-    await expect(searchbox).toBeEnabled();
+    await expect(searchbox).toBeEnabled({ timeout: 15_000 });
     await searchbox.click();
     await expect(
       page.getByText(/Try one of these/i),
@@ -44,7 +44,9 @@ test.describe("search panel + nav guide", () => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
     // Wait for the search trigger to mount before firing the shortcut so
     // the global keydown handler is guaranteed to be registered.
-    await expect(page.getByRole("combobox").first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("textbox", { name: /Search Kenya/i })).toBeEnabled({
+      timeout: 15_000,
+    });
     const modifier = process.platform === "darwin" ? "Meta" : "Control";
     await page.keyboard.press(`${modifier}+KeyK`);
     const input = page.getByRole("textbox", { name: /Search Kenya/i });
@@ -71,6 +73,9 @@ test.describe("search panel + nav guide", () => {
   test("? key re-opens the guided tour", async ({ page, context }) => {
     await suppressNavGuide(context);
     await page.goto("/", { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("textbox", { name: /Search Kenya/i })).toBeEnabled({
+      timeout: 15_000,
+    });
     // The `?` handler is attached inside a useEffect. Wait for the trigger
     // button (rendered by the same component) before firing the shortcut.
     await expect(page.getByRole("button", { name: /Open guided tour/i })).toBeVisible({

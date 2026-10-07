@@ -8,6 +8,12 @@ on:
     branches: [main]
   pull_request:
 
+# Validate the latest revision of each PR/branch; superseded runs cannot
+# satisfy release gates and should not keep consuming runner capacity.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   quality:
     name: Typecheck · Lint · Build
@@ -52,35 +58,16 @@ jobs:
         run: bunx playwright test --shard=${{ matrix.shard }}/6
         env:
           CI: "1"
-      - name: Upload Playwright report (on failure)
+      # Test failures remain fatal. Artifact storage is diagnostic only and
+      # must not turn a storage-quota failure into an application finding.
+      - name: Upload Playwright diagnostics (on failure)
         if: failure()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report-${{ matrix.shard }}
+          name: playwright-diagnostics-${{ matrix.shard }}
           path: |
             playwright-report
             test-results
-          retention-days: 14
-          if-no-files-found: ignore
-      - name: Upload failure screenshots & videos
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-failure-media-${{ matrix.shard }}
-          path: |
-            test-results/**/*.png
-            test-results/**/*.webm
-            test-results/**/*.zip
-          retention-days: 14
-          if-no-files-found: ignore
-      - name: Upload county-logo snapshot diffs (on failure)
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: county-logo-snapshot-diffs-${{ matrix.shard }}
-          path: |
-            test-results/**/*-diff.png
-            test-results/**/*-actual.png
-            tests/e2e/**/__snapshots__/**
-          retention-days: 14
+          retention-days: 3
           if-no-files-found: ignore

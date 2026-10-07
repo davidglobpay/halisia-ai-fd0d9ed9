@@ -865,13 +865,14 @@ function TitleDeedPage() {
                   {loc.address}
                   {loc.radiusM != null && (
                     <span className="mt-1.5 block text-[11px]">
-                      The gold ring is how far this match could be out:{" "}
+                      The gold ring represents the geocoder's suggested map extent:{" "}
                       <span className="tabular-nums text-foreground">
                         {loc.radiusM >= 1000
                           ? `${(loc.radiusM / 1000).toFixed(1)} km`
                           : `${loc.radiusM} m`}
                       </span>{" "}
-                      from the pin. The parcel is somewhere inside it, not at its centre.
+                      from the pin. It is not a positional error estimate or a parcel boundary; the
+                      parcel may be outside this area.
                     </span>
                   )}
                   {loc.partialMatch && (

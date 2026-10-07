@@ -17,6 +17,7 @@ import { PerfMonitor } from "../components/halisia/perf-monitor";
 import { GlobeBackdrop } from "../components/halisia/globe-backdrop";
 
 import { NavGuide } from "../components/halisia/nav-guide";
+import { FloatingSearch } from "../components/halisia/floating-search";
 import { Navbar } from "../components/halisia/navbar";
 import { supabase } from "../integrations/supabase/client";
 import { takePostAuthRedirect } from "../lib/post-auth";
@@ -211,6 +212,7 @@ function RootComponent() {
       <Navbar />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
+      <FloatingSearch />
       <NavGuide />
     </QueryClientProvider>
   );

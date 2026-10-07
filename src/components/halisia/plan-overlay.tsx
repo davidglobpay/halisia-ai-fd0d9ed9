@@ -1,13 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  AlertTriangle,
-  CheckCircle2,
-  Compass,
-  Info,
-  Move,
-  RotateCcw,
-  Layers,
-} from "lucide-react";
+import { AlertTriangle, CheckCircle2, Compass, Info, Move, RotateCcw, Layers } from "lucide-react";
 import { MapView } from "@/components/halisia/map-view";
 import { ReadAloud } from "@/components/halisia/read-aloud";
 import {
@@ -86,7 +78,11 @@ export function PlanOverlay({
   const shape = useMemo(
     () =>
       chosen
-        ? shapeForPlot({ areaM2: chosen.areaM2, dimsM: chosen.dimsM }, plan?.dimensionsM ?? [], aspect)
+        ? shapeForPlot(
+            { areaM2: chosen.areaM2, dimsM: chosen.dimsM },
+            plan?.dimensionsM ?? [],
+            aspect,
+          )
         : null,
     [chosen, plan, aspect],
   );
@@ -132,11 +128,9 @@ export function PlanOverlay({
   cbRef.current = onPlacementChange;
   useEffect(() => {
     const next = pendingRef.current;
-    if (!next) return;
-    const key = JSON.stringify({
-      r: next.ring.map((p) => [p.lat.toFixed(7), p.lng.toFixed(7)]),
-      d: next.rotationDeg,
-    });
+    // Include fit and shape metadata: the boundary can change while the
+    // placed ring stays still. Null must also clear the parent report.
+    const key = JSON.stringify(next);
     if (key === lastKeyRef.current) return;
     lastKeyRef.current = key;
     cbRef.current?.(next);
@@ -149,7 +143,7 @@ export function PlanOverlay({
     ? "Upload the surveyor's plan in step two first."
     : [
         shape
-          ? `The plot from the sheet is ${shape.widthM.toFixed(1)} by ${shape.depthM.toFixed(1)} metres.`
+          ? `The inferred candidate rectangle is ${shape.widthM.toFixed(1)} by ${shape.depthM.toFixed(1)} metres.`
           : "No plot size could be read from the sheet.",
         here ? "It is drawn on the map at that size." : "Place your pin or draw the plot first.",
         reading ? reading.text : "Draw your boundary in step three to compare the two.",
@@ -184,8 +178,8 @@ export function PlanOverlay({
             Lay the plot over the land
           </h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            The plot from the sheet, drawn at its true size. Tap the map to move it, turn it to face
-            the right way, then see how well it agrees with the boundary you drew.
+            A candidate rectangle based on extracted figures. Tap the map to move it, rotate it,
+            then compare it with your drawn outline.
           </p>
         </div>
         <ReadAloud text={spoken} label="Listen" />
@@ -195,10 +189,11 @@ export function PlanOverlay({
       <div className="mt-3 flex items-start gap-2 rounded-xl border-l-4 border-destructive bg-destructive/5 p-3">
         <AlertTriangle className="mt-0.5 h-4 w-4 flex-none text-destructive" aria-hidden="true" />
         <p className="text-[11px] leading-relaxed text-foreground">
-          A mutation plan carries no coordinates and no north arrow. <strong>Where this sits and
-          which way it points is your doing</strong> &mdash; not the surveyor&rsquo;s and not
-          HALISIA&rsquo;s. This is tracing paper over imagery. It is not georeferencing, not a
-          survey, and it establishes nothing about where the legal boundary runs.
+          HALISIA has not established georeferenced coordinates or orientation for this overlay.{" "}
+          <strong>Where this sits and which way it points is your doing</strong> &mdash; not the
+          surveyor&rsquo;s and not HALISIA&rsquo;s. This is tracing paper over imagery. It is not
+          georeferencing, not a survey, and it establishes nothing about where the legal boundary
+          runs.
         </p>
       </div>
 
@@ -210,7 +205,7 @@ export function PlanOverlay({
         <>
           <div className="mt-3">
             <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-              Which plot on the sheet is yours?
+              Choose an extracted area group (not a parcel identity)
             </div>
             <ul className="mt-1.5 flex flex-wrap gap-1.5">
               {sizes.map((s) => (
@@ -240,7 +235,7 @@ export function PlanOverlay({
                 </span>
                 <span className="text-[11px] text-muted-foreground">
                   {shape.basis === "dimensions"
-                    ? "both sides printed on the sheet"
+                    ? "rectangle inferred from extracted dimensions; parcel association unverified"
                     : "area from the sheet, proportions chosen by you"}
                 </span>
               </div>
@@ -254,14 +249,16 @@ export function PlanOverlay({
                     <>
                       Those sides multiply to {Math.round(shape.check.computedM2)} m&sup2; against a
                       printed {Math.round(shape.check.statedM2)} m&sup2; &mdash;{" "}
-                      {Math.abs(shape.check.errorPct).toFixed(1)}% apart, which rounding explains.
+                      {Math.abs(shape.check.errorPct).toFixed(1)}% apart, within the comparison
+                      tolerance; the cause is not established.
                     </>
                   ) : (
                     <>
                       The sides multiply to {Math.round(shape.check.computedM2)} m&sup2; but the
                       sheet prints {Math.round(shape.check.statedM2)} m&sup2; &mdash;{" "}
-                      {Math.abs(shape.check.errorPct).toFixed(1)}% apart. The sheet disagrees with
-                      itself; ask the surveyor which figure is right.
+                      {Math.abs(shape.check.errorPct).toFixed(1)}% apart. The selected dimensions
+                      and extracted area differ; ask the surveyor to check the OCR and parcel
+                      association.
                     </>
                   )}
                 </p>
@@ -293,8 +290,8 @@ export function PlanOverlay({
             <div className="mt-3 flex items-start gap-2 rounded-xl border border-white/10 bg-white/5 p-3 text-xs text-muted-foreground">
               <Info className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
               <span>
-                Place your pin in step 1, or draw the boundary in step 3, and the plot will appear on
-                the map ready to move.
+                Place your pin in step 1, or draw the boundary in step 3, and the plot will appear
+                on the map ready to move.
               </span>
             </div>
           ) : (
@@ -304,16 +301,14 @@ export function PlanOverlay({
                 zoom={19}
                 mapType="satellite"
                 polygon={boundary.length >= 3 ? boundary : null}
-                overlayPolygons={
-                  ring ? [{ ring, color: "#C08A2E", fillOpacity: 0.28 }] : null
-                }
+                overlayPolygons={ring ? [{ ring, color: "#C08A2E", fillOpacity: 0.28 }] : null}
                 onMapClick={(loc) => setCentre({ lat: loc.lat, lng: loc.lng })}
                 className="mt-3 h-64 w-full rounded-xl"
               />
               <p className="mt-1.5 text-[11px] text-muted-foreground">
                 <Move className="mr-1 inline h-3 w-3" aria-hidden="true" />
-                Tap anywhere on the map to move the plot there. The green outline is the boundary you
-                drew; the gold one is the plot from the sheet.
+                Tap anywhere on the map to move the plot there. The green outline is the boundary
+                you drew; the gold one is an inferred candidate rectangle.
               </p>
 
               <div className="mt-3">
@@ -415,10 +410,11 @@ export function PlanOverlay({
       )}
 
       <p className="mt-3 border-t border-white/10 pt-2 text-[11px] leading-relaxed text-muted-foreground">
-        The size comes from the sheet. The position and the angle come from you. Agreement between
-        the two outlines means the shape you drew matches the shape the surveyor drew &mdash; it says
-        nothing about whether either one is on the right land, and nothing about ownership. A
-        licensed surveyor fixes beacons; an advocate confirms title.
+        The rectangle uses OCR-extracted area and dimensions, sometimes pooled across equal-area
+        plots or drawn from elsewhere on the sheet. It is an inferred shape, not the surveyor's
+        confirmed parcel outline. Position and angle are chosen by you. A close fit proves neither
+        parcel identity, legal boundaries nor ownership. Ask a licensed surveyor to confirm the
+        correct plot and beacons, and an advocate to review an official title search.
       </p>
     </div>
   );

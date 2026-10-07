@@ -106,9 +106,9 @@ export function DataPipeline() {
               Every score is <span className="text-gradient">traceable to a source</span>.
             </h2>
             <p className="mt-3 text-sm md:text-base text-muted-foreground leading-relaxed">
-              Nothing in HALISIA is invented. A listing travels through open geospatial, climate,
-              satellite and government datasets before the AI reads it — and each stage stays
-              visible in the final report.
+              This diagram describes potential data sources, not confirmed coverage for a listing.
+              User submissions and AI inferences need independent checks. Use the sources and
+              availability shown in each location report; HALISIA has no land-registry connection.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">

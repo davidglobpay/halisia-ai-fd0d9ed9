@@ -97,11 +97,11 @@ export function evidenceSummary(input: NarrativeInput): NarrativeOutput {
     recommendations: [
       "Confirm the pin against the actual parcel and a licensed survey.",
       "Obtain an official title search through the relevant registry or Ardhisasa where available.",
-      "Verify permitted use, access and utilities with the responsible authorities and on site.",
+      "Confirm county-approved land use and legal road access. Ask the water provider and Kenya Power about actual connections, reliability and connection costs.",
     ],
     constructionAdvice: [
       "A qualified professional should specify geotechnical investigation and foundation design.",
-      "Obtain site drainage and flood assessment; elevation alone cannot answer either.",
+      "Check drainage with a qualified professional, ask neighbours about past flooding, and consult current Kenya Meteorological Department forecasts. A dry-day visit and altitude alone cannot establish flood safety.",
       "Confirm county planning requirements before commissioning a build.",
     ],
     investmentAdvice: [
@@ -127,7 +127,7 @@ export function evidenceSummary(input: NarrativeInput): NarrativeOutput {
       "Coverage percentages and amenity scores are heuristics, not audited confidence measures.",
     ],
     nextSteps: [
-      "Field-check mapped facilities and journey times.",
+      "Visit the mapped school, clinic and shops: confirm they are open, affordable and reachable by the transport you use.",
       "Ask qualified professionals to resolve title, boundaries and planning.",
       "Record documents, sources and dates in the parcel evidence ledger.",
     ],
