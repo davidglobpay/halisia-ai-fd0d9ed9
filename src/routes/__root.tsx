@@ -18,6 +18,7 @@ import { GlobeBackdrop } from "../components/halisia/globe-backdrop";
 
 import { NavGuide } from "../components/halisia/nav-guide";
 import { Navbar } from "../components/halisia/navbar";
+import { ServicePricing } from "../components/halisia/service-pricing";
 import { supabase } from "../integrations/supabase/client";
 import { takePostAuthRedirect } from "../lib/post-auth";
 import { primeMark } from "../lib/pdf-chrome";
@@ -211,7 +212,9 @@ function RootComponent() {
       <Navbar />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
+      <ServicePricing />
       <NavGuide />
     </QueryClientProvider>
   );
 }
+

@@ -20,26 +20,43 @@ type Search = {
   lng?: number;
 };
 
+/**
+ * A coordinate from the URL, or undefined.
+ *
+ * `!isNaN(Number(""))` is true, so an empty parameter — `?lat=&lng=` — used to
+ * become the number 0 and prefill the form with a point in the Gulf of Guinea
+ * that the buyer never typed. The submit guard caught it, but only after they
+ * had seen two populated fields presented as their plot. An empty string is a
+ * missing coordinate, not the origin.
+ */
+const coord = (v: unknown): number | undefined => {
+  if (v == null) return undefined;
+  if (typeof v === "string" && v.trim() === "") return undefined;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : undefined;
+};
+
 export const Route = createFileRoute("/_authenticated/scout")({
   validateSearch: (s: Record<string, unknown>): Search => ({
     job: typeof s.job === "string" ? s.job : undefined,
     ref: typeof s.ref === "string" ? s.ref : undefined,
     county: typeof s.county === "string" ? s.county : undefined,
     src: typeof s.src === "string" ? s.src : undefined,
-    lat: s.lat != null && !isNaN(Number(s.lat)) ? Number(s.lat) : undefined,
-    lng: s.lng != null && !isNaN(Number(s.lng)) ? Number(s.lng) : undefined,
+    lat: coord(s.lat),
+    lng: coord(s.lng),
   }),
   head: () => ({
     meta: [
       { title: "Send a Scout — HALISIA" },
       {
         name: "description",
-        content: "Book a vetted field scout to observe a plot in person.",
+        content:
+          "Book an approved field scout to observe a plot in person. Field observation, not a survey.",
       },
       { property: "og:title", content: "Send a Scout — HALISIA" },
       {
         property: "og:description",
-        content: "Book a vetted field scout to observe a plot.",
+        content: "Book an approved field scout to observe a plot in person.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -138,13 +155,25 @@ function ScoutPage() {
     kes: catalog?.find((c) => c.code === t.code)?.amount_kes ?? t.kes,
   }));
   const hasCoords = lat !== "" && lng !== "";
+  /**
+   * Provenance survives only while the coordinates are the ones that arrived.
+   *
+   * `location_source` is printed verbatim into the scout's brief and into the
+   * request record, so it has to describe how THESE numbers were obtained. The
+   * approximate_geocode branch always re-checked that; the manual_pin branch
+   * did not, so a buyer who arrived from the title-deed page with a pin they
+   * had placed, then typed different numbers into the two fields, still filed
+   * the request as "manual_pin". A pin somebody dropped on their own plot and
+   * a figure typed afterwards are different kinds of evidence, and the whole
+   * product rests on not confusing the two. Edit either field and the claim
+   * drops to explicit_coordinates, which is what it then is.
+   */
+  const untouched = lat === String(s.lat ?? "") && lng === String(s.lng ?? "");
   const locSource = !hasCoords
     ? "directions_only"
-    : s.src === "manual_pin"
+    : untouched && s.src === "manual_pin"
       ? "manual_pin"
-      : s.src === "approximate_geocode" &&
-          lat === String(s.lat) &&
-          lng === String(s.lng)
+      : untouched && s.src === "approximate_geocode"
         ? "approximate_geocode"
         : "explicit_coordinates";
 
@@ -235,6 +264,12 @@ function ScoutPage() {
           <p className="text-xs text-amber-glow">
             These coordinates are an approximate area match, not the parcel.
             Correct them or add directions.
+          </p>
+        )}
+        {hasCoords && !untouched && s.src && (
+          <p className="text-xs text-muted-foreground">
+            You changed the coordinates, so this request is filed as
+            coordinates you entered rather than as the point you arrived with.
           </p>
         )}
         <div className="grid grid-cols-2 gap-2">

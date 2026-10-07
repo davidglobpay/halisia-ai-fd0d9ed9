@@ -342,9 +342,12 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
             <p className="mt-4 text-muted-foreground max-w-xl mx-auto">
               Every location profile is free while HALISIA is in beta. Premium reports — deeper
               environmental, legal-context and construction feasibility, each with its source named
-              — are in development.
+              — are in development. Suggested paid prices start at KES 490 per report;
+              Scout visits start at KES 1,150 before travel and access. Payment integration
+              and live activation are pending.
             </p>
             <div className="mt-8 flex items-center justify-center gap-3">
+              <Link to="/pricing" className="glass rounded-full px-6 py-3 text-sm">See service prices</Link>
               <Link
                 to="/explore"
                 data-testid="launch-cta"
@@ -523,3 +526,4 @@ const SCENARIOS = [
     body: "Confidence bands mark what is thin, so the next trip targets the gaps rather than re-confirming what is already documented.",
   },
 ];
+
