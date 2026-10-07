@@ -14,7 +14,7 @@ import {
   recomputePulseTrending,
   runPulseIngestion,
 } from "@/lib/pulse.functions";
-import { listMyRoles } from "@/lib/roles";
+import { adminRpc, type AdminStatus } from "@/lib/admin";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/pulse/admin")({
@@ -59,11 +59,11 @@ function PulseAdmin() {
   const [message, setMessage] = useState<string | null>(null);
 
   const roles = useQuery({
-    queryKey: ["my-roles", user?.id],
-    queryFn: listMyRoles,
+    queryKey: ["admin-status", user?.id],
+    queryFn: () => adminRpc<AdminStatus>("halisia_admin_status"),
     enabled: !!user,
   });
-  const isAdmin = (roles.data ?? []).includes("administrator");
+  const isAdmin = roles.data?.ready === true;
 
   const stats = useQuery({ queryKey: ["pulse-stats"], queryFn: fetchPulseStats, enabled: isAdmin });
   const health = useQuery({
@@ -115,8 +115,9 @@ function PulseAdmin() {
       <main className="mx-auto max-w-3xl px-4 py-16">
         <h1 className="text-xl font-semibold">Pulse control room</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          This dashboard is restricted to administrators.
+          This dashboard requires an authorized administrator account and verified MFA.
         </p>
+        <Link to="/admin" className="mt-4 block text-sm text-primary underline">Verify access in master admin</Link>
         <Link to="/pulse" className="mt-4 inline-block text-sm text-accent hover:underline">
           Back to the Pulse feed
         </Link>
@@ -340,3 +341,4 @@ function PulseAdmin() {
     </main>
   );
 }
+
