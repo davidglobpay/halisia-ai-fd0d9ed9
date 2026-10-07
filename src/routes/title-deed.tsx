@@ -856,6 +856,21 @@ function TitleDeedPage() {
                 </div>
               )}
             </div>
+            {(fields || locIssue) && (
+              <Link
+                to="/scout"
+                search={{
+                  ref: fields?.titleNumber || fields?.lrNumber || fields?.parcelNumber || queryValue || undefined,
+                  county: loc?.county ?? fields?.county ?? undefined,
+                  src: pinned ? "manual_pin" : loc ? "approximate_geocode" : undefined,
+                  lat: pinned?.lat ?? loc?.lat,
+                  lng: pinned?.lng ?? loc?.lng,
+                }}
+                className="glass inline-flex min-h-12 items-center justify-center rounded-2xl px-4 text-sm font-medium"
+              >
+                Send a Scout to this plot
+              </Link>
+            )}
             {loc && (
               <>
                 <div className="glass rounded-2xl px-4 py-2.5 text-xs text-muted-foreground">

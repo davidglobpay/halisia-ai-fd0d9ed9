@@ -40,6 +40,7 @@ import { Route as AuthenticatedProsRouteImport } from './routes/_authenticated/p
 import { Route as AuthenticatedRentalsRouteImport } from './routes/_authenticated/rentals'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedSavedRouteImport } from './routes/_authenticated/saved'
+import { Route as AuthenticatedScoutRouteImport } from './routes/_authenticated/scout'
 import { Route as AuthenticatedSellerToolsRouteImport } from './routes/_authenticated/seller-tools'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as CountyCodeRouteImport } from './routes/county.$code'
@@ -212,6 +213,11 @@ const AuthenticatedSavedRoute = AuthenticatedSavedRouteImport.update({
   path: '/saved',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedScoutRoute = AuthenticatedScoutRouteImport.update({
+  id: '/scout',
+  path: '/scout',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSellerToolsRoute =
   AuthenticatedSellerToolsRouteImport.update({
     id: '/seller-tools',
@@ -322,6 +328,7 @@ export interface FileRoutesByFullPath {
   '/rentals': typeof AuthenticatedRentalsRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/saved': typeof AuthenticatedSavedRoute
+  '/scout': typeof AuthenticatedScoutRoute
   '/seller-tools': typeof AuthenticatedSellerToolsRoute
   '/api/chat': typeof ApiChatRoute
   '/county/$code': typeof CountyCodeRoute
@@ -368,6 +375,7 @@ export interface FileRoutesByTo {
   '/rentals': typeof AuthenticatedRentalsRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/saved': typeof AuthenticatedSavedRoute
+  '/scout': typeof AuthenticatedScoutRoute
   '/seller-tools': typeof AuthenticatedSellerToolsRoute
   '/api/chat': typeof ApiChatRoute
   '/county/$code': typeof CountyCodeRoute
@@ -417,6 +425,7 @@ export interface FileRoutesById {
   '/_authenticated/rentals': typeof AuthenticatedRentalsRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/saved': typeof AuthenticatedSavedRoute
+  '/_authenticated/scout': typeof AuthenticatedScoutRoute
   '/_authenticated/seller-tools': typeof AuthenticatedSellerToolsRoute
   '/api/chat': typeof ApiChatRoute
   '/county/$code': typeof CountyCodeRoute
@@ -466,6 +475,7 @@ export interface FileRouteTypes {
     | '/rentals'
     | '/reports'
     | '/saved'
+    | '/scout'
     | '/seller-tools'
     | '/api/chat'
     | '/county/$code'
@@ -512,6 +522,7 @@ export interface FileRouteTypes {
     | '/rentals'
     | '/reports'
     | '/saved'
+    | '/scout'
     | '/seller-tools'
     | '/api/chat'
     | '/county/$code'
@@ -560,6 +571,7 @@ export interface FileRouteTypes {
     | '/_authenticated/rentals'
     | '/_authenticated/reports'
     | '/_authenticated/saved'
+    | '/_authenticated/scout'
     | '/_authenticated/seller-tools'
     | '/api/chat'
     | '/county/$code'
@@ -829,6 +841,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSavedRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/scout': {
+      id: '/_authenticated/scout'
+      path: '/scout'
+      fullPath: '/scout'
+      preLoaderRoute: typeof AuthenticatedScoutRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/seller-tools': {
       id: '/_authenticated/seller-tools'
       path: '/seller-tools'
@@ -947,6 +966,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedRentalsRoute: typeof AuthenticatedRentalsRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedSavedRoute: typeof AuthenticatedSavedRoute
+  AuthenticatedScoutRoute: typeof AuthenticatedScoutRoute
   AuthenticatedSellerToolsRoute: typeof AuthenticatedSellerToolsRoute
   AuthenticatedDevelopIdRoute: typeof AuthenticatedDevelopIdRoute
   AuthenticatedSellNewRoute: typeof AuthenticatedSellNewRoute
@@ -964,6 +984,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedRentalsRoute: AuthenticatedRentalsRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedSavedRoute: AuthenticatedSavedRoute,
+  AuthenticatedScoutRoute: AuthenticatedScoutRoute,
   AuthenticatedSellerToolsRoute: AuthenticatedSellerToolsRoute,
   AuthenticatedDevelopIdRoute: AuthenticatedDevelopIdRoute,
   AuthenticatedSellNewRoute: AuthenticatedSellNewRoute,
