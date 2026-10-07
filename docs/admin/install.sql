@@ -27,6 +27,8 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
 $$;
 REVOKE ALL ON FUNCTION public.halisia_account_active() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.halisia_account_active() TO anon,authenticated;
+-- The reviewed findings read can rely on buyer RLS; do not bypass suspension.
+ALTER FUNCTION public.my_reviewed_scout_findings(text) SECURITY INVOKER;
 
 CREATE OR REPLACE FUNCTION halisia_private.reject_suspended_write() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
