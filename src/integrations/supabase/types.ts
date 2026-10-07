@@ -3166,6 +3166,304 @@ export type Database = {
         }
         Relationships: []
       }
+      scout_evidence: {
+        Row: {
+          accuracy_m: number | null
+          captured_at: string
+          created_at: string
+          evidence_kind: string
+          id: string
+          interview_consent: boolean
+          lat: number | null
+          lng: number | null
+          location_source: string
+          mime_type: string | null
+          note: string | null
+          request_id: string
+          scout_id: string
+          size_bytes: number | null
+          storage_path: string | null
+          task_code: string
+        }
+        Insert: {
+          accuracy_m?: number | null
+          captured_at?: string
+          created_at?: string
+          evidence_kind: string
+          id?: string
+          interview_consent?: boolean
+          lat?: number | null
+          lng?: number | null
+          location_source?: string
+          mime_type?: string | null
+          note?: string | null
+          request_id: string
+          scout_id: string
+          size_bytes?: number | null
+          storage_path?: string | null
+          task_code: string
+        }
+        Update: {
+          accuracy_m?: number | null
+          captured_at?: string
+          created_at?: string
+          evidence_kind?: string
+          id?: string
+          interview_consent?: boolean
+          lat?: number | null
+          lng?: number | null
+          location_source?: string
+          mime_type?: string | null
+          note?: string | null
+          request_id?: string
+          scout_id?: string
+          size_bytes?: number | null
+          storage_path?: string | null
+          task_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scout_evidence_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "scout_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scout_price_catalog: {
+        Row: {
+          active: boolean
+          amount_kes: number
+          code: string
+          description: string | null
+          kind: string
+          label: string
+          sort: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          amount_kes: number
+          code: string
+          description?: string | null
+          kind: string
+          label: string
+          sort?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          amount_kes?: number
+          code?: string
+          description?: string | null
+          kind?: string
+          label?: string
+          sort?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      scout_profiles: {
+        Row: {
+          availability: string | null
+          bio: string | null
+          created_at: string
+          display_name: string
+          reviewer_note: string | null
+          service_counties: string[]
+          status: Database["public"]["Enums"]["scout_profile_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          availability?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name: string
+          reviewer_note?: string | null
+          service_counties?: string[]
+          status?: Database["public"]["Enums"]["scout_profile_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          availability?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string
+          reviewer_note?: string | null
+          service_counties?: string[]
+          status?: Database["public"]["Enums"]["scout_profile_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      scout_request_events: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          detail: Json | null
+          event: string
+          id: number
+          request_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          detail?: Json | null
+          event: string
+          id?: never
+          request_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          detail?: Json | null
+          event?: string
+          id?: never
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scout_request_events_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "scout_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scout_requests: {
+        Row: {
+          access_level: string
+          block_reason: string | null
+          buyer_id: string
+          checklist: Json
+          claimed_at: string | null
+          completed_at: string | null
+          conflict_disclosure: string | null
+          county: string | null
+          created_at: string
+          custom_concern: string | null
+          evidence_exception_approved: boolean
+          evidence_exception_requested: string | null
+          id: string
+          instructions: string | null
+          lat: number | null
+          lng: number | null
+          location_confirmed_by_buyer: boolean
+          location_source: string
+          payment_reference: string | null
+          payment_submitted_at: string | null
+          payment_verified_at: string | null
+          payment_verified_by: string | null
+          payout_paid_at: string | null
+          payout_reference: string | null
+          payout_status: Database["public"]["Enums"]["scout_payout_status"]
+          pending_quote: Json | null
+          quote: Json
+          quote_accepted_at: string | null
+          quote_version: number
+          reviewed_by: string | null
+          reviewer_note: string | null
+          scout_id: string | null
+          scout_summary: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["scout_request_status"]
+          submitted_at: string | null
+          task_results: Json
+          title_reference: string | null
+          travel_estimate_kes: number
+          updated_at: string
+        }
+        Insert: {
+          access_level?: string
+          block_reason?: string | null
+          buyer_id: string
+          checklist?: Json
+          claimed_at?: string | null
+          completed_at?: string | null
+          conflict_disclosure?: string | null
+          county?: string | null
+          created_at?: string
+          custom_concern?: string | null
+          evidence_exception_approved?: boolean
+          evidence_exception_requested?: string | null
+          id?: string
+          instructions?: string | null
+          lat?: number | null
+          lng?: number | null
+          location_confirmed_by_buyer?: boolean
+          location_source: string
+          payment_reference?: string | null
+          payment_submitted_at?: string | null
+          payment_verified_at?: string | null
+          payment_verified_by?: string | null
+          payout_paid_at?: string | null
+          payout_reference?: string | null
+          payout_status?: Database["public"]["Enums"]["scout_payout_status"]
+          pending_quote?: Json | null
+          quote: Json
+          quote_accepted_at?: string | null
+          quote_version?: number
+          reviewed_by?: string | null
+          reviewer_note?: string | null
+          scout_id?: string | null
+          scout_summary?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["scout_request_status"]
+          submitted_at?: string | null
+          task_results?: Json
+          title_reference?: string | null
+          travel_estimate_kes?: number
+          updated_at?: string
+        }
+        Update: {
+          access_level?: string
+          block_reason?: string | null
+          buyer_id?: string
+          checklist?: Json
+          claimed_at?: string | null
+          completed_at?: string | null
+          conflict_disclosure?: string | null
+          county?: string | null
+          created_at?: string
+          custom_concern?: string | null
+          evidence_exception_approved?: boolean
+          evidence_exception_requested?: string | null
+          id?: string
+          instructions?: string | null
+          lat?: number | null
+          lng?: number | null
+          location_confirmed_by_buyer?: boolean
+          location_source?: string
+          payment_reference?: string | null
+          payment_submitted_at?: string | null
+          payment_verified_at?: string | null
+          payment_verified_by?: string | null
+          payout_paid_at?: string | null
+          payout_reference?: string | null
+          payout_status?: Database["public"]["Enums"]["scout_payout_status"]
+          pending_quote?: Json | null
+          quote?: Json
+          quote_accepted_at?: string | null
+          quote_version?: number
+          reviewed_by?: string | null
+          reviewer_note?: string | null
+          scout_id?: string | null
+          scout_summary?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["scout_request_status"]
+          submitted_at?: string | null
+          task_results?: Json
+          title_reference?: string | null
+          travel_estimate_kes?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       trending_scores: {
         Row: {
           ai_importance: number
@@ -3457,10 +3755,12 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_approved_scout: { Args: { _uid: string }; Returns: boolean }
       is_privileged_role: {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
         Returns: boolean
       }
+      is_scout_request_participant: { Args: { _req: string }; Returns: boolean }
       is_source_member: { Args: { _source_id: string }; Returns: boolean }
       is_verified_surveyor: { Args: { _user_id: string }; Returns: boolean }
       listing_save_count: { Args: { p_property_id: string }; Returns: number }
@@ -3490,6 +3790,16 @@ export type Database = {
           referral_code: string
         }[]
       }
+      my_reviewed_scout_findings: {
+        Args: { p_reference: string }
+        Returns: {
+          completed_at: string
+          request_id: string
+          reviewer_note: string
+          scout_summary: string
+          task_results: Json
+        }[]
+      }
       pulse_provider_status: {
         Args: never
         Returns: {
@@ -3500,6 +3810,42 @@ export type Database = {
           requests_today: number
           status: string
         }[]
+      }
+      scout_compute_quote: {
+        Args: {
+          p_access_level: string
+          p_checklist: Json
+          p_travel_kes: number
+        }
+        Returns: Json
+      }
+      scout_create_request: {
+        Args: {
+          p_access_level: string
+          p_checklist: Json
+          p_county: string
+          p_custom_concern: string
+          p_instructions: string
+          p_lat: number
+          p_lng: number
+          p_location_confirmed: boolean
+          p_location_source: string
+          p_title_reference: string
+          p_travel_kes: number
+        }
+        Returns: string
+      }
+      scout_log: {
+        Args: { p_detail?: Json; p_event: string; p_req: string }
+        Returns: undefined
+      }
+      scout_serves_county: {
+        Args: { _county: string; _uid: string }
+        Returns: boolean
+      }
+      scout_transition: {
+        Args: { p_action: string; p_id: string; p_payload?: Json }
+        Returns: Database["public"]["Enums"]["scout_request_status"]
       }
     }
     Enums: {
@@ -3699,6 +4045,19 @@ export type Database = {
         | "mixed_use"
         | "other"
       property_status: "draft" | "published" | "sold" | "rented" | "archived"
+      scout_payout_status: "none" | "pending" | "paid"
+      scout_profile_status: "pending" | "approved" | "suspended"
+      scout_request_status:
+        | "quoted"
+        | "payment_pending"
+        | "payment_verified"
+        | "assigned"
+        | "requote_pending"
+        | "in_progress"
+        | "submitted"
+        | "corrections_requested"
+        | "completed"
+        | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -4043,6 +4402,20 @@ export const Constants = {
         "other",
       ],
       property_status: ["draft", "published", "sold", "rented", "archived"],
+      scout_payout_status: ["none", "pending", "paid"],
+      scout_profile_status: ["pending", "approved", "suspended"],
+      scout_request_status: [
+        "quoted",
+        "payment_pending",
+        "payment_verified",
+        "assigned",
+        "requote_pending",
+        "in_progress",
+        "submitted",
+        "corrections_requested",
+        "completed",
+        "cancelled",
+      ],
     },
   },
 } as const
