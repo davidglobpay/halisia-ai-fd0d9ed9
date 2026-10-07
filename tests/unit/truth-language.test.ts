@@ -14,6 +14,14 @@
  * code, and they were displayed with confidence badges and citations to KNBS,
  * WASREB, Afrobarometer and TIFA. These tests exist so that cannot come back
  * quietly.
+ *
+ * The Send a Scout surfaces were added to this harness after shipping with the
+ * meta description "Book a vetted field scout". Nothing in scout_profiles holds
+ * an identity document, a credential or a reference: "vetting" is one
+ * administrator typing a free-text note and setting status to approved. The
+ * claim was exactly the class this file exists to catch, and it shipped only
+ * because the surface was not on the list. Any new public surface belongs here
+ * on the day it is written.
  */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -27,6 +35,8 @@ const NAV_GUIDE = read("src/components/halisia/nav-guide.tsx");
 const EVIDENCE = read("src/lib/evidence.ts");
 const COUNTY_MAP = read("src/components/halisia/kenya-county-map.tsx");
 const PDF_COMPARE = read("src/lib/pdf-county-compare.ts");
+const SCOUT = read("src/routes/_authenticated/scout.tsx");
+const SCOUT_HUB = read("src/components/halisia/scout-hub.tsx");
 
 const PUBLIC_SURFACES: Array<[string, string]> = [
   ["src/routes/index.tsx", LANDING],
@@ -35,6 +45,8 @@ const PUBLIC_SURFACES: Array<[string, string]> = [
   ["src/lib/evidence.ts", EVIDENCE],
   ["src/components/halisia/kenya-county-map.tsx", COUNTY_MAP],
   ["src/lib/pdf-county-compare.ts", PDF_COMPARE],
+  ["src/routes/_authenticated/scout.tsx", SCOUT],
+  ["src/components/halisia/scout-hub.tsx", SCOUT_HUB],
 ];
 
 describe("required public wording", () => {
@@ -53,6 +65,15 @@ describe("required public wording", () => {
     // behind the one county figure they publish.
     ["KNBS 2019 Census", COUNTY_MAP],
     ["KNBS 2019", PDF_COMPARE],
+    // A scout visit is a person looking at a plot. Both scout surfaces must
+    // keep saying so in their own words, because everything else about the
+    // feature — the price, the photographs, the PDF — reads like evidence.
+    ["not a survey, title search or ownership verification", SCOUT],
+    ["ownership and surveyed boundaries remain unverified", SCOUT_HUB],
+    [
+      "Device GPS was recorded at upload, not verified media capture location.",
+      SCOUT_HUB,
+    ],
   ])("contains %s", (needle, source) => {
     expect(source).toContain(needle);
   });
@@ -79,6 +100,20 @@ describe("forbidden claims on public surfaces", () => {
     "Data confidence",
     "Composite of infrastructure",
     "WASREB",
+    // Scout claims. "vetted" asserts a screening process that does not exist:
+    // scout_profiles holds a self-written display name, counties, availability
+    // and bio, and nothing else. "approved" is the true word and the one the
+    // rest of the UI already uses.
+    //
+    // The three "verified X" phrases are deliberately narrow. A bare
+    // "verified" would fail on the scout_requests status value
+    // payment_verified, which is rendered as text and is accurate; and
+    // "verified parcel" would fail on the scout form's own disclaimer, "it is
+    // not a verified parcel location", which is a negation and must stay.
+    "vetted",
+    "verified title",
+    "verified owner",
+    "verified boundary",
   ];
   it.each(forbidden)("no surface says %s", (needle) => {
     const offenders = PUBLIC_SURFACES.filter(([, src]) => src.includes(needle)).map(([p]) => p);
@@ -180,5 +215,27 @@ describe("verification tiers stay distinct", () => {
       expect(core).toContain(tier);
     }
     expect(new Set(present).size).toBe(present.length);
+  });
+});
+
+describe("scout provenance is not laundered", () => {
+  /**
+   * location_source is printed into the scout's brief and stored on the
+   * request. It has to describe how the coordinates being sent were obtained,
+   * so both provenance branches must re-check that the buyer did not edit the
+   * numbers after arriving. The manual_pin branch originally did not.
+   */
+  it("re-checks the coordinates before claiming either provenance", () => {
+    expect(SCOUT).toContain("const untouched =");
+    expect(SCOUT).toMatch(/untouched && s\.src === "manual_pin"/);
+    expect(SCOUT).toMatch(/untouched && s\.src === "approximate_geocode"/);
+  });
+
+  it("treats an empty coordinate parameter as missing, not as zero", () => {
+    // `!isNaN(Number(""))` is true, so the old validator turned ?lat=&lng=
+    // into the point 0,0 and prefilled the form with it.
+    expect(SCOUT).not.toContain("!isNaN(Number(s.lat))");
+    expect(SCOUT).not.toContain("!isNaN(Number(s.lng))");
+    expect(SCOUT).toContain("Number.isFinite(n) ? n : undefined");
   });
 });
