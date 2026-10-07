@@ -1,3 +1,4 @@
+import { MarketplaceCost } from "@/components/halisia/marketplace-cost";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -125,11 +126,17 @@ function MarketplaceIndex() {
     [filtered, filters],
   );
   const listings = useMemo(
-    () => (rail === "recommended" ? recs.map((r) => r.row) : railFilter(filtered, rail)),
+    () =>
+      rail === "recommended"
+        ? recs.map((r) => r.row)
+        : railFilter(filtered, rail),
     [rail, recs, filtered],
   );
   const counties = useMemo(
-    () => Array.from(new Set(all.map((p) => p.county).filter(Boolean) as string[])).sort(),
+    () =>
+      Array.from(
+        new Set(all.map((p) => p.county).filter(Boolean) as string[]),
+      ).sort(),
     [all],
   );
 
@@ -137,18 +144,25 @@ function MarketplaceIndex() {
     navigate({ search: { ...search, ...patch } as never, replace: true });
 
   const toggleCompare = (id: string) =>
-    setCompare((c) => (c.includes(id) ? c.filter((x) => x !== id) : [...c, id].slice(-3)));
+    setCompare((c) =>
+      c.includes(id) ? c.filter((x) => x !== id) : [...c, id].slice(-3),
+    );
 
   return (
     <main className="min-h-dvh px-4 sm:px-6 pt-24 pb-16 max-w-7xl mx-auto">
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <div className="text-[11px] uppercase tracking-[0.25em] text-accent">Halisia AI</div>
-          <h1 className="text-3xl sm:text-4xl font-display font-semibold mt-1">AI Marketplace</h1>
+          <div className="text-[11px] uppercase tracking-[0.25em] text-accent">
+            Halisia AI
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-display font-semibold mt-1">
+            AI Marketplace
+          </h1>
           <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-            Buy, sell, rent, lease, invest, develop and connect. Every listing shows its source and
-            how complete its details are. Open one with coordinates to read the site's terrain, air
-            quality and nearby amenities — and what HALISIA cannot assess.
+            Buy, sell, rent, lease, invest, develop and connect. Every listing
+            shows its source and how complete its details are. Open one with
+            coordinates to read the site's terrain, air quality and nearby
+            amenities — and what HALISIA cannot assess.
           </p>
         </div>
         <Link
@@ -160,13 +174,18 @@ function MarketplaceIndex() {
       </header>
 
       {/* Marketplace actions */}
-      <nav aria-label="Marketplace actions" className="mb-4 flex flex-wrap gap-2">
+      <nav
+        aria-label="Marketplace actions"
+        className="mb-4 flex flex-wrap gap-2"
+      >
         {[{ value: "all", label: "All" }, ...MARKET_ACTIONS].map((a) => {
           const active = (search.action ?? "all") === a.value;
           return (
             <button
               key={a.value}
-              onClick={() => setFilter({ action: a.value === "all" ? undefined : a.value })}
+              onClick={() =>
+                setFilter({ action: a.value === "all" ? undefined : a.value })
+              }
               aria-pressed={active}
               className={`rounded-full px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wide border transition ${
                 active
@@ -201,7 +220,9 @@ function MarketplaceIndex() {
         <select
           value={filters.category}
           onChange={(e) =>
-            setFilter({ category: e.target.value === "all" ? undefined : e.target.value })
+            setFilter({
+              category: e.target.value === "all" ? undefined : e.target.value,
+            })
           }
           className="rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-sm"
           aria-label="Listing category"
@@ -216,7 +237,9 @@ function MarketplaceIndex() {
         <select
           value={filters.intent}
           onChange={(e) =>
-            setFilter({ intent: e.target.value === "all" ? undefined : e.target.value })
+            setFilter({
+              intent: e.target.value === "all" ? undefined : e.target.value,
+            })
           }
           className="rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-sm"
           aria-label="Intent"
@@ -296,7 +319,9 @@ function MarketplaceIndex() {
             <input
               type="checkbox"
               checked={Boolean(search.road)}
-              onChange={(e) => setFilter({ road: e.target.checked || undefined })}
+              onChange={(e) =>
+                setFilter({ road: e.target.checked || undefined })
+              }
             />
             Road access
           </label>
@@ -304,7 +329,9 @@ function MarketplaceIndex() {
             <input
               type="checkbox"
               checked={Boolean(search.verified)}
-              onChange={(e) => setFilter({ verified: e.target.checked || undefined })}
+              onChange={(e) =>
+                setFilter({ verified: e.target.checked || undefined })
+              }
             />
             Complete listings only
           </label>
@@ -313,7 +340,11 @@ function MarketplaceIndex() {
 
       {/* Rails + view switcher */}
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <div role="tablist" aria-label="Listing collections" className="flex flex-wrap gap-2">
+        <div
+          role="tablist"
+          aria-label="Listing collections"
+          className="flex flex-wrap gap-2"
+        >
           {RAILS.map((r) => {
             const active = rail === r.value;
             return (
@@ -404,14 +435,19 @@ function MarketplaceIndex() {
             >
               <ul className="scrollbar-none flex snap-x snap-mandatory items-stretch gap-4 overflow-x-auto pb-2">
                 {rows.map((p) => (
-                  <li key={p.id} className="w-[280px] shrink-0 snap-start sm:w-[320px]">
+                  <li
+                    key={p.id}
+                    className="w-[280px] shrink-0 snap-start sm:w-[320px]"
+                  >
                     <ListingCard
                       p={p}
                       compared={compare.includes(p.id)}
                       onCompare={() => toggleCompare(p.id)}
                       reasons={recs.find((r) => r.row.id === p.id)?.reasons}
                       showWhy={whyId === p.id}
-                      onWhy={() => setWhyId((id) => (id === p.id ? null : p.id))}
+                      onWhy={() =>
+                        setWhyId((id) => (id === p.id ? null : p.id))
+                      }
                     />
                   </li>
                 ))}
@@ -430,12 +466,15 @@ function MarketplaceIndex() {
           Your recommendations, your rules
         </h2>
         <p>
-          Recommendations use only the filters and goals you set here plus public listing
-          intelligence. Reset them any time — we never target on sensitive personal information and
-          never contact you without permission.
+          Recommendations use only the filters and goals you set here plus
+          public listing intelligence. Reset them any time — we never target on
+          sensitive personal information and never contact you without
+          permission.
         </p>
         <button
-          onClick={() => navigate({ search: { view, rail } as never, replace: true })}
+          onClick={() =>
+            navigate({ search: { view, rail } as never, replace: true })
+          }
           className="mt-2 rounded-full glass border border-white/10 px-3 py-1.5 text-xs"
         >
           Reset recommendations
@@ -461,7 +500,9 @@ function NumField({
         type="number"
         inputMode="numeric"
         value={value ?? ""}
-        onChange={(e) => onChange(e.target.value === "" ? undefined : Number(e.target.value))}
+        onChange={(e) =>
+          onChange(e.target.value === "" ? undefined : Number(e.target.value))
+        }
         className="rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-foreground"
       />
     </label>
@@ -542,7 +583,8 @@ function Actions({
 }) {
   const share = async () => {
     const url = `${window.location.origin}/marketplace/${p.id}`;
-    if (navigator.share) await navigator.share({ title: p.title, url }).catch(() => {});
+    if (navigator.share)
+      await navigator.share({ title: p.title, url }).catch(() => {});
     else await navigator.clipboard.writeText(url).catch(() => {});
   };
   return (
@@ -564,7 +606,9 @@ function Actions({
         onClick={onCompare}
         aria-pressed={compared}
         className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 ${
-          compared ? "border-accent/50 text-accent bg-accent/10" : "glass border-white/10"
+          compared
+            ? "border-accent/50 text-accent bg-accent/10"
+            : "glass border-white/10"
         }`}
       >
         <Scale className="h-3 w-3" /> Compare
@@ -580,7 +624,9 @@ function Actions({
 }
 
 function MapView({ listings }: { listings: PropertyRow[] }) {
-  const withGeo = listings.filter((p) => p.latitude != null && p.longitude != null);
+  const withGeo = listings.filter(
+    (p) => p.latitude != null && p.longitude != null,
+  );
   const first = withGeo[0];
   return (
     <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
@@ -597,12 +643,25 @@ function MapView({ listings }: { listings: PropertyRow[] }) {
       )}
       <ul className="grid gap-2 max-h-[70vh] overflow-auto pr-1">
         {listings.map((p) => (
-          <li key={p.id} className="glass rounded-xl border border-white/10 p-3">
-            <Link to="/marketplace/$id" params={{ id: p.id }} className="text-sm font-medium">
+          <li
+            key={p.id}
+            className="glass rounded-xl border border-white/10 p-3"
+          >
+            <Link
+              to="/marketplace/$id"
+              params={{ id: p.id }}
+              className="text-sm font-medium"
+            >
               {p.title}
             </Link>
+            <MarketplaceCost
+              price={p.price}
+              currency={p.currency}
+              intent={p.intent}
+            />
             <div className="mt-1 text-[11px] text-muted-foreground flex items-center gap-1">
-              <MapPin className="h-3 w-3" /> {p.county ?? "Kenya"} · {formatPrice(p)}
+              <MapPin className="h-3 w-3" /> {p.county ?? "Kenya"} ·{" "}
+              {formatPrice(p)}
             </div>
           </li>
         ))}
@@ -641,7 +700,11 @@ function ListingRow({
         )}
       </Link>
       <div className="flex-1 min-w-0">
-        <Link to="/marketplace/$id" params={{ id: p.id }} className="font-medium text-sm">
+        <Link
+          to="/marketplace/$id"
+          params={{ id: p.id }}
+          className="font-medium text-sm"
+        >
           {p.title}
         </Link>
         <PassportLinks
@@ -685,7 +748,14 @@ function ListingRow({
           <Badges p={p} />
         </div>
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-          <div className="text-sm font-semibold">{formatPrice(p)}</div>
+          <div className="rounded-lg bg-primary/10 px-2 py-1 text-lg font-bold text-primary">
+            {formatPrice(p)}
+          </div>
+          <MarketplaceCost
+            price={p.price}
+            currency={p.currency}
+            intent={p.intent}
+          />
           <Actions p={p} compared={compared} onCompare={onCompare} />
         </div>
       </div>
@@ -733,7 +803,9 @@ function ListingCard({
         </div>
         <div className="p-4">
           <div className="flex items-start justify-between gap-2">
-            <h3 className="font-medium text-sm leading-tight line-clamp-2">{p.title}</h3>
+            <h3 className="font-medium text-sm leading-tight line-clamp-2">
+              {p.title}
+            </h3>
           </div>
           <div className="mt-1 text-[11px] text-muted-foreground flex items-center gap-1">
             <MapPin className="h-3 w-3" /> {p.county ?? "Kenya"}
@@ -747,16 +819,23 @@ function ListingCard({
         {cats.length > 0 && (
           <div className="flex flex-wrap gap-1 text-[10px] text-muted-foreground">
             {cats.slice(0, 3).map((c) => (
-              <span key={c} className="rounded-full bg-white/5 px-2 py-0.5 capitalize">
+              <span
+                key={c}
+                className="rounded-full bg-white/5 px-2 py-0.5 capitalize"
+              >
                 {c.replace(/_/g, " ")}
               </span>
             ))}
           </div>
         )}
         <div className="flex items-center justify-between">
-          <div className="text-sm font-semibold">{formatPrice(p)}</div>
+          <div className="rounded-lg bg-primary/10 px-2 py-1 text-lg font-bold text-primary">
+            {formatPrice(p)}
+          </div>
           {p.latitude != null && p.longitude != null && (
-            <span className="text-[11px] text-muted-foreground">Open for readings</span>
+            <span className="text-[11px] text-muted-foreground">
+              Open for readings
+            </span>
           )}
         </div>
         <PassportLinks
@@ -773,6 +852,11 @@ function ListingCard({
             status: "user_provided",
             county: p.county ?? "",
           }}
+        />
+        <MarketplaceCost
+          price={p.price}
+          currency={p.currency}
+          intent={p.intent}
         />
         <Actions p={p} compared={compared} onCompare={onCompare} />
         {reasons?.length ? (
@@ -823,7 +907,9 @@ function EmptyState() {
 }
 
 /** Groups listings into county rails so the marketplace reads as horizontal shelves. */
-function groupByCounty<T extends { county?: string | null }>(rows: T[]): Array<[string, T[]]> {
+function groupByCounty<T extends { county?: string | null }>(
+  rows: T[],
+): Array<[string, T[]]> {
   const map = new Map<string, T[]>();
   for (const r of rows) {
     const key = r.county?.trim() || "Kenya";

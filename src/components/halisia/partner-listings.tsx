@@ -1,3 +1,4 @@
+import { MarketplaceCost } from "@/components/halisia/marketplace-cost";
 import { useMemo, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -15,7 +16,12 @@ import {
   type PartnerListing,
 } from "@/lib/marketplace-external";
 
-type Filters = { county: string; category: string; intent: string; sourceId: string };
+type Filters = {
+  county: string;
+  category: string;
+  intent: string;
+  sourceId: string;
+};
 const EMPTY: Filters = { county: "", category: "", intent: "", sourceId: "" };
 
 /**
@@ -32,15 +38,22 @@ export function PartnerListings() {
   const all = useMemo(() => query.data ?? [], [query.data]);
 
   const counties = useMemo(
-    () => [...new Set(all.map((l) => l.county).filter(Boolean) as string[])].sort(),
+    () =>
+      [...new Set(all.map((l) => l.county).filter(Boolean) as string[])].sort(),
     [all],
   );
   const categories = useMemo(
-    () => [...new Set(all.map((l) => l.listing_category).filter(Boolean) as string[])].sort(),
+    () =>
+      [
+        ...new Set(
+          all.map((l) => l.listing_category).filter(Boolean) as string[],
+        ),
+      ].sort(),
     [all],
   );
   const intents = useMemo(
-    () => [...new Set(all.map((l) => l.intent).filter(Boolean) as string[])].sort(),
+    () =>
+      [...new Set(all.map((l) => l.intent).filter(Boolean) as string[])].sort(),
     [all],
   );
   const sources = useMemo(() => {
@@ -62,7 +75,9 @@ export function PartnerListings() {
   );
 
   const oldestChecked = useMemo(() => {
-    const dates = all.map((l) => l.source_checked_at).filter(Boolean) as string[];
+    const dates = all
+      .map((l) => l.source_checked_at)
+      .filter(Boolean) as string[];
     if (!dates.length) return null;
     return formatCheckedDate(dates.sort()[0]);
   }, [all]);
@@ -85,7 +100,8 @@ export function PartnerListings() {
       >
         <h2 className="text-sm font-semibold">Partner listings</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          These could not be loaded just now. Your own listings above are unaffected.
+          These could not be loaded just now. Your own listings above are
+          unaffected.
         </p>
       </section>
     );
@@ -103,9 +119,9 @@ export function PartnerListings() {
         </p>
       </div>
       <p className="mt-1 max-w-2xl text-xs text-muted-foreground">
-        Collected from public listings by other companies. HALISIA has not inspected these
-        properties, confirmed ownership, or verified any figure shown. Always check with the source
-        before paying anything.
+        Collected from public listings by other companies. HALISIA has not
+        inspected these properties, confirmed ownership, or verified any figure
+        shown. Always check with the source before paying anything.
       </p>
 
       <div className="mt-3 flex flex-wrap gap-2">
@@ -133,7 +149,10 @@ export function PartnerListings() {
           onChange={(sourceId) => setFilters((f) => ({ ...f, sourceId }))}
           options={sources}
         />
-        {(filters.county || filters.category || filters.intent || filters.sourceId) && (
+        {(filters.county ||
+          filters.category ||
+          filters.intent ||
+          filters.sourceId) && (
           <button
             onClick={() => setFilters(EMPTY)}
             className="rounded-full glass border border-white/10 px-3 py-1.5 text-xs focus-ring"
@@ -146,7 +165,10 @@ export function PartnerListings() {
       {rows.length === 0 ? (
         <div className="mt-4 glass rounded-2xl border border-white/10 p-8 text-center">
           <p className="text-sm">No partner listings match these filters.</p>
-          <button onClick={() => setFilters(EMPTY)} className="mt-3 text-xs underline focus-ring">
+          <button
+            onClick={() => setFilters(EMPTY)}
+            className="mt-3 text-xs underline focus-ring"
+          >
             Clear filters
           </button>
         </div>
@@ -205,7 +227,8 @@ function PartnerCard({ listing }: { listing: PartnerListing }) {
   const hasUrl = partnerUrl(listing) != null;
   const availability =
     listing.availability_status && listing.availability_status !== "available"
-      ? (AVAILABILITY_LABELS[listing.availability_status] ?? listing.availability_status)
+      ? (AVAILABILITY_LABELS[listing.availability_status] ??
+        listing.availability_status)
       : null;
 
   return (
@@ -213,16 +236,31 @@ function PartnerCard({ listing }: { listing: PartnerListing }) {
       <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
         {listing.source?.name ?? "Source unavailable"}
       </p>
-      <h3 className="mt-1 text-sm font-semibold leading-snug">{listing.title}</h3>
+      <h3 className="mt-1 text-sm font-semibold leading-snug">
+        {listing.title}
+      </h3>
       <p className="mt-1 text-xs text-muted-foreground">
-        {[listing.locality, listing.county].filter(Boolean).join(", ") || "Location not stated"}
+        {[listing.locality, listing.county].filter(Boolean).join(", ") ||
+          "Location not stated"}
       </p>
-      <p className="mt-2 text-sm font-semibold">{formatPartnerPrice(listing)}</p>
+      <p className="mt-2 text-sm font-semibold">
+        {formatPartnerPrice(listing)}
+      </p>
+      <MarketplaceCost
+        price={listing.price}
+        currency={listing.currency}
+        intent={listing.intent}
+      />
       <ul className="mt-2 flex flex-wrap gap-1.5 text-[11px] text-muted-foreground">
         {listing.listing_category && (
-          <Chip>{CATEGORY_LABELS[listing.listing_category] ?? listing.listing_category}</Chip>
+          <Chip>
+            {CATEGORY_LABELS[listing.listing_category] ??
+              listing.listing_category}
+          </Chip>
         )}
-        {listing.intent && <Chip>{INTENT_LABELS[listing.intent] ?? listing.intent}</Chip>}
+        {listing.intent && (
+          <Chip>{INTENT_LABELS[listing.intent] ?? listing.intent}</Chip>
+        )}
         {size && <Chip>{size}</Chip>}
         {listing.bedrooms != null && <Chip>{listing.bedrooms} bed</Chip>}
         {availability && <Chip>{availability}</Chip>}
@@ -240,7 +278,8 @@ function PartnerCard({ listing }: { listing: PartnerListing }) {
         >
           {hasUrl ? (
             <>
-              <ExternalLink className="h-3 w-3" aria-hidden="true" /> View details
+              <ExternalLink className="h-3 w-3" aria-hidden="true" /> View
+              details
             </>
           ) : (
             "View details"
@@ -257,5 +296,9 @@ function PartnerCard({ listing }: { listing: PartnerListing }) {
 }
 
 function Chip({ children }: { children: ReactNode }) {
-  return <li className="rounded-full border border-white/10 px-2 py-0.5">{children}</li>;
+  return (
+    <li className="rounded-full border border-white/10 px-2 py-0.5">
+      {children}
+    </li>
+  );
 }

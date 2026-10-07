@@ -1,7 +1,14 @@
+import { MarketplaceCost } from "@/components/halisia/marketplace-cost";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
-import { ArrowLeft, ExternalLink, Loader2, Clock, CheckCircle2 } from "lucide-react";
+import {
+  ArrowLeft,
+  ExternalLink,
+  Loader2,
+  Clock,
+  CheckCircle2,
+} from "lucide-react";
 import {
   getPartnerListing,
   createReferral,
@@ -62,7 +69,10 @@ function PartnerListingPage() {
         <p className="mt-1 text-sm text-muted-foreground">
           It may have been withdrawn by its source.
         </p>
-        <Link to="/marketplace" className="mt-4 inline-block text-sm underline focus-ring">
+        <Link
+          to="/marketplace"
+          className="mt-4 inline-block text-sm underline focus-ring"
+        >
           Back to the marketplace
         </Link>
       </main>
@@ -86,7 +96,11 @@ function PartnerListingPage() {
         console.error("referral failed", e);
       }
     }
-    window.open(withReferral(url, handle?.referral_code ?? null), "_blank", "noopener,noreferrer");
+    window.open(
+      withReferral(url, handle?.referral_code ?? null),
+      "_blank",
+      "noopener,noreferrer",
+    );
   }
 
   return (
@@ -101,11 +115,21 @@ function PartnerListingPage() {
       <p className="mt-4 text-[11px] uppercase tracking-wider text-muted-foreground">
         Listed by {listing.source?.name ?? "an external source"}
       </p>
-      <h1 className="mt-1 text-2xl font-semibold leading-tight">{listing.title}</h1>
+      <h1 className="mt-1 text-2xl font-semibold leading-tight">
+        {listing.title}
+      </h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        {[listing.locality, listing.county].filter(Boolean).join(", ") || "Location not stated"}
+        {[listing.locality, listing.county].filter(Boolean).join(", ") ||
+          "Location not stated"}
       </p>
-      <p className="mt-3 text-xl font-semibold">{formatPartnerPrice(listing)}</p>
+      <p className="mt-3 text-xl font-semibold">
+        {formatPartnerPrice(listing)}
+      </p>
+      <MarketplaceCost
+        price={listing.price}
+        currency={listing.currency}
+        intent={listing.intent}
+      />
       {mayBeOutOfDate(listing) && (
         <p className="mt-2 inline-flex items-center gap-1 text-xs text-muted-foreground">
           <Clock className="h-3 w-3" aria-hidden="true" /> May be out of date
@@ -118,16 +142,24 @@ function PartnerListingPage() {
           label="Type"
           value={
             listing.listing_category
-              ? (CATEGORY_LABELS[listing.listing_category] ?? listing.listing_category)
+              ? (CATEGORY_LABELS[listing.listing_category] ??
+                listing.listing_category)
               : null
           }
         />
         <Fact
           label="Intent"
-          value={listing.intent ? (INTENT_LABELS[listing.intent] ?? listing.intent) : null}
+          value={
+            listing.intent
+              ? (INTENT_LABELS[listing.intent] ?? listing.intent)
+              : null
+          }
         />
         <Fact label="Size" value={size} />
-        <Fact label="Bedrooms" value={listing.bedrooms != null ? String(listing.bedrooms) : null} />
+        <Fact
+          label="Bedrooms"
+          value={listing.bedrooms != null ? String(listing.bedrooms) : null}
+        />
         <Fact
           label="Bathrooms"
           value={listing.bathrooms != null ? String(listing.bathrooms) : null}
@@ -136,7 +168,11 @@ function PartnerListingPage() {
         <Fact label="Payment plan" value={listing.payment_plan_summary} />
         <Fact
           label="Completion"
-          value={listing.completion_date ? formatCheckedDate(listing.completion_date) : null}
+          value={
+            listing.completion_date
+              ? formatCheckedDate(listing.completion_date)
+              : null
+          }
         />
         <Fact label="Project" value={listing.project_name} />
         <Fact label="Developer" value={listing.developer_name} />
@@ -144,7 +180,8 @@ function PartnerListingPage() {
           label="Availability"
           value={
             listing.availability_status
-              ? (AVAILABILITY_LABELS[listing.availability_status] ?? listing.availability_status)
+              ? (AVAILABILITY_LABELS[listing.availability_status] ??
+                listing.availability_status)
               : null
           }
         />
@@ -152,7 +189,9 @@ function PartnerListingPage() {
       </dl>
 
       {listing.source?.can_display_description && listing.description ? (
-        <p className="mt-5 whitespace-pre-line text-sm">{listing.description}</p>
+        <p className="mt-5 whitespace-pre-line text-sm">
+          {listing.description}
+        </p>
       ) : null}
 
       <div className="mt-6">
@@ -166,8 +205,9 @@ function PartnerListingPage() {
           </button>
         ) : (
           <p className="glass rounded-xl border border-white/10 p-3 text-sm text-muted-foreground">
-            The link to this listing on {listing.source?.name ?? "the source site"} is being
-            confirmed. You can still send an enquiry below.
+            The link to this listing on{" "}
+            {listing.source?.name ?? "the source site"} is being confirmed. You
+            can still send an enquiry below.
           </p>
         )}
         {handoffFailed && (
@@ -178,14 +218,19 @@ function PartnerListingPage() {
       </div>
 
       <section className="mt-6 glass rounded-2xl border border-white/10 p-4 text-xs text-muted-foreground">
-        <h2 className="text-sm font-semibold text-foreground">Where this comes from</h2>
+        <h2 className="text-sm font-semibold text-foreground">
+          Where this comes from
+        </h2>
         <p className="mt-1">
           HALISIA collected this from a public listing by{" "}
-          {listing.source?.name ?? "an external source"}. We have not visited the property,
-          confirmed ownership or boundaries, or checked any figure here, and we earn nothing from
-          this listing unless a commercial agreement with that company exists.
+          {listing.source?.name ?? "an external source"}. We have not visited
+          the property, confirmed ownership or boundaries, or checked any figure
+          here, and we earn nothing from this listing unless a commercial
+          agreement with that company exists.
         </p>
-        {listing.source?.rights_basis && <p className="mt-2">{listing.source.rights_basis}</p>}
+        {listing.source?.rights_basis && (
+          <p className="mt-2">{listing.source.rights_basis}</p>
+        )}
         {listing.source?.website_url && (
           <a
             href={listing.source.website_url}
@@ -203,19 +248,38 @@ function PartnerListingPage() {
   );
 }
 
-function Fact({ label, value }: { label: string; value: string | null | undefined }) {
+function Fact({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | null | undefined;
+}) {
   if (!value) return null;
   return (
     <div>
-      <dt className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</dt>
+      <dt className="text-[11px] uppercase tracking-wider text-muted-foreground">
+        {label}
+      </dt>
       <dd className="mt-0.5">{value}</dd>
     </div>
   );
 }
 
-const ENQUIRY_TYPES = ["Viewing", "Price and payment plan", "Availability", "General question"];
+const ENQUIRY_TYPES = [
+  "Viewing",
+  "Price and payment plan",
+  "Availability",
+  "General question",
+];
 
-function EnquiryForm({ listing, referralId }: { listing: PartnerListing; referralId?: string }) {
+function EnquiryForm({
+  listing,
+  referralId,
+}: {
+  listing: PartnerListing;
+  referralId?: string;
+}) {
   const [form, setForm] = useState({
     fullName: "",
     email: "",
@@ -229,7 +293,8 @@ function EnquiryForm({ listing, referralId }: { listing: PartnerListing; referra
   const [error, setError] = useState<string | null>(null);
   const sourceName = listing.source?.name ?? "the source";
 
-  const canSubmit = consentPartner && form.fullName.trim().length > 1 && state !== "sending";
+  const canSubmit =
+    consentPartner && form.fullName.trim().length > 1 && state !== "sending";
 
   async function submit() {
     setState("sending");
@@ -249,7 +314,9 @@ function EnquiryForm({ listing, referralId }: { listing: PartnerListing; referra
       setState("sent");
     } catch (e) {
       setState("idle");
-      setError(e instanceof Error ? e.message : "The enquiry could not be sent.");
+      setError(
+        e instanceof Error ? e.message : "The enquiry could not be sent.",
+      );
     }
   }
 
@@ -257,13 +324,14 @@ function EnquiryForm({ listing, referralId }: { listing: PartnerListing; referra
     return (
       <section className="mt-6 glass rounded-2xl border border-white/10 p-4">
         <h2 className="flex items-center gap-2 text-sm font-semibold">
-          <CheckCircle2 className="h-4 w-4 text-primary" aria-hidden="true" /> Enquiry sent
+          <CheckCircle2 className="h-4 w-4 text-primary" aria-hidden="true" />{" "}
+          Enquiry sent
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Your name{form.email ? `, email` : ""}
-          {form.phone ? ` and phone number` : ""} and your question about “{listing.title}” were
-          shared with {sourceName} so they can reply to you directly. HALISIA does not answer on
-          their behalf.
+          {form.phone ? ` and phone number` : ""} and your question about “
+          {listing.title}” were shared with {sourceName} so they can reply to
+          you directly. HALISIA does not answer on their behalf.
         </p>
       </section>
     );
@@ -271,13 +339,17 @@ function EnquiryForm({ listing, referralId }: { listing: PartnerListing; referra
 
   return (
     <section className="mt-6 glass rounded-2xl border border-white/10 p-4">
-      <h2 className="text-sm font-semibold">Ask {sourceName} about this listing</h2>
+      <h2 className="text-sm font-semibold">
+        Ask {sourceName} about this listing
+      </h2>
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <Field label="Your name" required>
           <input
             className="input"
             value={form.fullName}
-            onChange={(e) => setForm((f) => ({ ...f, fullName: e.target.value }))}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, fullName: e.target.value }))
+            }
             autoComplete="name"
           />
         </Field>
@@ -285,7 +357,9 @@ function EnquiryForm({ listing, referralId }: { listing: PartnerListing; referra
           <select
             className="input"
             value={form.enquiryType}
-            onChange={(e) => setForm((f) => ({ ...f, enquiryType: e.target.value }))}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, enquiryType: e.target.value }))
+            }
           >
             {ENQUIRY_TYPES.map((t) => (
               <option key={t}>{t}</option>
@@ -315,7 +389,9 @@ function EnquiryForm({ listing, referralId }: { listing: PartnerListing; referra
             <textarea
               className="input min-h-24"
               value={form.message}
-              onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, message: e.target.value }))
+              }
             />
           </Field>
         </div>
@@ -329,8 +405,8 @@ function EnquiryForm({ listing, referralId }: { listing: PartnerListing; referra
           className="mt-0.5"
         />
         <span>
-          Share my name and contact details with {sourceName} so they can respond about this
-          listing. Required to send.
+          Share my name and contact details with {sourceName} so they can
+          respond about this listing. Required to send.
         </span>
       </label>
       <label className="mt-2 flex items-start gap-2 text-xs">
@@ -350,7 +426,9 @@ function EnquiryForm({ listing, referralId }: { listing: PartnerListing; referra
         disabled={!canSubmit}
         className="btn-base btn-primary mt-4 inline-flex items-center gap-2 disabled:opacity-50"
       >
-        {state === "sending" && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+        {state === "sending" && (
+          <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+        )}
         Send enquiry
       </button>
     </section>

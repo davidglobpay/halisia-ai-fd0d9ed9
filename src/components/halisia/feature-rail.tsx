@@ -11,6 +11,7 @@ import {
   ScrollText,
   Scale,
 } from "lucide-react";
+import { ServicePricing } from "@/components/halisia/service-pricing";
 import type { LucideIcon } from "lucide-react";
 
 type Tool = {
@@ -28,7 +29,8 @@ const TOOLS: Tool[] = [
   {
     to: "/title-deed",
     label: "Title deed reader",
-    blurb: "Pull the parcel number, size and registry details off a deed photo.",
+    blurb:
+      "Pull the parcel number, size and registry details off a deed photo.",
     action: "Read a deed",
     Icon: FileSearch,
   },
@@ -43,14 +45,16 @@ const TOOLS: Tool[] = [
     to: "/",
     hash: "counties",
     label: "Map pin",
-    blurb: "Tap any county on the live map and drop a pin where you are looking.",
+    blurb:
+      "Tap any county on the live map and drop a pin where you are looking.",
     action: "Open the county map",
     Icon: MapPin,
   },
   {
     to: "/design-studio",
     label: "3D Design Studio",
-    blurb: "Place five Kenyan-context development concepts on dimensions you control.",
+    blurb:
+      "Place five Kenyan-context development concepts on dimensions you control.",
     action: "Open Design Studio",
     Icon: Boxes,
   },
@@ -112,7 +116,10 @@ export function FeatureRail() {
   const page = (dir: -1 | 1) => {
     const el = trackRef.current;
     if (!el) return;
-    el.scrollBy({ left: dir * Math.max(el.clientWidth * 0.8, 260), behavior: "smooth" });
+    el.scrollBy({
+      left: dir * Math.max(el.clientWidth * 0.8, 260),
+      behavior: "smooth",
+    });
   };
 
   return (
@@ -125,16 +132,19 @@ export function FeatureRail() {
       <div className="mx-auto max-w-7xl px-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="text-[11px] uppercase tracking-[0.25em] text-accent">Start here</p>
+            <p className="text-[11px] uppercase tracking-[0.25em] text-accent">
+              Start here
+            </p>
             <h2
               id="tools-heading"
               className="mt-2 text-2xl md:text-4xl font-semibold tracking-tight"
             >
-              Eight ways into a place.
+              Start free. Choose your next step.
             </h2>
             <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-              Search above, or pick the tool that matches what you already have: a deed, a
-              coordinate, a pin on a map, or a plot you want to build on.
+              Search above, or pick the tool that matches what you already have:
+              a deed, a coordinate, a pin on a map, or a plot you want to build
+              on.
             </p>
           </div>
           <div className="hidden gap-2 md:flex">
@@ -164,8 +174,15 @@ export function FeatureRail() {
           onScroll={measure}
           className="scrollbar-none mt-6 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-3"
         >
-          {TOOLS.map((t) => (
-            <li key={`${t.to}-${t.label}`} className="w-[260px] shrink-0 snap-start sm:w-[300px]">
+          {[
+            TOOLS[2],
+            TOOLS[1],
+            ...TOOLS.filter((t) => t !== TOOLS[2] && t !== TOOLS[1]),
+          ].map((t) => (
+            <li
+              key={`${t.to}-${t.label}`}
+              className="w-[260px] shrink-0 snap-start sm:w-[300px]"
+            >
               <Link
                 to={t.to}
                 hash={t.hash}
@@ -175,8 +192,13 @@ export function FeatureRail() {
                 <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                   <t.Icon className="h-5 w-5" aria-hidden="true" />
                 </span>
-                <h3 className="mt-4 text-base font-semibold">{t.label}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{t.blurb}</p>
+                <span className="mt-4 inline-flex self-start rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-sm font-bold text-primary">
+                  Free beta · KES 0
+                </span>
+                <h3 className="mt-3 text-base font-semibold">{t.label}</h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                  {t.blurb}
+                </p>
                 <span className="mt-auto pt-4 text-xs font-semibold text-primary">
                   {t.action}
                   <span className="ml-1 inline-block transition-transform group-hover:translate-x-1">
@@ -195,6 +217,7 @@ export function FeatureRail() {
           />
         </div>
       </div>
+      <ServicePricing all />
     </section>
   );
 }
