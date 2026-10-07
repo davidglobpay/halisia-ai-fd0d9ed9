@@ -1,10 +1,18 @@
+import { ReviewedScoutFindings } from "@/components/halisia/scout-hub";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { z } from "zod";
 import { fallback, zodValidator } from "@tanstack/zod-adapter";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState, type ReactNode } from "react";
-import { ArrowLeft, Boxes, ChevronDown, Download, Loader2, Newspaper } from "lucide-react";
+import {
+  ArrowLeft,
+  Boxes,
+  ChevronDown,
+  Download,
+  Loader2,
+  Newspaper,
+} from "lucide-react";
 import { MapView } from "@/components/halisia/map-view";
 import { StreetViewPanel } from "@/components/halisia/land-passport/street-view-panel";
 import { LocationStatusCard } from "@/components/halisia/land-passport/location-status";
@@ -23,7 +31,10 @@ import {
   evidenceDigest,
   type ChapterId,
 } from "@/lib/passport-evidence";
-import { getLocationIntel, type LocationIntel } from "@/lib/location-intel.functions";
+import {
+  getLocationIntel,
+  type LocationIntel,
+} from "@/lib/location-intel.functions";
 import { reverseGeocode } from "@/lib/reverse-geocode.functions";
 import { runIntelligenceEngine } from "@/lib/intelligence-engine";
 import { getCountyFacts } from "@/lib/kenya-county-facts";
@@ -106,7 +117,10 @@ function Section({
   open?: boolean;
 }) {
   return (
-    <details open={open} className="group rounded-2xl border border-foreground/10 bg-card/80">
+    <details
+      open={open}
+      className="group rounded-2xl border border-foreground/10 bg-card/80"
+    >
       <summary className="flex min-h-[52px] cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
         <span className="flex items-center gap-3">
           <span className="font-mono text-[11px] text-muted-foreground">
@@ -121,7 +135,9 @@ function Section({
           <ChevronDown className="h-4 w-4 transition group-open:rotate-180" />
         </span>
       </summary>
-      <div className="border-t border-foreground/10 px-4 py-3 text-sm">{children}</div>
+      <div className="border-t border-foreground/10 px-4 py-3 text-sm">
+        {children}
+      </div>
     </details>
   );
 }
@@ -130,7 +146,9 @@ function Row({ k, v }: { k: string; v: ReactNode }) {
   return (
     <div className="flex justify-between gap-4 py-1 text-xs">
       <span className="text-muted-foreground">{k}</span>
-      <span className="text-right text-foreground break-words min-w-0">{v ?? "—"}</span>
+      <span className="text-right text-foreground break-words min-w-0">
+        {v ?? "—"}
+      </span>
     </div>
   );
 }
@@ -160,7 +178,9 @@ function concepts(intel: LocationIntel | undefined): Concept[] {
   if (civic >= 3)
     out.push({
       name: "Residential (maisonettes / apartments)",
-      why: [`${c.schools.length} schools and ${c.hospitals.length} health facilities found nearby`],
+      why: [
+        `${c.schools.length} schools and ${c.hospitals.length} health facilities found nearby`,
+      ],
       assume: "Residential use is permitted and water/power can be connected.",
       constraints: common,
       infra: "Access road, water connection, sewer or septic, power.",
@@ -243,7 +263,8 @@ function PassportPage() {
   const facts = county ? getCountyFacts(county.code) : null;
   const newsQ = useQuery({
     queryKey: ["passport-news", county?.name],
-    queryFn: () => fetchFeed({ county: county!.name, limit: 5, sort: "latest" }),
+    queryFn: () =>
+      fetchFeed({ county: county!.name, limit: 5, sort: "latest" }),
     enabled: !!county,
     staleTime: 15 * 60_000,
   });
@@ -251,27 +272,39 @@ function PassportPage() {
   if (!ok && (s.ref || s.label || s.county)) {
     const named = countyByName(s.county);
     return (
-      <div className="mx-auto max-w-xl px-4 py-12" data-testid="passport-limited">
+      <div
+        className="mx-auto max-w-xl px-4 py-12"
+        data-testid="passport-limited"
+      >
         <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
           Land Passport · limited
         </p>
-        <h1 className="mt-1 font-display text-2xl">{s.label || s.ref || "Unnamed listing"}</h1>
+        <h1 className="mt-1 font-display text-2xl">
+          {s.label || s.ref || "Unnamed listing"}
+        </h1>
         {s.ref && s.ref !== s.label && (
-          <p className="mt-1 font-mono text-xs text-muted-foreground">{s.ref}</p>
+          <p className="mt-1 font-mono text-xs text-muted-foreground">
+            {s.ref}
+          </p>
         )}
         <div
           role="status"
           className="mt-4 rounded-2xl border border-white/10 bg-card/70 p-4 text-sm"
         >
           <p className="font-semibold">Location not available</p>
-          <p className="mt-1 text-muted-foreground">{s.noloc || check.issues[0]}</p>
+          <p className="mt-1 text-muted-foreground">
+            {s.noloc || check.issues[0]}
+          </p>
           <p className="mt-2 text-muted-foreground">
-            Without a map position HALISIA cannot show the map, Street View, terrain, access,
-            habitability, nearby services or investment signals for this listing. Nothing here
-            confirms the parcel's position, boundary or ownership.
+            Without a map position HALISIA cannot show the map, Street View,
+            terrain, access, habitability, nearby services or investment signals
+            for this listing. Nothing here confirms the parcel's position,
+            boundary or ownership.
           </p>
           {s.source && (
-            <p className="mt-2 text-xs text-muted-foreground">Listing source: {s.source}</p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Listing source: {s.source}
+            </p>
           )}
           <p className="mt-2 text-xs text-muted-foreground">
             County stated by the listing: {s.county || "not stated"}
@@ -301,7 +334,10 @@ function PassportPage() {
 
   if (!ok) {
     return (
-      <div className="mx-auto max-w-xl px-4 py-16 text-center" data-testid="passport-invalid">
+      <div
+        className="mx-auto max-w-xl px-4 py-16 text-center"
+        data-testid="passport-invalid"
+      >
         <h1 className="font-display text-2xl">Land Passport cannot open</h1>
         <p className="mt-2 text-sm text-muted-foreground">{check.issues[0]}</p>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -334,7 +370,8 @@ function PassportPage() {
   const intelFailed = intelQ.isError;
 
   const gaps = [
-    !STATUS_META[status].exact && "Surveyed parcel geometry and beacon coordinates",
+    !STATUS_META[status].exact &&
+      "Surveyed parcel geometry and beacon coordinates",
     "Official ownership / title search (Ardhisasa is not connected to HALISIA)",
     "Encumbrances, caveats and charges on the title",
     "Laboratory soil or geotechnical test for this plot",
@@ -343,11 +380,16 @@ function PassportPage() {
     "County zoning and planning-approval status",
     "Flood modelling (elevation alone is not a flood assessment)",
     !intel?.elevation?.meters && "Elevation reading",
-    intelFailed && "Live amenity and environment data (request failed on this visit)",
+    intelFailed &&
+      "Live amenity and environment data (request failed on this visit)",
   ].filter(Boolean) as string[];
 
   const qs = (q: { isLoading: boolean; isError: boolean }) =>
-    q.isLoading ? ("loading" as const) : q.isError ? ("error" as const) : ("ok" as const);
+    q.isLoading
+      ? ("loading" as const)
+      : q.isError
+        ? ("error" as const)
+        : ("ok" as const);
   const ev = buildPassportEvidence({
     lat,
     lng,
@@ -358,7 +400,11 @@ function PassportPage() {
     sourceLabel: s.source,
     countyName: county?.name ?? null,
     admin: admin
-      ? { subCounty: admin.subCounty, ward: admin.ward, locality: admin.locality }
+      ? {
+          subCounty: admin.subCounty,
+          ward: admin.ward,
+          locality: admin.locality,
+        }
       : null,
     facts,
     intel,
@@ -371,10 +417,16 @@ function PassportPage() {
   });
   const byChapter = (id: ChapterId) => ev.items.filter((x) => x.chapter === id);
   const placeName =
-    s.ref || s.label || revQ.data?.address || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    s.ref ||
+    s.label ||
+    revQ.data?.address ||
+    `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
 
   return (
-    <div className="mx-auto max-w-4xl px-4 pb-28 pt-6" data-testid="land-passport-page">
+    <div
+      className="mx-auto max-w-4xl px-4 pb-28 pt-6"
+      data-testid="land-passport-page"
+    >
       <Link
         to="/explore"
         className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
@@ -382,26 +434,41 @@ function PassportPage() {
         <ArrowLeft className="h-3.5 w-3.5" /> Back to Explore
       </Link>
       <header className="mt-3">
-        <div className="text-[11px] uppercase tracking-[0.3em] text-accent">Land Passport</div>
+        <div className="text-[11px] uppercase tracking-[0.3em] text-accent">
+          Land Passport
+        </div>
         <h1 className="mt-1 font-display text-3xl break-words">
-          {s.ref || s.label || revQ.data?.address || `${lat.toFixed(5)}, ${lng.toFixed(5)}`}
+          {s.ref ||
+            s.label ||
+            revQ.data?.address ||
+            `${lat.toFixed(5)}, ${lng.toFixed(5)}`}
         </h1>
         <p className="mt-1 text-xs text-muted-foreground">
-          {[admin?.ward, admin?.subCounty, county ? `${county.name} County` : null, "Kenya"]
+          {[
+            admin?.ward,
+            admin?.subCounty,
+            county ? `${county.name} County` : null,
+            "Kenya",
+          ]
             .filter(Boolean)
             .join(" → ")}
         </p>
-        <PassportLinks className="mt-3" target={{ lat, lng, ref: s.ref, status }} />
+        <PassportLinks
+          className="mt-3"
+          target={{ lat, lng, ref: s.ref, status }}
+        />
         <Link
           to="/design-studio"
           search={{ lat, lng, ref: s.ref, label: s.label, status }}
           className="mt-2 inline-flex min-h-10 items-center gap-2 rounded-full border border-accent/50 px-4 text-xs font-semibold text-foreground hover:bg-accent/10"
           data-testid="open-design-studio"
         >
-          <Boxes className="h-4 w-4 text-accent" /> Place a 3D development concept
+          <Boxes className="h-4 w-4 text-accent" /> Place a 3D development
+          concept
         </Link>
       </header>
 
+      <ReviewedScoutFindings reference={s.ref} />
       <PassportSummaryStrip
         positionLabel={STATUS_META[status].label}
         locationPct={locConf}
@@ -413,7 +480,10 @@ function PassportPage() {
       />
 
       <div className="mt-5 overflow-hidden rounded-3xl border border-foreground/10">
-        <div className="flex gap-1 border-b border-foreground/10 bg-card p-1" role="tablist">
+        <div
+          className="flex gap-1 border-b border-foreground/10 bg-card p-1"
+          role="tablist"
+        >
           {(["map", "satellite", "street"] as const).map((m) => (
             <button
               key={m}
@@ -421,7 +491,9 @@ function PassportPage() {
               aria-selected={mode === m}
               onClick={() => setMode(m)}
               className={`min-h-[40px] flex-1 rounded-full text-xs font-semibold capitalize ${
-                mode === m ? "bg-primary text-primary-foreground" : "hover:bg-foreground/5"
+                mode === m
+                  ? "bg-primary text-primary-foreground"
+                  : "hover:bg-foreground/5"
               }`}
             >
               {m === "street" ? "Street View" : m}
@@ -488,14 +560,29 @@ function PassportPage() {
         <EvidenceLedger entries={ev.ledger} />
         <Section n={1} title="Identity & position" tag="source" open>
           <Row k="Location status" v={STATUS_META[status].label} />
-          <Row k="County" v={county ? `${county.name} (code ${county.code})` : "No county match"} />
+          <Row
+            k="County"
+            v={
+              county
+                ? `${county.name} (code ${county.code})`
+                : "No county match"
+            }
+          />
           <Row
             k="Sub-county"
-            v={admin?.subCounty ?? (revQ.isLoading ? "Loading…" : "Not reported")}
+            v={
+              admin?.subCounty ?? (revQ.isLoading ? "Loading…" : "Not reported")
+            }
           />
           <Row k="Ward / area" v={admin?.ward ?? "Not reported"} />
-          <Row k="Nearest town / centre" v={admin?.locality ?? "Not reported"} />
-          <Row k="Parcel polygon" v={STATUS_META[status].exact ? "See source" : "Not available"} />
+          <Row
+            k="Nearest town / centre"
+            v={admin?.locality ?? "Not reported"}
+          />
+          <Row
+            k="Parcel polygon"
+            v={STATUS_META[status].exact ? "See source" : "Not available"}
+          />
           <Row k="Area" v="Not available without survey data" />
           <Row k="Source" v={s.source || "Not stated"} />
           <Row k="Opened" v={openedAt || "—"} />
@@ -521,19 +608,34 @@ function PassportPage() {
           </ul>
           {facts ? (
             <>
-              <Row k="County government" v={`${facts.name} County · Governor ${facts.governor}`} />
+              <Row
+                k="County government"
+                v={`${facts.name} County · Governor ${facts.governor}`}
+              />
               <Row k="Headquarters" v={facts.headquarters} />
-              <Row k="Population (2019 census)" v={facts.population2019.toLocaleString("en-KE")} />
-              <Row k="Area" v={`${facts.areaKm2.toLocaleString("en-KE")} km²`} />
-              <Row k="Constituencies / wards" v={`${facts.constituencies} / ${facts.wards}`} />
+              <Row
+                k="Population (2019 census)"
+                v={facts.population2019.toLocaleString("en-KE")}
+              />
+              <Row
+                k="Area"
+                v={`${facts.areaKm2.toLocaleString("en-KE")} km²`}
+              />
+              <Row
+                k="Constituencies / wards"
+                v={`${facts.constituencies} / ${facts.wards}`}
+              />
               <Row k="Main economic activities" v={facts.economy.join(", ")} />
               <p className="mt-2 text-[11px] text-muted-foreground">
-                Sources: KNBS 2019 census, IEBC boundaries, county records. Projects, budgets and
-                security data are not held yet — open the county page for everything HALISIA has.
+                Sources: KNBS 2019 census, IEBC boundaries, county records.
+                Projects, budgets and security data are not held yet — open the
+                county page for everything HALISIA has.
               </p>
             </>
           ) : (
-            <p className="text-xs text-muted-foreground">No county profile matched this point.</p>
+            <p className="text-xs text-muted-foreground">
+              No county profile matched this point.
+            </p>
           )}
         </Section>
 
@@ -543,7 +645,11 @@ function PassportPage() {
             n={idx + 3}
             title={ch.title}
             tag={
-              ch.id === "trust" ? "gap" : ch.id === "build" || ch.id === "market" ? "ai" : "source"
+              ch.id === "trust"
+                ? "gap"
+                : ch.id === "build" || ch.id === "market"
+                  ? "ai"
+                  : "source"
             }
             open={ch.id === "trust"}
           >
@@ -555,24 +661,34 @@ function PassportPage() {
             </ul>
             {ch.id === "build" && ideas.length > 0 && (
               <div className="mt-3 space-y-3">
-                <div className="text-xs font-medium">Indicative development concepts</div>
+                <div className="text-xs font-medium">
+                  Indicative development concepts
+                </div>
                 {ideas.map((c) => (
                   <details
                     key={c.name}
                     className="group rounded-xl border border-foreground/10 text-xs"
                   >
                     <summary className="flex min-h-[48px] cursor-pointer list-none items-center justify-between gap-3 rounded-xl px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                      <span className="font-medium text-foreground">{c.name}</span>
+                      <span className="font-medium text-foreground">
+                        {c.name}
+                      </span>
                       <ChevronDown className="h-4 w-4 shrink-0 transition group-open:rotate-180" />
                     </summary>
                     <div className="border-t border-foreground/10 px-3 py-2">
                       <Row k="Supporting evidence" v={c.why.join("; ")} />
                       <Row k="Sources" v="Google Places nearby-place counts" />
-                      <Row k="Confidence" v="Indicative only — no planning or parcel evidence" />
+                      <Row
+                        k="Confidence"
+                        v="Indicative only — no planning or parcel evidence"
+                      />
                       <Row k="Assumes" v={c.assume} />
                       <Row k="Limitations" v={c.constraints} />
                       <Row k="Infrastructure" v={c.infra} />
-                      <Row k="Still needed" v="Zoning letter, survey, soil test" />
+                      <Row
+                        k="Still needed"
+                        v="Zoning letter, survey, soil test"
+                      />
                     </div>
                   </details>
                 ))}
@@ -582,12 +698,15 @@ function PassportPage() {
               </div>
             )}
             {ch.id === "build" && geoQ.data?.disclaimer && (
-              <p className="mt-2 text-[11px] text-muted-foreground">{geoQ.data.disclaimer}</p>
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                {geoQ.data.disclaimer}
+              </p>
             )}
             {ch.id === "market" && (
               <p className="mt-2 text-[11px] text-muted-foreground">
-                Not a forecast. HALISIA does not predict prices or guarantee returns. Scores with
-                low coverage are withheld rather than guessed.
+                Not a forecast. HALISIA does not predict prices or guarantee
+                returns. Scores with low coverage are withheld rather than
+                guessed.
               </p>
             )}
             {ch.id === "trust" && (
@@ -598,9 +717,13 @@ function PassportPage() {
                     className="mt-1 space-y-0.5 text-muted-foreground"
                     data-testid="verification-ladder"
                   >
-                    <li>Source listed: {s.source ? "yes — " + s.source : "no source stated"}</li>
                     <li>
-                      Data completeness: {ev.summary.coveragePct}% of passport facts available
+                      Source listed:{" "}
+                      {s.source ? "yes — " + s.source : "no source stated"}
+                    </li>
+                    <li>
+                      Data completeness: {ev.summary.coveragePct}% of passport
+                      facts available
                     </li>
                     <li>Documents reviewed: no</li>
                     <li>Evidence verified: no</li>
@@ -642,7 +765,8 @@ function PassportPage() {
                           <span>
                             {a.title}{" "}
                             <span className="text-muted-foreground">
-                              · {a.sourceName ?? "Source"} · {relativeTime(a.publishedAt)}
+                              · {a.sourceName ?? "Source"} ·{" "}
+                              {relativeTime(a.publishedAt)}
                             </span>
                           </span>
                         </Link>
@@ -650,8 +774,13 @@ function PassportPage() {
                     ))}
                   </ul>
                 )}
-                <div className="mt-4 text-xs font-medium">What HALISIA does not yet know</div>
-                <ul className="list-disc pl-4 text-xs" data-testid="passport-gaps">
+                <div className="mt-4 text-xs font-medium">
+                  What HALISIA does not yet know
+                </div>
+                <ul
+                  className="list-disc pl-4 text-xs"
+                  data-testid="passport-gaps"
+                >
                   {gaps.map((g) => (
                     <li key={g}>{g}</li>
                   ))}
@@ -698,7 +827,8 @@ function Loading() {
 function Failed() {
   return (
     <p className="text-xs text-amber-glow">
-      Live data could not be fetched (provider unavailable or rate-limited). Reload in a minute.
+      Live data could not be fetched (provider unavailable or rate-limited).
+      Reload in a minute.
     </p>
   );
 }
