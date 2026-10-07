@@ -1,4 +1,10 @@
-import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
+import { MarketplaceCost } from "@/components/halisia/marketplace-cost";
+import {
+  createFileRoute,
+  Link,
+  notFound,
+  useNavigate,
+} from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
@@ -18,7 +24,12 @@ import {
   Globe,
   Lock,
 } from "lucide-react";
-import { getProperty, createLead, formatPrice, updateProperty } from "@/lib/properties";
+import {
+  getProperty,
+  createLead,
+  formatPrice,
+  updateProperty,
+} from "@/lib/properties";
 import { LandIntelligenceScore } from "@/components/halisia/land-intelligence-score";
 import { SaveButton } from "@/components/halisia/save-button";
 import { useAuth } from "@/hooks/use-auth";
@@ -29,7 +40,10 @@ import {
   downloadBrochureDOCX,
   formatPriceEstimate,
 } from "@/lib/listing-brochure";
-import { ListingEditor, type ListingAiWithMeta } from "@/components/halisia/listing-editor";
+import {
+  ListingEditor,
+  type ListingAiWithMeta,
+} from "@/components/halisia/listing-editor";
 import { ListingServices } from "@/components/halisia/listing-services";
 import { PassportLinks } from "@/components/halisia/land-passport/passport-links";
 
@@ -44,7 +58,9 @@ export const Route = createFileRoute("/marketplace/$id")({
   head: ({ loaderData }) => {
     const p = loaderData?.property;
     const title = p ? `${p.title} · HALISIA AI` : "Listing · HALISIA AI";
-    const desc = p?.description?.slice(0, 155) ?? "AI-scored real estate listing in Kenya.";
+    const desc =
+      p?.description?.slice(0, 155) ??
+      "AI-scored real estate listing in Kenya.";
     return {
       meta: [
         { title },
@@ -67,7 +83,11 @@ export const Route = createFileRoute("/marketplace/$id")({
     <main className="min-h-dvh grid place-items-center px-4">
       <div className="glass rounded-2xl border border-white/10 p-6 text-center">
         <p className="text-sm">Couldn't load this listing.</p>
-        <Link to="/marketplace" search={{}} className="mt-3 inline-block text-xs text-accent">
+        <Link
+          to="/marketplace"
+          search={{}}
+          className="mt-3 inline-block text-xs text-accent"
+        >
           ← Back to marketplace
         </Link>
       </div>
@@ -77,7 +97,11 @@ export const Route = createFileRoute("/marketplace/$id")({
     <main className="min-h-dvh grid place-items-center px-4">
       <div className="glass rounded-2xl border border-white/10 p-6 text-center">
         <p className="text-sm">Listing not found.</p>
-        <Link to="/marketplace" search={{}} className="mt-3 inline-block text-xs text-accent">
+        <Link
+          to="/marketplace"
+          search={{}}
+          className="mt-3 inline-block text-xs text-accent"
+        >
           ← Back to marketplace
         </Link>
       </div>
@@ -101,7 +125,8 @@ function ListingDetail() {
       const next = p!.status === "published" ? "draft" : "published";
       return updateProperty(p!.id, { status: next });
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["property", property.id] }),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["property", property.id] }),
   });
   if (!p) return null;
   const ai = (p.ai_summary ?? null) as ListingAiWithMeta | null;
@@ -156,7 +181,11 @@ function ListingDetail() {
               data-testid="toggle-preview"
               className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 px-3 py-1.5"
             >
-              {previewing ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+              {previewing ? (
+                <EyeOff className="h-3.5 w-3.5" />
+              ) : (
+                <Eye className="h-3.5 w-3.5" />
+              )}
               {previewing ? "Exit preview" : "Preview as visitor"}
             </button>
             <button
@@ -199,22 +228,36 @@ function ListingDetail() {
             <div className="text-[11px] uppercase tracking-widest text-accent">
               {p.kind.replace("_", " ")} · {p.intent}
             </div>
-            <h1 className="mt-1 text-2xl sm:text-3xl font-display font-semibold">{p.title}</h1>
+            <h1 className="mt-1 text-2xl sm:text-3xl font-display font-semibold">
+              {p.title}
+            </h1>
             <div className="mt-1 text-sm text-muted-foreground flex items-center gap-1">
-              <MapPin className="h-3.5 w-3.5" /> {p.address ?? p.county ?? "Kenya"}
+              <MapPin className="h-3.5 w-3.5" />{" "}
+              {p.address ?? p.county ?? "Kenya"}
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-4">
-              <div className="text-xl font-semibold">{formatPrice(p)}</div>
+              <div className="rounded-xl bg-primary/10 p-3 text-2xl font-bold text-primary">
+                {formatPrice(p)}
+              </div>
+              <MarketplaceCost
+                price={p.price}
+                currency={p.currency}
+                intent={p.intent}
+              />
               {p.size_value != null && (
                 <div className="text-xs text-muted-foreground">
                   {p.size_value} {p.size_unit}
                 </div>
               )}
               {p.bedrooms != null && (
-                <div className="text-xs text-muted-foreground">{p.bedrooms} bed</div>
+                <div className="text-xs text-muted-foreground">
+                  {p.bedrooms} bed
+                </div>
               )}
               {p.bathrooms != null && (
-                <div className="text-xs text-muted-foreground">{p.bathrooms} bath</div>
+                <div className="text-xs text-muted-foreground">
+                  {p.bathrooms} bath
+                </div>
               )}
               <SaveButton
                 kind="location"
@@ -228,7 +271,9 @@ function ListingDetail() {
 
           {p.description && (
             <section className="mt-6 glass rounded-2xl border border-white/10 p-5">
-              <h2 className="text-sm font-semibold mb-2">About this property</h2>
+              <h2 className="text-sm font-semibold mb-2">
+                About this property
+              </h2>
               <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
                 {p.description}
               </p>
@@ -263,8 +308,9 @@ function ListingDetail() {
                 AI Intelligence Breakdown
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Every module below shows its score, data sources, last-updated time and a
-                recommendation. Expand any card for possible limitations.
+                Every module below shows its score, data sources, last-updated
+                time and a recommendation. Expand any card for possible
+                limitations.
               </p>
             </div>
             <PassportLinks
@@ -325,7 +371,9 @@ function AiListingBrief({
           <div className="text-[11px] uppercase tracking-widest text-accent inline-flex items-center gap-1">
             <Sparkles className="h-3 w-3" /> AI Listing Assistant
           </div>
-          <h2 className="text-lg font-display font-semibold mt-1">{ai.polishedTitle}</h2>
+          <h2 className="text-lg font-display font-semibold mt-1">
+            {ai.polishedTitle}
+          </h2>
           <p className="text-xs text-muted-foreground mt-0.5">{ai.headline}</p>
         </div>
         <div className="flex items-center gap-2">
@@ -362,7 +410,9 @@ function AiListingBrief({
         </div>
       </header>
 
-      <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{ai.aiSummary}</p>
+      <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+        {ai.aiSummary}
+      </p>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <div>
@@ -383,7 +433,9 @@ function AiListingBrief({
             Estimated price band
           </h3>
           <div className="text-lg font-semibold">{formatPriceEstimate(ai)}</div>
-          <p className="text-[11px] text-muted-foreground mt-1">{ai.priceEstimate.note}</p>
+          <p className="text-[11px] text-muted-foreground mt-1">
+            {ai.priceEstimate.note}
+          </p>
           <div className="mt-3">
             <h3 className="text-xs uppercase tracking-widest text-muted-foreground mb-1">
               SEO description
@@ -406,7 +458,10 @@ function AiListingBrief({
               ["instagram", "Instagram"],
             ] as const
           ).map(([k, label]) => (
-            <div key={k} className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-xs">
+            <div
+              key={k}
+              className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-xs"
+            >
               <div className="flex items-center justify-between mb-1">
                 <span className="text-muted-foreground">{label}</span>
                 <button
@@ -418,7 +473,9 @@ function AiListingBrief({
                   {copied === k ? "Copied" : "Copy"}
                 </button>
               </div>
-              <p className="whitespace-pre-line text-muted-foreground">{ai.socialCaptions[k]}</p>
+              <p className="whitespace-pre-line text-muted-foreground">
+                {ai.socialCaptions[k]}
+              </p>
             </div>
           ))}
         </div>
@@ -458,13 +515,21 @@ function ConceptStudio({ ai }: { ai: ListingAiOutput }) {
         <div className="text-[11px] uppercase tracking-widest text-accent inline-flex items-center gap-1">
           <Sparkles className="h-3 w-3" /> Architectural Concept Studio
         </div>
-        <h2 className="text-lg font-display font-semibold mt-1">Conceptual development options</h2>
+        <h2 className="text-lg font-display font-semibold mt-1">
+          Conceptual development options
+        </h2>
         <p className="text-xs text-muted-foreground mt-1">
           AI-generated concepts to spark planning conversations —{" "}
-          <span className="text-amber-glow">conceptual only, not architectural approvals.</span>
+          <span className="text-amber-glow">
+            conceptual only, not architectural approvals.
+          </span>
         </p>
       </header>
-      <div className="mt-4 grid gap-3 sm:grid-cols-3" role="tablist" aria-label="Concept options">
+      <div
+        className="mt-4 grid gap-3 sm:grid-cols-3"
+        role="tablist"
+        aria-label="Concept options"
+      >
         {ai.concepts.map((c, i) => {
           const on = i === selectedIdx;
           return (
@@ -487,7 +552,9 @@ function ConceptStudio({ ai }: { ai: ListingAiOutput }) {
                   {c.confidencePct}%
                 </span>
               </div>
-              <p className="mt-2 text-xs text-muted-foreground line-clamp-3">{c.description}</p>
+              <p className="mt-2 text-xs text-muted-foreground line-clamp-3">
+                {c.description}
+              </p>
               <div className="mt-2 text-[10px] uppercase tracking-widest text-amber-glow">
                 Conceptual only
               </div>
@@ -510,8 +577,12 @@ function ConceptStudio({ ai }: { ai: ListingAiOutput }) {
             <div className="text-[11px] uppercase tracking-widest text-accent">
               Selected concept
             </div>
-            <h3 className="mt-1 font-display text-lg font-semibold">{selected.name}</h3>
-            <p className="mt-1 text-xs text-muted-foreground">{selected.description}</p>
+            <h3 className="mt-1 font-display text-lg font-semibold">
+              {selected.name}
+            </h3>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {selected.description}
+            </p>
             <div className="mt-3 text-xs">
               <span className="text-muted-foreground">Best for: </span>
               {selected.useCase}
@@ -640,9 +711,17 @@ function ConceptSchematic({ zones }: { zones: Zone[] }) {
   );
 }
 
-function ContactSeller({ propertyId, sellerId }: { propertyId: string; sellerId: string }) {
+function ContactSeller({
+  propertyId,
+  sellerId,
+}: {
+  propertyId: string;
+  sellerId: string;
+}) {
   const { user } = useAuth();
-  const [message, setMessage] = useState("Hi, I'd like more details and to schedule a viewing.");
+  const [message, setMessage] = useState(
+    "Hi, I'd like more details and to schedule a viewing.",
+  );
   const [phone, setPhone] = useState("");
   const [sent, setSent] = useState(false);
   const m = useMutation({
@@ -682,9 +761,13 @@ function ContactSeller({ propertyId, sellerId }: { propertyId: string; sellerId:
           <h2 className="text-sm font-semibold">Enquiry sent</h2>
         </div>
         <p className="text-xs text-muted-foreground mt-2">
-          The seller will see your enquiry in their dashboard. You can track it there too.
+          The seller will see your enquiry in their dashboard. You can track it
+          there too.
         </p>
-        <Link to="/dashboard" className="mt-3 inline-block text-xs text-accent hover:underline">
+        <Link
+          to="/dashboard"
+          className="mt-3 inline-block text-xs text-accent hover:underline"
+        >
           Go to my dashboard →
         </Link>
       </div>

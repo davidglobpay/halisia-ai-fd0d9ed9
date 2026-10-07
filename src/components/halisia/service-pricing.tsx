@@ -1,3 +1,4 @@
+import { previewQuote } from "@/lib/scout-pricing";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { SERVICE_PRICES, pricesForPath, priceKes } from "@/lib/service-pricing";
 
@@ -50,6 +51,16 @@ export function ServicePricing({ all = false }: { all?: boolean }) {
           beta access stays free; paid benefits are activated only after
           delivery and billing are ready.
         </p>
+        <div className="mt-4 rounded-xl border border-primary/30 bg-primary/10 p-4">
+          <h3 className="text-lg font-bold text-primary">
+            Free beta tier · KES 0
+          </h3>
+          <p className="mt-1 text-sm">
+            Explore, map pins, coordinates, deed reading, interactive
+            comparisons, model previews and current beta PDF tools. External
+            provider and government charges are separate.
+          </p>
+        </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {prices.map((p) => (
             <article
@@ -57,7 +68,10 @@ export function ServicePricing({ all = false }: { all?: boolean }) {
               className="rounded-xl border border-border bg-background/70 p-4"
             >
               <h3 className="font-semibold">{p.name}</h3>
-              <p className="mt-1 text-xl font-semibold text-primary">
+              <p className="mt-2 rounded-lg bg-primary/10 px-3 py-2 text-2xl font-bold text-primary">
+                <span className="mb-1 block text-xs font-medium">
+                  Suggested paid launch price
+                </span>
                 {priceKes(p.amount)}{" "}
                 <span className="text-xs font-normal text-muted-foreground">
                   {p.unit}
@@ -82,6 +96,35 @@ export function ServicePricing({ all = false }: { all?: boolean }) {
           Final tax-inclusive payable totals must be confirmed before payment
           activation.
         </p>
+        {all && (
+          <div className="mt-4 rounded-xl border border-primary/30 bg-primary/10 p-4">
+            <h3 className="font-bold text-primary">
+              Send a Scout · suggested basic quote{" "}
+              {priceKes(previewQuote({}, "easy", 0).totalKes)}
+            </h3>
+            <p className="mt-1 text-xs">
+              Before travel and access extras. Open Scout for the current
+              catalogue and server-confirmed quote. Payment activation pending.
+            </p>
+            <Link to="/scout" className="mt-2 inline-block underline">
+              Build a Scout quote
+            </Link>
+            <p className="mt-3 font-semibold text-primary">
+              Financing enquiries · KES 0
+            </p>
+            <p className="text-xs">
+              Lender and professional charges quoted separately.
+            </p>
+          </div>
+        )}
+        {all && (
+          <Link
+            to="/pricing"
+            className="mt-4 inline-flex min-h-11 items-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground"
+          >
+            View Scout quotes and the full cost breakdown
+          </Link>
+        )}
         {!all && (
           <Link
             to="/pricing"
