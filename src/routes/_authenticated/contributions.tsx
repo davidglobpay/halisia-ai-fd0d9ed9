@@ -63,6 +63,9 @@ function ContributionsPage() {
       >
         <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" /> Back to dashboard
       </Link>
+      <Link to="/scout" className="mb-3 ml-4 inline-flex text-xs text-accent">
+        Send a Scout requests & jobs →
+      </Link>
       <header className="mb-6">
         <div className="text-[11px] uppercase tracking-[0.25em] text-accent">Halisia AI</div>
         <h1 className="mt-1 flex items-center gap-2 text-3xl font-display font-semibold">
