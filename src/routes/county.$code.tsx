@@ -342,11 +342,16 @@ function CountyPage() {
 
         {/* ECONOMY */}
         <Section id="sec-economy" title="Economic activities" icon={TrendingUp}>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid gap-3 sm:grid-cols-2">
             {facts.economy.map((e: string) => (
-              <span key={e} className="rounded-full glass px-3 py-1 text-sm">
-                {e}
-              </span>
+              <div key={e} data-output-card className="rounded-xl glass p-3 text-sm">
+                <div className="flex items-center gap-2">
+                  <OutputIcon subject={e} />
+                  <span>{e}</span>
+                </div>
+                <OutputVisual subject={e} />
+                <OutputTools label={e} />
+              </div>
             ))}
           </div>
           <p className="mt-4 text-sm text-muted-foreground">
