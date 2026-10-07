@@ -829,7 +829,9 @@ function ListingCard({
           </div>
         )}
         <div className="flex items-center justify-between">
-          <div className="text-sm font-semibold">{formatPrice(p)}</div>
+          <div className="rounded-lg bg-primary/10 px-2 py-1 text-lg font-bold text-primary">
+            {formatPrice(p)}
+          </div>
           {p.latitude != null && p.longitude != null && (
             <span className="text-[11px] text-muted-foreground">
               Open for readings
@@ -850,6 +852,11 @@ function ListingCard({
             status: "user_provided",
             county: p.county ?? "",
           }}
+        />
+        <MarketplaceCost
+          price={p.price}
+          currency={p.currency}
+          intent={p.intent}
         />
         <Actions p={p} compared={compared} onCompare={onCompare} />
         {reasons?.length ? (
