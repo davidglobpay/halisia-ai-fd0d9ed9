@@ -640,7 +640,7 @@ export function FloatingSearch() {
                 </div>
               </div>
             )}
-            {rows.length === 0 ? (
+            {!q.trim() || rows.length === 0 ? (
               !q.trim() ? (
                 <div className="p-4">
                   <div className="text-[11px] uppercase tracking-widest text-accent font-medium mb-2.5">
