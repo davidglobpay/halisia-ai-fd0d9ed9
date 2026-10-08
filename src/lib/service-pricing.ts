@@ -46,6 +46,18 @@ export type Plan = {
   readiness: string;
   /** Priced by agreement rather than off the shelf. */
   quoteOnly?: true;
+  /**
+   * The entitlements in this plan that also have a one-off price, so a page can
+   * state what the plan is worth without anyone typing a figure.
+   *
+   * `perMonth` is the most a subscriber can draw in a month, so everything
+   * computed from it is an upper bound and is labelled "up to" wherever it is
+   * shown. Where a plan says "unlimited", the count here is a deliberately
+   * conservative one a normal month would reach, never a number chosen to make
+   * the plan look better: a claim about value has to survive the subscriber
+   * checking it against the report prices on the same page.
+   */
+  includedValue?: readonly { serviceId: string; perMonth: number }[];
 };
 
 export const PLANS: readonly Plan[] = [
@@ -82,6 +94,7 @@ export const PLANS: readonly Plan[] = [
       "Saved comparisons and change alerts on places you follow",
       "Reports without the beta watermark",
     ],
+    includedValue: [{ serviceId: "passport", perMonth: 1 }],
     readiness: "Subscription benefits, billing and activation pending.",
   },
   {
@@ -99,6 +112,7 @@ export const PLANS: readonly Plan[] = [
       "Client-facing cover page on reports you share",
       "Bulk county comparison",
     ],
+    includedValue: [{ serviceId: "dossier", perMonth: 5 }],
     readiness:
       "Subscription benefits, billing and activation pending. Credentials remain subject to review.",
   },
@@ -115,6 +129,10 @@ export const PLANS: readonly Plan[] = [
       "Unlimited listing brochure packs",
       "One featured listing placement each month",
       "Enhanced listing insights and seller reporting",
+    ],
+    includedValue: [
+      { serviceId: "brochure", perMonth: 2 },
+      { serviceId: "listing", perMonth: 1 },
     ],
     readiness:
       "Subscription benefits, billing and activation pending. Advertising spend is separate.",
@@ -133,6 +151,10 @@ export const PLANS: readonly Plan[] = [
       "Unlimited ground and geotechnical briefs",
       "Model Lab and Spatial Studio exports",
       "Three seats",
+    ],
+    includedValue: [
+      { serviceId: "concept", perMonth: 2 },
+      { serviceId: "geotech", perMonth: 2 },
     ],
     readiness:
       "Concept tools available in beta; seats, billing and activation pending. Professional drawings and statutory approvals are excluded.",
@@ -478,6 +500,45 @@ export function bundleSavingKes(b: Bundle): number {
 export function annualSavingKes(p: Plan): number {
   if (p.quoteOnly || p.monthlyKes === 0) return 0;
   return Math.max(0, p.monthlyKes * 12 - p.annualKes);
+}
+
+/** The same saving for someone paying by card. */
+export function annualSavingUsd(p: Plan): number {
+  if (p.quoteOnly || p.monthlyUsd === 0) return 0;
+  return Math.max(0, p.monthlyUsd * 12 - p.annualUsd);
+}
+
+/**
+ * The most a subscriber could draw from a plan in one month, valued at the
+ * one-off prices on the same page. An upper bound, always shown as "up to".
+ */
+export function planIncludedValueKes(p: Plan): number {
+  return (p.includedValue ?? []).reduce(
+    (sum, v) => sum + (serviceById(v.serviceId)?.amount ?? 0) * v.perMonth,
+    0,
+  );
+}
+
+/**
+ * How many times over a month of the plan the included reports are worth, at
+ * list price. Zero where the plan includes nothing with a price of its own.
+ */
+export function planValueMultiple(p: Plan): number {
+  if (p.monthlyKes <= 0) return 0;
+  return planIncludedValueKes(p) / p.monthlyKes;
+}
+
+/**
+ * A package's saving as a percentage. The shilling figures are the
+ * authoritative set, so a card showing dollars quotes the percentage rather
+ * than a dollar saving: the extras inside a package (a Scout credit, a year of
+ * Plus) are priced in shillings only, and a dollar "list price" summed from
+ * them would be invented.
+ */
+export function bundleSavingPct(b: Bundle): number {
+  const list = bundleListKes(b);
+  if (list <= 0) return 0;
+  return Math.round((bundleSavingKes(b) / list) * 100);
 }
 
 export const priceKes = (amount: number) =>
