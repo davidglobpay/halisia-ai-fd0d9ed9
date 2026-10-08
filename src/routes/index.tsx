@@ -36,6 +36,13 @@ import { recordSearchConversion } from "@/lib/analytics";
 import halisiaSymbol from "@/assets/brand/halisia-mark.png.asset.json";
 import halisiaWordmark from "@/assets/brand/halisia-lockup.png.asset.json";
 import { HeroMap } from "@/components/halisia/hero-map";
+import {
+  lowestOneOffKes,
+  lowestBundleKes,
+  lowestPaidPlanMonthlyKes,
+  priceKes,
+} from "@/lib/service-pricing";
+import { previewQuote } from "@/lib/scout-pricing";
 
 export const Route = createFileRoute("/")({
   validateSearch: (s) => z.object({ compare: fallback(z.string(), "").default("") }).parse(s),
@@ -339,15 +346,42 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
             <h2 className="mt-4 text-3xl md:text-5xl font-semibold tracking-tight">
               Start with any place in Kenya.
             </h2>
-            <p className="mt-4 text-muted-foreground max-w-xl mx-auto">
-              Every location profile is free while HALISIA is in beta. Premium reports — deeper
-              environmental, legal-context and construction feasibility, each with its source named
-              — are in development. Suggested paid prices start at KES 490 per report;
-              Scout visits start at KES 1,150 before travel and access. Payment integration
-              and live activation are pending.
+            <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
+              Every location profile is free. Not for a trial period, and not only while
+              HALISIA is in beta — nothing that is free today becomes paid. Reports bought
+              one at a time start at {priceKes(lowestOneOffKes())}, packages at{" "}
+              {priceKes(lowestBundleKes())}, and a plan at{" "}
+              {priceKes(lowestPaidPlanMonthlyKes())} a month. Scout visits start at{" "}
+              {priceKes(previewQuote({}, "easy", 0).totalKes)} before travel and access.
+              Payment integration and live activation are pending.
             </p>
-            <div className="mt-8 flex items-center justify-center gap-3">
-              <Link to="/pricing" className="glass rounded-full px-6 py-3 text-sm">See service prices</Link>
+            <dl className="mt-6 grid gap-3 sm:grid-cols-3 max-w-2xl mx-auto text-left">
+              {[
+                {
+                  k: "Looking around",
+                  v: priceKes(0),
+                  d: "Any place in Kenya, every source named.",
+                },
+                {
+                  k: "One report",
+                  v: "from " + priceKes(lowestOneOffKes()),
+                  d: "No plan, no card on file.",
+                },
+                {
+                  k: "A plan",
+                  v: "from " + priceKes(lowestPaidPlanMonthlyKes()),
+                  d: "A month. A year costs ten months.",
+                },
+              ].map((c) => (
+                <div key={c.k} className="glass rounded-2xl p-4">
+                  <dt className="text-xs text-muted-foreground">{c.k}</dt>
+                  <dd className="mt-1 text-xl font-semibold text-primary">{c.v}</dd>
+                  <dd className="mt-1 text-xs text-muted-foreground">{c.d}</dd>
+                </div>
+              ))}
+            </dl>
+            <div className="mt-8 flex items-center justify-center gap-3 flex-wrap">
+              <Link to="/pricing" className="glass rounded-full px-6 py-3 text-sm">See all prices</Link>
               <Link
                 to="/explore"
                 data-testid="launch-cta"
@@ -526,4 +560,3 @@ const SCENARIOS = [
     body: "Confidence bands mark what is thin, so the next trip targets the gaps rather than re-confirming what is already documented.",
   },
 ];
-
