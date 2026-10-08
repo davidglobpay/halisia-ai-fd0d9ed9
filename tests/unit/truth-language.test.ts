@@ -22,12 +22,32 @@
  * claim was exactly the class this file exists to catch, and it shipped only
  * because the surface was not on the list. Any new public surface belongs here
  * on the day it is written.
+ *
+ * The pricing surfaces were added with the price tables themselves. A price is
+ * a promise, and the temptation on a pricing page is to justify the number by
+ * implying the product does more than it does — that paying buys certainty,
+ * protection or a guarantee. It buys a report that names its sources. The
+ * pricing group below holds that line.
  */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const read = (p: string) => readFileSync(resolve(process.cwd(), p), "utf8");
+
+/**
+ * Prose in JSX is wrapped by Prettier, so a sentence that renders as one line
+ * is often two or three lines of source with newlines and indentation inside
+ * it. `toContain` on raw source therefore fails on any needle longer than a
+ * few words. Flattening runs of whitespace to a single space lets a required
+ * sentence be asserted as it reads.
+ *
+ * Only the pricing group uses this. The groups above it match raw source and
+ * are left exactly as they were: switching them to flattened matching could
+ * make a forbidden needle start matching text that is currently split across
+ * two lines, which would be a behaviour change dressed up as a refactor.
+ */
+const flat = (s: string) => s.replace(/\s+/g, " ");
 
 const LANDING = read("src/routes/index.tsx");
 const SECTIONS = read("src/components/halisia/landing-sections.tsx");
@@ -37,6 +57,10 @@ const COUNTY_MAP = read("src/components/halisia/kenya-county-map.tsx");
 const PDF_COMPARE = read("src/lib/pdf-county-compare.ts");
 const SCOUT = read("src/routes/_authenticated/scout.tsx");
 const SCOUT_HUB = read("src/components/halisia/scout-hub.tsx");
+const PRICING = read("src/routes/pricing.tsx");
+const PLAN_TABLE = read("src/components/halisia/plan-table.tsx");
+const PRICE_CARD = read("src/components/halisia/service-pricing.tsx");
+const PRICE_LIB = read("src/lib/service-pricing.ts");
 
 const PUBLIC_SURFACES: Array<[string, string]> = [
   ["src/routes/index.tsx", LANDING],
@@ -47,6 +71,17 @@ const PUBLIC_SURFACES: Array<[string, string]> = [
   ["src/lib/pdf-county-compare.ts", PDF_COMPARE],
   ["src/routes/_authenticated/scout.tsx", SCOUT],
   ["src/components/halisia/scout-hub.tsx", SCOUT_HUB],
+  ["src/routes/pricing.tsx", PRICING],
+  ["src/components/halisia/plan-table.tsx", PLAN_TABLE],
+  ["src/components/halisia/service-pricing.tsx", PRICE_CARD],
+  ["src/lib/service-pricing.ts", PRICE_LIB],
+];
+
+const PRICING_SURFACES: Array<[string, string]> = [
+  ["src/routes/pricing.tsx", PRICING],
+  ["src/components/halisia/plan-table.tsx", PLAN_TABLE],
+  ["src/components/halisia/service-pricing.tsx", PRICE_CARD],
+  ["src/lib/service-pricing.ts", PRICE_LIB],
 ];
 
 describe("required public wording", () => {
@@ -114,6 +149,32 @@ describe("forbidden claims on public surfaces", () => {
     "verified title",
     "verified owner",
     "verified boundary",
+    // Pricing claims. Paying HALISIA buys a report that names its sources. It
+    // does not buy certainty, protection, indemnity or a result, and no price
+    // may be justified by implying otherwise.
+    //
+    // These are narrow for the same reason the scout ones are. A bare
+    // "guarantee" would fail on scout-hub's own negation, "not ownership, a
+    // licensed survey or a guarantee of safety"; "refund" would fail on the
+    // administrator's refund-handling UI; "licensed" would fail on both
+    // scout-hub and the county comparison PDF, which correctly tell a reader
+    // to go to a licensed professional; and "indemnity" would fail on the
+    // pricing page's own line saying no price is an offer of one. Every
+    // needle below was checked against all twelve surfaces before being
+    // added, and none of them currently matches anywhere.
+    "guaranteed",
+    "we guarantee",
+    "money-back",
+    "100% accurate",
+    "fraud protection",
+    "protects you from",
+    "protect you from",
+    "risk-free",
+    "verified listing",
+    "verified seller",
+    "insured",
+    "accredited",
+    "no hidden fees",
   ];
   it.each(forbidden)("no surface says %s", (needle) => {
     const offenders = PUBLIC_SURFACES.filter(([, src]) => src.includes(needle)).map(([p]) => p);
@@ -237,5 +298,98 @@ describe("scout provenance is not laundered", () => {
     expect(SCOUT).not.toContain("!isNaN(Number(s.lat))");
     expect(SCOUT).not.toContain("!isNaN(Number(s.lng))");
     expect(SCOUT).toContain("Number.isFinite(n) ? n : undefined");
+  });
+});
+
+describe("a price never implies more than the product does", () => {
+  /**
+   * Every pricing surface has to keep saying that money changes nothing about
+   * what HALISIA can assert. These needles are matched against whitespace-
+   * flattened source because they are full sentences, and Prettier wraps all
+   * of them across two or three lines.
+   */
+  it("says on the pricing page that payment is not yet live", () => {
+    expect(flat(PRICING)).toMatch(
+      /Payment integration and live activation are pending/,
+    );
+  });
+
+  it("says that paying does not confirm title, ownership or boundary", () => {
+    expect(flat(PRICING)).toContain(
+      "Paying HALISIA does not confirm title, ownership or a surveyed boundary, and no plan or package changes that",
+    );
+  });
+
+  it("names the professionals a paid report does not replace", () => {
+    const f = flat(PRICING);
+    expect(f).toContain("not legal, valuation or engineering advice");
+    expect(f).toContain("does not replace a search at the registry");
+  });
+
+  it("disclaims insurance, indemnity and compensation by name", () => {
+    expect(flat(PRICING)).toContain(
+      "No price here is an offer of insurance, indemnity or compensation, and HALISIA does not underwrite a transaction",
+    );
+  });
+
+  it("keeps statutory and professional fees separate from HALISIA's own", () => {
+    const f = flat(PRICING);
+    expect(f).toContain("They are HALISIA's own prices");
+    expect(f).toContain("Advocates Remuneration Order");
+    expect(f).toContain("payable separately");
+  });
+
+  it("promises on every pricing surface that free stays free", () => {
+    for (const [path, src] of PRICING_SURFACES) {
+      if (path.endsWith("service-pricing.tsx")) continue; // in-context strip
+      expect(
+        flat(src).toLowerCase(),
+        `${path} must promise that free stays free`,
+      ).toContain("nothing that is free today becomes paid");
+    }
+    // and the landing page, which is where the promise is first made
+    expect(flat(LANDING).toLowerCase()).toContain(
+      "nothing that is free today becomes paid",
+    );
+  });
+
+  it("states that the USD price is not a conversion of the KES price", () => {
+    expect(flat(PLAN_TABLE)).toContain("not a live conversion");
+    expect(flat(PRICE_CARD)).toContain("not a live conversion");
+    expect(flat(PRICE_LIB).toLowerCase()).toContain("not a live conversion");
+  });
+});
+
+describe("prices are read from one table, never retyped", () => {
+  /**
+   * The landing page used to hard-code "KES 490" and "KES 1,150" in prose
+   * while the pricing page computed its figures. The two could disagree, and
+   * for a while they were going to: the cheapest report is no longer 490.
+   * Prices on any surface must come from the module, so a figure cannot be
+   * correct in one place and stale in another.
+   */
+  it("the landing page quotes no literal shilling amount", () => {
+    // Allows "KES 0" via priceKes(0); bans a typed-in figure like "KES 490".
+    expect(LANDING).not.toMatch(/KES\s*[0-9]{2,}/);
+  });
+
+  it("the landing page derives its figures from the pricing module", () => {
+    expect(LANDING).toContain("lowestOneOffKes");
+    expect(LANDING).toContain("lowestBundleKes");
+    expect(LANDING).toContain("lowestPaidPlanMonthlyKes");
+  });
+
+  it("the scout figure on the landing page comes from the scout quote", () => {
+    expect(LANDING).toContain("previewQuote");
+  });
+
+  it("no pricing surface hard-codes a shilling figure in prose", () => {
+    for (const [path, src] of PRICING_SURFACES) {
+      // The lib is the one place a number is allowed to be written down.
+      if (path === "src/lib/service-pricing.ts") continue;
+      expect(src, `${path} must not hard-code a KES figure`).not.toMatch(
+        /KES\s*[0-9]{2,}/,
+      );
+    }
   });
 });
