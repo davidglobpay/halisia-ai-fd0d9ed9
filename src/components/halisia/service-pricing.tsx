@@ -1,9 +1,26 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { SERVICE_PRICES, pricesForPath, priceKes } from "@/lib/service-pricing";
+import {
+  SERVICE_PRICES,
+  pricesForPath,
+  priceKes,
+  priceUsd,
+  type ServiceKind,
+} from "@/lib/service-pricing";
 
-export function ServicePricing({ all = false }: { all?: boolean }) {
+export function ServicePricing({
+  all = false,
+  only,
+}: {
+  all?: boolean;
+  /** Narrow the list to one kind. The pricing page passes "one_off" so the
+   * three subscription rows are not shown twice: PlanTable is the canonical
+   * place a subscription is described. In-context strips pass nothing, so a
+   * page such as /seller-tools still shows the plan that belongs to it. */
+  only?: ServiceKind;
+}) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const prices = all ? SERVICE_PRICES : pricesForPath(pathname);
+  const matched = all ? SERVICE_PRICES : pricesForPath(pathname);
+  const prices = only ? matched.filter((p) => p.kind === only) : matched;
   if (!all && pathname === "/financing")
     return (
       <section
@@ -46,8 +63,9 @@ export function ServicePricing({ all = false }: { all?: boolean }) {
           </span>
         </div>
         <p className="mt-2 text-sm text-muted-foreground">
-          Suggested launch prices in KES. No charge is collected here. Current
-          beta access stays free; paid benefits are activated only after
+          Suggested launch prices in KES, with a separately set USD price for
+          payment by card from outside Kenya. No charge is collected here.
+          Current beta access stays free; paid benefits are activated only after
           delivery and billing are ready.
         </p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -63,6 +81,11 @@ export function ServicePricing({ all = false }: { all?: boolean }) {
                   {p.unit}
                 </span>
               </p>
+              {typeof p.usd === "number" && (
+                <p className="text-xs text-muted-foreground">
+                  {priceUsd(p.usd)} {p.unit} paying by card from outside Kenya
+                </p>
+              )}
               <p className="mt-2 text-sm">{p.scope}</p>
               <p className="mt-2 text-xs text-muted-foreground">{p.free}</p>
               <p className="mt-2 text-xs">{p.readiness}</p>
@@ -79,8 +102,9 @@ export function ServicePricing({ all = false }: { all?: boolean }) {
         <p className="mt-4 text-xs text-muted-foreground">
           These are HALISIA service prices. Government charges, legal or survey
           fees, third-party work, travel and construction costs are separate.
-          Final tax-inclusive payable totals must be confirmed before payment
-          activation.
+          The USD figure is set separately and is not a live conversion of the
+          shilling figure. Final tax-inclusive payable totals must be confirmed
+          before payment activation.
         </p>
         {!all && (
           <Link
