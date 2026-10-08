@@ -37,6 +37,10 @@ import {
   lowestOneOffKes,
   lowestBundleKes,
   lowestPaidPlanMonthlyKes,
+  annualSavingUsd,
+  planIncludedValueKes,
+  planValueMultiple,
+  bundleSavingPct,
 } from "@/lib/service-pricing";
 import { SCOUT_TASKS, previewQuote } from "@/lib/scout-pricing";
 
@@ -330,6 +334,93 @@ describe("the Scout credit covers a Scout visit", () => {
       ...SCOUT_TASKS.map((t) => t.code),
     ];
     for (const s of SERVICE_PRICES) expect(codes).not.toContain(s.id);
+  });
+});
+
+describe("a plan's value claim is checkable against the report prices", () => {
+  /**
+   * Each paid consumer plan card says what its included reports would cost
+   * bought one at a time. That number is summed from `includedValue`, which
+   * names real one-off services, so a subscriber can check the claim against
+   * the price table on the same page.
+   *
+   * The field was first called `valueOf`, which is a property every object
+   * inherits from Object.prototype as a FUNCTION. On the three plans that set
+   * no value — Free, the API pilot and the institutional licence —
+   * `p.valueOf ?? []` therefore returned that inherited function rather than
+   * an empty array, and calling `.reduce` on it threw. The pricing page would
+   * have rendered a blank screen for every visitor. The first test below is
+   * that bug, named, so the shape cannot come back.
+   */
+  it("reports zero, rather than throwing, for a plan that includes no priced report", () => {
+    for (const id of ["free", "api", "institution"]) {
+      expect(() => planIncludedValueKes(plan(id))).not.toThrow();
+      expect(planIncludedValueKes(plan(id))).toBe(0);
+      expect(planValueMultiple(plan(id))).toBe(0);
+    }
+  });
+
+  it.each(
+    PLANS.flatMap((p) =>
+      (p.includedValue ?? []).map((v) => [p.id, v.serviceId, v.perMonth] as const),
+    ),
+  )("%s values %s, a real one-off, at a believable %i a month", (_id, serviceId, perMonth) => {
+    const s = serviceById(serviceId);
+    expect(s, `${serviceId} is not a service`).toBeDefined();
+    expect(s!.kind).toBe("one_off");
+    expect(Number.isInteger(perMonth)).toBe(true);
+    expect(perMonth).toBeGreaterThanOrEqual(1);
+    expect(perMonth).toBeLessThanOrEqual(10);
+  });
+
+  it.each([
+    ["plus", 490, 1.6],
+    ["pro", 7450, 7.5],
+    ["seller", 3480, 2.3],
+    ["studio", 8380, 1.7],
+  ] as const)("%s includes KES %i of reports, %sx its monthly price", (id, worth, mult) => {
+    expect(planIncludedValueKes(plan(id))).toBe(worth);
+    expect(Number(planValueMultiple(plan(id)).toFixed(1))).toBe(mult);
+    // a plan may never be advertised as worth less than it costs
+    expect(planIncludedValueKes(plan(id))).toBeGreaterThan(plan(id).monthlyKes);
+  });
+
+  it("one Land Passport report costs more than a month of Plus", () => {
+    // the headline consumer argument, and it has to stay arithmetically true
+    expect(serviceById("passport")!.amount).toBeGreaterThan(plan("plus").monthlyKes);
+  });
+});
+
+describe("a saving is shown in whichever currency is on screen", () => {
+  /**
+   * Both saving lines used to render only in KES, so a buyer paying by card
+   * from abroad — the person the diaspora package exists for — saw a price
+   * with no saving beside it.
+   */
+  it.each(soldMonthly.map((p) => [p.id, p] as const))(
+    "%s saves two months in dollars as well as shillings",
+    (_id, p) => {
+      expect(annualSavingUsd(p)).toBe(p.monthlyUsd * 2);
+      expect(annualSavingKes(p)).toBeGreaterThan(0);
+      expect(annualSavingUsd(p)).toBeGreaterThan(0);
+    },
+  );
+
+  it("offers no dollar saving on the free or quote-only plans", () => {
+    expect(annualSavingUsd(plan("free"))).toBe(0);
+    expect(annualSavingUsd(plan("institution"))).toBe(0);
+  });
+
+  it.each([
+    ["starter", 13],
+    ["buyer", 39],
+    ["builder", 45],
+    ["diaspora", 26],
+  ] as const)("package %s saves %i%%, the figure the dollar card shows", (id, pct) => {
+    expect(bundleSavingPct(bundle(id))).toBe(pct);
+    expect(bundleSavingPct(bundle(id))).toBe(
+      Math.round((bundleSavingKes(bundle(id)) / bundleListKes(bundle(id))) * 100),
+    );
   });
 });
 
