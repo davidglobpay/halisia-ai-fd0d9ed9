@@ -5,7 +5,11 @@ import {
   BUNDLES,
   bundleListKes,
   bundleSavingKes,
+  bundleSavingPct,
   annualSavingKes,
+  annualSavingUsd,
+  planIncludedValueKes,
+  planValueMultiple,
   serviceById,
   priceKes,
   priceUsd,
@@ -99,14 +103,19 @@ export function PlanTable() {
         Paying for a year costs ten months. USD prices are set separately for
         payment by card from outside Kenya and are not a live conversion of the
         shilling price; card settlement costs more than M-Pesa and the
-        difference is in the price rather than hidden in a rate. Payment
-        integration and live activation are pending, so no plan can be bought
-        yet and nothing that is free today becomes paid.
+        difference is in the price rather than hidden in a rate. Where a plan
+        includes reports, its card says what those reports cost bought on their
+        own, so you can check the plan against the one-off prices further down
+        this page rather than take the comparison on trust. Payment integration
+        and live activation are pending, so no plan can be bought yet and
+        nothing that is free today becomes paid.
       </p>
 
       <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {PLANS.map((p) => {
-          const saving = annualSavingKes(p);
+          const saving = kes ? annualSavingKes(p) : annualSavingUsd(p);
+          const worth = planIncludedValueKes(p);
+          const multiple = planValueMultiple(p);
           return (
             <article
               key={p.id}
@@ -136,9 +145,17 @@ export function PlanTable() {
                   {planUnit(p)}
                 </span>
               </p>
-              {term === "annual" && saving > 0 && kes && (
+              {term === "annual" && saving > 0 && (
                 <p className="text-xs text-primary">
-                  Saves {priceKes(saving)} against paying monthly
+                  Saves {kes ? priceKes(saving) : priceUsd(saving)} against
+                  paying monthly
+                </p>
+              )}
+              {worth > 0 && multiple > 0 && (
+                <p className="mt-2 rounded-lg bg-primary/10 px-3 py-2 text-xs">
+                  Includes up to {priceKes(worth)} of reports a month at the
+                  one-off prices below — {multiple.toFixed(1)}× the monthly
+                  price.
                 </p>
               )}
               <ul className="mt-4 grid gap-2 text-sm">
@@ -193,7 +210,7 @@ export function PlanTable() {
                 once
               </span>
             </p>
-            {kes && (
+            {kes ? (
               <p className="text-xs">
                 <span className="text-muted-foreground line-through">
                   {priceKes(bundleListKes(b))}
@@ -201,6 +218,11 @@ export function PlanTable() {
                 <span className="text-primary">
                   saves {priceKes(bundleSavingKes(b))}
                 </span>
+              </p>
+            ) : (
+              <p className="text-xs text-primary">
+                saves {bundleSavingPct(b)}% against buying the contents
+                separately
               </p>
             )}
             <ul className="mt-4 grid gap-2 text-sm">
