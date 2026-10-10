@@ -12,6 +12,9 @@ import {
   type StudioTopology,
 } from "@/components/halisia/design-studio/catalog";
 import { KitButton } from "@/components/halisia/ds/button";
+import { CostEstimator } from "@/components/halisia/cost-estimator";
+import { ConceptDrawings } from "@/components/halisia/concept-drawings";
+import { CONCEPT_USE, TOPOLOGY_SLOPE } from "@/lib/construction-cost";
 
 const searchSchema = z.object({
   lat: fallback(z.number(), NaN).default(NaN),
@@ -382,6 +385,43 @@ function DesignStudioPage() {
             </p>
           </section>
         </aside>
+      </div>
+      <div className="mx-auto mt-6 max-w-7xl space-y-4 px-4">
+        {(() => {
+          const storeys = generated
+            ? generatedFloors
+            : Math.max(1, Math.round(concept.authoredHeightM / 3.5));
+          const s = scalePct / 100;
+          const footprint = generated
+            ? widthM * depthM * 0.4
+            : concept.authoredFootprintSqm * s * s;
+          const ratio = Math.max(0.3, Math.min(3, widthM / Math.max(1, depthM)));
+          const bldW = Math.min(widthM * 0.9, Math.sqrt(footprint * ratio));
+          const bldD = Math.min(depthM * 0.9, footprint / Math.max(1, bldW));
+          const use = generated
+            ? generatedUse
+            : (CONCEPT_USE[concept.id] ?? "residential");
+          return (
+            <>
+              <CostEstimator
+                grossM2={bldW * bldD * storeys}
+                storeys={storeys}
+                use={use}
+                slopeAdjust={TOPOLOGY_SLOPE[topology]}
+                title={generated ? `Generated ${generatedUse} concept` : concept.name}
+                context={`${topology} topology assumption · ${widthM} × ${depthM} m simulation plot`}
+              />
+              <ConceptDrawings
+                plotW={widthM}
+                plotD={depthM}
+                bldW={bldW}
+                bldD={bldD}
+                storeys={storeys}
+                title={concept.name}
+              />
+            </>
+          );
+        })()}
       </div>
     </main>
   );

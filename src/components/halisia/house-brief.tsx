@@ -415,6 +415,13 @@ export function HouseBrief({
             </div>
           )}
 
+          <CostEstimator
+            grossM2={study.grossM2}
+            storeys={study.storeysRequested}
+            use={q.purpose === "mixed" ? "mixed" : "residential"}
+            title="Architectural brief"
+          />
+
           <details className="rounded-xl border border-white/10 bg-white/5 p-3">
             <summary className="cursor-pointer list-none text-xs font-medium">
               <Building2 className="mr-1 inline h-3.5 w-3.5 text-accent" aria-hidden="true" />
