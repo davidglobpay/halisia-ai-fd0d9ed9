@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as CompareLocationsRouteImport } from './routes/compare-locations'
@@ -23,6 +24,7 @@ import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as ModelLabRouteImport } from './routes/model-lab'
 import { Route as PassportRouteImport } from './routes/passport'
+import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as ReportRouteImport } from './routes/report'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SpatialRouteImport } from './routes/spatial'
@@ -64,6 +66,11 @@ const IndexRoute = IndexRouteImport.update({
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -124,6 +131,11 @@ const ModelLabRoute = ModelLabRouteImport.update({
 const PassportRoute = PassportRouteImport.update({
   id: '/passport',
   path: '/passport',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ReportRoute = ReportRouteImport.update({
@@ -299,6 +311,7 @@ const ApiPublicHooksPulseRefreshRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/compare': typeof CompareRoute
   '/compare-locations': typeof CompareLocationsRoute
@@ -311,6 +324,7 @@ export interface FileRoutesByFullPath {
   '/mcp': typeof McpRoute
   '/model-lab': typeof ModelLabRoute
   '/passport': typeof PassportRoute
+  '/pricing': typeof PricingRoute
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/spatial': typeof SpatialRoute
@@ -347,6 +361,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/compare': typeof CompareRoute
   '/compare-locations': typeof CompareLocationsRoute
@@ -358,6 +373,7 @@ export interface FileRoutesByTo {
   '/mcp': typeof McpRoute
   '/model-lab': typeof ModelLabRoute
   '/passport': typeof PassportRoute
+  '/pricing': typeof PricingRoute
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/spatial': typeof SpatialRoute
@@ -396,6 +412,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/compare': typeof CompareRoute
   '/compare-locations': typeof CompareLocationsRoute
@@ -408,6 +425,7 @@ export interface FileRoutesById {
   '/mcp': typeof McpRoute
   '/model-lab': typeof ModelLabRoute
   '/passport': typeof PassportRoute
+  '/pricing': typeof PricingRoute
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/spatial': typeof SpatialRoute
@@ -446,6 +464,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/auth'
     | '/compare'
     | '/compare-locations'
@@ -458,6 +477,7 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/model-lab'
     | '/passport'
+    | '/pricing'
     | '/report'
     | '/reset-password'
     | '/spatial'
@@ -494,6 +514,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/auth'
     | '/compare'
     | '/compare-locations'
@@ -505,6 +526,7 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/model-lab'
     | '/passport'
+    | '/pricing'
     | '/report'
     | '/reset-password'
     | '/spatial'
@@ -542,6 +564,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/admin'
     | '/auth'
     | '/compare'
     | '/compare-locations'
@@ -554,6 +577,7 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/model-lab'
     | '/passport'
+    | '/pricing'
     | '/report'
     | '/reset-password'
     | '/spatial'
@@ -592,6 +616,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
   CompareRoute: typeof CompareRoute
   CompareLocationsRoute: typeof CompareLocationsRoute
@@ -604,6 +629,7 @@ export interface RootRouteChildren {
   McpRoute: typeof McpRoute
   ModelLabRoute: typeof ModelLabRoute
   PassportRoute: typeof PassportRoute
+  PricingRoute: typeof PricingRoute
   ReportRoute: typeof ReportRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SpatialRoute: typeof SpatialRoute
@@ -636,6 +662,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -720,6 +753,13 @@ declare module '@tanstack/react-router' {
       path: '/passport'
       fullPath: '/passport'
       preLoaderRoute: typeof PassportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/report': {
@@ -1012,6 +1052,7 @@ const MarketplaceRouteWithChildren = MarketplaceRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
   CompareRoute: CompareRoute,
   CompareLocationsRoute: CompareLocationsRoute,
@@ -1024,6 +1065,7 @@ const rootRouteChildren: RootRouteChildren = {
   McpRoute: McpRoute,
   ModelLabRoute: ModelLabRoute,
   PassportRoute: PassportRoute,
+  PricingRoute: PricingRoute,
   ReportRoute: ReportRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SpatialRoute: SpatialRoute,
