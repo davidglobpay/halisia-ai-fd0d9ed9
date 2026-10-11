@@ -5,6 +5,11 @@ import { z } from "zod";
 import { AlertTriangle, ArrowLeft, Box, Eye, EyeOff, RefreshCw } from "lucide-react";
 import { StudioViewer } from "@/components/halisia/design-studio/studio-viewer";
 import {
+  CAMERA_PRESETS,
+  type StudioViewerApi,
+} from "@/components/halisia/design-studio/studio-viewer.internal";
+import { RenderExportPanel, XrStatus } from "@/components/halisia/design-studio/studio-export";
+import {
   STUDIO_CONCEPTS,
   STUDIO_DISCLAIMER,
   validSimulationDimension,
@@ -88,6 +93,7 @@ function DesignStudioPage() {
     "residential",
   );
   const [generatedFloors, setGeneratedFloors] = useState(3);
+  const [api, setApi] = useState<StudioViewerApi | null>(null);
   const [viewerState, setViewerState] = useState({ loading: true, error: null as string | null });
   const concept = useMemo(
     () => STUDIO_CONCEPTS.find((item) => item.id === conceptId) ?? STUDIO_CONCEPTS[0],
@@ -163,6 +169,7 @@ function DesignStudioPage() {
               fitToken={fitToken}
               generated={generated ? { use: generatedUse, floors: generatedFloors } : null}
               onState={setViewerState}
+              onApi={setApi}
             />
           ) : (
             <div className="grid min-h-[52vh] place-items-center p-6 text-center text-sm text-destructive">
@@ -374,6 +381,27 @@ function DesignStudioPage() {
             </div>
           </section>
 
+          <section aria-label="Camera views" className="space-y-2">
+            <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              Camera views
+            </h2>
+            <div className="grid grid-cols-4 gap-1.5">
+              {CAMERA_PRESETS.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  disabled={!api}
+                  data-testid={`studio-view-${p.id}`}
+                  onClick={() => api?.setView(p.id)}
+                  className="min-h-11 rounded-lg border border-foreground/15 px-1 text-[11px] font-medium hover:border-primary/50 disabled:opacity-50"
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </section>
+          <RenderExportPanel api={api} name={generated ? `generated-${generatedUse}` : concept.id} />
+          <XrStatus />
           <section className="border-t border-foreground/10 pt-4 text-xs leading-relaxed text-muted-foreground">
             <h2 className="font-semibold uppercase tracking-[0.18em] text-foreground">
               Evidence boundary
@@ -417,7 +445,8 @@ function DesignStudioPage() {
                 bldW={bldW}
                 bldD={bldD}
                 storeys={storeys}
-                title={concept.name}
+                topology={topology}
+                title={generated ? `Generated ${generatedUse} concept` : concept.name}
               />
             </>
           );

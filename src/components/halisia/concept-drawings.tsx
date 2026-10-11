@@ -173,7 +173,7 @@ export function ConceptDrawings({ plotW, plotD, bldW, bldD, storeys, title, topo
             "Geotechnical investigation required before any foundation design.",
             "Sizes are indicative only. A licensed structural engineer must design and certify.",
           ].map((t, i) => (
-            <text key={i} x="12" y={30 + i * 30} fontSize="8.5" fill={i >= 5 ? "#B3261E" : INK}>{t}</text>
+            <text key={i} x="12" y={30 + i * 30} fontSize="7" fill={i >= 5 ? "#B3261E" : INK}>{t}</text>
           ))}
         </Frame>
         <Frame id="isometric" title="Isometric (aerial)" scale="schematic">
