@@ -2,7 +2,7 @@
  * Public construction market references. These are NOT live prices or
  * county quotations. The January 2026 ranges below were published by
  * Goldstay Research and must not be attributed to PPRA or KNBS.
- * PPRA reference guides cover sampled towns; KNBS CIPI is an INDEX,
+ * PPRA September 2026 guide excludes construction materials; KNBS CIPI is an INDEX,
  * not a retail price list. Never infer a 47-county quote from either.
  */
 export type MaterialPrice = {
@@ -54,9 +54,9 @@ export const CONSTRUCTION_MATERIALS: readonly MaterialPrice[] = [...BENCHMARKS, 
 
 export const MARKET_SOURCES = [
   {
-    label: "PPRA market price reference guides (September and June 2026)",
+    label: "PPRA September 2026 market reference guide (non-construction categories)",
     url: "https://ppra.go.ke/market-price-index/",
-    note: "Published sampled-town prices; check product specifications before quoting.",
+    note: "September survey covered cleaning, ICT, food, petroleum, pharmaceuticals and stationery, NOT construction materials; not a source for the material prices above.",
   },
   {
     label: "KNBS Construction Input Price Index, Q2 2026",
