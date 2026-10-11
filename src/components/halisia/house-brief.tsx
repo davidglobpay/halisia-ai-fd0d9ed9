@@ -1,4 +1,5 @@
 import { OutputTools, OutputIcon } from "@/components/halisia/output-tools";
+import { CostEstimator } from "@/components/halisia/cost-estimator";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Building2, CheckCircle2, Info, Layers, Minus, Plus, XCircle } from "lucide-react";
 import { MapView } from "@/components/halisia/map-view";
