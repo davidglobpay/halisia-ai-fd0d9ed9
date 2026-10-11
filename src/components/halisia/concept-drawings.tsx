@@ -7,7 +7,35 @@ import { Download } from "lucide-react";
  */
 export const DRAWING_LABEL = "CONCEPTUAL – NOT FOR CONSTRUCTION – NOT CERTIFIED";
 
-type Props = { plotW: number; plotD: number; bldW: number; bldD: number; storeys: number; title: string };
+type Props = {
+  plotW: number;
+  plotD: number;
+  bldW: number;
+  bldD: number;
+  storeys: number;
+  title: string;
+  topology?: "level" | "gentle-slope" | "terraced";
+};
+
+/** Non-certified foundation assumption by user-selected topology. */
+export function foundationAssumption(topology: Props["topology"] = "level"): string {
+  if (topology === "terraced")
+    return "Stepped strip / pad footings on cut terraces with retaining walls (assumption)";
+  if (topology === "gentle-slope")
+    return "Strip footings stepped with the fall; cut-and-fill platform (assumption)";
+  return "Strip or pad footings on level platform (assumption)";
+}
+
+function Dim({ x1, y1, x2, y2, label }: { x1: number; y1: number; x2: number; y2: number; label: string }) {
+  return (
+    <g>
+      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={GOLD} strokeWidth="0.7" />
+      <line x1={x1} y1={y1 - 3} x2={x1} y2={y1 + 3} stroke={GOLD} strokeWidth="0.7" />
+      <line x1={x2} y1={y2 - 3} x2={x2} y2={y2 + 3} stroke={GOLD} strokeWidth="0.7" />
+      <text x={(x1 + x2) / 2} y={y1 - 3} fontSize="7" fill={INK} textAnchor="middle">{label}</text>
+    </g>
+  );
+}
 
 const INK = "#102D1A";
 const GREEN = "#147B35";
@@ -68,7 +96,8 @@ function Frame({ id, title, scale, children }: { id: string; title: string; scal
   );
 }
 
-export function ConceptDrawings({ plotW, plotD, bldW, bldD, storeys, title }: Props) {
+export function ConceptDrawings({ plotW, plotD, bldW, bldD, storeys, title, topology = "level" }: Props) {
+  const slopePct = topology === "terraced" ? 12 : topology === "gentle-slope" ? 4 : 0;
   const fl = 3.2;
   const H = Math.max(1, storeys) * fl;
   // Site plan
@@ -111,6 +140,8 @@ export function ConceptDrawings({ plotW, plotD, bldW, bldD, storeys, title }: Pr
           <rect x={200 - (bldW * sS) / 2} y={py + (plotD * sS - bldD * sS) / 2} width={bldW * sS} height={bldD * sS} fill={GREEN} fillOpacity="0.25" stroke={GREEN} />
           <text x={px} y={py + plotD * sS + 12} fontSize="8" fill={INK}>{`Plot ${plotW} × ${plotD} m (simulation input)`}</text>
           <text x="380" y="30" fontSize="10" fill={INK}>N↑</text>
+          <Dim x1={200 - (bldW * sS) / 2} y1={py + (plotD * sS - bldD * sS) / 2 - 4} x2={200 + (bldW * sS) / 2} y2={py + (plotD * sS - bldD * sS) / 2 - 4} label={`${bldW.toFixed(1)} m`} />
+          {slopePct > 0 ? <text x={px + 4} y={py + 12} fontSize="7" fill={INK}>{`Fall ≈ ${slopePct}% (assumed, ${topology})`}</text> : null}
         </Frame>
         <Frame id="floor-plan" title="Floor plan (bay grid)" scale={`1 px ≈ ${(1 / pS).toFixed(2)} m`}>
           <rect x={bx} y={by} width={bldW * pS} height={bldD * pS} fill="none" stroke={INK} strokeWidth="2" />
@@ -120,6 +151,7 @@ export function ConceptDrawings({ plotW, plotD, bldW, bldD, storeys, title }: Pr
           {Array.from({ length: rows - 1 }).map((_, i) => (
             <line key={`r${i}`} x1={bx} y1={by + ((i + 1) * bldD * pS) / rows} x2={bx + bldW * pS} y2={by + ((i + 1) * bldD * pS) / rows} stroke={INK} strokeWidth="0.6" />
           ))}
+          <Dim x1={bx} y1={by + bldD * pS + 22} x2={bx + bldW * pS} y2={by + bldD * pS + 22} label={`${bldW.toFixed(1)} m`} />
           <text x={bx} y={by + bldD * pS + 12} fontSize="8" fill={INK}>{`${cols} × ${rows} bays · ${(bldW * bldD).toFixed(0)} m² per floor`}</text>
         </Frame>
         <Frame id="elevation-front" title="Front / back elevation" scale="schematic">{elev(bldW)}</Frame>
@@ -130,6 +162,19 @@ export function ConceptDrawings({ plotW, plotD, bldW, bldD, storeys, title }: Pr
             const s = Math.min(360 / bldD, 240 / (H + 2));
             return <line key={f} x1={(400 - bldD * s) / 2} x2={(400 + bldD * s) / 2} y1={270 - f * fl * s} y2={270 - f * fl * s} stroke={INK} strokeWidth="2" />;
           })}
+        </Frame>
+        <Frame id="structural" title="Structural concept notes" scale="annotation">
+          {[
+            `Grid: ${cols} × ${rows} bays ≈ ${(bldW / cols).toFixed(1)} × ${(bldD / rows).toFixed(1)} m (column positions at grid nodes)`,
+            `Frame: RC columns/beams; slabs ${storeys > 1 ? "150–200 mm" : "ground-bearing 150 mm"} (assumption)`,
+            `Floors: ${storeys} @ ${fl} m = ${H.toFixed(1)} m to roof`,
+            `Ground: ${topology}${slopePct ? `, fall ≈ ${slopePct}%` : ""} — user-selected, not surveyed`,
+            `Foundation: ${foundationAssumption(topology)}`,
+            "Geotechnical investigation required before any foundation design.",
+            "Sizes are indicative only. A licensed structural engineer must design and certify.",
+          ].map((t, i) => (
+            <text key={i} x="12" y={30 + i * 30} fontSize="8.5" fill={i >= 5 ? "#B3261E" : INK}>{t}</text>
+          ))}
         </Frame>
         <Frame id="isometric" title="Isometric (aerial)" scale="schematic">
           <polygon points={pts([[0, 0, 0], [bldW, 0, 0], [bldW, bldD, 0], [0, bldD, 0]])} fill="#E7E0D2" stroke={INK} />
