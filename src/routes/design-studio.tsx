@@ -398,7 +398,10 @@ function DesignStudioPage() {
               ))}
             </div>
           </section>
-          <RenderExportPanel api={api} name={generated ? `generated-${generatedUse}` : concept.id} />
+          <RenderExportPanel
+            api={api}
+            name={generated ? `generated-${generatedUse}` : concept.id}
+          />
           <XrStatus />
           <section className="border-t border-foreground/10 pt-4 text-xs leading-relaxed text-muted-foreground">
             <h2 className="font-semibold uppercase tracking-[0.18em] text-foreground">
@@ -424,9 +427,7 @@ function DesignStudioPage() {
           const ratio = Math.max(0.3, Math.min(3, widthM / Math.max(1, depthM)));
           const bldW = Math.min(widthM * 0.9, Math.sqrt(footprint * ratio));
           const bldD = Math.min(depthM * 0.9, footprint / Math.max(1, bldW));
-          const use = generated
-            ? generatedUse
-            : (CONCEPT_USE[concept.id] ?? "residential");
+          const use = generated ? generatedUse : (CONCEPT_USE[concept.id] ?? "residential");
           return (
             <>
               <CostEstimator

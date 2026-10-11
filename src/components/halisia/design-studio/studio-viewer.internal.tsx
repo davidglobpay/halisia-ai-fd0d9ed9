@@ -301,7 +301,8 @@ async function captureFrame(engine: Engine, width: number, height: number): Prom
     canvas.width = width;
     canvas.height = height;
     const ctx = canvas.getContext("2d");
-    if (!ctx || canvas.width !== width) throw new Error("The browser could not allocate this image size.");
+    if (!ctx || canvas.width !== width)
+      throw new Error("The browser could not allocate this image size.");
     const img = ctx.createImageData(width, height);
     const row = width * 4;
     for (let y = 0; y < height; y += 1) {
@@ -309,7 +310,10 @@ async function captureFrame(engine: Engine, width: number, height: number): Prom
     }
     ctx.putImageData(img, 0, 0);
     return await new Promise<Blob>((resolve, reject) =>
-      canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Image encoding failed."))), "image/png"),
+      canvas.toBlob(
+        (b) => (b ? resolve(b) : reject(new Error("Image encoding failed."))),
+        "image/png",
+      ),
     );
   } finally {
     renderer.setRenderTarget(null);

@@ -19,4 +19,3 @@ export const CAMERA_PRESETS: { id: CameraPreset; label: string }[] = [
   { id: "eye-level", label: "Eye level" },
   { id: "worms-eye", label: "Worm's eye" },
 ];
-

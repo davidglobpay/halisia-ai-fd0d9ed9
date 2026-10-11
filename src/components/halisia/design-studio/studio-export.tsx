@@ -106,7 +106,10 @@ export function XrStatus() {
           ? "Open the Model Lab to place these buildings in AR or walk through in VR."
           : "This browser cannot start AR/VR. The Model Lab offers a 3D viewer and phone model-viewer fallback."}
       </p>
-      <Link to="/model-lab" className="inline-flex min-h-11 items-center font-semibold text-primary underline">
+      <Link
+        to="/model-lab"
+        className="inline-flex min-h-11 items-center font-semibold text-primary underline"
+      >
         Open Model Lab
       </Link>
     </section>
