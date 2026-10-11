@@ -24,6 +24,7 @@ import { LeafletLayersMap } from "@/components/halisia/leaflet-layers-map";
 import { CountyEvidenceStrip } from "@/components/halisia/county-evidence-strip";
 import { generateCountyProfilePdf } from "@/lib/pdf-county-profile";
 import { SaveButton } from "@/components/halisia/save-button";
+import { CountyConstructionMarket } from "@/components/halisia/construction-market";
 
 /**
  * County profile page.
@@ -121,6 +122,7 @@ function CountyError() {
 
 const SECTION_NAV = [
   { id: "sec-record", label: "The record" },
+  { id: "sec-material-costs", label: "Building costs" },
   { id: "sec-map", label: "Location & map" },
   { id: "sec-admin", label: "Administration" },
   { id: "sec-economy", label: "Economy" },
@@ -265,6 +267,8 @@ function CountyPage() {
             <ProfileFact label="Wards" value={String(facts.wards)} />
           </div>
         </header>
+
+        <CountyConstructionMarket countyName={facts.name} />
 
         {/* STICKY IN-PAGE NAV */}
         <nav aria-label="County profile sections" className="sticky top-16 z-20 mt-6 -mx-2 px-2">
