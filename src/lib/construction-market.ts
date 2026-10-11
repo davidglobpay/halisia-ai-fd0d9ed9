@@ -20,7 +20,7 @@ export type MaterialPrice = {
 const RESEARCH = "Goldstay Research, 13 January 2026";
 const RESEARCH_URL = "https://goldstay.co.ke/insights/cement-steel-finishing-prices-kenya-2026";
 
-export const CONSTRUCTION_MATERIALS: readonly MaterialPrice[] = [
+const BENCHMARKS: MaterialPrice[] = [
   { id: "cement", label: "Cement 50 kg", unit: "bag", low: 700, high: 850 },
   { id: "stone", label: "Machine-cut stone", unit: "piece", low: 50, high: 75 },
   { id: "steel", label: "Rebar Y12", unit: "12 m bar", low: 1400, high: 1750 },
@@ -33,7 +33,9 @@ export const CONSTRUCTION_MATERIALS: readonly MaterialPrice[] = [
   source: RESEARCH,
   sourceUrl: RESEARCH_URL,
   coverage: "national-indicative" as const,
-})).concat([
+}));
+
+const QUOTE_ONLY: MaterialPrice[] = [
   { id: "precast", label: "Precast concrete panels", unit: "supplier specification" },
   { id: "eps", label: "EPS wall panels", unit: "supplier specification" },
   { id: "skilled-labour", label: "Skilled labour", unit: "day" },
