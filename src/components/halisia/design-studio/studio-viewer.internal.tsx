@@ -23,26 +23,8 @@ export type StudioViewerProps = {
   onState?: (state: { loading: boolean; error: string | null }) => void;
 };
 
-export type CameraPreset =
-  | "isometric"
-  | "front"
-  | "back"
-  | "left"
-  | "right"
-  | "aerial"
-  | "eye-level"
-  | "worms-eye";
-
-export const CAMERA_PRESETS: { id: CameraPreset; label: string }[] = [
-  { id: "isometric", label: "Isometric" },
-  { id: "front", label: "Front" },
-  { id: "back", label: "Back" },
-  { id: "left", label: "Left" },
-  { id: "right", label: "Right" },
-  { id: "aerial", label: "Aerial" },
-  { id: "eye-level", label: "Eye level" },
-  { id: "worms-eye", label: "Worm's eye" },
-];
+import type { CameraPreset } from "./camera-presets";
+export type { CameraPreset };
 
 export type RenderCapability = { maxWidth: number; maxHeight: number; supports8k: boolean };
 

@@ -4,10 +4,8 @@ import { useMemo, useState } from "react";
 import { z } from "zod";
 import { AlertTriangle, ArrowLeft, Box, Eye, EyeOff, RefreshCw } from "lucide-react";
 import { StudioViewer } from "@/components/halisia/design-studio/studio-viewer";
-import {
-  CAMERA_PRESETS,
-  type StudioViewerApi,
-} from "@/components/halisia/design-studio/studio-viewer.internal";
+import { CAMERA_PRESETS } from "@/components/halisia/design-studio/camera-presets";
+import type { StudioViewerApi } from "@/components/halisia/design-studio/studio-viewer.internal";
 import { RenderExportPanel, XrStatus } from "@/components/halisia/design-studio/studio-export";
 import {
   STUDIO_CONCEPTS,
