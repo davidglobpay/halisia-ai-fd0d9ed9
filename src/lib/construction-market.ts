@@ -48,7 +48,9 @@ const QUOTE_ONLY: MaterialPrice[] = [
   source: null,
   sourceUrl: null,
   coverage: "quote-required" as const,
-})));
+}));
+
+export const CONSTRUCTION_MATERIALS: readonly MaterialPrice[] = [...BENCHMARKS, ...QUOTE_ONLY];
 
 export const MARKET_SOURCES = [
   {
