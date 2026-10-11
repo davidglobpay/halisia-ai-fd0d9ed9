@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { FeatureRail } from "@/components/halisia/feature-rail";
+import { ConstructionMarketTicker } from "@/components/halisia/construction-market";
 import { z } from "zod";
 import { fallback } from "@tanstack/zod-adapter";
 import { motion } from "framer-motion";
@@ -214,6 +215,7 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
       </section>
 
       {/* HERO MAP — interactive map / satellite / Street View → Land Passport */}
+      <ConstructionMarketTicker />
       <HeroMap />
 
       {/* TOOLS RAIL — the paid entry points, straight after the search bar */}
