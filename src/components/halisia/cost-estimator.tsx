@@ -6,8 +6,11 @@ import {
   estimateCosts,
   kes,
   kesShort,
+  TOPOLOGY_SLOPE,
   type UseClass,
 } from "@/lib/construction-cost";
+
+type Topo = keyof typeof TOPOLOGY_SLOPE;
 
 export function CostEstimator(props: {
   grossM2: number;
@@ -18,22 +21,31 @@ export function CostEstimator(props: {
   context?: string;
 }) {
   const [busy, setBusy] = useState(false);
+  const [topo, setTopo] = useState<Topo>("level");
+  const ownTopology = props.slopeAdjust === undefined;
+  const slope = ownTopology ? TOPOLOGY_SLOPE[topo] : props.slopeAdjust;
   const rows = useMemo(
     () =>
       estimateCosts({
         grossM2: props.grossM2,
         storeys: props.storeys,
         use: props.use,
-        slopeAdjust: props.slopeAdjust,
+        slopeAdjust: slope,
       }),
-    [props.grossM2, props.storeys, props.use, props.slopeAdjust],
+    [props.grossM2, props.storeys, props.use, slope],
   );
 
   async function exportPdf() {
     setBusy(true);
     try {
       const { downloadCostPdf } = await import("@/lib/pdf-cost-estimate");
-      const name = await downloadCostPdf({ ...props, rows });
+      const name = await downloadCostPdf({
+        ...props,
+        context: ownTopology
+          ? [props.context, `${topo} topology assumption (x${slope})`].filter(Boolean).join(" · ")
+          : props.context,
+        rows,
+      });
       toast.success(`Downloaded ${name}`);
     } catch (e) {
       toast.error(`Could not build the estimate PDF: ${(e as Error).message}`);
@@ -66,6 +78,21 @@ export function CostEstimator(props: {
           {busy ? "Preparing…" : "Download estimate PDF"}
         </button>
       </div>
+      {ownTopology ? (
+        <label className="flex items-center gap-2 text-xs">
+          Ground assumption
+          <select
+            data-testid="cost-topology"
+            value={topo}
+            onChange={(e) => setTopo(e.target.value as Topo)}
+            className="min-h-11 rounded-lg border border-white/15 bg-background px-2"
+          >
+            <option value="level">Level</option>
+            <option value="gentle-slope">Gentle slope (+5%)</option>
+            <option value="terraced">Terraced (+12%)</option>
+          </select>
+        </label>
+      ) : null}
       <p className="text-[11px] text-muted-foreground">
         Estimate · planning range, not a quote or engineering design. Confidence: low–moderate.
       </p>

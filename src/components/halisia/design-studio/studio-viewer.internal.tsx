@@ -19,7 +19,20 @@ export type StudioViewerProps = {
   showLandscape: boolean;
   fitToken: number;
   generated: { use: "residential" | "commercial" | "mixed"; floors: number } | null;
+  onApi?: (api: StudioViewerApi | null) => void;
   onState?: (state: { loading: boolean; error: string | null }) => void;
+};
+
+import type { CameraPreset } from "./camera-presets";
+export type { CameraPreset };
+
+export type RenderCapability = { maxWidth: number; maxHeight: number; supports8k: boolean };
+
+export type StudioViewerApi = {
+  setView: (preset: CameraPreset) => void;
+  capability: () => RenderCapability;
+  /** Renders offscreen at the requested size; rejects if the GPU cannot. */
+  capture: (width: number, height: number) => Promise<Blob>;
 };
 
 type Engine = {
@@ -196,6 +209,123 @@ function frameSite(engine: Engine, widthM: number, depthM: number) {
   frame(engine);
 }
 
+export function presetPosition(
+  preset: CameraPreset,
+  centre: THREE.Vector3,
+  radius: number,
+  height: number,
+): { position: THREE.Vector3; target: THREE.Vector3 } {
+  const r = Math.max(radius * 2.2, 8);
+  const t = centre.clone();
+  const p = new THREE.Vector3();
+  switch (preset) {
+    case "front":
+      p.set(t.x, t.y + height * 0.1, t.z + r);
+      break;
+    case "back":
+      p.set(t.x, t.y + height * 0.1, t.z - r);
+      break;
+    case "left":
+      p.set(t.x - r, t.y + height * 0.1, t.z);
+      break;
+    case "right":
+      p.set(t.x + r, t.y + height * 0.1, t.z);
+      break;
+    case "aerial":
+      p.set(t.x + 0.01, t.y + r * 1.4, t.z + 0.01);
+      break;
+    case "eye-level":
+      t.y = 1.6;
+      p.set(t.x + r * 0.35, 1.6, t.z + r * 0.9);
+      break;
+    case "worms-eye":
+      t.y = Math.max(height * 0.7, 2);
+      p.set(t.x + r * 0.2, 0.35, t.z + r * 0.55);
+      break;
+    default:
+      p.set(t.x + r * 0.7, t.y + r * 0.7, t.z + r * 0.7);
+  }
+  return { position: p, target: t };
+}
+
+function applyPreset(engine: Engine, preset: CameraPreset) {
+  const bounds = new THREE.Box3().setFromObject(engine.content);
+  if (bounds.isEmpty()) return;
+  const sphere = bounds.getBoundingSphere(new THREE.Sphere());
+  const size = bounds.getSize(new THREE.Vector3());
+  const { position, target } = presetPosition(preset, sphere.center, sphere.radius, size.y);
+  engine.camera.position.copy(position);
+  engine.camera.near = 0.05;
+  engine.camera.far = Math.max(5000, sphere.radius * 20);
+  engine.camera.updateProjectionMatrix();
+  engine.controls.minDistance = 0.5;
+  engine.controls.target.copy(target);
+  engine.controls.update();
+}
+
+function renderCapability(engine: Engine): RenderCapability {
+  const gl = engine.renderer.getContext();
+  const maxRb = Number(gl.getParameter(gl.MAX_RENDERBUFFER_SIZE)) || 0;
+  const dims = gl.getParameter(gl.MAX_VIEWPORT_DIMS) as Int32Array | number[] | null;
+  const maxTex = engine.renderer.capabilities.maxTextureSize || 0;
+  const maxWidth = Math.min(maxRb, maxTex, dims ? Number(dims[0]) : maxRb);
+  const maxHeight = Math.min(maxRb, maxTex, dims ? Number(dims[1]) : maxRb);
+  return { maxWidth, maxHeight, supports8k: maxWidth >= 7680 && maxHeight >= 4320 };
+}
+
+async function captureFrame(engine: Engine, width: number, height: number): Promise<Blob> {
+  const cap = renderCapability(engine);
+  if (width > cap.maxWidth || height > cap.maxHeight) {
+    throw new Error(
+      `This device's graphics renderer supports at most ${cap.maxWidth} × ${cap.maxHeight} px.`,
+    );
+  }
+  const { renderer, scene, camera } = engine;
+  const target = new THREE.WebGLRenderTarget(width, height, {
+    samples: Math.min(4, renderer.capabilities.maxSamples || 0),
+    colorSpace: THREE.SRGBColorSpace,
+  });
+  const prevAspect = camera.aspect;
+  const prevShadow = engine.sun.shadow.mapSize.x;
+  try {
+    engine.sun.shadow.mapSize.set(4096, 4096);
+    engine.sun.shadow.map?.dispose();
+    engine.sun.shadow.map = null;
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+    renderer.setRenderTarget(target);
+    renderer.render(scene, camera);
+    const pixels = new Uint8Array(width * height * 4);
+    renderer.readRenderTargetPixels(target, 0, 0, width, height, pixels);
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx || canvas.width !== width)
+      throw new Error("The browser could not allocate this image size.");
+    const img = ctx.createImageData(width, height);
+    const row = width * 4;
+    for (let y = 0; y < height; y += 1) {
+      img.data.set(pixels.subarray((height - 1 - y) * row, (height - y) * row), y * row);
+    }
+    ctx.putImageData(img, 0, 0);
+    return await new Promise<Blob>((resolve, reject) =>
+      canvas.toBlob(
+        (b) => (b ? resolve(b) : reject(new Error("Image encoding failed."))),
+        "image/png",
+      ),
+    );
+  } finally {
+    renderer.setRenderTarget(null);
+    target.dispose();
+    engine.sun.shadow.mapSize.set(prevShadow, prevShadow);
+    engine.sun.shadow.map?.dispose();
+    engine.sun.shadow.map = null;
+    camera.aspect = prevAspect;
+    camera.updateProjectionMatrix();
+  }
+}
+
 export default function StudioViewerInternal(props: StudioViewerProps) {
   const {
     concept,
@@ -210,7 +340,10 @@ export default function StudioViewerInternal(props: StudioViewerProps) {
     fitToken,
     generated,
     onState,
+    onApi,
   } = props;
+  const onApiRef = useRef(onApi);
+  onApiRef.current = onApi;
   const hostRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<Engine | null>(null);
   const requestRef = useRef(0);
@@ -248,6 +381,11 @@ export default function StudioViewerInternal(props: StudioViewerProps) {
     const engine = { renderer, scene, camera, controls, content, sun, hemi };
     engineRef.current = engine;
     applyEnvironment(engine, "day");
+    onApiRef.current?.({
+      setView: (preset) => applyPreset(engine, preset),
+      capability: () => renderCapability(engine),
+      capture: (w, h) => captureFrame(engine, w, h),
+    });
 
     const resize = () => {
       const width = host.clientWidth || 640;
@@ -267,6 +405,7 @@ export default function StudioViewerInternal(props: StudioViewerProps) {
     });
     return () => {
       requestRef.current += 1;
+      onApiRef.current?.(null);
       ro.disconnect();
       renderer.setAnimationLoop(null);
       controls.dispose();
