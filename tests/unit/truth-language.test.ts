@@ -84,6 +84,9 @@ const COST_PANEL = read("src/components/halisia/cost-estimator.tsx");
 const DRAWINGS = read("src/components/halisia/concept-drawings.tsx");
 const COST_LIB = read("src/lib/construction-cost.ts");
 const COST_PDF = read("src/lib/pdf-cost-estimate.ts");
+const MARKET = read("src/routes/marketplace.index.tsx");
+const PARTNER_LISTING = read("src/routes/partner-listing.$id.tsx");
+const PARTNER_CARDS = read("src/components/halisia/partner-listings.tsx");
 
 const PUBLIC_SURFACES: Array<[string, string]> = [
   ["src/routes/index.tsx", LANDING],
@@ -106,6 +109,11 @@ const PUBLIC_SURFACES: Array<[string, string]> = [
   ["src/components/halisia/concept-drawings.tsx", DRAWINGS],
   ["src/lib/construction-cost.ts", COST_LIB],
   ["src/lib/pdf-cost-estimate.ts", COST_PDF],
+  // The marketplace sells placement and earns referral fees, so it is a money
+  // surface even though it publishes no price of its own.
+  ["src/routes/marketplace.index.tsx", MARKET],
+  ["src/routes/partner-listing.$id.tsx", PARTNER_LISTING],
+  ["src/components/halisia/partner-listings.tsx", PARTNER_CARDS],
 ];
 
 const PRICING_SURFACES: Array<[string, string]> = [
@@ -533,5 +541,110 @@ describe("a cost range never becomes a price, a drawing never becomes certified"
         servicePrice,
       );
     }
+  });
+});
+
+describe("money that changes what a buyer sees is disclosed to that buyer", () => {
+  /**
+   * Two mechanisms on the marketplace move money without publishing a price.
+   *
+   * A seller can pay KES 500 for a "featured" listing, and listProperties
+   * orders by that column before anything else — so the payment buys rank. The
+   * badge said only "Featured", which reads as an editorial pick. The word
+   * "sponsored" existed solely inside the scope string of the price table,
+   * which a buyer browsing the grid never opens.
+   *
+   * Separately, the partner tables carry a whole referral-commission engine —
+   * agreements with percentage rates, commissions, clawbacks, payouts — and
+   * the click-out records an attribution row. The listing page's only sentence
+   * on the subject was a conditional negative: it said HALISIA earns nothing
+   * "unless a commercial agreement exists", which tells a reader they might be
+   * being monetised without telling them whether they are.
+   *
+   * Both are disclosure obligations to the person who did not choose to pay,
+   * so both are pinned here rather than left to copy review.
+   */
+
+  it("calls a paid placement sponsored, not featured", () => {
+    expect(MARKET).toContain("Sponsored");
+    expect(MARKET).toContain(
+      'title="Paid placement. This seller paid to appear above other listings."',
+    );
+    // the old badge was a line containing nothing but the word
+    expect(MARKET).not.toMatch(/^\s*Featured\s*$/m);
+  });
+
+  it("tells the buyer that paying moves a listing up the page", () => {
+    expect(flat(MARKET)).toContain(
+      "Listings marked Sponsored are paid placements and appear above the rest; paying changes where a listing sits, never what HALISIA says about it.",
+    );
+  });
+
+  it("states whether HALISIA is paid by a partner, rather than that it might be", () => {
+    // Both branches must exist: a conditional negative on its own is not a
+    // disclosure, and the commercial branch has to name who pays the fee.
+    expect(PARTNER_LISTING).toContain(
+      "HALISIA has a commercial agreement with that company and may be paid a referral fee if you transact with them. That fee is paid by the company, not added to your price, and it does not affect what this page says about the property.",
+    );
+    expect(PARTNER_LISTING).toContain(
+      "HALISIA has no commercial agreement with that company and is paid nothing if you contact them.",
+    );
+  });
+
+  it("says the click-out is recorded, before it is clicked", () => {
+    // Previously the only mention of attribution appeared when it FAILED.
+    expect(flat(PARTNER_LISTING)).toContain(
+      "Opening the link below records that you came from HALISIA, so the company can attribute the enquiry.",
+    );
+  });
+});
+
+describe("naming a payment method never implies a checkout", () => {
+  /**
+   * The app says in at least six places that no charge is collected and that
+   * activation is pending. Listing M-Pesa, card and crypto alongside those
+   * sentences reads like a checkout unless the page says it is not one, so the
+   * disclaimer travels with the list rather than sitting elsewhere on the page.
+   */
+
+  it("keeps the not-live sentence attached to the rails", () => {
+    expect(PRICE_LIB).toContain(
+      "No checkout exists in the application yet and no charge can be collected. These are the methods HALISIA intends to accept, not methods you can use today.",
+    );
+    expect(PRICING).toContain("PAYMENT_NOT_LIVE");
+  });
+
+  it("does not promise that any rail works today", () => {
+    for (const claim of [
+      "pay now",
+      "Pay now",
+      "checkout is open",
+      "start your subscription",
+      "Buy now",
+    ]) {
+      expect(PRICING, `pricing page must not say ${claim}`).not.toContain(claim);
+      expect(PLAN_TABLE, `plan table must not say ${claim}`).not.toContain(claim);
+    }
+  });
+
+  it("still says activation is pending on the pricing page", () => {
+    expect(flat(PRICING)).toMatch(
+      /Payment integration and live activation are pending/,
+    );
+  });
+});
+
+describe("a quote that could not load is not presented as a quote", () => {
+  /**
+   * previewQuote falls back to the constants in scout-pricing.ts when the
+   * catalogue request fails, so the whole table still renders with plausible
+   * figures while an error sits beside it. Submission was already blocked; what
+   * was missing was telling the buyer that the numbers in front of them are
+   * defaults.
+   */
+  it("labels the fallback figures on the scout form", () => {
+    expect(flat(SCOUT)).toContain(
+      "These figures are the built-in pilot defaults, not the current catalogue, which did not load. They are not your quote.",
+    );
   });
 });
