@@ -149,7 +149,9 @@ function MarketplaceIndex() {
           <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
             Buy, sell, rent, lease, invest, develop and connect. Every listing shows its source and
             how complete its details are. Open one with coordinates to read the site's terrain, air
-            quality and nearby amenities — and what HALISIA cannot assess.
+            quality and nearby amenities — and what HALISIA cannot assess. Listings marked
+            Sponsored are paid placements and appear above the rest; paying changes where a
+            listing sits, never what HALISIA says about it.
           </p>
         </div>
         <Link
@@ -735,8 +737,13 @@ function ListingCard({
             </div>
           )}
           {p.featured && (
-            <span className="absolute top-2 left-2 rounded-full bg-amber-glow/90 text-black text-[10px] uppercase tracking-widest px-2 py-0.5">
-              Featured
+            /* A paid placement, and it sorts above everything else. "Featured"
+               alone read like an editorial pick; the seller bought it. */
+            <span
+              title="Paid placement. This seller paid to appear above other listings."
+              className="absolute top-2 left-2 rounded-full bg-amber-glow/90 text-black text-[10px] uppercase tracking-widest px-2 py-0.5"
+            >
+              Sponsored
             </span>
           )}
         </div>

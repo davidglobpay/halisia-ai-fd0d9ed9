@@ -9,6 +9,9 @@ import {
   lowestOneOffKes,
   lowestBundleKes,
   lowestPaidPlanMonthlyKes,
+  PAYMENT_RAILS,
+  PAYMENT_PROCESSOR,
+  PAYMENT_NOT_LIVE,
   type PlanId,
 } from "@/lib/service-pricing";
 import { supabase } from "@/integrations/supabase/client";
@@ -246,6 +249,35 @@ function PricingPage() {
         >
           Build a Scout quote
         </Link>
+      </section>
+
+      <section className="mx-4 mt-10" aria-label="How you will be able to pay">
+        <div className="glass rounded-2xl border border-primary/20 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="font-display text-xl font-semibold">How you will pay</h2>
+            <span className="rounded-full bg-accent/15 px-3 py-1 text-xs font-medium">
+              Not live yet
+            </span>
+          </div>
+          <p className="mt-2 text-sm text-muted-foreground">{PAYMENT_NOT_LIVE}</p>
+          <ul className="mt-4 grid gap-3 sm:grid-cols-3">
+            {PAYMENT_RAILS.map((r) => (
+              <li
+                key={r.id}
+                className="rounded-xl border border-border bg-background/70 p-4"
+              >
+                <p className="text-sm font-semibold">{r.label}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{r.note}</p>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-4 text-xs text-muted-foreground">
+            Payments will be processed by {PAYMENT_PROCESSOR}. A Scout visit stays
+            an exception: it is quoted and settled in shillings against verified
+            payment instructions that an administrator confirms by hand, and that
+            path is switched off until those instructions are configured.
+          </p>
+        </div>
       </section>
 
       <section className="mx-4 mt-10" aria-label="What a price here is not">
