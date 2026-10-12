@@ -465,6 +465,44 @@ export const BUNDLES: readonly Bundle[] = [
   },
 ] as const;
 
+/**
+ * How a buyer will be able to pay once collection is switched on, and the
+ * processor that will handle it.
+ *
+ * None of this is wired. There is no payment SDK in the project, no checkout
+ * route, and CURRENT_PLAN_ID below is a constant nothing reads. The list is
+ * published anyway because "can I actually pay you from here" is the first
+ * question a buyer outside Kenya asks, and leaving it unanswered until launch
+ * costs more than saying plainly what is planned and that it is not live.
+ *
+ * Every surface that renders this must keep saying the second part. A list of
+ * accepted methods reads like a checkout unless the page says it is not one.
+ */
+export const PAYMENT_RAILS = [
+  {
+    id: "mpesa",
+    label: "M-Pesa",
+    note: "All M-Pesa options, including for buyers paying from outside Kenya.",
+  },
+  {
+    id: "card",
+    label: "Card",
+    note: "Billed in the USD price, which is set separately from the shilling price.",
+  },
+  {
+    id: "crypto",
+    label: "Bitcoin and other crypto",
+    note: "For buyers without a Kenyan bank account or a card that works here.",
+  },
+] as const;
+
+/** The processor the rails above will run through. Not yet integrated. */
+export const PAYMENT_PROCESSOR = "Globpay";
+
+/** One sentence, reused wherever the rails are shown. */
+export const PAYMENT_NOT_LIVE =
+  "No checkout exists in the application yet and no charge can be collected. These are the methods HALISIA intends to accept, not methods you can use today.";
+
 /** The plan this browser currently has. Payment integration replaces this
  * constant with the plan recorded against the signed-in account. Nothing in
  * the app gates on it today: every tool that is free now stays reachable. */
