@@ -390,6 +390,15 @@ function ScoutPage() {
           </label>
         </div>
 
+        {catalogQ.error && (
+          /* previewQuote falls back to the constants in scout-pricing.ts when
+             the catalogue will not load, so every figure below still renders.
+             Without this line the buyer reads stale defaults as their quote. */
+          <p className="rounded-xl border border-amber-glow/40 px-3 py-2 text-xs text-amber-glow">
+            These figures are the built-in pilot defaults, not the current
+            catalogue, which did not load. They are not your quote.
+          </p>
+        )}
         <dl className="grid grid-cols-2 gap-1 rounded-xl border border-white/10 p-3 text-sm">
           <dt>Scout work (base + activities)</dt>
           <dd className="text-right">{kes(q.scoutWorkKes)}</dd>
