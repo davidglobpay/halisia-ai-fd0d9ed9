@@ -28,6 +28,23 @@
  * implying the product does more than it does — that paying buys certainty,
  * protection or a guarantee. It buys a report that names its sources. The
  * pricing group below holds that line.
+ *
+ * The construction-cost and concept-drawing surfaces were added last, after a
+ * Lovable agent run put a budget panel and a downloadable KES estimate PDF on
+ * /design-studio — a public route, reachable with no account. The copy it
+ * wrote was careful, but nothing held it there: a later edit could have
+ * dropped "not a quote" and turned a planning range into a price. The group at
+ * the end of this file pins the exact disclaimer strings.
+ *
+ * Those strings are matched against raw source, so their characters matter
+ * more than they look. DRAWING_LABEL separates its three clauses with EN
+ * DASHES (U+2013), while the conceptual-only sentence beside it uses an EM
+ * DASH (U+2014). The cost panel on screen writes "low–moderate" with an en
+ * dash and "not a quote" in lower case; the PDF writes "low-moderate" with an
+ * ASCII hyphen and "Not a quote" capitalised, because jsPDF's Latin-1 encoding
+ * forced a different character set on that file. One shared needle would pass
+ * on one surface and silently leave the other unguarded, so they are asserted
+ * separately and deliberately.
  */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -61,6 +78,12 @@ const PRICING = read("src/routes/pricing.tsx");
 const PLAN_TABLE = read("src/components/halisia/plan-table.tsx");
 const PRICE_CARD = read("src/components/halisia/service-pricing.tsx");
 const PRICE_LIB = read("src/lib/service-pricing.ts");
+const STUDIO = read("src/routes/design-studio.tsx");
+const STUDIO_CATALOG = read("src/components/halisia/design-studio/catalog.ts");
+const COST_PANEL = read("src/components/halisia/cost-estimator.tsx");
+const DRAWINGS = read("src/components/halisia/concept-drawings.tsx");
+const COST_LIB = read("src/lib/construction-cost.ts");
+const COST_PDF = read("src/lib/pdf-cost-estimate.ts");
 
 const PUBLIC_SURFACES: Array<[string, string]> = [
   ["src/routes/index.tsx", LANDING],
@@ -75,6 +98,14 @@ const PUBLIC_SURFACES: Array<[string, string]> = [
   ["src/components/halisia/plan-table.tsx", PLAN_TABLE],
   ["src/components/halisia/service-pricing.tsx", PRICE_CARD],
   ["src/lib/service-pricing.ts", PRICE_LIB],
+  // Added after a Lovable agent run shipped a budget panel and a downloadable
+  // KES estimate PDF onto /design-studio, which is public and needs no account.
+  ["src/routes/design-studio.tsx", STUDIO],
+  ["src/components/halisia/design-studio/catalog.ts", STUDIO_CATALOG],
+  ["src/components/halisia/cost-estimator.tsx", COST_PANEL],
+  ["src/components/halisia/concept-drawings.tsx", DRAWINGS],
+  ["src/lib/construction-cost.ts", COST_LIB],
+  ["src/lib/pdf-cost-estimate.ts", COST_PDF],
 ];
 
 const PRICING_SURFACES: Array<[string, string]> = [
@@ -389,6 +420,117 @@ describe("prices are read from one table, never retyped", () => {
       if (path === "src/lib/service-pricing.ts") continue;
       expect(src, `${path} must not hard-code a KES figure`).not.toMatch(
         /KES\s*[0-9]{2,}/,
+      );
+    }
+  });
+});
+
+describe("a cost range never becomes a price, a drawing never becomes certified", () => {
+  /**
+   * Everything below is on a public route. An anonymous visitor can open
+   * /design-studio, read a KES construction budget and download it as a
+   * branded PDF without an account, so every one of these sentences is public
+   * copy and not an internal note.
+   *
+   * The numbers on that surface are construction rates per square metre
+   * (roughly 30,000 to 58,000) and never HALISIA's own service prices (190 to
+   * 9,900). The two sets do not overlap, and the test below keeps it that way
+   * by naming the service prices that must not appear beside a KES sign.
+   */
+
+  it("keeps the studio's headline disclaimer, which lives in the catalogue", () => {
+    // The route renders {STUDIO_DISCLAIMER}; the sentence itself is in
+    // catalog.ts, so checking only design-studio.tsx would protect nothing.
+    expect(STUDIO_CATALOG).toContain(
+      "Not a surveyed parcel, planning approval, architectural drawing, flood assessment or construction specification.",
+    );
+  });
+
+  it("says on the studio page that the massing is deterministic, not generated art", () => {
+    expect(STUDIO).toContain(
+      "Deterministic massing only. It is not an AI-generated architectural drawing.",
+    );
+  });
+
+  it("calls the cost panel a planning range rather than a quote", () => {
+    // U+00B7 middle dot, U+2013 en dash in "low–moderate". The PDF spells both
+    // differently; see the next test.
+    expect(COST_PANEL).toContain(
+      "Estimate · planning range, not a quote or engineering design. Confidence: low–moderate.",
+    );
+  });
+
+  it("repeats the disclaimer inside the downloadable PDF, in that file's own characters", () => {
+    // ASCII hyphen in "low-moderate" and a capitalised "Not a quote", because
+    // jsPDF is Latin-1 only and this file is sanitised for it.
+    expect(COST_PDF).toContain(
+      "Not a quote, BoQ or engineering design.",
+    );
+    expect(COST_PDF).toContain("Confirm with a quantity surveyor and engineer.");
+  });
+
+  it("states in the cost module that the rates are not quotes", () => {
+    // Contiguous on one comment line; "verified supplier prices" wraps and is
+    // deliberately not matched across the break.
+    expect(COST_LIB).toContain(
+      "planning ranges, NOT quotes, bills of quantities or verified",
+    );
+    expect(COST_LIB).toContain("quantity surveyor");
+  });
+
+  it("keeps the cost assumptions that qualify every figure", () => {
+    for (const assumption of [
+      "Indicative planning ranges for mid-2020s Kenyan markets, not supplier quotes or a bill of quantities.",
+      "A 10% contingency is shown separately and should be confirmed with a quantity surveyor.",
+      "Not a preliminary engineering design. Structural adequacy of any system needs a licensed engineer.",
+    ]) {
+      expect(COST_LIB).toContain(assumption);
+    }
+  });
+
+  it("stamps every concept drawing as conceptual and uncertified", () => {
+    // Both separators are U+2013 EN DASH. An em dash here would be a different
+    // string and this assertion is the reason to keep them straight.
+    expect(DRAWINGS).toContain(
+      'export const DRAWING_LABEL = "CONCEPTUAL – NOT FOR CONSTRUCTION – NOT CERTIFIED";',
+    );
+  });
+
+  it("says in words, not only in a stamp, that the drawings are not certified", () => {
+    // U+2014 EM DASH here. Prettier wraps before "drawing.", so the needle
+    // stops at the end of the source line rather than at the end of the
+    // sentence.
+    expect(DRAWINGS).toContain(
+      "Conceptual only — not a certified architectural, structural or planning",
+    );
+  });
+
+  it("sends structural and ground questions to the people who can answer them", () => {
+    expect(DRAWINGS).toContain(
+      "Geotechnical investigation required before any foundation design.",
+    );
+    expect(DRAWINGS).toContain(
+      "Sizes are indicative only. A licensed structural engineer must design and certify.",
+    );
+  });
+
+  it("never prints a HALISIA service price on the construction surfaces", () => {
+    // Construction rates and service prices are different things from
+    // different modules. A service price appearing here would mean the two had
+    // been confused. Anchored on the currency prefix: bare 500 and 300 are
+    // legitimate on these surfaces as a rounding step, a metre cap and an SVG
+    // viewBox.
+    const servicePrice =
+      /KES\s*(190|290|490|690|790|990|1,?290|1,?490|2,?900|3,?000|9,?900)\b/;
+    for (const [path, src] of [
+      ["src/routes/design-studio.tsx", STUDIO],
+      ["src/components/halisia/cost-estimator.tsx", COST_PANEL],
+      ["src/components/halisia/concept-drawings.tsx", DRAWINGS],
+      ["src/lib/construction-cost.ts", COST_LIB],
+      ["src/lib/pdf-cost-estimate.ts", COST_PDF],
+    ] as Array<[string, string]>) {
+      expect(src, `${path} must not quote a HALISIA service price`).not.toMatch(
+        servicePrice,
       );
     }
   });
