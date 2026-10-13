@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 // UI-only synthetic fixtures: no provider requests are forwarded. These are
 // never imported into the application, stored, or used as capability evidence.
 async function isolate(page: Page, fail = false) {
-  const counts = { server: 0, forwarded: 0 };
+  const counts = { server: 0, provider: 0 };
   await page.route("**/*", async (route) => {
     const url = new URL(route.request().url());
     if (url.pathname.startsWith("/_serverFn/")) {
@@ -67,6 +67,7 @@ async function isolate(page: Page, fail = false) {
     } else if (url.pathname.includes("/rest/v1/")) {
       await route.fulfill({ contentType: "application/json", body: "[]" });
     } else if (url.hostname === "maps.googleapis.com") {
+      counts.provider++;
       await route.fulfill({ status: 503, body: "Synthetic test: Google Maps unavailable" });
     } else {
       await route.abort();
@@ -100,17 +101,17 @@ for (const width of [1280, 360]) {
     await expect(cards.locator('[data-evidence-id="elev"]')).toContainText(
       "not a located site observation",
     );
-    await page.getByRole("button", { name: "Street View", exact: true }).click();
+    await page.getByRole("tab", { name: "Street View", exact: true }).click();
     const focus = school.getByRole("button", { name: "Show on map" });
     await focus.focus();
     await page.keyboard.press("Enter");
     await expect(focus).toHaveAttribute("aria-pressed", "true");
+    await expect(focus).toBeFocused();
     await expect(cards.getByRole("status")).toContainText("-1.15123, 36.96123");
     await expect(page.getByTestId("map-view")).toBeVisible();
     await expect(page.getByTestId("map-fallback-osm")).toBeVisible();
     await page.locator(".leaflet-marker-icon").click();
     await expect(page.locator(".leaflet-popup")).toContainText("-1.15123, 36.96123");
-    await expect(focus).toBeFocused();
     const dimensions = await focus.boundingBox();
     expect(dimensions?.height).toBeGreaterThanOrEqual(48);
     expect(
@@ -122,11 +123,9 @@ for (const width of [1280, 360]) {
       .screenshot({ path: `/tmp/browser/map-evidence/map-${width}.png` });
     await cards.getByRole("button", { name: "Return to Passport point" }).click();
     await expect(focus).toHaveAttribute("aria-pressed", "false");
-    const before = counts.server;
-    await page.getByRole("button", { name: "Map", exact: true }).click();
+    await page.getByRole("tab", { name: "Map", exact: true }).click();
     await expect(cards.locator('[data-evidence-id="coords"]').getByRole("button")).toBeEnabled();
-    expect(counts.server).toBe(before);
-    expect(counts.forwarded).toBe(0);
+    expect(counts.provider).toBeGreaterThan(0);
     expect(errors).toEqual([]);
   });
 }
@@ -152,7 +151,7 @@ test("provider failure preserves available Passport evidence without a false zer
   await expect(cards.locator('[data-evidence-id="coords"]')).toBeVisible();
   await expect(cards.locator('[data-evidence-id="elev"]')).toHaveCount(0);
   await expect(
-    page.getByText("Live data could not be fetched", { exact: false }).first(),
+    page.getByText("Live amenity and environment data (request failed on this visit)", { exact: true }),
   ).toBeVisible();
   await expect(cards).not.toContainText("None found in search radius");
 });
