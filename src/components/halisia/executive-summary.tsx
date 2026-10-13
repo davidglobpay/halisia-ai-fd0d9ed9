@@ -137,12 +137,13 @@ export function ExecutiveSummary({
     const s = new Set<string>();
     narrative?.dataSources?.forEach((x) => s.add(x));
     if (intel?.categories) s.add("Google Places");
-    if (intel?.elevation) s.add("Open-Topo-Data (ASTER 30m)");
+    // Only name a source that actually answered for THIS point. These four
+    // were added unconditionally, so the panel credited OpenStreetMap,
+    // Open-Meteo, SoilGrids and KNBS on every location whether or not they
+    // were queried — and credited Open-Topo-Data for an elevation that comes
+    // from the Google Elevation API.
+    if (intel?.elevation) s.add("Google Maps Elevation API");
     if (intel?.airQuality) s.add("Google Air Quality API");
-    s.add("OpenStreetMap");
-    s.add("Open-Meteo");
-    s.add("SoilGrids v2.0");
-    s.add("KNBS · IEBC");
     return Array.from(s);
   }, [narrative, intel]);
 
@@ -259,11 +260,12 @@ export function ExecutiveSummary({
           )}
           {technical && (
             <div className="mt-2 text-[11px] text-muted-foreground">
-              Livability composite ={" "}
+              Livability is an amenity count, not a composite. It is{" "}
               <code className="text-foreground/90">
-                (investment + infrastructure + environment) / 3
+                min(95, 40 + 4 × (schools + health + shops + transit within 3 km))
               </code>
-              , calibrated against amenity-density and elevation signals.
+              . It is calibrated against nothing, and a higher number means more
+              places were mapped nearby, not that anywhere is better to live.
             </div>
           )}
         </Section>
@@ -339,8 +341,9 @@ export function ExecutiveSummary({
           </div>
           {technical && (
             <div className="mt-2 text-[11px] text-muted-foreground leading-relaxed">
-              Confidence blends dataset coverage (weight 0.5), signal freshness (0.3) and
-              cross-source agreement (0.2). Last updated{" "}
+              Confidence here is a coverage count, not a blend: the share of
+              three checks that returned anything. There is no freshness term
+              and no cross-source agreement term. Last updated{" "}
               {new Date(narrative.lastUpdated).toLocaleString()}.
             </div>
           )}

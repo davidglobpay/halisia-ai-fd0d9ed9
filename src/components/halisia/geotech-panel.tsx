@@ -191,7 +191,6 @@ function TerrainSection({ g }: { g: GeotechIntel }) {
         <Stat label="Roughness" value={`${t.roughness} m`} />
         <Stat label="Landform" value={t.landform} />
       </div>
-      <TerrainProfile g={g} />
       <div className="mt-2 flex items-center gap-2 text-[11px] text-muted-foreground">
         <span className="rounded-full bg-white/5 px-2 py-0.5">
           Erosion: <b className={eroseTone(t.erosionRisk)}>{t.erosionRisk}</b>
@@ -210,58 +209,6 @@ function eroseTone(l: "Low" | "Moderate" | "High") {
     : l === "Moderate"
       ? "text-amber-glow"
       : "text-emerald-glow";
-}
-
-function TerrainProfile({ g }: { g: GeotechIntel }) {
-  const t = g.terrain;
-  // Simple synthetic transect from min to max lifting through mean.
-  const points = useMemo(() => {
-    const n = 24;
-    const base = t.minM;
-    const amp = t.reliefM;
-    return Array.from({ length: n + 1 }, (_, i) => {
-      const x = i / n;
-      const bump = Math.sin(x * Math.PI) * (t.landform === "valley" ? -0.4 : 0.7);
-      const wave = Math.sin(x * Math.PI * 3 + t.aspectDeg) * 0.15;
-      const y = base + amp * Math.max(0, 0.35 + bump + wave);
-      return { x, y };
-    });
-  }, [t]);
-  const W = 320,
-    H = 90;
-  const yMin = Math.min(...points.map((p) => p.y));
-  const yMax = Math.max(...points.map((p) => p.y));
-  const span = Math.max(1, yMax - yMin);
-  const path = points
-    .map((p, i) => {
-      const px = p.x * W;
-      const py = H - ((p.y - yMin) / span) * (H - 10) - 4;
-      return `${i === 0 ? "M" : "L"}${px.toFixed(1)},${py.toFixed(1)}`;
-    })
-    .join(" ");
-  const fill = `${path} L${W},${H} L0,${H} Z`;
-  return (
-    <div className="mt-3 rounded-xl border border-white/5 bg-black/40 p-2">
-      <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">
-        Terrain profile transect
-      </div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-24">
-        <defs>
-          <linearGradient id="terrainFill" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0" stopColor="hsl(var(--accent) / 0.6)" />
-            <stop offset="1" stopColor="hsl(var(--accent) / 0.05)" />
-          </linearGradient>
-        </defs>
-        <path d={fill} fill="url(#terrainFill)" />
-        <path d={path} stroke="hsl(var(--accent))" strokeWidth={1.4} fill="none" />
-      </svg>
-      <div className="flex justify-between text-[10px] text-muted-foreground tabular-nums">
-        <span>{t.minM} m</span>
-        <span>along ~1 km transect</span>
-        <span>{t.maxM} m</span>
-      </div>
-    </div>
-  );
 }
 
 function SoilSection({ layers }: { layers: SoilLayer[] }) {

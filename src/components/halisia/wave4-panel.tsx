@@ -449,9 +449,9 @@ function SourcesTab({ data }: { data: Wave4Intel }) {
         ))}
       </ul>
       <p className="text-[10px] text-muted-foreground leading-relaxed">
-        Live sources feed this dashboard on every search. Planned sources are wired through the
-        modular connector layer and can be enabled without a redesign, in line with the Kenya Data
-        Protection Act and applicable public-data terms.
+        Live sources feed this dashboard on every search. Planned sources are
+        not connected: no code queries them, nothing on this page uses them, and
+        listing them here is a statement of intent rather than of capability.
       </p>
     </div>
   );
