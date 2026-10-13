@@ -1,5 +1,11 @@
 # Current work
 
+## Isolated map evidence foundation
+- [ ] Apply uploaded additions with design-system controls and truthful metadata
+- [ ] Connect actual Passport findings to the existing map and correct reference-layer labels
+- [ ] Validate formatting, lint, unit tests, deterministic desktop/mobile browser flow and preview build
+- [ ] Withhold publication and acceptance until the complete release gate passes
+
 - [x] Remove persistent floating search and decorative perpetual glow motion
 - [x] Add evidence-linked AI summary to Land Passport PDF
 - [x] Add parcel-context Design Studio with five concept scenes and generated massing
