@@ -151,7 +151,9 @@ test("provider failure preserves available Passport evidence without a false zer
   await expect(cards.locator('[data-evidence-id="coords"]')).toBeVisible();
   await expect(cards.locator('[data-evidence-id="elev"]')).toHaveCount(0);
   await expect(
-    page.getByText("Live amenity and environment data (request failed on this visit)", { exact: true }),
+    page.getByText("Live amenity and environment data (request failed on this visit)", {
+      exact: true,
+    }),
   ).toBeVisible();
   await expect(cards).not.toContainText("None found in search radius");
 });
