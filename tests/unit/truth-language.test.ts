@@ -94,6 +94,7 @@ const WAVE4 = read("src/components/halisia/wave4-panel.tsx");
 const GEOTECH_PANEL = read("src/components/halisia/geotech-panel.tsx");
 const GEOTECH_PDF = read("src/lib/geotech-pdf.ts");
 const PASSPORT_EVIDENCE = read("src/lib/passport-evidence.ts");
+const GEOTECH_FN = read("src/lib/geotech.functions.ts");
 
 const PUBLIC_SURFACES: Array<[string, string]> = [
   ["src/routes/index.tsx", LANDING],
@@ -784,6 +785,39 @@ describe("no figure is generated from a hash or a sine wave", () => {
     expect(GEOTECH_PDF).not.toContain("synthetic transect");
     expect(flat(GEOTECH_PDF)).toContain(
       "HALISIA does not sample a ground transect at this location, so no profile is drawn.",
+    );
+  });
+});
+
+describe("a failed elevation grid is a gap, not a flat site", () => {
+  /**
+   * When the ASTER request failed, the code substituted a flat 5x5 grid at
+   * 1000 m and fed it to terrainAnalysis, interpretGeology, estimateBedrock,
+   * groundwater and foundationGuidance. The user was then shown a complete
+   * geotechnical interpretation — slope, landform, bedrock depth, foundation
+   * recommendations and KES/m² cost bands — computed from ground nobody had
+   * measured, with nothing on screen saying so. The only signal was a lower
+   * confidence number, and a reader cannot tell 35 missing points from a
+   * genuinely flat site.
+   */
+
+  it("records whether the terrain was actually measured", () => {
+    expect(GEOTECH_FN).toContain("terrainMeasured: boolean;");
+    expect(GEOTECH_FN).toContain("const terrainMeasured = gridInfo != null;");
+    expect(GEOTECH_FN).toContain("terrainMeasured,");
+  });
+
+  it("withholds terrain figures on screen when it was not", () => {
+    expect(GEOTECH_PANEL).toContain("if (!g.terrainMeasured)");
+    expect(flat(GEOTECH_PANEL)).toContain(
+      "The ASTER 30 m elevation grid did not load for this point, so there is no measured ground here.",
+    );
+  });
+
+  it("withholds them in the PDF too, and claims no grid it did not read", () => {
+    expect(GEOTECH_PDF).toContain("g.terrainMeasured ?");
+    expect(flat(GEOTECH_PDF)).toContain(
+      "The ASTER 30 m elevation grid did not load for this point, so no terrain figure on this page is a measurement.",
     );
   });
 });
