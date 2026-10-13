@@ -89,6 +89,11 @@ const PARTNER_LISTING = read("src/routes/partner-listing.$id.tsx");
 const PARTNER_CARDS = read("src/components/halisia/partner-listings.tsx");
 const ROOT = read("src/routes/__root.tsx");
 const BUILD_INFO = read("src/lib/build-info.ts");
+const EXEC_SUMMARY = read("src/components/halisia/executive-summary.tsx");
+const WAVE4 = read("src/components/halisia/wave4-panel.tsx");
+const GEOTECH_PANEL = read("src/components/halisia/geotech-panel.tsx");
+const GEOTECH_PDF = read("src/lib/geotech-pdf.ts");
+const PASSPORT_EVIDENCE = read("src/lib/passport-evidence.ts");
 
 const PUBLIC_SURFACES: Array<[string, string]> = [
   ["src/routes/index.tsx", LANDING],
@@ -687,5 +692,98 @@ describe("the served page says which build it is", () => {
   it("keeps a build identifier to render", () => {
     expect(BUILD_INFO).toMatch(/export const BUILD_ID = "[^"]+";/);
     expect(BUILD_INFO).toMatch(/export const BUILD_NOTE =/);
+  });
+});
+
+describe("the app never describes a method it does not use", () => {
+  /**
+   * An audit of every per-location output found several statements that were
+   * not merely uncalibrated but untrue: the app described computations that
+   * existed nowhere in the codebase, and credited datasets it had not queried.
+   * A wrong number is a bug. A wrong description of how a number was produced
+   * is something a reader cannot detect at all, which is why these are pinned
+   * by their exact removed wording rather than by a general rule.
+   */
+
+  it("does not claim a livability composite that is really an amenity count", () => {
+    expect(EXEC_SUMMARY).not.toContain(
+      "(investment + infrastructure + environment) / 3",
+    );
+    expect(EXEC_SUMMARY).not.toContain("calibrated against amenity-density");
+  });
+
+  it("does not claim a confidence blend with terms the code does not have", () => {
+    expect(EXEC_SUMMARY).not.toContain("signal freshness");
+    expect(EXEC_SUMMARY).not.toContain("cross-source agreement (0.2)");
+  });
+
+  it("names only the sources that answered for this point", () => {
+    // These four were added unconditionally, so every location credited them
+    // whether or not they were queried.
+    for (const unconditional of [
+      's.add("OpenStreetMap")',
+      's.add("Open-Meteo")',
+      's.add("SoilGrids v2.0")',
+      's.add("KNBS · IEBC")',
+    ]) {
+      expect(EXEC_SUMMARY).not.toContain(unconditional);
+    }
+    // and the elevation shown comes from Google, not Open-Topo-Data
+    expect(EXEC_SUMMARY).not.toContain('s.add("Open-Topo-Data (ASTER 30m)")');
+  });
+
+  it("does not claim unqueried datasets are wired up", () => {
+    expect(WAVE4).not.toContain("modular connector layer");
+  });
+
+  it("attributes SoilGrids to ISRIC, which publishes it", () => {
+    expect(GEOTECH_PDF).not.toContain("FAO SoilGrids");
+    expect(GEOTECH_PDF).toContain("ISRIC SoilGrids");
+  });
+
+  it("does not claim a source for a lookup that does not run", () => {
+    // The nearest-water field is never populated; the row named OpenStreetMap
+    // as its source regardless.
+    expect(PASSPORT_EVIDENCE).toContain(
+      "No source — this lookup is not implemented",
+    );
+  });
+});
+
+describe("no figure is generated from a hash or a sine wave", () => {
+  /**
+   * The county surface was stripped of hash-derived metrics once, and the
+   * constant 43758.5453 was banned — but only in the three county modules. It
+   * reappeared in the geotechnical PDF, drawing a terrain profile from a hash
+   * of the coordinates beside real ASTER figures on a document people pay for.
+   * A separate sine wave did the same on screen, captioned "along ~1 km
+   * transect" with real elevation endpoints.
+   *
+   * The ban is therefore widened here beyond the county modules: wherever a
+   * surface draws ground, it must draw sampled ground or nothing.
+   */
+
+  const GROUND_SURFACES: Array<[string, string]> = [
+    ["src/lib/geotech-pdf.ts", GEOTECH_PDF],
+    ["src/components/halisia/geotech-panel.tsx", GEOTECH_PANEL],
+  ];
+
+  it.each(GROUND_SURFACES)("%s derives no shape from a coordinate hash", (_p, src) => {
+    expect(src).not.toContain("43758.5453");
+    expect(src).not.toContain("12.9898");
+    expect(src).not.toMatch(/Math\.sin\s*\(\s*seed/);
+  });
+
+  it("draws no synthetic transect on screen", () => {
+    expect(GEOTECH_PANEL).not.toContain("along ~1 km transect");
+    expect(GEOTECH_PANEL).not.toContain("Terrain profile transect");
+    expect(GEOTECH_PANEL).not.toContain("function TerrainProfile");
+  });
+
+  it("says in the PDF that no transect is sampled, rather than drawing one", () => {
+    expect(GEOTECH_PDF).not.toContain("synthetic transect");
+    expect(flat(GEOTECH_PDF)).toContain(
+      "HALISIA does not sample a ground transect at this location, so no profile is drawn.",
+    );
   });
 });
