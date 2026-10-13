@@ -2,10 +2,10 @@
 
 ## Isolated map evidence foundation
 
-- [ ] Apply uploaded additions with design-system controls and truthful metadata
-- [ ] Connect actual Passport findings to the existing map and correct reference-layer labels
-- [ ] Validate formatting, lint, unit tests, deterministic desktop/mobile browser flow and preview build
-- [ ] Withhold publication and acceptance until the complete release gate passes
+- [x] Apply uploaded additions with design-system controls and truthful metadata
+- [x] Connect actual Passport findings to the existing map and correct reference-layer labels
+- [x] Validate changed-file formatting/lint, all unit tests and preview build
+- [ ] Full release gate: blocked by unrelated repository formatting/lint drift; publication and acceptance withheld
 
 - [x] Remove persistent floating search and decorative perpetual glow motion
 - [x] Add evidence-linked AI summary to Land Passport PDF

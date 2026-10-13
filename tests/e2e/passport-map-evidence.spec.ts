@@ -123,7 +123,7 @@ for (const width of [1280, 360]) {
       .screenshot({ path: `/tmp/browser/map-evidence/map-${width}.png` });
     await cards.getByRole("button", { name: "Return to Passport point" }).click();
     await expect(focus).toHaveAttribute("aria-pressed", "false");
-    await page.getByRole("tab", { name: "Map", exact: true }).click();
+    await page.getByRole("tab", { name: "map", exact: true }).click();
     await expect(cards.locator('[data-evidence-id="coords"]').getByRole("button")).toBeEnabled();
     expect(counts.provider).toBeGreaterThan(0);
     expect(errors).toEqual([]);
