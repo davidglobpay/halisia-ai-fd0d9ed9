@@ -7,6 +7,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState, type ReactNode } from "react";
 import { ArrowLeft, Boxes, ChevronDown, Download, Loader2, Newspaper } from "lucide-react";
 import { MapView } from "@/components/halisia/map-view";
+import { MapEvidenceCards } from "@/components/halisia/map-evidence-cards";
+import { KitButton } from "@/components/halisia/ds/button";
+import { passportMapEvidence } from "@/lib/passport-map-evidence";
+import type { EvidencePosition } from "@/lib/map-evidence";
 import { StreetViewPanel } from "@/components/halisia/land-passport/street-view-panel";
 import { LocationStatusCard } from "@/components/halisia/land-passport/location-status";
 import { PassportLinks } from "@/components/halisia/land-passport/passport-links";
@@ -204,6 +208,9 @@ function PassportPage() {
   const fetchRev = useServerFn(reverseGeocode);
   const [mode, setMode] = useState<"map" | "satellite" | "street">("satellite");
   const [aiSummary, setAiSummary] = useState<PassportAiExport | null>(null);
+  const [mapFocus, setMapFocus] = useState<{ id: string; position: EvidencePosition; locationKey: string } | null>(null);
+  const locationKey = JSON.stringify([s.lat, s.lng, s.ref, s.source, s.status]);
+  useEffect(() => setMapFocus(null), [locationKey]);
   const ok = check.ok && check.lat != null && check.lng != null;
   const lat = check.lat ?? 0;
   const lng = check.lng ?? 0;
@@ -375,6 +382,11 @@ function PassportPage() {
     retrievedAt: openedAt || "This visit",
   });
   const byChapter = (id: ChapterId) => ev.items.filter((x) => x.chapter === id);
+  const mapEvidence = passportMapEvidence(ev.items, { lat, lng, intel });
+  const selected = mapFocus?.locationKey === locationKey
+    ? mapEvidence.find((item) => item.id === mapFocus.id && item.position != null)
+    : undefined;
+  const mapPoint = selected?.position ?? { lat, lng, accuracyM: null };
   const placeName =
     s.ref || s.label || revQ.data?.address || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
 
@@ -439,14 +451,32 @@ function PassportPage() {
             <StreetViewPanel lat={lat} lng={lng} className="absolute inset-0" />
           ) : (
             <MapView
-              center={{ lat, lng }}
+              center={mapPoint}
               zoom={STATUS_META[status].exact ? 17 : 14}
-              marker={{ lat, lng, label: STATUS_META[status].label }}
+              marker={{ ...mapPoint, label: selected?.label ?? STATUS_META[status].label }}
+              accuracyRadiusM={mapPoint.accuracyM}
               mapType={mode === "satellite" ? "hybrid" : "roadmap"}
               theme="light"
             />
           )}
         </div>
+      </div>
+
+      <div className="mt-4" data-testid="passport-map-evidence">
+        {selected && (
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <p role="status" className="text-xs text-muted-foreground">Map focus: {selected.label} · {mapPoint.lat}, {mapPoint.lng} · {mapPoint.accuracyM == null ? "Accuracy unavailable" : `Reported uncertainty: ${mapPoint.accuracyM} m`}</p>
+            <KitButton size="lg" onClick={() => setMapFocus(null)}>Return to Passport point</KitButton>
+          </div>
+        )}
+        <MapEvidenceCards
+          items={mapEvidence}
+          selectedId={selected?.id ?? null}
+          onFocus={(id, position) => {
+            setMapFocus({ id, position, locationKey });
+            if (mode === "street") setMode("map");
+          }}
+        />
       </div>
 
       <div className="mt-4 grid gap-3">

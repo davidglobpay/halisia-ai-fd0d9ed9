@@ -19,6 +19,9 @@ export type MapEvidence = {
   position: EvidencePosition | null;
   supports: string;
   limitations: string;
+  method?: string;
+  confidence?: string;
+  retrievedAt?: string | null;
 };
 export const EVIDENCE_CLASS_LABELS: Record<EvidenceClass, string> = {
   official_registry: "Official registry record",

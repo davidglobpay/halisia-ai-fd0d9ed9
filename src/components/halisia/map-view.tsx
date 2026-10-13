@@ -2,6 +2,7 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { AlertTriangle, Loader2, RefreshCw } from "lucide-react";
 import { loadGoogleMaps, resetGoogleMapsLoader } from "@/lib/google-maps-loader";
+import { MAP_CONTEXT_LAYERS } from "@/lib/map-evidence";
 
 const MapFallback = lazy(() => import("./map-fallback.internal"));
 
@@ -263,7 +264,7 @@ export function MapView({
       "slope",
       () =>
         new g.maps.ImageMapType({
-          name: "Slope",
+          name: MAP_CONTEXT_LAYERS.slope.label,
           tileSize: new g.maps.Size(256, 256),
           opacity: 0.55,
           getTileUrl: (c, z) =>
@@ -274,7 +275,7 @@ export function MapView({
       "drainage",
       () =>
         new g.maps.ImageMapType({
-          name: "Drainage",
+          name: MAP_CONTEXT_LAYERS.drainage.label,
           tileSize: new g.maps.Size(256, 256),
           opacity: 0.9,
           getTileUrl: (c, z) =>

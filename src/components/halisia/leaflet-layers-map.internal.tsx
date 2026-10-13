@@ -18,6 +18,7 @@ import L from "leaflet";
 import { getWave4Overlays, type Wave4Overlays } from "@/lib/wave4-overlays.functions";
 import { Ruler, Hexagon, PenLine, Download, Trash2 } from "lucide-react";
 import { usePersistedState } from "@/hooks/use-persisted-state";
+import { MAP_CONTEXT_LAYERS } from "@/lib/map-evidence";
 
 const DefaultIcon = L.icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
@@ -124,7 +125,7 @@ export default function LeafletLayersMap({
               eventHandlers={{ add: () => setShowLabels(true), remove: () => setShowLabels(false) }}
             />
           </LayersControl.Overlay>
-          <LayersControl.Overlay name="Slope · hillshade">
+          <LayersControl.Overlay name={MAP_CONTEXT_LAYERS.slope.label}>
             <TileLayer
               url="https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}"
               attribution="Hillshade © Esri"
@@ -133,7 +134,7 @@ export default function LeafletLayersMap({
               opacity={0.28}
             />
           </LayersControl.Overlay>
-          <LayersControl.Overlay name="Drainage · hydro">
+          <LayersControl.Overlay name={MAP_CONTEXT_LAYERS.drainage.label}>
             <TileLayer
               url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Hydro_Reference_Overlay/MapServer/tile/{z}/{y}/{x}"
               attribution="Hydro © Esri"
@@ -180,7 +181,7 @@ export default function LeafletLayersMap({
                 </LayerGroup>
               </LayersControl.Overlay>
               <LayersControl.Overlay
-                name={`Wave 4 · Drainage lines (${overlays.drainage.length})`}
+                name={`Wave 4 · Mapped watercourses (${overlays.drainage.length})`}
                 checked
               >
                 <LayerGroup>
@@ -266,12 +267,14 @@ export default function LeafletLayersMap({
         </div>
         <div className="flex items-center gap-2">
           <span className="h-0.5 w-4 bg-[#38bdf8]" />
-          Drainage / river
+          Mapped watercourses
         </div>
         <div className="flex items-center gap-2">
           <span className="h-2 w-2 rounded-full bg-emerald-400" />
           Facility
         </div>
+        <p className="max-w-[210px]">{MAP_CONTEXT_LAYERS.slope.limitation}</p>
+        <p className="max-w-[210px]">{MAP_CONTEXT_LAYERS.drainage.limitation}</p>
       </div>
     </div>
   );
