@@ -18,7 +18,13 @@ const item: MapEvidence = {
 };
 describe("map evidence cards", () => {
   it("retains unknown accuracy and limitations", () => {
-    render(createElement(MapEvidenceCards, { items: [{ ...item, position: { lat: -1, lng: 37, accuracyM: null } }], selectedId: null, onFocus: vi.fn() }));
+    render(
+      createElement(MapEvidenceCards, {
+        items: [{ ...item, position: { lat: -1, lng: 37, accuracyM: null } }],
+        selectedId: null,
+        onFocus: vi.fn(),
+      }),
+    );
     expect(screen.getByText("Accuracy unavailable")).toBeTruthy();
     expect(screen.getByText(item.limitations)).toBeTruthy();
     expect(screen.getByText(item.source)).toBeTruthy();
@@ -61,10 +67,8 @@ describe("map evidence cards", () => {
         onFocus: vi.fn(),
       }),
     );
-    expect(
-      screen
-        .getByRole("button", { name: "Show on map" })
-        .getAttribute("aria-pressed"),
-    ).toBe("true");
+    expect(screen.getByRole("button", { name: "Show on map" }).getAttribute("aria-pressed")).toBe(
+      "true",
+    );
   });
 });

@@ -20,9 +20,9 @@ export function MapEvidenceCards({
   return (
     <section aria-label="Evidence linked to the map">
       <p className="text-sm text-muted-foreground">
-        Where imagery is available, its capture date must be checked separately.
-        Imagery supports observations at its capture date. It does not confirm
-        ownership, legal access or surveyed boundaries.
+        Where imagery is available, its capture date must be checked separately. Imagery supports
+        observations at its capture date. It does not confirm ownership, legal access or surveyed
+        boundaries.
       </p>
       <ul className="mt-3 grid gap-3 sm:grid-cols-2">
         {items.map((item) => {
@@ -42,9 +42,24 @@ export function MapEvidenceCards({
                 <dd>{item.source || "Source unavailable"}</dd>
                 <dt>Captured</dt>
                 <dd>{item.capturedAt || "Capture date unavailable"}</dd>
-                {item.retrievedAt && <><dt>Retrieved (not captured)</dt><dd>{item.retrievedAt}</dd></>}
-                {item.method && <><dt>Method</dt><dd>{item.method}</dd></>}
-                {item.confidence && <><dt>Finding confidence (not positional accuracy)</dt><dd>{item.confidence}</dd></>}
+                {item.retrievedAt && (
+                  <>
+                    <dt>Retrieved (not captured)</dt>
+                    <dd>{item.retrievedAt}</dd>
+                  </>
+                )}
+                {item.method && (
+                  <>
+                    <dt>Method</dt>
+                    <dd>{item.method}</dd>
+                  </>
+                )}
+                {item.confidence && (
+                  <>
+                    <dt>Finding confidence (not positional accuracy)</dt>
+                    <dd>{item.confidence}</dd>
+                  </>
+                )}
                 <dt>Location accuracy</dt>
                 <dd>
                   {target?.accuracyM != null

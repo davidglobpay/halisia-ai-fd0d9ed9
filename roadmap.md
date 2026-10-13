@@ -1,6 +1,7 @@
 # Current work
 
 ## Isolated map evidence foundation
+
 - [ ] Apply uploaded additions with design-system controls and truthful metadata
 - [ ] Connect actual Passport findings to the existing map and correct reference-layer labels
 - [ ] Validate formatting, lint, unit tests, deterministic desktop/mobile browser flow and preview build

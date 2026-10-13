@@ -208,7 +208,11 @@ function PassportPage() {
   const fetchRev = useServerFn(reverseGeocode);
   const [mode, setMode] = useState<"map" | "satellite" | "street">("satellite");
   const [aiSummary, setAiSummary] = useState<PassportAiExport | null>(null);
-  const [mapFocus, setMapFocus] = useState<{ id: string; position: EvidencePosition; locationKey: string } | null>(null);
+  const [mapFocus, setMapFocus] = useState<{
+    id: string;
+    position: EvidencePosition;
+    locationKey: string;
+  } | null>(null);
   const locationKey = JSON.stringify([s.lat, s.lng, s.ref, s.source, s.status]);
   useEffect(() => setMapFocus(null), [locationKey]);
   const ok = check.ok && check.lat != null && check.lng != null;
@@ -383,9 +387,10 @@ function PassportPage() {
   });
   const byChapter = (id: ChapterId) => ev.items.filter((x) => x.chapter === id);
   const mapEvidence = passportMapEvidence(ev.items, { lat, lng, intel });
-  const selected = mapFocus?.locationKey === locationKey
-    ? mapEvidence.find((item) => item.id === mapFocus.id && item.position != null)
-    : undefined;
+  const selected =
+    mapFocus?.locationKey === locationKey
+      ? mapEvidence.find((item) => item.id === mapFocus.id && item.position != null)
+      : undefined;
   const mapPoint = selected?.position ?? { lat, lng, accuracyM: null };
   const placeName =
     s.ref || s.label || revQ.data?.address || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
@@ -465,8 +470,15 @@ function PassportPage() {
       <div className="mt-4" data-testid="passport-map-evidence">
         {selected && (
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <p role="status" className="text-xs text-muted-foreground">Map focus: {selected.label} · {mapPoint.lat}, {mapPoint.lng} · {mapPoint.accuracyM == null ? "Accuracy unavailable" : `Reported uncertainty: ${mapPoint.accuracyM} m`}</p>
-            <KitButton size="lg" onClick={() => setMapFocus(null)}>Return to Passport point</KitButton>
+            <p role="status" className="text-xs text-muted-foreground">
+              Map focus: {selected.label} · {mapPoint.lat}, {mapPoint.lng} ·{" "}
+              {mapPoint.accuracyM == null
+                ? "Accuracy unavailable"
+                : `Reported uncertainty: ${mapPoint.accuracyM} m`}
+            </p>
+            <KitButton size="lg" onClick={() => setMapFocus(null)}>
+              Return to Passport point
+            </KitButton>
           </div>
         )}
         <MapEvidenceCards

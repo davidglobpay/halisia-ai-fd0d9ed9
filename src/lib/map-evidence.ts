@@ -38,8 +38,7 @@ export const MAP_CONTEXT_LAYERS = {
   },
   drainage: {
     label: "Mapped watercourses",
-    limitation:
-      "Hydrographic reference, not a site drainage or flood assessment.",
+    limitation: "Hydrographic reference, not a site drainage or flood assessment.",
   },
 } as const;
 export function evidenceTarget(item: MapEvidence): EvidencePosition | null {
@@ -54,12 +53,7 @@ export function evidenceTarget(item: MapEvidence): EvidencePosition | null {
     p.lng > 180
   )
     return null;
-  if (
-    p.accuracyM !== null &&
-    (!Number.isFinite(p.accuracyM) || p.accuracyM < 0)
-  )
-    return null;
-  if (!item.source.trim() || !item.supports.trim() || !item.limitations.trim())
-    return null;
+  if (p.accuracyM !== null && (!Number.isFinite(p.accuracyM) || p.accuracyM < 0)) return null;
+  if (!item.source.trim() || !item.supports.trim() || !item.limitations.trim()) return null;
   return p;
 }
