@@ -20,7 +20,7 @@ describe("map evidence focus", () => {
     expect(evidenceTarget(item)?.accuracyM).toBeNull();
   });
   it("does not mutate the supplied position", () => {
-    expect(evidenceTarget(item)).toEqual(item.position);
+    expect(evidenceTarget(item)).toBe(item.position);
   });
   it.each([NaN, Infinity, 91, -91])("rejects invalid latitude %s", (lat) => {
     expect(

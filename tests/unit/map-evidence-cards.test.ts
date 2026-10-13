@@ -17,6 +17,12 @@ const item: MapEvidence = {
   limitations: "Legal access unconfirmed",
 };
 describe("map evidence cards", () => {
+  it("retains unknown accuracy and limitations", () => {
+    render(createElement(MapEvidenceCards, { items: [{ ...item, position: { lat: -1, lng: 37, accuracyM: null } }], selectedId: null, onFocus: vi.fn() }));
+    expect(screen.getByText("Accuracy unavailable")).toBeTruthy();
+    expect(screen.getByText(item.limitations)).toBeTruthy();
+    expect(screen.getByText(item.source)).toBeTruthy();
+  });
   it("focuses the exact recorded target without a provider request", () => {
     const onFocus = vi.fn();
     render(
