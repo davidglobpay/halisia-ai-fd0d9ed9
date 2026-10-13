@@ -186,60 +186,24 @@ export async function downloadGeotechPdf(g: GeotechIntel, address: string) {
     pw = W - 80,
     ph = 130;
   panel(px, py, pw, ph, 10);
-  heading(px + 14, py + 20, "Terrain profile (synthetic transect)");
+  heading(px + 14, py + 20, "Terrain profile");
   setText(C.dim);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
+  // The curve drawn here was generated from a hash of the coordinates. It
+  // resembled a surveyed transect while carrying no ground information at
+  // all, printed beside real ASTER figures on a document people pay for.
+  // HALISIA does not sample a transect, so there is no profile to draw.
   doc.text(
-    `${g.terrain.landform.toUpperCase()} · relief ${g.terrain.reliefM} m · aspect ${g.terrain.aspectLabel} · roughness ${g.terrain.roughness} m`,
+    "HALISIA does not sample a ground transect at this location, so no profile is drawn.",
     px + 14,
-    py + 34,
+    py + 36,
   );
-
-  // Draw a synthetic profile from elevation ± relief with deterministic seed
-  const pts: [number, number][] = [];
-  const gxl = px + 20,
-    gyt = py + 48,
-    gxw = pw - 40,
-    gyh = ph - 62;
-  const seed = (g.lat * 1000 + g.lng * 1000) | 0;
-  const rand = (i: number) => {
-    const s = Math.sin(seed + i * 7.31) * 43758.5453;
-    return s - Math.floor(s);
-  };
-  const N = 60;
-  for (let i = 0; i <= N; i++) {
-    const t = i / N;
-    const base = 0.5 + 0.3 * Math.sin(t * Math.PI * 2 + rand(1) * 3);
-    const noise = 0.15 * rand(i) - 0.075;
-    const y = gyt + gyh - (base + noise) * gyh;
-    pts.push([gxl + t * gxw, y]);
-  }
-  // Fill under curve
-  setFill([30, 60, 110]);
-  doc.setDrawColor(0, 0, 0, 0);
-  const poly: number[][] = pts.map(([x, y]) => [x, y]);
-  poly.push([gxl + gxw, gyt + gyh]);
-  poly.push([gxl, gyt + gyh]);
-  // jsPDF lacks fillPolygon; draw as many tiny rects would be slow — use lines + area sim
-  for (let i = 0; i < pts.length - 1; i++) {
-    const [x1, y1] = pts[i];
-    const [x2, y2] = pts[i + 1];
-    doc.setFillColor(30, 60, 110);
-    // triangle-ish area
-    doc.triangle(x1, y1, x2, y2, x2, gyt + gyh, "F");
-    doc.triangle(x1, y1, x2, gyt + gyh, x1, gyt + gyh, "F");
-  }
-  // Line on top
-  setDraw(C.cyan);
-  doc.setLineWidth(1.2);
-  for (let i = 0; i < pts.length - 1; i++) {
-    doc.line(pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1]);
-  }
-  // Axes
-  setDraw(C.line);
-  doc.setLineWidth(0.4);
-  doc.line(gxl, gyt + gyh, gxl + gxw, gyt + gyh);
+  doc.text(
+    `Landform ${g.terrain.landform.toUpperCase()} - relief ${g.terrain.reliefM} m - aspect ${g.terrain.aspectLabel} - roughness ${g.terrain.roughness} m, from the ASTER 30 m grid.`,
+    px + 14,
+    py + 50,
+  );
 
   // ── PAGE 2 — SOIL + GEOLOGY + BEDROCK ─────────────────────────────
   doc.addPage();
@@ -250,7 +214,7 @@ export async function downloadGeotechPdf(g: GeotechIntel, address: string) {
   setText(C.dim);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
-  doc.text("Source: FAO SoilGrids v2.0 (250m) · derived interpretation", 40, 56);
+  doc.text("Source: ISRIC SoilGrids v2.0 (250m model) · derived interpretation", 40, 56);
 
   // Soil layers stacked bars
   const sy = 80,

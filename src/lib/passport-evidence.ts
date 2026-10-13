@@ -374,8 +374,11 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
     label: "Nearest mapped water",
     value:
       g?.groundwater.nearestWaterKm != null ? `${r(g.groundwater.nearestWaterKm, 1)} km` : null,
-    source: "OpenStreetMap",
-    method: "Nearest mapped river / lake / water feature. Riparian reserve not surveyed.",
+    // The backing field is never populated, so naming OpenStreetMap here
+    // claimed a source for a lookup that does not run.
+    source: "No source — this lookup is not implemented",
+    method:
+      "HALISIA does not currently measure distance to the nearest mapped water feature. This row names no source because none is queried.",
     usedFor: ["Riparian caution", "Groundwater"],
     cls: "modelled",
     confidence: "low",
