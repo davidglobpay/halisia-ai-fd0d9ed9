@@ -30,7 +30,20 @@ type Quote = {
 };
 const control =
   "mt-1 w-full min-h-11 rounded-xl border border-white/20 bg-card px-3 py-2 text-sm";
-const kes = (n: unknown) => `KES ${Number(n ?? 0).toLocaleString("en-KE")}`;
+/**
+ * A money figure, or an em dash when there is no figure to show.
+ *
+ * This used to coerce a missing value to zero, so "nothing has been paid" and
+ * "this field is absent from the quote" both rendered as KES 0. On the
+ * Verified received row those are very different things for a buyer to read,
+ * and the one that is actually dangerous — no record at all — looked like the
+ * reassuring one.
+ */
+const kes = (n: unknown) => {
+  if (n == null || n === "") return "\u2014";
+  const v = Number(n);
+  return Number.isFinite(v) ? `KES ${v.toLocaleString("en-KE")}` : "\u2014";
+};
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 const asObject = (v: Json | null) =>
   v && typeof v === "object" && !Array.isArray(v) ? v : {};
