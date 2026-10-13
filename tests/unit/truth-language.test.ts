@@ -87,6 +87,8 @@ const COST_PDF = read("src/lib/pdf-cost-estimate.ts");
 const MARKET = read("src/routes/marketplace.index.tsx");
 const PARTNER_LISTING = read("src/routes/partner-listing.$id.tsx");
 const PARTNER_CARDS = read("src/components/halisia/partner-listings.tsx");
+const ROOT = read("src/routes/__root.tsx");
+const BUILD_INFO = read("src/lib/build-info.ts");
 
 const PUBLIC_SURFACES: Array<[string, string]> = [
   ["src/routes/index.tsx", LANDING],
@@ -646,5 +648,44 @@ describe("a quote that could not load is not presented as a quote", () => {
     expect(flat(SCOUT)).toContain(
       "These figures are the built-in pilot defaults, not the current catalogue, which did not load. They are not your quote.",
     );
+  });
+});
+
+describe("a money figure is never invented to fill a gap", () => {
+  /**
+   * scout-hub renders every amount in the job panel through one helper, and
+   * that helper used to coerce a missing value to zero. "Nothing has been
+   * paid" and "this field is absent from the quote" therefore both displayed
+   * as KES 0 — and on the Verified received row, the dangerous state (no
+   * record at all) looked like the reassuring one.
+   *
+   * A genuine zero must still print as zero; only absence becomes a dash.
+   */
+  it("does not coerce a missing amount to zero", () => {
+    expect(SCOUT_HUB).not.toContain("Number(n ?? 0)");
+  });
+
+  it("distinguishes absent from zero before formatting", () => {
+    expect(SCOUT_HUB).toContain('if (n == null || n === "") return');
+    expect(SCOUT_HUB).toContain("Number.isFinite(v)");
+  });
+});
+
+describe("the served page says which build it is", () => {
+  /**
+   * Until this existed, nothing proved which revision the public URL returns.
+   * The editor's commit SHA and the published flag describe what the project
+   * holds, not what the CDN serves, and that gap produced a real error in this
+   * project: a route was uploaded and reported live while the generated route
+   * tree had not picked it up, so the page did not resolve.
+   */
+  it("renders the build identifier into the document head", () => {
+    expect(ROOT).toContain('{ name: "halisia-build", content: BUILD_ID },');
+    expect(ROOT).toContain('from "../lib/build-info"');
+  });
+
+  it("keeps a build identifier to render", () => {
+    expect(BUILD_INFO).toMatch(/export const BUILD_ID = "[^"]+";/);
+    expect(BUILD_INFO).toMatch(/export const BUILD_NOTE =/);
   });
 });
