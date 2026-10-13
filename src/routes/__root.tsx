@@ -16,6 +16,7 @@ import halisiaLogo from "../assets/brand/halisia-mark.png.asset.json";
 import { PerfMonitor } from "../components/halisia/perf-monitor";
 import { GlobeBackdrop } from "../components/halisia/globe-backdrop";
 
+import { BUILD_ID, BUILD_NOTE } from "../lib/build-info";
 import { NavGuide } from "../components/halisia/nav-guide";
 import { Navbar } from "../components/halisia/navbar";
 import { ServicePricing } from "../components/halisia/service-pricing";
@@ -96,6 +97,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "AI-powered land intelligence for Kenya. Understand any place before you buy, build, or invest — with maps, community signals, and confidence-scored insights.",
       },
       { name: "author", content: "HALISIA AI" },
+      // Lets a release be verified from the served page rather than from a
+      // dashboard flag. See src/lib/build-info.ts.
+      { name: "halisia-build", content: BUILD_ID },
+      { name: "halisia-build-note", content: BUILD_NOTE },
       { property: "og:title", content: "HALISIA AI — Land Intelligence Platform" },
       {
         property: "og:description",
@@ -217,4 +222,3 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
-
