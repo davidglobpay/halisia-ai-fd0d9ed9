@@ -438,8 +438,16 @@ function Explore() {
                         { id: "traffic" as const, icon: TrafficCone, label: "Traffic" },
                         { id: "transit" as const, icon: Bus, label: "Transit" },
                         { id: "bicycling" as const, icon: Bike, label: "Bicycling" },
-                        { id: "slope" as const, icon: TrendingUp, label: MAP_CONTEXT_LAYERS.slope.label },
-                        { id: "drainage" as const, icon: Waves, label: MAP_CONTEXT_LAYERS.drainage.label },
+                        {
+                          id: "slope" as const,
+                          icon: TrendingUp,
+                          label: MAP_CONTEXT_LAYERS.slope.label,
+                        },
+                        {
+                          id: "drainage" as const,
+                          icon: Waves,
+                          label: MAP_CONTEXT_LAYERS.drainage.label,
+                        },
                       ].map((l) => {
                         const on = overlays.includes(l.id);
                         return (
