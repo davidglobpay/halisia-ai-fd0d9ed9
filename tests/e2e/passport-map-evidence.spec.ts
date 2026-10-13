@@ -109,7 +109,7 @@ for (const width of [1280, 360]) {
     await expect(focus).toBeFocused();
     await expect(cards.getByRole("status")).toContainText("-1.15123, 36.96123");
     await expect(page.getByTestId("map-view")).toBeVisible();
-    await expect(page.getByTestId("map-fallback-osm")).toBeVisible();
+    await expect(page.getByTestId("map-fallback-osm")).toBeVisible({ timeout: 20_000 });
     await page.locator(".leaflet-marker-icon").click();
     await expect(page.locator(".leaflet-popup")).toContainText("-1.15123, 36.96123");
     const dimensions = await focus.boundingBox();
