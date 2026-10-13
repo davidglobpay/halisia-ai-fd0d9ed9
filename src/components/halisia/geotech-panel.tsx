@@ -181,6 +181,18 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 function TerrainSection({ g }: { g: GeotechIntel }) {
   const t = g.terrain;
+  if (!g.terrainMeasured)
+    return (
+      <Card title="Terrain analysis" icon={Mountain} hint="No elevation grid">
+        <p className="text-sm text-muted-foreground">
+          The ASTER 30 m elevation grid did not load for this point, so there is
+          no measured ground here. Slope, aspect, relief, roughness, landform
+          and drainage are withheld rather than estimated, and the geology,
+          bedrock, groundwater and foundation sections below rest on the same
+          missing data — treat all of them as unavailable, not as readings.
+        </p>
+      </Card>
+    );
   return (
     <Card title="Terrain analysis" icon={Mountain} hint="ASTER 30m">
       <div className="grid grid-cols-3 gap-2">
