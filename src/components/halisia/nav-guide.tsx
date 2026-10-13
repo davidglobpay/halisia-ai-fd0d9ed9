@@ -31,7 +31,7 @@ const STEPS = [
   {
     icon: Layers,
     title: "Map layers on Explore",
-    body: "Tap Layers to overlay traffic, transit, bicycling, slope/hillshade and drainage/rivers. Hillshade comes from Esri World Hillshade, drainage from Esri Hydro Reference. Switch the base map between Map, Satellite, Hybrid and Terrain.",
+    body: "Tap Layers for traffic, transit, bicycling, Terrain hillshade and Mapped watercourses. Hillshade © Esri is relief shading, not a measured slope. Watercourses © Esri Hydro Reference do not confirm flood risk or legal riparian status. Switch between Map, Satellite, Hybrid and Terrain.",
   },
   {
     icon: GitCompareArrows,
