@@ -83,6 +83,14 @@ export type GeotechIntel = {
   foundations: Foundation[];
   risks: RiskIndicator[];
   confidence: number; // 0-100
+  /**
+   * False when the elevation grid did not load. Every terrain-derived figure
+   * in this object — slope, aspect, relief, roughness, landform, erosion,
+   * drainage, and the geology, bedrock, groundwater and foundation guidance
+   * computed from them — is then derived from a substituted flat grid and
+   * must not be shown as a reading. Consumers check this before rendering.
+   */
+  terrainMeasured: boolean;
   sources: Array<{ label: string; url: string; used: boolean }>;
   disclaimer: string;
 };
@@ -555,9 +563,20 @@ export const getGeotechIntel = createServerFn({ method: "POST" })
       fetchElevGrid(lat, lng).catch(() => null),
       fetchClimate(lat, lng),
     ]);
-    // Graceful fallback: if elevation API is unreachable, synthesise a flat
-    // terrain grid so downstream analysis (and the UI) still work. Confidence
-    // is reduced below to reflect the missing data.
+    // When the elevation grid does not load there is no ground to analyse.
+    //
+    // This substitution used to be silent. A failed request produced a flat
+    // grid at 1000 m, which then flowed into terrainAnalysis, interpretGeology,
+    // estimateBedrock, groundwater and foundationGuidance — so the user was
+    // shown a complete geotechnical interpretation, foundation advice and
+    // KES/m² cost bands derived from ground that was never measured, with
+    // nothing on screen marking it. Lowering a confidence number is not a
+    // disclosure; a reader cannot tell 35 points of missing confidence from a
+    // genuinely flat site.
+    //
+    // The grid is still substituted, because the response shape depends on it,
+    // but terrainMeasured now carries the truth and every consumer must gate
+    // on it.
     const effectiveGrid =
       gridInfo ??
       (() => {
@@ -574,6 +593,7 @@ export const getGeotechIntel = createServerFn({ method: "POST" })
     const gw = groundwater(terrain, soil, rain);
     const foundations = foundationGuidance(terrain, soil, bedrock);
     const risks = riskIndicators(terrain, gw, soil);
+    const terrainMeasured = gridInfo != null;
     const conf =
       (soil.length ? 30 : 0) +
       (gridInfo ? 35 : 5) +
@@ -591,6 +611,7 @@ export const getGeotechIntel = createServerFn({ method: "POST" })
       foundations,
       risks,
       confidence: Math.min(100, conf),
+      terrainMeasured,
       sources: [
         { label: "ISRIC SoilGrids v2.0", url: "https://soilgrids.org", used: soil.length > 0 },
         {

@@ -158,10 +158,17 @@ export async function downloadGeotechPdf(g: GeotechIntel, address: string) {
   doc.text(disc, 52, dy + 30);
 
   // ── At-a-glance stat tiles ─────────────────────────────────────────
+  // Elevation, slope and bedrock all derive from the ASTER grid. When it did
+  // not load they are computed from a substituted flat surface, so they are
+  // printed as unavailable rather than as figures. Rainfall is independent.
   const tiles: Array<[string, string, [number, number, number]]> = [
-    [`${g.terrain.elevationM} m`, "Elevation", C.accent],
-    [`${g.terrain.slopePct}%`, "Slope", C.cyan],
-    [`${g.bedrock.minM}–${g.bedrock.maxM} m`, "Bedrock depth", C.warn],
+    [g.terrainMeasured ? `${g.terrain.elevationM} m` : "—", "Elevation", C.accent],
+    [g.terrainMeasured ? `${g.terrain.slopePct}%` : "—", "Slope", C.cyan],
+    [
+      g.terrainMeasured ? `${g.bedrock.minM}–${g.bedrock.maxM} m` : "—",
+      "Bedrock depth",
+      C.warn,
+    ],
     [`${g.groundwater.annualRainMm ?? "—"} mm`, "Annual rain", C.good],
   ];
   const ty = 244,
@@ -200,7 +207,9 @@ export async function downloadGeotechPdf(g: GeotechIntel, address: string) {
     py + 36,
   );
   doc.text(
-    `Landform ${g.terrain.landform.toUpperCase()} - relief ${g.terrain.reliefM} m - aspect ${g.terrain.aspectLabel} - roughness ${g.terrain.roughness} m, from the ASTER 30 m grid.`,
+    g.terrainMeasured
+      ? `Landform ${g.terrain.landform.toUpperCase()} - relief ${g.terrain.reliefM} m - aspect ${g.terrain.aspectLabel} - roughness ${g.terrain.roughness} m, from the ASTER 30 m grid.`
+      : "The ASTER 30 m elevation grid did not load for this point, so no terrain figure on this page is a measurement.",
     px + 14,
     py + 50,
   );
