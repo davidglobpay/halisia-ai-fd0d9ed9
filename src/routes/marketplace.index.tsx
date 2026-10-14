@@ -149,9 +149,9 @@ function MarketplaceIndex() {
           <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
             Buy, sell, rent, lease, invest, develop and connect. Every listing shows its source and
             how complete its details are. Open one with coordinates to read the site's terrain, air
-            quality and nearby amenities — and what HALISIA cannot assess. Listings marked
-            Sponsored are paid placements and appear above the rest; paying changes where a
-            listing sits, never what HALISIA says about it.
+            quality and nearby amenities — and what HALISIA cannot assess. Listings marked Sponsored
+            are paid placements and appear above the rest; paying changes where a listing sits,
+            never what HALISIA says about it.
           </p>
         </div>
         <Link

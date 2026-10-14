@@ -1,7 +1,8 @@
+import { visibleOutputText } from "@/components/halisia/output-text";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { ListenButton } from "@/components/halisia/listen-button";
-import { OutputTools, OutputVisual, visibleOutputText } from "@/components/halisia/output-tools";
+import { OutputTools, OutputVisual } from "@/components/halisia/output-tools";
 import { HoloTile } from "@/components/halisia/ds/holo-tile";
 import { referencesForOutput } from "@/lib/output-visuals";
 

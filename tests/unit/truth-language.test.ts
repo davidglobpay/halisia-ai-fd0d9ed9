@@ -154,7 +154,7 @@ describe("required public wording", () => {
     ["ownership and surveyed boundaries remain unverified", SCOUT_HUB],
     ["Device GPS was recorded at upload, not verified media capture location.", SCOUT_HUB],
   ])("contains %s", (needle, source) => {
-    expect(source).toContain(needle);
+    expect(flat(source)).toContain(needle);
   });
 });
 

@@ -10,10 +10,7 @@
 export type BuildSystem = "masonry" | "precast" | "eps";
 export type UseClass = "residential" | "affordable" | "mixed" | "commercial" | "industrial";
 
-export const SYSTEM_META: Record<
-  BuildSystem,
-  { label: string; pros: string[]; cons: string[] }
-> = {
+export const SYSTEM_META: Record<BuildSystem, { label: string; pros: string[]; cons: string[] }> = {
   masonry: {
     label: "Conventional masonry (machine-cut stone / block, RC frame)",
     pros: [
@@ -148,8 +145,4 @@ export const CONCEPT_USE: Record<string, UseClass> = {
 
 export const kes = (n: number) => `KES ${Math.round(n).toLocaleString("en-KE")}`;
 export const kesShort = (n: number) =>
-  n >= 1e9
-    ? `KES ${(n / 1e9).toFixed(2)}B`
-    : n >= 1e6
-      ? `KES ${(n / 1e6).toFixed(1)}M`
-      : kes(n);
+  n >= 1e9 ? `KES ${(n / 1e9).toFixed(2)}B` : n >= 1e6 ? `KES ${(n / 1e6).toFixed(1)}M` : kes(n);

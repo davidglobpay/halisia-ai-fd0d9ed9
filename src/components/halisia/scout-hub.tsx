@@ -28,8 +28,7 @@ type Quote = {
   reason?: string;
   tasks?: { code: string; label: string; amount_kes: number }[];
 };
-const control =
-  "mt-1 w-full min-h-11 rounded-xl border border-white/20 bg-card px-3 py-2 text-sm";
+const control = "mt-1 w-full min-h-11 rounded-xl border border-white/20 bg-card px-3 py-2 text-sm";
 /**
  * A money figure, or an em dash when there is no figure to show.
  *
@@ -45,8 +44,7 @@ const kes = (n: unknown) => {
   return Number.isFinite(v) ? `KES ${v.toLocaleString("en-KE")}` : "\u2014";
 };
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
-const asObject = (v: Json | null) =>
-  v && typeof v === "object" && !Array.isArray(v) ? v : {};
+const asObject = (v: Json | null) => (v && typeof v === "object" && !Array.isArray(v) ? v : {});
 function Button({
   children,
   onClick,
@@ -84,10 +82,7 @@ export function ScoutHub({
     queryKey: ["scout-hub", uid],
     queryFn: async () => {
       const [requests, profiles, settings, catalog] = await Promise.all([
-        supabase
-          .from("scout_requests")
-          .select("*")
-          .order("created_at", { ascending: false }),
+        supabase.from("scout_requests").select("*").order("created_at", { ascending: false }),
         supabase.from("scout_profiles").select("*"),
         supabase.from("scout_service_settings").select("*").single(),
         supabase.from("scout_price_catalog").select("*").order("sort"),
@@ -139,9 +134,7 @@ export function ScoutHub({
   return (
     <section className="mt-8 space-y-6" aria-label="Scout workspace">
       <details className="glass rounded-2xl p-4">
-        <summary className="cursor-pointer text-lg">
-          Register / manage your scout profile
-        </summary>
+        <summary className="cursor-pointer text-lg">Register / manage your scout profile</summary>
         <ScoutRegistration uid={uid} profile={profile} save={run} busy={busy} />
       </details>
       {isAdmin && (
@@ -154,17 +147,15 @@ export function ScoutHub({
       )}
       {!d.settings.payments_enabled && (
         <p className="rounded-xl border border-amber-400/40 p-4 text-sm">
-          Quote-only mode. HALISIA has not configured payment instructions. Do
-          not send money yet. Requests can still be saved for review.
+          Quote-only mode. HALISIA has not configured payment instructions. Do not send money yet.
+          Requests can still be saved for review.
         </p>
       )}
-      <h2 className="text-xl font-semibold">
-        Your requests and available jobs
-      </h2>
+      <h2 className="text-xl font-semibold">Your requests and available jobs</h2>
       {d.requests.length === 0 && (
         <p className="text-sm text-muted-foreground">
-          No requests yet. Create a request above, or register as a scout to see
-          eligible jobs after approval.
+          No requests yet. Create a request above, or register as a scout to see eligible jobs after
+          approval.
         </p>
       )}
       <div className="grid gap-3">
@@ -177,8 +168,7 @@ export function ScoutHub({
           >
             <div className="flex flex-wrap justify-between gap-2">
               <b>
-                {r.title_reference || "Site visit"} ·{" "}
-                {r.county || "County not specified"}
+                {r.title_reference || "Site visit"} · {r.county || "County not specified"}
               </b>
               <span>{r.status.replaceAll("_", " ")}</span>
             </div>
@@ -220,9 +210,7 @@ function ScoutRegistration({
   busy: boolean;
 }) {
   const [name, setName] = useState(profile?.display_name ?? "");
-  const [counties, setCounties] = useState(
-    profile?.service_counties.join(", ") ?? "",
-  );
+  const [counties, setCounties] = useState(profile?.service_counties.join(", ") ?? "");
   const [availability, setAvailability] = useState(profile?.availability ?? "");
   const [bio, setBio] = useState(profile?.bio ?? "");
   return (
@@ -243,20 +231,15 @@ function ScoutRegistration({
           if (!fields.display_name || !fields.service_counties.length)
             throw new Error("Enter your name and at least one service county");
           const res = profile
-            ? await supabase
-                .from("scout_profiles")
-                .update(fields)
-                .eq("user_id", uid)
-            : await supabase
-                .from("scout_profiles")
-                .insert({ ...fields, user_id: uid });
+            ? await supabase.from("scout_profiles").update(fields).eq("user_id", uid)
+            : await supabase.from("scout_profiles").insert({ ...fields, user_id: uid });
           if (res.error) throw new Error(res.error.message);
         });
       }}
     >
       <p className="text-sm">
-        Approval: {profile?.status ?? "Not registered"}. Only approved scouts
-        can take jobs. {profile?.reviewer_note}
+        Approval: {profile?.status ?? "Not registered"}. Only approved scouts can take jobs.{" "}
+        {profile?.reviewer_note}
       </p>
       <label className="block text-sm">
         Display name
@@ -287,11 +270,7 @@ function ScoutRegistration({
       </label>
       <label className="block text-sm">
         Experience and equipment
-        <textarea
-          value={bio}
-          onChange={(e) => setBio(e.target.value)}
-          className={control}
-        />
+        <textarea value={bio} onChange={(e) => setBio(e.target.value)} className={control} />
       </label>
       <button
         disabled={busy}
@@ -316,9 +295,7 @@ function AdminSetup({
   save: (a: () => Promise<void>) => Promise<void>;
   busy: boolean;
 }) {
-  const [instructions, setInstructions] = useState(
-    data.settings.payment_instructions,
-  );
+  const [instructions, setInstructions] = useState(data.settings.payment_instructions);
   const [enabled, setEnabled] = useState(data.settings.payments_enabled);
   return (
     <div className="mt-4 space-y-6">
@@ -351,11 +328,7 @@ function AdminSetup({
           />
         </label>
         <label className="flex gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={enabled}
-            onChange={(e) => setEnabled(e.target.checked)}
-          />{" "}
+          <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />{" "}
           Enable manual payments after verifying these instructions
         </label>
         <button disabled={busy} className="min-h-11 rounded-xl border px-4">
@@ -407,11 +380,7 @@ function AdminSetup({
             const form = new FormData(e.currentTarget);
             void save(async () => {
               const amount = Number(form.get("amount"));
-              if (
-                !Number.isFinite(amount) ||
-                amount < 0 ||
-                (p.kind === "fee" && amount > 100)
-              )
+              if (!Number.isFinite(amount) || amount < 0 || (p.kind === "fee" && amount > 100))
                 throw new Error("Invalid amount");
               const r = await supabase
                 .from("scout_price_catalog")
@@ -463,12 +432,8 @@ function ScoutJob({
     asObject(r.task_results) as Record<string, Finding>,
   );
   const [summary, setSummary] = useState(r.scout_summary ?? "");
-  const [exception, setException] = useState(
-    r.evidence_exception_requested ?? "",
-  );
-  const [travel, setTravel] = useState(
-    Number((r.quote as Quote).travel_kes ?? 0),
-  );
+  const [exception, setException] = useState(r.evidence_exception_requested ?? "");
+  const [travel, setTravel] = useState(Number((r.quote as Quote).travel_kes ?? 0));
   const [access, setAccess] = useState(r.access_level);
   const [reason, setReason] = useState("");
   const [payRef, setPayRef] = useState("");
@@ -491,10 +456,7 @@ function ScoutJob({
   const quote = r.quote as Quote;
   const buyer = r.buyer_id === uid;
   const scout = r.scout_id === uid;
-  const editable =
-    scout &&
-    approved &&
-    ["in_progress", "corrections_requested"].includes(r.status);
+  const editable = scout && approved && ["in_progress", "corrections_requested"].includes(r.status);
   const run = async (f: () => Promise<void>) => {
     setBusy(true);
     setError("");
@@ -521,22 +483,15 @@ function ScoutJob({
     const value = window.prompt(label);
     if (value?.trim()) void run(() => act(action, { [key]: value }));
   };
-  const tasks = [
-    { code: "base", label: "Site overview" },
-    ...(quote.tasks ?? []),
-  ];
+  const tasks = [{ code: "base", label: "Site overview" }, ...(quote.tasks ?? [])];
   return (
-    <article
-      className="glass space-y-4 rounded-2xl p-4 sm:p-6"
-      aria-label="Selected scout request"
-    >
+    <article className="glass space-y-4 rounded-2xl p-4 sm:p-6" aria-label="Selected scout request">
       <h3 className="text-xl font-semibold">
         {r.title_reference || "Site visit"} · {r.status.replaceAll("_", " ")}
       </h3>
       <p className="break-all text-sm">Request {r.id}</p>
       <p className="text-sm">
-        Visit location:{" "}
-        {r.lat != null ? `${r.lat}, ${r.lng}` : "Directions only"} ·{" "}
+        Visit location: {r.lat != null ? `${r.lat}, ${r.lng}` : "Directions only"} ·{" "}
         {r.location_source}. {r.instructions}
       </p>
       <p className="text-sm">Custom concern: {r.custom_concern || "None"}</p>
@@ -544,9 +499,7 @@ function ScoutJob({
         <dt>Scout work</dt>
         <dd>{kes(quote.scout_work_kes)}</dd>
         <dt>Travel / access</dt>
-        <dd>
-          {kes(Number(quote.travel_kes ?? 0) + Number(quote.access_kes ?? 0))}
-        </dd>
+        <dd>{kes(Number(quote.travel_kes ?? 0) + Number(quote.access_kes ?? 0))}</dd>
         <dt>HALISIA fee</dt>
         <dd>{kes(quote.platform_fee_kes)}</dd>
         <dt>Total</dt>
@@ -554,14 +507,7 @@ function ScoutJob({
         <dt>Verified received</dt>
         <dd>{kes(r.paid_amount_kes)}</dd>
         <dt>Amount still due</dt>
-        <dd>
-          {kes(
-            Math.max(
-              0,
-              Number(quote.total_kes ?? 0) - Number(r.paid_amount_kes ?? 0),
-            ),
-          )}
-        </dd>
+        <dd>{kes(Math.max(0, Number(quote.total_kes ?? 0) - Number(r.paid_amount_kes ?? 0)))}</dd>
         <dt>Scout earnings</dt>
         <dd>{kes(quote.scout_earnings_kes)}</dd>
         <dt>Payout / refund</dt>
@@ -570,16 +516,11 @@ function ScoutJob({
         </dd>
       </dl>
       {error && (
-        <p
-          role="alert"
-          className="rounded-xl border border-red-400/50 p-3 text-sm"
-        >
+        <p role="alert" className="rounded-xl border border-red-400/50 p-3 text-sm">
           {error}
         </p>
       )}
-      {r.reviewer_note && (
-        <p className="text-sm">Reviewer: {r.reviewer_note}</p>
-      )}
+      {r.reviewer_note && <p className="text-sm">Reviewer: {r.reviewer_note}</p>}
       {buyer && r.status === "quoted" && (
         <Button
           disabled={busy || !settings.payments_enabled}
@@ -593,17 +534,13 @@ function ScoutJob({
           className="space-y-3"
           onSubmit={(e) => {
             e.preventDefault();
-            void run(() =>
-              act("submit_payment_reference", { reference: payRef }),
-            );
+            void run(() => act("submit_payment_reference", { reference: payRef }));
           }}
         >
-          <p className="whitespace-pre-wrap text-sm">
-            {settings.payment_instructions}
-          </p>
+          <p className="whitespace-pre-wrap text-sm">{settings.payment_instructions}</p>
           <p className="text-sm">
-            Pay the outstanding amount above. Payment is verified manually;
-            entering a reference does not confirm payment.
+            Pay the outstanding amount above. Payment is verified manually; entering a reference
+            does not confirm payment.
           </p>
           <label className="block text-sm">
             Payment reference
@@ -627,15 +564,12 @@ function ScoutJob({
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            void run(() =>
-              act("verify_payment", { amount_kes: Number(amount) }),
-            );
+            void run(() => act("verify_payment", { amount_kes: Number(amount) }));
           }}
           className="space-y-2"
         >
           <p className="text-sm">
-            Verify receipt {r.payment_reference} against the actual account
-            statement.
+            Verify receipt {r.payment_reference} against the actual account statement.
           </p>
           <label className="block text-sm">
             Actual newly received amount (KES)
@@ -671,16 +605,10 @@ function ScoutJob({
       {scout && r.status === "assigned" && (
         <div className="space-y-3">
           <div className="flex flex-wrap gap-2">
-            <Button
-              disabled={busy}
-              onClick={() => void run(() => act("start"))}
-            >
+            <Button disabled={busy} onClick={() => void run(() => act("start"))}>
               Start site visit
             </Button>
-            <Button
-              disabled={busy}
-              onClick={() => void run(() => act("release"))}
-            >
+            <Button disabled={busy} onClick={() => void run(() => act("release"))}>
               Release assignment
             </Button>
           </div>
@@ -740,16 +668,10 @@ function ScoutJob({
             Revised total: {kes((r.pending_quote as Quote)?.total_kes)}.{" "}
             {(r.pending_quote as Quote)?.reason}
           </p>
-          <Button
-            disabled={busy}
-            onClick={() => void run(() => act("accept_requote"))}
-          >
+          <Button disabled={busy} onClick={() => void run(() => act("accept_requote"))}>
             Accept revised quote
           </Button>
-          <Button
-            disabled={busy}
-            onClick={() => void run(() => act("decline_requote"))}
-          >
+          <Button disabled={busy} onClick={() => void run(() => act("decline_requote"))}>
             Keep original quote
           </Button>
         </div>
@@ -758,9 +680,8 @@ function ScoutJob({
         <div className="space-y-4">
           <h4 className="font-semibold">Record the site findings</h4>
           <p className="text-sm">
-            Save your findings before submitting. Report what you observed and
-            what remains unknown. Saving revised findings resets any evidence
-            exception for fresh review.
+            Save your findings before submitting. Report what you observed and what remains unknown.
+            Saving revised findings resets any evidence exception for fresh review.
           </p>
           {tasks.map((t) => {
             const value = results[t.code] ?? {
@@ -768,10 +689,7 @@ function ScoutJob({
               note: "",
             };
             return (
-              <fieldset
-                key={t.code}
-                className="rounded-xl border border-white/15 p-3"
-              >
+              <fieldset key={t.code} className="rounded-xl border border-white/15 p-3">
                 <legend className="px-2 text-sm">{t.label}</legend>
                 <label className="block text-sm">
                   Outcome
@@ -798,18 +716,13 @@ function ScoutJob({
                     : "Finding and source"}
                   <textarea
                     className={control}
-                    value={
-                      value.status === "blocked"
-                        ? (value.reason ?? "")
-                        : (value.note ?? "")
-                    }
+                    value={value.status === "blocked" ? (value.reason ?? "") : (value.note ?? "")}
                     onChange={(e) =>
                       setResults({
                         ...results,
                         [t.code]: {
                           ...value,
-                          [value.status === "blocked" ? "reason" : "note"]:
-                            e.target.value,
+                          [value.status === "blocked" ? "reason" : "note"]: e.target.value,
                         },
                       })
                     }
@@ -829,8 +742,7 @@ function ScoutJob({
                       })
                     }
                   />
-                  This finding disagrees with the AI report; explain the
-                  difference above
+                  This finding disagrees with the AI report; explain the difference above
                 </label>
               </fieldset>
             );
@@ -878,20 +790,15 @@ function ScoutJob({
           <p className="text-sm">
             Base evidence:{" "}
             {
-              evidence.filter(
-                (e) =>
-                  e.task_code === "base" && e.mime_type?.startsWith("image/"),
-              ).length
+              evidence.filter((e) => e.task_code === "base" && e.mime_type?.startsWith("image/"))
+                .length
             }
             /8 photos;{" "}
             {
-              evidence.filter(
-                (e) =>
-                  e.task_code === "base" && e.mime_type?.startsWith("video/"),
-              ).length
+              evidence.filter((e) => e.task_code === "base" && e.mime_type?.startsWith("video/"))
+                .length
             }
-            /1 video. Exception:{" "}
-            {r.evidence_exception_approved ? "Approved" : "Not approved"}.
+            /1 video. Exception: {r.evidence_exception_approved ? "Approved" : "Not approved"}.
           </p>
           <Button disabled={busy} onClick={() => void run(() => act("submit"))}>
             Submit saved report for review
@@ -927,17 +834,13 @@ function ScoutJob({
           <div className="flex flex-wrap gap-2">
             <Button
               disabled={busy || review.trim().length < 5}
-              onClick={() =>
-                void run(() => act("accept_report", { note: review }))
-              }
+              onClick={() => void run(() => act("accept_report", { note: review }))}
             >
               Accept reviewed report
             </Button>
             <Button
               disabled={busy || review.trim().length < 5}
-              onClick={() =>
-                void run(() => act("request_corrections", { note: review }))
-              }
+              onClick={() => void run(() => act("request_corrections", { note: review }))}
             >
               Request corrections
             </Button>
@@ -947,9 +850,7 @@ function ScoutJob({
       {(buyer || scout || admin) && (
         <>
           <h4 className="font-semibold">
-            {r.status === "completed"
-              ? "Reviewed site report"
-              : "Draft / unreviewed site report"}
+            {r.status === "completed" ? "Reviewed site report" : "Draft / unreviewed site report"}
           </h4>
           <p className="whitespace-pre-wrap text-sm">
             {r.scout_summary || "No report submitted yet."}
@@ -971,13 +872,10 @@ function ScoutJob({
             );
           })}
           <p className="text-sm text-muted-foreground">
-            This report records observations and attributed testimony, not
-            ownership, a licensed survey or a guarantee of safety.
+            This report records observations and attributed testimony, not ownership, a licensed
+            survey or a guarantee of safety.
           </p>
-          <Button
-            disabled={busy}
-            onClick={() => void run(() => downloadScoutReport(r, evidence))}
-          >
+          <Button disabled={busy} onClick={() => void run(() => downloadScoutReport(r, evidence))}>
             Download {r.status === "completed" ? "reviewed" : "draft"} PDF
           </Button>
         </>
@@ -985,9 +883,7 @@ function ScoutJob({
       {evidenceQ.error && (
         <p role="alert">
           Evidence could not load.{" "}
-          <Button onClick={() => void evidenceQ.refetch()}>
-            Retry evidence
-          </Button>
+          <Button onClick={() => void evidenceQ.refetch()}>Retry evidence</Button>
         </p>
       )}
       <div className="grid gap-3 sm:grid-cols-2">
@@ -998,15 +894,10 @@ function ScoutJob({
             removable={editable}
             onRemove={() =>
               void run(async () => {
-                const a = await supabase
-                  .from("scout_evidence")
-                  .delete()
-                  .eq("id", e.id);
+                const a = await supabase.from("scout_evidence").delete().eq("id", e.id);
                 if (a.error) throw new Error(a.error.message);
                 if (e.storage_path) {
-                  const b = await supabase.storage
-                    .from("scout-evidence")
-                    .remove([e.storage_path]);
+                  const b = await supabase.storage.from("scout-evidence").remove([e.storage_path]);
                   if (b.error) throw new Error(b.error.message);
                 }
               })
@@ -1110,14 +1001,11 @@ function EvidenceUpload({
     setError("");
     let remaining = [...files];
     try {
-      if (kind === "testimony" && !consent)
-        throw new Error("Confirm informed interview consent");
+      if (kind === "testimony" && !consent) throw new Error("Confirm informed interview consent");
       if (!note.trim()) throw new Error("Describe the evidence and source");
       if (files.length && !captured)
         throw new Error("Enter the date and time the media was captured");
-      const time = captured
-        ? new Date(captured).toISOString()
-        : new Date().toISOString();
+      const time = captured ? new Date(captured).toISOString() : new Date().toISOString();
       if (new Date(time).getTime() > Date.now() + 600000)
         throw new Error("Capture time cannot be in the future");
       const work = files.length ? files : [null];
@@ -1136,9 +1024,7 @@ function EvidenceUpload({
             file.size > 52428800 ||
             file.size === 0
           )
-            throw new Error(
-              `${file.name}: use JPEG, PNG, WebP, MP4, WebM or MOV up to 50 MB`,
-            );
+            throw new Error(`${file.name}: use JPEG, PNG, WebP, MP4, WebM or MOV up to 50 MB`);
           path = `${request.id}/${crypto.randomUUID()}.${
             file.name
               .split(".")
@@ -1150,30 +1036,27 @@ function EvidenceUpload({
             .upload(path, file, { contentType: file.type, upsert: false });
           if (u.error) throw new Error(u.error.message);
         }
-        const res = await supabase
-          .from("scout_evidence")
-          .insert({
-            request_id: request.id,
-            scout_id: uid,
-            task_code: task,
-            evidence_kind: kind,
-            note:
-              (gps
-                ? "Device GPS was recorded at upload, not verified media capture location. "
-                : "") + note.trim(),
-            storage_path: path,
-            mime_type: file?.type ?? null,
-            size_bytes: file?.size ?? null,
-            captured_at: time,
-            lat: gps?.lat ?? null,
-            lng: gps?.lng ?? null,
-            accuracy_m: gps?.accuracy ?? null,
-            location_source: gps ? "device_gps" : "none",
-            interview_consent: consent,
-          });
+        const res = await supabase.from("scout_evidence").insert({
+          request_id: request.id,
+          scout_id: uid,
+          task_code: task,
+          evidence_kind: kind,
+          note:
+            (gps
+              ? "Device GPS was recorded at upload, not verified media capture location. "
+              : "") + note.trim(),
+          storage_path: path,
+          mime_type: file?.type ?? null,
+          size_bytes: file?.size ?? null,
+          captured_at: time,
+          lat: gps?.lat ?? null,
+          lng: gps?.lng ?? null,
+          accuracy_m: gps?.accuracy ?? null,
+          location_source: gps ? "device_gps" : "none",
+          interview_consent: consent,
+        });
         if (res.error) {
-          if (path)
-            await supabase.storage.from("scout-evidence").remove([path]);
+          if (path) await supabase.storage.from("scout-evidence").remove([path]);
           throw new Error(res.error.message);
         }
         if (file) {
@@ -1197,11 +1080,7 @@ function EvidenceUpload({
       <legend className="px-2">Add private evidence</legend>
       <label className="block text-sm">
         Checklist item
-        <select
-          className={control}
-          value={task}
-          onChange={(e) => setTask(e.target.value)}
-        >
+        <select className={control} value={task} onChange={(e) => setTask(e.target.value)}>
           {tasks.map((t) => (
             <option key={t.code} value={t.code}>
               {t.label}
@@ -1211,11 +1090,7 @@ function EvidenceUpload({
       </label>
       <label className="block text-sm">
         Source type
-        <select
-          className={control}
-          value={kind}
-          onChange={(e) => setKind(e.target.value)}
-        >
+        <select className={control} value={kind} onChange={(e) => setKind(e.target.value)}>
           <option value="observation">Direct observation</option>
           <option value="testimony">Local testimony</option>
           <option value="inference">Scout interpretation / inference</option>
@@ -1232,13 +1107,8 @@ function EvidenceUpload({
       </label>
       {kind === "testimony" && (
         <label className="flex gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={consent}
-            onChange={(e) => setConsent(e.target.checked)}
-          />
-          The interviewee consented to collection and sharing with this buyer
-          and HALISIA reviewers
+          <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
+          The interviewee consented to collection and sharing with this buyer and HALISIA reviewers
         </label>
       )}
       <label className="block text-sm">
@@ -1252,8 +1122,8 @@ function EvidenceUpload({
         />
       </label>
       <p className="text-sm">
-        {files.length} files pending. Failed files remain selected for retry;
-        after closing this page you must reselect files.
+        {files.length} files pending. Failed files remain selected for retry; after closing this
+        page you must reselect files.
       </p>
       <label className="block text-sm">
         Actual capture date and time (your local time)
@@ -1268,9 +1138,7 @@ function EvidenceUpload({
         disabled={busy}
         onClick={() => {
           if (!navigator.geolocation) {
-            setError(
-              "GPS is unavailable; evidence will be labelled without GPS",
-            );
+            setError("GPS is unavailable; evidence will be labelled without GPS");
             return;
           }
           navigator.geolocation.getCurrentPosition(
@@ -1317,9 +1185,7 @@ function MediaCard({
   const [error, setError] = useState("");
   const open = async () => {
     if (!e.storage_path) return;
-    const r = await supabase.storage
-      .from("scout-evidence")
-      .createSignedUrl(e.storage_path, 300);
+    const r = await supabase.storage.from("scout-evidence").createSignedUrl(e.storage_path, 300);
     if (r.error) setError(r.error.message);
     else {
       setUrl(r.data.signedUrl);
@@ -1335,24 +1201,13 @@ function MediaCard({
       <p>Captured: {new Date(e.captured_at).toLocaleString()}</p>
       <p>
         Location: {e.location_source};{" "}
-        {e.lat != null
-          ? `${e.lat}, ${e.lng} ±${e.accuracy_m ?? "unknown"} m`
-          : "not recorded"}
+        {e.lat != null ? `${e.lat}, ${e.lng} ±${e.accuracy_m ?? "unknown"} m` : "not recorded"}
       </p>
       {url &&
         (e.mime_type?.startsWith("video/") ? (
-          <video
-            controls
-            preload="metadata"
-            src={url}
-            className="w-full rounded-xl"
-          />
+          <video controls preload="metadata" src={url} className="w-full rounded-xl" />
         ) : (
-          <img
-            src={url}
-            alt={e.note || "Scout site evidence"}
-            className="w-full rounded-xl"
-          />
+          <img src={url} alt={e.note || "Scout site evidence"} className="w-full rounded-xl" />
         ))}
       {e.storage_path && (
         <Button onClick={() => void open()}>
@@ -1384,8 +1239,7 @@ function JobTimeline({ id }: { id: string }) {
       <summary>Activity history</summary>
       {q.data?.map((e) => (
         <p key={e.id} className="mt-2 text-sm">
-          {new Date(e.created_at).toLocaleString()} ·{" "}
-          {e.event.replaceAll("_", " ")}
+          {new Date(e.created_at).toLocaleString()} · {e.event.replaceAll("_", " ")}
         </p>
       ))}
     </details>
@@ -1411,16 +1265,9 @@ async function downloadScoutReport(r: Request, evidence: Evidence[]) {
     y += 3;
   };
   line("HALISIA - Ground due diligence", true);
-  line(
-    r.status === "completed" ? "REVIEWED REPORT" : "DRAFT - NOT REVIEWED",
-    true,
-  );
-  line(
-    `Reference: ${r.title_reference || r.id}; County: ${r.county || "Not provided"}`,
-  );
-  line(
-    `Location source: ${r.location_source}; ${r.lat ?? "Unknown"}, ${r.lng ?? "Unknown"}`,
-  );
+  line(r.status === "completed" ? "REVIEWED REPORT" : "DRAFT - NOT REVIEWED", true);
+  line(`Reference: ${r.title_reference || r.id}; County: ${r.county || "Not provided"}`);
+  line(`Location source: ${r.location_source}; ${r.lat ?? "Unknown"}, ${r.lng ?? "Unknown"}`);
   line(`Site summary: ${r.scout_summary || "No findings yet"}`);
   line(`Review note: ${r.reviewer_note || "Not reviewed"}`);
   for (const [code, val] of Object.entries(asObject(r.task_results))) {
@@ -1428,23 +1275,16 @@ async function downloadScoutReport(r: Request, evidence: Evidence[]) {
     line(`${code}: ${f.status}`, true);
     line(f.note || f.reason || "Unanswered");
     if (f.contradicts_ai)
-      line(
-        "Ground finding disagrees with AI interpretation; consult the reviewed evidence.",
-      );
+      line("Ground finding disagrees with AI interpretation; consult the reviewed evidence.");
   }
   line("Evidence register", true);
   for (const e of evidence) {
-    line(
-      `${e.task_code} / ${e.evidence_kind} / ${new Date(e.captured_at).toISOString()}`,
-    );
+    line(`${e.task_code} / ${e.evidence_kind} / ${new Date(e.captured_at).toISOString()}`);
     line(e.note || "Media evidence");
     line(
       `Evidence ID: ${e.id}. Location: ${e.location_source}; ${e.lat ?? "Unknown"}, ${e.lng ?? "Unknown"}; accuracy ${e.accuracy_m ?? "Unknown"} m.`,
     );
-    if (
-      e.storage_path &&
-      ["image/jpeg", "image/png"].includes(e.mime_type ?? "")
-    ) {
+    if (e.storage_path && ["image/jpeg", "image/png"].includes(e.mime_type ?? "")) {
       const signed = await supabase.storage
         .from("scout-evidence")
         .createSignedUrl(e.storage_path, 60);
@@ -1470,9 +1310,7 @@ async function downloadScoutReport(r: Request, evidence: Evidence[]) {
           );
           y += h + 8;
         } catch {
-          line(
-            "Image could not be embedded; view its private original in the scout workspace.",
-          );
+          line("Image could not be embedded; view its private original in the scout workspace.");
         }
       }
     }
@@ -1505,16 +1343,14 @@ export function ReviewedScoutFindings({ reference }: { reference: string }) {
     <section className="glass mt-5 space-y-3 rounded-2xl p-4">
       <h2 className="font-semibold">Reviewed ground findings</h2>
       <p className="text-sm">
-        Private reports linked to this title reference. Ground findings
-        supplement the AI; ownership and surveyed boundaries remain unverified.
+        Private reports linked to this title reference. Ground findings supplement the AI; ownership
+        and surveyed boundaries remain unverified.
       </p>
       {q.data.map((r) => (
         <div key={r.request_id}>
           <p className="text-sm">
             Reviewed{" "}
-            {r.completed_at
-              ? new Date(r.completed_at).toLocaleDateString()
-              : "date unavailable"}
+            {r.completed_at ? new Date(r.completed_at).toLocaleDateString() : "date unavailable"}
           </p>
           <p className="whitespace-pre-wrap text-sm">{r.scout_summary}</p>
           {Object.entries(asObject(r.task_results)).map(([code, v]) => {

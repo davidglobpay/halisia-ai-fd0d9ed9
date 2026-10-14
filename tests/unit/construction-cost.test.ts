@@ -24,7 +24,9 @@ describe("construction cost estimator", () => {
   });
   it("builds a nonempty valid PDF", () => {
     const rows = estimateCosts({ grossM2: 150, storeys: 1, use: "residential" });
-    const out = buildCostPdf({ title: "Test", grossM2: 150, storeys: 1, rows }).output("arraybuffer");
+    const out = buildCostPdf({ title: "Test", grossM2: 150, storeys: 1, rows }).output(
+      "arraybuffer",
+    );
     const head = new TextDecoder().decode(out.slice(0, 5));
     expect(head).toBe("%PDF-");
     expect(out.byteLength).toBeGreaterThan(2000);

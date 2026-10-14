@@ -860,7 +860,12 @@ function TitleDeedPage() {
               <Link
                 to="/scout"
                 search={{
-                  ref: fields?.titleNumber || fields?.lrNumber || fields?.parcelNumber || queryValue || undefined,
+                  ref:
+                    fields?.titleNumber ||
+                    fields?.lrNumber ||
+                    fields?.parcelNumber ||
+                    queryValue ||
+                    undefined,
                   county: loc?.county ?? fields?.county ?? undefined,
                   src: pinned ? "manual_pin" : loc ? "approximate_geocode" : undefined,
                   lat: pinned?.lat ?? loc?.lat,

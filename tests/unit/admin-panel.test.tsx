@@ -36,9 +36,7 @@ vi.mock("@/lib/admin", async (importOriginal) => {
       if (name === "halisia_admin_overview")
         return Promise.resolve({ accounts: 1, payments_enabled: false });
       return Promise.resolve({
-        rows: [
-          { id: "client", email: "client@example.com", roles: ["explorer"] },
-        ],
+        rows: [{ id: "client", email: "client@example.com", roles: ["explorer"] }],
         total: 1,
         offset: 0,
       });
@@ -66,26 +64,20 @@ describe("Master administrator access", () => {
   it("offers account sign-in without querying privileged records", () => {
     state.user = null;
     mount();
-    expect(
-      screen.getByRole("link", { name: "Sign in / register" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Sign in / register" })).toBeInTheDocument();
     expect(state.rpc).not.toHaveBeenCalled();
   });
   it("keeps account records and mutation controls hidden until MFA", async () => {
     mount();
     await screen.findByText("Security setup");
     expect(screen.queryByLabelText("Resource")).not.toBeInTheDocument();
-    expect(
-      state.rpc.mock.calls.every(([name]) => name === "halisia_admin_status"),
-    ).toBe(true);
+    expect(state.rpc.mock.calls.every(([name]) => name === "halisia_admin_status")).toBe(true);
   });
   it("loads real record workspaces only after verified access", async () => {
     state.ready = true;
     mount();
     await screen.findByRole("heading", { name: "client@example.com" });
-    expect(
-      screen.getByRole("button", { name: "Suspend app access" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Suspend app access" })).toBeInTheDocument();
     await waitFor(() =>
       expect(state.rpc).toHaveBeenCalledWith("halisia_admin_read", {
         p_table: "accounts",

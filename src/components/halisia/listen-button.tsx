@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Volume2, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -17,10 +17,13 @@ export function ListenButton({
   const generation = useRef(0);
   const speakingRef = useRef(false);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const invalidateSpeech = useCallback(() => {
+    generation.current++;
+  }, []);
   useEffect(() => {
     setSupported("speechSynthesis" in window && "SpeechSynthesisUtterance" in window);
     const stopped = () => {
-      generation.current++;
+      invalidateSpeech();
       speakingRef.current = false;
       utteranceRef.current = null;
       setOn(false);
@@ -28,13 +31,13 @@ export function ListenButton({
     window.addEventListener(SPEECH_STOP_EVENT, stopped);
     return () => {
       window.removeEventListener(SPEECH_STOP_EVENT, stopped);
-      generation.current++;
+      invalidateSpeech();
       if (speakingRef.current && "speechSynthesis" in window) {
         window.speechSynthesis.cancel();
         window.dispatchEvent(new Event(SPEECH_STOP_EVENT));
       }
     };
-  }, []);
+  }, [invalidateSpeech]);
   const toggle = () => {
     const s = window.speechSynthesis;
     const stopping = speakingRef.current;

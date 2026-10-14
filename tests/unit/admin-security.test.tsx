@@ -1,10 +1,4 @@
-import {
-  render,
-  screen,
-  fireEvent,
-  waitFor,
-  cleanup,
-} from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
 import { afterEach, describe, it, expect, vi } from "vitest";
 import { AdminSecurity } from "@/components/halisia/admin-security";
 const mock = vi.hoisted(() => ({
@@ -40,9 +34,7 @@ afterEach(() => {
 describe("Administrator credential controls", () => {
   it("does not enable password changes before MFA", () => {
     render(<AdminSecurity ready={false} onVerified={() => {}} />);
-    expect(
-      screen.getByRole("button", { name: "Save my password" }),
-    ).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Save my password" })).toBeDisabled();
   });
   it("checks current assurance again before sending a password", async () => {
     mock.level = "aal1";
@@ -53,13 +45,9 @@ describe("Administrator credential controls", () => {
     fireEvent.change(screen.getByLabelText("Confirm password"), {
       target: { value: "testing-strong-secret" },
     });
-    fireEvent.submit(
-      screen.getByRole("button", { name: "Save my password" }).closest("form")!,
-    );
+    fireEvent.submit(screen.getByRole("button", { name: "Save my password" }).closest("form")!);
     await waitFor(() =>
-      expect(
-        screen.getByRole("button", { name: "Save my password" }),
-      ).not.toBeDisabled(),
+      expect(screen.getByRole("button", { name: "Save my password" })).not.toBeDisabled(),
     );
     expect(mock.update).not.toHaveBeenCalled();
   });
@@ -71,13 +59,9 @@ describe("Administrator credential controls", () => {
     fireEvent.change(screen.getByLabelText("Confirm password"), {
       target: { value: "different-strong-secret" },
     });
-    fireEvent.submit(
-      screen.getByRole("button", { name: "Save my password" }).closest("form")!,
-    );
+    fireEvent.submit(screen.getByRole("button", { name: "Save my password" }).closest("form")!);
     await waitFor(() =>
-      expect(
-        screen.getByRole("button", { name: "Save my password" }),
-      ).not.toBeDisabled(),
+      expect(screen.getByRole("button", { name: "Save my password" })).not.toBeDisabled(),
     );
     expect(mock.update).not.toHaveBeenCalled();
   });

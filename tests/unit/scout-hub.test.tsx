@@ -1,10 +1,4 @@
-import {
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  cleanup,
-} from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, cleanup } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ScoutHub } from "@/components/halisia/scout-hub";
@@ -58,8 +52,7 @@ vi.mock("@/integrations/supabase/client", () => ({
         error: mock.failing ? { message: "Connection unavailable" } : null,
       };
       const chain: Record<string, unknown> = {
-        then: (resolve: (v: unknown) => void) =>
-          Promise.resolve(result).then(resolve),
+        then: (resolve: (v: unknown) => void) => Promise.resolve(result).then(resolve),
       };
       for (const key of ["select", "order", "eq", "single", "update", "delete"])
         chain[key] = () => chain;
@@ -96,17 +89,13 @@ describe("scout service screens", () => {
     mount();
     await screen.findByText(/Quote-only mode/);
     fireEvent.click(screen.getByRole("button", { name: /LR TEST/ }));
-    expect(
-      await screen.findByRole("button", { name: "Accept quote" }),
-    ).toBeDisabled();
+    expect(await screen.findByRole("button", { name: "Accept quote" })).toBeDisabled();
     expect(screen.queryByText(/Administration:/)).not.toBeInTheDocument();
   });
   it("shows a recoverable connection error instead of an empty workspace", async () => {
     mock.failing = true;
     mount();
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Connection unavailable",
-    );
+    expect(await screen.findByRole("alert")).toHaveTextContent("Connection unavailable");
     expect(screen.getByRole("button", { name: "Retry" })).toBeEnabled();
   });
   it("blocks testimony without consent before uploading or saving anything", async () => {
@@ -125,9 +114,7 @@ describe("scout service screens", () => {
       }),
     );
     await waitFor(() =>
-      expect(screen.getByRole("alert")).toHaveTextContent(
-        "Confirm informed interview consent",
-      ),
+      expect(screen.getByRole("alert")).toHaveTextContent("Confirm informed interview consent"),
     );
     expect(mock.upload).not.toHaveBeenCalled();
     expect(mock.insert).not.toHaveBeenCalled();

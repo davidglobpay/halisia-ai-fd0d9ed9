@@ -75,9 +75,7 @@ function ScoutPage() {
   const DRAFT_KEY = DRAFT_PREFIX + (uid ?? "signed-out");
   const [draftLoaded, setDraftLoaded] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [checklist, setChecklist] = useState<Record<string, ChecklistChoice>>(
-    {},
-  );
+  const [checklist, setChecklist] = useState<Record<string, ChecklistChoice>>({});
   const [access, setAccess] = useState<AccessLevel>("easy");
   const [travel, setTravel] = useState(0);
   const [lat, setLat] = useState(s.lat?.toString() ?? "");
@@ -111,10 +109,7 @@ function ScoutPage() {
   useEffect(() => {
     if (!uid || !draftLoaded) return;
     try {
-      localStorage.setItem(
-        DRAFT_KEY,
-        JSON.stringify({ checklist, instructions, custom }),
-      );
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ checklist, instructions, custom }));
     } catch {
       /* optional draft */
     }
@@ -138,10 +133,7 @@ function ScoutPage() {
   const catalogQ = useQuery({
     queryKey: ["scout-catalog"],
     queryFn: async () => {
-      const r = await supabase
-        .from("scout_price_catalog")
-        .select("*")
-        .order("sort");
+      const r = await supabase.from("scout_price_catalog").select("*").order("sort");
       if (r.error) throw new Error(r.error.message);
       return r.data ?? [];
     },
@@ -179,19 +171,12 @@ function ScoutPage() {
 
   const submit = async () => {
     if (!county.trim()) return toast.error("Enter the service county");
-    if ((lat === "") !== (lng === ""))
-      return toast.error("Enter both latitude and longitude");
-    if (
-      hasCoords &&
-      (!Number.isFinite(Number(lat)) || !Number.isFinite(Number(lng)))
-    )
+    if ((lat === "") !== (lng === "")) return toast.error("Enter both latitude and longitude");
+    if (hasCoords && (!Number.isFinite(Number(lat)) || !Number.isFinite(Number(lng))))
       return toast.error("Enter valid coordinates");
     if (
       hasCoords &&
-      (Number(lat) < -5 ||
-        Number(lat) > 5.5 ||
-        Number(lng) < 33.5 ||
-        Number(lng) > 42.5)
+      (Number(lat) < -5 || Number(lat) > 5.5 || Number(lng) < 33.5 || Number(lng) > 42.5)
     )
       return toast.error("Coordinates are outside Kenya");
     if (!hasCoords && !instructions.trim())
@@ -209,9 +194,7 @@ function ScoutPage() {
       p_location_confirmed: confirmed,
       p_instructions: instructions,
       p_custom_concern: custom,
-      p_checklist: Object.fromEntries(
-        taskOptions.map((t) => [t.code, checklist[t.code] ?? "not"]),
-      ),
+      p_checklist: Object.fromEntries(taskOptions.map((t) => [t.code, checklist[t.code] ?? "not"])),
       p_access_level: access,
       p_travel_kes: travel,
     });
@@ -235,8 +218,8 @@ function ScoutPage() {
       </Link>
       <h1 className="mt-2 font-display text-3xl font-semibold">Send a Scout</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        A person visits and records what they see and hear. This is field
-        observation, not a survey, title search or ownership verification.
+        A person visits and records what they see and hear. This is field observation, not a survey,
+        title search or ownership verification.
       </p>
 
       <section className="glass mt-6 grid gap-4 rounded-2xl p-4">
@@ -262,14 +245,14 @@ function ScoutPage() {
         </div>
         {s.src === "approximate_geocode" && (
           <p className="text-xs text-amber-glow">
-            These coordinates are an approximate area match, not the parcel.
-            Correct them or add directions.
+            These coordinates are an approximate area match, not the parcel. Correct them or add
+            directions.
           </p>
         )}
         {hasCoords && !untouched && s.src && (
           <p className="text-xs text-muted-foreground">
-            You changed the coordinates, so this request is filed as
-            coordinates you entered rather than as the point you arrived with.
+            You changed the coordinates, so this request is filed as coordinates you entered rather
+            than as the point you arrived with.
           </p>
         )}
         <div className="grid grid-cols-2 gap-2">
@@ -303,17 +286,10 @@ function ScoutPage() {
         </label>
 
         <fieldset className="grid gap-2">
-          <legend className="mb-1 text-sm font-medium">
-            Checklist (suggested pilot pricing)
-          </legend>
-          <div className="text-xs">
-            Base visit — 8 photos + 1 short video · {kes(q.baseKes)}
-          </div>
+          <legend className="mb-1 text-sm font-medium">Checklist (suggested pilot pricing)</legend>
+          <div className="text-xs">Base visit — 8 photos + 1 short video · {kes(q.baseKes)}</div>
           {taskOptions.map((t) => (
-            <div
-              key={t.code}
-              className="flex flex-wrap items-center justify-between gap-2"
-            >
+            <div key={t.code} className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-sm">
                 {t.label} · {kes(t.kes)}
               </span>
@@ -353,28 +329,14 @@ function ScoutPage() {
               onChange={(e) => setAccess(e.target.value as AccessLevel)}
             >
               <option value="easy">
-                Easy (
-                {kes(
-                  catalog?.find((c) => c.code === "access_easy")?.amount_kes ??
-                    0,
-                )}
-                )
+                Easy ({kes(catalog?.find((c) => c.code === "access_easy")?.amount_kes ?? 0)})
               </option>
               <option value="difficult">
                 Difficult (
-                {kes(
-                  catalog?.find((c) => c.code === "access_difficult")
-                    ?.amount_kes ?? 500,
-                )}
-                )
+                {kes(catalog?.find((c) => c.code === "access_difficult")?.amount_kes ?? 500)})
               </option>
               <option value="remote">
-                Remote (
-                {kes(
-                  catalog?.find((c) => c.code === "access_remote")
-                    ?.amount_kes ?? 1500,
-                )}
-                )
+                Remote ({kes(catalog?.find((c) => c.code === "access_remote")?.amount_kes ?? 1500)})
               </option>
             </select>
           </label>
@@ -395,8 +357,8 @@ function ScoutPage() {
              the catalogue will not load, so every figure below still renders.
              Without this line the buyer reads stale defaults as their quote. */
           <p className="rounded-xl border border-amber-glow/40 px-3 py-2 text-xs text-amber-glow">
-            These figures are the built-in pilot defaults, not the current
-            catalogue, which did not load. They are not your quote.
+            These figures are the built-in pilot defaults, not the current catalogue, which did not
+            load. They are not your quote.
           </p>
         )}
         <dl className="grid grid-cols-2 gap-1 rounded-xl border border-white/10 p-3 text-sm">
@@ -418,30 +380,26 @@ function ScoutPage() {
             checked={confirmed}
             onChange={(e) => setConfirmed(e.target.checked)}
           />
-          I confirm this is the place I want visited. I understand it is not a
-          verified parcel location.
+          I confirm this is the place I want visited. I understand it is not a verified parcel
+          location.
         </label>
         <button
-          disabled={
-            busy || !confirmed || catalogQ.isPending || !!catalogQ.error
-          }
+          disabled={busy || !confirmed || catalogQ.isPending || !!catalogQ.error}
           onClick={submit}
           className="min-h-12 rounded-full bg-primary px-4 text-primary-foreground disabled:opacity-50"
         >
           Request quote
         </button>
         <p className="text-[11px] text-muted-foreground">
-          Current prices are suggested pilot prices. Automatic checkout and
-          payouts are not configured. Payment collection stays disabled until
-          HALISIA configures verified payment instructions; an administrator
-          verifies actual receipts before assignment.
+          Current prices are suggested pilot prices. Automatic checkout and payouts are not
+          configured. Payment collection stays disabled until HALISIA configures verified payment
+          instructions; an administrator verifies actual receipts before assignment.
         </p>
       </section>
 
       {catalogQ.error && (
         <p role="alert">
-          Pricing could not load.{" "}
-          <button onClick={() => void catalogQ.refetch()}>Retry</button>
+          Pricing could not load. <button onClick={() => void catalogQ.refetch()}>Retry</button>
         </p>
       )}
       {uid && <ScoutHub uid={uid} isAdmin={isAdmin} initialJob={s.job} />}
