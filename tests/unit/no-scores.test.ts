@@ -76,10 +76,10 @@ describe("no score comes back, for any persona", () => {
       ...d.modules.flatMap((m) => [m.label, ...m.reasons, ...m.limitations, m.nextStep]),
     ].join("  ");
 
-    // Google's own air-quality category is a measured value passed through
-    // verbatim — "Good air quality" is theirs, read from the Air Quality API and
-    // named as such. It is removed before the band check so the check tests what
-    // HALISIA says about the place, not what a named source said about the air.
+  // Google's own air-quality category is a measured value passed through
+  // verbatim — "Good air quality" is theirs, read from the Air Quality API and
+  // named as such. It is removed before the band check so the check tests what
+  // HALISIA says about the place, not what a named source said about the air.
     const judged = text.split(INTEL.airQuality.category).join(" ");
 
     // A mark out of a hundred, however it is spaced.
@@ -159,10 +159,22 @@ describe("the surfaces themselves carry no score", () => {
   // The engine could be clean while a component prints "/100" from its own
   // state. These are the files that did exactly that.
   const SURFACES = [
+    // The land engine and the surfaces that render it.
     "src/lib/intelligence-engine.ts",
     "src/components/halisia/hero-summary.tsx",
     "src/components/halisia/land-intelligence-score.tsx",
     "src/lib/pdf-intelligence.ts",
+    // Wave 4 — a second scoring layer, on its own data pipeline. It published
+    // "Investment score · NN / 100 · composite" in the panel, a mark in the
+    // provenance export, "72/100" as a Land Passport evidence row, and a
+    // filled bar per indicator in the dossier PDF.
+    "src/lib/wave4-intel.functions.ts",
+    "src/components/halisia/wave4-panel.tsx",
+    "src/components/halisia/provenance-modal.tsx",
+    "src/lib/pdf-dossier.ts",
+    "src/lib/passport-evidence.ts",
+    // The language model's suitability marks, rendered as gauges.
+    "src/components/halisia/intelligence-dashboard.tsx",
   ];
 
   /**
@@ -198,6 +210,39 @@ describe("the surfaces themselves carry no score", () => {
       // `grade: Grade | null` on the interface, or `grade: null` in a producer.
       expect(a.trim()).toMatch(/^grade:\s*(null|Grade \| null);?$/);
     }
+  });
+
+  it("no longer renders a progress bar whose width is a score", () => {
+    // Every removed gauge was a div whose width came from the number beside
+    // it. A width driven by a score is a score, drawn rather than printed —
+    // and it carries more conviction than the digits do.
+    //
+    // The line is drawn at who defined the scale, not at whether a number is
+    // involved. A quantity whose 0-100 range is published by the source that
+    // measured it may be drawn on that range: the Universal AQI is defined by
+    // Google as 0-100 with 100 best, and `confidencePct` is a true proportion
+    // of a whole. A figure HALISIA computed may not, because its 0-100 range
+    // was chosen by us and corresponds to nothing — which is what made the old
+    // bars a misrepresentation rather than a styling choice.
+    for (const path of SURFACES) {
+      const c = code(path);
+      const widths = c.match(/width:\s*`\$\{[^`]*\}%`/g) ?? [];
+      for (const w of widths) {
+        expect(w, `${path} must not size an element by a score`).not.toMatch(
+          /\b(score|reading|grade|rating)\b/i,
+        );
+      }
+    }
+  });
+
+  it("names no indicator a score, a grade or a rating in its own output", () => {
+    // The Wave 4 panel's tab read "Investment"; the passport's rows read
+    // "Accessibility score", "Investment composite".
+    const wave4 = code("src/lib/wave4-intel.functions.ts");
+    expect(wave4).not.toMatch(/formula:/);
+    expect(wave4).not.toMatch(/weight:/);
+    const passport = code("src/lib/passport-evidence.ts");
+    expect(passport).not.toMatch(/"[A-Za-z ]+ score"/);
   });
 
   it("no longer defines a grader or a score-to-band map", () => {

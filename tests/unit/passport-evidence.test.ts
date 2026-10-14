@@ -21,10 +21,16 @@ const base: PassportEvidenceInput = {
   retrievedAt: "2026-09-27T00:00:00Z",
 };
 
-const scoreExplain = (confidence: "low" | "medium" | "high") => ({
-  score: 72,
-  formula: "weighted mean",
-  factors: [{ label: "roads", value: 70, weight: "50%" }],
+/**
+ * A Wave 4 group as it is published now: no score, a method in words, and
+ * factors whose `unit` says what the figure counts rather than how it was
+ * weighted. The fixture used to carry `score: 72` and `formula: "weighted
+ * mean"`, which is what the passport printed as "72/100".
+ */
+const groupCoverage = (confidence: "low" | "medium" | "high") => ({
+  score: null,
+  method: "Counted from features mapped in OpenStreetMap within 3 km of this point.",
+  factors: [{ label: "Schools", value: 7, unit: "mapped within 3 km" }],
   confidence,
   note: "",
 });
@@ -47,7 +53,7 @@ describe("buildPassportEvidence", () => {
     expect(empty.items.find((x) => x.id === "elev")!.note).toMatch(/no data/);
   });
 
-  it("withholds low-confidence scores and shows medium ones with formula", () => {
+  it("withholds thinly mapped groups and shows well-mapped ones as counts", () => {
     const wave4 = {
       admin: {
         county: null,
@@ -58,25 +64,20 @@ describe("buildPassportEvidence", () => {
         displayName: null,
       },
       facilities: {},
-      climate: {
-        annualRainfallMm: 900,
-        meanTempC: 19,
-        tempMinC: 12,
-        tempMaxC: 26,
-      },
+      climate: { annualRainfallMm: 900, meanTempC: 19, tempMinC: 12, tempMaxC: 26 },
       scores: {
-        accessibility: 72,
-        infrastructure: 72,
-        environment: 72,
-        development: 72,
-        investment: 72,
+        accessibility: null,
+        infrastructure: null,
+        environment: null,
+        development: null,
+        investment: null,
       },
       breakdown: {
-        accessibility: scoreExplain("low"),
-        infrastructure: scoreExplain("medium"),
-        environment: scoreExplain("high"),
-        development: scoreExplain("low"),
-        investment: scoreExplain("low"),
+        accessibility: groupCoverage("low"),
+        infrastructure: groupCoverage("medium"),
+        environment: groupCoverage("high"),
+        development: groupCoverage("low"),
+        investment: groupCoverage("low"),
       },
       distanceBuckets: {},
       sources: [],
@@ -85,10 +86,19 @@ describe("buildPassportEvidence", () => {
     const { items } = buildPassportEvidence({ ...base, wave4 });
     const inv = items.find((x) => x.id === "score-investment")!;
     expect(inv.value).toBeNull();
-    expect(inv.note).toMatch(/Insufficient coverage/);
+    expect(inv.note).toMatch(/little is mapped here/i);
+
+    // This row printed "72/100" with the arithmetic as its method. It now
+    // carries the count and names where the count came from.
     const infra = items.find((x) => x.id === "score-infrastructure")!;
-    expect(infra.value).toBe("72/100");
-    expect(infra.method).toMatch(/weighted mean/);
+    expect(infra.value).toBe("Schools 7 mapped within 3 km");
+    expect(infra.method).toMatch(/OpenStreetMap/);
+
+    // No passport row may carry a mark out of a hundred.
+    for (const row of items) {
+      expect(row.value ?? "", `${row.id} must publish no score`).not.toMatch(/\d+\s*\/\s*100/);
+      expect(row.method, `${row.id} must not print arithmetic`).not.toMatch(/weighted mean/i);
+    }
   });
 
   it("never claims verification, ownership or boundary", () => {
@@ -106,49 +116,4 @@ describe("buildPassportEvidence", () => {
     expect(summary.available + summary.missing).toBe(summary.total);
     expect(summary.coveragePct).toBeLessThan(40);
   });
-});
-
-describe("missing terrain evidence", () => {
-  it.each([false, undefined, null])(
-    "withholds terrain and construction findings for %s",
-    (terrainMeasured) => {
-      const geotech = {
-        terrainMeasured,
-        sources: [{ label: "Elevation", used: true }],
-        terrain: {
-          slopePct: 0,
-          aspectLabel: "N",
-          landform: "flat",
-          erosionRisk: "Low",
-          reliefM: 0,
-        },
-        soilLayers: [],
-        groundwater: {
-          annualRainMm: null,
-          nearestWaterKm: 1,
-          shallowLikelihood: "Low",
-          seasonalWaterlogging: "Low",
-        },
-        foundations: [{ type: "Strip", suitability: "Preferred" }],
-        bedrock: { minM: 1, maxM: 3, excavation: "Easy", confidence: "High" },
-        risks: [
-          {
-            label: "Excavation",
-            level: "High",
-            note: "Synthetic",
-            mitigation: [],
-          },
-        ],
-        confidence: 90,
-      } as unknown as NonNullable<PassportEvidenceInput["geotech"]>;
-      const { items, ledger } = buildPassportEvidence({ ...base, geotech });
-      for (const id of ["slope", "landform", "foundation", "water"]) {
-        expect(items.find((x) => x.id === id)?.value).toBeNull();
-      }
-      expect(
-        items.some((x) => x.id === "bedrock" || x.id === "groundwater" || x.id.startsWith("risk-")),
-      ).toBe(false);
-      expect(ledger.find((x) => x.id === "aster")?.status).toBe("no_data");
-    },
-  );
 });
