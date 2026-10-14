@@ -347,7 +347,7 @@ function SpatialPage() {
       <SectionHeading
         eyebrow="Spatial intelligence"
         title="AR · VR · XR Land Studio"
-        description="Project a surveyed Kenyan parcel into your physical space, verify beacons on the ground, test massing against zoning envelopes and issue a Digital Land Passport."
+        description="Visualise supplied parcel records in your physical space, inspect recorded beacons, compare concept massing against user-supplied envelopes and review a Digital Land Passport."
         className="mt-4"
       />
 

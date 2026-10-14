@@ -317,7 +317,18 @@ export default function StudioViewerInternal(props: StudioViewerProps) {
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    } catch {
+      onApiRef.current?.(null);
+      onStateRef.current?.({
+        loading: false,
+        error:
+          "3D rendering is unavailable in this browser. Enable hardware acceleration or use another supported browser. Your concept inputs remain available.",
+      });
+      return;
+    }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;

@@ -21,10 +21,8 @@ import {
 import { KenyaCountyMap } from "@/components/halisia/kenya-county-map";
 import { SearchBar } from "@/components/halisia/search-bar";
 import { AIOrb } from "@/components/halisia/ai-orb";
-import { DataPipeline } from "@/components/halisia/data-pipeline";
 import { HoloStack } from "@/components/halisia/ds/holo-stack";
 
-import { ScoreDrivers } from "@/components/halisia/score-drivers";
 import {
   PulseWindow,
   CountyListSection,
@@ -317,9 +315,6 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
           </div>
         </div>
       </section>
-
-      <DataPipeline />
-      <ScoreDrivers />
 
       {/* PEOPLE — holographic collapsible stack */}
       <HoloStack

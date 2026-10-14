@@ -278,10 +278,7 @@ function scoreConstruction(intel?: LocationIntel): ModuleOutput {
     );
   }
 
-  // Elevation is a coarse buildability signal and nothing more: it says
-  // something about drainage and water table, not about what the ground can
-  // carry. It is reported as the metres it is, and the sentence below says
-  // what that height implies. It is not converted into a mark out of 100.
+  // Absolute elevation does not establish drainage, water table or buildability.
   return {
     id: "construction",
     label: "Construction",
@@ -291,16 +288,8 @@ function scoreConstruction(intel?: LocationIntel): ModuleOutput {
     trend: null,
     confidencePct: confidence,
     reasons: [
-      `Elevation ${elev.toFixed(0)} m — ${
-        elev < 20
-          ? "coastal or low-lying; check the water table"
-          : elev < 100
-            ? "low relief, so drainage matters"
-            : elev > 2400
-              ? "high altitude; curing and access need planning"
-              : "elevated, drainage friendlier"
-      }`,
-      "Reads drainage and water-table risk from height alone",
+      `Elevation ${elev.toFixed(0)} m above sea level`,
+      "Drainage, water table and buildability are not assessed from elevation",
       "Says nothing about bearing capacity, soil type or slope at parcel scale",
     ],
     sources: [SRC_ELEVATION],
@@ -309,7 +298,7 @@ function scoreConstruction(intel?: LocationIntel): ModuleOutput {
       "Slope at parcel scale — not computed",
       "Road width and haulage access — not surveyed",
     ],
-    limitations: ["Elevation is a proxy for drainage, not a geotechnical assessment"],
+    limitations: ["A point elevation is not a drainage or geotechnical assessment"],
     nextStep: "Commission SPT and moisture tests at three points on the parcel.",
   };
 }
@@ -354,8 +343,8 @@ function scoreEnvironment(intel?: LocationIntel): ModuleOutput {
         ? `Air quality index ${aqi}${intel?.airQuality?.category ? ` (${intel.airQuality.category})` : ""}, measured now`
         : "Air quality not returned for this point",
       elev != null
-        ? `Elevation ${elev.toFixed(0)} m — a coarse flood proxy only`
-        : "Elevation not returned, so no flood proxy",
+        ? `Elevation ${elev.toFixed(0)} m above sea level; flood risk unassessed`
+        : "Elevation not returned; flood risk unassessed",
       "Neither input describes this parcel's own drainage",
     ],
     sources,
@@ -366,7 +355,7 @@ function scoreEnvironment(intel?: LocationIntel): ModuleOutput {
     ],
     limitations: [
       "Air quality is a reading at one moment, not an annual average",
-      "Elevation stands in for flood risk; it is not a flood study",
+      "Elevation alone cannot establish flood risk",
     ],
     nextStep: "Walk the parcel during the long rains (March–May) before committing.",
   };
