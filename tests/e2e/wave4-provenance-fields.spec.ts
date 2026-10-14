@@ -1,7 +1,20 @@
 import { test, expect } from "@playwright/test";
 import { readFileSync } from "node:fs";
 
-test("Wave 4 provenance export payload matches drill-down factors, weights, confidence & sources", async ({
+/**
+ * The provenance export must say the same thing the screen says.
+ *
+ * This spec asserted `typeof f.weight === "number"` and filtered the modal's
+ * rows by /weight\s+\d/. Neither ever matched: `weight` was typed `string` and
+ * held "×6", "×0.35", "17–26 ideal", so the UI filter found zero rows and the
+ * first expectation in the test failed before the export was even checked.
+ * The whole provenance path was therefore untested, which is how a score out
+ * of 100 survived in it for as long as it did.
+ *
+ * It now checks what is actually published: no score, a method in words, each
+ * factor's figure with the unit it is counted in, and the mapping coverage.
+ */
+test("Wave 4 provenance export payload matches the drill-down factors, units, coverage & sources", async ({
   page,
 }) => {
   await page.goto("/explore?q=Nairobi");
@@ -13,12 +26,16 @@ test("Wave 4 provenance export payload matches drill-down factors, weights, conf
   const modal = page.getByTestId("provenance-modal");
   await expect(modal).toBeVisible();
 
-  // Capture UI-visible factor labels + weights before exporting.
+  // Capture UI-visible factor rows before exporting. Each carries a figure
+  // (or an em dash where the reading never arrived) and the unit it is in.
   const uiFactors = await modal
     .locator("li")
-    .filter({ hasText: /weight\s+\d/ })
+    .filter({ hasText: /within 3 km|not returned|2010–2020/ })
     .allTextContents();
   expect(uiFactors.length).toBeGreaterThan(0);
+
+  // Nothing in the modal may show a mark out of a hundred.
+  await expect(modal).not.toContainText(/\d+\s*\/\s*100/);
 
   const jsonPromise = page.waitForEvent("download", { timeout: 15_000 });
   await page.getByTestId("provenance-export-json").click();
@@ -28,14 +45,22 @@ test("Wave 4 provenance export payload matches drill-down factors, weights, conf
   const parsed = JSON.parse(readFileSync(jsonPath, "utf8"));
 
   expect(parsed.title).toBeTruthy();
-  expect(typeof parsed.score).toBe("number");
-  expect(parsed.formula).toBeTruthy();
+  // Exported as null rather than dropped, so an export taken before this
+  // change and one taken after line up field for field.
+  expect(parsed.score).toBeNull();
+  expect(parsed.method).toBeTruthy();
+  expect(parsed.method).not.toMatch(/[·*]\s*\d|\d\s*[·*]/);
   expect(["high", "medium", "low"]).toContain(parsed.confidence);
-  expect(parsed.confidenceWording).toMatch(/dense|workable|limited/i);
+  expect(parsed.coverage).toBe(parsed.confidence);
+  expect(parsed.confidenceWording).toMatch(/densely mapped|workable|little is mapped/i);
   expect(Array.isArray(parsed.factors) && parsed.factors.length).toBeTruthy();
   for (const f of parsed.factors) {
     expect(f.label).toBeTruthy();
-    expect(typeof f.weight).toBe("number");
+    expect(typeof f.unit).toBe("string");
+    expect(f.unit.length).toBeGreaterThan(0);
+    // A figure, or null where the reading never arrived — never a stand-in 0.
+    expect(f.value === null || typeof f.value === "number").toBe(true);
+    if (/not returned/.test(f.unit)) expect(f.value).toBeNull();
   }
   expect(Array.isArray(parsed.sources) && parsed.sources.length).toBeTruthy();
   for (const s of parsed.sources) {
@@ -43,11 +68,12 @@ test("Wave 4 provenance export payload matches drill-down factors, weights, conf
     expect(s.url).toMatch(/^https?:\/\//);
     expect(["live", "planned"]).toContain(s.status);
   }
-  // Every UI factor weight appears in the JSON export.
-  const jsonWeights = parsed.factors.map((f: { weight: number }) => f.weight);
-  for (const row of uiFactors) {
-    const w = Number(row.match(/weight\s+(\d+(?:\.\d+)?)/)?.[1]);
-    if (!Number.isNaN(w)) expect(jsonWeights).toContain(w);
+  // Every factor label on screen appears in the JSON export, so the file the
+  // user downloads cannot quietly differ from the panel they read.
+  const jsonLabels = parsed.factors.map((f: { label: string }) => f.label);
+  expect(jsonLabels.length).toBe(uiFactors.length);
+  for (const label of jsonLabels) {
+    expect(uiFactors.some((row: string) => row.includes(label))).toBe(true);
   }
 
   // CSV export mirrors the same fields.
@@ -57,11 +83,13 @@ test("Wave 4 provenance export payload matches drill-down factors, weights, conf
   const csvPath = test.info().outputPath("prov.csv");
   await csvDl.saveAs(csvPath);
   const csv = readFileSync(csvPath, "utf8");
-  expect(csv).toMatch(/^section,key,value,weight,confidence/);
-  expect(csv).toMatch(/\nformula,/);
-  expect(csv).toMatch(/\nconfidence,/);
+  expect(csv).toMatch(/^section,key,value,unit,confidence/);
+  expect(csv).toMatch(/\nmethod,/);
+  expect(csv).toMatch(/\ncoverage,/);
   expect(csv).toMatch(/\nfactor,/);
   expect(csv).toMatch(/\nsource,/);
+  // The CSV carried a `score,<title>,<n>,,<confidence>` row. It must not return.
+  expect(csv).not.toMatch(/\nscore,/);
   for (const s of parsed.sources) {
     expect(csv).toContain(s.url);
   }
