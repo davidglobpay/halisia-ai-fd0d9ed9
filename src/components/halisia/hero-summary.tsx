@@ -1,10 +1,13 @@
-import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Sparkles,
   MapPin,
   CircleSlash,
   ChevronDown,
+  Eye,
+  Ruler,
+  Calculator,
+  HelpCircle,
   Trees,
   Route,
   Building2,
@@ -23,102 +26,95 @@ import type { Wave4Intel } from "@/lib/wave4-intel.functions";
 import { runIntelligenceEngine, DOSSIER_SCOPE, type ModuleOutput } from "@/lib/intelligence-engine";
 import { useUserPersona } from "@/hooks/use-user-persona";
 import { ListenButton } from "@/components/halisia/listen-button";
+import { SpokenText } from "@/components/halisia/spoken-text";
+import {
+  classTally,
+  EVIDENCE_LEAD,
+  type EvidenceClass,
+  type ClassMeta,
+} from "@/lib/evidence-class";
 
 /**
  * The hero read for a location.
  *
- * This component used to score the location itself, in parallel with the
- * intelligence engine and disagreeing with it. It derived eight gauges from
- * whatever was to hand: "Safety" was `50 + airQualityIndex / 2`, "Utilities"
- * was a count of shops and restaurants, "Future growth" was the mean of two
- * LLM numbers, and anything unknown fell back to 55 or 60. It then multiplied
- * the headline score by 65,000, added 1.5 million and printed the result as
- * a headline valuation in shillings per acre — a price, in front of a buyer,
- * derived from a language model's opinion of how livable a place felt.
+ * Two scoring layers have now been taken out of this component.
  *
- * The price is gone and the parallel scorer with it. This now renders what
- * `runIntelligenceEngine` measured and nothing else, so one scorer governs the
- * whole app and the hero cannot contradict the dossier below it.
+ * The first was its own: eight gauges built from whatever was to hand —
+ * "Safety" was `50 + airQualityIndex / 2`, "Utilities" a count of shops and
+ * restaurants — multiplied by 65,000 and printed as a headline valuation in
+ * shillings per acre. That went when the engine became the single scorer.
+ *
+ * The second is the engine's. A 0-100 dial sat at the top of this card reading
+ * "72 /100 · Good", and a row of pills gave each module its own mark. Neither
+ * was measured: the marks were hard-coded elevation bands and a count of
+ * nearby places times 3.5, and the dial was their persona-weighted mean. A
+ * buyer could not check any of it and neither could we, because "Good compared
+ * to what?" had no answer.
+ *
+ * What stands in its place is not a smaller number — it is the shape of the
+ * evidence. Every output this app produces falls into one of four classes, and
+ * the card opens by saying how many fall into each: what you can see in the
+ * imagery, what a named dataset measured, what a rule worked out, and what
+ * nobody can tell you from a screen. Ownership, title, the legal boundary and
+ * planning approval are in that last group, and saying so plainly is worth
+ * more to someone about to part with money than any mark out of a hundred.
+ *
+ * The lead passage reads itself aloud with the spoken word highlighted, so the
+ * part that matters most is the part that does not depend on reading a dense
+ * screen.
  */
 
-function toneFor(score: number) {
-  if (score >= 75) return { ring: "#22c55e", text: "text-emerald-glow", label: "Excellent" };
-  if (score >= 60) return { ring: "#62e9ff", text: "text-cyan-glow", label: "Good" };
-  if (score >= 45) return { ring: "#d4a017", text: "text-amber-glow", label: "Fair" };
-  return { ring: "#ef4444", text: "text-destructive", label: "Weak" };
-}
+/* ---------- evidence classes ---------- */
 
-const NEUTRAL = { ring: "rgba(255,255,255,0.14)", text: "text-muted-foreground", label: "—" };
+const CLASS_ICONS: Record<EvidenceClass, LucideIcon> = {
+  visible: Eye,
+  measured: Ruler,
+  inferred: Calculator,
+  unprovable: HelpCircle,
+};
 
-/* ---------- animated circular gauge ---------- */
+/**
+ * Colour carries rank here, so it must not be the only thing that does: the
+ * count and the wording say the same thing for anyone who cannot separate the
+ * greens from the ambers.
+ */
+const CLASS_TONE: Record<EvidenceClass, { text: string; ring: string; dot: string }> = {
+  visible: { text: "text-emerald-glow", ring: "border-emerald-glow/30", dot: "#22c55e" },
+  measured: { text: "text-cyan-glow", ring: "border-cyan-glow/30", dot: "#62e9ff" },
+  inferred: { text: "text-amber-glow", ring: "border-amber-glow/30", dot: "#d4a017" },
+  unprovable: { text: "text-muted-foreground", ring: "border-white/15", dot: "#8c96a8" },
+};
 
-function useCountUp(target: number, ms = 900) {
-  const [v, setV] = useState(0);
-  useEffect(() => {
-    let raf = 0;
-    const start = performance.now();
-    const step = (t: number) => {
-      const p = Math.min(1, (t - start) / ms);
-      const eased = 1 - Math.pow(1 - p, 3);
-      setV(target * eased);
-      if (p < 1) raf = requestAnimationFrame(step);
-    };
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
-  }, [target, ms]);
-  return v;
-}
-
-function Gauge({
-  score,
-  size = 72,
-  stroke = 6,
-}: {
-  score: number | null;
-  size?: number;
-  stroke?: number;
-}) {
-  const v = useCountUp(score ?? 0);
-  const tone = score != null ? toneFor(score) : NEUTRAL;
-  const r = (size - stroke) / 2;
-  const c = 2 * Math.PI * r;
-  const off = score != null ? c * (1 - v / 100) : c;
+function ClassRow({ meta, count }: { meta: ClassMeta; count: number }) {
+  const tone = CLASS_TONE[meta.id];
+  const Icon = CLASS_ICONS[meta.id];
   return (
-    <div className="relative" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="-rotate-90">
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          strokeWidth={stroke}
-          className="stroke-white/10"
-          fill="none"
-        />
-        {score != null && (
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={r}
-            strokeWidth={stroke}
-            stroke={tone.ring}
-            fill="none"
-            strokeLinecap="round"
-            strokeDasharray={c}
-            strokeDashoffset={off}
-            style={{ filter: `drop-shadow(0 0 6px ${tone.ring}66)` }}
-          />
-        )}
-      </svg>
-      <div className="absolute inset-0 grid place-items-center">
-        <span className={`text-sm font-semibold tabular-nums ${tone.text}`}>
-          {score != null ? Math.round(v) : "—"}
+    <details className={`group glass rounded-2xl border ${tone.ring}`}>
+      <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2.5 rounded-2xl p-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        <span
+          className="grid h-8 w-8 shrink-0 place-items-center rounded-xl border border-foreground/10 bg-background/35"
+          aria-hidden="true"
+        >
+          <Icon className={`h-4 w-4 ${tone.text}`} />
         </span>
+        <span className={`text-lg font-semibold tabular-nums ${tone.text}`}>{count}</span>
+        <span className="min-w-0 flex-1 text-xs font-medium leading-tight">{meta.label}</span>
+        <ChevronDown
+          className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
+          aria-hidden="true"
+        />
+      </summary>
+      <div className="border-t border-foreground/10 px-3 pb-3 pt-2 text-[11px] leading-relaxed text-muted-foreground">
+        {meta.meaning}
+        {meta.action && <div className="mt-1.5 text-foreground/80">{meta.action}</div>}
       </div>
-    </div>
+    </details>
   );
 }
 
-/** A tile per measured or explicitly projected module. */
+/* ---------- module tiles ---------- */
+
+/** A tile per module with data behind it, or an explicit projection. */
 const MODULE_ICONS: Record<ModuleOutput["id"], LucideIcon> = {
   investment: Landmark,
   construction: Building2,
@@ -133,31 +129,42 @@ const MODULE_ICONS: Record<ModuleOutput["id"], LucideIcon> = {
 };
 
 function ModuleTile({ m }: { m: ModuleOutput }) {
-  const tone = m.score != null ? toneFor(m.score) : NEUTRAL;
   const Icon = MODULE_ICONS[m.id];
-  const narration = `${m.label}. ${m.status === "projected" ? "Indicative projection" : tone.label}. Confidence ${m.confidencePct ?? 0} percent. ${m.reasons.join(" ")} Sources: ${m.sources.join(", ") || "No source available"}. Limitations: ${m.limitations.join(" ")}. Next: ${m.nextStep}`;
+  const projected = m.status === "projected";
+  // The first reason is the finding itself — the elevation in metres, the air
+  // quality index, the counts within 3 km. It is what the gauge used to cover.
+  const lead = m.reasons[0] ?? "";
+  const narration = `${m.label}. ${projected ? "Indicative projection" : "Read from data"}. ${lead} Confidence ${m.confidencePct ?? 0} percent. ${m.reasons.slice(1).join(" ")} Sources: ${m.sources.join(", ") || "No source available"}. Limitations: ${m.limitations.join(" ")}. Next: ${m.nextStep}`;
   return (
     <details className="group glass rounded-2xl">
-      <summary className="flex min-h-[96px] cursor-pointer list-none items-center gap-3 rounded-2xl p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-        <Gauge score={m.score} />
+      <summary className="flex min-h-[96px] cursor-pointer list-none items-start gap-2.5 rounded-2xl p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        <span
+          className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-xl border border-foreground/10 bg-background/35"
+          aria-hidden="true"
+        >
+          <Icon className="h-4 w-4 text-accent" />
+        </span>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">
-            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-lg border border-foreground/10 bg-background/35">
-              <Icon className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
-            </span>
-            <span className="truncate">{m.label}</span>
+          <div className="truncate text-[10px] uppercase tracking-widest text-muted-foreground">
+            {m.label}
           </div>
-          <div className={`mt-0.5 text-xs font-medium ${tone.text}`}>
-            {m.status === "projected" ? "Indicative projection" : tone.label}
-          </div>
-          <div className="text-[10px] text-muted-foreground">
-            {m.status === "projected" ? "Projection confidence" : "Confidence"}{" "}
+          {/* The finding, in the words the engine published it in. No mark. */}
+          <div className="mt-0.5 text-xs font-medium leading-snug text-foreground/90">{lead}</div>
+          <div className="mt-1 text-[10px] text-muted-foreground">
+            {projected ? "Indicative projection · confidence" : "Read from data · confidence"}{" "}
             {m.confidencePct ?? 0}%
           </div>
         </div>
-        <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
+        <ChevronDown className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
       </summary>
       <div className="border-t border-foreground/10 px-3 pb-3 pt-2 text-[11px] leading-relaxed">
+        {m.reasons.length > 1 && (
+          <ul className="mb-2 list-disc space-y-1 pl-4 text-muted-foreground">
+            {m.reasons.slice(1).map((reason) => (
+              <li key={reason}>{reason}</li>
+            ))}
+          </ul>
+        )}
         <div className="font-medium text-foreground">Evidence</div>
         <div className="mt-1 text-muted-foreground">
           Sources: {m.sources.length > 0 ? m.sources.join(", ") : "No source available"}
@@ -175,17 +182,6 @@ function ModuleTile({ m }: { m: ModuleOutput }) {
         </div>
       </div>
     </details>
-  );
-}
-
-function RatingPill({ label, score }: { label: string; score: number }) {
-  const tone = toneFor(score);
-  return (
-    <div className="glass rounded-full pl-2 pr-3 py-1 inline-flex items-center gap-1.5 text-[11px]">
-      <span className="h-1.5 w-1.5 rounded-full" style={{ background: tone.ring }} />
-      <span className="text-muted-foreground">{label}</span>
-      <span className={`font-semibold tabular-nums ${tone.text}`}>{score}</span>
-    </div>
   );
 }
 
@@ -208,9 +204,7 @@ export function HeroSummary({
 }) {
   const [persona] = useUserPersona();
   const decision = runIntelligenceEngine(intel, narrative, persona, wave4);
-  const reading = decision.reading;
-  const tone = reading != null ? toneFor(reading) : NEUTRAL;
-  const readingCount = useCountUp(reading ?? 0, 1100);
+  const tally = classTally();
 
   const measured = decision.modules.filter((m) => m.status === "measured");
   const projected = decision.modules.filter((m) => m.status === "projected");
@@ -230,78 +224,55 @@ export function HeroSummary({
       className="glass-strong rounded-3xl p-4 sm:p-5 relative overflow-hidden"
       aria-label="Location hero summary"
     >
-      <div
-        className="absolute -top-24 -right-16 h-56 w-56 rounded-full blur-3xl opacity-40"
-        style={{ background: `radial-gradient(circle, ${tone.ring}88, transparent 70%)` }}
-      />
+      <div className="absolute -top-24 -right-16 h-56 w-56 rounded-full bg-emerald-glow/20 blur-3xl opacity-40" />
 
-      <div className="relative grid gap-4 sm:grid-cols-[auto_minmax(0,1fr)] items-start">
-        {/* The reading */}
-        <div className="flex items-center gap-3 sm:flex-col sm:items-start">
-          <Gauge score={reading} size={110} stroke={9} />
-          <div className="sm:mt-1">
-            <div className="text-[10px] uppercase tracking-[0.2em] text-accent">
-              {decision.readingLabel}
-            </div>
-            <div className={`text-2xl font-bold tabular-nums ${tone.text}`}>
-              {reading != null ? Math.round(readingCount) : "—"}
-              {reading != null && (
-                <span className="text-sm text-muted-foreground font-normal">/100</span>
-              )}
-            </div>
-            <div className={`text-xs ${tone.text}`}>
-              {reading != null ? tone.label : "Not enough read"}
-            </div>
-          </div>
+      {/* Address first: a buyer should know what they are looking at before
+          they are told anything about it. */}
+      <div className="relative min-w-0">
+        <div className="flex items-start gap-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">
+          <MapPin className="h-3 w-3 text-accent shrink-0" /> Location
         </div>
-
-        {/* Address + written read */}
-        <div className="min-w-0">
-          <div className="flex items-start gap-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">
-            <MapPin className="h-3 w-3 text-accent shrink-0" /> Location
-          </div>
-          <h2 className="mt-0.5 text-lg sm:text-xl font-semibold leading-tight line-clamp-2">
-            {address}
-          </h2>
-          <div className="mt-0.5 text-[11px] text-muted-foreground tabular-nums">
-            {lat.toFixed(4)}, {lng.toFixed(4)}
-            {intel?.elevation?.meters != null && (
-              <> · {intel.elevation.meters.toFixed(0)} m elev.</>
-            )}
-          </div>
-
-          {measured.length > 0 && (
-            <div className="mt-2.5 flex flex-wrap gap-1.5">
-              {measured.map((m) => (
-                <RatingPill key={m.id} label={m.label} score={m.score!} />
-              ))}
-            </div>
-          )}
-
-          <div className="mt-3 rounded-2xl border border-white/10 bg-black/15 p-3">
-            <div className="flex flex-wrap items-center gap-1.5 text-[10px] uppercase tracking-widest text-accent">
-              <Sparkles className="h-3 w-3" /> Written read
-              <span className="ml-auto">
-                <ListenButton
-                  text={`${summary} This is a written interpretation. HALISIA holds no price or transaction data for this location and publishes no valuation.`}
-                  label="Listen to written read"
-                />
-              </span>
-            </div>
-            <p className="mt-1 text-sm leading-relaxed text-foreground/90 line-clamp-3">
-              {summary}
-            </p>
-            <p className="mt-2 text-[11px] text-muted-foreground">
-              A written interpretation of the readings below. HALISIA holds no price or transaction
-              data for this location and publishes no valuation.
-            </p>
-          </div>
+        <h2 className="mt-0.5 text-lg sm:text-xl font-semibold leading-tight line-clamp-2">
+          {address}
+        </h2>
+        <div className="mt-0.5 text-[11px] text-muted-foreground tabular-nums">
+          {lat.toFixed(4)}, {lng.toFixed(4)}
+          {intel?.elevation?.meters != null && <> · {intel.elevation.meters.toFixed(0)} m elev.</>}
         </div>
       </div>
 
-      {/* Measured modules */}
+      {/* What kind of thing each answer is. This replaces the reading. */}
+      <div
+        className="relative mt-3 rounded-2xl border border-white/10 bg-black/15 p-3"
+        data-testid="hero-evidence-classes"
+      >
+        <div className="flex flex-wrap items-center gap-1.5 text-[10px] uppercase tracking-widest text-accent">
+          <ShieldCheck className="h-3 w-3" /> How far each answer can be trusted
+        </div>
+        <SpokenText text={EVIDENCE_LEAD} label="Read this to me" className="mt-2" />
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          {tally.map(({ meta, count }) => (
+            <ClassRow key={meta.id} meta={meta} count={count} />
+          ))}
+        </div>
+      </div>
+
+      {/* Written read */}
+      <div className="relative mt-3 rounded-2xl border border-white/10 bg-black/15 p-3">
+        <div className="flex flex-wrap items-center gap-1.5 text-[10px] uppercase tracking-widest text-accent">
+          <Sparkles className="h-3 w-3" /> Written read
+        </div>
+        <SpokenText text={summary} label="Read this to me" className="mt-2" />
+        <p className="mt-2 text-[11px] text-muted-foreground">
+          A written interpretation of the readings below. It is worked out, not observed. HALISIA
+          holds no price or transaction data for this location and publishes no valuation, score or
+          grade.
+        </p>
+      </div>
+
+      {/* Modules with data behind them */}
       {measured.length > 0 && (
-        <div className="relative mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+        <div className="relative mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
           {measured.map((m) => (
             <ModuleTile key={m.id} m={m} />
           ))}
@@ -311,7 +282,7 @@ export function HeroSummary({
       {projected.length > 0 && (
         <div className="relative mt-3">
           <div className="mb-2 text-[10px] uppercase tracking-widest text-amber-glow">
-            Evidence-based proxy projections · excluded from the score
+            Worked out from mapped features · not observed on this site
           </div>
           <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
             {projected.map((m) => (

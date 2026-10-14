@@ -40,29 +40,31 @@ import type { NarrativeOutput } from "@/lib/ai-narrative.functions";
 import type { Wave4Intel } from "@/lib/wave4-intel.functions";
 import { getFeedback, setRating, flagIssue, type ModuleFeedback } from "@/lib/feedback-store";
 import { generateIntelligencePdf } from "@/lib/pdf-intelligence";
+import { SpokenText } from "@/components/halisia/spoken-text";
+import { classTally, EVIDENCE_LEAD } from "@/lib/evidence-class";
 
 /**
  * The location dossier.
  *
  * This panel used to lead with a Land Intelligence Score out of 100 and a
  * verdict — Highly Recommended through Not Recommended — over ten modules,
- * seven of which had no data behind them. It now leads with a reading named
- * for its inputs, shows the unassessable modules as checks to run rather than
- * scores to trust, and states in one line which three services HALISIA reads.
+ * seven of which had no data behind them. Restricting it to modules with data
+ * behind them left a smaller dial reading "72 · Grade BBB", which was the same
+ * defect in a quieter voice: the marks underneath were elevation bands and a
+ * count of nearby places times 3.5, and AAA-to-C notation borrows the look of
+ * a credit rating for arithmetic nobody can check.
+ *
+ * The dial and the grades are gone from the engine, so nothing here renders
+ * them. The panel leads instead with how far each kind of answer can be
+ * trusted — seen in imagery, measured by a named dataset, worked out by a
+ * rule, or impossible to establish from a screen at all — and that passage
+ * reads itself aloud. The module cards keep what they always had underneath:
+ * the finding in words, the services read for it, what it does not prove and
+ * what to check next.
+ *
+ * `tone()` and `NEUTRAL_TONE` were deleted with the dial. They mapped a score
+ * onto Excellent / Good / Fair / Weak, and there is no score to map.
  */
-
-function tone(score: number) {
-  if (score >= 75) return { ring: "#22c55e", text: "text-emerald-glow", label: "Excellent" };
-  if (score >= 60) return { ring: "#62e9ff", text: "text-cyan-glow", label: "Good" };
-  if (score >= 45) return { ring: "#d4a017", text: "text-amber-glow", label: "Fair" };
-  return { ring: "#ef4444", text: "text-destructive", label: "Weak" };
-}
-
-const NEUTRAL_TONE = {
-  ring: "rgba(255,255,255,0.12)",
-  text: "text-muted-foreground",
-  label: "—",
-};
 
 function TrendIcon({ trend }: { trend: ModuleOutput["trend"] }) {
   if (trend == null) return null;
@@ -126,9 +128,11 @@ function sourceUrl(label: string): string | null {
 }
 
 function ModuleCard({ m, freshness }: { m: ModuleOutput; freshness: string }) {
-  const assessed = m.status === "measured" && m.score != null;
+  // "Assessed" means the data behind this module arrived. It used to also
+  // require a score; there are no scores now, and whether elevation came back
+  // was never a question about a number.
+  const assessed = m.status === "measured";
   const projected = m.status === "projected";
-  const t = assessed ? tone(m.score!) : NEUTRAL_TONE;
   const v = provenanceBadge(m);
   const [fb, setFb] = useState<ModuleFeedback | undefined>(undefined);
   const [flagOpen, setFlagOpen] = useState(false);
@@ -161,16 +165,22 @@ function ModuleCard({ m, freshness }: { m: ModuleOutput; freshness: string }) {
       data-status={m.status}
     >
       <summary className="cursor-pointer list-none px-3 py-2.5 flex items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 rounded-2xl">
+        {/* The dial that stood here printed the module's mark out of 100 as a
+            filled arc. What the card can honestly show at a glance is which of
+            the three kinds of answer this is, so that is what it shows. */}
         {assessed ? (
           <div
-            className="h-9 w-9 rounded-full grid place-items-center text-[11px] font-bold tabular-nums shrink-0"
-            style={{
-              background: `conic-gradient(${t.ring} ${m.score! * 3.6}deg, rgba(255,255,255,0.08) 0deg)`,
-            }}
+            className="h-9 w-9 rounded-full grid place-items-center shrink-0 border border-emerald-400/30 bg-emerald-500/10"
+            aria-hidden
           >
-            <span className="h-7 w-7 rounded-full grid place-items-center bg-background/90">
-              <span className={t.text}>{m.score}</span>
-            </span>
+            <ShieldCheck className="h-4 w-4 text-emerald-glow" />
+          </div>
+        ) : projected ? (
+          <div
+            className="h-9 w-9 rounded-full grid place-items-center shrink-0 border border-amber-400/30 bg-amber-500/10"
+            aria-hidden
+          >
+            <Info className="h-4 w-4 text-amber-glow" />
           </div>
         ) : (
           <div
@@ -183,11 +193,10 @@ function ModuleCard({ m, freshness }: { m: ModuleOutput; freshness: string }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             <span className="text-sm font-medium truncate">{m.label}</span>
-            {m.grade && (
-              <span className="text-[10px] font-semibold text-foreground/70 px-1.5 rounded bg-white/5 border border-white/10">
-                {m.grade}
-              </span>
-            )}
+            {/* The AAA-to-C chip sat here. `m.grade` is now always null and the
+                engine no longer produces a trend either, so TrendIcon renders
+                nothing; it is kept only so the type stays honest if a genuinely
+                measured trend is ever published. */}
             <TrendIcon trend={m.trend} />
           </div>
           <div className="mt-0.5 flex flex-wrap items-center gap-1 text-[10px] text-muted-foreground">
@@ -481,8 +490,7 @@ export function LandIntelligenceScore({
     () => runIntelligenceEngine(intel, narrative, persona, wave4),
     [intel, narrative, persona, wave4],
   );
-  const hasReading = decision.reading != null;
-  const t = hasReading ? tone(decision.reading!) : NEUTRAL_TONE;
+  const tally = classTally();
 
   const [downloading, setDownloading] = useState(false);
   const [pdfStage, setPdfStage] = useState("");
@@ -556,34 +564,37 @@ export function LandIntelligenceScore({
         </div>
       </div>
 
-      {/* Reading head */}
-      <div className="mt-3 grid gap-3 sm:grid-cols-[auto_minmax(0,1fr)] items-start">
-        <div
-          className="h-24 w-24 rounded-full grid place-items-center shrink-0"
-          style={{
-            background: hasReading
-              ? `conic-gradient(${t.ring} ${decision.reading! * 3.6}deg, rgba(255,255,255,0.08) 0deg)`
-              : "rgba(255,255,255,0.06)",
-          }}
-        >
-          <div className="h-20 w-20 rounded-full grid place-items-center bg-background/90">
-            <div className="text-center">
-              <div className={`text-2xl font-bold tabular-nums ${t.text}`}>
-                {hasReading ? decision.reading : "—"}
-              </div>
-              <div className="text-[10px] text-muted-foreground -mt-0.5">
-                {decision.grade ? `Grade ${decision.grade}` : "No reading"}
+      {/* What kind of answer each thing is. This replaces the dial. */}
+      <div
+        className="mt-3 rounded-2xl border border-white/10 bg-black/15 p-3"
+        data-testid="dossier-evidence-classes"
+      >
+        <div className="text-[10px] uppercase tracking-widest text-accent">
+          {decision.readingLabel}
+        </div>
+        <SpokenText text={EVIDENCE_LEAD} label="Read this to me" className="mt-2" />
+        <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          {tally.map(({ meta, count }) => (
+            <div
+              key={meta.id}
+              className="rounded-xl border border-white/10 bg-white/[0.03] p-2.5"
+              title={meta.meaning}
+            >
+              <div className="text-lg font-semibold tabular-nums text-foreground">{count}</div>
+              <div className="text-[11px] font-medium leading-tight">{meta.label}</div>
+              <div className="mt-1 text-[10px] leading-snug text-muted-foreground">
+                {meta.action}
               </div>
             </div>
-          </div>
+          ))}
         </div>
+      </div>
+
+      <div className="mt-3 grid gap-3">
         <div className="min-w-0">
-          <div className="text-[10px] uppercase tracking-widest text-accent">
-            {decision.readingLabel}
-          </div>
-          <div className={`text-base sm:text-lg font-semibold ${t.text}`}>{decision.headline}</div>
+          <div className="text-base sm:text-lg font-semibold">{decision.headline}</div>
           <div className="text-[11px] text-muted-foreground">
-            Weighted for {labelForPersona(persona)}
+            Ordered for {labelForPersona(persona)}
             {decision.confidencePct != null && ` · Confidence ${decision.confidencePct}%`}
           </div>
           <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
