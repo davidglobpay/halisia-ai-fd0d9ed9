@@ -213,8 +213,8 @@ export function SpokenText({
       <div className={className}>
         <p className="text-sm leading-relaxed">{text}</p>
         <p role="status" className="mt-2 text-xs text-muted-foreground">
-          This browser has no speech voice installed, so the read-aloud is not
-          available here. The full text is above.
+          This browser has no speech voice installed, so the read-aloud is not available here. The
+          full text is above.
         </p>
       </div>
     );
@@ -224,9 +224,7 @@ export function SpokenText({
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
-          onClick={
-            state === "playing" ? pause : state === "paused" ? resume : play
-          }
+          onClick={state === "playing" ? pause : state === "paused" ? resume : play}
           aria-label={state === "playing" ? "Pause reading" : label}
           className="inline-flex min-h-11 items-center gap-2 rounded-full bg-primary px-4 text-sm text-primary-foreground"
         >
@@ -235,11 +233,7 @@ export function SpokenText({
           ) : (
             <Play className="h-4 w-4" aria-hidden />
           )}
-          {state === "playing"
-            ? "Pause"
-            : state === "paused"
-              ? "Continue"
-              : label}
+          {state === "playing" ? "Pause" : state === "paused" ? "Continue" : label}
         </button>
         {state !== "idle" && (
           <button
@@ -253,11 +247,7 @@ export function SpokenText({
           </button>
         )}
       </div>
-      <p
-        className="mt-3 text-sm leading-relaxed"
-        aria-live="off"
-        data-testid="spoken-text-body"
-      >
+      <p className="mt-3 text-sm leading-relaxed" aria-live="off" data-testid="spoken-text-body">
         {tokens.map((t, i) =>
           t.word ? (
             <span

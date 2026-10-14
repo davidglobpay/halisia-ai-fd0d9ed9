@@ -104,15 +104,19 @@ describe("a speech boundary lands on the right word", () => {
 describe("every output is classed by what can be said about it", () => {
   it("has four classes in reading order, checkable first", () => {
     expect(EVIDENCE_CLASSES).toHaveLength(4);
-    expect(
-      [...EVIDENCE_CLASSES].sort((a, b) => a.rank - b.rank).map((c) => c.id),
-    ).toEqual(["visible", "measured", "inferred", "unprovable"]);
+    expect([...EVIDENCE_CLASSES].sort((a, b) => a.rank - b.rank).map((c) => c.id)).toEqual([
+      "visible",
+      "measured",
+      "inferred",
+      "unprovable",
+    ]);
   });
 
   it("only draws on the map what someone could check there", () => {
-    expect(EVIDENCE_CLASSES.filter((c) => c.mappable).map((c) => c.id)).toEqual(
-      ["visible", "measured"],
-    );
+    expect(EVIDENCE_CLASSES.filter((c) => c.mappable).map((c) => c.id)).toEqual([
+      "visible",
+      "measured",
+    ]);
     expect(isMappable("inferred")).toBe(false);
     expect(isMappable("unprovable")).toBe(false);
   });
@@ -146,16 +150,12 @@ describe("every output is classed by what can be said about it", () => {
     }
   });
 
-  it.each([
-    "title",
-    "owner",
-    "boundary-legal",
-    "zoning",
-    "encumbrance",
-    "comps",
-  ])("classes %s as something nobody can tell you from a screen", (id) => {
-    expect(classOf(id)).toBe("unprovable");
-  });
+  it.each(["title", "owner", "boundary-legal", "zoning", "encumbrance", "comps"])(
+    "classes %s as something nobody can tell you from a screen",
+    (id) => {
+      expect(classOf(id)).toBe("unprovable");
+    },
+  );
 
   it.each(["schools", "health"])(
     "classes %s as a dataset record, not imagery verification",
@@ -166,12 +166,7 @@ describe("every output is classed by what can be said about it", () => {
 
   it("tallies every output across the four classes", () => {
     const t = classTally();
-    expect(t.map((x) => x.meta.id)).toEqual([
-      "visible",
-      "measured",
-      "inferred",
-      "unprovable",
-    ]);
+    expect(t.map((x) => x.meta.id)).toEqual(["visible", "measured", "inferred", "unprovable"]);
     expect(t.reduce((s, x) => s + x.count, 0)).toBe(OUTPUT_CLASSES.length);
     expect(outputsOfClass("visible")).toHaveLength(0);
   });

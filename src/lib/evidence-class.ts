@@ -74,8 +74,7 @@ export const EVIDENCE_CLASSES: readonly ClassMeta[] = [
     label: "Nobody can tell you this from here",
     meaning:
       "No photograph, satellite pass or open dataset establishes it. Anyone who offers you this from a screen is guessing.",
-    action:
-      "This needs a registry search, a licensed surveyor or a site visit.",
+    action: "This needs a registry search, a licensed surveyor or a site visit.",
     mappable: false,
     rank: 3,
   },
@@ -85,8 +84,7 @@ export const classMeta = (id: EvidenceClass): ClassMeta =>
   EVIDENCE_CLASSES.find((c) => c.id === id) as ClassMeta;
 
 /** May this class be drawn on the map as evidence? */
-export const isMappable = (id: EvidenceClass): boolean =>
-  classMeta(id).mappable;
+export const isMappable = (id: EvidenceClass): boolean => classMeta(id).mappable;
 
 export type OutputDescriptor = {
   /** Stable id, matching the evidence row ids the passport already uses. */

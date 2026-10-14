@@ -1,3 +1,4 @@
+import { geotechAvailability } from "@/lib/geotech-availability";
 import { OutputTools, OutputVisual, OutputIcon } from "@/components/halisia/output-tools";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -42,6 +43,13 @@ export function GeotechPanel({ lat, lng, address }: { lat: number; lng: number; 
   });
   const [exporting, setExporting] = useState(false);
 
+  if (q.error) {
+    return (
+      <div className="glass rounded-2xl p-4 text-xs text-amber-glow">
+        Geotechnical data unavailable: {(q.error as Error).message}
+      </div>
+    );
+  }
   if (q.isLoading || !q.data) {
     return (
       <div className="glass rounded-2xl p-6 text-xs text-muted-foreground inline-flex items-center gap-2">
@@ -50,17 +58,14 @@ export function GeotechPanel({ lat, lng, address }: { lat: number; lng: number; 
       </div>
     );
   }
-  if (q.error) {
-    return (
-      <div className="glass rounded-2xl p-4 text-xs text-amber-glow">
-        Geotechnical data unavailable: {(q.error as Error).message}
-      </div>
-    );
-  }
   const g = q.data;
+  const availability = geotechAvailability(g.terrainMeasured);
   const usedSources = g.sources.filter((source) => source.used).map((source) => source.label);
-  const narration = `Preliminary geotechnical intelligence for ${address}. ${g.geology.dominant}, ${g.terrain.landform}, at ${g.terrain.elevationM} metres elevation. Confidence ${g.confidence} percent. Sources used: ${usedSources.join(", ") || "none available"}. Limitation: ${g.disclaimer}`;
+  const narration = availability.terrainDerivedAvailable
+    ? `Preliminary geotechnical intelligence for ${address}. ${g.geology.dominant}, ${g.terrain.landform}, at ${g.terrain.elevationM} metres elevation. Confidence ${g.confidence} percent. Sources used: ${usedSources.join(", ") || "none available"}. Limitation: ${g.disclaimer}`
+    : `Geotechnical intelligence for ${address}. ${availability.message} Sources used: ${usedSources.join(", ") || "none available"}. Limitation: ${g.disclaimer}`;
   const exportPdf = async () => {
+    if (!availability.exportAvailable) return;
     setExporting(true);
     try {
       await downloadGeotechPdf(g, address);
@@ -85,7 +90,9 @@ export function GeotechPanel({ lat, lng, address }: { lat: number; lng: number; 
           </div>
         </div>
         <div className="mt-1 text-sm font-semibold">
-          {g.geology.dominant} · {g.terrain.landform} at {g.terrain.elevationM} m
+          {availability.terrainDerivedAvailable
+            ? `${g.geology.dominant} · ${g.terrain.landform} at ${g.terrain.elevationM} m`
+            : "Terrain-derived interpretation unavailable"}
         </div>
         <div className="mt-2">
           <ListenButton text={narration} label="Listen to geotech summary" />
@@ -98,7 +105,7 @@ export function GeotechPanel({ lat, lng, address }: { lat: number; lng: number; 
         </div>
         <button
           onClick={exportPdf}
-          disabled={exporting}
+          disabled={exporting || !availability.exportAvailable}
           className="mt-3 w-full glass rounded-xl px-3 py-2 text-xs font-medium inline-flex items-center justify-center gap-2 hover:bg-white/10 transition disabled:opacity-60"
           data-testid="geotech-export-pdf"
         >
@@ -116,11 +123,19 @@ export function GeotechPanel({ lat, lng, address }: { lat: number; lng: number; 
 
       <TerrainSection g={g} />
       <SoilSection layers={g.soilLayers} />
-      <SubsurfaceCrossSection g={g} />
-      <GeologySection g={g} />
-      <GroundwaterSection g={g} />
-      <FoundationSection g={g} />
-      <RiskSection g={g} />
+      {availability.terrainDerivedAvailable ? (
+        <>
+          <SubsurfaceCrossSection g={g} />
+          <GeologySection g={g} />
+          <GroundwaterSection g={g} />
+          <FoundationSection g={g} />
+          <RiskSection g={g} />
+        </>
+      ) : (
+        <p role="status" className="rounded-xl border border-amber-glow/30 p-3 text-sm">
+          {availability.message}
+        </p>
+      )}
       <SourcesSection sources={g.sources} />
     </div>
   );
@@ -185,11 +200,10 @@ function TerrainSection({ g }: { g: GeotechIntel }) {
     return (
       <Card title="Terrain analysis" icon={Mountain} hint="No elevation grid">
         <p className="text-sm text-muted-foreground">
-          The ASTER 30 m elevation grid did not load for this point, so there is
-          no measured ground here. Slope, aspect, relief, roughness, landform
-          and drainage are withheld rather than estimated, and the geology,
-          bedrock, groundwater and foundation sections below rest on the same
-          missing data — treat all of them as unavailable, not as readings.
+          The ASTER 30 m elevation grid did not load for this point, so there is no measured ground
+          here. Slope, aspect, relief, roughness, landform and drainage are withheld rather than
+          estimated, and the geology, bedrock, groundwater and foundation sections below rest on the
+          same missing data — treat all of them as unavailable, not as readings.
         </p>
       </Card>
     );
@@ -521,7 +535,15 @@ function suitTone(s: string) {
 
 export function RiskSection({ g }: { g: GeotechIntel }) {
   const [open, setOpen] = useState<string | null>(g.risks[0]?.label ?? null);
+  const availability = geotechAvailability(g.terrainMeasured);
   const gwScore = groundwaterScore(g);
+  if (!availability.terrainDerivedAvailable) {
+    return (
+      <p role="status" className="text-sm text-muted-foreground">
+        {availability.message}
+      </p>
+    );
+  }
   return (
     <Card
       title="Construction risks · mitigation & cost impact"

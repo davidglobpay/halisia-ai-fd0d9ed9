@@ -1,13 +1,7 @@
 // @vitest-environment jsdom
 import { createElement } from "react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-} from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { SpokenText } from "../../src/components/halisia/spoken-text";
 afterEach(() => {
   cleanup();
@@ -60,16 +54,12 @@ it("pauses highlighting and resumes without counting paused time", () => {
   act(() => {
     vi.advanceTimersByTime(5000);
   });
-  expect(document.querySelector('[data-spoken="now"]')?.textContent).toBe(
-    before,
-  );
+  expect(document.querySelector('[data-spoken="now"]')?.textContent).toBe(before);
   fireEvent.click(screen.getByRole("button", { name: "Listen" }));
   act(() => {
     vi.advanceTimersByTime(700);
   });
-  expect(document.querySelector('[data-spoken="now"]')?.textContent).not.toBe(
-    before,
-  );
+  expect(document.querySelector('[data-spoken="now"]')?.textContent).not.toBe(before);
 });
 it("clears the delayed fallback on unmount", () => {
   const view = mount();

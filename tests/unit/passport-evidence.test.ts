@@ -58,7 +58,12 @@ describe("buildPassportEvidence", () => {
         displayName: null,
       },
       facilities: {},
-      climate: { annualRainfallMm: 900, meanTempC: 19, tempMinC: 12, tempMaxC: 26 },
+      climate: {
+        annualRainfallMm: 900,
+        meanTempC: 19,
+        tempMinC: 12,
+        tempMaxC: 26,
+      },
       scores: {
         accessibility: 72,
         infrastructure: 72,
@@ -101,4 +106,49 @@ describe("buildPassportEvidence", () => {
     expect(summary.available + summary.missing).toBe(summary.total);
     expect(summary.coveragePct).toBeLessThan(40);
   });
+});
+
+describe("missing terrain evidence", () => {
+  it.each([false, undefined, null])(
+    "withholds terrain and construction findings for %s",
+    (terrainMeasured) => {
+      const geotech = {
+        terrainMeasured,
+        sources: [{ label: "Elevation", used: true }],
+        terrain: {
+          slopePct: 0,
+          aspectLabel: "N",
+          landform: "flat",
+          erosionRisk: "Low",
+          reliefM: 0,
+        },
+        soilLayers: [],
+        groundwater: {
+          annualRainMm: null,
+          nearestWaterKm: 1,
+          shallowLikelihood: "Low",
+          seasonalWaterlogging: "Low",
+        },
+        foundations: [{ type: "Strip", suitability: "Preferred" }],
+        bedrock: { minM: 1, maxM: 3, excavation: "Easy", confidence: "High" },
+        risks: [
+          {
+            label: "Excavation",
+            level: "High",
+            note: "Synthetic",
+            mitigation: [],
+          },
+        ],
+        confidence: 90,
+      } as unknown as NonNullable<PassportEvidenceInput["geotech"]>;
+      const { items, ledger } = buildPassportEvidence({ ...base, geotech });
+      for (const id of ["slope", "landform", "foundation", "water"]) {
+        expect(items.find((x) => x.id === id)?.value).toBeNull();
+      }
+      expect(
+        items.some((x) => x.id === "bedrock" || x.id === "groundwater" || x.id.startsWith("risk-")),
+      ).toBe(false);
+      expect(ledger.find((x) => x.id === "aster")?.status).toBe("no_data");
+    },
+  );
 });

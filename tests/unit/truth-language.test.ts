@@ -152,10 +152,7 @@ describe("required public wording", () => {
     // feature — the price, the photographs, the PDF — reads like evidence.
     ["not a survey, title search or ownership verification", SCOUT],
     ["ownership and surveyed boundaries remain unverified", SCOUT_HUB],
-    [
-      "Device GPS was recorded at upload, not verified media capture location.",
-      SCOUT_HUB,
-    ],
+    ["Device GPS was recorded at upload, not verified media capture location.", SCOUT_HUB],
   ])("contains %s", (needle, source) => {
     expect(source).toContain(needle);
   });
@@ -356,9 +353,7 @@ describe("a price never implies more than the product does", () => {
    * of them across two or three lines.
    */
   it("says on the pricing page that payment is not yet live", () => {
-    expect(flat(PRICING)).toMatch(
-      /Payment integration and live activation are pending/,
-    );
+    expect(flat(PRICING)).toMatch(/Payment integration and live activation are pending/);
   });
 
   it("says that paying does not confirm title, ownership or boundary", () => {
@@ -389,15 +384,12 @@ describe("a price never implies more than the product does", () => {
   it("promises on every pricing surface that free stays free", () => {
     for (const [path, src] of PRICING_SURFACES) {
       if (path.endsWith("service-pricing.tsx")) continue; // in-context strip
-      expect(
-        flat(src).toLowerCase(),
-        `${path} must promise that free stays free`,
-      ).toContain("nothing that is free today becomes paid");
+      expect(flat(src).toLowerCase(), `${path} must promise that free stays free`).toContain(
+        "nothing that is free today becomes paid",
+      );
     }
     // and the landing page, which is where the promise is first made
-    expect(flat(LANDING).toLowerCase()).toContain(
-      "nothing that is free today becomes paid",
-    );
+    expect(flat(LANDING).toLowerCase()).toContain("nothing that is free today becomes paid");
   });
 
   it("states that the USD price is not a conversion of the KES price", () => {
@@ -434,9 +426,7 @@ describe("prices are read from one table, never retyped", () => {
     for (const [path, src] of PRICING_SURFACES) {
       // The lib is the one place a number is allowed to be written down.
       if (path === "src/lib/service-pricing.ts") continue;
-      expect(src, `${path} must not hard-code a KES figure`).not.toMatch(
-        /KES\s*[0-9]{2,}/,
-      );
+      expect(src, `${path} must not hard-code a KES figure`).not.toMatch(/KES\s*[0-9]{2,}/);
     }
   });
 });
@@ -479,18 +469,14 @@ describe("a cost range never becomes a price, a drawing never becomes certified"
   it("repeats the disclaimer inside the downloadable PDF, in that file's own characters", () => {
     // ASCII hyphen in "low-moderate" and a capitalised "Not a quote", because
     // jsPDF is Latin-1 only and this file is sanitised for it.
-    expect(COST_PDF).toContain(
-      "Not a quote, BoQ or engineering design.",
-    );
+    expect(COST_PDF).toContain("Not a quote, BoQ or engineering design.");
     expect(COST_PDF).toContain("Confirm with a quantity surveyor and engineer.");
   });
 
   it("states in the cost module that the rates are not quotes", () => {
     // Contiguous on one comment line; "verified supplier prices" wraps and is
     // deliberately not matched across the break.
-    expect(COST_LIB).toContain(
-      "planning ranges, NOT quotes, bills of quantities or verified",
-    );
+    expect(COST_LIB).toContain("planning ranges, NOT quotes, bills of quantities or verified");
     expect(COST_LIB).toContain("quantity surveyor");
   });
 
@@ -522,9 +508,7 @@ describe("a cost range never becomes a price, a drawing never becomes certified"
   });
 
   it("sends structural and ground questions to the people who can answer them", () => {
-    expect(DRAWINGS).toContain(
-      "Geotechnical investigation required before any foundation design.",
-    );
+    expect(DRAWINGS).toContain("Geotechnical investigation required before any foundation design.");
     expect(DRAWINGS).toContain(
       "Sizes are indicative only. A licensed structural engineer must design and certify.",
     );
@@ -536,8 +520,7 @@ describe("a cost range never becomes a price, a drawing never becomes certified"
     // been confused. Anchored on the currency prefix: bare 500 and 300 are
     // legitimate on these surfaces as a rounding step, a metre cap and an SVG
     // viewBox.
-    const servicePrice =
-      /KES\s*(190|290|490|690|790|990|1,?290|1,?490|2,?900|3,?000|9,?900)\b/;
+    const servicePrice = /KES\s*(190|290|490|690|790|990|1,?290|1,?490|2,?900|3,?000|9,?900)\b/;
     for (const [path, src] of [
       ["src/routes/design-studio.tsx", STUDIO],
       ["src/components/halisia/cost-estimator.tsx", COST_PANEL],
@@ -545,9 +528,7 @@ describe("a cost range never becomes a price, a drawing never becomes certified"
       ["src/lib/construction-cost.ts", COST_LIB],
       ["src/lib/pdf-cost-estimate.ts", COST_PDF],
     ] as Array<[string, string]>) {
-      expect(src, `${path} must not quote a HALISIA service price`).not.toMatch(
-        servicePrice,
-      );
+      expect(src, `${path} must not quote a HALISIA service price`).not.toMatch(servicePrice);
     }
   });
 });
@@ -588,14 +569,13 @@ describe("money that changes what a buyer sees is disclosed to that buyer", () =
     );
   });
 
-  it("states whether HALISIA is paid by a partner, rather than that it might be", () => {
-    // Both branches must exist: a conditional negative on its own is not a
-    // disclosure, and the commercial branch has to name who pays the fee.
+  it("uses a status-aware disclosure without inventing a payer or agreement", () => {
     expect(PARTNER_LISTING).toContain(
-      "HALISIA has a commercial agreement with that company and may be paid a referral fee if you transact with them. That fee is paid by the company, not added to your price, and it does not affect what this page says about the property.",
+      "partnerCommercialDisclosure(listing.source?.commercial_status)",
     );
-    expect(PARTNER_LISTING).toContain(
-      "HALISIA has no commercial agreement with that company and is paid nothing if you contact them.",
+    expect(PARTNER_LISTING).not.toContain("That fee is paid by the company");
+    expect(PARTNER_LISTING).not.toContain(
+      "HALISIA has no commercial agreement with that company and is paid nothing",
     );
   });
 
@@ -636,9 +616,7 @@ describe("naming a payment method never implies a checkout", () => {
   });
 
   it("still says activation is pending on the pricing page", () => {
-    expect(flat(PRICING)).toMatch(
-      /Payment integration and live activation are pending/,
-    );
+    expect(flat(PRICING)).toMatch(/Payment integration and live activation are pending/);
   });
 });
 
@@ -707,9 +685,7 @@ describe("the app never describes a method it does not use", () => {
    */
 
   it("does not claim a livability composite that is really an amenity count", () => {
-    expect(EXEC_SUMMARY).not.toContain(
-      "(investment + infrastructure + environment) / 3",
-    );
+    expect(EXEC_SUMMARY).not.toContain("(investment + infrastructure + environment) / 3");
     expect(EXEC_SUMMARY).not.toContain("calibrated against amenity-density");
   });
 
@@ -745,9 +721,7 @@ describe("the app never describes a method it does not use", () => {
   it("does not claim a source for a lookup that does not run", () => {
     // The nearest-water field is never populated; the row named OpenStreetMap
     // as its source regardless.
-    expect(PASSPORT_EVIDENCE).toContain(
-      "No source — this lookup is not implemented",
-    );
+    expect(PASSPORT_EVIDENCE).toContain("No source — this lookup is not implemented");
   });
 });
 

@@ -38,12 +38,7 @@ import { useUserPersona } from "@/hooks/use-user-persona";
 import type { LocationIntel } from "@/lib/location-intel.functions";
 import type { NarrativeOutput } from "@/lib/ai-narrative.functions";
 import type { Wave4Intel } from "@/lib/wave4-intel.functions";
-import {
-  getFeedback,
-  setRating,
-  flagIssue,
-  type ModuleFeedback,
-} from "@/lib/feedback-store";
+import { getFeedback, setRating, flagIssue, type ModuleFeedback } from "@/lib/feedback-store";
 import { generateIntelligencePdf } from "@/lib/pdf-intelligence";
 import { SpokenText } from "@/components/halisia/spoken-text";
 import { classTally, EVIDENCE_LEAD } from "@/lib/evidence-class";
@@ -73,8 +68,7 @@ import { classTally, EVIDENCE_LEAD } from "@/lib/evidence-class";
 
 function TrendIcon({ trend }: { trend: ModuleOutput["trend"] }) {
   if (trend == null) return null;
-  const Icon =
-    trend === "up" ? TrendingUp : trend === "down" ? TrendingDown : Minus;
+  const Icon = trend === "up" ? TrendingUp : trend === "down" ? TrendingDown : Minus;
   const cls =
     trend === "up"
       ? "text-emerald-glow"
@@ -123,12 +117,10 @@ function provenanceBadge(m: ModuleOutput): { label: string; cls: string } {
  * which the dossier reads, and one of which does not exist.
  */
 const SOURCE_URLS: Record<string, string> = {
-  "Google Places":
-    "https://developers.google.com/maps/documentation/places/web-service/overview",
+  "Google Places": "https://developers.google.com/maps/documentation/places/web-service/overview",
   "Google Maps Elevation API":
     "https://developers.google.com/maps/documentation/elevation/overview",
-  "Google Air Quality API":
-    "https://developers.google.com/maps/documentation/air-quality",
+  "Google Air Quality API": "https://developers.google.com/maps/documentation/air-quality",
 };
 
 function sourceUrl(label: string): string | null {
@@ -149,16 +141,13 @@ function ModuleCard({ m, freshness }: { m: ModuleOutput; freshness: string }) {
   useEffect(() => {
     setFb(getFeedback(m.id));
     const h = () => setFb(getFeedback(m.id));
-    if (typeof window !== "undefined")
-      window.addEventListener("halisia:feedback", h);
+    if (typeof window !== "undefined") window.addEventListener("halisia:feedback", h);
     return () => {
-      if (typeof window !== "undefined")
-        window.removeEventListener("halisia:feedback", h);
+      if (typeof window !== "undefined") window.removeEventListener("halisia:feedback", h);
     };
   }, [m.id]);
 
-  const rate = (r: "up" | "down") =>
-    setRating(m.id, fb?.rating === r ? null : r);
+  const rate = (r: "up" | "down") => setRating(m.id, fb?.rating === r ? null : r);
   const submitFlag = () => {
     if (!flagText.trim()) return;
     flagIssue(m.id, flagText.trim());
@@ -221,20 +210,14 @@ function ModuleCard({ m, freshness }: { m: ModuleOutput; freshness: string }) {
               <>
                 <span className="inline-flex items-center gap-1">
                   <Database className="h-2.5 w-2.5" />{" "}
-                  {m.sources.length === 1
-                    ? "1 source"
-                    : `${m.sources.length} sources`}
+                  {m.sources.length === 1 ? "1 source" : `${m.sources.length} sources`}
                 </span>
-                <span
-                  className="inline-flex items-center gap-1"
-                  title={formatDateTime(freshness)}
-                >
+                <span className="inline-flex items-center gap-1" title={formatDateTime(freshness)}>
                   <Clock className="h-2.5 w-2.5" /> {formatDate(freshness)}
                 </span>
                 {m.confidencePct != null && (
                   <span>
-                    · {projected ? "Projection confidence" : "Confidence"}{" "}
-                    {m.confidencePct}%
+                    · {projected ? "Projection confidence" : "Confidence"} {m.confidencePct}%
                   </span>
                 )}
               </>
@@ -272,8 +255,7 @@ function ModuleCard({ m, freshness }: { m: ModuleOutput; freshness: string }) {
         {m.sources.length > 0 && (
           <div>
             <div className="text-[10px] uppercase tracking-widest text-muted-foreground flex items-center gap-1">
-              <ShieldCheck className="h-3 w-3" /> Read for this reading (
-              {m.sources.length})
+              <ShieldCheck className="h-3 w-3" /> Read for this reading ({m.sources.length})
             </div>
             <div className="mt-1 flex flex-wrap gap-1">
               {m.sources.map((s) => {
@@ -413,10 +395,7 @@ function ModuleCard({ m, freshness }: { m: ModuleOutput; freshness: string }) {
             <Flag className="h-3 w-3" /> Flag issue
           </button>
           {fb?.flag && !flagOpen && (
-            <span
-              className="text-[10px] text-amber-glow truncate max-w-[60%]"
-              title={fb.flag}
-            >
+            <span className="text-[10px] text-amber-glow truncate max-w-[60%]" title={fb.flag}>
               Flagged: {fb.flag}
             </span>
           )}
@@ -463,19 +442,14 @@ function WebFindings({ place, topics }: { place?: string; topics: string[] }) {
   return (
     <div className="mt-4 grid gap-2 sm:grid-cols-2" data-testid="web-findings">
       {data.map((f) => (
-        <div
-          key={f.topic}
-          className="rounded-2xl border border-white/10 bg-card/70 p-3"
-        >
+        <div key={f.topic} className="rounded-2xl border border-white/10 bg-card/70 p-3">
           <div className="flex items-start justify-between gap-2">
             <div className="text-[13px] font-medium">{f.topic}</div>
             <ListenButton
               text={`${f.topic}. ${f.summary}. Source: ${f.sourceTitle}. Public web finding, not verified by HALISIA.`}
             />
           </div>
-          <p className="mt-1 text-[12px] leading-snug text-foreground/85">
-            {f.summary}
-          </p>
+          <p className="mt-1 text-[12px] leading-snug text-foreground/85">{f.summary}</p>
           <div className="mt-1.5 flex flex-wrap items-center gap-1 text-[10px] text-muted-foreground">
             <span className="rounded-full border border-foreground/15 px-1.5 py-0.5">
               Public web finding
@@ -598,14 +572,10 @@ export function LandIntelligenceScore({
         <div className="text-[10px] uppercase tracking-widest text-accent">
           {decision.readingLabel}
         </div>
-        <SpokenText
-          text={EVIDENCE_LEAD}
-          label="Read this to me"
-          className="mt-2"
-        />
+        <SpokenText text={EVIDENCE_LEAD} label="Read this to me" className="mt-2" />
         <p className="mt-2 text-xs text-muted-foreground">
-          Output catalogue counts — not findings available for this location.
-          Evidence classes describe method, not a trust ranking.
+          Output catalogue counts — not findings available for this location. Evidence classes
+          describe method, not a trust ranking.
         </p>
         <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           {tally.map(({ meta, count }) => (
@@ -614,12 +584,8 @@ export function LandIntelligenceScore({
               className="rounded-xl border border-white/10 bg-white/[0.03] p-2.5"
               title={meta.meaning}
             >
-              <div className="text-lg font-semibold tabular-nums text-foreground">
-                {count}
-              </div>
-              <div className="text-[11px] font-medium leading-tight">
-                {meta.label}
-              </div>
+              <div className="text-lg font-semibold tabular-nums text-foreground">{count}</div>
+              <div className="text-[11px] font-medium leading-tight">{meta.label}</div>
               <div className="mt-1 text-[10px] leading-snug text-muted-foreground">
                 {meta.action}
               </div>
@@ -630,13 +596,10 @@ export function LandIntelligenceScore({
 
       <div className="mt-3 grid gap-3">
         <div className="min-w-0">
-          <div className="text-base sm:text-lg font-semibold">
-            {decision.headline}
-          </div>
+          <div className="text-base sm:text-lg font-semibold">{decision.headline}</div>
           <div className="text-[11px] text-muted-foreground">
             Ordered for {labelForPersona(persona)}
-            {decision.confidencePct != null &&
-              ` · Confidence ${decision.confidencePct}%`}
+            {decision.confidencePct != null && ` · Confidence ${decision.confidencePct}%`}
           </div>
           <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
             {decision.scopeNote}
@@ -666,17 +629,11 @@ export function LandIntelligenceScore({
           ) : (
             <FileDown className="h-3.5 w-3.5" />
           )}
-          {downloading
-            ? `${pdfPct}% · ${pdfStage || "Working…"}`
-            : "Download report (PDF)"}
+          {downloading ? `${pdfPct}% · ${pdfStage || "Working…"}` : "Download report (PDF)"}
         </button>
         <Link
           to="/compare-locations"
-          search={
-            lat != null && lng != null
-              ? { a: `${lat},${lng}`, aLabel: address ?? "" }
-              : {}
-          }
+          search={lat != null && lng != null ? { a: `${lat},${lng}`, aLabel: address ?? "" } : {}}
           data-testid="open-compare-locations"
           className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-foreground/85 hover:border-accent/40"
         >
@@ -703,9 +660,7 @@ export function LandIntelligenceScore({
 
       <WebFindings
         place={address}
-        topics={decision.modules
-          .filter((m) => m.status === "not-assessed")
-          .map((m) => m.label)}
+        topics={decision.modules.filter((m) => m.status === "not-assessed").map((m) => m.label)}
       />
 
       {/* Professional recommendations */}

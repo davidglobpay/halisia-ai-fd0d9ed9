@@ -58,19 +58,11 @@
  *
  * Pure functions — no network, no side effects.
  */
-import type {
-  LocationIntel,
-  ProviderStatus,
-} from "@/lib/location-intel.functions";
+import type { LocationIntel, ProviderStatus } from "@/lib/location-intel.functions";
 import type { NarrativeOutput } from "@/lib/ai-narrative.functions";
 import type { Wave4Intel, ScoreExplain } from "@/lib/wave4-intel.functions";
 
-export type Persona =
-  | "investor"
-  | "home-buyer"
-  | "farmer"
-  | "developer"
-  | "business";
+export type Persona = "investor" | "home-buyer" | "farmer" | "developer" | "business";
 
 export type ModuleId =
   | "investment"
@@ -188,10 +180,7 @@ function confidenceFrom(inputs: ModuleInput[]): number | null {
   return clamp((have / inputs.length) * 100);
 }
 
-function providerStatus(
-  intel: LocationIntel | undefined,
-  key: keyof LocationIntel["providers"],
-) {
+function providerStatus(intel: LocationIntel | undefined, key: keyof LocationIntel["providers"]) {
   return intel?.providers?.[key]?.status;
 }
 
@@ -283,9 +272,7 @@ function scoreConstruction(intel?: LocationIntel): ModuleOutput {
     return notAssessed(
       "construction",
       "Construction",
-      [
-        "Elevation could not be read for this point, so there is no terrain signal at all.",
-      ],
+      ["Elevation could not be read for this point, so there is no terrain signal at all."],
       ["Ground elevation", "Parcel soil test (SPT)", "Slope at parcel scale"],
       "Commission SPT and moisture tests at three points on the parcel.",
     );
@@ -322,11 +309,8 @@ function scoreConstruction(intel?: LocationIntel): ModuleOutput {
       "Slope at parcel scale — not computed",
       "Road width and haulage access — not surveyed",
     ],
-    limitations: [
-      "Elevation is a proxy for drainage, not a geotechnical assessment",
-    ],
-    nextStep:
-      "Commission SPT and moisture tests at three points on the parcel.",
+    limitations: ["Elevation is a proxy for drainage, not a geotechnical assessment"],
+    nextStep: "Commission SPT and moisture tests at three points on the parcel.",
   };
 }
 
@@ -343,12 +327,7 @@ function scoreEnvironment(intel?: LocationIntel): ModuleOutput {
       "environment",
       "Environment",
       ["Neither air quality nor elevation could be read for this point."],
-      [
-        "Air quality index",
-        "Ground elevation",
-        "Catchment hydrology",
-        "Rainfall record",
-      ],
+      ["Air quality index", "Ground elevation", "Catchment hydrology", "Rainfall record"],
       "Walk the parcel during the long rains before committing.",
     );
   }
@@ -389,8 +368,7 @@ function scoreEnvironment(intel?: LocationIntel): ModuleOutput {
       "Air quality is a reading at one moment, not an annual average",
       "Elevation stands in for flood risk; it is not a flood study",
     ],
-    nextStep:
-      "Walk the parcel during the long rains (March–May) before committing.",
+    nextStep: "Walk the parcel during the long rains (March–May) before committing.",
   };
 }
 
@@ -416,8 +394,7 @@ function scoreInfrastructure(intel?: LocationIntel): ModuleOutput {
     groceries: c.groceries.length,
     transit: c.transit.length,
   };
-  const total =
-    counts.schools + counts.hospitals + counts.groceries + counts.transit;
+  const total = counts.schools + counts.hospitals + counts.groceries + counts.transit;
   void total; // Counted for the sentence below, no longer scaled into a mark.
 
   return {
@@ -478,9 +455,7 @@ function notAssessed(
 
 const WAVE4_SOURCE = "OpenStreetMap via Overpass API";
 
-function wave4ConfidencePct(
-  confidence: ScoreExplain["confidence"],
-): number | null {
+function wave4ConfidencePct(confidence: ScoreExplain["confidence"]): number | null {
   if (confidence === "high") return 80;
   if (confidence === "medium") return 60;
   return null;
@@ -497,9 +472,7 @@ function scoreDevelopmentContext(wave4?: Wave4Intel): ModuleOutput | null {
   const confidencePct = wave4ConfidencePct(explanation.confidence);
   if (confidencePct == null) return null;
 
-  const usedSources = wave4.sources
-    .filter((source) => source.used)
-    .map((source) => source.label);
+  const usedSources = wave4.sources.filter((source) => source.used).map((source) => source.label);
   const sources = usedSources.length > 0 ? usedSources : [WAVE4_SOURCE];
   return {
     id: "investment",
@@ -557,9 +530,7 @@ function projectPublicContext(
   const anchorSummary = anchors.length
     ? anchors.map((item) => `${item.count} ${item.label}`).join(" · ")
     : `${facilityCount} mapped facilities`;
-  const sources = wave4.sources
-    .filter((source) => source.used)
-    .map((source) => source.label);
+  const sources = wave4.sources.filter((source) => source.used).map((source) => source.label);
 
   if (id === "community") {
     return {
@@ -575,10 +546,7 @@ function projectPublicContext(
         "This is an indicative mapped-facility proxy, not a measure of community quality, cohesion or resident experience.",
       ],
       sources: sources.length ? sources : [WAVE4_SOURCE],
-      projectionBasis: [
-        "Mapped public facilities within 3 km",
-        "Development-context coverage",
-      ],
+      projectionBasis: ["Mapped public facilities within 3 km", "Development-context coverage"],
       missing: [
         "Resident reports",
         "Neighbourhood association records",
@@ -664,14 +632,8 @@ function unassessableModules(): ModuleOutput[] {
     notAssessed(
       "market",
       "Market depth",
-      [
-        "No listings feed is integrated, so supply, demand and liquidity are unknown.",
-      ],
-      [
-        "Live listings feed",
-        "Absorption and time-to-sell",
-        "Price trend for the ward",
-      ],
+      ["No listings feed is integrated, so supply, demand and liquidity are unknown."],
+      ["Live listings feed", "Absorption and time-to-sell", "Price trend for the ward"],
       "Cross-check asking prices against at least two listing portals and a local agent.",
     ),
     notAssessed(
@@ -776,10 +738,7 @@ export function runIntelligenceEngine(
   const confidencePct =
     measured.length > 0 && weightTotal > 0
       ? clamp(
-          measured.reduce(
-            (acc, m) => acc + m.confidencePct * (w[m.id] ?? 0.1),
-            0,
-          ) / weightTotal,
+          measured.reduce((acc, m) => acc + m.confidencePct * (w[m.id] ?? 0.1), 0) / weightTotal,
         )
       : null;
 

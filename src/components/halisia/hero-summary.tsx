@@ -23,11 +23,7 @@ import {
 import type { LocationIntel } from "@/lib/location-intel.functions";
 import type { NarrativeOutput } from "@/lib/ai-narrative.functions";
 import type { Wave4Intel } from "@/lib/wave4-intel.functions";
-import {
-  runIntelligenceEngine,
-  DOSSIER_SCOPE,
-  type ModuleOutput,
-} from "@/lib/intelligence-engine";
+import { runIntelligenceEngine, DOSSIER_SCOPE, type ModuleOutput } from "@/lib/intelligence-engine";
 import { useUserPersona } from "@/hooks/use-user-persona";
 import { ListenButton } from "@/components/halisia/listen-button";
 import { SpokenText } from "@/components/halisia/spoken-text";
@@ -82,10 +78,7 @@ const CLASS_ICONS: Record<EvidenceClass, LucideIcon> = {
  * count and the wording say the same thing for anyone who cannot separate the
  * greens from the ambers.
  */
-const CLASS_TONE: Record<
-  EvidenceClass,
-  { text: string; ring: string; dot: string }
-> = {
+const CLASS_TONE: Record<EvidenceClass, { text: string; ring: string; dot: string }> = {
   visible: {
     text: "text-emerald-glow",
     ring: "border-emerald-glow/30",
@@ -120,12 +113,8 @@ function ClassRow({ meta, count }: { meta: ClassMeta; count: number }) {
         >
           <Icon className={`h-4 w-4 ${tone.text}`} />
         </span>
-        <span className={`text-lg font-semibold tabular-nums ${tone.text}`}>
-          {count}
-        </span>
-        <span className="min-w-0 flex-1 text-xs font-medium leading-tight">
-          {meta.label}
-        </span>
+        <span className={`text-lg font-semibold tabular-nums ${tone.text}`}>{count}</span>
+        <span className="min-w-0 flex-1 text-xs font-medium leading-tight">{meta.label}</span>
         <ChevronDown
           className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
           aria-hidden="true"
@@ -133,9 +122,7 @@ function ClassRow({ meta, count }: { meta: ClassMeta; count: number }) {
       </summary>
       <div className="border-t border-foreground/10 px-3 pb-3 pt-2 text-[11px] leading-relaxed text-muted-foreground">
         {meta.meaning}
-        {meta.action && (
-          <div className="mt-1.5 text-foreground/80">{meta.action}</div>
-        )}
+        {meta.action && <div className="mt-1.5 text-foreground/80">{meta.action}</div>}
       </div>
     </details>
   );
@@ -178,13 +165,9 @@ function ModuleTile({ m }: { m: ModuleOutput }) {
             {m.label}
           </div>
           {/* The finding, in the words the engine published it in. No mark. */}
-          <div className="mt-0.5 text-xs font-medium leading-snug text-foreground/90">
-            {lead}
-          </div>
+          <div className="mt-0.5 text-xs font-medium leading-snug text-foreground/90">{lead}</div>
           <div className="mt-1 text-[10px] text-muted-foreground">
-            {projected
-              ? "Indicative projection · confidence"
-              : "Read from data · confidence"}{" "}
+            {projected ? "Indicative projection · confidence" : "Read from data · confidence"}{" "}
             {m.confidencePct ?? 0}%
           </div>
         </div>
@@ -200,12 +183,9 @@ function ModuleTile({ m }: { m: ModuleOutput }) {
         )}
         <div className="font-medium text-foreground">Evidence</div>
         <div className="mt-1 text-muted-foreground">
-          Sources:{" "}
-          {m.sources.length > 0 ? m.sources.join(", ") : "No source available"}
+          Sources: {m.sources.length > 0 ? m.sources.join(", ") : "No source available"}
         </div>
-        <div className="text-muted-foreground">
-          Confidence: {m.confidencePct ?? 0}%
-        </div>
+        <div className="text-muted-foreground">Confidence: {m.confidencePct ?? 0}%</div>
         <div className="mt-2 font-medium text-foreground">Limitations</div>
         <ul className="mt-1 list-disc space-y-1 pl-4 text-muted-foreground">
           {m.limitations.map((limitation) => (
@@ -244,16 +224,12 @@ export function HeroSummary({
 
   const measured = decision.modules.filter((m) => m.status === "measured");
   const projected = decision.modules.filter((m) => m.status === "projected");
-  const notAssessed = decision.modules.filter(
-    (m) => m.status === "not-assessed",
-  );
+  const notAssessed = decision.modules.filter((m) => m.status === "not-assessed");
 
   // The narrative is a written read, not a measurement. It is shown as prose
   // and never converted into a number anywhere on this surface.
   const summary =
-    narrative?.paragraphs?.[0] ??
-    narrative?.overview ??
-    "HALISIA is reading this location…";
+    narrative?.paragraphs?.[0] ?? narrative?.overview ?? "HALISIA is reading this location…";
 
   return (
     <motion.section
@@ -277,9 +253,7 @@ export function HeroSummary({
         </h2>
         <div className="mt-0.5 text-[11px] text-muted-foreground tabular-nums">
           {lat.toFixed(4)}, {lng.toFixed(4)}
-          {intel?.elevation?.meters != null && (
-            <> · {intel.elevation.meters.toFixed(0)} m elev.</>
-          )}
+          {intel?.elevation?.meters != null && <> · {intel.elevation.meters.toFixed(0)} m elev.</>}
         </div>
       </div>
 
@@ -291,14 +265,10 @@ export function HeroSummary({
         <div className="flex flex-wrap items-center gap-1.5 text-[10px] uppercase tracking-widest text-accent">
           <ShieldCheck className="h-3 w-3" /> How far each answer can be trusted
         </div>
-        <SpokenText
-          text={EVIDENCE_LEAD}
-          label="Read this to me"
-          className="mt-2"
-        />
+        <SpokenText text={EVIDENCE_LEAD} label="Read this to me" className="mt-2" />
         <p className="mt-2 text-xs text-muted-foreground">
-          Output catalogue counts — not findings available for this location.
-          Evidence classes describe method, not a trust ranking.
+          Output catalogue counts — not findings available for this location. Evidence classes
+          describe method, not a trust ranking.
         </p>
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
           {tally.map(({ meta, count }) => (
@@ -314,9 +284,9 @@ export function HeroSummary({
         </div>
         <SpokenText text={summary} label="Read this to me" className="mt-2" />
         <p className="mt-2 text-[11px] text-muted-foreground">
-          A written interpretation of the readings below. It is worked out, not
-          observed. HALISIA holds no price or transaction data for this location
-          and publishes no valuation, score or grade.
+          A written interpretation of the readings below. It is worked out, not observed. HALISIA
+          holds no price or transaction data for this location and publishes no valuation, score or
+          grade.
         </p>
       </div>
 
@@ -349,8 +319,8 @@ export function HeroSummary({
           data-testid="hero-not-assessed"
         >
           <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">
-            <CircleSlash className="h-3 w-3" /> Not assessed —{" "}
-            {notAssessed.length} of {decision.modules.length}
+            <CircleSlash className="h-3 w-3" /> Not assessed — {notAssessed.length} of{" "}
+            {decision.modules.length}
           </div>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {notAssessed.map((m) => (
@@ -364,8 +334,7 @@ export function HeroSummary({
             ))}
           </div>
           <p className="mt-2 text-[11px] text-muted-foreground">
-            HALISIA holds no data that answers these. The full report lists who
-            to ask for each.
+            HALISIA holds no data that answers these. The full report lists who to ask for each.
           </p>
         </div>
       )}
