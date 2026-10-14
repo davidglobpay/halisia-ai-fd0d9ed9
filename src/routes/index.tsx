@@ -347,13 +347,12 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
               Start with any place in Kenya.
             </h2>
             <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
-              Every location profile is free. Not for a trial period, and not only while
-              HALISIA is in beta — nothing that is free today becomes paid. Reports bought
-              one at a time start at {priceKes(lowestOneOffKes())}, packages at{" "}
-              {priceKes(lowestBundleKes())}, and a plan at{" "}
-              {priceKes(lowestPaidPlanMonthlyKes())} a month. Scout visits start at{" "}
-              {priceKes(previewQuote({}, "easy", 0).totalKes)} before travel and access.
-              Payment integration and live activation are pending.
+              Every location profile is free. Not for a trial period, and not only while HALISIA is
+              in beta — nothing that is free today becomes paid. Reports bought one at a time start
+              at {priceKes(lowestOneOffKes())}, packages at {priceKes(lowestBundleKes())}, and a
+              plan at {priceKes(lowestPaidPlanMonthlyKes())} a month. Scout visits start at{" "}
+              {priceKes(previewQuote({}, "easy", 0).totalKes)} before travel and access. Payment
+              integration and live activation are pending.
             </p>
             <dl className="mt-6 grid gap-3 sm:grid-cols-3 max-w-2xl mx-auto text-left">
               {[
@@ -381,7 +380,9 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
               ))}
             </dl>
             <div className="mt-8 flex items-center justify-center gap-3 flex-wrap">
-              <Link to="/pricing" className="glass rounded-full px-6 py-3 text-sm">See all prices</Link>
+              <Link to="/pricing" className="glass rounded-full px-6 py-3 text-sm">
+                See all prices
+              </Link>
               <Link
                 to="/explore"
                 data-testid="launch-cta"

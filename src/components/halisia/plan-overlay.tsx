@@ -1,13 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  AlertTriangle,
-  CheckCircle2,
-  Compass,
-  Info,
-  Move,
-  RotateCcw,
-  Layers,
-} from "lucide-react";
+import { AlertTriangle, CheckCircle2, Compass, Info, Move, RotateCcw, Layers } from "lucide-react";
 import { MapView } from "@/components/halisia/map-view";
 import { ReadAloud } from "@/components/halisia/read-aloud";
 import {
@@ -86,7 +78,11 @@ export function PlanOverlay({
   const shape = useMemo(
     () =>
       chosen
-        ? shapeForPlot({ areaM2: chosen.areaM2, dimsM: chosen.dimsM }, plan?.dimensionsM ?? [], aspect)
+        ? shapeForPlot(
+            { areaM2: chosen.areaM2, dimsM: chosen.dimsM },
+            plan?.dimensionsM ?? [],
+            aspect,
+          )
         : null,
     [chosen, plan, aspect],
   );
@@ -195,10 +191,11 @@ export function PlanOverlay({
       <div className="mt-3 flex items-start gap-2 rounded-xl border-l-4 border-destructive bg-destructive/5 p-3">
         <AlertTriangle className="mt-0.5 h-4 w-4 flex-none text-destructive" aria-hidden="true" />
         <p className="text-[11px] leading-relaxed text-foreground">
-          A mutation plan carries no coordinates and no north arrow. <strong>Where this sits and
-          which way it points is your doing</strong> &mdash; not the surveyor&rsquo;s and not
-          HALISIA&rsquo;s. This is tracing paper over imagery. It is not georeferencing, not a
-          survey, and it establishes nothing about where the legal boundary runs.
+          A mutation plan carries no coordinates and no north arrow.{" "}
+          <strong>Where this sits and which way it points is your doing</strong> &mdash; not the
+          surveyor&rsquo;s and not HALISIA&rsquo;s. This is tracing paper over imagery. It is not
+          georeferencing, not a survey, and it establishes nothing about where the legal boundary
+          runs.
         </p>
       </div>
 
@@ -293,8 +290,8 @@ export function PlanOverlay({
             <div className="mt-3 flex items-start gap-2 rounded-xl border border-white/10 bg-white/5 p-3 text-xs text-muted-foreground">
               <Info className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
               <span>
-                Place your pin in step 1, or draw the boundary in step 3, and the plot will appear on
-                the map ready to move.
+                Place your pin in step 1, or draw the boundary in step 3, and the plot will appear
+                on the map ready to move.
               </span>
             </div>
           ) : (
@@ -304,16 +301,14 @@ export function PlanOverlay({
                 zoom={19}
                 mapType="satellite"
                 polygon={boundary.length >= 3 ? boundary : null}
-                overlayPolygons={
-                  ring ? [{ ring, color: "#C08A2E", fillOpacity: 0.28 }] : null
-                }
+                overlayPolygons={ring ? [{ ring, color: "#C08A2E", fillOpacity: 0.28 }] : null}
                 onMapClick={(loc) => setCentre({ lat: loc.lat, lng: loc.lng })}
                 className="mt-3 h-64 w-full rounded-xl"
               />
               <p className="mt-1.5 text-[11px] text-muted-foreground">
                 <Move className="mr-1 inline h-3 w-3" aria-hidden="true" />
-                Tap anywhere on the map to move the plot there. The green outline is the boundary you
-                drew; the gold one is the plot from the sheet.
+                Tap anywhere on the map to move the plot there. The green outline is the boundary
+                you drew; the gold one is the plot from the sheet.
               </p>
 
               <div className="mt-3">
@@ -416,8 +411,8 @@ export function PlanOverlay({
 
       <p className="mt-3 border-t border-white/10 pt-2 text-[11px] leading-relaxed text-muted-foreground">
         The size comes from the sheet. The position and the angle come from you. Agreement between
-        the two outlines means the shape you drew matches the shape the surveyor drew &mdash; it says
-        nothing about whether either one is on the right land, and nothing about ownership. A
+        the two outlines means the shape you drew matches the shape the surveyor drew &mdash; it
+        says nothing about whether either one is on the right land, and nothing about ownership. A
         licensed surveyor fixes beacons; an advocate confirms title.
       </p>
     </div>

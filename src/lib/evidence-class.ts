@@ -53,9 +53,9 @@ export const EVIDENCE_CLASSES: readonly ClassMeta[] = [
   },
   {
     id: "measured",
-    label: "Measured by someone named",
+    label: "Reported by a named dataset",
     meaning:
-      "It comes from a dataset we name, with the date it was read. You can go to that source and check the same number.",
+      "A named dataset reports this. Check its method, date and resolution; a record is not necessarily a direct field measurement.",
     action: "The source is named beside each figure.",
     mappable: true,
     rank: 1,
@@ -107,45 +107,200 @@ export type OutputDescriptor = {
  */
 export const OUTPUT_CLASSES: readonly OutputDescriptor[] = [
   // --- visible: confirmable against imagery of this place ---
-  { id: "schools", label: "Schools within 3 km", cls: "visible", source: "Google Places" },
-  { id: "health", label: "Health facilities within 3 km", cls: "visible", source: "Google Places" },
-  { id: "shops", label: "Shops and markets within 3 km", cls: "visible", source: "Google Places" },
-  { id: "transit", label: "Public transport within 3 km", cls: "visible", source: "Google Places" },
-  { id: "osm-fac", label: "Mapped public facilities", cls: "visible", source: "OpenStreetMap Overpass" },
-  { id: "slope", label: "Slope and aspect", cls: "visible", source: "Open-Topo-Data ASTER 30 m" },
-  { id: "relief", label: "Relief and landform", cls: "visible", source: "Open-Topo-Data ASTER 30 m" },
-  { id: "boundary-drawn", label: "Boundary you drew", cls: "visible", source: "Drawn on the map by you" },
-  { id: "buildable", label: "Buildable area inside your setbacks", cls: "visible", source: "Computed from your drawn boundary" },
+  {
+    id: "schools",
+    label: "Schools within 3 km",
+    cls: "measured",
+    source: "Google Places",
+  },
+  {
+    id: "health",
+    label: "Health facilities within 3 km",
+    cls: "measured",
+    source: "Google Places",
+  },
+  {
+    id: "shops",
+    label: "Shops and markets within 3 km",
+    cls: "measured",
+    source: "Google Places",
+  },
+  {
+    id: "transit",
+    label: "Public transport within 3 km",
+    cls: "measured",
+    source: "Google Places",
+  },
+  {
+    id: "osm-fac",
+    label: "Mapped public facilities",
+    cls: "measured",
+    source: "OpenStreetMap Overpass",
+  },
+  {
+    id: "slope",
+    label: "Slope and aspect",
+    cls: "inferred",
+    source: "Open-Topo-Data ASTER 30 m",
+  },
+  {
+    id: "relief",
+    label: "Relief and landform",
+    cls: "inferred",
+    source: "Open-Topo-Data ASTER 30 m",
+  },
+  {
+    id: "boundary-drawn",
+    label: "Boundary you drew",
+    cls: "inferred",
+    source: "Drawn on the map by you",
+  },
+  {
+    id: "buildable",
+    label: "Buildable area inside your setbacks",
+    cls: "inferred",
+    source: "Computed from your drawn boundary",
+  },
 
   // --- measured: a named dataset, checkable at source ---
-  { id: "elev", label: "Elevation", cls: "measured", source: "Google Maps Elevation API" },
-  { id: "aqi", label: "Air quality now", cls: "measured", source: "Google Air Quality API" },
-  { id: "rain", label: "Mean annual rainfall", cls: "measured", source: "Open-Meteo Climate (EC-Earth3P-HR, 2010–2020)" },
-  { id: "temp", label: "Mean temperature", cls: "measured", source: "Open-Meteo Climate (EC-Earth3P-HR, 2010–2020)" },
-  { id: "weather", label: "Weather now and next 7 days", cls: "measured", source: "Open-Meteo forecast" },
-  { id: "county", label: "County", cls: "measured", source: "IEBC county boundaries" },
-  { id: "ward", label: "Ward and constituency", cls: "measured", source: "OpenStreetMap Nominatim" },
-  { id: "pop", label: "County population", cls: "measured", source: "KNBS 2019 Census" },
-  { id: "soil", label: "Soil composition", cls: "measured", source: "ISRIC SoilGrids v2.0 (250 m model)" },
-  { id: "coords", label: "Coordinates", cls: "measured", source: "Entered, pinned or geocoded — provenance recorded" },
+  {
+    id: "elev",
+    label: "Elevation",
+    cls: "measured",
+    source: "Google Maps Elevation API",
+  },
+  {
+    id: "aqi",
+    label: "Air quality now",
+    cls: "measured",
+    source: "Google Air Quality API",
+  },
+  {
+    id: "rain",
+    label: "Mean annual rainfall",
+    cls: "inferred",
+    source: "Open-Meteo Climate (EC-Earth3P-HR, 2010–2020)",
+  },
+  {
+    id: "temp",
+    label: "Mean temperature",
+    cls: "inferred",
+    source: "Open-Meteo Climate (EC-Earth3P-HR, 2010–2020)",
+  },
+  {
+    id: "weather",
+    label: "Weather now and next 7 days",
+    cls: "inferred",
+    source: "Open-Meteo forecast",
+  },
+  {
+    id: "county",
+    label: "County",
+    cls: "measured",
+    source: "IEBC county boundaries",
+  },
+  {
+    id: "ward",
+    label: "Ward and constituency",
+    cls: "measured",
+    source: "OpenStreetMap Nominatim",
+  },
+  {
+    id: "pop",
+    label: "County population",
+    cls: "measured",
+    source: "KNBS 2019 Census",
+  },
+  {
+    id: "soil",
+    label: "Soil composition",
+    cls: "inferred",
+    source: "ISRIC SoilGrids v2.0 (250 m model)",
+  },
+  {
+    id: "coords",
+    label: "Coordinates",
+    cls: "inferred",
+    source: "Entered, pinned or geocoded — provenance recorded",
+  },
 
   // --- inferred: a rule produced it; nothing observed it ---
-  { id: "flood-proxy", label: "Flood proxy", cls: "inferred", source: "Elevation bands only — not a flood model" },
-  { id: "erosion", label: "Erosion risk", cls: "inferred", source: "Slope thresholds" },
-  { id: "landform-risk", label: "Landform risk notes", cls: "inferred", source: "Rules over slope and soil" },
-  { id: "geology", label: "Geological interpretation", cls: "inferred", source: "Rules over landform, clay and elevation" },
-  { id: "concepts", label: "Indicative development concepts", cls: "inferred", source: "Thresholds over nearby amenity counts" },
+  {
+    id: "flood-proxy",
+    label: "Flood proxy",
+    cls: "inferred",
+    source: "Elevation bands only — not a flood model",
+  },
+  {
+    id: "erosion",
+    label: "Erosion risk",
+    cls: "inferred",
+    source: "Slope thresholds",
+  },
+  {
+    id: "landform-risk",
+    label: "Landform risk notes",
+    cls: "inferred",
+    source: "Rules over slope and soil",
+  },
+  {
+    id: "geology",
+    label: "Geological interpretation",
+    cls: "inferred",
+    source: "Rules over landform, clay and elevation",
+  },
+  {
+    id: "concepts",
+    label: "Indicative development concepts",
+    cls: "inferred",
+    source: "Thresholds over nearby amenity counts",
+  },
 
   // --- unprovable: no imagery and no open dataset settles it ---
-  { id: "title", label: "Title and its validity", cls: "unprovable", source: null },
+  {
+    id: "title",
+    label: "Title and its validity",
+    cls: "unprovable",
+    source: null,
+  },
   { id: "owner", label: "Who owns it", cls: "unprovable", source: null },
-  { id: "encumbrance", label: "Charges, caveats and encumbrances", cls: "unprovable", source: null },
-  { id: "boundary-legal", label: "The legal parcel boundary", cls: "unprovable", source: null },
-  { id: "zoning", label: "Zoning and planning approval", cls: "unprovable", source: null },
-  { id: "bearing", label: "Bearing capacity of the ground", cls: "unprovable", source: null },
+  {
+    id: "encumbrance",
+    label: "Charges, caveats and encumbrances",
+    cls: "unprovable",
+    source: null,
+  },
+  {
+    id: "boundary-legal",
+    label: "The legal parcel boundary",
+    cls: "unprovable",
+    source: null,
+  },
+  {
+    id: "zoning",
+    label: "Zoning and planning approval",
+    cls: "unprovable",
+    source: null,
+  },
+  {
+    id: "bearing",
+    label: "Bearing capacity of the ground",
+    cls: "unprovable",
+    source: null,
+  },
   { id: "bedrock", label: "Depth to bedrock", cls: "unprovable", source: null },
-  { id: "groundwater", label: "Shallow groundwater", cls: "unprovable", source: null },
-  { id: "comps", label: "What comparable plots sold for", cls: "unprovable", source: null },
+  {
+    id: "groundwater",
+    label: "Shallow groundwater",
+    cls: "unprovable",
+    source: null,
+  },
+  {
+    id: "comps",
+    label: "What comparable plots sold for",
+    cls: "unprovable",
+    source: null,
+  },
 ] as const;
 
 export const outputsOfClass = (cls: EvidenceClass): OutputDescriptor[] =>
@@ -170,7 +325,7 @@ export function classTally(): Array<{ meta: ClassMeta; count: number }> {
  */
 export const EVIDENCE_LEAD =
   "HALISIA publishes no score for this place. Nothing here is graded, ranked or rated. " +
-  "What follows is sorted by how far each fact can be trusted: what you can see in the imagery, " +
-  "what a named dataset measured, what a rule worked out, and what nobody can tell you from a screen at all. " +
+  "The catalogue below describes output types, not evidence retrieved for this location: what imagery may show when available, " +
+  "what a named dataset reports, what a rule worked out, and what nobody can tell you from a screen at all. " +
   "Ownership, title, the legal boundary and planning approval are in that last group. " +
   "They need a registry search and a licensed surveyor, and no amount of data on this page replaces them.";

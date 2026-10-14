@@ -41,7 +41,10 @@ function slugify(s: string) {
  * direct elevation reading "AI-Estimated" and a pair of invented inputs
  * "Verified", because it judged by confidence and source count alone.
  */
-function provenanceOf(m: ModuleOutput): { label: string; color: [number, number, number] } {
+function provenanceOf(m: ModuleOutput): {
+  label: string;
+  color: [number, number, number];
+} {
   if (m.status === "projected") return { label: "Indicative projection", color: [138, 94, 18] };
   if (m.status === "not-assessed") return { label: "Not assessed", color: [140, 150, 168] };
   if ((m.confidencePct ?? 0) >= 100) return { label: "Measured", color: [34, 197, 94] };
@@ -117,6 +120,8 @@ export async function generateIntelligencePdf(
   );
   coverY += 18;
 
+  doc.text("Output catalogue counts, not findings retrieved for this site.", M, coverY);
+  coverY += 18;
   // The tally, in words rather than a mark. These counts are of output kinds,
   // fixed by what HALISIA can and cannot establish — not of this location.
   doc.text(

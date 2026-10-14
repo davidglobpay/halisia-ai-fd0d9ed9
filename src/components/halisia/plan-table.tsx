@@ -54,11 +54,7 @@ export function PlanTable() {
           Plans · pick the one that matches how often you look
         </h2>
         <div className="flex flex-wrap gap-2">
-          <div
-            role="group"
-            aria-label="Currency"
-            className="glass inline-flex rounded-full p-1"
-          >
+          <div role="group" aria-label="Currency" className="glass inline-flex rounded-full p-1">
             {(["KES", "USD"] as const).map((c) => (
               <button
                 key={c}
@@ -66,9 +62,7 @@ export function PlanTable() {
                 aria-pressed={currency === c}
                 onClick={() => setCurrency(c)}
                 className={`min-h-11 rounded-full px-4 text-sm ${
-                  currency === c
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground"
+                  currency === c ? "bg-primary text-primary-foreground" : "text-muted-foreground"
                 }`}
               >
                 {c === "KES" ? "KES · M-Pesa" : "USD · card"}
@@ -87,9 +81,7 @@ export function PlanTable() {
                 aria-pressed={term === t}
                 onClick={() => setTerm(t)}
                 className={`min-h-11 rounded-full px-4 text-sm ${
-                  term === t
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground"
+                  term === t ? "bg-primary text-primary-foreground" : "text-muted-foreground"
                 }`}
               >
                 {t === "monthly" ? "Monthly" : "Yearly · 2 months free"}
@@ -100,15 +92,13 @@ export function PlanTable() {
       </div>
 
       <p className="mt-3 text-sm text-muted-foreground">
-        Paying for a year costs ten months. USD prices are set separately for
-        payment by card from outside Kenya and are not a live conversion of the
-        shilling price; card settlement costs more than M-Pesa and the
-        difference is in the price rather than hidden in a rate. Where a plan
-        includes reports, its card says what those reports cost bought on their
-        own, so you can check the plan against the one-off prices further down
-        this page rather than take the comparison on trust. Payment integration
-        and live activation are pending, so no plan can be bought yet and
-        nothing that is free today becomes paid.
+        Paying for a year costs ten months. USD prices are set separately for payment by card from
+        outside Kenya and are not a live conversion of the shilling price; card settlement costs
+        more than M-Pesa and the difference is in the price rather than hidden in a rate. Where a
+        plan includes reports, its card says what those reports cost bought on their own, so you can
+        check the plan against the one-off prices further down this page rather than take the
+        comparison on trust. Payment integration and live activation are pending, so no plan can be
+        bought yet and nothing that is free today becomes paid.
       </p>
 
       <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -136,42 +126,31 @@ export function PlanTable() {
               <p className="mt-1 text-xs text-muted-foreground">{p.audience}</p>
               <p className="mt-3 text-2xl font-semibold text-primary">
                 {p.quoteOnly && (
-                  <span className="text-sm font-normal text-muted-foreground">
-                    from{" "}
-                  </span>
+                  <span className="text-sm font-normal text-muted-foreground">from </span>
                 )}
                 {planPrice(p)}{" "}
-                <span className="text-xs font-normal text-muted-foreground">
-                  {planUnit(p)}
-                </span>
+                <span className="text-xs font-normal text-muted-foreground">{planUnit(p)}</span>
               </p>
               {term === "annual" && saving > 0 && (
                 <p className="text-xs text-primary">
-                  Saves {kes ? priceKes(saving) : priceUsd(saving)} against
-                  paying monthly
+                  Saves {kes ? priceKes(saving) : priceUsd(saving)} against paying monthly
                 </p>
               )}
               {worth > 0 && multiple > 0 && (
                 <p className="mt-2 rounded-lg bg-primary/10 px-3 py-2 text-xs">
-                  Includes up to {priceKes(worth)} of reports a month at the
-                  one-off prices below — {multiple.toFixed(1)}× the monthly
-                  price.
+                  Includes up to {priceKes(worth)} of reports a month at the one-off prices below —{" "}
+                  {multiple.toFixed(1)}× the monthly price.
                 </p>
               )}
               <ul className="mt-4 grid gap-2 text-sm">
                 {p.includes.map((line) => (
                   <li key={line} className="flex gap-2">
-                    <Check
-                      className="mt-0.5 h-4 w-4 shrink-0 text-primary"
-                      aria-hidden
-                    />
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
                     <span>{line}</span>
                   </li>
                 ))}
               </ul>
-              <p className="mt-3 text-xs text-muted-foreground">
-                {p.readiness}
-              </p>
+              <p className="mt-3 text-xs text-muted-foreground">{p.readiness}</p>
               <button
                 type="button"
                 disabled
@@ -192,37 +171,29 @@ export function PlanTable() {
         Packages · the same reports, bought together
       </h2>
       <p className="mt-2 text-sm text-muted-foreground">
-        Every package is built from the individual reports listed below it, at
-        less than the sum of their prices. The saving shown is the difference
-        between the package price and those reports bought one at a time.
+        Every package is built from the individual reports listed below it, at less than the sum of
+        their prices. The saving shown is the difference between the package price and those reports
+        bought one at a time.
       </p>
       <div className="mt-6 grid gap-4 md:grid-cols-2">
         {BUNDLES.map((b: Bundle) => (
-          <article
-            key={b.id}
-            className="rounded-2xl border border-border bg-background/70 p-5"
-          >
+          <article key={b.id} className="rounded-2xl border border-border bg-background/70 p-5">
             <h3 className="font-display text-lg font-semibold">{b.name}</h3>
             <p className="mt-1 text-xs text-muted-foreground">{b.audience}</p>
             <p className="mt-3 text-2xl font-semibold text-primary">
               {kes ? priceKes(b.amountKes) : priceUsd(b.amountUsd)}{" "}
-              <span className="text-xs font-normal text-muted-foreground">
-                once
-              </span>
+              <span className="text-xs font-normal text-muted-foreground">once</span>
             </p>
             {kes ? (
               <p className="text-xs">
                 <span className="text-muted-foreground line-through">
                   {priceKes(bundleListKes(b))}
                 </span>{" "}
-                <span className="text-primary">
-                  saves {priceKes(bundleSavingKes(b))}
-                </span>
+                <span className="text-primary">saves {priceKes(bundleSavingKes(b))}</span>
               </p>
             ) : (
               <p className="text-xs text-primary">
-                saves {bundleSavingPct(b)}% against buying the contents
-                separately
+                saves {bundleSavingPct(b)}% against buying the contents separately
               </p>
             )}
             <ul className="mt-4 grid gap-2 text-sm">
@@ -232,18 +203,14 @@ export function PlanTable() {
                 return (
                   <li key={id} className="flex justify-between gap-2">
                     <span>{s.name}</span>
-                    <span className="shrink-0 text-muted-foreground">
-                      {priceKes(s.amount)}
-                    </span>
+                    <span className="shrink-0 text-muted-foreground">{priceKes(s.amount)}</span>
                   </li>
                 );
               })}
               {(b.extras ?? []).map((e) => (
                 <li key={e.label} className="flex justify-between gap-2">
                   <span>{e.label}</span>
-                  <span className="shrink-0 text-muted-foreground">
-                    {priceKes(e.kes)}
-                  </span>
+                  <span className="shrink-0 text-muted-foreground">{priceKes(e.kes)}</span>
                 </li>
               ))}
             </ul>

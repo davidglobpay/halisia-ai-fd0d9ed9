@@ -18,10 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
-    meta: [
-      { title: "Master Admin — HALISIA" },
-      { name: "robots", content: "noindex,nofollow" },
-    ],
+    meta: [{ title: "Master Admin — HALISIA" }, { name: "robots", content: "noindex,nofollow" }],
   }),
   component: AdminPageView,
 });
@@ -91,10 +88,7 @@ function AdminPageView() {
     if (a === "update_profile")
       setProfileEdit(
         Object.fromEntries(
-          ["display_name", "county", "phone", "headline"].map((k) => [
-            k,
-            String(row[k] ?? ""),
-          ]),
+          ["display_name", "county", "phone", "headline"].map((k) => [k, String(row[k] ?? "")]),
         ),
       );
   };
@@ -105,15 +99,12 @@ function AdminPageView() {
       await adminRpc("halisia_admin_action", {
         p_action: action,
         p_target: target,
-        p_value:
-          action === "update_profile" ? JSON.stringify(profileEdit) : value,
+        p_value: action === "update_profile" ? JSON.stringify(profileEdit) : value,
         p_reason: reason,
       });
       if (action === "document_access" && selected?.storage_path) {
         const signed = await supabase.storage
-          .from(
-            value === "vault_documents" ? "finance-vault" : "scout-evidence",
-          )
+          .from(value === "vault_documents" ? "finance-vault" : "scout-evidence")
           .createSignedUrl(String(selected.storage_path), 300);
         if (signed.error) throw signed.error;
         setFileLink(signed.data.signedUrl);
@@ -136,8 +127,7 @@ function AdminPageView() {
       <main className="mx-auto max-w-3xl px-4 pt-24">
         <h1 className="text-3xl font-semibold">HALISIA master admin</h1>
         <p className="mt-3">
-          Sign in with an authorized email. Confirm the email before setting up
-          your authenticator.
+          Sign in with an authorized email. Confirm the email before setting up your authenticator.
         </p>
         <Link
           to="/auth"
@@ -160,12 +150,10 @@ function AdminPageView() {
   if (!status.data?.eligible)
     return (
       <main className="mx-auto max-w-3xl px-4 pt-24">
-        <h1 className="text-2xl font-semibold">
-          Administrator access restricted
-        </h1>
+        <h1 className="text-2xl font-semibold">Administrator access restricted</h1>
         <p className="mt-3">
-          This confirmed account is not an enabled administrator. Ask an
-          authorized administrator to review the exact email address.
+          This confirmed account is not an enabled administrator. Ask an authorized administrator to
+          review the exact email address.
         </p>
         <Link to="/account" className="mt-4 inline-block underline">
           My account
@@ -191,12 +179,9 @@ function AdminPageView() {
     <main className="relative mx-auto max-w-7xl px-4 pt-24 pb-24">
       <header className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-3xl font-semibold">
-            HALISIA master admin
-          </h1>
+          <h1 className="font-display text-3xl font-semibold">HALISIA master admin</h1>
           <p className="text-sm text-muted-foreground">
-            {user.email} ·{" "}
-            {ready ? "MFA verified" : "MFA verification required"}
+            {user.email} · {ready ? "MFA verified" : "MFA verification required"}
           </p>
         </div>
         {ready && (
@@ -221,45 +206,29 @@ function AdminPageView() {
                       {k.replaceAll("_", " ")}
                     </p>
                     <p className="mt-1 text-xl font-semibold">
-                      {typeof v === "boolean"
-                        ? v
-                          ? "Enabled"
-                          : "Disabled"
-                        : String(v)}
+                      {typeof v === "boolean" ? (v ? "Enabled" : "Disabled") : String(v)}
                     </p>
                   </div>
                 ))}
             {overview.error && (
               <p role="alert">
                 Overview unavailable.{" "}
-                <button
-                  onClick={() => void overview.refetch()}
-                  className="underline"
-                >
+                <button onClick={() => void overview.refetch()} className="underline">
                   Retry
                 </button>
               </p>
             )}
           </section>
           <p className="mb-4 text-xs text-muted-foreground">
-            Database snapshot refreshes every 30 seconds. Recorded receipts are
-            not independently reconciled revenue. Empty tables show actual zero
-            records; health panels cover instrumented providers.
+            Database snapshot refreshes every 30 seconds. Recorded receipts are not independently
+            reconciled revenue. Empty tables show actual zero records; health panels cover
+            instrumented providers.
           </p>
-          <nav
-            aria-label="Administrator workspaces"
-            className="mb-5 flex flex-wrap gap-2"
-          >
-            <button
-              onClick={() => choose("accounts")}
-              className="rounded-full border px-4 py-2"
-            >
+          <nav aria-label="Administrator workspaces" className="mb-5 flex flex-wrap gap-2">
+            <button onClick={() => choose("accounts")} className="rounded-full border px-4 py-2">
               Accounts
             </button>
-            <button
-              onClick={() => choose("properties")}
-              className="rounded-full border px-4 py-2"
-            >
+            <button onClick={() => choose("properties")} className="rounded-full border px-4 py-2">
               Listings
             </button>
             <button
@@ -360,8 +329,8 @@ function AdminPageView() {
               </div>
               {account && (
                 <p className="mt-3 break-all text-xs">
-                  Reviewing account {account}. Choose a supported resource to
-                  see this account's records.
+                  Reviewing account {account}. Choose a supported resource to see this account's
+                  records.
                 </p>
               )}
               {resource === "admin_allowed_emails" && (
@@ -382,18 +351,14 @@ function AdminPageView() {
               ) : rows.error ? (
                 <p role="alert" className="mt-4">
                   Records could not load.{" "}
-                  <button
-                    onClick={() => void rows.refetch()}
-                    className="underline"
-                  >
+                  <button onClick={() => void rows.refetch()} className="underline">
                     Retry
                   </button>
                 </p>
               ) : (
                 <>
                   <p className="my-4 text-sm">
-                    {rows.data?.total ?? 0} records · page{" "}
-                    {Math.floor(offset / 50) + 1}
+                    {rows.data?.total ?? 0} records · page {Math.floor(offset / 50) + 1}
                   </p>
                   {!visible.length && (
                     <p className="py-5 text-sm text-muted-foreground">
@@ -406,9 +371,7 @@ function AdminPageView() {
                         key={String(r.id ?? r.email ?? r.key ?? i)}
                         className="min-w-0 rounded-xl border bg-background/70 p-4"
                       >
-                        <h2 className="break-words font-semibold">
-                          {headline(r)}
-                        </h2>
+                        <h2 className="break-words font-semibold">{headline(r)}</h2>
                         <p className="mt-1 break-all text-xs text-muted-foreground">
                           {String(
                             r.status ??
@@ -453,36 +416,23 @@ function AdminPageView() {
                                 Review account activity
                               </button>
                               <button
-                                onClick={() =>
-                                  prepare(
-                                    r.suspended ? "restore" : "suspend",
-                                    r,
-                                  )
-                                }
+                                onClick={() => prepare(r.suspended ? "restore" : "suspend", r)}
                                 className="rounded-xl border px-3 text-sm"
                               >
-                                {r.suspended
-                                  ? "Restore access"
-                                  : "Suspend app access"}
+                                {r.suspended ? "Restore access" : "Suspend app access"}
                               </button>
                               <button
-                                onClick={() =>
-                                  prepare("grant_role", r, "explorer")
-                                }
+                                onClick={() => prepare("grant_role", r, "explorer")}
                                 className="rounded-xl border px-3 text-sm"
                               >
                                 Manage roles
                               </button>
                             </>
                           )}
-                          {["vault_documents", "scout_evidence"].includes(
-                            resource,
-                          ) &&
+                          {["vault_documents", "scout_evidence"].includes(resource) &&
                             !!r.storage_path && (
                               <button
-                                onClick={() =>
-                                  prepare("document_access", r, resource)
-                                }
+                                onClick={() => prepare("document_access", r, resource)}
                                 className="rounded-xl border px-3 text-sm"
                               >
                                 Review private file
@@ -490,9 +440,7 @@ function AdminPageView() {
                             )}
                           {resource === "properties" && (
                             <button
-                              onClick={() =>
-                                prepare("listing_status", r, "draft")
-                              }
+                              onClick={() => prepare("listing_status", r, "draft")}
                               className="rounded-xl border px-3 text-sm"
                             >
                               Moderate listing
@@ -500,9 +448,7 @@ function AdminPageView() {
                           )}
                           {resource === "contributions" && (
                             <button
-                              onClick={() =>
-                                prepare("contribution_review", r, "pending")
-                              }
+                              onClick={() => prepare("contribution_review", r, "pending")}
                               className="rounded-xl border px-3 text-sm"
                             >
                               Review contribution
@@ -510,9 +456,7 @@ function AdminPageView() {
                           )}
                           {resource === "professional_profiles" && (
                             <button
-                              onClick={() =>
-                                prepare("professional_review", r, "pending")
-                              }
+                              onClick={() => prepare("professional_review", r, "pending")}
                               className="rounded-xl border px-3 text-sm"
                             >
                               Review credentials
@@ -521,11 +465,7 @@ function AdminPageView() {
                           {resource === "marketplace_feature_flags" && (
                             <button
                               onClick={() =>
-                                prepare(
-                                  "feature_flag",
-                                  r,
-                                  r.enabled ? "false" : "true",
-                                )
+                                prepare("feature_flag", r, r.enabled ? "false" : "true")
                               }
                               className="rounded-xl border px-3 text-sm"
                             >
@@ -535,17 +475,11 @@ function AdminPageView() {
                           {resource === "admin_allowed_emails" && (
                             <button
                               onClick={() =>
-                                prepare(
-                                  "admin_email",
-                                  r,
-                                  r.enabled ? "disable" : "enable",
-                                )
+                                prepare("admin_email", r, r.enabled ? "disable" : "enable")
                               }
                               className="rounded-xl border px-3 text-sm"
                             >
-                              {r.enabled
-                                ? "Revoke admin access"
-                                : "Enable admin access"}
+                              {r.enabled ? "Revoke admin access" : "Enable admin access"}
                             </button>
                           )}
                         </div>
@@ -580,27 +514,16 @@ function AdminPageView() {
           )}
           {fileLink && (
             <section className="glass mt-5 rounded-2xl p-5">
-              <a
-                href={fileLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline"
-              >
+              <a href={fileLink} target="_blank" rel="noopener noreferrer" className="underline">
                 Open reviewed private file · link expires in 5 minutes
               </a>
-              <button
-                onClick={() => setFileLink("")}
-                className="ml-4 underline"
-              >
+              <button onClick={() => setFileLink("")} className="ml-4 underline">
                 Hide link
               </button>
             </section>
           )}
           {selected && (
-            <section
-              className="glass mt-5 rounded-2xl p-5"
-              aria-label="Selected record"
-            >
+            <section className="glass mt-5 rounded-2xl p-5" aria-label="Selected record">
               <div className="flex justify-between">
                 <h2 className="font-semibold">Record detail</h2>
                 <button onClick={() => setSelected(null)} className="underline">
@@ -620,8 +543,8 @@ function AdminPageView() {
             >
               <h2 className="font-semibold">Confirm administrator change</h2>
               <p className="text-sm">
-                Action: {action.replaceAll("_", " ")}. Every saved change
-                requires a reason and records its before and after values.
+                Action: {action.replaceAll("_", " ")}. Every saved change requires a reason and
+                records its before and after values.
               </p>
               {action === "update_profile" &&
                 ["display_name", "county", "phone", "headline"].map((k) => (
@@ -630,9 +553,7 @@ function AdminPageView() {
                     <input
                       maxLength={512}
                       value={profileEdit[k] ?? ""}
-                      onChange={(e) =>
-                        setProfileEdit({ ...profileEdit, [k]: e.target.value })
-                      }
+                      onChange={(e) => setProfileEdit({ ...profileEdit, [k]: e.target.value })}
                       className="mt-1 block w-full rounded-xl border bg-background p-3"
                     />
                   </label>
@@ -669,9 +590,7 @@ function AdminPageView() {
                       onChange={(e) => setValue(e.target.value)}
                       className="ml-2 rounded-xl border bg-background p-3"
                     >
-                      {ROLE_CATALOG.filter(
-                        (r) => r.value !== "administrator",
-                      ).map((r) => (
+                      {ROLE_CATALOG.filter((r) => r.value !== "administrator").map((r) => (
                         <option key={r.value} value={r.value}>
                           {r.label}
                         </option>

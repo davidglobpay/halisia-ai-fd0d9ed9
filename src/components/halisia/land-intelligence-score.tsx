@@ -573,6 +573,10 @@ export function LandIntelligenceScore({
           {decision.readingLabel}
         </div>
         <SpokenText text={EVIDENCE_LEAD} label="Read this to me" className="mt-2" />
+        <p className="mt-2 text-xs text-muted-foreground">
+          Output catalogue counts — not findings available for this location. Evidence classes
+          describe method, not a trust ranking.
+        </p>
         <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           {tally.map(({ meta, count }) => (
             <div

@@ -264,8 +264,8 @@ export function ExecutiveSummary({
               <code className="text-foreground/90">
                 min(95, 40 + 4 × (schools + health + shops + transit within 3 km))
               </code>
-              . It is calibrated against nothing, and a higher number means more
-              places were mapped nearby, not that anywhere is better to live.
+              . It is calibrated against nothing, and a higher number means more places were mapped
+              nearby, not that anywhere is better to live.
             </div>
           )}
         </Section>
@@ -341,10 +341,9 @@ export function ExecutiveSummary({
           </div>
           {technical && (
             <div className="mt-2 text-[11px] text-muted-foreground leading-relaxed">
-              Confidence here is a coverage count, not a blend: the share of
-              three checks that returned anything. There is no freshness term
-              and no cross-source agreement term. Last updated{" "}
-              {new Date(narrative.lastUpdated).toLocaleString()}.
+              Confidence here is a coverage count, not a blend: the share of three checks that
+              returned anything. There is no freshness term and no cross-source agreement term. Last
+              updated {new Date(narrative.lastUpdated).toLocaleString()}.
             </div>
           )}
         </Section>

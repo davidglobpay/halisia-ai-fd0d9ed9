@@ -522,7 +522,10 @@ function projectPublicContext(
     ["transit", "public transport"],
     ["worship", "places of worship"],
   ]
-    .map(([key, label]) => ({ label, count: wave4.facilities[key]?.length ?? 0 }))
+    .map(([key, label]) => ({
+      label,
+      count: wave4.facilities[key]?.length ?? 0,
+    }))
     .filter((item) => item.count > 0);
   const anchorSummary = anchors.length
     ? anchors.map((item) => `${item.count} ${item.label}`).join(" · ")
@@ -825,7 +828,11 @@ export function labelForPersona(p: Persona): string {
 
 export const PERSONAS: { id: Persona; label: string; hint: string }[] = [
   { id: "investor", label: "Investor", hint: "ROI, growth, rental demand" },
-  { id: "home-buyer", label: "Home buyer", hint: "Livability, schools, safety" },
+  {
+    id: "home-buyer",
+    label: "Home buyer",
+    hint: "Livability, schools, safety",
+  },
   { id: "farmer", label: "Farmer", hint: "Soil, rainfall, water access" },
   { id: "developer", label: "Developer", hint: "Zoning, utilities, density" },
   { id: "business", label: "Business", hint: "Traffic, visibility, commerce" },

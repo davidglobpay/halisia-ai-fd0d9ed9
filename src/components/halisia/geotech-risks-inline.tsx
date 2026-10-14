@@ -15,6 +15,8 @@ export function GeotechRisksInline({ lat, lng }: { lat: number; lng: number }) {
     queryFn: () => getGeotechIntel({ data: { lat, lng } }),
     staleTime: 15 * 60 * 1000,
   });
+  if (q.error)
+    return <p role="status">Construction screening unavailable. The data request failed.</p>;
   if (q.isLoading || !q.data) {
     return (
       <div className="glass rounded-2xl p-4 text-xs text-muted-foreground inline-flex items-center gap-2">
@@ -22,6 +24,5 @@ export function GeotechRisksInline({ lat, lng }: { lat: number; lng: number }) {
       </div>
     );
   }
-  if (q.error) return null;
   return <RiskSection g={q.data} />;
 }

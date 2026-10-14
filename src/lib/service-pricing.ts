@@ -23,14 +23,7 @@
  * hidden in a spread.
  */
 
-export type PlanId =
-  | "free"
-  | "plus"
-  | "pro"
-  | "seller"
-  | "studio"
-  | "api"
-  | "institution";
+export type PlanId = "free" | "plus" | "pro" | "seller" | "studio" | "api" | "institution";
 
 export type Plan = {
   id: PlanId;
@@ -76,8 +69,7 @@ export const PLANS: readonly Plan[] = [
       "Current beta PDF tools",
       "Scout quotes — build and price a visit before deciding",
     ],
-    readiness:
-      "Available now. Free tools stay free; nothing that is free today becomes paid.",
+    readiness: "Available now. Free tools stay free; nothing that is free today becomes paid.",
   },
   {
     id: "plus",
@@ -172,8 +164,7 @@ export const PLANS: readonly Plan[] = [
       "Programmatic access to available HALISIA intelligence",
       "No registry access is included",
     ],
-    readiness:
-      "Commercial API access, quotas, billing and activation pending.",
+    readiness: "Commercial API access, quotas, billing and activation pending.",
   },
   {
     id: "institution",
@@ -190,8 +181,7 @@ export const PLANS: readonly Plan[] = [
       "Agreed support response times",
       "Scope, data sources and deliverables fixed in the agreement",
     ],
-    readiness:
-      "By agreement. Scope and price are confirmed in writing before any work starts.",
+    readiness: "By agreement. Scope and price are confirmed in writing before any work starts.",
   },
 ] as const;
 
@@ -259,8 +249,7 @@ export const SERVICE_PRICES: readonly ServicePrice[] = [
     amount: 500,
     usd: 5,
     unit: "per listing for 7 days",
-    scope:
-      "Proposed labelled sponsored placement; no sale or verification guarantee.",
+    scope: "Proposed labelled sponsored placement; no sale or verification guarantee.",
     free: "Standard listings and browsing remain free.",
     readiness: "Sponsored placement and payment activation pending.",
     paths: ["/marketplace", "/sell", "/seller-tools"],
@@ -300,8 +289,7 @@ export const SERVICE_PRICES: readonly ServicePrice[] = [
     scope:
       "Proposed saved concept views, assumptions and feasibility summary. Professional drawings and approvals excluded.",
     free: "Current model previews, AR and beta design tools remain free.",
-    readiness:
-      "Concept tools available; paid pack packaging and entitlement pending.",
+    readiness: "Concept tools available; paid pack packaging and entitlement pending.",
     paths: ["/design-studio", "/model-lab", "/spatial", "/develop"],
   },
   {
@@ -327,8 +315,7 @@ export const SERVICE_PRICES: readonly ServicePrice[] = [
     scope:
       "Proposed deeper environmental, legal-context and construction analysis; external professional work excluded.",
     free: "Existing evidence summaries remain free.",
-    readiness:
-      "Expanded paid service in development; payment alone will not activate it.",
+    readiness: "Expanded paid service in development; payment alone will not activate it.",
     paths: ["/title-deed", "/passport", "/reports"],
   },
   {
@@ -382,8 +369,7 @@ export const SERVICE_PRICES: readonly ServicePrice[] = [
     amount: 1490,
     usd: 13,
     unit: "per month",
-    scope:
-      "Proposed enhanced listing insights and seller reporting; advertising spend excluded.",
+    scope: "Proposed enhanced listing insights and seller reporting; advertising spend excluded.",
     free: "Existing seller tools remain available in beta.",
     readiness: "Subscription benefits, billing and activation pending.",
     paths: ["/seller-tools", "/sell", "/rentals"],
@@ -508,8 +494,7 @@ export const PAYMENT_NOT_LIVE =
  * the app gates on it today: every tool that is free now stays reachable. */
 export const CURRENT_PLAN_ID: PlanId = "free";
 
-export const planById = (id: PlanId): Plan | undefined =>
-  PLANS.find((p) => p.id === id);
+export const planById = (id: PlanId): Plan | undefined => PLANS.find((p) => p.id === id);
 
 export const serviceById = (id: string): ServicePrice | undefined =>
   SERVICE_PRICES.find((s) => s.id === id);
@@ -522,10 +507,7 @@ export function pricesForPath(path: string) {
 
 /** What the contents of a bundle would cost bought one at a time. */
 export function bundleListKes(b: Bundle): number {
-  const services = b.includes.reduce(
-    (sum, id) => sum + (serviceById(id)?.amount ?? 0),
-    0,
-  );
+  const services = b.includes.reduce((sum, id) => sum + (serviceById(id)?.amount ?? 0), 0);
   const extras = (b.extras ?? []).reduce((sum, e) => sum + e.kes, 0);
   return services + extras;
 }
@@ -579,26 +561,17 @@ export function bundleSavingPct(b: Bundle): number {
   return Math.round((bundleSavingKes(b) / list) * 100);
 }
 
-export const priceKes = (amount: number) =>
-  "KES " + amount.toLocaleString("en-KE");
+export const priceKes = (amount: number) => "KES " + amount.toLocaleString("en-KE");
 
-export const priceUsd = (amount: number) =>
-  "USD " + amount.toLocaleString("en-US");
+export const priceUsd = (amount: number) => "USD " + amount.toLocaleString("en-US");
 
 /* The three "from" figures the landing page quotes. They are derived here so
  * that page can never hard-code a price that the tables have moved past. */
 
 export const lowestOneOffKes = (): number =>
-  Math.min(
-    ...SERVICE_PRICES.filter((s) => s.kind === "one_off").map((s) => s.amount),
-  );
+  Math.min(...SERVICE_PRICES.filter((s) => s.kind === "one_off").map((s) => s.amount));
 
-export const lowestBundleKes = (): number =>
-  Math.min(...BUNDLES.map((b) => b.amountKes));
+export const lowestBundleKes = (): number => Math.min(...BUNDLES.map((b) => b.amountKes));
 
 export const lowestPaidPlanMonthlyKes = (): number =>
-  Math.min(
-    ...PLANS.filter((p) => !p.quoteOnly && p.monthlyKes > 0).map(
-      (p) => p.monthlyKes,
-    ),
-  );
+  Math.min(...PLANS.filter((p) => !p.quoteOnly && p.monthlyKes > 0).map((p) => p.monthlyKes));

@@ -2,13 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export function AdminSecurity({
-  onVerified,
-  ready,
-}: {
-  onVerified: () => void;
-  ready: boolean;
-}) {
+export function AdminSecurity({ onVerified, ready }: { onVerified: () => void; ready: boolean }) {
   const [factor, setFactor] = useState("");
   const [qr, setQr] = useState("");
   const [code, setCode] = useState("");
@@ -40,9 +34,7 @@ export function AdminSecurity({
       setFactor(r.data.id);
       setQr(r.data.totp.qr_code);
     } catch (e) {
-      toast.error(
-        e instanceof Error ? e.message : "Authenticator setup failed",
-      );
+      toast.error(e instanceof Error ? e.message : "Authenticator setup failed");
     } finally {
       setBusy(false);
     }
@@ -51,8 +43,7 @@ export function AdminSecurity({
     e.preventDefault();
     setBusy(true);
     try {
-      if (!/^\d{6}$/.test(code))
-        throw new Error("Enter the six-digit authenticator code");
+      if (!/^\d{6}$/.test(code)) throw new Error("Enter the six-digit authenticator code");
       const r = await supabase.auth.mfa.challengeAndVerify({
         factorId: factor,
         code,
@@ -78,8 +69,7 @@ export function AdminSecurity({
       if (password !== confirmation) throw new Error("Passwords do not match");
       const { data: u, error: ue } = await supabase.auth.getUser();
       if (ue || !u.user?.email) throw new Error("Sign in again");
-      const assurance =
-        await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      const assurance = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
       if (assurance.error || assurance.data.currentLevel !== "aal2")
         throw new Error("Verify MFA first");
       const r = await supabase.auth.updateUser({ password });
@@ -94,14 +84,11 @@ export function AdminSecurity({
     }
   };
   return (
-    <section
-      className="glass rounded-2xl p-5"
-      aria-label="Administrator security"
-    >
+    <section className="glass rounded-2xl p-5" aria-label="Administrator security">
       <h2 className="text-xl font-semibold">Administrator security</h2>
       <p className="mt-2 text-sm text-muted-foreground">
-        Email confirmation and an authenticator code protect all administrator
-        tools. Each approved email signs in with its own account.
+        Email confirmation and an authenticator code protect all administrator tools. Each approved
+        email signs in with its own account.
       </p>
       {!ready && (
         <div className="mt-4">
@@ -116,9 +103,7 @@ export function AdminSecurity({
           )}
           {qr && (
             <>
-              <p className="mt-3 text-sm">
-                Scan in your authenticator app. Keep this QR private.
-              </p>
+              <p className="mt-3 text-sm">Scan in your authenticator app. Keep this QR private.</p>
               <img
                 src={qr}
                 alt="Private authenticator enrollment QR"
@@ -155,10 +140,9 @@ export function AdminSecurity({
           Set or change my account password
         </summary>
         <p className="my-3 text-xs text-muted-foreground">
-          Enter your chosen password here, never in chat. This updates only the
-          signed-in account, not every administrator account. If your
-          authentication provider requests recovery verification, use the
-          sign-in page password recovery flow.
+          Enter your chosen password here, never in chat. This updates only the signed-in account,
+          not every administrator account. If your authentication provider requests recovery
+          verification, use the sign-in page password recovery flow.
         </p>
         <form onSubmit={updatePassword} className="grid max-w-md gap-3">
           <label className="text-sm">

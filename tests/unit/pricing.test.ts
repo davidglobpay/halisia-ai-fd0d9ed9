@@ -168,9 +168,7 @@ describe("a package is always cheaper than its parts", () => {
   });
 
   it("the package ladder ascends", () => {
-    const prices = ["starter", "buyer", "builder", "diaspora"].map(
-      (id) => bundle(id).amountKes,
-    );
+    const prices = ["starter", "buyer", "builder", "diaspora"].map((id) => bundle(id).amountKes);
     expect(prices).toEqual([...prices].sort((a, b) => a - b));
   });
 
@@ -188,15 +186,9 @@ describe("the USD price is a premium, never a discount", () => {
    * shilling price that card settlement is supposed to cost more than.
    */
   const priced: Array<[string, number, number]> = [
-    ...SERVICE_PRICES.map(
-      (s) => [s.id, s.amount, s.usd as number] as [string, number, number],
-    ),
-    ...soldMonthly.map(
-      (p) => [p.id, p.monthlyKes, p.monthlyUsd] as [string, number, number],
-    ),
-    ...BUNDLES.map(
-      (b) => [b.id, b.amountKes, b.amountUsd] as [string, number, number],
-    ),
+    ...SERVICE_PRICES.map((s) => [s.id, s.amount, s.usd as number] as [string, number, number]),
+    ...soldMonthly.map((p) => [p.id, p.monthlyKes, p.monthlyUsd] as [string, number, number]),
+    ...BUNDLES.map((b) => [b.id, b.amountKes, b.amountUsd] as [string, number, number]),
   ];
 
   it.each(priced)("%s implies a plausible shillings-per-dollar", (_id, kes, usd) => {
@@ -217,17 +209,13 @@ describe("the landing page's three 'from' figures are real rows", () => {
   });
 
   it("each 'from' figure resolves to something that can be bought", () => {
-    expect(
-      SERVICE_PRICES.some(
-        (s) => s.kind === "one_off" && s.amount === lowestOneOffKes(),
-      ),
-    ).toBe(true);
+    expect(SERVICE_PRICES.some((s) => s.kind === "one_off" && s.amount === lowestOneOffKes())).toBe(
+      true,
+    );
     expect(BUNDLES.some((b) => b.amountKes === lowestBundleKes())).toBe(true);
-    expect(
-      PLANS.some(
-        (p) => !p.quoteOnly && p.monthlyKes === lowestPaidPlanMonthlyKes(),
-      ),
-    ).toBe(true);
+    expect(PLANS.some((p) => !p.quoteOnly && p.monthlyKes === lowestPaidPlanMonthlyKes())).toBe(
+      true,
+    );
   });
 
   it("one report costs less than a month of the cheapest plan", () => {
@@ -260,11 +248,12 @@ describe("prices appear on the pages they belong to", () => {
     expect(pricesForPath(path).some((p) => p.id === id)).toBe(true);
   });
 
-  it.each(
-    SERVICE_PRICES.flatMap((s) => s.paths.map((p) => [s.id, p] as const)),
-  )("%s is reachable from its own path %s", (id, path) => {
-    expect(pricesForPath(path).some((x) => x.id === id)).toBe(true);
-  });
+  it.each(SERVICE_PRICES.flatMap((s) => s.paths.map((p) => [s.id, p] as const)))(
+    "%s is reachable from its own path %s",
+    (id, path) => {
+      expect(pricesForPath(path).some((x) => x.id === id)).toBe(true);
+    },
+  );
 
   it("matches whole path segments, not bare prefixes", () => {
     expect(pricesForPath("/marketplace/123").length).toBeGreaterThan(0);
@@ -308,9 +297,7 @@ describe("the Scout credit covers a Scout visit", () => {
   });
 
   it("the diaspora credit pays for a full checklist visit", () => {
-    const credit = bundle("diaspora").extras!.find((e) =>
-      e.label.includes("Scout"),
-    )!;
+    const credit = bundle("diaspora").extras!.find((e) => e.label.includes("Scout"))!;
     expect(credit).toBeDefined();
     expect(credit.kes).toBeGreaterThanOrEqual(fullEasy.totalKes);
     // and is not so far above one that the package is padded
@@ -318,9 +305,7 @@ describe("the Scout credit covers a Scout visit", () => {
   });
 
   it("the Plus year inside the diaspora package is the real Plus price", () => {
-    const plus = bundle("diaspora").extras!.find((e) =>
-      e.label.includes("Plus"),
-    )!;
+    const plus = bundle("diaspora").extras!.find((e) => e.label.includes("Plus"))!;
     expect(plus.kes).toBe(plan("plus").annualKes);
   });
 

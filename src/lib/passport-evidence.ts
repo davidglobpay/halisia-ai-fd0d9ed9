@@ -7,6 +7,7 @@
  * sure HALISIA is. A missing value is always a labelled gap — never a default.
  * Nothing in here can mark land, title, boundary or ownership as verified.
  */
+import { geotechAvailability } from "@/lib/geotech-availability";
 import type { LocationIntel } from "@/lib/location-intel.functions";
 import type { GeotechIntel } from "@/lib/geotech.functions";
 import type { Wave4Intel } from "@/lib/wave4-intel.functions";
@@ -43,7 +44,11 @@ export const CHAPTERS: Array<{ id: ChapterId; title: string; blurb: string }> = 
     title: "Climate & environment",
     blurb: "Long-term rainfall and temperature, air, water.",
   },
-  { id: "access", title: "Access & services", blurb: "Roads, schools, health, shops, transport." },
+  {
+    id: "access",
+    title: "Access & services",
+    blurb: "Roads, schools, health, shops, transport.",
+  },
   {
     id: "build",
     title: "Build & develop",
@@ -54,7 +59,11 @@ export const CHAPTERS: Array<{ id: ChapterId; title: string; blurb: string }> = 
     title: "Market & investment",
     blurb: "Coverage-gated scores with formulas. No return predictions.",
   },
-  { id: "trust", title: "Legal, finance & trust", blurb: "What has and has not been checked." },
+  {
+    id: "trust",
+    title: "Legal, finance & trust",
+    blurb: "What has and has not been checked.",
+  },
 ];
 
 export type EvidenceClass = "measured" | "modelled" | "official" | "user" | "ai" | "gap";
@@ -112,7 +121,11 @@ export type PassportEvidenceInput = {
   locationConfidencePct: number;
   sourceLabel: string;
   countyName: string | null;
-  admin: { subCounty?: string | null; ward?: string | null; locality?: string | null } | null;
+  admin: {
+    subCounty?: string | null;
+    ward?: string | null;
+    locality?: string | null;
+  } | null;
   facts: CountyFacts | null;
   intel: LocationIntel | null | undefined;
   intelState: FetchState;
@@ -139,7 +152,12 @@ function stateGap(state: FetchState, what: string): string {
 export function buildPassportEvidence(i: PassportEvidenceInput): {
   items: EvidenceItem[];
   ledger: LedgerEntry[];
-  summary: { total: number; available: number; missing: number; coveragePct: number };
+  summary: {
+    total: number;
+    available: number;
+    missing: number;
+    coveragePct: number;
+  };
 } {
   const items: EvidenceItem[] = [];
   const t = i.retrievedAt;
@@ -267,7 +285,7 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
         : "Elevation alone is not a flood assessment.",
   });
   const g = i.geotech;
-  const terrainOk = !!g && (srcUsed(g.sources, "Topo") || srcUsed(g.sources, "Elevation"));
+  const terrainOk = geotechAvailability(g?.terrainMeasured).terrainDerivedAvailable;
   add({
     id: "slope",
     chapter: "physical",
@@ -372,8 +390,7 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
     id: "water",
     chapter: "climate",
     label: "Nearest mapped water",
-    value:
-      g?.groundwater.nearestWaterKm != null ? `${r(g.groundwater.nearestWaterKm, 1)} km` : null,
+    value: null,
     // The backing field is never populated, so naming OpenStreetMap here
     // claimed a source for a lookup that does not run.
     source: "No source — this lookup is not implemented",
@@ -460,7 +477,7 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
   }
 
   // ---------- 6. Build ----------
-  if (g) {
+  if (g && terrainOk) {
     const pref = g.foundations.filter(
       (f) => f.suitability === "Preferred" || f.suitability === "Possible",
     );

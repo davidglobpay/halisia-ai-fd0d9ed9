@@ -1,3 +1,4 @@
+import { partnerCommercialDisclosure } from "@/lib/partner-commercial-disclosure";
 import { OutputTools, OutputIcon } from "@/components/halisia/output-tools";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -184,12 +185,8 @@ function PartnerListingPage() {
           HALISIA collected this from a public listing by{" "}
           {listing.source?.name ?? "an external source"}. We have not visited the property,
           confirmed ownership or boundaries, or checked any figure here.{" "}
-          {listing.source?.commercial_status &&
-          listing.source.commercial_status !== "discovery_only"
-            ? "HALISIA has a commercial agreement with that company and may be paid a referral fee if you transact with them. That fee is paid by the company, not added to your price, and it does not affect what this page says about the property."
-            : "HALISIA has no commercial agreement with that company and is paid nothing if you contact them."}{" "}
-          Opening the link below records that you came from HALISIA, so the company can attribute
-          the enquiry.
+          {partnerCommercialDisclosure(listing.source?.commercial_status)} Opening the link below
+          records that you came from HALISIA, so the company can attribute the enquiry.
         </p>
         {listing.source?.rights_basis && <p className="mt-2">{listing.source.rights_basis}</p>}
         {listing.source?.website_url && (

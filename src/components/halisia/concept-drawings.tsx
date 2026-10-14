@@ -1,3 +1,4 @@
+import { foundationAssumption } from "./concept-drawing-assumptions";
 import { useRef } from "react";
 import { Download } from "lucide-react";
 
@@ -18,13 +19,6 @@ type Props = {
 };
 
 /** Non-certified foundation assumption by user-selected topology. */
-export function foundationAssumption(topology: Props["topology"] = "level"): string {
-  if (topology === "terraced")
-    return "Stepped strip / pad footings on cut terraces with retaining walls (assumption)";
-  if (topology === "gentle-slope")
-    return "Strip footings stepped with the fall; cut-and-fill platform (assumption)";
-  return "Strip or pad footings on level platform (assumption)";
-}
 
 function Dim({
   x1,

@@ -10,7 +10,7 @@
  * OpenStreetMap, Ardhisasa, county planning offices, county CIDPs and
  * "HALISIA community reports (planned)" — none of which this engine reads.
  *
- * These tests pin the replacement contract: a module scores only when its
+ * These tests pin the replacement contract: a module reports only when its
  * data arrived, confidence follows the providers, and no surface may cite a
  * dataset the engine does not call.
  */
@@ -102,7 +102,7 @@ const WAVE4 = {
   },
   breakdown: {
     investment: {
-      score: 71,
+      score: null,
       confidence: "medium",
       note: "Composite view — not a valuation.",
     },
@@ -156,7 +156,7 @@ describe("a module scores only when its data arrived", () => {
     expect(context).toMatchObject({
       label: "Development context",
       status: "measured",
-      score: 71,
+      score: null,
       confidencePct: 60,
     });
     expect(context?.sources).toEqual(["OpenStreetMap"]);
@@ -234,11 +234,12 @@ describe("confidence follows the providers", () => {
     expect(d.modules.find((m) => m.id === "construction")!.confidencePct).toBeLessThan(100);
   });
 
-  it("publishes score confidence only for measured modules", () => {
+  it("preserves provider coverage without publishing module scores", () => {
     for (const fixture of [FULL, EMPTY]) {
       for (const m of runIntelligenceEngine(fixture, undefined, "farmer").modules) {
         if (m.status === "measured") {
-          expect(m.score).not.toBeNull();
+          expect(m.score).toBeNull();
+          expect(m.grade).toBeNull();
           expect(m.confidencePct).not.toBeNull();
         }
       }
@@ -294,7 +295,8 @@ describe("no surface cites a dataset the engine does not read", () => {
 describe("the composite is named for its inputs and publishes no verdict", () => {
   it("names the modules it was built from", () => {
     const d = runIntelligenceEngine(FULL, undefined, "investor");
-    expect(d.reading).not.toBeNull();
+    expect(d.reading).toBeNull();
+    expect(d.grade).toBeNull();
     expect(d.readingLabel.toLowerCase()).not.toContain("land intelligence");
     expect(d.scopeNote).toContain("3 of 10");
   });
@@ -307,7 +309,8 @@ describe("the composite is named for its inputs and publishes no verdict", () =>
     const d = runIntelligenceEngine(onlyAir, undefined, "investor");
     expect(d.measuredCount).toBe(1);
     expect(d.reading).toBeNull();
-    expect(d.headline).toContain("One reading available");
+    expect(d.headline).toContain("environment");
+    expect(d.headline).toContain("No score, no grade, no ranking");
   });
 
   it("carries no buy or do-not-buy verdict anywhere in the output", () => {
@@ -339,24 +342,26 @@ describe("the composite is named for its inputs and publishes no verdict", () =>
   });
 });
 
-describe("persona weighting still differentiates", () => {
-  it("weights the same measured modules differently per persona", () => {
-    const farmer = runIntelligenceEngine(SPREAD, undefined, "farmer").reading!;
-    const business = runIntelligenceEngine(SPREAD, undefined, "business").reading!;
-    // On this site amenities are dense but the air is poor and the ground low.
-    // Farmers weight environment far above amenity access; business the reverse,
-    // so the business reading must come out materially higher.
-    expect(business).toBeGreaterThan(farmer + 10);
+describe("persona priority without numerical scoring", () => {
+  it("changes reading order without inventing a composite", () => {
+    const farmer = runIntelligenceEngine(SPREAD, undefined, "farmer");
+    const business = runIntelligenceEngine(SPREAD, undefined, "business");
+    expect(farmer.reading).toBeNull();
+    expect(business.reading).toBeNull();
+    expect(farmer.reasons[0]).not.toBe(business.reasons[0]);
+    expect([...farmer.reasons].sort()).toEqual([...business.reasons].sort());
   });
 
-  it("renormalises over the measured modules rather than the full ten", () => {
-    // Weights across all ten sum to 1, so without renormalisation a composite
-    // built from three of them would be roughly a third of its true value.
+  it("keeps raw provider facts and sources while every score stays absent", () => {
     const d = runIntelligenceEngine(SPREAD, undefined, "business");
-    const measured = d.modules.filter((m) => m.score != null);
-    const lowest = Math.min(...measured.map((m) => m.score!));
-    const highest = Math.max(...measured.map((m) => m.score!));
-    expect(d.reading!).toBeGreaterThanOrEqual(lowest);
-    expect(d.reading!).toBeLessThanOrEqual(highest);
+    expect(d.reading).toBeNull();
+    for (const module of d.modules) {
+      expect(module.score).toBeNull();
+      expect(module.grade).toBeNull();
+      if (module.status === "measured") {
+        expect(module.sources.length).toBeGreaterThan(0);
+        expect(module.reasons.length).toBeGreaterThan(0);
+      }
+    }
   });
 });

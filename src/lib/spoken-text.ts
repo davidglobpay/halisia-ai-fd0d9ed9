@@ -25,12 +25,27 @@ export function tokenize(text: string): Token[] {
   let m: RegExpExecArray | null;
   while ((m = re.exec(text))) {
     if (m.index > last)
-      out.push({ text: text.slice(last, m.index), start: last, end: m.index, word: false });
-    out.push({ text: m[0], start: m.index, end: m.index + m[0].length, word: true });
+      out.push({
+        text: text.slice(last, m.index),
+        start: last,
+        end: m.index,
+        word: false,
+      });
+    out.push({
+      text: m[0],
+      start: m.index,
+      end: m.index + m[0].length,
+      word: true,
+    });
     last = m.index + m[0].length;
   }
   if (last < text.length)
-    out.push({ text: text.slice(last), start: last, end: text.length, word: false });
+    out.push({
+      text: text.slice(last),
+      start: last,
+      end: text.length,
+      word: false,
+    });
   return out;
 }
 

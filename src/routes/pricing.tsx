@@ -87,18 +87,14 @@ function PricingPage() {
   const catalog = useQuery({
     queryKey: ["scout-catalog"],
     queryFn: async () => {
-      const r = await supabase
-        .from("scout_price_catalog")
-        .select("*")
-        .order("sort");
+      const r = await supabase.from("scout_price_catalog").select("*").order("sort");
       if (r.error) throw new Error(r.error.message);
       return r.data;
     },
   });
   const base = previewQuote({}, "easy", 0, catalog.data);
   const tasks = SCOUT_TASKS.filter(
-    (t) =>
-      !catalog.data || catalog.data.some((c) => c.code === t.code && c.active),
+    (t) => !catalog.data || catalog.data.some((c) => c.code === t.code && c.active),
   );
   const full = previewQuote(
     Object.fromEntries(tasks.map((t) => [t.code, "check" as const])),
@@ -111,14 +107,11 @@ function PricingPage() {
   return (
     <main className="relative mx-auto max-w-6xl pt-24 pb-20">
       <header className="px-4">
-        <h1 className="font-display text-3xl font-semibold">
-          Clear prices. Start free.
-        </h1>
+        <h1 className="font-display text-3xl font-semibold">Clear prices. Start free.</h1>
         <p className="mt-3 max-w-3xl text-muted-foreground">
-          Explore locations, read available evidence, browse properties and
-          preview concepts with current free beta tools. Paid service prices are
-          visible ahead of payment integration and live activation. Nothing that
-          is free today becomes paid.
+          Explore locations, read available evidence, browse properties and preview concepts with
+          current free beta tools. Paid service prices are visible ahead of payment integration and
+          live activation. Nothing that is free today becomes paid.
         </p>
         <ul className="mt-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {AUDIENCES.map((a) => (
@@ -128,9 +121,7 @@ function PricingPage() {
                 className="glass block h-full rounded-xl p-3 transition hover:border-primary/40"
               >
                 <span className="text-sm font-medium">{a.label}</span>
-                <span className="mt-1 block text-xs text-muted-foreground">
-                  {a.line}
-                </span>
+                <span className="mt-1 block text-xs text-muted-foreground">{a.line}</span>
               </a>
             </li>
           ))}
@@ -162,9 +153,9 @@ function PricingPage() {
           One at a time · no plan needed
         </h2>
         <p className="mx-auto mt-2 max-w-6xl px-4 text-sm text-muted-foreground">
-          Every report can be bought on its own. The cheapest is{" "}
-          {priceKes(lowestOneOffKes())}, which is less than the government
-          search fee it sits alongside and is not a substitute for it.
+          Every report can be bought on its own. The cheapest is {priceKes(lowestOneOffKes())},
+          which is less than the government search fee it sits alongside and is not a substitute for
+          it.
         </p>
         <ServicePricing all only="one_off" />
       </div>
@@ -173,16 +164,13 @@ function PricingPage() {
         className="glass mx-4 rounded-2xl border border-primary/20 p-5"
         aria-label="Scout pricing"
       >
-        <h2 className="text-xl font-semibold">
-          Send a Scout · ground evidence
-        </h2>
+        <h2 className="text-xl font-semibold">Send a Scout · ground evidence</h2>
         <p className="mt-2 text-sm">
-          Field observation with photos and video. Ownership and surveyed
-          boundaries remain unverified.
+          Field observation with photos and video. Ownership and surveyed boundaries remain
+          unverified.
         </p>
         <p className="mt-3 text-lg font-semibold">
-          Basic {priceKes(base.totalKes)} · Full checklist{" "}
-          {priceKes(full.totalKes)}
+          Basic {priceKes(base.totalKes)} · Full checklist {priceKes(full.totalKes)}
         </p>
         <p className="text-xs text-muted-foreground">
           {catalog.data
@@ -193,10 +181,7 @@ function PricingPage() {
         {catalog.error && (
           <p role="alert" className="mt-2 text-sm">
             Current Scout prices could not load.{" "}
-            <button
-              className="underline"
-              onClick={() => void catalog.refetch()}
-            >
+            <button className="underline" onClick={() => void catalog.refetch()}>
               Retry
             </button>
           </p>
@@ -208,10 +193,7 @@ function PricingPage() {
             <div key={t.code} className="contents">
               <dt>{t.label}</dt>
               <dd className="text-right">
-                {priceKes(
-                  catalog.data?.find((c) => c.code === t.code)?.amount_kes ??
-                    t.kes,
-                )}
+                {priceKes(catalog.data?.find((c) => c.code === t.code)?.amount_kes ?? t.kes)}
               </dd>
             </div>
           ))}
@@ -219,29 +201,21 @@ function PricingPage() {
           <dd className="text-right">{base.feePct}%</dd>
           <dt>Difficult access</dt>
           <dd className="text-right">
-            {priceKes(
-              catalog.data?.find((c) => c.code === "access_difficult")
-                ?.amount_kes ?? 500,
-            )}
+            {priceKes(catalog.data?.find((c) => c.code === "access_difficult")?.amount_kes ?? 500)}
           </dd>
           <dt>Remote access</dt>
           <dd className="text-right">
-            {priceKes(
-              catalog.data?.find((c) => c.code === "access_remote")
-                ?.amount_kes ?? 1500,
-            )}
+            {priceKes(catalog.data?.find((c) => c.code === "access_remote")?.amount_kes ?? 1500)}
           </dd>
           <dt>Travel</dt>
           <dd className="text-right">At cost, confirmed in quote</dd>
         </dl>
         <p className="mt-4 text-xs text-muted-foreground">
-          Check and Unsure both request work and are charged once. The server
-          confirms the final quote. A Scout visit is quoted and settled in
-          shillings whatever country you are paying from, so there is no second
-          USD price here; a card issuer applies its own rate. Payment
-          integration and live activation are pending; quotes can be requested
-          now. Paid dispatch also requires an approved scout and configured
-          payment instructions.
+          Check and Unsure both request work and are charged once. The server confirms the final
+          quote. A Scout visit is quoted and settled in shillings whatever country you are paying
+          from, so there is no second USD price here; a card issuer applies its own rate. Payment
+          integration and live activation are pending; quotes can be requested now. Paid dispatch
+          also requires an approved scout and configured payment instructions.
         </p>
         <Link
           to="/scout"
@@ -262,68 +236,60 @@ function PricingPage() {
           <p className="mt-2 text-sm text-muted-foreground">{PAYMENT_NOT_LIVE}</p>
           <ul className="mt-4 grid gap-3 sm:grid-cols-3">
             {PAYMENT_RAILS.map((r) => (
-              <li
-                key={r.id}
-                className="rounded-xl border border-border bg-background/70 p-4"
-              >
+              <li key={r.id} className="rounded-xl border border-border bg-background/70 p-4">
                 <p className="text-sm font-semibold">{r.label}</p>
                 <p className="mt-1 text-xs text-muted-foreground">{r.note}</p>
               </li>
             ))}
           </ul>
           <p className="mt-4 text-xs text-muted-foreground">
-            Payments will be processed by {PAYMENT_PROCESSOR}. A Scout visit stays
-            an exception: it is quoted and settled in shillings against verified
-            payment instructions that an administrator confirms by hand, and that
-            path is switched off until those instructions are configured.
+            Payments will be processed by {PAYMENT_PROCESSOR}. A Scout visit stays an exception: it
+            is quoted and settled in shillings against verified payment instructions that an
+            administrator confirms by hand, and that path is switched off until those instructions
+            are configured.
           </p>
         </div>
       </section>
 
       <section className="mx-4 mt-10" aria-label="What a price here is not">
         <div className="rounded-2xl border border-border p-5">
-          <h2 className="font-display text-xl font-semibold">
-            What these prices are not
-          </h2>
+          <h2 className="font-display text-xl font-semibold">What these prices are not</h2>
           <ul className="mt-3 grid gap-2 text-sm text-muted-foreground">
             <li>
-              · They are HALISIA's own prices. Government search and transfer
-              charges, advocates' fees under the Advocates Remuneration Order,
-              registered valuers' fees and licensed surveyors' fees are set by
-              others and are payable separately.
+              · They are HALISIA's own prices. Government search and transfer charges, advocates'
+              fees under the Advocates Remuneration Order, registered valuers' fees and licensed
+              surveyors' fees are set by others and are payable separately.
             </li>
             <li>
-              · Paying HALISIA does not confirm title, ownership or a surveyed
-              boundary, and no plan or package changes that. Reports describe
-              available evidence, name every source and state what is missing.
+              · Paying HALISIA does not confirm title, ownership or a surveyed boundary, and no plan
+              or package changes that. Reports describe available evidence, name every source and
+              state what is missing.
             </li>
             <li>
-              · A paid report is not legal, valuation or engineering advice, and
-              it does not replace a search at the registry, an advocate, a
-              valuer or a licensed surveyor.
+              · A paid report is not legal, valuation or engineering advice, and it does not replace
+              a search at the registry, an advocate, a valuer or a licensed surveyor.
             </li>
             <li>
-              · No price here is an offer of insurance, indemnity or
-              compensation, and HALISIA does not underwrite a transaction.
+              · No price here is an offer of insurance, indemnity or compensation, and HALISIA does
+              not underwrite a transaction.
             </li>
             <li>
-              · Prices are the suggested pilot tariff. Final tax-inclusive
-              payable totals must be confirmed before payment activation.
+              · Prices are the suggested pilot tariff. Final tax-inclusive payable totals must be
+              confirmed before payment activation.
             </li>
           </ul>
         </div>
       </section>
 
       <p className="mx-4 mt-5 text-sm text-muted-foreground">
-        Financing enquiries are free. Any lender interest, insurance premium,
-        property price or professional fee is quoted by the provider; HALISIA
-        does not invent those amounts. Referral commissions require an agreed
-        provider contract before activation.
+        Financing enquiries are free. Any lender interest, insurance premium, property price or
+        professional fee is quoted by the provider; HALISIA does not invent those amounts. Referral
+        commissions require an agreed provider contract before activation.
       </p>
       <p className="mx-4 mt-3 text-xs text-muted-foreground">
-        {PLANS.length} plans and {SCOUT_TASKS.length} Scout checks are listed on
-        this page. Every figure shown is read from one table in the application
-        source, so a price here and a price on any other page cannot disagree.
+        {PLANS.length} plans and {SCOUT_TASKS.length} Scout checks are listed on this page. Every
+        figure shown is read from one table in the application source, so a price here and a price
+        on any other page cannot disagree.
       </p>
     </main>
   );

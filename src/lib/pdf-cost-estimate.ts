@@ -36,25 +36,39 @@ export function buildCostPdf(o: {
     `Gross floor area: ${Math.round(o.grossM2)} m2  |  Storeys: ${o.storeys}  |  Generated: ${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC`,
     9,
   );
-  t("Type: Estimate (planning range). Confidence: low-moderate. Not a quote, BoQ or engineering design.", 8.5, true, [179, 38, 30]);
+  t(
+    "Type: Estimate (planning range). Confidence: low-moderate. Not a quote, BoQ or engineering design.",
+    8.5,
+    true,
+    [179, 38, 30],
+  );
   y += 8;
   for (const r of o.rows) {
     t(r.label, 12, true);
     t(`Rate: ${kes(r.rateLow)} - ${kes(r.rateHigh)} per m2`, 9);
-    t(`Total: ${kes(r.totalLow)} - ${kes(r.totalHigh)}  (+10% contingency ${kes(r.contingencyLow)} - ${kes(r.contingencyHigh)})`, 9, true);
+    t(
+      `Total: ${kes(r.totalLow)} - ${kes(r.totalHigh)}  (+10% contingency ${kes(r.contingencyLow)} - ${kes(r.contingencyHigh)})`,
+      9,
+      true,
+    );
     r.pros.forEach((p) => t(`+ ${p}`, 8.5));
     r.cons.forEach((c) => t(`- ${c}`, 8.5, false, [95, 105, 98]));
     y += 6;
   }
   t("Assumptions and limitations", 12, true);
   COST_ASSUMPTIONS.forEach((a) => t(`- ${a}`, 8.5));
-  brandFooters(doc, mark, { note: "Indicative estimate. Confirm with a quantity surveyor and engineer." });
+  brandFooters(doc, mark, {
+    note: "Indicative estimate. Confirm with a quantity surveyor and engineer.",
+  });
   return doc;
 }
 
 export async function downloadCostPdf(o: Parameters<typeof buildCostPdf>[0]): Promise<string> {
   const doc = buildCostPdf(o);
-  const name = `halisia-cost-estimate-${o.title.replace(/[^a-z0-9]+/gi, "-").toLowerCase().slice(0, 40)}.pdf`;
+  const name = `halisia-cost-estimate-${o.title
+    .replace(/[^a-z0-9]+/gi, "-")
+    .toLowerCase()
+    .slice(0, 40)}.pdf`;
   doc.save(name);
   return name;
 }

@@ -79,10 +79,26 @@ const CLASS_ICONS: Record<EvidenceClass, LucideIcon> = {
  * greens from the ambers.
  */
 const CLASS_TONE: Record<EvidenceClass, { text: string; ring: string; dot: string }> = {
-  visible: { text: "text-emerald-glow", ring: "border-emerald-glow/30", dot: "#22c55e" },
-  measured: { text: "text-cyan-glow", ring: "border-cyan-glow/30", dot: "#62e9ff" },
-  inferred: { text: "text-amber-glow", ring: "border-amber-glow/30", dot: "#d4a017" },
-  unprovable: { text: "text-muted-foreground", ring: "border-white/15", dot: "#8c96a8" },
+  visible: {
+    text: "text-emerald-glow",
+    ring: "border-emerald-glow/30",
+    dot: "#22c55e",
+  },
+  measured: {
+    text: "text-cyan-glow",
+    ring: "border-cyan-glow/30",
+    dot: "#62e9ff",
+  },
+  inferred: {
+    text: "text-amber-glow",
+    ring: "border-amber-glow/30",
+    dot: "#d4a017",
+  },
+  unprovable: {
+    text: "text-muted-foreground",
+    ring: "border-white/15",
+    dot: "#8c96a8",
+  },
 };
 
 function ClassRow({ meta, count }: { meta: ClassMeta; count: number }) {
@@ -250,6 +266,10 @@ export function HeroSummary({
           <ShieldCheck className="h-3 w-3" /> How far each answer can be trusted
         </div>
         <SpokenText text={EVIDENCE_LEAD} label="Read this to me" className="mt-2" />
+        <p className="mt-2 text-xs text-muted-foreground">
+          Output catalogue counts — not findings available for this location. Evidence classes
+          describe method, not a trust ranking.
+        </p>
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
           {tally.map(({ meta, count }) => (
             <ClassRow key={meta.id} meta={meta} count={count} />

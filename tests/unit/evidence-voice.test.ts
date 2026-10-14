@@ -7,12 +7,7 @@
  * falls in — lives here where it can be checked.
  */
 import { describe, expect, it } from "vitest";
-import {
-  tokenize,
-  tokenAt,
-  firstWord,
-  msPerWord,
-} from "@/lib/spoken-text";
+import { tokenize, tokenAt, firstWord, msPerWord } from "@/lib/spoken-text";
 import {
   EVIDENCE_CLASSES,
   OUTPUT_CLASSES,
@@ -28,7 +23,11 @@ describe("a passage survives being split for highlighting", () => {
   const SAMPLE = "Ownership is  not visible.\nAsk the registry.";
 
   it("loses no character, so the rendered text matches the source", () => {
-    expect(tokenize(SAMPLE).map((t) => t.text).join("")).toBe(SAMPLE);
+    expect(
+      tokenize(SAMPLE)
+        .map((t) => t.text)
+        .join(""),
+    ).toBe(SAMPLE);
   });
 
   it("produces contiguous offsets", () => {
@@ -158,10 +157,10 @@ describe("every output is classed by what can be said about it", () => {
     },
   );
 
-  it.each(["schools", "health", "slope", "boundary-drawn", "buildable"])(
-    "classes %s as something a buyer can see for themselves",
+  it.each(["schools", "health"])(
+    "classes %s as a dataset record, not imagery verification",
     (id) => {
-      expect(classOf(id)).toBe("visible");
+      expect(classOf(id)).toBe("measured");
     },
   );
 
@@ -169,7 +168,7 @@ describe("every output is classed by what can be said about it", () => {
     const t = classTally();
     expect(t.map((x) => x.meta.id)).toEqual(["visible", "measured", "inferred", "unprovable"]);
     expect(t.reduce((s, x) => s + x.count, 0)).toBe(OUTPUT_CLASSES.length);
-    for (const c of EVIDENCE_CLASSES) expect(outputsOfClass(c.id).length).toBeGreaterThan(0);
+    expect(outputsOfClass("visible")).toHaveLength(0);
   });
 
   it("opens by denying a score and pointing at the registry", () => {
@@ -179,3 +178,10 @@ describe("every output is classed by what can be said about it", () => {
     expect(EVIDENCE_LEAD).toMatch(/surveyor/i);
   });
 });
+
+it.each(["boundary-drawn", "buildable", "soil", "coords", "slope"])(
+  "does not present %s as observed ground",
+  (id) => {
+    expect(classOf(id)).toBe("inferred");
+  },
+);

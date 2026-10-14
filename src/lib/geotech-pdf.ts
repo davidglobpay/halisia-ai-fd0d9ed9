@@ -1,3 +1,4 @@
+import { geotechAvailability } from "@/lib/geotech-availability";
 import type { GeotechIntel } from "@/lib/geotech.functions";
 import { brandPage, brandFooters, prepareMark } from "@/lib/pdf-chrome";
 import halisiaMark from "@/assets/brand/halisia-mark.png.asset.json";
@@ -9,6 +10,8 @@ import halisiaMark from "@/assets/brand/halisia-mark.png.asset.json";
  * downloaded report feels like the in-app dashboard.
  */
 export async function downloadGeotechPdf(g: GeotechIntel, address: string) {
+  const availability = geotechAvailability(g.terrainMeasured);
+  if (!availability.exportAvailable) throw new Error(availability.message);
   const { jsPDF } = await import("jspdf");
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   // Named brandMark, not mark: the sources list below declares its own `mark`
@@ -164,11 +167,7 @@ export async function downloadGeotechPdf(g: GeotechIntel, address: string) {
   const tiles: Array<[string, string, [number, number, number]]> = [
     [g.terrainMeasured ? `${g.terrain.elevationM} m` : "—", "Elevation", C.accent],
     [g.terrainMeasured ? `${g.terrain.slopePct}%` : "—", "Slope", C.cyan],
-    [
-      g.terrainMeasured ? `${g.bedrock.minM}–${g.bedrock.maxM} m` : "—",
-      "Bedrock depth",
-      C.warn,
-    ],
+    [g.terrainMeasured ? `${g.bedrock.minM}–${g.bedrock.maxM} m` : "—", "Bedrock depth", C.warn],
     [`${g.groundwater.annualRainMm ?? "—"} mm`, "Annual rain", C.good],
   ];
   const ty = 244,
