@@ -52,11 +52,14 @@ const run = (persona: Persona = "investor"): DecisionOutput =>
   runIntelligenceEngine(INTEL, undefined, persona, undefined);
 
 describe("no score comes back, for any persona", () => {
-  it.each(PERSONAS.map((p) => p.id))("%s gets no composite and no grade", (persona) => {
-    const d = run(persona);
-    expect(d.reading).toBeNull();
-    expect(d.grade).toBeNull();
-  });
+  it.each(PERSONAS.map((p) => p.id))(
+    "%s gets no composite and no grade",
+    (persona) => {
+      const d = run(persona);
+      expect(d.reading).toBeNull();
+      expect(d.grade).toBeNull();
+    },
+  );
 
   it("gives no module a mark or a letter", () => {
     for (const m of run().modules) {
@@ -73,13 +76,18 @@ describe("no score comes back, for any persona", () => {
       d.scopeNote,
       ...d.reasons,
       ...d.professionalRecs,
-      ...d.modules.flatMap((m) => [m.label, ...m.reasons, ...m.limitations, m.nextStep]),
+      ...d.modules.flatMap((m) => [
+        m.label,
+        ...m.reasons,
+        ...m.limitations,
+        m.nextStep,
+      ]),
     ].join("  ");
 
-  // Google's own air-quality category is a measured value passed through
-  // verbatim — "Good air quality" is theirs, read from the Air Quality API and
-  // named as such. It is removed before the band check so the check tests what
-  // HALISIA says about the place, not what a named source said about the air.
+    // Google's own air-quality category is a measured value passed through
+    // verbatim — "Good air quality" is theirs, read from the Air Quality API and
+    // named as such. It is removed before the band check so the check tests what
+    // HALISIA says about the place, not what a named source said about the air.
     const judged = text.split(INTEL.airQuality.category).join(" ");
 
     // A mark out of a hundred, however it is spaced.
@@ -104,7 +112,9 @@ describe("everything that was actually read is still published", () => {
   it("keeps the elevation in metres, not a band derived from it", () => {
     expect(module("construction").reasons.join(" ")).toContain("1795");
     expect(module("construction").status).toBe("measured");
-    expect(module("construction").sources).toContain("Google Maps Elevation API");
+    expect(module("construction").sources).toContain(
+      "Google Maps Elevation API",
+    );
   });
 
   it("keeps the air quality index and its category", () => {

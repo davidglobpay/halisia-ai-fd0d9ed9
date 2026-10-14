@@ -25,12 +25,27 @@ export function tokenize(text: string): Token[] {
   let m: RegExpExecArray | null;
   while ((m = re.exec(text))) {
     if (m.index > last)
-      out.push({ text: text.slice(last, m.index), start: last, end: m.index, word: false });
-    out.push({ text: m[0], start: m.index, end: m.index + m[0].length, word: true });
+      out.push({
+        text: text.slice(last, m.index),
+        start: last,
+        end: m.index,
+        word: false,
+      });
+    out.push({
+      text: m[0],
+      start: m.index,
+      end: m.index + m[0].length,
+      word: true,
+    });
     last = m.index + m[0].length;
   }
   if (last < text.length)
-    out.push({ text: text.slice(last), start: last, end: text.length, word: false });
+    out.push({
+      text: text.slice(last),
+      start: last,
+      end: text.length,
+      word: false,
+    });
   return out;
 }
 
@@ -53,7 +68,8 @@ export function tokenAt(tokens: Token[], charIndex: number): number {
 }
 
 /** Index of the first word, or -1 when the passage has none. */
-export const firstWord = (tokens: Token[]): number => tokens.findIndex((t) => t.word);
+export const firstWord = (tokens: Token[]): number =>
+  tokens.findIndex((t) => t.word);
 
 /**
  * Milliseconds a word takes at a given rate, for engines that never fire a
@@ -61,4 +77,5 @@ export const firstWord = (tokens: Token[]): number => tokens.findIndex((t) => t.
  * Coarse on purpose: it keeps a reader near the right line rather than
  * claiming to be in step with a voice it cannot hear.
  */
-export const msPerWord = (rate: number): number => 60_000 / (165 * Math.max(0.1, rate));
+export const msPerWord = (rate: number): number =>
+  60_000 / (165 * Math.max(0.1, rate));

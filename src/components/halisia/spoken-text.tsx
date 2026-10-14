@@ -44,6 +44,10 @@ export function SpokenText({
   const [state, setState] = useState<"idle" | "playing" | "paused">("idle");
   const [available, setAvailable] = useState(true);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const delay = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const generation = useRef(0);
+  const playing = useRef(false);
+  const pausedAt = useRef(0);
   const gotBoundary = useRef(false);
   const startedAt = useRef(0);
 
@@ -52,6 +56,10 @@ export function SpokenText({
   }, []);
 
   const clearTimer = () => {
+    if (delay.current !== null) {
+      clearTimeout(delay.current);
+      delay.current = null;
+    }
     if (timer.current) {
       clearInterval(timer.current);
       timer.current = null;
@@ -59,6 +67,8 @@ export function SpokenText({
   };
 
   const stop = useCallback(() => {
+    generation.current += 1;
+    playing.current = false;
     clearTimer();
     try {
       window.speechSynthesis?.cancel();
@@ -75,6 +85,8 @@ export function SpokenText({
     window.addEventListener(STOP_EVENT, onStop);
     return () => {
       window.removeEventListener(STOP_EVENT, onStop);
+      generation.current += 1;
+      playing.current = false;
       clearTimer();
       try {
         window.speechSynthesis?.cancel();
@@ -82,7 +94,7 @@ export function SpokenText({
         /* ignore */
       }
     };
-  }, [stop]);
+  }, [stop, text]);
 
   const pickVoice = () => {
     const voices = window.speechSynthesis.getVoices?.() ?? [];
@@ -103,6 +115,7 @@ export function SpokenText({
       /* ignore */
     }
 
+    const session = ++generation.current;
     const u = new SpeechSynthesisUtterance(text);
     const v = pickVoice();
     if (v) u.voice = v;
@@ -113,22 +126,30 @@ export function SpokenText({
     startedAt.current = Date.now();
 
     u.onboundary = (e: SpeechSynthesisEvent) => {
+      if (session !== generation.current || !playing.current) return;
       gotBoundary.current = true;
       clearTimer();
       const i = tokenAt(tokens, e.charIndex);
       if (i >= 0) setActive(i);
     };
     u.onend = () => {
+      if (session !== generation.current) return;
+      generation.current += 1;
+      playing.current = false;
       clearTimer();
       setState("idle");
       setActive(-1);
     };
     u.onerror = () => {
+      if (session !== generation.current) return;
+      generation.current += 1;
+      playing.current = false;
       clearTimer();
       setState("idle");
       setActive(-1);
     };
 
+    playing.current = true;
     setState("playing");
     setActive(firstWord(tokens));
     window.speechSynthesis.speak(u);
@@ -136,32 +157,38 @@ export function SpokenText({
     // Fallback for engines that never fire `boundary`: advance on a timer
     // paced by the passage length. Coarse on purpose — it keeps a reader near
     // the right line without claiming to be in step with the voice.
-    window.setTimeout(() => {
-      if (gotBoundary.current) return;
+    delay.current = setTimeout(() => {
+      delay.current = null;
+      if (session !== generation.current || gotBoundary.current) return;
       const words = tokens.filter((t) => t.word).length;
       if (!words) return;
       const perWord = msPerWord(u.rate);
-      timer.current = setInterval(() => {
-        const elapsed = Date.now() - startedAt.current;
-        const n = Math.floor(elapsed / perWord);
-        let seen = -1;
-        for (let i = 0; i < tokens.length; i++) {
-          if (!tokens[i].word) continue;
-          seen++;
-          if (seen === n) {
-            setActive(i);
-            return;
+      timer.current = setInterval(
+        () => {
+          if (session !== generation.current || !playing.current) return;
+          const elapsed = Date.now() - startedAt.current;
+          const n = Math.floor(elapsed / perWord);
+          let seen = -1;
+          for (let i = 0; i < tokens.length; i++) {
+            if (!tokens[i].word) continue;
+            seen++;
+            if (seen === n) {
+              setActive(i);
+              return;
+            }
           }
-        }
-        clearTimer();
-      }, Math.max(120, perWord / 2));
+          clearTimer();
+        },
+        Math.max(120, perWord / 2),
+      );
     }, 1000);
   }, [available, text, tokens]);
 
   const pause = useCallback(() => {
     try {
       window.speechSynthesis.pause();
-      clearTimer();
+      playing.current = false;
+      pausedAt.current = Date.now();
       setState("paused");
     } catch {
       /* ignore */
@@ -171,6 +198,8 @@ export function SpokenText({
   const resume = useCallback(() => {
     try {
       window.speechSynthesis.resume();
+      startedAt.current += Date.now() - pausedAt.current;
+      playing.current = true;
       setState("playing");
     } catch {
       /* ignore */
@@ -193,7 +222,9 @@ export function SpokenText({
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
-          onClick={state === "playing" ? pause : state === "paused" ? resume : play}
+          onClick={
+            state === "playing" ? pause : state === "paused" ? resume : play
+          }
           aria-label={state === "playing" ? "Pause reading" : label}
           className="inline-flex min-h-11 items-center gap-2 rounded-full bg-primary px-4 text-sm text-primary-foreground"
         >
@@ -202,7 +233,11 @@ export function SpokenText({
           ) : (
             <Play className="h-4 w-4" aria-hidden />
           )}
-          {state === "playing" ? "Pause" : state === "paused" ? "Continue" : label}
+          {state === "playing"
+            ? "Pause"
+            : state === "paused"
+              ? "Continue"
+              : label}
         </button>
         {state !== "idle" && (
           <button
