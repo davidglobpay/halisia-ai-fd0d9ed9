@@ -161,35 +161,41 @@ export async function generateLocationDossier(opts: {
     doc.textWithLink("Open shareable view", M, 114, { url: shareUrl });
   }
 
-  // Composite indicator — withheld when open-data coverage cannot support it.
+  // A composite indicator out of 100 led this cover. It was a weighted mean of
+  // four figures that were themselves counts multiplied by invented constants,
+  // over counts capped at twelve per category — so the number could not tell a
+  // dense neighbourhood from a moderately mapped one. What the cover can state
+  // is how much is mapped near this point and how near it is.
   const composite = wave4?.breakdown.investment ?? null;
-  const compositeScore = composite && composite.confidence !== "low" ? composite.score : null;
+  const thin = !composite || composite.confidence === "low";
+  const buckets = Object.values(wave4?.distanceBuckets ?? {});
+  const mappedNearby = buckets.reduce((t, b) => t + b.close + b.near + b.far, 0);
 
   doc.setFillColor(255, 255, 255);
   doc.roundedRect(M, 120, W - M * 2, 90, 10, 10, "F");
   doc.setTextColor(...muted);
   doc.setFontSize(9);
-  doc.text("COMPOSITE OPEN-DATA INDICATOR · INDICATIVE", M + 20, 145);
-  if (compositeScore != null) {
+  doc.text("MAPPED WITHIN 3 KM · NO SCORE IS PUBLISHED", M + 20, 145);
+  if (!thin && mappedNearby > 0) {
     doc.setTextColor(...ink);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(42);
-    doc.text(`${compositeScore}`, M + 20, 190);
+    doc.text(`${mappedNearby}`, M + 20, 190);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(11);
     doc.setTextColor(...muted);
-    doc.text("/ 100", M + 100, 190);
+    doc.text("features in OpenStreetMap", M + 20 + doc.getTextWidth(`${mappedNearby}`) + 14, 190);
   } else {
     doc.setTextColor(...ink);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
-    doc.text("Not assessed", M + 20, 172);
+    doc.text("Little is mapped here", M + 20, 172);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(...muted);
     doc.text(
       doc.splitTextToSize(
-        "Open-data coverage at this location is too thin to support an indicator.",
+        "That may mean little is there, or that nobody has mapped it. From open data alone those cannot be told apart — go and look.",
         W - M * 2 - 240,
       ),
       M + 20,
@@ -240,23 +246,23 @@ export async function generateLocationDossier(opts: {
     doc.addPage();
     doc.setFillColor(...bg);
     doc.rect(0, 0, W, H, "F");
-    drawHeader(doc, M, "Open-data indicators · indicative", ink, muted);
+    drawHeader(doc, M, "What is mapped within 3 km", ink, muted);
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(...muted);
     doc.text(
-      "Formula-based indicators computed from public open data. Not measurements, not a valuation.",
+      "Counts of features mapped in public open data. Not scores, not measurements of this parcel, not a valuation.",
       M,
       96,
     );
 
     const cards: Array<{ label: string; ex: ScoreExplain }> = [
-      { label: "Accessibility", ex: wave4.breakdown.accessibility },
-      { label: "Infrastructure", ex: wave4.breakdown.infrastructure },
-      { label: "Environment", ex: wave4.breakdown.environment },
-      { label: "Development", ex: wave4.breakdown.development },
-      { label: "Investment (composite)", ex: wave4.breakdown.investment },
+      { label: "Transport and markets", ex: wave4.breakdown.accessibility },
+      { label: "Services", ex: wave4.breakdown.infrastructure },
+      { label: "Climate normals", ex: wave4.breakdown.environment },
+      { label: "Community anchors", ex: wave4.breakdown.development },
+      { label: "Summary of the above", ex: wave4.breakdown.investment },
     ];
 
     const colW = (W - M * 2 - 20) / 2;
@@ -282,13 +288,13 @@ export async function generateLocationDossier(opts: {
         doc.setFont("helvetica", "bold");
         doc.setFontSize(12);
         doc.setTextColor(...ink);
-        doc.text("Insufficient coverage", x + 14, yy + 44);
+        doc.text("Little is mapped here", x + 14, yy + 44);
         doc.setFont("helvetica", "normal");
         doc.setFontSize(8);
         doc.setTextColor(...muted);
         doc.text(
           doc.splitTextToSize(
-            "Too few mapped features here to compute this. Absence in OpenStreetMap is not evidence that facilities are absent.",
+            "Too few features are mapped here to report a count. Absence in OpenStreetMap is not evidence that nothing is there.",
             innerW,
           ),
           x + 14,
@@ -297,45 +303,55 @@ export async function generateLocationDossier(opts: {
         return;
       }
 
+      // A mark out of 100 and a filled bar stood here. The card now leads with
+      // the figures themselves, which is what it always had underneath.
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(22);
+      doc.setFontSize(11);
       doc.setTextColor(...ink);
-      doc.text(`${c.ex.score}`, x + 14, yy + 46);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
-      doc.setTextColor(...muted);
-      doc.text("/100", x + 48, yy + 46);
-      doc.setFillColor(230, 235, 242);
-      doc.roundedRect(x + 14, yy + 54, innerW, 5, 2.5, 2.5, "F");
-      doc.setFillColor(...accent);
-      doc.roundedRect(x + 14, yy + 54, (innerW * c.ex.score) / 100, 5, 2.5, 2.5, "F");
+      // Built from label, figure and unit together. Figure-then-label alone
+      // turned the climate card into "19 mean temperature, 900 annual
+      // rainfall", which reads as a count of things rather than a reading, and
+      // printed a bare 0 wherever the archive had returned nothing.
+      const headline = c.ex.factors
+        .map((f) =>
+          f.value == null
+            ? `${f.label}: not returned`
+            : `${f.label}: ${Math.round(f.value * 10) / 10} ${f.unit}`,
+        )
+        .join("  ·  ");
+      const headlineLines = (doc.splitTextToSize(headline, innerW) as string[]).slice(0, 3);
+      doc.text(headlineLines, x + 14, yy + 42);
 
-      // Wrap formula and factors so long infrastructure lines never spill into
-      // the neighbouring card, and cap them so they never reach the confidence line.
+      // Wrap the method and units so a long services line never spills into the
+      // neighbouring card, and cap them so they never reach the coverage line.
+      doc.setFont("helvetica", "normal");
       doc.setFontSize(7.5);
       doc.setTextColor(...muted);
-      const formulaLines = (
-        doc.splitTextToSize(`Formula: ${c.ex.formula}`, innerW) as string[]
-      ).slice(0, 2);
-      doc.text(formulaLines, x + 14, yy + 72);
-      const factorText = c.ex.factors
-        .map((f) => `${f.label}: ${Math.round(f.value * 10) / 10} (${f.weight})`)
+      const methodY = yy + 42 + headlineLines.length * lineH + 6;
+      const methodLines = (doc.splitTextToSize(c.ex.method, innerW) as string[]).slice(0, 3);
+      doc.text(methodLines, x + 14, methodY);
+      const unitText = c.ex.factors
+        .map((f) =>
+          f.value == null
+            ? `${f.label}: not returned`
+            : `${f.label}: ${Math.round(f.value * 10) / 10} ${f.unit}`,
+        )
         .join("  ·  ");
-      const factorsY = yy + 72 + formulaLines.length * lineH + 4;
+      const factorsY = methodY + methodLines.length * lineH + 4;
       const maxFactorLines = Math.max(1, Math.floor((yy + cardH - 26 - factorsY) / lineH) + 1);
-      const factorLines = (doc.splitTextToSize(factorText, innerW) as string[]).slice(
+      const factorLines = (doc.splitTextToSize(unitText, innerW) as string[]).slice(
         0,
         maxFactorLines,
       );
       doc.text(factorLines, x + 14, factorsY);
-      doc.text(`Confidence: ${c.ex.confidence}`, x + 14, yy + cardH - 12);
+      doc.text(`Mapping coverage: ${c.ex.confidence}`, x + 14, yy + cardH - 12);
     });
 
     doc.setFontSize(8);
     doc.setTextColor(...muted);
     doc.text(
       doc.splitTextToSize(
-        "Facility counts are a capped sample — the Overpass query returns at most 60 elements within 3 km, so dense areas are understated. These indicators use fixed heuristic weights and are not calibrated against transaction or survey data.",
+        "Facility counts are a capped sample — the query returns at most 60 features within 3 km and keeps the 12 nearest in each category, so a busy area is undercounted and a category showing 12 means twelve or more. These are counts, not scores: nothing here is weighted, combined or ranked, and HALISIA holds no price, rent, yield, sale or planning approval for this point.",
         W - M * 2,
       ),
       M,
@@ -421,7 +437,7 @@ export async function generateLocationDossier(opts: {
   doc.setFontSize(10);
   doc.setTextColor(...muted);
   const scopeNote =
-    "This dossier assembles public open data and basemap imagery for the coordinate given. It does not establish ownership, boundaries, plot size, zoning, servicing, flood risk or market value. No site visit, survey, title search or valuation informed any figure in it. Every indicator shown is formula-based and indicative, with its inputs printed alongside it.";
+    "This dossier assembles public open data and basemap imagery for the coordinate given. It does not establish ownership, boundaries, plot size, zoning, servicing, flood risk or market value. No site visit, survey, title search or valuation informed any figure in it. It publishes no score, grade or ranking: every figure shown is a count or a reading, printed with the source it came from so you can check it there.";
   const scopeLines = doc.splitTextToSize(scopeNote, W - M * 2 - 40) as string[];
   doc.text(scopeLines, M + 20, 155);
 

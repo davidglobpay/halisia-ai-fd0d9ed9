@@ -54,12 +54,18 @@ export type Wave4Intel = {
     tempMinC: number | null;
     tempMaxC: number | null;
   };
+  /**
+   * Always null, every field. These were five 0-100 indicators and a composite
+   * of them; see the note above `coverage()` for what they actually measured.
+   * The keys and the `number | null` type are kept so nothing that reads them
+   * breaks — it simply gets nothing instead of a plausible number.
+   */
   scores: {
-    accessibility: number;
-    infrastructure: number;
-    environment: number;
-    development: number;
-    investment: number;
+    accessibility: number | null;
+    infrastructure: number | null;
+    environment: number | null;
+    development: number | null;
+    investment: number | null;
   };
   breakdown: {
     accessibility: ScoreExplain;
@@ -73,10 +79,41 @@ export type Wave4Intel = {
   generatedAt: string;
 };
 
+/**
+ * What was counted for one indicator, and how far the count can be trusted.
+ *
+ * It used to carry `score` (0-100) and `formula` (the arithmetic that produced
+ * it, e.g. "25 + transit·6 + fuel·4 + markets·5"). Printing the arithmetic was
+ * an honest gesture aimed at the wrong thing: showing your working does not
+ * make the working mean anything, and no reader could tell you why a transit
+ * stop was worth six and a fuel station four. Nobody could, including us.
+ *
+ * `score` is now always null. `formula` is replaced by `method`, which says in
+ * words what was counted and where, and `weight` by `unit`, which says what
+ * each figure is a count OF. The figures themselves are unchanged and are the
+ * point: they are counts of features mapped in OpenStreetMap, which anyone can
+ * open and check.
+ */
 export type ScoreExplain = {
-  score: number;
-  formula: string;
-  factors: Array<{ label: string; value: number; weight: string }>;
+  /** Always null. Nothing here produces a score. */
+  score: number | null;
+  /** Plain words: what was counted, over what area, from which source. */
+  method: string;
+  /**
+   * `unit` says what the figure counts — never a weighting.
+   *
+   * `value` is null when the reading did not arrive. It used to be
+   * `number`, and the climate factors filled a missing reading with
+   * `?? 0` — so a point where the archive returned nothing published
+   * "0 °C mean temperature" rather than admitting it did not know. A
+   * count of zero and an absent reading are different facts and the
+   * type now distinguishes them.
+   */
+  factors: Array<{ label: string; value: number | null; unit: string }>;
+  /**
+   * How well this area is mapped in the source data — a statement about the
+   * dataset's coverage here, never a judgement of the place itself.
+   */
   confidence: "low" | "medium" | "high";
   note: string;
 };
@@ -241,41 +278,65 @@ function extractFacilities(
   return out;
 }
 
-export function score(facilities: Record<string, Wave4Facility[]>, climate: Wave4Intel["climate"]) {
-  const count = (k: string) => facilities[k]?.length ?? 0;
-  const clip = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
+/**
+ * What is mapped near this point, and how completely.
+ *
+ * WHAT THIS REPLACED
+ *
+ * Five indicators out of 100 and a composite of them. They were:
+ *
+ *   accessibility   25 + transit*6 + fuel*4 + markets*5
+ *   infrastructure  20 + hospitals*5 + schools*4 + banks*4 + police*6
+ *                      + fire*6 + government*3
+ *   environment     55, +/-15 for a temperature band, +/-15 for a rainfall band
+ *   development     (accessibility + infrastructure) / 2 + min(20, ...)
+ *   investment      0.35*access + 0.35*infra + 0.15*env + 0.15*dev
+ *
+ * Three things were wrong with them, and the third is the one that mattered.
+ *
+ * The constants were invented. There is no source for a transit stop being
+ * worth six and a fuel station four, and no reading of the result that could
+ * be checked against anything.
+ *
+ * `environment` began at 55 and moved by fixed steps, so a point where the
+ * climate API returned nothing still published 55 — the same constant-standing-
+ * in-for-data defect the land engine was rewritten to remove.
+ *
+ * And the counts underneath were truncated before they were used. The Overpass
+ * query returns at most 60 elements for the whole 3 km radius, and each
+ * category is then cut to its 12 nearest. So a neighbourhood with twelve
+ * schools and one with two hundred produced the same infrastructure figure.
+ * The indicator could not distinguish them, while looking as though it had.
+ *
+ * WHAT IS HERE NOW
+ *
+ * The counts, named for what they count, with the cap stated wherever a
+ * category hit it. Every one is checkable: open OpenStreetMap at this point
+ * and count the same features. `confidence` is kept, and says how well mapped
+ * this area is — a fact about the dataset, not a verdict on the place.
+ */
 
-  const accessibility = clip(count("transit") * 6 + count("fuel") * 4 + count("markets") * 5 + 25);
-  const infrastructure = clip(
-    count("hospitals") * 5 +
-      count("schools") * 4 +
-      count("banks") * 4 +
-      count("police") * 6 +
-      count("fire") * 6 +
-      count("government") * 3 +
-      20,
-  );
-  // Climate suitability: warm-temperate + moderate rainfall = higher.
-  let envBase = 55;
-  if (climate.meanTempC != null) {
-    if (climate.meanTempC > 17 && climate.meanTempC < 26) envBase += 15;
-    else if (climate.meanTempC > 30) envBase -= 15;
-  }
-  if (climate.annualRainfallMm != null) {
-    if (climate.annualRainfallMm > 600 && climate.annualRainfallMm < 1500) envBase += 15;
-    else if (climate.annualRainfallMm < 300) envBase -= 15;
-  }
-  const environment = clip(envBase);
-  const development = clip(
-    (accessibility + infrastructure) / 2 + Math.min(20, count("worship") + count("markets") * 2),
-  );
-  const investment = clip(
-    accessibility * 0.35 + infrastructure * 0.35 + environment * 0.15 + development * 0.15,
-  );
-  // Confidence is per-component: each indicator may only claim as much
-  // confidence as the mapped features it is actually computed from. A
-  // component with nothing mapped scores the bare formula constant, which is
-  // not evidence, so it stays "low" and the dossier withholds it.
+/** Per-category cap applied in `extractFacilities`. A count at the cap means "at least". */
+const LIST_CAP = 12;
+
+export function coverage(
+  facilities: Record<string, Wave4Facility[]>,
+  climate: Wave4Intel["climate"],
+) {
+  const count = (k: string) => facilities[k]?.length ?? 0;
+  /** Says what the figure is, and admits it when the list was cut short. */
+  const within = (k: string) =>
+    count(k) >= LIST_CAP
+      ? `or more within 3 km — the list is capped at ${LIST_CAP}`
+      : "mapped within 3 km";
+  const COUNTED =
+    "Counted from features mapped in OpenStreetMap within 3 km of this point, " +
+    `at most ${LIST_CAP} per category. Open the map at this point and you can count the same features.`;
+  // Coverage is per-category: a group may only claim as much coverage as the
+  // features actually mapped in it. A group with nothing mapped says "low",
+  // which is the honest reading of an empty count — it may mean there is
+  // nothing there, or that nobody has mapped it yet, and from here those two
+  // cannot be told apart.
   const band = (signal: number): ScoreExplain["confidence"] =>
     signal >= 15 ? "high" : signal >= 6 ? "medium" : "low";
   const RANK: Record<ScoreExplain["confidence"], number> = { low: 0, medium: 1, high: 2 };
@@ -292,89 +353,108 @@ export function score(facilities: Record<string, Wave4Facility[]>, climate: Wave
     count("government");
   const accessibilityConfidence = band(accessSignal);
   const infrastructureConfidence = band(infraSignal);
-  // Development is derived from accessibility and infrastructure, so it
-  // inherits their weakest coverage.
+  // Community anchors are counted from the same Overpass response as access
+  // and services, so they inherit the weakest coverage of the two.
   const developmentConfidence = weakest(accessibilityConfidence, infrastructureConfidence);
   // Climate is an independent source — good climate coverage says nothing
   // about how well the area is mapped in OpenStreetMap.
   const environmentConfidence: ScoreExplain["confidence"] =
     climate.meanTempC != null && climate.annualRainfallMm != null ? "high" : "low";
-  // The composite is only as trustworthy as the weakest OSM-derived component
-  // feeding it. Climate support alone must never unlock it.
+  // The summary group gathers the OSM-derived counts, so it is only as well
+  // covered as the worst of them. Climate coverage must never speak for them.
   const investmentConfidence = weakest(
     accessibilityConfidence,
     infrastructureConfidence,
     developmentConfidence,
   );
 
-  const breakdown = {
+  const breakdown: Wave4Intel["breakdown"] = {
     accessibility: {
-      score: accessibility,
-      formula: "25 + transit·6 + fuel·4 + markets·5",
+      score: null,
+      method: COUNTED,
       factors: [
-        { label: "Transit stops (3 km)", value: count("transit"), weight: "×6" },
-        { label: "Fuel stations", value: count("fuel"), weight: "×4" },
-        { label: "Marketplaces", value: count("markets"), weight: "×5" },
+        { label: "Transit stops", value: count("transit"), unit: within("transit") },
+        { label: "Fuel stations", value: count("fuel"), unit: within("fuel") },
+        { label: "Marketplaces", value: count("markets"), unit: within("markets") },
       ],
       confidence: accessibilityConfidence,
-      note: "Higher when there are many transit stops and market anchors within 3 km.",
+      note: "How you would reach this place and move from it. A mapped stop is not proof of a running service.",
     },
     infrastructure: {
-      score: infrastructure,
-      formula: "20 + hospitals·5 + schools·4 + banks·4 + police·6 + fire·6 + gov·3",
+      score: null,
+      method: COUNTED,
       factors: [
-        { label: "Healthcare", value: count("hospitals"), weight: "×5" },
-        { label: "Schools", value: count("schools"), weight: "×4" },
-        { label: "Banks / ATM", value: count("banks"), weight: "×4" },
-        { label: "Police", value: count("police"), weight: "×6" },
-        { label: "Fire stations", value: count("fire"), weight: "×6" },
-        { label: "Government offices", value: count("government"), weight: "×3" },
+        { label: "Healthcare", value: count("hospitals"), unit: within("hospitals") },
+        { label: "Schools", value: count("schools"), unit: within("schools") },
+        { label: "Banks / ATM", value: count("banks"), unit: within("banks") },
+        { label: "Police", value: count("police"), unit: within("police") },
+        { label: "Fire stations", value: count("fire"), unit: within("fire") },
+        { label: "Government offices", value: count("government"), unit: within("government") },
       ],
       confidence: infrastructureConfidence,
-      note: "Weights emergency services higher because they're rarer but critical.",
+      note: "Services mapped nearby. Presence is not capacity: none of these counts says whether a facility is open, staffed or able to take you.",
     },
     environment: {
-      score: environment,
-      formula: "55 + climate suitability (temp + rainfall bands)",
+      score: null,
+      method:
+        "Open-Meteo climate archive, EC-Earth3P-HR downscaled, averaged over 2010–2020. These are the long-run normals for the grid cell containing this point, not readings taken on this land.",
       factors: [
-        { label: "Mean temp (°C)", value: climate.meanTempC ?? 0, weight: "17–26 ideal" },
         {
-          label: "Rainfall (mm/yr)",
-          value: climate.annualRainfallMm ?? 0,
-          weight: "600–1500 ideal",
+          label: "Mean temperature",
+          value: climate.meanTempC,
+          unit: climate.meanTempC != null ? "°C, 2010–2020 mean" : "not returned",
+        },
+        {
+          label: "Annual rainfall",
+          value: climate.annualRainfallMm,
+          unit:
+            climate.annualRainfallMm != null ? "mm per year, 2010–2020 mean" : "not returned",
         },
       ],
       confidence: environmentConfidence,
-      note: "Open-Meteo 2010–2020 climate normals (EC-Earth3P-HR downscaled).",
+      note: "A modelled climate normal for the surrounding grid cell. It describes the area's weather over a decade, and says nothing about this parcel's own drainage, shade or exposure.",
     },
     development: {
-      score: development,
-      formula: "(access + infra) / 2 + min(20, worship + markets·2)",
+      score: null,
+      method: COUNTED,
       factors: [
-        { label: "Places of worship", value: count("worship"), weight: "×1" },
-        { label: "Marketplaces", value: count("markets"), weight: "×2" },
+        { label: "Places of worship", value: count("worship"), unit: within("worship") },
+        { label: "Marketplaces", value: count("markets"), unit: within("markets") },
       ],
       confidence: developmentConfidence,
-      note: "Community anchors correlate with settled, buildable neighbourhoods.",
+      note: "Community anchors that are mapped here. This used to carry the claim that they 'correlate with settled, buildable neighbourhoods', which was asserted rather than measured and is not repeated.",
     },
     investment: {
-      score: investment,
-      formula: "0.35·access + 0.35·infra + 0.15·env + 0.15·dev",
+      score: null,
+      method:
+        "A gathering of the counts above, not a calculation over them. Nothing here is weighted, combined or ranked.",
       factors: [
-        { label: "Accessibility", value: accessibility, weight: "×0.35" },
-        { label: "Infrastructure", value: infrastructure, weight: "×0.35" },
-        { label: "Environment", value: environment, weight: "×0.15" },
-        { label: "Development", value: development, weight: "×0.15" },
+        { label: "Transit stops", value: count("transit"), unit: within("transit") },
+        { label: "Healthcare", value: count("hospitals"), unit: within("hospitals") },
+        { label: "Schools", value: count("schools"), unit: within("schools") },
+        { label: "Marketplaces", value: count("markets"), unit: within("markets") },
       ],
       confidence: investmentConfidence,
-      note: "Composite view — not a valuation.",
+      note: "HALISIA holds no prices, rents, yields, sales or approvals for this point and publishes no investment figure. What is mapped nearby is a starting point for your own questions, not an answer about money.",
     },
   };
   return {
-    scores: { accessibility, infrastructure, environment, development, investment },
+    scores: {
+      accessibility: null,
+      infrastructure: null,
+      environment: null,
+      development: null,
+      investment: null,
+    },
     breakdown,
   };
 }
+
+/**
+ * @deprecated Former name for `coverage`, kept so no existing import breaks.
+ * It produces no scores; every `score` field it returns is null.
+ */
+export const score = coverage;
 
 function distanceBuckets(facilities: Record<string, Wave4Facility[]>) {
   const out: Record<string, { close: number; near: number; far: number }> = {};
@@ -420,7 +500,7 @@ export const getWave4Intel = createServerFn({ method: "POST" })
       tempMinC: cli?.tempMinC ?? null,
       tempMaxC: cli?.tempMaxC ?? null,
     };
-    const { scores, breakdown } = score(facilities, climate);
+    const { scores, breakdown } = coverage(facilities, climate);
     const bucketMap = distanceBuckets(facilities);
 
     const value: Wave4Intel = {

@@ -7,7 +7,6 @@
  * sure HALISIA is. A missing value is always a labelled gap — never a default.
  * Nothing in here can mark land, title, boundary or ownership as verified.
  */
-import { geotechAvailability } from "@/lib/geotech-availability";
 import type { LocationIntel } from "@/lib/location-intel.functions";
 import type { GeotechIntel } from "@/lib/geotech.functions";
 import type { Wave4Intel } from "@/lib/wave4-intel.functions";
@@ -44,11 +43,7 @@ export const CHAPTERS: Array<{ id: ChapterId; title: string; blurb: string }> = 
     title: "Climate & environment",
     blurb: "Long-term rainfall and temperature, air, water.",
   },
-  {
-    id: "access",
-    title: "Access & services",
-    blurb: "Roads, schools, health, shops, transport.",
-  },
+  { id: "access", title: "Access & services", blurb: "Roads, schools, health, shops, transport." },
   {
     id: "build",
     title: "Build & develop",
@@ -57,13 +52,9 @@ export const CHAPTERS: Array<{ id: ChapterId; title: string; blurb: string }> = 
   {
     id: "market",
     title: "Market & investment",
-    blurb: "Coverage-gated scores with formulas. No return predictions.",
+    blurb: "Counts of what is mapped nearby, withheld where mapping is thin. No scores, no return predictions.",
   },
-  {
-    id: "trust",
-    title: "Legal, finance & trust",
-    blurb: "What has and has not been checked.",
-  },
+  { id: "trust", title: "Legal, finance & trust", blurb: "What has and has not been checked." },
 ];
 
 export type EvidenceClass = "measured" | "modelled" | "official" | "user" | "ai" | "gap";
@@ -121,11 +112,7 @@ export type PassportEvidenceInput = {
   locationConfidencePct: number;
   sourceLabel: string;
   countyName: string | null;
-  admin: {
-    subCounty?: string | null;
-    ward?: string | null;
-    locality?: string | null;
-  } | null;
+  admin: { subCounty?: string | null; ward?: string | null; locality?: string | null } | null;
   facts: CountyFacts | null;
   intel: LocationIntel | null | undefined;
   intelState: FetchState;
@@ -152,12 +139,7 @@ function stateGap(state: FetchState, what: string): string {
 export function buildPassportEvidence(i: PassportEvidenceInput): {
   items: EvidenceItem[];
   ledger: LedgerEntry[];
-  summary: {
-    total: number;
-    available: number;
-    missing: number;
-    coveragePct: number;
-  };
+  summary: { total: number; available: number; missing: number; coveragePct: number };
 } {
   const items: EvidenceItem[] = [];
   const t = i.retrievedAt;
@@ -285,7 +267,7 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
         : "Elevation alone is not a flood assessment.",
   });
   const g = i.geotech;
-  const terrainOk = geotechAvailability(g?.terrainMeasured).terrainDerivedAvailable;
+  const terrainOk = !!g && (srcUsed(g.sources, "Topo") || srcUsed(g.sources, "Elevation"));
   add({
     id: "slope",
     chapter: "physical",
@@ -352,7 +334,7 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
     value: rain != null ? `${Math.round(rain)} mm / year` : null,
     source: "Open-Meteo Climate API (EC_Earth3P_HR model)",
     method: "Daily modelled precipitation averaged over the reference period.",
-    usedFor: ["Groundwater likelihood", "Environment score"],
+    usedFor: ["Groundwater likelihood", "Climate normals for this area"],
     cls: "modelled",
     confidence: "medium",
     note: rain == null ? stateGap(i.w4State, "Climate model") : undefined,
@@ -367,7 +349,7 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
         : null,
     source: "Open-Meteo Climate API",
     method: "Modelled daily means, 2010–2020.",
-    usedFor: ["Habitability", "Environment score"],
+    usedFor: ["Habitability", "Climate normals for this area"],
     cls: "modelled",
     confidence: "medium",
   });
@@ -390,7 +372,8 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
     id: "water",
     chapter: "climate",
     label: "Nearest mapped water",
-    value: null,
+    value:
+      g?.groundwater.nearestWaterKm != null ? `${r(g.groundwater.nearestWaterKm, 1)} km` : null,
     // The backing field is never populated, so naming OpenStreetMap here
     // claimed a source for a lookup that does not run.
     source: "No source — this lookup is not implemented",
@@ -456,7 +439,7 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
       })`,
       source: "OpenStreetMap Overpass",
       method: "Tag query, 3 km radius. OSM coverage in Kenya is uneven.",
-      usedFor: ["Accessibility & infrastructure scores"],
+      usedFor: ["What is mapped nearby"],
       cls: "measured",
       confidence: n >= 10 ? "medium" : "low",
       retrieved: i.wave4?.generatedAt ?? t,
@@ -469,7 +452,7 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
       value: null,
       source: "OpenStreetMap Overpass",
       method: "Tag query, 3 km radius.",
-      usedFor: ["Accessibility & infrastructure scores"],
+      usedFor: ["What is mapped nearby"],
       cls: "gap",
       confidence: "not_assessed",
       note: stateGap(i.w4State, "OSM"),
@@ -477,7 +460,7 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
   }
 
   // ---------- 6. Build ----------
-  if (g && terrainOk) {
+  if (g) {
     const pref = g.foundations.filter(
       (f) => f.suitability === "Preferred" || f.suitability === "Possible",
     );
@@ -556,33 +539,53 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
 
   // ---------- 7. Market ----------
   const b = i.wave4?.breakdown;
-  const scoreRow = (k: keyof NonNullable<typeof b>, label: string) => {
+  /**
+   * These rows printed a mark out of 100 — "72/100" — with the arithmetic
+   * behind it as the method. The passport is the document a buyer forwards to
+   * a lender or an advocate, so it is the worst place in the product for a
+   * figure nobody can check. The counts underneath were real and are what the
+   * row carries now; the mark is gone, and so is the row's old claim to be a
+   * "score". A row whose area is thinly mapped still says so rather than
+   * printing a confident number over a thin count.
+   */
+  const countRow = (k: keyof NonNullable<typeof b>, label: string) => {
     const s = b?.[k];
-    const withheld = !s || s.confidence === "low";
+    const thin = !s || s.confidence === "low";
+    // A factor whose reading never arrived is named as absent, never printed
+    // as a zero. An empty join collapses to null so the row is classed as a
+    // gap rather than carrying an empty string past the gap check.
+    const counted =
+      s && s.factors.length
+        ? s.factors
+            .map((f) =>
+              f.value == null ? `${f.label} not returned` : `${f.label} ${Math.round(f.value)} ${f.unit}`,
+            )
+            .join("; ") || null
+        : null;
     add({
       id: `score-${k}`,
       chapter: "market",
       label,
-      value: withheld ? null : `${Math.round(s.score)}/100`,
-      source: "HALISIA Wave 4 scoring (OSM + Open-Meteo)",
+      value: thin ? null : counted,
+      source: "OpenStreetMap Overpass and Open-Meteo, read by HALISIA",
       method: s
-        ? `${s.formula}. Factors: ${s.factors.map((f) => `${f.label} ${Math.round(f.value)} (${f.weight})`).join(", ")}`
-        : "Needs OSM and climate data.",
-      usedFor: ["Investment composite"],
+        ? s.method
+        : "Needs the OpenStreetMap and climate lookups, which did not return for this point.",
+      usedFor: ["What is mapped nearby"],
       cls: "ai",
       confidence: s?.confidence ?? "not_assessed",
-      note: withheld
+      note: thin
         ? s
-          ? "Insufficient coverage — score withheld."
-          : stateGap(i.w4State, "Scoring")
+          ? "Little is mapped here, so the count is withheld. That may mean little is there, or that nobody has mapped it — from a screen those cannot be told apart."
+          : stateGap(i.w4State, "Open-data lookup")
         : s.note,
     });
   };
-  scoreRow("accessibility", "Accessibility score");
-  scoreRow("infrastructure", "Infrastructure score");
-  scoreRow("environment", "Environment score");
-  scoreRow("development", "Development score");
-  scoreRow("investment", "Investment composite");
+  countRow("accessibility", "Transport and markets mapped nearby");
+  countRow("infrastructure", "Services mapped nearby");
+  countRow("environment", "Climate normals for this area");
+  countRow("development", "Community anchors mapped nearby");
+  countRow("investment", "Summary of what is mapped nearby");
   add({
     id: "comps",
     chapter: "market",
