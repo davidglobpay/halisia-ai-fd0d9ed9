@@ -81,6 +81,8 @@ export function SpokenText({
 
   // One reader at a time, and never leave a voice running behind a closed page.
   useEffect(() => {
+    setState("idle");
+    setActive(-1);
     const onStop = () => stop();
     window.addEventListener(STOP_EVENT, onStop);
     return () => {

@@ -80,3 +80,14 @@ it("clears the delayed fallback on unmount", () => {
   });
   expect(vi.getTimerCount()).toBe(0);
 });
+
+it("resets controls and cancels fallback when the passage changes", () => {
+  const view = mount();
+  fireEvent.click(screen.getByRole("button", { name: "Listen" }));
+  view.rerender(createElement(SpokenText, { text: "A different passage." }));
+  expect(screen.queryByRole("button", { name: "Stop reading" })).toBeNull();
+  act(() => {
+    vi.advanceTimersByTime(2000);
+  });
+  expect(document.querySelector('[data-spoken="now"]')).toBeNull();
+});
