@@ -10,3 +10,7 @@ routeTree.gen.ts
 src/integrations/supabase/types.ts
 src/integrations/supabase/previewAuthStorage.ts
 src/lib/testfixtures/konza-lr-fixture.ts
+
+# Generated browser-test artifacts
+test-results
+playwright-report
