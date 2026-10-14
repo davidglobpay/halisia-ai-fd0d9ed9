@@ -7,16 +7,25 @@
  * forwards to a spouse, a lender or a lawyer, so it is the worst place in the
  * product for a number that was not measured.
  *
- * It now leads with the reading and what the reading is OF, prints the
- * measured modules with the services actually read for each, and gives the
- * unassessed modules a section of their own: what HALISIA does not hold and
- * who to ask instead. Still jsPDF only, so it works when map providers are
- * unreachable.
+ * The reading that replaced it has now gone the same way, and for the same
+ * reason: it was a persona-weighted mean of hard-coded elevation bands and a
+ * count of nearby places, printed as a mark out of a hundred over a grade from
+ * AAA to C. A buyer forwarding this to a lender had no way to ask what the
+ * number was a hundredth of, and nor did we.
+ *
+ * The cover now opens on the shape of the evidence — how many of the answers
+ * in here can be seen in imagery, how many a named dataset measured, how many
+ * a rule worked out, and how many nobody can establish from a screen at all.
+ * Inside, each module prints the services actually read for it and what it
+ * does not prove, and the unassessed modules keep a section of their own
+ * naming who to ask instead. Still jsPDF only, so it works when map providers
+ * are unreachable.
  */
 import jsPDF from "jspdf";
 import type { DecisionOutput, ModuleOutput } from "@/lib/intelligence-engine";
 import { labelForPersona, DOSSIER_SCOPE } from "@/lib/intelligence-engine";
 import { PDF, brandPage, brandFooters, prepareMark } from "@/lib/pdf-chrome";
+import { classTally } from "@/lib/evidence-class";
 import halisiaMark from "@/assets/brand/halisia-mark.png.asset.json";
 
 function slugify(s: string) {
@@ -85,22 +94,35 @@ export async function generateIntelligencePdf(
   doc.setFontSize(11);
   doc.text("HALISIA.AI · LOCATION READINGS", M, 64);
 
-  doc.setFontSize(28);
-  doc.text(decision.reading != null ? `${decision.reading} / 100` : "No reading", M, 130);
+  // Where "72 / 100" used to sit. The cover is the page that gets forwarded,
+  // so it carries the one thing the reader most needs to take away.
+  doc.setFontSize(24);
+  doc.text("What can be checked,", M, 124);
+  doc.text("and what cannot", M, 150);
   doc.setFontSize(13);
   setColor(ACCENT);
-  doc.text(decision.readingLabel, M, 152);
+  doc.text(decision.readingLabel, M, 172);
 
   setColor([200, 210, 224]);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
   const addrLines = wrap(address || `${lat.toFixed(5)}, ${lng.toFixed(5)}`, W - M * 2);
-  doc.text(addrLines, M, 180);
-  let coverY = 198 + (addrLines.length - 1) * 14;
+  doc.text(addrLines, M, 200);
+  let coverY = 218 + (addrLines.length - 1) * 14;
   doc.text(
     `Coordinates ${lat.toFixed(5)}, ${lng.toFixed(5)}` +
-      (decision.grade ? `  ·  Grade ${decision.grade}` : "") +
       (decision.confidencePct != null ? `  ·  Confidence ${decision.confidencePct}%` : ""),
+    M,
+    coverY,
+  );
+  coverY += 18;
+
+  // The tally, in words rather than a mark. These counts are of output kinds,
+  // fixed by what HALISIA can and cannot establish — not of this location.
+  doc.text(
+    classTally()
+      .map((c) => `${c.count} ${c.meta.label.toLowerCase()}`)
+      .join("   ·   "),
     M,
     coverY,
   );
@@ -246,13 +268,17 @@ export async function generateIntelligencePdf(
     setColor(INK);
     doc.text(m.label, M, y + 10);
 
-    // Score chip — only when there is a score.
-    if (m.score != null) {
+    // This chip used to print the module's mark out of 100 and its grade, and
+    // fell back to "Not assessed" when there was no score. Both halves were
+    // wrong once the scores went: there is no mark to print, and a module whose
+    // data arrived is assessed whether or not a number was ever attached to it.
+    // It now reports the status, which is the thing the chip was pointing at.
+    if (m.status !== "not-assessed") {
       doc.setFillColor(ACCENT[0], ACCENT[1], ACCENT[2]);
       doc.roundedRect(W - M - 80, y - 2, 80, 22, 6, 6, "F");
       setColor([7, 30, 61]);
-      doc.setFontSize(11);
-      doc.text(`${m.score}/100${m.grade ? ` · ${m.grade}` : ""}`, W - M - 74, y + 12);
+      doc.setFontSize(9);
+      doc.text(m.status === "projected" ? "Worked out" : "Read from data", W - M - 74, y + 12);
     } else {
       doc.setDrawColor(200, 208, 220);
       doc.roundedRect(W - M - 80, y - 2, 80, 22, 6, 6, "S");

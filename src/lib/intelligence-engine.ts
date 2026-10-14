@@ -32,17 +32,29 @@
  *
  * THE RULE NOW
  *
- * A module publishes a score only when the data behind it was actually
- * fetched. Otherwise its status is "not-assessed": no score, no grade, no
- * confidence, and it is excluded from the composite rather than dragging a
- * default into it. Confidence is derived from `intel.providers`, which the
- * snapshot has always carried and this engine used to ignore.
+ * The scores are gone — all of them, including the composite.
  *
- * The composite survives but is named for its inputs — terrain, air and
- * amenity access — not as a judgement on the land. The buy/don't-buy verdict
- * is gone: elevation, air quality and a count of nearby shops cannot support
- * one. In its place is a due-diligence checklist naming what HALISIA cannot
- * assess and who can.
+ * Restricting them to modules with data behind them fixed the second and third
+ * problems but not the first, because the numbers themselves were never
+ * measurements. "Construction" was a four-step band off elevation alone: 42
+ * below 20 m, 62 below 100 m, 55 above 2,400 m, 78 otherwise. "Amenity access"
+ * was 30 + the count of mapped places x 3.5. "Environment" averaged the air
+ * quality index, read as though an AQI were a grade out of 100, with another
+ * elevation band. Those were weighted by persona into a composite and mapped
+ * onto AAA through C — credit-rating notation, which lends an authority none
+ * of this had earned. None of it could be checked by anyone, us included:
+ * there is no answer to "78 compared to what?".
+ *
+ * What was actually read survives, published without the arithmetic on top:
+ * the elevation in metres, the air quality index and its category, the counts
+ * of schools, health facilities, shops and transit stops, and the confidence
+ * derived from which providers answered. Each is checkable at its source, and
+ * that is the whole of the claim being made for it.
+ *
+ * `score` and `grade` stay on the type and are always null, so every surface
+ * that already renders the no-reading state keeps working unchanged. The
+ * buy/don't-buy verdict went earlier; in its place is a due-diligence
+ * checklist naming what HALISIA cannot assess and who can.
  *
  * Pure functions — no network, no side effects.
  */
@@ -77,9 +89,20 @@ export interface ModuleOutput {
   id: ModuleId;
   label: string;
   status: ModuleStatus;
-  /** 0-100. Null when not assessed — never a default standing in for data. */
+  /**
+   * Always null. Kept so the surfaces that render the no-score state need no
+   * change, and so anything still reading it gets nothing rather than a
+   * plausible number. Nothing in this engine computes a score any more.
+   *
+   * The type stays `number | null` rather than narrowing to `null`, so every
+   * consumer's existing null-check compiles and behaves exactly as it did for
+   * an unassessed module. Narrowing it would be the stricter guarantee, but it
+   * would change the type of every already-correct `m.score != null` branch in
+   * the app at the same time as the behaviour, which is two changes at once.
+   */
   score: number | null;
   confidencePct: number | null;
+  /** Always null. See `score`. */
   grade: Grade | null;
   trend: "up" | "flat" | "down" | null;
   /** Why the reading is what it is, or why nothing can be read. */
@@ -102,13 +125,14 @@ export interface DueDiligenceItem {
 
 export interface DecisionOutput {
   /**
-   * Composite across the measured modules only, weighted by persona and
-   * renormalised over those modules. Null when fewer than two were measured,
-   * because a "composite" of one reading is just that reading.
+   * Always null. There is no composite: it was a persona-weighted mean of
+   * three banded numbers, and a weighted mean of unmeasured quantities is not
+   * a measurement of anything.
    */
   reading: number | null;
-  /** What the composite is a reading OF. Never "the land" in general. */
+  /** What the surface should say instead of a number. */
   readingLabel: string;
+  /** Always null. The AAA-to-C ladder is gone with the score beneath it. */
   grade: Grade | null;
   confidencePct: number | null;
   /** One sentence naming exactly which modules fed the composite. */
@@ -130,21 +154,9 @@ export interface DecisionOutput {
 
 const clamp = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
 
-function grade(score: number): Grade {
-  if (score >= 90) return "AAA";
-  if (score >= 82) return "AA";
-  if (score >= 74) return "A";
-  if (score >= 66) return "BBB";
-  if (score >= 58) return "BB";
-  if (score >= 45) return "B";
-  return "C";
-}
-
-function trendFrom(score: number, hasGrowthSignal: boolean): "up" | "flat" | "down" {
-  if (score >= 70 && hasGrowthSignal) return "up";
-  if (score < 45) return "down";
-  return "flat";
-}
+// grade() and trendFrom() stood here. Both read a 0-100 score and there are no
+// longer any scores to read. They are deleted rather than left dormant: a
+// grader still in the file is an invitation to print a grade again.
 
 /**
  * Confidence from the inputs a module actually received.
@@ -173,10 +185,11 @@ function providerStatus(intel: LocationIntel | undefined, key: keyof LocationInt
 }
 
 /**
- * Persona weighting. These are relative importances, not shares of a whole:
- * the composite renormalises over whichever modules were measured, so a
- * persona whose priority module could not be read does not silently get a
- * composite dominated by something it does not care about.
+ * Persona weighting. These are relative importances, not shares of a whole.
+ *
+ * They no longer weight a score, because there is no score. What they still do
+ * is renormalise the confidence figure over whichever modules were read, and
+ * order the reasons so that what this persona came to find out appears first.
  */
 const WEIGHTS: Record<Persona, Record<ModuleId, number>> = {
   investor: {
@@ -267,15 +280,15 @@ function scoreConstruction(intel?: LocationIntel): ModuleOutput {
 
   // Elevation is a coarse buildability signal and nothing more: it says
   // something about drainage and water table, not about what the ground can
-  // carry. The score is deliberately banded rather than continuous.
-  const score = clamp(elev < 20 ? 42 : elev < 100 ? 62 : elev > 2400 ? 55 : 78);
+  // carry. It is reported as the metres it is, and the sentence below says
+  // what that height implies. It is not converted into a mark out of 100.
   return {
     id: "construction",
     label: "Construction",
     status: "measured",
-    score,
-    grade: grade(score),
-    trend: "flat",
+    score: null,
+    grade: null,
+    trend: null,
     confidencePct: confidence,
     reasons: [
       `Elevation ${elev.toFixed(0)} m — ${
@@ -319,27 +332,22 @@ function scoreEnvironment(intel?: LocationIntel): ModuleOutput {
     );
   }
 
-  // Each half is scored only if its input arrived, then averaged over the
-  // halves that exist. Absence lowers confidence; it does not invent a 60.
-  const parts: number[] = [];
+  // Only the sources that answered are named. The two readings used to be
+  // averaged into a mark, which required treating an air quality index as if
+  // it were a grade out of 100 — it is not; on the universal scale a higher
+  // AQI is better air, and it is not a percentage of anything. Both readings
+  // are now reported as themselves.
   const sources: string[] = [];
-  if (aqi != null) {
-    parts.push(clamp(aqi));
-    sources.push(SRC_AIR);
-  }
-  if (elev != null) {
-    parts.push(clamp(elev < 20 ? 30 : elev < 100 ? 58 : 82));
-    sources.push(SRC_ELEVATION);
-  }
-  const score = clamp(parts.reduce((a, b) => a + b, 0) / parts.length);
+  if (aqi != null) sources.push(SRC_AIR);
+  if (elev != null) sources.push(SRC_ELEVATION);
 
   return {
     id: "environment",
     label: "Environment",
     status: "measured",
-    score,
-    grade: grade(score),
-    trend: "flat",
+    score: null,
+    grade: null,
+    trend: null,
     confidencePct: confidence,
     reasons: [
       aqi != null
@@ -387,7 +395,7 @@ function scoreInfrastructure(intel?: LocationIntel): ModuleOutput {
     transit: c.transit.length,
   };
   const total = counts.schools + counts.hospitals + counts.groceries + counts.transit;
-  const score = clamp(30 + total * 3.5);
+  void total; // Counted for the sentence below, no longer scaled into a mark.
 
   return {
     id: "infrastructure",
@@ -396,9 +404,9 @@ function scoreInfrastructure(intel?: LocationIntel): ModuleOutput {
     // "Infrastructure" implies to a buyer.
     label: "Amenity access",
     status: "measured",
-    score,
-    grade: grade(score),
-    trend: trendFrom(score, total > 8),
+    score: null,
+    grade: null,
+    trend: null,
     confidencePct: confidence,
     reasons: [
       `${counts.schools} schools · ${counts.hospitals} health facilities · ${counts.groceries} shops within about 3 km`,
@@ -470,12 +478,12 @@ function scoreDevelopmentContext(wave4?: Wave4Intel): ModuleOutput | null {
     id: "investment",
     label: "Development context",
     status: "measured",
-    score: explanation.score,
+    score: null,
     confidencePct,
-    grade: grade(explanation.score),
+    grade: null,
     trend: null,
     reasons: [
-      `Context indicator ${explanation.score}/100 from mapped access, services, climate and settlement anchors`,
+      "Built from mapped access, services, climate normals and settlement anchors in public open data",
       "This describes present public-data context; it does not predict price, demand, yield or appreciation",
     ],
     sources,
@@ -707,9 +715,13 @@ export function runIntelligenceEngine(
     ),
   ];
 
+  // "Measured" now means the data behind the module arrived — which is what
+  // the word meant all along. It used to also require a score, so removing the
+  // scores would otherwise have emptied this list and made the scope note
+  // below claim that nothing could be read, which would be false.
   const measured = modules.filter(
-    (m): m is ModuleOutput & { score: number; confidencePct: number } =>
-      m.status === "measured" && m.score != null && m.confidencePct != null,
+    (m): m is ModuleOutput & { confidencePct: number } =>
+      m.status === "measured" && m.confidencePct != null,
   );
   const notAssessedList = modules.filter((m) => m.status === "not-assessed");
   const projected = modules.filter((m) => m.status === "projected");
@@ -717,15 +729,15 @@ export function runIntelligenceEngine(
   const w = WEIGHTS[persona];
   const weightTotal = measured.reduce((acc, m) => acc + (w[m.id] ?? 0.1), 0);
 
-  // A composite of a single reading is not a composite — it is that reading
-  // with a grander name, so below two measured modules there is no number.
-  const hasComposite = measured.length >= 2 && weightTotal > 0;
-  const reading = hasComposite
-    ? clamp(measured.reduce((acc, m) => acc + m.score * (w[m.id] ?? 0.1), 0) / weightTotal)
-    : null;
-  const confidencePct = hasComposite
-    ? clamp(measured.reduce((acc, m) => acc + m.confidencePct * (w[m.id] ?? 0.1), 0) / weightTotal)
-    : null;
+  // There is no composite reading. Confidence survives it, because confidence
+  // is not a judgement of the place: it reports how much of what this module
+  // needed actually arrived from the providers, which is a fact about the run.
+  const confidencePct =
+    measured.length > 0 && weightTotal > 0
+      ? clamp(
+          measured.reduce((acc, m) => acc + m.confidencePct * (w[m.id] ?? 0.1), 0) / weightTotal,
+        )
+      : null;
 
   const measuredNames = measured.map((m) => m.label.toLowerCase());
   const scopeNote = measured.length
@@ -736,15 +748,15 @@ export function runIntelligenceEngine(
       `the other ${notAssessedList.length} are listed below as checks to run, not as scores.`
     : "Nothing could be read for this point — every provider returned empty.";
 
-  const headline = hasComposite
-    ? `Evidence-backed context reading ${reading}/100 for ${labelForPersona(persona).toLowerCase()}`
-    : measured.length === 1
-      ? `One reading available: ${measured[0].label.toLowerCase()} ${measured[0].score}/100`
-      : "No readings available for this point";
+  const headline = measured.length
+    ? `Read for this point: ${listPhrase(measuredNames)}. No score, no grade, no ranking.`
+    : "Nothing could be read for this point.";
 
+  // Ordered by what this persona came to find out, which is the only thing
+  // the weights can honestly do now that there is no score to weight.
   const reasons = measured
     .slice()
-    .sort((a, b) => (w[b.id] ?? 0.1) * b.score - (w[a.id] ?? 0.1) * a.score)
+    .sort((a, b) => (w[b.id] ?? 0.1) - (w[a.id] ?? 0.1))
     .map((m) => `${m.label}: ${m.reasons[0]}`);
 
   const dueDiligence: DueDiligenceItem[] = notAssessedList.map((m) => ({
@@ -753,12 +765,16 @@ export function runIntelligenceEngine(
     who: m.nextStep,
   }));
 
-  const construction = modules.find((m) => m.id === "construction");
+  // Keyed off the elevation actually read rather than off the old construction
+  // score, which no longer exists. Low ground and very high ground each raise
+  // real foundation questions — water table in the first case, access and
+  // curing in the second — and both are things the reading can establish.
+  const elevM = intel?.elevation?.meters ?? null;
   const professionalRecs = [
     "Licensed Surveyor — confirm boundaries and beacons",
     "Advocate — official title search and sale agreement",
-    construction?.score != null && construction.score < 60
-      ? "Structural engineer — foundation strategy for a challenging site"
+    elevM != null && (elevM < 100 || elevM > 2400)
+      ? "Structural engineer — foundation strategy for low-lying or high-altitude ground"
       : "Architect — buildability and design brief",
     "Insurance broker — property and construction cover",
     persona === "investor" || persona === "developer"
@@ -767,9 +783,9 @@ export function runIntelligenceEngine(
   ];
 
   return {
-    reading,
-    readingLabel: "Evidence-backed context reading",
-    grade: reading != null ? grade(reading) : null,
+    reading: null,
+    readingLabel: "Evidence, sorted by what can be checked",
+    grade: null,
     confidencePct,
     scopeNote,
     measuredCount: measured.length,
