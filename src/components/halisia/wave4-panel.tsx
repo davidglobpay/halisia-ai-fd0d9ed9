@@ -5,8 +5,7 @@ import {
   Loader2,
   MapPin,
   Building2,
-  Gauge,
-  TrendingUp,
+  Ruler,
   Database,
   ShieldCheck,
   ExternalLink,
@@ -28,10 +27,25 @@ import { ProvenanceModal } from "@/components/halisia/provenance-modal";
 
 type SubTab = "admin" | "public" | "invest" | "sources";
 
+/**
+ * The third tab was called "Investment" and led with "Investment score · NN /
+ * 100 · composite" over a filled progress bar. The number came from
+ * `0.35·access + 0.35·infra + 0.15·env + 0.15·dev`, where each input was a
+ * count of OpenStreetMap features multiplied by an invented constant — and the
+ * counts were capped at twelve per category before the arithmetic ran, so a
+ * neighbourhood with twelve schools and one with two hundred came out the same.
+ *
+ * Calling that "Investment" was the worst part. HALISIA holds no price, rent,
+ * yield, sale or approval for any point in Kenya. The tab now says what it
+ * actually holds: what is mapped within three kilometres, and how far away.
+ *
+ * The `invest` id is kept so existing links and the end-to-end tests that drive
+ * `wave4-tab-invest` still find it.
+ */
 const SUB_TABS: Array<{ id: SubTab; label: string; icon: React.ElementType }> = [
   { id: "admin", label: "Admin", icon: MapPin },
   { id: "public", label: "Public data", icon: Building2 },
-  { id: "invest", label: "Investment", icon: TrendingUp },
+  { id: "invest", label: "Within 3 km", icon: Ruler },
   { id: "sources", label: "Sources", icon: Database },
 ];
 
@@ -255,14 +269,21 @@ function InvestTab({ data }: { data: Wave4Intel }) {
     key: keyof Wave4Intel["breakdown"];
     label: string;
   } | null>(null);
+  // Totals across every category Overpass answered for, with how near they are.
+  const buckets = Object.values(data.distanceBuckets);
+  const close = buckets.reduce((t, b) => t + b.close, 0);
+  const near = buckets.reduce((t, b) => t + b.near, 0);
+  const far = buckets.reduce((t, b) => t + b.far, 0);
+  const mapped = close + near + far;
+
   return (
     <div className="space-y-3">
-      <div className="glass rounded-2xl p-4">
+      <div className="glass rounded-2xl p-4" data-testid="wave4-mapped-nearby">
         <div className="flex items-center gap-2">
-          <Gauge className="h-4 w-4 text-emerald-glow" />
-          <div className="text-sm font-medium">Investment score</div>
+          <Ruler className="h-4 w-4 text-emerald-glow" />
+          <div className="text-sm font-medium">What is mapped within 3 km</div>
           <button
-            onClick={() => setProv({ key: "investment", label: "Investment (composite)" })}
+            onClick={() => setProv({ key: "investment", label: "Mapped within 3 km" })}
             className="ml-auto inline-flex items-center gap-1 rounded-full glass px-2 py-0.5 text-[10px] hover:bg-white/10"
             data-testid="wave4-provenance-investment"
           >
@@ -270,22 +291,40 @@ function InvestTab({ data }: { data: Wave4Intel }) {
           </button>
         </div>
         <div className="mt-2 flex items-end gap-3">
-          <div className="text-4xl font-semibold tracking-tight text-emerald-glow">
-            {data.scores.investment}
+          <div className="text-4xl font-semibold tracking-tight text-emerald-glow tabular-nums">
+            {mapped}
           </div>
-          <div className="text-xs text-muted-foreground pb-1">/ 100 · composite</div>
+          <div className="text-xs text-muted-foreground pb-1">
+            features mapped nearby — no score, no ranking
+          </div>
         </div>
-        <div className="mt-3 h-2 rounded-full bg-white/5 overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-primary via-accent to-emerald-glow transition-all"
-            style={{ width: `${data.scores.investment}%` }}
-          />
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          {[
+            ["Under 500 m", close],
+            ["500 m – 1.5 km", near],
+            ["Over 1.5 km", far],
+          ].map(([label, value]) => (
+            <div
+              key={String(label)}
+              className="rounded-xl border border-white/5 bg-black/20 px-3 py-2"
+            >
+              <div className="text-lg font-semibold tabular-nums">{value}</div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                {label}
+              </div>
+            </div>
+          ))}
         </div>
+        <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
+          Counted from OpenStreetMap. The search returns at most 60 features and keeps the 12
+          nearest in each category, so a busy area is undercounted — a category showing 12 means
+          twelve or more. Open the map at this point and you can count the same features yourself.
+        </p>
         <ScoreDrill
-          label="How this score is built"
+          label="What was counted"
           explain={data.breakdown.investment}
           defaultOpen
-          onProvenance={() => setProv({ key: "investment", label: "Investment (composite)" })}
+          onProvenance={() => setProv({ key: "investment", label: "Mapped within 3 km" })}
         />
       </div>
       <div className="grid grid-cols-2 gap-2">
@@ -297,7 +336,7 @@ function InvestTab({ data }: { data: Wave4Intel }) {
               <OutputIcon subject={label} />
               <ListenButton
                 label={`Listen to ${label}`}
-                text={`${label}: ${explain.score} out of 100. ${explain.note}. Confidence ${explain.confidence}. Derived from public datasets, not a valuation.`}
+                text={`${label}. ${explain.factors.map((f) => (f.value == null ? `${f.label}: not returned` : `${f.label}: ${Math.round(f.value)} ${f.unit}`)).join(". ")}. ${explain.note} Mapping coverage here is ${explain.confidence}. Counted from public open data. No score and no valuation.`}
               />
               <button
                 onClick={() => setOpenKey(open ? null : key)}
@@ -314,13 +353,32 @@ function InvestTab({ data }: { data: Wave4Intel }) {
                     <ChevronDown className="h-3 w-3 text-muted-foreground" />
                   )}
                 </div>
-                <div className="mt-1 text-2xl font-semibold">{explain.score}</div>
-                <div className="mt-1.5 h-1.5 rounded-full bg-white/5 overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-primary to-accent"
-                    style={{ width: `${explain.score}%` }}
-                  />
-                </div>
+                {/* The mark out of 100 and its filled bar stood here. What the
+                    card can show truthfully is the count it was built from —
+                    and for climate, which is not a count, nothing at all. */}
+                {key === "environment" ? (
+                  <>
+                    {/* A missing reading is an em dash, never a zero. The
+                        archive returning nothing is not a temperature. */}
+                    <div className="mt-1 text-2xl font-semibold tabular-nums">
+                      {explain.factors[0]?.value != null
+                        ? `${Math.round(explain.factors[0].value * 10) / 10}°`
+                        : "—"}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground">
+                      {explain.factors[0]?.value != null
+                        ? "mean temperature, 2010–2020"
+                        : "climate archive returned nothing"}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="mt-1 text-2xl font-semibold tabular-nums">
+                      {explain.factors.reduce((t, f) => t + (f.value ?? 0), 0)}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground">mapped within 3 km</div>
+                  </>
+                )}
               </button>
               {open && (
                 <ScoreDrill
@@ -334,9 +392,11 @@ function InvestTab({ data }: { data: Wave4Intel }) {
         })}
       </div>
       <div className="text-[11px] text-muted-foreground px-1 leading-relaxed">
-        Composite = 0.35·access + 0.35·infra + 0.15·environment + 0.15·development. Derived from OSM
-        facility density (3&nbsp;km) and Open-Meteo climate normals. AI-generated interpretation,
-        not a valuation.
+        These are counts of features mapped in OpenStreetMap within 3&nbsp;km, and climate normals
+        from the Open-Meteo archive (EC-Earth3P-HR, 2010–2020). They are not weighted, combined or
+        ranked, and HALISIA publishes no investment figure: it holds no price, rent, yield, sale or
+        planning approval for this point. A mapped facility is not proof that it is open, staffed or
+        able to serve you.
       </div>
       <ProvenanceModal
         open={!!prov}
@@ -373,19 +433,22 @@ function ScoreDrill({
       </button>
       {open && (
         <div className="mt-2 space-y-1.5">
-          <div className="text-[10px] font-mono text-cyan-glow">{explain.formula}</div>
+          {/* A monospace line printed the arithmetic — "25 + transit·6 + fuel·4"
+              — which showed the working without the working meaning anything.
+              In its place: what was counted, and where. */}
+          <div className="text-[10px] leading-relaxed text-cyan-glow">{explain.method}</div>
           <ul className="space-y-1">
             {explain.factors.map((f) => (
-              <li key={f.label} className="flex items-center justify-between text-[11px]">
+              <li key={f.label} className="flex items-start justify-between gap-2 text-[11px]">
                 <span className="text-muted-foreground">{f.label}</span>
-                <span className="tabular-nums">
-                  {typeof f.value === "number" ? Math.round(f.value * 10) / 10 : f.value}{" "}
-                  <span className="text-[10px] text-muted-foreground">{f.weight}</span>
+                <span className="text-right tabular-nums">
+                  {f.value == null ? "—" : Math.round(f.value * 10) / 10}{" "}
+                  <span className="text-[10px] text-muted-foreground">{f.unit}</span>
                 </span>
               </li>
             ))}
           </ul>
-          <div className="flex items-center justify-between pt-1 text-[10px]">
+          <div className="flex items-start justify-between gap-2 pt-1 text-[10px]">
             <span className="text-muted-foreground">{explain.note}</span>
             <span
               className={
@@ -396,7 +459,7 @@ function ScoreDrill({
                     : "text-muted-foreground"
               }
             >
-              confidence: {explain.confidence}
+              mapping coverage: {explain.confidence}
             </span>
           </div>
           {onProvenance && (
@@ -449,9 +512,9 @@ function SourcesTab({ data }: { data: Wave4Intel }) {
         ))}
       </ul>
       <p className="text-[10px] text-muted-foreground leading-relaxed">
-        Live sources feed this dashboard on every search. Planned sources are not connected: no code
-        queries them, nothing on this page uses them, and listing them here is a statement of intent
-        rather than of capability.
+        Live sources feed this dashboard on every search. Planned sources are
+        not connected: no code queries them, nothing on this page uses them, and
+        listing them here is a statement of intent rather than of capability.
       </p>
     </div>
   );

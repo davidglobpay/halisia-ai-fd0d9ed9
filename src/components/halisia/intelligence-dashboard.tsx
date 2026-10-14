@@ -607,7 +607,7 @@ function OverviewTab({
           sub={intel.airQuality?.category ?? "Universal AQI"}
           icon={Wind}
           tone="from-primary to-emerald-glow"
-          source="Google Air Quality API \u00b7 read now"
+          source="Google Air Quality API · read now"
         />
       </div>
       {narrative && narrative.paragraphs[0] && (
@@ -641,16 +641,28 @@ function EnvironmentTab({ intel, loading }: { intel?: LocationIntel; loading: bo
             Dominant pollutant: {intel.airQuality.dominant}
           </div>
         )}
-        <div className="mt-3 h-2 rounded-full bg-white/5 overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-destructive via-amber-glow to-emerald-glow"
-            style={{ width: `${Math.min(100, Math.max(0, aqi ?? 0))}%` }}
-          />
-        </div>
-        <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
-          <span>Hazardous</span>
-          <span>Excellent</span>
-        </div>
+        {/* The bar was drawn with `aqi ?? 0`, so a point where the Air Quality
+            API returned nothing rendered an empty bar pinned at the Hazardous
+            end — an absent reading shown as the worst possible one. No reading,
+            no bar. */}
+        {aqi != null ? (
+          <>
+            <div className="mt-3 h-2 rounded-full bg-white/5 overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-destructive via-amber-glow to-emerald-glow"
+                style={{ width: `${Math.min(100, Math.max(0, aqi))}%` }}
+              />
+            </div>
+            <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
+              <span>Hazardous</span>
+              <span>Excellent</span>
+            </div>
+          </>
+        ) : (
+          <p className="mt-3 text-[11px] text-muted-foreground">
+            The Air Quality API returned nothing for this point, so there is no reading to show.
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-2.5">
@@ -862,16 +874,14 @@ function AITab({ narrative, loading }: { narrative?: NarrativeOutput; loading: b
         />
       </div>
 
-      {/* Suitability scores */}
+      {/* Suitability — the written read, without the number it used to carry */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <ScoreCard
+        <SuitabilityCard
           title="Family suitability"
-          score={narrative.familySuitability.score}
           note={narrative.familySuitability.note}
         />
-        <ScoreCard
+        <SuitabilityCard
           title="Business suitability"
-          score={narrative.businessSuitability.score}
           note={narrative.businessSuitability.note}
         />
       </div>
@@ -1007,22 +1017,32 @@ function WhyList({
   );
 }
 
-function ScoreCard({ title, score, note }: { title: string; score: number; note: string }) {
-  const pct = Math.max(0, Math.min(100, score));
+/**
+ * Suitability, as a written read rather than a mark.
+ *
+ * This was `ScoreCard`, and it printed a number out of 100 with a filled bar
+ * above the note. The number came from the language model that wrote the note:
+ * it was an opinion rendered in the typography of a measurement, and the bar
+ * gave it the authority of a gauge. The model's reasoning is worth reading and
+ * is kept. Its number is not a quantity of anything and is gone.
+ */
+function SuitabilityCard({ title, note }: { title: string; note: string }) {
   return (
     <div className="glass rounded-2xl p-4" data-output-card>
       <OutputTools label={title} />
-      <div className="flex items-center justify-between">
-        <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{title}</div>
-        <div className="text-lg font-semibold tracking-tight">{pct}</div>
-      </div>
-      <div className="mt-2 h-1.5 rounded-full bg-white/10 overflow-hidden">
-        <div
-          className="h-full rounded-full bg-gradient-to-r from-accent to-emerald-glow transition-all"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      {note && <div className="mt-2 text-[12px] text-muted-foreground leading-snug">{note}</div>}
+      <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{title}</div>
+      {note ? (
+        <p className="mt-1.5 text-[13px] leading-relaxed text-foreground/90">{note}</p>
+      ) : (
+        <p className="mt-1.5 text-[13px] text-muted-foreground">
+          Nothing written for this location.
+        </p>
+      )}
+      <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
+        Worked out by a language model from the readings above. Nothing observed this, and no
+        dataset holds it — treat it as a question to put to someone who knows the area, not a
+        finding.
+      </p>
     </div>
   );
 }

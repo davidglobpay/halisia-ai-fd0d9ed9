@@ -2,9 +2,17 @@ import { X, ExternalLink, ShieldCheck, Download } from "lucide-react";
 import type { ScoreExplain } from "@/lib/wave4-intel.functions";
 
 /**
- * Provenance modal for a Wave 4 score category. Lays out the exact formula,
- * every contributing factor with its raw value, weight and confidence, and
- * links to the underlying open datasets.
+ * Provenance for one group of Wave 4 counts.
+ *
+ * It used to open on the group's score out of 100 with the arithmetic that
+ * produced it printed underneath in monospace. Showing the formula was meant
+ * as candour, but it answered the wrong question: a reader could see that a
+ * transit stop was multiplied by six and still had no way to find out why six,
+ * because there was no why. The score is gone and so is the arithmetic.
+ *
+ * What is laid out instead is what was counted, over what area, from which
+ * source, with every raw figure and its unit, how well mapped the area is, and
+ * links to the datasets so the whole thing can be checked at source.
  */
 export type ProvenanceSource = {
   label: string;
@@ -28,10 +36,13 @@ export function ProvenanceModal({
   contextNote?: string;
 }) {
   if (!open) return null;
+  // Coverage describes the dataset here, not the place. Thin mapping is not
+  // evidence that there is little nearby; it is evidence that little has been
+  // mapped, and from a screen those two cannot be told apart.
   const confidenceCopy: Record<ScoreExplain["confidence"], string> = {
-    high: "High — dense open-data coverage supports this reading.",
-    medium: "Medium — a workable sample was returned but some inputs are sparse.",
-    low: "Low — limited public data at this coordinate; treat as directional only.",
+    high: "High — this area is densely mapped, so the counts are likely close to complete.",
+    medium: "Medium — a workable sample came back, but some categories are sparsely mapped.",
+    low: "Low — little is mapped at this coordinate. That may mean little is there, or that nobody has mapped it. Go and look.",
   };
   const confTone: Record<ScoreExplain["confidence"], string> = {
     high: "text-emerald-glow",
@@ -47,15 +58,19 @@ export function ProvenanceModal({
 
   const buildPayload = () => ({
     title,
-    score: explain.score,
-    formula: explain.formula,
+    // `score` is exported as null rather than dropped, so an export taken
+    // before this change and one taken after line up field for field and the
+    // difference is visible rather than silent.
+    score: null,
+    method: explain.method,
+    coverage: explain.confidence,
     confidence: explain.confidence,
     confidenceWording: confidenceCopy[explain.confidence],
     note: explain.note,
     factors: explain.factors.map((f) => ({
       label: f.label,
       value: f.value,
-      weight: f.weight,
+      unit: f.unit,
     })),
     sources: sources.map((s) => ({
       label: s.label,
@@ -90,12 +105,11 @@ export function ProvenanceModal({
       return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
     };
     const rows: string[] = [];
-    rows.push("section,key,value,weight,confidence");
-    rows.push(`score,${esc(p.title)},${esc(p.score)},,${esc(p.confidence)}`);
-    rows.push(`formula,${esc(p.title)},${esc(p.formula)},,`);
-    rows.push(`confidence,${esc(p.title)},${esc(p.confidenceWording)},,${esc(p.confidence)}`);
+    rows.push("section,key,value,unit,confidence");
+    rows.push(`method,${esc(p.title)},${esc(p.method)},,`);
+    rows.push(`coverage,${esc(p.title)},${esc(p.confidenceWording)},,${esc(p.confidence)}`);
     for (const f of p.factors) {
-      rows.push(`factor,${esc(f.label)},${esc(f.value)},${esc(f.weight)},`);
+      rows.push(`factor,${esc(f.label)},${esc(f.value)},${esc(f.unit)},`);
     }
     for (const s of p.sources) {
       rows.push(`source,${esc(s.label)},${esc(s.url)},,${esc(s.status)}`);
@@ -153,19 +167,20 @@ export function ProvenanceModal({
 
         <div className="p-4 space-y-3 max-h-[70vh] overflow-y-auto">
           <div className="rounded-xl border border-white/10 bg-black/30 p-3">
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Score</div>
-            <div className="mt-1 flex items-end gap-2">
-              <div className="text-3xl font-semibold">{explain.score}</div>
-              <div className="text-xs text-muted-foreground pb-1">/ 100</div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              How this was obtained
             </div>
-            <div className="mt-2 font-mono text-[11px] text-cyan-glow break-words">
-              {explain.formula}
-            </div>
+            <p className="mt-1.5 text-[12px] leading-relaxed text-foreground/90">
+              {explain.method}
+            </p>
+            <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+              No score is published for this group. Nothing below is weighted, combined or ranked.
+            </p>
           </div>
 
           <div>
             <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
-              Factor-level computation
+              What was counted
             </div>
             <ul className="space-y-1.5">
               {explain.factors.map((f) => (
@@ -176,10 +191,8 @@ export function ProvenanceModal({
                   <div className="flex items-center justify-between">
                     <span className="text-foreground/90">{f.label}</span>
                     <span className="tabular-nums">
-                      {typeof f.value === "number" ? Math.round(f.value * 10) / 10 : f.value}
-                      <span className="text-[10px] text-muted-foreground ml-1.5">
-                        weight {f.weight}
-                      </span>
+                      {f.value == null ? "—" : Math.round(f.value * 10) / 10}
+                      <span className="text-[10px] text-muted-foreground ml-1.5">{f.unit}</span>
                     </span>
                   </div>
                 </li>
@@ -191,7 +204,7 @@ export function ProvenanceModal({
             <div className="flex items-center gap-2">
               <ShieldCheck className={`h-4 w-4 ${confTone[explain.confidence]}`} />
               <div className="text-xs font-medium">
-                Confidence:{" "}
+                Mapping coverage:{" "}
                 <span className={confTone[explain.confidence]}>
                   {explain.confidence.toUpperCase()}
                 </span>
