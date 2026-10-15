@@ -17,7 +17,8 @@ import { readFileSync } from "node:fs";
 test("Wave 4 provenance export payload matches the drill-down factors, units, coverage & sources", async ({
   page,
 }) => {
-  await page.goto("/explore?q=Nairobi");
+  await page.addInitScript(() => localStorage.setItem("halisia:navguide:v1:seen", "1"));
+  await page.goto("/explore?q=-1.292100%2C36.821900");
   await page.getByTestId("tab-wave4").click();
   await expect(page.getByTestId("wave4-panel")).toBeVisible({ timeout: 30_000 });
   await page.getByTestId("wave4-tab-invest").click();
@@ -98,7 +99,8 @@ test("Wave 4 provenance export payload matches the drill-down factors, units, co
 test("PDF dossier download progress advances from low to 100% with aria-live status", async ({
   page,
 }) => {
-  await page.goto("/explore?q=Nairobi");
+  await page.addInitScript(() => localStorage.setItem("halisia:navguide:v1:seen", "1"));
+  await page.goto("/explore?q=-1.292100%2C36.821900");
   await expect(page.getByTestId("active-address")).toContainText(/Nairobi/i, { timeout: 20_000 });
 
   const status = page.getByTestId("download-dossier-progress");
