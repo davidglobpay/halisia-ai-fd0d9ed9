@@ -407,8 +407,7 @@ export function coverage(
         {
           label: "Annual rainfall",
           value: climate.annualRainfallMm,
-          unit:
-            climate.annualRainfallMm != null ? "mm per year, 2010–2020 mean" : "not returned",
+          unit: climate.annualRainfallMm != null ? "mm per year, 2010–2020 mean" : "not returned",
         },
       ],
       confidence: environmentConfidence,

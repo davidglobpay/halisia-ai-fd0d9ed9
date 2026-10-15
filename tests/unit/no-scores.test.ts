@@ -76,10 +76,10 @@ describe("no score comes back, for any persona", () => {
       ...d.modules.flatMap((m) => [m.label, ...m.reasons, ...m.limitations, m.nextStep]),
     ].join("  ");
 
-  // Google's own air-quality category is a measured value passed through
-  // verbatim — "Good air quality" is theirs, read from the Air Quality API and
-  // named as such. It is removed before the band check so the check tests what
-  // HALISIA says about the place, not what a named source said about the air.
+    // Google's own air-quality category is a measured value passed through
+    // verbatim — "Good air quality" is theirs, read from the Air Quality API and
+    // named as such. It is removed before the band check so the check tests what
+    // HALISIA says about the place, not what a named source said about the air.
     const judged = text.split(INTEL.airQuality.category).join(" ");
 
     // A mark out of a hundred, however it is spaced.

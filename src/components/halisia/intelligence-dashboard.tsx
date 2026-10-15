@@ -876,14 +876,8 @@ function AITab({ narrative, loading }: { narrative?: NarrativeOutput; loading: b
 
       {/* Suitability — the written read, without the number it used to carry */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <SuitabilityCard
-          title="Family suitability"
-          note={narrative.familySuitability.note}
-        />
-        <SuitabilityCard
-          title="Business suitability"
-          note={narrative.businessSuitability.note}
-        />
+        <SuitabilityCard title="Family suitability" note={narrative.familySuitability.note} />
+        <SuitabilityCard title="Business suitability" note={narrative.businessSuitability.note} />
       </div>
 
       {/* Advice columns */}
