@@ -114,7 +114,12 @@ export function Wave4Panel({ lat, lng }: { lat: number; lng: number }) {
         </div>
       </div>
 
-      {q.isLoading || !q.data ? (
+      {q.isError ? (
+        <div role="alert" className="glass rounded-2xl p-4 text-xs text-muted-foreground">
+          Public mapping data is unavailable. Nearby facilities and mapping coverage are not
+          assessed. This does not mean that no facilities exist. Use Refresh to try again.
+        </div>
+      ) : q.isLoading || !q.data ? (
         <div className="glass rounded-2xl p-6 flex items-center justify-center text-xs text-muted-foreground gap-2">
           <Loader2 className="h-4 w-4 animate-spin text-accent" />
           Fetching public open-data (OSM · Nominatim · Open-Meteo)…

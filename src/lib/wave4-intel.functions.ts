@@ -488,6 +488,12 @@ export const getWave4Intel = createServerFn({ method: "POST" })
       fetchClimate(data.lat, data.lng),
     ]);
 
+    if (!ovp || !Array.isArray(ovp.elements)) {
+      throw new Error(
+        "Public mapping provider unavailable. Nearby facility counts are not assessed; no absence of facilities is established.",
+      );
+    }
+
     const admin = classifyAdmin(nom);
     const facilities = extractFacilities(ovp, { lat: data.lat, lng: data.lng });
     const climate: Wave4Intel["climate"] = {
