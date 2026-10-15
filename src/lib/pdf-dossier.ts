@@ -1,3 +1,4 @@
+import { optionalDeadline } from "@/lib/optional-deadline";
 import jsPDF from "jspdf";
 import { fetchStaticMapCached } from "@/lib/static-map-cache";
 import {
@@ -61,10 +62,10 @@ export async function generateLocationDossier(opts: {
 
   // Fetch evidence maps in parallel — never let a static-map failure block the PDF.
   const settled = await Promise.allSettled([
-    fetchStaticMapCached({ lat, lng, layer: "roadmap-light", zoom: 15 }),
-    fetchStaticMapCached({ lat, lng, layer: "terrain", zoom: 13 }),
-    fetchStaticMapCached({ lat, lng, layer: "hybrid", zoom: 16 }),
-    fetchStaticMapCached({ lat, lng, layer: "satellite", zoom: 17 }),
+    optionalDeadline(fetchStaticMapCached({ lat, lng, layer: "roadmap-light", zoom: 15 }), 6000),
+    optionalDeadline(fetchStaticMapCached({ lat, lng, layer: "terrain", zoom: 13 }), 6000),
+    optionalDeadline(fetchStaticMapCached({ lat, lng, layer: "hybrid", zoom: 16 }), 6000),
+    optionalDeadline(fetchStaticMapCached({ lat, lng, layer: "satellite", zoom: 17 }), 6000),
   ]);
   let mapsFailed = 0;
   let lastError: { error: string; status?: number } | null = null;
@@ -87,7 +88,7 @@ export async function generateLocationDossier(opts: {
   progress(35, "Aggregating public open data…");
   let wave4: Wave4Intel | null = null;
   try {
-    wave4 = await getWave4Intel({ data: { lat, lng } });
+    wave4 = await optionalDeadline(getWave4Intel({ data: { lat, lng } }), 18000);
   } catch {
     wave4 = null;
   }
@@ -97,7 +98,10 @@ export async function generateLocationDossier(opts: {
   progress(55, "Sampling ASTER elevation grid…");
   let terrainGrid: ElevationGrid | null = null;
   try {
-    terrainGrid = await fetchElevationGrid(lat, lng, 9, 0.02, undefined, "pdf-terrain");
+    terrainGrid = await optionalDeadline(
+      fetchElevationGrid(lat, lng, 9, 0.02, undefined, "pdf-terrain"),
+      6000,
+    );
   } catch {
     terrainGrid = null;
   }
@@ -120,7 +124,7 @@ export async function generateLocationDossier(opts: {
 
   // Decode the mark before any page is drawn. Never throws; a logo that will
   // not load must not cost the user their download.
-  runMark = await prepareMark(halisiaMark.url);
+  runMark = await optionalDeadline(prepareMark(halisiaMark.url), 3000).catch(() => null);
 
   // ---------- Page 1: cover ----------
   doc.setFillColor(...bg);
@@ -189,13 +193,15 @@ export async function generateLocationDossier(opts: {
     doc.setTextColor(...ink);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
-    doc.text("Little is mapped here", M + 20, 172);
+    doc.text(wave4 ? "Little is mapped here" : "Mapping data unavailable", M + 20, 172);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(...muted);
     doc.text(
       doc.splitTextToSize(
-        "That may mean little is there, or that nobody has mapped it. From open data alone those cannot be told apart — go and look.",
+        wave4
+          ? "Sparse mapping does not establish what exists on site. Check the site and original records."
+          : "The public provider did not return usable data. Nearby facilities and mapping coverage are not assessed.",
         W - M * 2 - 240,
       ),
       M + 20,

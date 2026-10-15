@@ -263,11 +263,11 @@ function Explore() {
       }
     } catch (e) {
       console.error(e);
+      setPdfPct(0);
       setPdfError("Couldn't generate the PDF. Please try again.");
     } finally {
       setDownloading(false);
       setPdfStage("");
-      setPdfPct(0);
     }
   };
 
@@ -509,7 +509,17 @@ function Explore() {
                 </>
               )}
             </button>
-            {downloading && (
+            {!downloading && pdfPct === 100 && (
+              <div
+                role="status"
+                aria-live="polite"
+                data-testid="download-dossier-progress"
+                className="mb-2 text-xs text-muted-foreground"
+              >
+                PDF saved · 100%
+              </div>
+            )}
+            {(downloading || pdfPct === 100) && (
               <div
                 className="mb-2 h-1 w-full rounded-full bg-white/5 overflow-hidden"
                 role="progressbar"
