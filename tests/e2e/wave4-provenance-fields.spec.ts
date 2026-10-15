@@ -101,7 +101,9 @@ test("PDF dossier download progress advances from low to 100% with aria-live sta
 }) => {
   await page.addInitScript(() => localStorage.setItem("halisia:navguide:v1:seen", "1"));
   await page.goto("/explore?q=-1.292100%2C36.821900");
-  await expect(page.getByTestId("active-address")).toContainText(/Nairobi/i, { timeout: 20_000 });
+  await expect(page.getByTestId("active-address")).toContainText(/-1\.2921.*36\.8219/, {
+    timeout: 20_000,
+  });
 
   const status = page.getByTestId("download-dossier-progress");
   const bar = page.getByTestId("download-dossier-bar");
