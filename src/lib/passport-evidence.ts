@@ -52,7 +52,8 @@ export const CHAPTERS: Array<{ id: ChapterId; title: string; blurb: string }> = 
   {
     id: "market",
     title: "Market & investment",
-    blurb: "Counts of what is mapped nearby, withheld where mapping is thin. No scores, no return predictions.",
+    blurb:
+      "Counts of what is mapped nearby, withheld where mapping is thin. No scores, no return predictions.",
   },
   { id: "trust", title: "Legal, finance & trust", blurb: "What has and has not been checked." },
 ];
@@ -558,7 +559,9 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
       s && s.factors.length
         ? s.factors
             .map((f) =>
-              f.value == null ? `${f.label} not returned` : `${f.label} ${Math.round(f.value)} ${f.unit}`,
+              f.value == null
+                ? `${f.label} not returned`
+                : `${f.label} ${Math.round(f.value)} ${f.unit}`,
             )
             .join("; ") || null
         : null;

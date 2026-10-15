@@ -1,7 +1,9 @@
 import { test, expect } from "@playwright/test";
 
 test("Wave 4 panel renders, refreshes, and drills down", async ({ page }) => {
-  await page.goto("/explore?q=Nairobi");
+  await page.addInitScript(() => localStorage.setItem("halisia:navguide:v1:seen", "1"));
+  await page.goto("/explore?q=-1.292100%2C36.821900");
+  await page.getByRole("button", { name: "Wave 4 · Public data", exact: true }).click();
   const panel = page.getByTestId("wave4-panel");
   await expect(panel).toBeVisible({ timeout: 20_000 });
 

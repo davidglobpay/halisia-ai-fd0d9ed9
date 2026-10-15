@@ -1,3 +1,4 @@
+import { fetchPublicJson } from "@/lib/public-json";
 import { createServerFn } from "@tanstack/react-start";
 
 /**
@@ -159,9 +160,9 @@ function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: num
 async function fetchNominatim(lat: number, lng: number) {
   const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=14&addressdetails=1&countrycodes=ke`;
   try {
-    const res = await fetch(url, { headers: { "User-Agent": UA, Accept: "application/json" } });
-    if (!res.ok) return null;
-    return (await res.json()) as NominatimResp;
+    return await fetchPublicJson<NominatimResp>(url, {
+      headers: { "User-Agent": UA, Accept: "application/json" },
+    });
   } catch {
     return null;
   }
@@ -179,13 +180,11 @@ async function fetchOverpass(lat: number, lng: number, radiusM = 3000) {
   ];
   for (const ep of endpoints) {
     try {
-      const res = await fetch(ep, {
+      return await fetchPublicJson<OverpassResp>(ep, {
         method: "POST",
         headers: { "Content-Type": "text/plain", "User-Agent": UA },
         body: query,
       });
-      if (!res.ok) continue;
-      return (await res.json()) as OverpassResp;
     } catch {
       /* try next */
     }
@@ -197,11 +196,9 @@ async function fetchClimate(lat: number, lng: number) {
   // 2010–2020 normals from the Open-Meteo climate archive.
   const url = `https://climate-api.open-meteo.com/v1/climate?latitude=${lat}&longitude=${lng}&start_date=2010-01-01&end_date=2020-12-31&models=EC_Earth3P_HR&daily=temperature_2m_mean,precipitation_sum`;
   try {
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    const j = (await res.json()) as {
+    const j = await fetchPublicJson<{
       daily?: { temperature_2m_mean?: number[]; precipitation_sum?: number[] };
-    };
+    }>(url);
     const temps = j.daily?.temperature_2m_mean ?? [];
     const rains = j.daily?.precipitation_sum ?? [];
     if (!temps.length || !rains.length) return null;
@@ -407,8 +404,7 @@ export function coverage(
         {
           label: "Annual rainfall",
           value: climate.annualRainfallMm,
-          unit:
-            climate.annualRainfallMm != null ? "mm per year, 2010–2020 mean" : "not returned",
+          unit: climate.annualRainfallMm != null ? "mm per year, 2010–2020 mean" : "not returned",
         },
       ],
       confidence: environmentConfidence,
