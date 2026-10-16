@@ -11,6 +11,8 @@ export default tseslint.config(
       "dist",
       ".output",
       ".vinxi",
+      // Preview tooling is generated during builds, not maintained app source.
+      ".lovable/preview-supabase.config.ts",
       "src/integrations/supabase/previewAuthStorage.ts",
       "src/integrations/supabase/types.ts",
     ],
