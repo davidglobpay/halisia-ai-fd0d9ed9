@@ -33,4 +33,29 @@ describe("public provider deadline", () => {
     await result;
     expect(vi.getTimerCount()).toBe(0);
   });
+  it("keeps the deadline active while the response body stalls", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_url, init) => ({
+        ok: true,
+        json: () =>
+          new Promise((_resolve, reject) => {
+            init.signal.addEventListener("abort", () => reject(new Error("body aborted")));
+          }),
+      })),
+    );
+    const result = expect(fetchPublicJson("https://example.invalid/test", {}, 100)).rejects.toThrow(
+      "body aborted",
+    );
+    await vi.advanceTimersByTimeAsync(100);
+    await result;
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  it("rejects malformed provider JSON and releases its timer", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("not json")));
+    await expect(fetchPublicJson("https://example.invalid/test")).rejects.toThrow();
+    expect(vi.getTimerCount()).toBe(0);
+  });
 });
