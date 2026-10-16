@@ -62,7 +62,10 @@ async function isolate(page: Page, fail = false) {
     if (url.pathname.endsWith("leaflet.css")) {
       await route.fulfill({
         contentType: "text/css",
-        body: readFileSync("node_modules/leaflet/dist/leaflet.css", "utf8"),
+        body: readFileSync(
+          new URL("../../node_modules/leaflet/dist/leaflet.css", import.meta.url),
+          "utf8",
+        ),
       });
     } else if (url.pathname.includes("/rest/v1/")) {
       await route.fulfill({ contentType: "application/json", body: "[]" });
@@ -90,7 +93,10 @@ for (const width of [1280, 360]) {
     const counts = await isolate(page);
     const cards = page.getByTestId("passport-map-evidence");
     const school = cards.locator('[data-evidence-id="acc-schools"]');
-    await expect(school).toContainText("Synthetic test school — not real evidence");
+    // The first visit can compile the lazy Passport chunk before requesting the fixture.
+    await expect(school).toContainText("Synthetic test school — not real evidence", {
+      timeout: 20_000,
+    });
     await expect(school).toContainText("Capture date unavailable");
     await expect(school).toContainText("Accuracy unavailable");
     await expect(cards.locator('[data-evidence-id="pop"]')).toContainText("Open-data indicator");
