@@ -170,6 +170,14 @@ describe("every output is classed by what can be said about it", () => {
     expect(t.reduce((s, x) => s + x.count, 0)).toBe(OUTPUT_CLASSES.length);
     expect(outputsOfClass("visible")).toHaveLength(0);
   });
+  it("does not describe the empty imagery class as observed physical proof", () => {
+    expect(classMeta("visible").meaning).toMatch(/no imagery-confirmed observations/);
+    expect(classMeta("visible").meaning).not.toMatch(/it is there in the/i);
+  });
+  it("does not retain an elevation-derived flood output in the catalogue", () => {
+    expect(classOf("flood-proxy")).toBe("unprovable");
+    expect(OUTPUT_CLASSES.find((x) => x.id === "flood-proxy")?.source).toBeNull();
+  });
 
   it("opens by denying a score and pointing at the registry", () => {
     expect(EVIDENCE_LEAD).toMatch(/publishes no score/i);

@@ -1,0 +1,232 @@
+{
+  "columns": [
+    {
+      "column_default": "gen_random_uuid()",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "udt_name": "uuid"
+    },
+    {
+      "column_default": null,
+      "column_name": "applicant_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "udt_name": "uuid"
+    },
+    {
+      "column_default": null,
+      "column_name": "property_id",
+      "data_type": "uuid",
+      "is_nullable": "YES",
+      "udt_name": "uuid"
+    },
+    {
+      "column_default": null,
+      "column_name": "borrower_name",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "udt_name": "text"
+    },
+    {
+      "column_default": null,
+      "column_name": "borrower_email",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "udt_name": "text"
+    },
+    {
+      "column_default": null,
+      "column_name": "borrower_phone",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "udt_name": "text"
+    },
+    {
+      "column_default": null,
+      "column_name": "monthly_income",
+      "data_type": "numeric",
+      "is_nullable": "YES",
+      "udt_name": "numeric"
+    },
+    {
+      "column_default": null,
+      "column_name": "employment_status",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "udt_name": "text"
+    },
+    {
+      "column_default": null,
+      "column_name": "requested_amount",
+      "data_type": "numeric",
+      "is_nullable": "NO",
+      "udt_name": "numeric"
+    },
+    {
+      "column_default": "'KES'::text",
+      "column_name": "currency",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "udt_name": "text"
+    },
+    {
+      "column_default": "'purchase'::financing_purpose",
+      "column_name": "purpose",
+      "data_type": "USER-DEFINED",
+      "is_nullable": "NO",
+      "udt_name": "financing_purpose"
+    },
+    {
+      "column_default": null,
+      "column_name": "tenure_months",
+      "data_type": "integer",
+      "is_nullable": "YES",
+      "udt_name": "int4"
+    },
+    {
+      "column_default": null,
+      "column_name": "property_value",
+      "data_type": "numeric",
+      "is_nullable": "YES",
+      "udt_name": "numeric"
+    },
+    {
+      "column_default": null,
+      "column_name": "property_address",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "udt_name": "text"
+    },
+    {
+      "column_default": null,
+      "column_name": "notes",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "udt_name": "text"
+    },
+    {
+      "column_default": null,
+      "column_name": "ai_summary",
+      "data_type": "jsonb",
+      "is_nullable": "YES",
+      "udt_name": "jsonb"
+    },
+    {
+      "column_default": "'draft'::financing_status",
+      "column_name": "status",
+      "data_type": "USER-DEFINED",
+      "is_nullable": "NO",
+      "udt_name": "financing_status"
+    },
+    {
+      "column_default": null,
+      "column_name": "lender_name",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "udt_name": "text"
+    },
+    {
+      "column_default": "now()",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "udt_name": "timestamptz"
+    },
+    {
+      "column_default": "now()",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "udt_name": "timestamptz"
+    },
+    {
+      "column_default": null,
+      "column_name": "shared_report_url",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "udt_name": "text"
+    },
+    {
+      "column_default": "'[]'::jsonb",
+      "column_name": "documents",
+      "data_type": "jsonb",
+      "is_nullable": "NO",
+      "udt_name": "jsonb"
+    },
+    {
+      "column_default": null,
+      "column_name": "consultation_requested_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "udt_name": "timestamptz"
+    },
+    {
+      "column_default": null,
+      "column_name": "readiness",
+      "data_type": "jsonb",
+      "is_nullable": "YES",
+      "udt_name": "jsonb"
+    }
+  ],
+  "grants": [
+    { "grantee": "anon", "privilege_type": "INSERT" },
+    { "grantee": "anon", "privilege_type": "SELECT" },
+    { "grantee": "anon", "privilege_type": "UPDATE" },
+    { "grantee": "anon", "privilege_type": "DELETE" },
+    { "grantee": "anon", "privilege_type": "TRUNCATE" },
+    { "grantee": "anon", "privilege_type": "REFERENCES" },
+    { "grantee": "anon", "privilege_type": "TRIGGER" },
+    { "grantee": "authenticated", "privilege_type": "INSERT" },
+    { "grantee": "authenticated", "privilege_type": "SELECT" },
+    { "grantee": "authenticated", "privilege_type": "UPDATE" },
+    { "grantee": "authenticated", "privilege_type": "DELETE" },
+    { "grantee": "authenticated", "privilege_type": "TRUNCATE" },
+    { "grantee": "authenticated", "privilege_type": "REFERENCES" },
+    { "grantee": "authenticated", "privilege_type": "TRIGGER" },
+    { "grantee": "service_role", "privilege_type": "INSERT" },
+    { "grantee": "service_role", "privilege_type": "SELECT" },
+    { "grantee": "service_role", "privilege_type": "UPDATE" },
+    { "grantee": "service_role", "privilege_type": "DELETE" },
+    { "grantee": "service_role", "privilege_type": "TRUNCATE" },
+    { "grantee": "service_role", "privilege_type": "REFERENCES" },
+    { "grantee": "service_role", "privilege_type": "TRIGGER" }
+  ],
+  "policies": [
+    {
+      "cmd": "ALL",
+      "permissive": "PERMISSIVE",
+      "policyname": "Applicant manages own financing applications",
+      "qual": "(auth.uid() = applicant_id)",
+      "roles": ["authenticated"],
+      "with_check": "(auth.uid() = applicant_id)"
+    },
+    {
+      "cmd": "ALL",
+      "permissive": "RESTRICTIVE",
+      "policyname": "halisia_active_account",
+      "qual": "halisia_account_active()",
+      "roles": ["authenticated"],
+      "with_check": "halisia_account_active()"
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "halisia_master_admin_read",
+      "qual": "has_role(auth.uid(), 'administrator'::app_role)",
+      "roles": ["authenticated"],
+      "with_check": null
+    }
+  ],
+  "triggers": [
+    {
+      "definition": "CREATE TRIGGER halisia_guard_financing_status BEFORE UPDATE ON public.financing_applications FOR EACH ROW EXECUTE FUNCTION halisia_private.guard_financing_status()"
+    },
+    {
+      "definition": "CREATE TRIGGER halisia_reject_suspended_write BEFORE INSERT OR DELETE OR UPDATE ON public.financing_applications FOR EACH ROW EXECUTE FUNCTION halisia_private.reject_suspended_write()"
+    },
+    {
+      "definition": "CREATE TRIGGER trg_financing_updated_at BEFORE UPDATE ON public.financing_applications FOR EACH ROW EXECUTE FUNCTION set_updated_at()"
+    }
+  ]
+}

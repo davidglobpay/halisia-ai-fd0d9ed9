@@ -44,10 +44,10 @@ export type ClassMeta = {
 export const EVIDENCE_CLASSES: readonly ClassMeta[] = [
   {
     id: "visible",
-    label: "You can see this",
+    label: "Imagery-confirmed observations",
     meaning:
-      "It is there in the satellite, aerial or street imagery of this place. Open the map and look for yourself.",
-    action: "Check it on the imagery before you rely on it.",
+      "Reserved for findings explicitly checked against imagery of this place. The current output catalogue claims no imagery-confirmed observations.",
+    action: "Do not treat a dataset record or map marker as an imagery-confirmed finding.",
     mappable: true,
     rank: 0,
   },
@@ -227,9 +227,9 @@ export const OUTPUT_CLASSES: readonly OutputDescriptor[] = [
   // --- inferred: a rule produced it; nothing observed it ---
   {
     id: "flood-proxy",
-    label: "Flood proxy",
-    cls: "inferred",
-    source: "Elevation bands only — not a flood model",
+    label: "Flood risk not assessed",
+    cls: "unprovable",
+    source: null,
   },
   {
     id: "erosion",

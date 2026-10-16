@@ -1,5 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { applicantFinancingPatch } from "@/lib/financing-input";
+export { APPLICANT_FINANCING_STATUSES } from "@/lib/financing-input";
 
 export type FinancingRow = Database["public"]["Tables"]["financing_applications"]["Row"];
 export type FinancingInsert = Database["public"]["Tables"]["financing_applications"]["Insert"];
@@ -54,7 +56,7 @@ export async function createFinancing(
   if (!u.user) throw new Error("Sign in to start a financing application");
   const { data, error } = await supabase
     .from("financing_applications")
-    .insert({ ...input, applicant_id: u.user.id })
+    .insert({ ...input, applicant_id: u.user.id, status: "draft" })
     .select()
     .single();
   if (error) throw error;
@@ -67,7 +69,7 @@ export async function updateFinancing(
 ): Promise<FinancingRow> {
   const { data, error } = await supabase
     .from("financing_applications")
-    .update(patch)
+    .update(applicantFinancingPatch(patch))
     .eq("id", id)
     .select()
     .single();

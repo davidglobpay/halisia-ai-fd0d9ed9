@@ -1,0 +1,30 @@
+[
+  {
+    "config": ["search_path=\"\""],
+    "definition": "CREATE OR REPLACE FUNCTION public.halisia_account_active()\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n SELECT NOT EXISTS(SELECT 1 FROM public.admin_account_controls c WHERE c.user_id=auth.uid() AND c.suspended)\n$function$\n",
+    "name": "halisia_account_active",
+    "schema": "public",
+    "security_definer": true
+  },
+  {
+    "config": ["search_path=\"\""],
+    "definition": "CREATE OR REPLACE FUNCTION halisia_private.reject_suspended_write()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nBEGIN\n IF auth.uid() IS NOT NULL AND NOT public.halisia_account_active() THEN\n  RAISE EXCEPTION 'Account app access is suspended' USING ERRCODE='42501';\n END IF;\n IF TG_OP='DELETE' THEN RETURN OLD; END IF;\n RETURN NEW;\nEND $function$\n",
+    "name": "reject_suspended_write",
+    "schema": "halisia_private",
+    "security_definer": true
+  },
+  {
+    "config": ["search_path=public, pg_temp"],
+    "definition": "CREATE OR REPLACE FUNCTION halisia_private.guard_financing_status()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\ndeclare\n  caller uuid := auth.uid();\nbegin\n  -- A null caller means row-level security was bypassed: a service-role or\n  -- other server-side connection. An ordinary user cannot reach this trigger\n  -- with a null uid, because the applicant policy requires\n  -- auth.uid() = applicant_id, which fails when uid is null.\n  if caller is null then\n    return new;\n  end if;\n\n  -- The applicant keeps draft, submitted and withdrawn. Every status that\n  -- represents a lender decision is an administrator transition.\n  if new.status is distinct from old.status\n     and new.status in ('under_review','approved','funded','rejected')\n     and not has_role(caller, 'administrator'::app_role)\n  then\n    raise exception\n      'financing status % may only be set by an administrator or an authorised backend process',\n      new.status\n      using errcode = '42501';\n  end if;\n\n  return new;\nend;\n$function$\n",
+    "name": "guard_financing_status",
+    "schema": "halisia_private",
+    "security_definer": true
+  },
+  {
+    "config": ["search_path=\"\""],
+    "definition": "CREATE OR REPLACE FUNCTION public.has_role(_user_id uuid, _role app_role)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n SELECT EXISTS(SELECT 1 FROM public.user_roles r WHERE r.user_id=_user_id AND r.role=_role)\n AND NOT EXISTS(SELECT 1 FROM public.admin_account_controls c WHERE c.user_id=_user_id AND c.suspended)\n AND (_role<>'administrator' OR (\n  _user_id=auth.uid() AND auth.jwt()->>'aal'='aal2'\n  AND EXISTS(SELECT 1 FROM auth.users u JOIN public.admin_allowed_emails a ON a.email=lower(u.email)\n    WHERE u.id=_user_id AND u.email_confirmed_at IS NOT NULL AND a.enabled)\n  AND EXISTS(SELECT 1 FROM auth.sessions s WHERE s.user_id=_user_id AND s.id::text=auth.jwt()->>'session_id')\n ))\n$function$\n",
+    "name": "has_role",
+    "schema": "public",
+    "security_definer": true
+  }
+]

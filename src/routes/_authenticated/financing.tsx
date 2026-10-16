@@ -10,6 +10,7 @@ import {
   formatMoney,
   FINANCING_PURPOSES,
   FINANCING_STATUSES,
+  APPLICANT_FINANCING_STATUSES,
   type FinancingRow,
   type FinancingStatus,
 } from "@/lib/financing";
@@ -308,14 +309,28 @@ function FinancingCard({
           <select
             className="input h-8 py-1 text-xs"
             value={f.status}
+            aria-label="Application status"
+            disabled={statusMut.isPending}
             onChange={(e) => statusMut.mutate(e.target.value as FinancingStatus)}
           >
-            {FINANCING_STATUSES.map((s) => (
+            {!APPLICANT_FINANCING_STATUSES.some((s) => s === f.status) && (
+              <option value={f.status} disabled>
+                {FINANCING_STATUSES.find((s) => s.value === f.status)?.label ?? f.status} (decision)
+              </option>
+            )}
+            {FINANCING_STATUSES.filter((s) =>
+              APPLICANT_FINANCING_STATUSES.some((a) => a === s.value),
+            ).map((s) => (
               <option key={s.value} value={s.value}>
                 {s.label}
               </option>
             ))}
           </select>
+          {statusMut.isError && (
+            <span role="alert" className="text-xs text-destructive">
+              Status was not changed. Please retry or contact support.
+            </span>
+          )}
           <button
             type="button"
             onClick={() => {
