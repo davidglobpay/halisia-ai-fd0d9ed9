@@ -93,7 +93,11 @@ for (const phase of ["production-catalog-replica", "proposed-hardening", "initia
     await db.exec(
       "DROP TRIGGER halisia_guard_financing_status ON public.financing_applications; DROP FUNCTION halisia_private.guard_financing_status();",
     );
-  if (phase !== "production-catalog-replica") await db.exec(proposed);
+  if (phase !== "production-catalog-replica") {
+    await db.exec(proposed);
+    // Deployment tooling may replay a manually applied migration before recording history.
+    await db.exec(proposed);
+  }
   const up = (s) => `UPDATE public.financing_applications SET status='${s}' WHERE id='${row}'`;
   await run(db, phase, "anonymous update denied", "anon", null, up("approved"), "no rows");
   await run(db, phase, "owner submit allowed", "authenticated", owner, up("submitted"), "allowed");

@@ -4,7 +4,7 @@ CREATE SCHEMA IF NOT EXISTS halisia_private;
 DO $lease$
 BEGIN
  IF to_regprocedure('halisia_private.guard_financing_status()') IS NOT NULL THEN
-  IF md5(pg_get_functiondef('halisia_private.guard_financing_status()'::regprocedure)) <> '7d2068e919f89a12dbb5e6f145e64fca' THEN
+  IF md5(pg_get_functiondef('halisia_private.guard_financing_status()'::regprocedure)) NOT IN ('7d2068e919f89a12dbb5e6f145e64fca', '76c2c55ccc0ba367605ad16adc2ae51e') THEN
    RAISE EXCEPTION 'Financing guard changed since review; inspect before applying';
   END IF;
  END IF;
