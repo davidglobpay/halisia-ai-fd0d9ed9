@@ -757,17 +757,11 @@ export function runIntelligenceEngine(
     who: m.nextStep,
   }));
 
-  // Keyed off the elevation actually read rather than off the old construction
-  // score, which no longer exists. Low ground and very high ground each raise
-  // real foundation questions — water table in the first case, access and
-  // curing in the second — and both are things the reading can establish.
-  const elevM = intel?.elevation?.meters ?? null;
+  // Professional follow-up requires a site assessment, not an altitude threshold.
   const professionalRecs = [
     "Licensed Surveyor — confirm boundaries and beacons",
     "Advocate — official title search and sale agreement",
-    elevM != null && (elevM < 100 || elevM > 2400)
-      ? "Structural engineer — foundation strategy for low-lying or high-altitude ground"
-      : "Architect — buildability and design brief",
+    "Architect and structural engineer — design brief and site-specific assessment",
     "Insurance broker — property and construction cover",
     persona === "investor" || persona === "developer"
       ? "Independent valuer — before committing capital"
