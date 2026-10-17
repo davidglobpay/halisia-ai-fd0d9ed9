@@ -3,6 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 const BUCKET = "listing-media";
 const TEN_YEARS = 60 * 60 * 24 * 365 * 10;
 
+/** Deletes the stored file behind a removed listing photo so old links stop working. */
+export async function removeListingPhoto(url: string): Promise<void> {
+  const marker = `/object/sign/${BUCKET}/`;
+  const i = url.indexOf(marker);
+  if (i < 0) return;
+  const path = decodeURIComponent(url.slice(i + marker.length).split("?")[0] ?? "");
+  if (!path) return;
+  const { error } = await supabase.storage.from(BUCKET).remove([path]);
+  if (error) console.warn("Could not delete removed listing photo", error.message);
+}
+
 /** Uploads a listing photo and returns a long-lived shareable URL. */
 export async function uploadListingPhoto(file: File): Promise<string> {
   const { data: userRes } = await supabase.auth.getUser();

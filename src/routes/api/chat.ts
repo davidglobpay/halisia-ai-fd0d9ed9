@@ -10,6 +10,21 @@ export const Route = createFileRoute("/api/chat")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const auth = request.headers.get("authorization") ?? "";
+        const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+        const url = process.env.SUPABASE_URL;
+        const key = process.env.SUPABASE_PUBLISHABLE_KEY;
+        if (!token || !url || !key) {
+          return Response.json({ reply: "Please sign in to use HALISIA AI." }, { status: 401 });
+        }
+        const { createClient } = await import("@supabase/supabase-js");
+        const authClient = createClient(url, key, {
+          auth: { persistSession: false, autoRefreshToken: false },
+        });
+        const { data: claims, error: claimsError } = await authClient.auth.getClaims(token);
+        if (claimsError || !claims?.claims?.sub) {
+          return Response.json({ reply: "Please sign in to use HALISIA AI." }, { status: 401 });
+        }
         let payload: { messages?: unknown; context?: unknown };
         try {
           payload = (await request.json()) as { messages?: unknown; context?: unknown };

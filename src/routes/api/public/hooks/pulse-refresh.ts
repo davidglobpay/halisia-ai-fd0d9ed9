@@ -12,10 +12,10 @@ export const Route = createFileRoute("/api/public/hooks/pulse-refresh")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const apikey = request.headers.get("apikey") ?? "";
-        const expected =
-          process.env["SUPABASE_ANON_KEY"] ?? process.env["SUPABASE_PUBLISHABLE_KEY"] ?? "";
-        if (!expected || apikey !== expected) {
+        // The public publishable key is not a credential; require a dedicated server secret.
+        const provided = request.headers.get("x-cron-secret") ?? "";
+        const expected = process.env["PULSE_CRON_SECRET"] ?? "";
+        if (!expected || provided.length !== expected.length || provided !== expected) {
           return Response.json({ error: "Unauthorized" }, { status: 401 });
         }
 
