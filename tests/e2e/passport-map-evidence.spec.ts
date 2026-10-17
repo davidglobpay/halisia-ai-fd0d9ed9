@@ -111,7 +111,7 @@ for (const width of [1280, 360]) {
     await page.locator("summary").filter({ hasText: "Access & services" }).click();
     await expect(school).toContainText("Capture date unavailable");
     await expect(school).toContainText("Accuracy unavailable");
-    await expect(cards.locator('[data-evidence-id="pop"]')).toContainText("Official statistics");
+    await expect(cards.locator('[data-evidence-id="pop"]')).toHaveCount(0);
     await expect(
       cards.locator('[data-evidence-id="pop"]').getByTestId("map-evidence-preview"),
     ).toHaveCount(0);
@@ -150,9 +150,7 @@ for (const width of [1280, 360]) {
     await cards.getByRole("button", { name: "Return to Passport point" }).click();
     await expect(focus).toHaveAttribute("aria-pressed", "false");
     await page.getByRole("tab", { name: "map", exact: true }).click();
-    await expect(
-      cards.locator('[data-evidence-id="coords"]').getByTestId("map-evidence-preview"),
-    ).toBeEnabled();
+    await expect(cards.locator('[data-evidence-id="coords"]')).toHaveCount(0);
     expect(counts.provider).toBeGreaterThan(0);
     expect(errors).toEqual([]);
   });
@@ -176,15 +174,8 @@ test("provider failure preserves available Passport evidence without a false zer
 }) => {
   await isolate(page, true);
   const cards = page.getByTestId("land-passport-page");
-  await expect(cards.locator('[data-evidence-id="coords"]')).toBeVisible();
-  await expect(cards.locator('[data-evidence-id="elev"]')).toHaveAttribute("data-gap", "1");
-  await expect(
-    cards.locator('[data-evidence-id="elev"]').getByTestId("map-evidence-preview"),
-  ).toHaveCount(0);
-  await expect(
-    page.getByText("Live amenity and environment data (request failed on this visit)", {
-      exact: true,
-    }),
-  ).toBeVisible();
+  await expect(page.getByTestId("passport-findings-count")).toContainText("No sourced findings");
+  await expect(cards.locator('[data-evidence-id="elev"]')).toHaveCount(0);
+  await expect(cards.locator('[data-evidence-id="coords"]')).toHaveCount(0);
   await expect(cards).not.toContainText("None found in search radius");
 });
