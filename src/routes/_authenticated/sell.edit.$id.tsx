@@ -1,3 +1,4 @@
+import { saveListingWithMediaCleanup } from "@/lib/listing-media-update";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -201,33 +202,38 @@ function EditListing() {
 
   const saveM = useMutation({
     mutationFn: async () => {
-      const row = await updateProperty(id, {
-        title: form.title.trim(),
-        description: form.description.trim() || null,
-        kind: form.kind,
-        intent: form.intent,
-        status: publish ? "published" : "draft",
-        review_state: publish ? "approved" : "in_review",
-        submitted_at: new Date().toISOString(),
-        completeness_pct: pct,
-        media_urls: form.media_urls,
-        cover_image: form.cover_image.trim() || form.media_urls[0] || null,
-        price: form.price ? Number(form.price) : null,
-        currency: form.currency || "KES",
-        size_value: form.size_value ? Number(form.size_value) : null,
-        size_unit: form.size_unit || "acres",
-        county: form.county.trim() || null,
-        address: form.address.trim() || null,
-        latitude: form.latitude ? Number(form.latitude) : null,
-        longitude: form.longitude ? Number(form.longitude) : null,
-        bedrooms: form.bedrooms ? Number(form.bedrooms) : null,
-        bathrooms: form.bathrooms ? Number(form.bathrooms) : null,
-        amenities: form.amenities
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean),
-        utilities: form.utilities,
-      });
+      const row = await saveListingWithMediaCleanup(
+        () =>
+          updateProperty(id, {
+            title: form.title.trim(),
+            description: form.description.trim() || null,
+            kind: form.kind,
+            intent: form.intent,
+            status: publish ? "published" : "draft",
+            review_state: publish ? "approved" : "in_review",
+            submitted_at: new Date().toISOString(),
+            completeness_pct: pct,
+            media_urls: form.media_urls,
+            cover_image: form.cover_image.trim() || form.media_urls[0] || null,
+            price: form.price ? Number(form.price) : null,
+            currency: form.currency || "KES",
+            size_value: form.size_value ? Number(form.size_value) : null,
+            size_unit: form.size_unit || "acres",
+            county: form.county.trim() || null,
+            address: form.address.trim() || null,
+            latitude: form.latitude ? Number(form.latitude) : null,
+            longitude: form.longitude ? Number(form.longitude) : null,
+            bedrooms: form.bedrooms ? Number(form.bedrooms) : null,
+            bathrooms: form.bathrooms ? Number(form.bathrooms) : null,
+            amenities: form.amenities
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean),
+            utilities: form.utilities,
+          }),
+        q.data?.property.media_urls ?? [],
+        removeListingPhoto,
+      );
       if (rental) {
         try {
           await upsertRentalDetails({
@@ -534,7 +540,6 @@ function EditListing() {
                     type="button"
                     aria-label="Remove photo"
                     onClick={() => {
-                      void removeListingPhoto(u);
                       setForm((f) => ({
                         ...f,
                         media_urls: f.media_urls.filter((x) => x !== u),
