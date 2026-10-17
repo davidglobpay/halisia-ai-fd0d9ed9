@@ -1,4 +1,4 @@
--- Candidate repair; not applied to production. Validate authorized MFA admin path before application.
+-- Applied and verified 17 October 2026 after rollback-only synthetic database tests. Preserve original function leases before replay.
 BEGIN;
 CREATE OR REPLACE FUNCTION public.halisia_guard_property_system_fields()
  RETURNS trigger
@@ -30,7 +30,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION halisia_private.admin_action(p_action text, p_target text, p_value text, p_reason text)
  RETURNS jsonb
