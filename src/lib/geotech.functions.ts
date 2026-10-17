@@ -1,3 +1,4 @@
+import { fetchPowerClimate } from "./power-climate";
 import { createServerFn } from "@tanstack/react-start";
 
 /**
@@ -192,38 +193,19 @@ async function fetchElevGrid(lat: number, lng: number, signal?: AbortSignal) {
   // Provider 1: Open-Topo-Data ASTER30m (primary)
   const tryOpenTopo = async (): Promise<number[]> => {
     const res = await fetch(`https://api.opentopodata.org/v1/aster30m?locations=${pts.join("|")}`, {
-      signal,
+      signal: signal ?? AbortSignal.timeout(15_000),
     });
     if (!res.ok) throw new Error(`opentopodata ${res.status}`);
     const j = (await res.json()) as { results?: Array<{ elevation: number | null }> };
-    const flat = (j.results ?? []).map((r) => r.elevation ?? 0);
+    const flat = (j.results ?? []).map((r) => r.elevation);
+    if (flat.some((v) => v == null || !Number.isFinite(v)))
+      throw new Error("missing elevation sample");
     if (flat.length !== n * n) throw new Error("bad elevation grid");
-    return flat;
+    return flat as number[];
   };
 
-  // Provider 2: Open-Meteo Elevation API (fallback, different infrastructure)
-  const tryOpenMeteo = async (): Promise<number[]> => {
-    const res = await fetch(
-      `https://api.open-meteo.com/v1/elevation?latitude=${lats.join(",")}&longitude=${lngs.join(",")}`,
-      { signal },
-    );
-    if (!res.ok) throw new Error(`open-meteo ${res.status}`);
-    const j = (await res.json()) as { elevation?: number[] };
-    const flat = j.elevation ?? [];
-    if (flat.length !== n * n) throw new Error("bad elevation grid");
-    return flat;
-  };
-
-  let flat: number[];
-  try {
-    flat = await tryOpenTopo();
-  } catch (primaryErr) {
-    try {
-      flat = await tryOpenMeteo();
-    } catch {
-      throw primaryErr;
-    }
-  }
+  // A missing raster sample is unknown, never an elevation of zero.
+  const flat = await tryOpenTopo();
   const g: number[][] = [];
   for (let y = 0; y < n; y++) g.push(flat.slice(y * n, (y + 1) * n));
   return { grid: g, n, step };
@@ -284,24 +266,8 @@ function terrainAnalysis(g: number[][], n: number, step: number, lat: number): T
   };
 }
 
-async function fetchClimate(lat: number, lng: number, signal?: AbortSignal) {
-  try {
-    const res = await fetch(
-      `https://climate-api.open-meteo.com/v1/climate?latitude=${lat}&longitude=${lng}&start_date=1990-01-01&end_date=2020-12-31&models=EC_Earth3P_HR&daily=precipitation_sum`,
-      { signal },
-    );
-    if (!res.ok) return null;
-    const j = (await res.json()) as {
-      daily?: { precipitation_sum?: number[] };
-    };
-    const arr = j.daily?.precipitation_sum ?? [];
-    if (!arr.length) return null;
-    const total = arr.reduce((a, b) => a + (b || 0), 0);
-    const years = arr.length / 365;
-    return Math.round(total / years);
-  } catch {
-    return null;
-  }
+async function fetchClimate(lat: number, lng: number, _signal?: AbortSignal) {
+  return (await fetchPowerClimate(lat, lng))?.annualRainfallMm ?? null;
 }
 
 function interpretGeology(
@@ -620,8 +586,8 @@ export const getGeotechIntel = createServerFn({ method: "POST" })
           used: gridInfo != null,
         },
         {
-          label: "Open-Meteo Climate API",
-          url: "https://open-meteo.com/en/docs/climate-api",
+          label: "NASA POWER Climate API",
+          url: "https://power.larc.nasa.gov/docs/services/api/temporal/climatology/",
           used: rain != null,
         },
         { label: "OneGeology portal", url: "http://portal.onegeology.org", used: false },

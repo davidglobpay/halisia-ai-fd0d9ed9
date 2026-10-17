@@ -13,35 +13,43 @@ const direct: EvidenceItem = {
   confidence: "high",
   retrieved: "2026-10-17",
 };
-describe("conservative Passport presentation", () => {
-  it("retains supported direct provider results", () =>
-    expect(isVisiblePassportEvidence(direct)).toBe(true));
-  it.each([null, "", "   "])("omits missing values (%s)", (value) =>
+describe("source-backed Passport presentation", () => {
+  it("retains direct provider results", () => expect(isVisiblePassportEvidence(direct)).toBe(true));
+  it.each([null, "", " ", "NaN m"])("omits missing or invalid values %s", (value) =>
     expect(isVisiblePassportEvidence({ ...direct, value })).toBe(false),
   );
-  it.each(["modelled", "ai", "user", "official", "gap"] as const)(
-    "withholds %s rather than promoting it to measured evidence",
-    (cls) => expect(isVisiblePassportEvidence({ ...direct, cls })).toBe(false),
-  );
-  it("does not trust an arbitrary source or a confidence label alone", () => {
-    expect(isVisiblePassportEvidence({ ...direct, source: "Copied blog" })).toBe(false);
-    expect(isVisiblePassportEvidence({ ...direct, id: "ownership" })).toBe(false);
-    expect(isVisiblePassportEvidence({ ...direct, confidence: "low" })).toBe(false);
-  });
-  it("retains a populated Google place lookup, not an empty search", () => {
+  it("restores labelled soil and climate models", () => {
     expect(
       isVisiblePassportEvidence({
         ...direct,
-        id: "acc-schools",
-        source: "Google Places API (New)",
+        id: "soil",
+        cls: "modelled",
+        source: "ISRIC SoilGrids v2.0",
+        confidence: "medium",
       }),
     ).toBe(true);
     expect(
       isVisiblePassportEvidence({
         ...direct,
+        id: "rain",
+        cls: "modelled",
+        source: "Open-Meteo Climate API",
+        confidence: "medium",
+      }),
+    ).toBe(true);
+  });
+  it.each(["bedrock", "groundwater", "foundation", "owner", "title", "finance"])(
+    "does not invent %s from generic rules",
+    (id) => expect(isVisiblePassportEvidence({ ...direct, id, cls: "ai" })).toBe(false),
+  );
+  it("does not promote arbitrary text or zero search placeholders", () => {
+    expect(isVisiblePassportEvidence({ ...direct, source: "Copied blog" })).toBe(false);
+    expect(
+      isVisiblePassportEvidence({
+        ...direct,
         id: "acc-schools",
         source: "Google Places API (New)",
-        confidence: "medium",
+        value: "None found in search radius",
       }),
     ).toBe(false);
   });

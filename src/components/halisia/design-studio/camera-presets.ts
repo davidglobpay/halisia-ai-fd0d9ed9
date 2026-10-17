@@ -1,13 +1,6 @@
 /** Browser-safe camera preset list (no three.js import). */
 export type CameraPreset =
-  | "isometric"
-  | "front"
-  | "back"
-  | "left"
-  | "right"
-  | "aerial"
-  | "eye-level"
-  | "worms-eye";
+  "isometric" | "front" | "back" | "left" | "right" | "aerial" | "eye-level" | "worms-eye";
 
 export const CAMERA_PRESETS: { id: CameraPreset; label: string }[] = [
   { id: "isometric", label: "Isometric" },

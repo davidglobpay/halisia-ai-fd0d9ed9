@@ -8,12 +8,7 @@ export type PulseProvider = "newsdata" | "gnews" | "gdelt" | "rss";
 export type PulseProviderStatus = "active" | "degraded" | "disabled" | "awaiting_api_key";
 
 export type PulseGeoLevel =
-  | "national"
-  | "county"
-  | "sub_county"
-  | "town"
-  | "estate"
-  | "neighbourhood";
+  "national" | "county" | "sub_county" | "town" | "estate" | "neighbourhood";
 
 export const PULSE_CATEGORIES = [
   { slug: "politics", label: "Politics" },

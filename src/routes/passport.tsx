@@ -243,6 +243,8 @@ function PassportPage() {
     staleTime: 15 * 60_000,
     retry: 1,
   });
+  const [pdfPending, setPdfPending] = useState(false);
+  const [pdfError, setPdfError] = useState("");
   const [openedAt, setOpenedAt] = useState("");
   useEffect(() => setOpenedAt(new Date().toISOString()), [lat, lng]);
   const county = ok ? countyForPoint(lat, lng) : null;
@@ -491,30 +493,56 @@ function PassportPage() {
         <button
           type="button"
           data-testid="passport-pdf"
+          disabled={pdfPending || intelQ.isFetching || geoQ.isFetching || w4Q.isFetching}
           onClick={async () => {
-            const { downloadPassportPdf } = await import("@/lib/passport-pdf");
-            downloadPassportPdf({
-              place: placeName,
-              locationLine: [
-                admin?.ward,
-                admin?.subCounty,
-                county ? `${county.name} County` : null,
-                "Kenya",
-              ]
-                .filter(Boolean)
-                .join(", "),
-              positionLabel: STATUS_META[status].label,
-              items: visibleEvidence,
-              ledger: ev.ledger,
-              coveragePct: ev.summary.coveragePct,
-              generatedAt: `${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC`,
-              aiSummary: undefined,
-            });
+            setPdfPending(true);
+            setPdfError("");
+            try {
+              const { downloadPassportPdf } = await import("@/lib/passport-pdf");
+              await downloadPassportPdf({
+                coords: { lat, lng },
+                county: facts,
+                intel,
+                geotech: geoQ.data,
+                wave4: w4Q.data,
+                place: placeName,
+                locationLine: [
+                  admin?.ward,
+                  admin?.subCounty,
+                  county ? `${county.name} County` : null,
+                  "Kenya",
+                ]
+                  .filter(Boolean)
+                  .join(", "),
+                positionLabel: STATUS_META[status].label,
+                items: visibleEvidence,
+                ledger: ev.ledger,
+                coveragePct: ev.summary.coveragePct,
+                generatedAt: `${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC`,
+                aiSummary: undefined,
+              });
+            } catch (error) {
+              setPdfError(
+                error instanceof Error ? error.message : "PDF export failed. Please retry.",
+              );
+            } finally {
+              setPdfPending(false);
+            }
           }}
           className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground"
         >
-          <Download className="h-4 w-4" /> Download Passport PDF
+          <Download className="h-4 w-4" />{" "}
+          {pdfPending
+            ? "Preparing visual PDF…"
+            : intelQ.isFetching || geoQ.isFetching || w4Q.isFetching
+              ? "Waiting for source responses…"
+              : "Download visual Passport PDF"}
         </button>
+        {pdfError && (
+          <p role="alert" className="text-sm text-destructive">
+            {pdfError}
+          </p>
+        )}
         <EvidenceLedger entries={ev.ledger} />
         <Section n={1} title="Identity & position" tag="source" open>
           <Row k="Location status" v={STATUS_META[status].label} />
@@ -547,12 +575,12 @@ function PassportPage() {
           />
         </Section>
 
-        {CHAPTERS.slice(2)
+        {CHAPTERS.slice(1)
           .filter((ch) => byChapter(ch.id).length > 0)
           .map((ch, idx) => (
             <Section
               key={ch.id}
-              n={idx + 3}
+              n={idx + 2}
               title={ch.title}
               tag={
                 ch.id === "trust"

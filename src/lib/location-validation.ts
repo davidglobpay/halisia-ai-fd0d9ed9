@@ -157,8 +157,7 @@ type Ring = number[][];
 type Feat = {
   properties: { code: number; name: string; lat: number; lng: number };
   geometry:
-    | { type: "Polygon"; coordinates: Ring[] }
-    | { type: "MultiPolygon"; coordinates: Ring[][] };
+    { type: "Polygon"; coordinates: Ring[] } | { type: "MultiPolygon"; coordinates: Ring[][] };
 };
 const FEATURES = (countiesData as unknown as { features: Feat[] }).features;
 

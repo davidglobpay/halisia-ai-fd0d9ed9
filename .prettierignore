@@ -15,3 +15,6 @@ src/lib/testfixtures/konza-lr-fixture.ts
 test-results
 playwright-report
 tests/security/financing/results.json
+
+# Generated deployment metadata
+.wrangler

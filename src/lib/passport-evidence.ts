@@ -13,14 +13,7 @@ import type { Wave4Intel } from "@/lib/wave4-intel.functions";
 import type { CountyFacts } from "@/lib/kenya-county-facts";
 
 export type ChapterId =
-  | "identity"
-  | "admin"
-  | "physical"
-  | "climate"
-  | "access"
-  | "build"
-  | "market"
-  | "trust";
+  "identity" | "admin" | "physical" | "climate" | "access" | "build" | "market" | "trust";
 
 export const CHAPTERS: Array<{ id: ChapterId; title: string; blurb: string }> = [
   {
@@ -199,7 +192,7 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
     cls: "modelled",
     confidence: i.countyName ? "high" : "not_assessed",
   });
-  const sub = i.admin?.subCounty ?? i.wave4?.admin.constituency ?? null;
+  const sub = i.admin?.subCounty ?? i.wave4?.admin?.constituency ?? null;
   add({
     id: "subcounty",
     chapter: "admin",
@@ -215,7 +208,7 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
     id: "ward",
     chapter: "admin",
     label: "Ward / area",
-    value: i.admin?.ward ?? i.wave4?.admin.ward ?? null,
+    value: i.admin?.ward ?? i.wave4?.admin?.ward ?? null,
     source: "Reverse geocoding (Google / OSM)",
     method: "Reverse geocode of the coordinates.",
     usedFor: ["Location hierarchy"],
@@ -326,6 +319,20 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
     });
 
   // ---------- 4. Climate ----------
+  const forecast = i.wave4?.weather?.points[0];
+  if (forecast?.temperatureC != null)
+    add({
+      id: "weather",
+      chapter: "climate",
+      label: "Weather forecast",
+      value: `${forecast.temperatureC.toFixed(1)} °C at ${forecast.time}`,
+      source: "MET Norway Locationforecast",
+      method: "Numerical weather forecast; not an on-site observation.",
+      usedFor: ["Short-term planning context"],
+      cls: "modelled",
+      confidence: "medium",
+      retrieved: i.wave4?.weather?.updatedAt ?? t,
+    });
   const cl = i.wave4?.climate;
   const rain = cl?.annualRainfallMm ?? g?.groundwater.annualRainMm ?? null;
   add({
@@ -333,8 +340,9 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
     chapter: "climate",
     label: "Mean annual rainfall",
     value: rain != null ? `${Math.round(rain)} mm / year` : null,
-    source: "Open-Meteo Climate API (EC_Earth3P_HR model)",
-    method: "Daily modelled precipitation averaged over the reference period.",
+    source: cl?.source ?? "NASA POWER climatology",
+    method:
+      "Regional climatology mean daily precipitation converted to an annual mean with 365.25 days.",
     usedFor: ["Groundwater likelihood", "Climate normals for this area"],
     cls: "modelled",
     confidence: "medium",
@@ -348,8 +356,8 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
       cl?.meanTempC != null
         ? `${r(cl.meanTempC, 1)} °C (range ${r(cl.tempMinC ?? NaN, 1)}–${r(cl.tempMaxC ?? NaN, 1)} °C)`
         : null,
-    source: "Open-Meteo Climate API",
-    method: "Modelled daily means, 2010–2020.",
+    source: cl?.source ?? "NASA POWER climatology",
+    method: `Regional reanalysis mean; displayed range is monthly mean temperatures. ${cl?.period ?? "Provider reference period"}.`,
     usedFor: ["Habitability", "Climate normals for this area"],
     cls: "modelled",
     confidence: "medium",
@@ -426,7 +434,7 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
   near("transit", "Public transport", ["Accessibility", "Transit-oriented concepts"]);
   near("banks", "Banks", ["Finance access"]);
   const w4f = i.wave4?.facilities;
-  if (w4f) {
+  if (w4f && srcUsed(i.wave4?.sources, "Overpass")) {
     const n = Object.values(w4f).reduce((a, l) => a + l.length, 0);
     add({
       id: "osm-fac",
@@ -570,7 +578,7 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
       chapter: "market",
       label,
       value: thin ? null : counted,
-      source: "OpenStreetMap Overpass and Open-Meteo, read by HALISIA",
+      source: "OpenStreetMap Overpass and NASA POWER, interpreted by HALISIA",
       method: s
         ? s.method
         : "Needs the OpenStreetMap and climate lookups, which did not return for this point.",
@@ -652,6 +660,13 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
             : "failed";
   const ledger: LedgerEntry[] = [
     {
+      id: "met",
+      provider: "MET Norway weather forecast",
+      status: st(i.w4State, !!i.wave4?.weather?.points.length),
+      detail: "Model forecast / CC BY 4.0",
+      chapters: ["climate"],
+    },
+    {
       id: "g-elev",
       provider: "Google Elevation",
       status: phStatus(ph?.elevation),
@@ -695,8 +710,11 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
     },
     {
       id: "om",
-      provider: "Open-Meteo Climate",
-      status: st(i.w4State, srcUsed(i.wave4?.sources, "Open-Meteo")),
+      provider: "NASA POWER climatology",
+      status: st(
+        i.w4State,
+        srcUsed(i.wave4?.sources, "NASA POWER") || srcUsed(i.wave4?.sources, "Open-Meteo"),
+      ),
       detail: "",
       chapters: ["climate", "market"],
     },

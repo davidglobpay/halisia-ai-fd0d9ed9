@@ -1,3 +1,5 @@
+import { fetchPowerClimate } from "./power-climate";
+import { fetchWeatherForecast, type WeatherForecast } from "./met-weather";
 import { fetchPublicJson } from "@/lib/public-json";
 import { createServerFn } from "@tanstack/react-start";
 
@@ -40,6 +42,7 @@ export type Wave4Facility = {
 };
 
 export type Wave4Intel = {
+  weather?: WeatherForecast | null;
   admin: {
     county: string | null;
     constituency: string | null;
@@ -50,10 +53,13 @@ export type Wave4Intel = {
   };
   facilities: Record<string, Wave4Facility[]>;
   climate: {
+    source?: string;
+    period?: string;
     annualRainfallMm: number | null;
     meanTempC: number | null;
     tempMinC: number | null;
     tempMaxC: number | null;
+    monthly?: Array<{ month: string; temperatureC: number | null; rainfallMm: number | null }>;
   };
   /**
    * Always null, every field. These were five 0-100 indicators and a composite
@@ -180,39 +186,20 @@ async function fetchOverpass(lat: number, lng: number, radiusM = 3000) {
   ];
   for (const ep of endpoints) {
     try {
-      return await fetchPublicJson<OverpassResp>(ep, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain", "User-Agent": UA },
-        body: query,
-      });
+      return await fetchPublicJson<OverpassResp>(
+        ep,
+        {
+          method: "POST",
+          headers: { "Content-Type": "text/plain", "User-Agent": UA },
+          body: query,
+        },
+        25_000,
+      );
     } catch {
       /* try next */
     }
   }
   return null;
-}
-
-async function fetchClimate(lat: number, lng: number) {
-  // 2010–2020 normals from the Open-Meteo climate archive.
-  const url = `https://climate-api.open-meteo.com/v1/climate?latitude=${lat}&longitude=${lng}&start_date=2010-01-01&end_date=2020-12-31&models=EC_Earth3P_HR&daily=temperature_2m_mean,precipitation_sum`;
-  try {
-    const j = await fetchPublicJson<{
-      daily?: { temperature_2m_mean?: number[]; precipitation_sum?: number[] };
-    }>(url);
-    const temps = j.daily?.temperature_2m_mean ?? [];
-    const rains = j.daily?.precipitation_sum ?? [];
-    if (!temps.length || !rains.length) return null;
-    const meanTempC = temps.reduce((a, b) => a + b, 0) / temps.length;
-    const tempMinC = Math.min(...temps);
-    const tempMaxC = Math.max(...temps);
-    // Rain daily → annual mean over ~11 years.
-    const totalRain = rains.reduce((a, b) => a + b, 0);
-    const years = rains.length / 365.25;
-    const annualRainfallMm = years > 0 ? totalRain / years : null;
-    return { meanTempC, tempMinC, tempMaxC, annualRainfallMm };
-  } catch {
-    return null;
-  }
 }
 
 function classifyAdmin(n: NominatimResp | null) {
@@ -394,7 +381,7 @@ export function coverage(
     environment: {
       score: null,
       method:
-        "Open-Meteo climate archive, EC-Earth3P-HR downscaled, averaged over 2010–2020. These are the long-run normals for the grid cell containing this point, not readings taken on this land.",
+        "NASA POWER / MERRA-2 climatology. Monthly regional reanalysis estimates for the provider-labelled reference period, not measurements taken on this land.",
       factors: [
         {
           label: "Mean temperature",
@@ -482,17 +469,15 @@ export const getWave4Intel = createServerFn({ method: "POST" })
       if (hit && Date.now() - hit.at < TTL) return hit.value;
     }
 
-    const [nom, ovp, cli] = await Promise.all([
+    const [nom, ovp, cli, weather] = await Promise.all([
       fetchNominatim(data.lat, data.lng),
       fetchOverpass(data.lat, data.lng),
-      fetchClimate(data.lat, data.lng),
+      fetchPowerClimate(data.lat, data.lng),
+      fetchWeatherForecast(data.lat, data.lng),
     ]);
 
-    if (!ovp || !Array.isArray(ovp.elements)) {
-      throw new Error(
-        "Public mapping provider unavailable. Nearby facility counts are not assessed; no absence of facilities is established.",
-      );
-    }
+    // Keep independent climate/admin successes if Overpass fails. Its coverage
+    // is low and its source remains unused; no zero count is a site finding.
 
     const admin = classifyAdmin(nom);
     const facilities = extractFacilities(ovp, { lat: data.lat, lng: data.lng });
@@ -501,18 +486,27 @@ export const getWave4Intel = createServerFn({ method: "POST" })
       meanTempC: cli?.meanTempC ?? null,
       tempMinC: cli?.tempMinC ?? null,
       tempMaxC: cli?.tempMaxC ?? null,
+      monthly: cli?.monthly,
+      source: cli?.source,
+      period: cli?.period,
     };
     const { scores, breakdown } = coverage(facilities, climate);
     const bucketMap = distanceBuckets(facilities);
 
     const value: Wave4Intel = {
       admin,
+      weather,
       facilities,
       climate,
       scores,
       breakdown,
       distanceBuckets: bucketMap,
       sources: [
+        {
+          label: "MET Norway Locationforecast (CC BY 4.0)",
+          url: "https://api.met.no",
+          used: !!weather,
+        },
         {
           label: "OpenStreetMap Nominatim (admin lookup)",
           url: "https://nominatim.openstreetmap.org",
@@ -523,7 +517,7 @@ export const getWave4Intel = createServerFn({ method: "POST" })
           url: "https://overpass-api.de",
           used: !!ovp,
         },
-        { label: "Open-Meteo Climate Archive", url: "https://open-meteo.com", used: !!cli },
+        { label: "NASA POWER climatology", url: "https://power.larc.nasa.gov", used: !!cli },
         { label: "Kenya Open Data Portal", url: "https://opendata.go.ke", used: false },
         { label: "Kenya National Bureau of Statistics", url: "https://knbs.or.ke", used: false },
         { label: "IEBC boundaries", url: "https://iebc.or.ke", used: false },
