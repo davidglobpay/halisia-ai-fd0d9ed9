@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { assertSellerModeration } from "@/lib/seller-moderation";
 
 export type PropertyRow = Database["public"]["Tables"]["properties"]["Row"];
 export type PropertyInsert = Database["public"]["Tables"]["properties"]["Insert"];
@@ -61,6 +62,7 @@ export async function listMyProperties(): Promise<PropertyRow[]> {
 export async function createProperty(
   input: Omit<PropertyInsert, "owner_id">,
 ): Promise<PropertyRow> {
+  assertSellerModeration(input);
   const { data: userRes } = await supabase.auth.getUser();
   if (!userRes.user) throw new Error("Sign in to create a listing");
   const { data, error } = await supabase
@@ -76,6 +78,7 @@ export async function updateProperty(
   id: string,
   patch: Partial<PropertyInsert>,
 ): Promise<PropertyRow> {
+  assertSellerModeration(patch);
   const { data, error } = await supabase
     .from("properties")
     .update(patch)

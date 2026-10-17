@@ -23,6 +23,7 @@ import {
 } from "@/lib/properties";
 import { generateListingAi } from "@/lib/ai-listing.functions";
 import { coachListing, type CoachOutput } from "@/lib/listing-coach.functions";
+import { SELLER_REVIEW_SUBMISSION } from "@/lib/seller-moderation";
 import { uploadListingPhoto } from "@/lib/listing-media";
 import {
   upsertRentalDetails,
@@ -85,7 +86,6 @@ function SellNew() {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<WizardDraft>(EMPTY_DRAFT);
-  const [publish, setPublish] = useState(false);
   const [coach, setCoach] = useState<CoachOutput | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -170,8 +170,7 @@ function SellNew() {
         description: form.description.trim() || null,
         kind: form.kind,
         intent: form.intent,
-        status: publish ? "published" : "draft",
-        review_state: publish ? "approved" : "in_review",
+        ...SELLER_REVIEW_SUBMISSION,
         submitted_at: new Date().toISOString(),
         completeness_pct: pct,
         media_urls: form.media_urls,
@@ -901,14 +900,10 @@ function SellNew() {
               </div>
             )}
 
-            <label className="flex items-center gap-2 text-xs text-muted-foreground">
-              <input
-                type="checkbox"
-                checked={publish}
-                onChange={(e) => setPublish(e.target.checked)}
-              />
-              Publish immediately instead of submitting for review
-            </label>
+            <p className="text-sm text-muted-foreground">
+              Saving keeps this listing private and submits it for authorized moderation. Submission
+              does not verify title, ownership or location.
+            </p>
           </>
         )}
 
@@ -935,19 +930,11 @@ function SellNew() {
             {m.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
             ) : step === STEPS.length - 1 ? (
-              publish ? (
-                <Sparkles className="h-4 w-4" aria-hidden="true" />
-              ) : (
-                <Send className="h-4 w-4" aria-hidden="true" />
-              )
+              <Send className="h-4 w-4" aria-hidden="true" />
             ) : (
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             )}
-            {step === STEPS.length - 1
-              ? publish
-                ? "Publish listing"
-                : "Submit for review"
-              : "Continue"}
+            {step === STEPS.length - 1 ? "Submit for review" : "Continue"}
           </button>
         </div>
         <p className="text-[11px] text-muted-foreground">

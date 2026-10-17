@@ -11,6 +11,7 @@ import {
   type ListingIntent,
 } from "@/lib/properties";
 import { getRentalDetails, upsertRentalDetails, FURNISHING_OPTIONS } from "@/lib/rentals";
+import { SELLER_REVIEW_SUBMISSION } from "@/lib/seller-moderation";
 import { uploadListingPhoto } from "@/lib/listing-media";
 import { coachListing, type CoachOutput } from "@/lib/listing-coach.functions";
 import {
@@ -74,7 +75,6 @@ function EditListing() {
   const [coach, setCoach] = useState<CoachOutput | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [publish, setPublish] = useState(true);
   const [availability, setAvailability] = useState<AvailabilityWindow[]>([]);
   const [viewings, setViewings] = useState<ViewingWindow[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -129,7 +129,6 @@ function EditListing() {
       contact_email: r?.contact_email ?? "",
       viewing_instructions: r?.viewing_instructions ?? "",
     });
-    setPublish(p.status === "published");
     setAvailability(parseAvailability(r?.availability_windows));
     setViewings(parseViewings(r?.viewing_windows));
   }, [q.data]);
@@ -206,8 +205,7 @@ function EditListing() {
         description: form.description.trim() || null,
         kind: form.kind,
         intent: form.intent,
-        status: publish ? "published" : "draft",
-        review_state: publish ? "approved" : "in_review",
+        ...SELLER_REVIEW_SUBMISSION,
         submitted_at: new Date().toISOString(),
         completeness_pct: pct,
         media_urls: form.media_urls,
@@ -705,10 +703,10 @@ function EditListing() {
           )}
         </section>
 
-        <label className="inline-flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={publish} onChange={(e) => setPublish(e.target.checked)} />
-          Publish immediately (uncheck to save as a draft)
-        </label>
+        <p className="text-sm text-muted-foreground">
+          Saving keeps this listing private and submits it for authorized moderation. Submission
+          does not verify title, ownership or location.
+        </p>
 
         {saveM.error && <p className="text-sm text-red-300">{(saveM.error as Error).message}</p>}
 
