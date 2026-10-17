@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   CONCEPT_DISCLAIMER,
   conceptFallback,
@@ -9,6 +10,7 @@ import {
 } from "@/lib/development-studio";
 
 export const generateDevelopmentConcept = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => input as ConceptInput)
   .handler(async ({ data }): Promise<ConceptOutput> => {
     const key = process.env["LOVABLE_API_KEY"];

@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
 export type WebFinding = {
@@ -27,6 +28,7 @@ const QUERY: Record<string, string> = {
  * A topic with no result is omitted — never padded.
  */
 export const getWebFindings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z
       .object({

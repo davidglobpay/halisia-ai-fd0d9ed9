@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { TtsEngine } from "./pulse/tts.server";
 
 /**
@@ -20,6 +21,7 @@ import type { TtsEngine } from "./pulse/tts.server";
 const MAX_CHARS = 4000;
 
 export const synthesizeText = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: { text: string; engine?: TtsEngine }) => input)
   .handler(async ({ data }) => {
     const text = (data.text ?? "").trim();

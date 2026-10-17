@@ -23,7 +23,7 @@ import {
 } from "@/lib/properties";
 import { generateListingAi } from "@/lib/ai-listing.functions";
 import { coachListing, type CoachOutput } from "@/lib/listing-coach.functions";
-import { uploadListingPhoto } from "@/lib/listing-media";
+import { uploadListingPhoto, removeListingPhoto } from "@/lib/listing-media";
 import {
   upsertRentalDetails,
   FURNISHING_OPTIONS,
@@ -605,13 +605,14 @@ function SellNew() {
                       <button
                         type="button"
                         aria-label="Remove photo"
-                        onClick={() =>
+                        onClick={() => {
+                          void removeListingPhoto(u);
                           setForm((f) => ({
                             ...f,
                             media_urls: f.media_urls.filter((x) => x !== u),
                             cover_image: f.cover_image === u ? "" : f.cover_image,
-                          }))
-                        }
+                          }));
+                        }}
                         className="text-red-300"
                       >
                         <Trash2 className="h-3 w-3" aria-hidden="true" />

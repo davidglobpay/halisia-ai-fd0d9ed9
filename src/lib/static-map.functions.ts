@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 type Layer = "roadmap-light" | "terrain" | "satellite" | "hybrid";
 
@@ -20,6 +21,7 @@ const MAP_TYPES: Record<Layer, string> = {
 };
 
 export const fetchStaticMap = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => {
     const v = input as { lat?: number; lng?: number; layer?: Layer; zoom?: number };
     if (typeof v?.lat !== "number" || typeof v?.lng !== "number")

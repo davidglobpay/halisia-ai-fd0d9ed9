@@ -67,6 +67,7 @@ export const archivePulseArticles = createServerFn({ method: "POST" })
  * back to the Web Speech API.
  */
 export const synthesizeArticleAudio = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: { articleId: string; engine?: TtsEngine }) => input)
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -74,6 +75,7 @@ export const synthesizeArticleAudio = createServerFn({ method: "POST" })
       .from("news_articles")
       .select("id, title, summary, raw_excerpt, why_it_matters")
       .eq("id", data.articleId)
+      .eq("archived", false)
       .maybeSingle();
     if (!row) return { ok: false as const, reason: "Article not found", engines: [] as string[] };
 
@@ -89,10 +91,6 @@ export const synthesizeArticleAudio = createServerFn({ method: "POST" })
     const engines = availableEngines();
     const result = await synthesize(script, data.engine);
     if (!result.ok) return { ok: false as const, reason: result.reason, engines };
-
-    await supabaseAdmin
-      .from("news_audio")
-      .insert({ article_id: row.id, script, engine: result.engine, segment: "full" });
 
     return {
       ok: true as const,

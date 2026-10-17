@@ -11,7 +11,7 @@ import {
   type ListingIntent,
 } from "@/lib/properties";
 import { getRentalDetails, upsertRentalDetails, FURNISHING_OPTIONS } from "@/lib/rentals";
-import { uploadListingPhoto } from "@/lib/listing-media";
+import { uploadListingPhoto, removeListingPhoto } from "@/lib/listing-media";
 import { coachListing, type CoachOutput } from "@/lib/listing-coach.functions";
 import {
   EMPTY_DRAFT,
@@ -533,13 +533,14 @@ function EditListing() {
                   <button
                     type="button"
                     aria-label="Remove photo"
-                    onClick={() =>
+                    onClick={() => {
+                      void removeListingPhoto(u);
                       setForm((f) => ({
                         ...f,
                         media_urls: f.media_urls.filter((x) => x !== u),
                         cover_image: f.cover_image === u ? "" : f.cover_image,
-                      }))
-                    }
+                      }));
+                    }}
                     className="text-red-300"
                   >
                     <Trash2 className="h-3 w-3" aria-hidden="true" />

@@ -47,7 +47,7 @@ export function sanitizeMessages(value: unknown): AiMessage[] {
     .filter((item): item is { role: AiRole; content: unknown } => {
       if (!item || typeof item !== "object") return false;
       const role = (item as { role?: unknown }).role;
-      return role === "user" || role === "assistant" || role === "system";
+      return role === "user" || role === "assistant";
     })
     .map((item) => ({
       role: item.role,

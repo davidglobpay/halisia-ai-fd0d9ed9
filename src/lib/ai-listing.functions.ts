@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export type ListingAiInput = {
   title: string;
@@ -164,6 +165,7 @@ function fallback(input: ListingAiInput): ListingAiOutput {
 }
 
 export const generateListingAi = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => input as ListingAiInput)
   .handler(async ({ data }): Promise<ListingAiOutput> => {
     const key = process.env.LOVABLE_API_KEY;
