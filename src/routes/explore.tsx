@@ -1,3 +1,4 @@
+import { SignInPrompt } from "@/components/halisia/sign-in-prompt";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { z } from "zod";
@@ -277,6 +278,7 @@ function Explore() {
   return (
     <div className="min-h-screen" data-testid="explore-page" data-hydrated={clientReady}>
       <div className="pt-24 pb-10 mx-auto max-w-[1400px] px-4">
+        <SignInPrompt feature="Address search and place details" className="mb-4" />
         <div className="max-w-3xl">
           <SearchBar
             size="lg"

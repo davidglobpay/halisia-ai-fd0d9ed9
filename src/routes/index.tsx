@@ -1,3 +1,4 @@
+import { SignInPrompt } from "@/components/halisia/sign-in-prompt";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { FeatureRail } from "@/components/halisia/feature-rail";
 import { z } from "zod";
@@ -91,6 +92,9 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
         aria-label="HALISIA cinematic hero"
         className="relative pt-20 md:pt-24 overflow-hidden"
       >
+        <div className="relative z-10 mx-auto max-w-3xl px-4 pb-3">
+          <SignInPrompt feature="Address search and land insights" />
+        </div>
         <HeroStage>
           <motion.div
             initial={{ opacity: 0, y: 24 }}

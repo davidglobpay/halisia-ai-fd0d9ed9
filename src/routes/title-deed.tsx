@@ -1,3 +1,4 @@
+import { SignInPrompt } from "@/components/halisia/sign-in-prompt";
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -439,6 +440,7 @@ function TitleDeedPage() {
   return (
     <div className="min-h-screen">
       <div className="mx-auto min-w-0 max-w-[1400px] px-4 pb-16 pt-24">
+        <SignInPrompt feature="Deed reading and location matching" className="mb-4" />
         <header className="min-w-0 max-w-3xl">
           <div className="inline-flex items-center gap-2 glass rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-accent">
             <Sparkles className="h-3 w-3" /> Title Deed Intelligence
