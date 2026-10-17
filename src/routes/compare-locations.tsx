@@ -1,3 +1,4 @@
+import { SignInPrompt } from "@/components/halisia/sign-in-prompt";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState, useEffect } from "react";
@@ -160,6 +161,7 @@ function CompareLocationsPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-7xl px-4 pt-24 pb-16">
+        <SignInPrompt feature="Location comparisons" className="mb-4" />
         <Link
           to="/explore"
           search={{ q: undefined }}

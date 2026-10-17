@@ -1,3 +1,6 @@
+import { SignInPrompt } from "@/components/halisia/sign-in-prompt";
+import { isAuthError } from "@/lib/auth-error";
+import { useAuth } from "@/hooks/use-auth";
 import { isVisiblePassportEvidence } from "@/lib/passport-visible-evidence";
 import { ReviewedScoutFindings } from "@/components/halisia/scout-hub";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -194,6 +197,8 @@ function concepts(intel: LocationIntel | undefined): Concept[] {
 function PassportPage() {
   const s = Route.useSearch();
   const check = validateCoordinate(s.lat, s.lng);
+  const { session, loading: authLoading } = useAuth();
+  const signedIn = !authLoading && !!session;
   const fetchIntel = useServerFn(getLocationIntel);
   const fetchRev = useServerFn(reverseGeocode);
   const [mode, setMode] = useState<"map" | "satellite" | "street">("satellite");
@@ -211,14 +216,14 @@ function PassportPage() {
   const intelQ = useQuery({
     queryKey: ["passport-intel", lat, lng],
     queryFn: () => fetchIntel({ data: { lat, lng } }),
-    enabled: ok,
+    enabled: ok && signedIn,
     staleTime: 10 * 60_000,
     retry: 1,
   });
   const revQ = useQuery({
     queryKey: ["passport-rev", lat, lng],
     queryFn: () => fetchRev({ data: { lat, lng } }),
-    enabled: ok,
+    enabled: ok && signedIn,
     staleTime: 60 * 60_000,
     retry: 1,
   });
@@ -227,14 +232,14 @@ function PassportPage() {
   const geoQ = useQuery({
     queryKey: ["passport-geo", lat, lng],
     queryFn: () => fetchGeo({ data: { lat, lng } }),
-    enabled: ok,
+    enabled: ok && signedIn,
     staleTime: 30 * 60_000,
     retry: 1,
   });
   const w4Q = useQuery({
     queryKey: ["passport-w4", lat, lng],
     queryFn: () => fetchW4({ data: { lat, lng } }),
-    enabled: ok,
+    enabled: ok && signedIn,
     staleTime: 15 * 60_000,
     retry: 1,
   });
@@ -387,6 +392,11 @@ function PassportPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 pb-28 pt-6" data-testid="land-passport-page">
+      <SignInPrompt
+        feature="Passport findings"
+        expired={isAuthError(intelQ.error)}
+        className="mb-4"
+      />
       <Link
         to="/explore"
         className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
