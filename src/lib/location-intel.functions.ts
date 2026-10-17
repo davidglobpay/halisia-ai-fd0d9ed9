@@ -380,7 +380,8 @@ export const getLocationIntel = createServerFn({ method: "POST" })
     return {
       lat: v.lat,
       lng: v.lng,
-      parcelId: typeof v.parcelId === "string" ? v.parcelId : null,
+      // Caller-supplied parcel ids are never trusted as shared cache keys.
+      parcelId: null as string | null,
       refresh: v.refresh === true,
     };
   })
