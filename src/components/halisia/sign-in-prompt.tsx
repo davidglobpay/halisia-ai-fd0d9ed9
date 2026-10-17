@@ -2,12 +2,6 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { LogIn } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
-/** True when an error came from a signed-in-only server function rejecting the request. */
-export function isAuthError(err: unknown): boolean {
-  const msg = err instanceof Error ? err.message : typeof err === "string" ? err : "";
-  return /unauthori[sz]ed|invalid token|jwt expired|401/i.test(msg);
-}
-
 /**
  * Calm banner shown to signed-out visitors on public pages whose location
  * lookups require an account. Preserves the full current URL (path + search,

@@ -1,4 +1,5 @@
-import { SignInPrompt, isAuthError } from "@/components/halisia/sign-in-prompt";
+import { SignInPrompt } from "@/components/halisia/sign-in-prompt";
+import { isAuthError } from "@/lib/auth-error";
 import { useAuth } from "@/hooks/use-auth";
 import { isVisiblePassportEvidence } from "@/lib/passport-visible-evidence";
 import { ReviewedScoutFindings } from "@/components/halisia/scout-hub";
