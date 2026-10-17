@@ -17,6 +17,7 @@ export type MapEvidence = {
   source: string;
   capturedAt: string | null;
   position: EvidencePosition | null;
+  positionScope?: "place" | "sample" | "supplied";
   supports: string;
   limitations: string;
   method?: string;

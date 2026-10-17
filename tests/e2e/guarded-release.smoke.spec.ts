@@ -31,7 +31,7 @@ test.describe("guarded release route shells", () => {
       await expect(page.getByRole("heading").first()).toBeVisible();
       await expect(page.locator('meta[name="halisia-build"]')).toHaveAttribute(
         "content",
-        "2026-10-16.2",
+        "2026-10-17.1",
       );
       expect(errors).toEqual([]);
     });

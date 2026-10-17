@@ -7,7 +7,6 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState, type ReactNode } from "react";
 import { ArrowLeft, Boxes, ChevronDown, Download, Loader2, Newspaper } from "lucide-react";
 import { MapView } from "@/components/halisia/map-view";
-import { MapEvidenceCards } from "@/components/halisia/map-evidence-cards";
 import { KitButton } from "@/components/halisia/ds/button";
 import { passportMapEvidence } from "@/lib/passport-map-evidence";
 import type { EvidencePosition } from "@/lib/map-evidence";
@@ -470,7 +469,11 @@ function PassportPage() {
       <div className="mt-4" data-testid="passport-map-evidence">
         {selected && (
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <p role="status" className="text-xs text-muted-foreground">
+            <p
+              role="status"
+              data-testid="map-evidence-focus-status"
+              className="text-xs text-muted-foreground"
+            >
               Map focus: {selected.label} · {mapPoint.lat}, {mapPoint.lng} ·{" "}
               {mapPoint.accuracyM == null
                 ? "Accuracy unavailable"
@@ -481,14 +484,10 @@ function PassportPage() {
             </KitButton>
           </div>
         )}
-        <MapEvidenceCards
-          items={mapEvidence}
-          selectedId={selected?.id ?? null}
-          onFocus={(id, position) => {
-            setMapFocus({ id, position, locationKey });
-            if (mode === "street") setMode("map");
-          }}
-        />
+        <p className="text-xs text-muted-foreground">
+          Located findings include satellite, map and terrain images directly in their data tiles
+          below. Reference imagery does not confirm ownership, legal access or surveyed boundaries.
+        </p>
       </div>
 
       <div className="mt-4 grid gap-3">
@@ -549,7 +548,16 @@ function PassportPage() {
           <Row k="Opened" v={openedAt || "—"} />
           <ul className="mt-2">
             {byChapter("identity").map((it) => (
-              <EvidenceRow key={it.id} item={it} />
+              <EvidenceRow
+                key={it.id}
+                item={it}
+                mapItem={mapEvidence.find((mapped) => mapped.id === it.id)}
+                selectedMapId={selected?.id ?? null}
+                onMapFocus={(id, position) => {
+                  setMapFocus({ id, position, locationKey });
+                  if (mode === "street") setMode("map");
+                }}
+              />
             ))}
           </ul>
           <LocationStatusCard
@@ -564,7 +572,16 @@ function PassportPage() {
         <Section n={2} title="Administrative context" tag="official">
           <ul className="mb-2">
             {byChapter("admin").map((it) => (
-              <EvidenceRow key={it.id} item={it} />
+              <EvidenceRow
+                key={it.id}
+                item={it}
+                mapItem={mapEvidence.find((mapped) => mapped.id === it.id)}
+                selectedMapId={selected?.id ?? null}
+                onMapFocus={(id, position) => {
+                  setMapFocus({ id, position, locationKey });
+                  if (mode === "street") setMode("map");
+                }}
+              />
             ))}
           </ul>
           {facts ? (
@@ -598,7 +615,16 @@ function PassportPage() {
             <p className="text-[11px] text-muted-foreground">{ch.blurb}</p>
             <ul className="mt-1">
               {byChapter(ch.id).map((it) => (
-                <EvidenceRow key={it.id} item={it} />
+                <EvidenceRow
+                  key={it.id}
+                  item={it}
+                  mapItem={mapEvidence.find((mapped) => mapped.id === it.id)}
+                  selectedMapId={selected?.id ?? null}
+                  onMapFocus={(id, position) => {
+                    setMapFocus({ id, position, locationKey });
+                    if (mode === "street") setMode("map");
+                  }}
+                />
               ))}
             </ul>
             {ch.id === "build" && ideas.length > 0 && (

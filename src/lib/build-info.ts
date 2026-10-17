@@ -14,8 +14,8 @@
  * Bump BUILD_ID on every ship. A stale identifier is worse than none, because
  * it answers the question confidently and wrongly instead of not answering it.
  */
-export const BUILD_ID = "2026-10-16.2";
+export const BUILD_ID = "2026-10-17.1";
 
 /** What this build changed, in a few words. Non-sensitive by design. */
 export const BUILD_NOTE =
-  "Financing input restrictions, bounded provider response bytes and explicit evidence limitations";
+  "Inline satellite, map and terrain context on located Passport evidence cards";

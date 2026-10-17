@@ -60,6 +60,7 @@ export function passportMapEvidence(
         source: item.source,
         capturedAt: null,
         position: point ? { lat: point.lat, lng: point.lng, accuracyM: null } : null,
+        positionScope: located ? "place" : supplied ? "supplied" : sampled ? "sample" : undefined,
         supports: item.usedFor.join("; "),
         limitations: [scope, item.note, "Does not confirm title, ownership or surveyed boundaries."]
           .filter(Boolean)

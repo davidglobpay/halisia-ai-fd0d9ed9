@@ -1,10 +1,23 @@
 import { OutputTools, OutputVisual, OutputIcon } from "@/components/halisia/output-tools";
 import { CLASS_LABEL, CONFIDENCE_LABEL, type EvidenceItem } from "@/lib/passport-evidence";
 import { ListenButton } from "@/components/halisia/listen-button";
+import { MapEvidencePreview } from "@/components/halisia/map-evidence-preview";
+import { evidenceTarget, type MapEvidence, type EvidencePosition } from "@/lib/map-evidence";
 
 /** One fact with its value, source, method, uses and confidence. */
-export function EvidenceRow({ item }: { item: EvidenceItem }) {
+export function EvidenceRow({
+  item,
+  mapItem,
+  selectedMapId,
+  onMapFocus,
+}: {
+  item: EvidenceItem;
+  mapItem?: MapEvidence;
+  selectedMapId?: string | null;
+  onMapFocus?: (id: string, position: EvidencePosition) => void;
+}) {
   const gap = item.value == null;
+  const target = mapItem ? evidenceTarget(mapItem) : null;
   return (
     <li
       className="border-b border-foreground/10 py-2.5 last:border-0"
@@ -34,7 +47,26 @@ export function EvidenceRow({ item }: { item: EvidenceItem }) {
       >
         {gap ? "Not available" : item.value}
       </div>
-      <OutputVisual subject={item.label} value={item.value == null ? null : String(item.value)} />
+      {mapItem && target && onMapFocus ? (
+        <>
+          <MapEvidencePreview
+            item={mapItem}
+            target={target}
+            selected={selectedMapId === item.id}
+            onFocus={() => onMapFocus(item.id, target)}
+          />
+          <p className="mt-1 text-xs text-muted-foreground">
+            {target.accuracyM == null
+              ? "Accuracy unavailable"
+              : `Reported uncertainty: ${target.accuracyM} m`}
+            {" · "}
+            {mapItem.capturedAt || "Capture date unavailable"}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">{mapItem.limitations}</p>
+        </>
+      ) : (
+        <OutputVisual subject={item.label} value={item.value == null ? null : String(item.value)} />
+      )}
       <details className="mt-1 text-[11px] text-muted-foreground">
         <summary className="cursor-pointer select-none min-h-[28px] inline-flex items-center">
           Evidence & use

@@ -59,6 +59,17 @@ async function isolate(page: Page, fail = false) {
       await route.continue();
       return;
     }
+    if (
+      url.hostname === "server.arcgisonline.com" ||
+      url.hostname.endsWith(".tile.opentopomap.org") ||
+      url.hostname.endsWith(".basemaps.cartocdn.com")
+    ) {
+      await route.fulfill({
+        contentType: "image/svg+xml",
+        body: '<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><rect width="256" height="256" fill="#c9d8c4"/><path d="M0 128H256M128 0V256" stroke="#56744c"/><text x="10" y="30" fill="#183419">Synthetic map tile</text></svg>',
+      });
+      return;
+    }
     if (url.pathname.endsWith("leaflet.css")) {
       await route.fulfill({
         contentType: "text/css",
@@ -91,16 +102,19 @@ for (const width of [1280, 360]) {
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));
     const counts = await isolate(page);
-    const cards = page.getByTestId("passport-map-evidence");
+    const cards = page.getByTestId("land-passport-page");
     const school = cards.locator('[data-evidence-id="acc-schools"]');
     // The first visit can compile the lazy Passport chunk before requesting the fixture.
     await expect(school).toContainText("Synthetic test school — not real evidence", {
       timeout: 20_000,
     });
+    await page.locator("summary").filter({ hasText: "Access & services" }).click();
     await expect(school).toContainText("Capture date unavailable");
     await expect(school).toContainText("Accuracy unavailable");
-    await expect(cards.locator('[data-evidence-id="pop"]')).toContainText("Open-data indicator");
-    await expect(cards.locator('[data-evidence-id="pop"]').getByRole("button")).toBeDisabled();
+    await expect(cards.locator('[data-evidence-id="pop"]')).toContainText("Official statistics");
+    await expect(
+      cards.locator('[data-evidence-id="pop"]').getByTestId("map-evidence-preview"),
+    ).toHaveCount(0);
     await expect(cards.locator('[data-evidence-id="elev"]')).toContainText(
       "context sampled around this Passport point",
     );
@@ -108,12 +122,18 @@ for (const width of [1280, 360]) {
       "not a located site observation",
     );
     await page.getByRole("tab", { name: "Street View", exact: true }).click();
-    const focus = school.getByRole("button", { name: "Show on map" });
+    const focus = school.getByTestId("map-evidence-preview");
+    await expect(focus.getByRole("img")).toBeVisible();
+    await expect(school).toContainText("Provider-reported place");
+    await expect(school.getByRole("button", { name: "Satellite", exact: true })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
     await focus.focus();
     await page.keyboard.press("Enter");
     await expect(focus).toHaveAttribute("aria-pressed", "true");
     await expect(focus).toBeFocused();
-    await expect(cards.getByRole("status")).toContainText("-1.15123, 36.96123");
+    await expect(page.getByTestId("map-evidence-focus-status")).toContainText("-1.15123, 36.96123");
     await expect(page.getByTestId("map-view")).toBeVisible();
     await expect(page.getByTestId("map-fallback-osm")).toBeVisible({ timeout: 20_000 });
     await page.locator(".leaflet-marker-icon").click();
@@ -130,7 +150,9 @@ for (const width of [1280, 360]) {
     await cards.getByRole("button", { name: "Return to Passport point" }).click();
     await expect(focus).toHaveAttribute("aria-pressed", "false");
     await page.getByRole("tab", { name: "map", exact: true }).click();
-    await expect(cards.locator('[data-evidence-id="coords"]').getByRole("button")).toBeEnabled();
+    await expect(
+      cards.locator('[data-evidence-id="coords"]').getByTestId("map-evidence-preview"),
+    ).toBeEnabled();
     expect(counts.provider).toBeGreaterThan(0);
     expect(errors).toEqual([]);
   });
@@ -153,9 +175,12 @@ test("provider failure preserves available Passport evidence without a false zer
   page,
 }) => {
   await isolate(page, true);
-  const cards = page.getByTestId("passport-map-evidence");
+  const cards = page.getByTestId("land-passport-page");
   await expect(cards.locator('[data-evidence-id="coords"]')).toBeVisible();
-  await expect(cards.locator('[data-evidence-id="elev"]')).toHaveCount(0);
+  await expect(cards.locator('[data-evidence-id="elev"]')).toHaveAttribute("data-gap", "1");
+  await expect(
+    cards.locator('[data-evidence-id="elev"]').getByTestId("map-evidence-preview"),
+  ).toHaveCount(0);
   await expect(
     page.getByText("Live amenity and environment data (request failed on this visit)", {
       exact: true,

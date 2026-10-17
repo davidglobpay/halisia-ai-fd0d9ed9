@@ -29,7 +29,7 @@ describe("map evidence cards", () => {
     expect(screen.getByText(item.limitations)).toBeTruthy();
     expect(screen.getByText(item.source)).toBeTruthy();
   });
-  it("focuses the exact recorded target without a provider request", () => {
+  it("focuses the exact recorded target from its inline image", () => {
     const onFocus = vi.fn();
     render(
       createElement(MapEvidenceCards, {
@@ -38,12 +38,12 @@ describe("map evidence cards", () => {
         onFocus,
       }),
     );
-    fireEvent.click(screen.getByRole("button", { name: "Show on map" }));
+    fireEvent.click(screen.getByRole("button", { name: "Inspect map evidence for Recorded road" }));
     expect(onFocus).toHaveBeenCalledExactlyOnceWith(item.id, item.position);
     expect(screen.getByText("Capture date unavailable")).toBeTruthy();
     expect(screen.getByText("Reported uncertainty: 20 m")).toBeTruthy();
   });
-  it("disables focus when no physical location exists", () => {
+  it("withholds images and focus when no physical location exists", () => {
     const onFocus = vi.fn();
     render(
       createElement(MapEvidenceCards, {
@@ -52,11 +52,8 @@ describe("map evidence cards", () => {
         onFocus,
       }),
     );
-    const button = screen.getByRole("button", {
-      name: "Map evidence unavailable",
-    }) as HTMLButtonElement;
-    expect(button.disabled).toBe(true);
-    fireEvent.click(button);
+    expect(screen.getByText(/Map evidence unavailable/)).toBeTruthy();
+    expect(screen.queryByTestId("map-evidence-preview")).toBeNull();
     expect(onFocus).not.toHaveBeenCalled();
   });
   it("exposes selected state to assistive technology", () => {
@@ -67,8 +64,10 @@ describe("map evidence cards", () => {
         onFocus: vi.fn(),
       }),
     );
-    expect(screen.getByRole("button", { name: "Show on map" }).getAttribute("aria-pressed")).toBe(
-      "true",
-    );
+    expect(
+      screen
+        .getByRole("button", { name: "Inspect map evidence for Recorded road" })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
   });
 });

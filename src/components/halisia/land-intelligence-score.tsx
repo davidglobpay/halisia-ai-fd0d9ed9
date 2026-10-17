@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getWebFindings } from "@/lib/web-findings.functions";
 import { ListenButton } from "@/components/halisia/listen-button";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import {
   Sparkles,
   TrendingUp,
@@ -27,6 +27,10 @@ import {
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { formatDate, formatDateTime } from "@/lib/format-datetime";
+
+const subscribeToClient = () => () => {};
+const clientReadySnapshot = () => true;
+const serverReadySnapshot = () => false;
 import {
   runIntelligenceEngine,
   PERSONAS,
@@ -486,11 +490,19 @@ export function LandIntelligenceScore({
   wave4?: Wave4Intel;
 }) {
   const [persona, setPersona] = useUserPersona();
+  const clientReady = useSyncExternalStore(
+    subscribeToClient,
+    clientReadySnapshot,
+    serverReadySnapshot,
+  );
   const decision = useMemo(
     () => runIntelligenceEngine(intel, narrative, persona, wave4),
     [intel, narrative, persona, wave4],
   );
   const tally = classTally();
+  // Engine generation time can cross a minute boundary during hydration.
+  // Defer only its display; source retrieval dates and report data remain intact.
+  const displayFreshness = clientReady ? decision.freshness : "";
 
   const [downloading, setDownloading] = useState(false);
   const [pdfStage, setPdfStage] = useState("");
@@ -640,7 +652,7 @@ export function LandIntelligenceScore({
           <ArrowLeftRight className="h-3.5 w-3.5" /> Compare two locations
         </Link>
         <span className="text-[10px] text-muted-foreground ml-auto">
-          Generated {formatDateTime(decision.freshness)}
+          Generated {formatDateTime(displayFreshness)}
         </span>
       </div>
       {pdfError && (
@@ -654,7 +666,7 @@ export function LandIntelligenceScore({
         {decision.modules
           .filter((m) => m.status !== "not-assessed")
           .map((m) => (
-            <ModuleCard key={m.id} m={m} freshness={decision.freshness} />
+            <ModuleCard key={m.id} m={m} freshness={displayFreshness} />
           ))}
       </div>
 
@@ -681,7 +693,7 @@ export function LandIntelligenceScore({
       </div>
 
       <p className="mt-3 text-[10px] text-muted-foreground leading-relaxed">
-        {DOSSIER_SCOPE} Updated {formatDateTime(decision.freshness)}.
+        {DOSSIER_SCOPE} Updated {formatDateTime(displayFreshness)}.
       </p>
     </section>
   );
