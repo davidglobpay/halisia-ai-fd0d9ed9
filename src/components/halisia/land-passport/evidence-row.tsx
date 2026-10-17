@@ -1,4 +1,5 @@
-import { OutputTools, OutputVisual, OutputIcon } from "@/components/halisia/output-tools";
+import { CircleHelp, ArrowRight, Info, ShieldQuestion } from "lucide-react";
+import { OutputVisual, OutputIcon } from "@/components/halisia/output-tools";
 import { CLASS_LABEL, CONFIDENCE_LABEL, type EvidenceItem } from "@/lib/passport-evidence";
 import { ListenButton } from "@/components/halisia/listen-button";
 import { MapEvidencePreview } from "@/components/halisia/map-evidence-preview";
@@ -20,7 +21,7 @@ export function EvidenceRow({
   const target = mapItem ? evidenceTarget(mapItem) : null;
   return (
     <li
-      className="border-b border-foreground/10 py-2.5 last:border-0"
+      className="my-3 rounded-2xl border border-foreground/10 bg-card/80 p-4 shadow-sm"
       data-testid="evidence-row"
       data-evidence-id={item.id}
       data-gap={gap ? "1" : "0"}
@@ -45,9 +46,41 @@ export function EvidenceRow({
       <div
         className={`mt-0.5 text-sm break-words ${gap ? "text-muted-foreground italic" : "text-foreground"}`}
       >
-        {gap ? "Not available" : item.value}
+        {gap ? "Evidence needed" : item.value}
       </div>
-      {mapItem && target && onMapFocus ? (
+      {gap && (
+        <div
+          className="mt-3 rounded-xl border border-dashed border-foreground/20 bg-muted/40 p-3"
+          data-testid="evidence-gap-guidance"
+        >
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <CircleHelp size={18} aria-hidden="true" />
+            Not checked yet
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Missing information does not mean there is no risk or no feature on the ground.
+          </p>
+          <div className="mt-2 flex items-start gap-2 text-xs">
+            <ArrowRight size={16} className="shrink-0" aria-hidden="true" />
+            <span>
+              {item.chapter === "trust" || item.id === "boundary"
+                ? "Ask the relevant registry or a licensed professional for current records and a site check."
+                : "Check the source details below. Retry the lookup or add a dated site observation for review."}
+            </span>
+          </div>
+        </div>
+      )}
+      {!gap && (
+        <div className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+          <Info size={14} aria-hidden="true" />
+          {item.cls === "user"
+            ? "Submitted information · independent check needed"
+            : item.cls === "ai" || item.cls === "modelled"
+              ? "Estimate / interpretation · not a site inspection"
+              : "Source-backed context · check scope and date"}
+        </div>
+      )}
+      {!gap && mapItem && target && onMapFocus ? (
         <>
           <MapEvidencePreview
             item={mapItem}
@@ -68,9 +101,10 @@ export function EvidenceRow({
         <OutputVisual subject={item.label} value={item.value == null ? null : String(item.value)} />
       )}
       <details className="mt-1 text-[11px] text-muted-foreground">
-        <summary className="cursor-pointer select-none min-h-[28px] inline-flex items-center">
-          Evidence & use
+        <summary className="cursor-pointer select-none min-h-[44px] inline-flex items-center">
+          <ShieldQuestion size={15} className="mr-1.5" aria-hidden="true" /> Evidence & use
         </summary>
+        {item.note && <p className="mb-2 text-xs">{item.note}</p>}
         <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
           <dt>Source</dt>
           <dd className="break-words">{item.source}</dd>
@@ -82,7 +116,6 @@ export function EvidenceRow({
           <dd className="font-mono">{item.retrieved ?? "Reference data"}</dd>
         </dl>
       </details>
-      {item.note && <p className="mt-1 text-[11px] text-muted-foreground">{item.note}</p>}
     </li>
   );
 }

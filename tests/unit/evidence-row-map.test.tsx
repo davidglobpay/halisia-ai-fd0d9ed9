@@ -63,3 +63,20 @@ it("withholds unsupported map evidence without removing the written finding", ()
   expect(screen.queryByTestId("map-evidence-preview")).toBeNull();
   expect(screen.getByText(item.value!)).toBeTruthy();
 });
+it("explains missing evidence without inventing a value or showing imagery", () => {
+  render(
+    createElement(EvidenceRow, {
+      item: { ...item, value: null, cls: "gap", chapter: "trust", note: "Registry not connected" },
+    }),
+  );
+  expect(screen.getByText("Evidence needed")).toBeTruthy();
+  expect(screen.getByText("Not checked yet")).toBeTruthy();
+  expect(screen.getByText(/licensed professional/)).toBeTruthy();
+  expect(screen.queryByTestId("map-evidence-preview")).toBeNull();
+  expect(screen.getByText("Registry not connected").closest("details")).toBeTruthy();
+});
+it("labels model outputs as interpretations rather than site inspections", () => {
+  render(createElement(EvidenceRow, { item }));
+  expect(screen.getByText(/not a site inspection/)).toBeTruthy();
+  expect(screen.getByText(item.source)).toBeTruthy();
+});
