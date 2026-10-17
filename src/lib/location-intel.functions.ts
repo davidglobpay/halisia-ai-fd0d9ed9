@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { SliceProvenance, SnapshotMeta } from "@/lib/intel-snapshot.types";
 
 const GATEWAY = "https://connector-gateway.lovable.dev/google_maps";
@@ -371,6 +372,7 @@ type PlacesSlicePayload = {
 };
 
 export const getLocationIntel = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => {
     const v = input as { lat?: number; lng?: number; parcelId?: string; refresh?: boolean };
     if (typeof v?.lat !== "number" || typeof v?.lng !== "number")
@@ -638,6 +640,7 @@ export type PlaceDetails = {
 };
 
 export const getPlaceDetails = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => {
     const v = input as { id?: string };
     if (typeof v?.id !== "string" || !v.id) throw new Error("place id required");

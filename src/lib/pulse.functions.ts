@@ -67,6 +67,7 @@ export const archivePulseArticles = createServerFn({ method: "POST" })
  * back to the Web Speech API.
  */
 export const synthesizeArticleAudio = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: { articleId: string; engine?: TtsEngine }) => input)
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

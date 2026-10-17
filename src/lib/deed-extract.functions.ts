@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export type ValidationStep = {
   name: string;
@@ -214,6 +215,7 @@ function heuristicExtract(text: string): DeedFields {
 }
 
 export const extractDeedFields = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => {
     const v = input as { text?: string };
     if (!v?.text || typeof v.text !== "string") throw new Error("text required");

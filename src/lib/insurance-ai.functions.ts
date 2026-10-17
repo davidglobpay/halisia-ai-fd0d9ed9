@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { InsuranceAiOutput, InsuranceRisk } from "@/lib/insurance";
 
 export type InsuranceBriefInput = {
@@ -87,6 +88,7 @@ function fallback(input: InsuranceBriefInput): InsuranceAiOutput {
 }
 
 export const generateInsuranceBrief = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => i as InsuranceBriefInput)
   .handler(async ({ data }): Promise<InsuranceAiOutput> => {
     const key = process.env.LOVABLE_API_KEY;

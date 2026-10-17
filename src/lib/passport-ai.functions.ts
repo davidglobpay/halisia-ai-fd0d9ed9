@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
 const MODEL = "openai/gpt-6-astra";
@@ -15,6 +16,7 @@ export type PassportAiResult =
   | { ok: false; status: number; message: string };
 
 export const summarisePassport = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z.object({ digest: z.string().min(20).max(12_000), place: z.string().max(200) }).parse(d),
   )

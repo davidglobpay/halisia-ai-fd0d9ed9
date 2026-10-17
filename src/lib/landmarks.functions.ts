@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 /**
  * Find a landmark near a point, so a person can walk the map to their plot.
@@ -62,6 +63,7 @@ function bearingOf(aLat: number, aLng: number, bLat: number, bLng: number): stri
 const NOISE = new Set(["point_of_interest", "establishment", "political", "geocode"]);
 
 export const findLandmarks = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => {
     const v = input as { query?: string; lat?: number; lng?: number; radiusM?: number };
     if (!v?.query || typeof v.query !== "string") throw new Error("query required");
