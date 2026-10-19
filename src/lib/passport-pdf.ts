@@ -1,4 +1,5 @@
 import jsPDF from "jspdf";
+import { displayPlaceName, isQueryCentroid } from "./passport-quality";
 import { CHAPTERS, CLASS_LABEL, type EvidenceItem, type LedgerEntry } from "./passport-evidence";
 import type { PassportAiExport } from "./passport-ai-evidence";
 import type { LocationIntel } from "./location-intel.functions";
@@ -62,18 +63,18 @@ async function collectAssets(o: PassportPdfOptions): Promise<PassportPdfAssets> 
         maps[layer] = await passportMapImage(o.coords!.lat, o.coords!.lng, layer);
       }),
     );
-  if (o.coords && (!maps.satellite || !maps.map)) {
-    throw new Error(
-      "Satellite or road imagery could not be embedded. Please retry when the imagery is available; no text-only report was downloaded.",
-    );
-  }
   const imageDeadline = Date.now() + 45_000;
   const places: Omit<PassportPdfAssets["amenities"][number], "image" | "photo">[] = [];
   for (const [category, list] of Object.entries(o.intel?.categories ?? {}))
     for (const p of list) {
-      if (p.location && Number.isFinite(p.location.lat) && Number.isFinite(p.location.lng))
+      if (
+        p.location &&
+        Number.isFinite(p.location.lat) &&
+        Number.isFinite(p.location.lng) &&
+        !isQueryCentroid(p.location, o.coords)
+      )
         places.push({
-          name: p.name,
+          name: displayPlaceName(p.name),
           category,
           lat: p.location.lat,
           lng: p.location.lng,
@@ -85,7 +86,10 @@ async function collectAssets(o: PassportPdfOptions): Promise<PassportPdfAssets> 
     }
   if (o.wave4?.sources.some((s) => s.used && s.label.includes("Overpass")))
     for (const [category, list] of Object.entries(o.wave4.facilities))
-      for (const p of list) places.push({ ...p, category, source: "OpenStreetMap" });
+      for (const p of list) {
+        if (!isQueryCentroid(p, o.coords))
+          places.push({ ...p, name: displayPlaceName(p.name), category, source: "OpenStreetMap" });
+      }
   // Existing adapter results are bounded; preserve every located named result in the directory.
   const amenities: PassportPdfAssets["amenities"] = [];
   for (let i = 0; i < places.length; i += 4) {
@@ -187,8 +191,11 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
   };
   const map = (layer: EvidenceMapLayer, h = 235) => {
     const im = a.maps[layer];
-    if (!im) return;
-    need(h + 45);
+    if (!im) {
+      block(`${PREVIEW_LAYERS[layer].label} imagery`, "Map imagery unavailable for this export");
+      return;
+    }
+    need(h + 75);
     image(im, M, y, C, h);
     y += h + 6;
     meta(`${PREVIEW_LAYERS[layer].label} context - ${PREVIEW_LAYERS[layer].attribution}`);
@@ -239,11 +246,12 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
   map("satellite", 255);
   if (o.coords)
     block("Selected coordinates", `${o.coords.lat.toFixed(6)}, ${o.coords.lng.toFixed(6)}`);
-  const sourced = o.items.filter((it) => it.cls === "measured" || it.cls === "official").length,
-    estimates = o.items.filter((it) => it.cls === "modelled" || it.cls === "ai").length;
+  const directory = o.items.filter((it) => it.value);
+  const sourced = directory.filter((it) => it.cls === "measured" || it.cls === "official").length,
+    estimates = directory.filter((it) => it.cls === "modelled" || it.cls === "ai").length;
   block(
     "Report contents",
-    `${sourced} sourced readings / reference facts - ${estimates} labelled estimates`,
+    `Evidence directory: ${directory.length} entries / ${sourced} sourced or reference / ${estimates} modelled or AI. Maps, amenities and charts are additional context.`,
   );
   meta(
     "Imagery is location context. Estimates and conceptual diagrams are distinct from site observations. Registry, ownership and surveyed boundary verification are outside this report.",
@@ -343,10 +351,41 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     );
   }
   const g = o.geotech;
-  if (g?.terrainMeasured) {
+  if (g?.terrainMeasured && g.terrain) {
     next("Terrain & regional slope model");
     title("Terrain & topography");
-    map("terrain", 220);
+    if (g.elevationGrid?.values.length) {
+      const values = g.elevationGrid.values;
+      const n = values.length;
+      const valid = n >= 2 && values.every((row) => row.length === n && row.every(Number.isFinite));
+      if (valid) {
+        need(230);
+        const lo = Math.min(...values.flat()),
+          hi = Math.max(...values.flat());
+        const cellW = C / n,
+          cellH = 32,
+          top = y;
+        values.forEach((row, r) =>
+          row.forEach((elevation, c) => {
+            const t = (elevation - lo) / Math.max(1, hi - lo);
+            doc.setFillColor(220 - t * 130, 235 - t * 110, 195 - t * 110);
+            doc.rect(M + c * cellW, top + (n - 1 - r) * cellH, cellW, cellH, "F");
+            doc.setFontSize(9);
+            doc.setTextColor(...PDF.forest);
+            doc.text(
+              `${Math.round(elevation)} m`,
+              M + (c + 0.5) * cellW,
+              top + (n - 1 - r + 0.6) * cellH,
+              { align: "center" },
+            );
+          }),
+        );
+        y += n * cellH + 8;
+        meta(
+          `North up / regional elevation samples / ${g.elevationGrid.source}. Grid spacing ${g.elevationGrid.stepDeg} degrees; raster resolution is not survey accuracy.`,
+        );
+      } else map("terrain", 180);
+    } else map("terrain", 180);
     block(
       "Regional slope / aspect",
       `${g.terrain.slopePct.toFixed(1)}% / ${g.terrain.aspectLabel}`,
@@ -420,6 +459,19 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       "Concept diagram: surface soil / unknown deeper geology. Dashed line has no assigned depth.",
     );
   }
+  if (g && !g.soilLayers.length) {
+    next("Soil data availability");
+    title("Soil model unavailable");
+    block(
+      "ISRIC SoilGrids",
+      g.soilStatus === "failed"
+        ? "The provider request failed or timed out for this export."
+        : "No complete soil-composition band was returned for this export.",
+    );
+    text(
+      "This is a data gap, not evidence that soil is absent. Bedrock, groundwater and foundation suitability have not been assessed. A site investigation is needed before structural design.",
+    );
+  }
   next("Roads & access context");
   title("Roads & access");
   map("map", 300);
@@ -428,6 +480,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
   );
   const access = o.items.filter((it) => it.chapter === "access" && it.value);
   for (const it of access) {
+    need(110 + doc.splitTextToSize(sanitize(it.value!), C - 24).length * 16);
     block(it.label, it.value!);
     meta(it.source);
   }
@@ -441,7 +494,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
       const nameLines = doc.splitTextToSize(sanitize(p.name), C - 214) as string[];
-      const cardHeight = Math.max(155, 100 + nameLines.length * 14.3);
+      const cardHeight = Math.max(180, 155 + nameLines.length * 14.3);
       need(cardHeight + 12, "Amenities continued");
       const top = y;
       doc.setFillColor(...PDF.paper);
@@ -471,7 +524,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       text(`${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}`, 8, false, PDF.stone2, M + 200, C - 214);
       y = Math.max(y, top + cardHeight - 30);
       text(
-        `${p.source} | map: OSM/CARTO | image date unknown`,
+        `${p.source} | map: OpenStreetMap | image date unknown`,
         7,
         false,
         PDF.stone2,
@@ -493,7 +546,19 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     text(c.title, 15, true);
     y += 7;
     for (const it of list) {
-      need(85);
+      doc.setFontSize(10);
+      const findingHeight =
+        doc.splitTextToSize(sanitize(`${it.label}: ${it.value}`), C).length * 13.5;
+      doc.setFontSize(8);
+      const sourceHeight =
+        doc.splitTextToSize(
+          sanitize(
+            `${CLASS_LABEL[it.cls]} | ${it.source} | retrieved ${it.retrieved ?? "reference dataset"}`,
+          ),
+          C,
+        ).length * 10.8;
+      const methodHeight = doc.splitTextToSize(sanitize(it.method), C).length * 10.8;
+      need(findingHeight + sourceHeight + methodHeight + 18);
       text(`${it.label}: ${it.value}`, 10, true);
       meta(
         `${CLASS_LABEL[it.cls]} | ${it.source} | retrieved ${it.retrieved ?? "reference dataset"}`,
@@ -520,7 +585,6 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     doc.setPage(n);
     doc.setDrawColor(...PDF.gold);
     doc.line(M, H - 45, W - M, H - 45);
-    if (a.lockup) image(a.lockup, M, H - 39, 75, 23);
     doc.setFontSize(7);
     doc.setTextColor(...PDF.stone2);
     doc.text("Source-backed context / model estimates labelled", W / 2, H - 25, {

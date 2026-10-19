@@ -14,6 +14,8 @@ describe("geotechnical output availability", () => {
     const result = geotechAvailability(true);
     expect(result.terrainDerivedAvailable).toBe(true);
     expect(result.exportAvailable).toBe(true);
-    expect(result.message).toContain("subsurface interpretations remain estimates");
+    expect(result.message).toContain(
+      "subsurface conditions and foundation suitability are not assessed",
+    );
   });
 });

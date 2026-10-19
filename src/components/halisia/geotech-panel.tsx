@@ -23,10 +23,6 @@ import {
   SOIL_LAYER_META,
   type SoilLayerKey,
   layerValue,
-  bearingCapacityKpa,
-  shrinkSwellScore,
-  groundwaterScore,
-  foundationScore,
 } from "@/lib/geotech-derive";
 import { usePersistedState } from "@/hooks/use-persisted-state";
 import { ListenButton } from "@/components/halisia/listen-button";
@@ -61,9 +57,10 @@ export function GeotechPanel({ lat, lng, address }: { lat: number; lng: number; 
   const g = q.data;
   const availability = geotechAvailability(g.terrainMeasured);
   const usedSources = g.sources.filter((source) => source.used).map((source) => source.label);
-  const narration = availability.terrainDerivedAvailable
-    ? `Preliminary geotechnical intelligence for ${address}. ${g.geology.dominant}, ${g.terrain.landform}, at ${g.terrain.elevationM} metres elevation. Confidence ${g.confidence} percent. Sources used: ${usedSources.join(", ") || "none available"}. Limitation: ${g.disclaimer}`
-    : `Geotechnical intelligence for ${address}. ${availability.message} Sources used: ${usedSources.join(", ") || "none available"}. Limitation: ${g.disclaimer}`;
+  const narration =
+    availability.terrainDerivedAvailable && g.terrain
+      ? `Preliminary geotechnical intelligence for ${address}. Regional elevation ${g.terrain.elevationM} metres. Groundwater, bedrock, erosion risk and foundation suitability are not assessed. Sources used: ${usedSources.join(", ") || "none available"}. Limitation: ${g.disclaimer}`
+      : `Geotechnical intelligence for ${address}. ${availability.message} Sources used: ${usedSources.join(", ") || "none available"}. Limitation: ${g.disclaimer}`;
   const exportPdf = async () => {
     if (!availability.exportAvailable) return;
     setExporting(true);
@@ -85,23 +82,15 @@ export function GeotechPanel({ lat, lng, address }: { lat: number; lng: number; 
           <div className="text-[10px] uppercase tracking-widest text-accent">
             AI Geotechnical Intelligence
           </div>
-          <div className="ml-auto text-[10px] text-muted-foreground">
-            Confidence {g.confidence}/100
-          </div>
+          <div className="ml-auto text-[10px] text-muted-foreground">Regional model data</div>
         </div>
         <div className="mt-1 text-sm font-semibold">
-          {availability.terrainDerivedAvailable
-            ? `${g.geology.dominant} · ${g.terrain.landform} at ${g.terrain.elevationM} m`
+          {availability.terrainDerivedAvailable && g.terrain
+            ? `Regional elevation ${g.terrain.elevationM} m`
             : "Terrain-derived interpretation unavailable"}
         </div>
         <div className="mt-2">
           <ListenButton text={narration} label="Listen to geotech summary" />
-        </div>
-        <div className="mt-2 h-1.5 rounded-full bg-white/5 overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-destructive via-amber-glow to-emerald-glow"
-            style={{ width: `${g.confidence}%` }}
-          />
         </div>
         <button
           onClick={exportPdf}
@@ -123,19 +112,7 @@ export function GeotechPanel({ lat, lng, address }: { lat: number; lng: number; 
 
       <TerrainSection g={g} />
       <SoilSection layers={g.soilLayers} />
-      {availability.terrainDerivedAvailable ? (
-        <>
-          <SubsurfaceCrossSection g={g} />
-          <GeologySection g={g} />
-          <GroundwaterSection g={g} />
-          <FoundationSection g={g} />
-          <RiskSection g={g} />
-        </>
-      ) : (
-        <p role="status" className="rounded-xl border border-amber-glow/30 p-3 text-sm">
-          {availability.message}
-        </p>
-      )}
+      <RiskSection g={g} />
       <SourcesSection sources={g.sources} />
     </div>
   );
@@ -207,6 +184,7 @@ function TerrainSection({ g }: { g: GeotechIntel }) {
         </p>
       </Card>
     );
+  if (!t) return null;
   return (
     <Card title="Terrain analysis" icon={Mountain} hint="ASTER 30m">
       <div className="grid grid-cols-3 gap-2">
@@ -215,16 +193,10 @@ function TerrainSection({ g }: { g: GeotechIntel }) {
         <Stat label="Aspect" value={`${t.aspectLabel} · ${t.aspectDeg}°`} />
         <Stat label="Relief" value={`${t.reliefM} m`} />
         <Stat label="Roughness" value={`${t.roughness} m`} />
-        <Stat label="Landform" value={t.landform} />
       </div>
-      <div className="mt-2 flex items-center gap-2 text-[11px] text-muted-foreground">
-        <span className="rounded-full bg-white/5 px-2 py-0.5">
-          Erosion: <b className={eroseTone(t.erosionRisk)}>{t.erosionRisk}</b>
-        </span>
-        <span className="rounded-full bg-white/5 px-2 py-0.5">
-          Natural drainage index: <b>{t.drainageIndex}/100</b>
-        </span>
-      </div>
+      <p className="mt-2 text-xs text-muted-foreground">
+        Regional elevation model only. Erosion risk, drainage and buildability are not assessed.
+      </p>
     </Card>
   );
 }
@@ -294,7 +266,7 @@ function SoilSection({ layers }: { layers: SoilLayer[] }) {
                 <span className="ml-2 text-muted-foreground">· {L.texture}</span>
               </span>
               <span className="text-[10px] text-muted-foreground uppercase tracking-widest">
-                drainage: {L.drainage}
+                Regional soil model
               </span>
             </div>
             {(active.clay || active.silt || active.sand) && (
@@ -344,281 +316,20 @@ function SoilSection({ layers }: { layers: SoilLayer[] }) {
           </div>
         ))}
       </div>
-      <SubsurfaceIndicators layers={layers} />
     </Card>
   );
-}
-
-function SubsurfaceIndicators({ layers }: { layers: SoilLayer[] }) {
-  const top = layers[0];
-  if (!top) return null;
-  const bear = bearingCapacityKpa(top);
-  const ss = shrinkSwellScore(top);
-  return (
-    <div className="mt-3 grid grid-cols-2 gap-2" data-testid="subsurface-indicators">
-      <div className="rounded-xl bg-black/25 border border-white/5 px-3 py-2" title={bear.note}>
-        <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-          Bearing capacity
-        </div>
-        <div className="text-sm font-semibold tabular-nums mt-0.5">
-          {bear.low}–{bear.high} kPa
-        </div>
-      </div>
-      <div className="rounded-xl bg-black/25 border border-white/5 px-3 py-2">
-        <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-          Shrink–swell
-        </div>
-        <div className="text-sm font-semibold mt-0.5">
-          <span
-            className={eroseTone(
-              ss.band === "Severe" ? "High" : (ss.band as "Low" | "Moderate" | "High"),
-            )}
-          >
-            {ss.band}
-          </span>{" "}
-          <span className="text-muted-foreground text-[10px] tabular-nums">({ss.score}/100)</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function SubsurfaceCrossSection({ g }: { g: GeotechIntel }) {
-  const layers = g.soilLayers;
-  const total = 6; // metres depicted
-  return (
-    <Card
-      title="Estimated subsurface"
-      icon={LayersIcon}
-      hint={`Bedrock ${g.bedrock.minM}-${g.bedrock.maxM} m`}
-    >
-      <div className="flex gap-3">
-        <div className="w-24 flex flex-col rounded-xl overflow-hidden border border-white/5">
-          {layers.map((L, i) => (
-            <div
-              key={i}
-              className="flex-1 flex items-center justify-center text-[10px] text-black/80"
-              style={{ background: layerColour(L) }}
-              title={L.texture}
-            >
-              {L.depth}
-            </div>
-          ))}
-          <div
-            className="flex-1 flex items-center justify-center text-[10px] text-white/90"
-            style={{
-              background: "repeating-linear-gradient(45deg,#3a3a3a 0 4px,#4a4a4a 4px 8px)",
-            }}
-          >
-            Bedrock ~{g.bedrock.minM}-{g.bedrock.maxM} m
-          </div>
-        </div>
-        <div className="flex-1 text-[11px] text-muted-foreground leading-relaxed">
-          Estimated stratigraphy over the first {total} m: surface{" "}
-          {layers[0]?.texture.toLowerCase() ?? "cover"}, transitioning to residual soils, with
-          competent rock expected at{" "}
-          <b className="text-foreground">
-            {g.bedrock.minM}–{g.bedrock.maxM} m
-          </b>{" "}
-          depth. Excavation difficulty: <b>{g.bedrock.excavation}</b>.
-        </div>
-      </div>
-    </Card>
-  );
-}
-
-function layerColour(L: SoilLayer): string {
-  if (L.texture.startsWith("Clay")) return "#d3a86a";
-  if (L.texture.startsWith("Sand")) return "#e9d9a7";
-  if (L.texture.startsWith("Silt")) return "#c9b088";
-  return "#b8a075";
-}
-
-function GeologySection({ g }: { g: GeotechIntel }) {
-  return (
-    <Card
-      title="Geological interpretation"
-      icon={ShieldCheck}
-      hint={`AI · ${g.geology.confidence}`}
-    >
-      <div className="text-sm font-semibold">{g.geology.dominant}</div>
-      <div className="text-[11px] text-muted-foreground uppercase tracking-widest mt-0.5">
-        Setting: {g.geology.setting}
-      </div>
-      <p className="mt-2 text-xs text-foreground/80 leading-relaxed">{g.geology.note}</p>
-    </Card>
-  );
-}
-
-function GroundwaterSection({ g }: { g: GeotechIntel }) {
-  const gw = g.groundwater;
-  return (
-    <Card title="Groundwater indicators" icon={Droplets} hint="Preliminary">
-      <div className="grid grid-cols-2 gap-2">
-        <Stat label="Shallow groundwater" value={gw.shallowLikelihood} />
-        <Stat label="Seasonal waterlogging" value={gw.seasonalWaterlogging} />
-        <Stat
-          label="Annual rainfall"
-          value={gw.annualRainMm != null ? `${gw.annualRainMm} mm` : "—"}
-        />
-        <Stat label="Drainage class" value={g.soilLayers[0]?.drainage ?? "—"} />
-      </div>
-    </Card>
-  );
-}
-
-function FoundationSection({ g }: { g: GeotechIntel }) {
-  return (
-    <Card title="Foundation comparison" icon={Building2} hint="Guidance only">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2" data-testid="foundation-comparison">
-        {g.foundations.map((f) => {
-          const s = foundationScore(f, g);
-          return (
-            <div
-              data-output-card
-              key={f.type}
-              className="rounded-xl bg-black/30 border border-white/5 px-3 py-2.5 flex flex-col"
-              data-testid={`foundation-card-${f.type.toLowerCase()}`}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold">{f.type}</span>
-                <span
-                  className={`text-[10px] uppercase tracking-widest ${suitTone(f.suitability)}`}
-                >
-                  {f.suitability}
-                </span>
-              </div>
-              <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed line-clamp-3">
-                {f.note}
-              </p>
-              <OutputVisual subject={`${f.type} foundation`} />
-              <OutputTools label={`${f.type} foundation`} />
-              <div className="mt-2 space-y-1">
-                <MiniBar label="Load" value={s.loadCapacity} tone="#62e9ff" />
-                <MiniBar label="Cost" value={s.costEfficiency} tone="#22c55e" />
-                <MiniBar label="Fit" value={s.siteFit} tone="#d4a017" />
-              </div>
-              <div className="mt-2 text-[10px] text-muted-foreground tabular-nums">
-                {s.costLabel}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <p className="mt-2 text-[10px] text-muted-foreground">
-        Final foundation design requires a professional site-specific geotechnical investigation.
-      </p>
-    </Card>
-  );
-}
-
-function MiniBar({ label, value, tone }: { label: string; value: number; tone: string }) {
-  return (
-    <div className="flex items-center gap-2">
-      <span className="text-[9px] uppercase tracking-widest text-muted-foreground w-8">
-        {label}
-      </span>
-      <div className="flex-1 h-1.5 rounded-full bg-white/5 overflow-hidden">
-        <div className="h-full rounded-full" style={{ width: `${value}%`, background: tone }} />
-      </div>
-      <span className="text-[10px] tabular-nums text-muted-foreground w-6 text-right">{value}</span>
-    </div>
-  );
-}
-
-function suitTone(s: string) {
-  if (s === "Preferred") return "text-emerald-glow";
-  if (s === "Possible") return "text-cyan-glow";
-  if (s === "Cautious") return "text-amber-glow";
-  return "text-destructive";
 }
 
 export function RiskSection({ g }: { g: GeotechIntel }) {
-  const [open, setOpen] = useState<string | null>(g.risks[0]?.label ?? null);
-  const availability = geotechAvailability(g.terrainMeasured);
-  const gwScore = groundwaterScore(g);
-  if (!availability.terrainDerivedAvailable) {
-    return (
-      <p role="status" className="text-sm text-muted-foreground">
-        {availability.message}
-      </p>
-    );
-  }
   return (
-    <Card
-      title="Construction risks · mitigation & cost impact"
-      icon={ShieldAlert}
-      hint={`Groundwater ${gwScore}/100`}
-    >
-      <div className="space-y-2" data-testid="risk-cards">
-        {g.risks.map((r) => {
-          const isOpen = open === r.label;
-          const band = r.costImpact.band;
-          const bandTone =
-            band === "Severe" || band === "High"
-              ? "text-destructive"
-              : band === "Moderate"
-                ? "text-amber-glow"
-                : "text-emerald-glow";
-          const bandWidth =
-            band === "Severe" ? 100 : band === "High" ? 75 : band === "Moderate" ? 50 : 25;
-          return (
-            <div
-              key={r.label}
-              className="rounded-xl bg-black/30 border border-white/5 overflow-hidden"
-              data-testid={`risk-card-${r.label.toLowerCase().replace(/\s+/g, "-")}`}
-            >
-              <button
-                type="button"
-                onClick={() => setOpen(isOpen ? null : r.label)}
-                aria-expanded={isOpen}
-                className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/[0.03]"
-              >
-                <span className="text-sm font-medium flex-1">{r.label}</span>
-                <span className={`text-[10px] uppercase tracking-widest ${eroseTone(r.level)}`}>
-                  {r.level}
-                </span>
-                <span
-                  className={`text-[10px] uppercase tracking-widest ${bandTone} ml-1`}
-                  title={r.costImpact.note}
-                >
-                  {band} cost
-                </span>
-              </button>
-              {isOpen && (
-                <div className="border-t border-white/5 px-3 py-2 space-y-2">
-                  <p className="text-[11px] text-muted-foreground leading-relaxed">{r.note}</p>
-                  <div>
-                    <div className="text-[10px] uppercase tracking-widest text-muted-foreground flex items-center gap-1 mb-1">
-                      <Wrench className="h-3 w-3 text-accent" /> What to do
-                    </div>
-                    <ul className="list-disc list-inside space-y-0.5 text-[11px] text-foreground/85">
-                      {r.mitigation.map((m, i) => (
-                        <li key={i}>{m}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div>
-                    <div className="text-[10px] uppercase tracking-widest text-muted-foreground flex items-center gap-1 mb-1">
-                      <Coins className="h-3 w-3 text-amber-glow" /> Estimated cost impact
-                    </div>
-                    <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-emerald-glow via-amber-glow to-destructive"
-                        style={{ width: `${bandWidth}%` }}
-                      />
-                    </div>
-                    <div className="mt-1 text-[10px] text-muted-foreground tabular-nums">
-                      KES {r.costImpact.rangeKESPerSqm[0].toLocaleString()}–
-                      {r.costImpact.rangeKESPerSqm[1].toLocaleString()} / m² · {r.costImpact.note}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+    <Card title="Ground investigation needed" icon={ShieldAlert} hint="Not assessed">
+      <p className="text-sm text-muted-foreground">
+        Bedrock depth, groundwater, bearing capacity, erosion risk and foundation suitability have
+        not been established. Regional soil and elevation models cannot establish these site
+        conditions. A licensed geotechnical engineer should arrange sampling, testing and
+        groundwater observations before structural design.
+      </p>
+      {!g.terrainMeasured && <p role="status">{geotechAvailability(false).message}</p>}
     </Card>
   );
 }

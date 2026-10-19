@@ -72,6 +72,6 @@ describe("inline map evidence", () => {
     expect(screen.getByText(/No substitute image has been generated/)).toBeTruthy();
     expect(container.querySelector("img")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Map", exact: true }));
-    expect(container.querySelector("img")?.src).toContain("basemaps.cartocdn.com");
+    expect(container.querySelector("img")?.src).toContain("tile.openstreetmap.org");
   });
 });

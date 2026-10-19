@@ -76,8 +76,8 @@ export default function KenyaCountyLeaflet({
       style={{ background: "#F1ECE0" }}
     >
       <TileLayer
-        attribution="&copy; OpenStreetMap contributors &copy; CARTO"
-        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+        attribution="&copy; OpenStreetMap contributors"
+        url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
         maxNativeZoom={20}
         maxZoom={21}
       />

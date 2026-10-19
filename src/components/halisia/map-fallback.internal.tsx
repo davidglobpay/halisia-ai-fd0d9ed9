@@ -57,7 +57,7 @@ export default function MapFallback({
   // cap now follows the provider; Leaflet upscales beyond it instead of
   // requesting tiles that do not exist.
   const maxNative =
-    mapType === "satellite" || mapType === "hybrid" ? 19 : mapType === "terrain" ? 17 : 20;
+    mapType === "satellite" || mapType === "hybrid" ? 19 : mapType === "terrain" ? 17 : 19;
 
   const url =
     mapType === "satellite" || mapType === "hybrid"
@@ -65,14 +65,14 @@ export default function MapFallback({
       : mapType === "terrain"
         ? "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png"
         : theme === "light"
-          ? "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-          : "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+          ? "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+          : "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
   const attribution =
     mapType === "satellite" || mapType === "hybrid"
       ? "Tiles © Esri, Maxar"
       : mapType === "terrain"
         ? "© OpenTopoMap (CC-BY-SA)"
-        : "© OpenStreetMap · © CARTO";
+        : "© OpenStreetMap contributors";
   return (
     <MapContainer
       center={[lat, lng]}

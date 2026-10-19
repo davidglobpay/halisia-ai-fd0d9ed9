@@ -67,8 +67,8 @@ export default function HeatmapMap({
         key={`${lat.toFixed(4)}-${lng.toFixed(4)}`}
       >
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-          attribution="© OpenStreetMap · © CARTO"
+          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution="© OpenStreetMap contributors"
           maxNativeZoom={20}
           maxZoom={21}
         />

@@ -5,7 +5,7 @@ export function geotechAvailability(measured: boolean | null | undefined) {
     terrainDerivedAvailable: available,
     exportAvailable: available,
     message: available
-      ? "Terrain values are derived from an elevation grid; subsurface interpretations remain estimates."
+      ? "Terrain values are derived from an elevation grid; subsurface conditions and foundation suitability are not assessed."
       : "Elevation grid unavailable. Terrain-derived geology, bedrock, groundwater, foundation and risk interpretations are withheld. The geotechnical PDF export is unavailable.",
   };
 }

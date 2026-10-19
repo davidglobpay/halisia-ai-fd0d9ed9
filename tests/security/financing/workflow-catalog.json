@@ -1,0 +1,596 @@
+{
+  "columns": [
+    {
+      "column_default": "gen_random_uuid()",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "table_name": "bid_proposals",
+      "udt_name": "uuid"
+    },
+    {
+      "column_default": null,
+      "column_name": "bid_request_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "table_name": "bid_proposals",
+      "udt_name": "uuid"
+    },
+    {
+      "column_default": null,
+      "column_name": "provider_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "table_name": "bid_proposals",
+      "udt_name": "uuid"
+    },
+    {
+      "column_default": null,
+      "column_name": "company_name",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "table_name": "bid_proposals",
+      "udt_name": "text"
+    },
+    {
+      "column_default": null,
+      "column_name": "contact_email",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "table_name": "bid_proposals",
+      "udt_name": "text"
+    },
+    {
+      "column_default": null,
+      "column_name": "contact_phone",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "table_name": "bid_proposals",
+      "udt_name": "text"
+    },
+    {
+      "column_default": null,
+      "column_name": "amount",
+      "data_type": "numeric",
+      "is_nullable": "YES",
+      "table_name": "bid_proposals",
+      "udt_name": "numeric"
+    },
+    {
+      "column_default": "'KES'::text",
+      "column_name": "currency",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "table_name": "bid_proposals",
+      "udt_name": "text"
+    },
+    {
+      "column_default": null,
+      "column_name": "timeline_days",
+      "data_type": "integer",
+      "is_nullable": "YES",
+      "table_name": "bid_proposals",
+      "udt_name": "int4"
+    },
+    {
+      "column_default": null,
+      "column_name": "message",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "table_name": "bid_proposals",
+      "udt_name": "text"
+    },
+    {
+      "column_default": null,
+      "column_name": "portfolio_url",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "table_name": "bid_proposals",
+      "udt_name": "text"
+    },
+    {
+      "column_default": "'submitted'::bid_proposal_status",
+      "column_name": "status",
+      "data_type": "USER-DEFINED",
+      "is_nullable": "NO",
+      "table_name": "bid_proposals",
+      "udt_name": "bid_proposal_status"
+    },
+    {
+      "column_default": "now()",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "table_name": "bid_proposals",
+      "udt_name": "timestamptz"
+    },
+    {
+      "column_default": "now()",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "table_name": "bid_proposals",
+      "udt_name": "timestamptz"
+    },
+    {
+      "column_default": "gen_random_uuid()",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "table_name": "leads",
+      "udt_name": "uuid"
+    },
+    {
+      "column_default": null,
+      "column_name": "property_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "table_name": "leads",
+      "udt_name": "uuid"
+    },
+    {
+      "column_default": null,
+      "column_name": "buyer_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "table_name": "leads",
+      "udt_name": "uuid"
+    },
+    {
+      "column_default": null,
+      "column_name": "seller_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "table_name": "leads",
+      "udt_name": "uuid"
+    },
+    {
+      "column_default": "'new'::lead_stage",
+      "column_name": "stage",
+      "data_type": "USER-DEFINED",
+      "is_nullable": "NO",
+      "table_name": "leads",
+      "udt_name": "lead_stage"
+    },
+    {
+      "column_default": null,
+      "column_name": "message",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "table_name": "leads",
+      "udt_name": "text"
+    },
+    {
+      "column_default": null,
+      "column_name": "contact_email",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "table_name": "leads",
+      "udt_name": "text"
+    },
+    {
+      "column_default": null,
+      "column_name": "contact_phone",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "table_name": "leads",
+      "udt_name": "text"
+    },
+    {
+      "column_default": "now()",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "table_name": "leads",
+      "udt_name": "timestamptz"
+    },
+    {
+      "column_default": "now()",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "table_name": "leads",
+      "udt_name": "timestamptz"
+    },
+    {
+      "column_default": "gen_random_uuid()",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "table_name": "professional_requests",
+      "udt_name": "uuid"
+    },
+    {
+      "column_default": null,
+      "column_name": "professional_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "table_name": "professional_requests",
+      "udt_name": "uuid"
+    },
+    {
+      "column_default": null,
+      "column_name": "requester_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "table_name": "professional_requests",
+      "udt_name": "uuid"
+    },
+    {
+      "column_default": null,
+      "column_name": "property_id",
+      "data_type": "uuid",
+      "is_nullable": "YES",
+      "table_name": "professional_requests",
+      "udt_name": "uuid"
+    },
+    {
+      "column_default": null,
+      "column_name": "project_brief",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "table_name": "professional_requests",
+      "udt_name": "text"
+    },
+    {
+      "column_default": null,
+      "column_name": "county",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "table_name": "professional_requests",
+      "udt_name": "text"
+    },
+    {
+      "column_default": null,
+      "column_name": "budget_note",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "table_name": "professional_requests",
+      "udt_name": "text"
+    },
+    {
+      "column_default": null,
+      "column_name": "contact_email",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "table_name": "professional_requests",
+      "udt_name": "text"
+    },
+    {
+      "column_default": null,
+      "column_name": "contact_phone",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "table_name": "professional_requests",
+      "udt_name": "text"
+    },
+    {
+      "column_default": "'new'::text",
+      "column_name": "status",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "table_name": "professional_requests",
+      "udt_name": "text"
+    },
+    {
+      "column_default": "now()",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "table_name": "professional_requests",
+      "udt_name": "timestamptz"
+    },
+    {
+      "column_default": "now()",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "table_name": "professional_requests",
+      "udt_name": "timestamptz"
+    },
+    {
+      "column_default": null,
+      "column_name": "preferred_start",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "table_name": "professional_requests",
+      "udt_name": "timestamptz"
+    },
+    {
+      "column_default": null,
+      "column_name": "preferred_end",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "table_name": "professional_requests",
+      "udt_name": "timestamptz"
+    },
+    {
+      "column_default": null,
+      "column_name": "confirmed_start",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "table_name": "professional_requests",
+      "udt_name": "timestamptz"
+    },
+    {
+      "column_default": null,
+      "column_name": "confirmed_end",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "table_name": "professional_requests",
+      "udt_name": "timestamptz"
+    },
+    {
+      "column_default": "gen_random_uuid()",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "table_name": "viewings",
+      "udt_name": "uuid"
+    },
+    {
+      "column_default": null,
+      "column_name": "property_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "table_name": "viewings",
+      "udt_name": "uuid"
+    },
+    {
+      "column_default": null,
+      "column_name": "buyer_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "table_name": "viewings",
+      "udt_name": "uuid"
+    },
+    {
+      "column_default": null,
+      "column_name": "seller_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "table_name": "viewings",
+      "udt_name": "uuid"
+    },
+    {
+      "column_default": null,
+      "column_name": "scheduled_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "table_name": "viewings",
+      "udt_name": "timestamptz"
+    },
+    {
+      "column_default": "'requested'::text",
+      "column_name": "status",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "table_name": "viewings",
+      "udt_name": "text"
+    },
+    {
+      "column_default": null,
+      "column_name": "notes",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "table_name": "viewings",
+      "udt_name": "text"
+    },
+    {
+      "column_default": "now()",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "table_name": "viewings",
+      "udt_name": "timestamptz"
+    },
+    {
+      "column_default": "now()",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "table_name": "viewings",
+      "udt_name": "timestamptz"
+    },
+    {
+      "column_default": null,
+      "column_name": "slot_id",
+      "data_type": "uuid",
+      "is_nullable": "YES",
+      "table_name": "viewings",
+      "udt_name": "uuid"
+    }
+  ],
+  "policies": [
+    {
+      "cmd": "ALL",
+      "permissive": "PERMISSIVE",
+      "policyname": "Provider manages own proposals",
+      "qual": "(auth.uid() = provider_id)",
+      "roles": ["authenticated"],
+      "schemaname": "public",
+      "tablename": "bid_proposals",
+      "with_check": "(auth.uid() = provider_id)"
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Request owner can read proposals on their requests",
+      "qual": "(EXISTS ( SELECT 1\n   FROM bid_requests r\n  WHERE ((r.id = bid_proposals.bid_request_id) AND (r.owner_id = auth.uid()))))",
+      "roles": ["authenticated"],
+      "schemaname": "public",
+      "tablename": "bid_proposals",
+      "with_check": null
+    },
+    {
+      "cmd": "UPDATE",
+      "permissive": "PERMISSIVE",
+      "policyname": "Request owner can update proposal status",
+      "qual": "(EXISTS ( SELECT 1\n   FROM bid_requests r\n  WHERE ((r.id = bid_proposals.bid_request_id) AND (r.owner_id = auth.uid()))))",
+      "roles": ["authenticated"],
+      "schemaname": "public",
+      "tablename": "bid_proposals",
+      "with_check": "(EXISTS ( SELECT 1\n   FROM bid_requests r\n  WHERE ((r.id = bid_proposals.bid_request_id) AND (r.owner_id = auth.uid()))))"
+    },
+    {
+      "cmd": "ALL",
+      "permissive": "RESTRICTIVE",
+      "policyname": "halisia_active_account",
+      "qual": "halisia_account_active()",
+      "roles": ["authenticated"],
+      "schemaname": "public",
+      "tablename": "bid_proposals",
+      "with_check": "halisia_account_active()"
+    },
+    {
+      "cmd": "INSERT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Authenticated buyers create leads",
+      "qual": null,
+      "roles": ["authenticated"],
+      "schemaname": "public",
+      "tablename": "leads",
+      "with_check": "(auth.uid() = buyer_id)"
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Buyer or seller can read the lead",
+      "qual": "((auth.uid() = buyer_id) OR (auth.uid() = seller_id))",
+      "roles": ["authenticated"],
+      "schemaname": "public",
+      "tablename": "leads",
+      "with_check": null
+    },
+    {
+      "cmd": "UPDATE",
+      "permissive": "PERMISSIVE",
+      "policyname": "Seller updates lead stage",
+      "qual": "(auth.uid() = seller_id)",
+      "roles": ["authenticated"],
+      "schemaname": "public",
+      "tablename": "leads",
+      "with_check": "(auth.uid() = seller_id)"
+    },
+    {
+      "cmd": "ALL",
+      "permissive": "RESTRICTIVE",
+      "policyname": "halisia_active_account",
+      "qual": "halisia_account_active()",
+      "roles": ["authenticated"],
+      "schemaname": "public",
+      "tablename": "leads",
+      "with_check": "halisia_account_active()"
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "halisia_master_admin_read",
+      "qual": "has_role(auth.uid(), 'administrator'::app_role)",
+      "roles": ["authenticated"],
+      "schemaname": "public",
+      "tablename": "leads",
+      "with_check": null
+    },
+    {
+      "cmd": "INSERT",
+      "permissive": "PERMISSIVE",
+      "policyname": "create own request",
+      "qual": null,
+      "roles": ["authenticated"],
+      "schemaname": "public",
+      "tablename": "professional_requests",
+      "with_check": "(auth.uid() = requester_id)"
+    },
+    {
+      "cmd": "ALL",
+      "permissive": "RESTRICTIVE",
+      "policyname": "halisia_active_account",
+      "qual": "halisia_account_active()",
+      "roles": ["authenticated"],
+      "schemaname": "public",
+      "tablename": "professional_requests",
+      "with_check": "halisia_account_active()"
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "halisia_master_admin_read",
+      "qual": "has_role(auth.uid(), 'administrator'::app_role)",
+      "roles": ["authenticated"],
+      "schemaname": "public",
+      "tablename": "professional_requests",
+      "with_check": null
+    },
+    {
+      "cmd": "UPDATE",
+      "permissive": "PERMISSIVE",
+      "policyname": "pro updates request status",
+      "qual": "(EXISTS ( SELECT 1\n   FROM professional_profiles p\n  WHERE ((p.id = professional_requests.professional_id) AND (p.user_id = auth.uid()))))",
+      "roles": ["authenticated"],
+      "schemaname": "public",
+      "tablename": "professional_requests",
+      "with_check": "(EXISTS ( SELECT 1\n   FROM professional_profiles p\n  WHERE ((p.id = professional_requests.professional_id) AND (p.user_id = auth.uid()))))"
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "requester or pro reads request",
+      "qual": "((auth.uid() = requester_id) OR (EXISTS ( SELECT 1\n   FROM professional_profiles p\n  WHERE ((p.id = professional_requests.professional_id) AND (p.user_id = auth.uid())))))",
+      "roles": ["authenticated"],
+      "schemaname": "public",
+      "tablename": "professional_requests",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Buyer or seller can read viewing",
+      "qual": "((auth.uid() = buyer_id) OR (auth.uid() = seller_id))",
+      "roles": ["authenticated"],
+      "schemaname": "public",
+      "tablename": "viewings",
+      "with_check": null
+    },
+    {
+      "cmd": "INSERT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Buyers create viewings",
+      "qual": null,
+      "roles": ["authenticated"],
+      "schemaname": "public",
+      "tablename": "viewings",
+      "with_check": "(auth.uid() = buyer_id)"
+    },
+    {
+      "cmd": "UPDATE",
+      "permissive": "PERMISSIVE",
+      "policyname": "Seller or buyer updates viewing",
+      "qual": "((auth.uid() = buyer_id) OR (auth.uid() = seller_id))",
+      "roles": ["authenticated"],
+      "schemaname": "public",
+      "tablename": "viewings",
+      "with_check": "((auth.uid() = buyer_id) OR (auth.uid() = seller_id))"
+    },
+    {
+      "cmd": "ALL",
+      "permissive": "RESTRICTIVE",
+      "policyname": "halisia_active_account",
+      "qual": "halisia_account_active()",
+      "roles": ["authenticated"],
+      "schemaname": "public",
+      "tablename": "viewings",
+      "with_check": "halisia_account_active()"
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "halisia_master_admin_read",
+      "qual": "has_role(auth.uid(), 'administrator'::app_role)",
+      "roles": ["authenticated"],
+      "schemaname": "public",
+      "tablename": "viewings",
+      "with_check": null
+    }
+  ]
+}

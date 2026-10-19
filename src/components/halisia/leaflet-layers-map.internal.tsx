@@ -48,15 +48,15 @@ const BASEMAPS: Array<{
   {
     id: "carto-dark",
     name: "Carto Dark",
-    url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-    attribution: "© OpenStreetMap · © CARTO",
+    url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    attribution: "© OpenStreetMap contributors",
     max: 20,
   },
   {
     id: "carto-light",
     name: "Carto Light",
-    url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-    attribution: "© OpenStreetMap · © CARTO",
+    url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    attribution: "© OpenStreetMap contributors",
     max: 20,
   },
   {
@@ -118,8 +118,8 @@ export default function LeafletLayersMap({
           ))}
           <LayersControl.Overlay name="Labels & roads" checked={showLabels}>
             <TileLayer
-              url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png"
-              attribution="Labels © CARTO"
+              url="https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
+              attribution="Labels © Esri"
               maxNativeZoom={20}
               maxZoom={21}
               eventHandlers={{ add: () => setShowLabels(true), remove: () => setShowLabels(false) }}

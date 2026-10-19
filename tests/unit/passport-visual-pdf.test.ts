@@ -41,6 +41,13 @@ it("renders charts, mapped amenities and branded pages without inventing subsurf
       photo: null,
     },
   ];
+  if (process.env.HALISIA_PDF_QA) {
+    a.amenities = Array.from({ length: 30 }, (_, i) => ({
+      ...a.amenities[0],
+      name: `SYNTHETIC AMENITY ${i + 1} / NOT REAL EVIDENCE`,
+      distanceKm: i + 1,
+    }));
+  }
   const doc = renderPassportPdf(
     {
       place: "QA FIXTURE - NOT A SITE REPORT",
@@ -53,6 +60,13 @@ it("renders charts, mapped amenities and branded pages without inventing subsurf
       county: KENYA_COUNTY_FACTS[39],
       geotech: {
         terrainMeasured: true,
+        elevationGrid: {
+          values: Array.from({ length: 5 }, (_, y) =>
+            Array.from({ length: 5 }, (_, x) => 1400 + y * 8 + x * 3),
+          ),
+          stepDeg: 0.01,
+          source: "SYNTHETIC GRID - NOT SITE EVIDENCE",
+        },
         terrain: { slopePct: 8.5, aspectLabel: "NE", minM: 1400, maxM: 1450 },
         soilLayers: [
           {

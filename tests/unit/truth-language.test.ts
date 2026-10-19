@@ -789,9 +789,12 @@ describe("a failed elevation grid is a gap, not a flat site", () => {
   });
 
   it("withholds them in the PDF too, and claims no grid it did not read", () => {
-    expect(GEOTECH_PDF).toContain("g.terrainMeasured ?");
-    expect(flat(GEOTECH_PDF)).toContain(
-      "The ASTER 30 m elevation grid did not load for this point, so no terrain figure on this page is a measurement.",
+    expect(GEOTECH_PDF).toContain("geotechAvailability(g.terrainMeasured)");
+    expect(GEOTECH_PDF).toContain(
+      "if (!availability.exportAvailable) throw new Error(availability.message)",
     );
+    expect(GEOTECH_PDF).toContain("downloadPassportPdf");
+    const renderer = readFileSync("src/lib/passport-pdf.ts", "utf8");
+    expect(renderer).toContain("if (g?.terrainMeasured && g.terrain)");
   });
 });

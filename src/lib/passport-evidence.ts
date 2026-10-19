@@ -40,7 +40,7 @@ export const CHAPTERS: Array<{ id: ChapterId; title: string; blurb: string }> = 
   {
     id: "build",
     title: "Build & develop",
-    blurb: "Foundations, groundwater, bedrock — indicative only.",
+    blurb: "Ground investigation and planning evidence gaps.",
   },
   {
     id: "market",
@@ -267,10 +267,12 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
     chapter: "physical",
     label: "Slope & aspect",
     value:
-      terrainOk && g ? `${r(g.terrain.slopePct, 1)}% slope, faces ${g.terrain.aspectLabel}` : null,
+      terrainOk && g?.terrain
+        ? `${r(g.terrain.slopePct, 1)}% slope, faces ${g.terrain.aspectLabel}`
+        : null,
     source: "OpenTopoData ASTER 30 m grid",
     method: "5×5 elevation grid around the point, finite-difference slope.",
-    usedFor: ["Erosion risk", "Foundation guidance", "Drainage index"],
+    usedFor: ["Regional terrain context"],
     cls: "modelled",
     confidence: "medium",
     note: terrainOk ? undefined : stateGap(i.geoState, "Terrain grid"),
@@ -278,13 +280,10 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
   add({
     id: "landform",
     chapter: "physical",
-    label: "Landform & erosion risk",
-    value:
-      terrainOk && g
-        ? `${g.terrain.landform}, erosion ${g.terrain.erosionRisk.toLowerCase()}, relief ${r(g.terrain.reliefM)} m`
-        : null,
+    label: "Regional elevation relief",
+    value: terrainOk && g?.terrain ? `${r(g.terrain.reliefM)} m elevation range` : null,
     source: "Derived from ASTER 30 m grid",
-    method: "Rule-based classification of relief, slope and roughness.",
+    method: "Range of returned regional elevation-grid samples; erosion risk is not assessed.",
     usedFor: ["Construction considerations"],
     cls: "ai",
     confidence: "low",
@@ -293,13 +292,13 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
   add({
     id: "soil",
     chapter: "physical",
-    label: "Topsoil (0–5 cm)",
+    label: `Soil model (${top?.depth ?? "depth unavailable"})`,
     value: top
       ? `${top.texture}: clay ${r(top.clayPct)}%, sand ${r(top.sandPct)}%, silt ${r(top.siltPct)}%`
       : null,
     source: "ISRIC SoilGrids v2.0 (250 m model)",
     method: "Global machine-learning soil model sampled at the point. Not a lab test.",
-    usedFor: ["Drainage", "Bearing capacity", "Shrink-swell"],
+    usedFor: ["Regional soil composition"],
     cls: "modelled",
     confidence: "medium",
     note: top ? undefined : stateGap(i.geoState, "Soil model"),
@@ -310,10 +309,10 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
       id: "subsoil",
       chapter: "physical",
       label: `Subsoil (${deep.depth})`,
-      value: `${deep.texture}, drainage ${deep.drainage}`,
+      value: `${deep.texture}: clay ${r(deep.clayPct)}%, sand ${r(deep.sandPct)}%, silt ${r(deep.siltPct)}%`,
       source: "ISRIC SoilGrids v2.0",
-      method: "Deepest modelled layer; drainage adjusted for slope.",
-      usedFor: ["Foundation guidance"],
+      method: "Deepest complete composition band returned by the regional soil model.",
+      usedFor: ["Regional soil composition"],
       cls: "modelled",
       confidence: "medium",
     });
@@ -468,70 +467,25 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
     });
   }
 
-  // ---------- 6. Build ----------
-  if (g) {
-    const pref = g.foundations.filter(
-      (f) => f.suitability === "Preferred" || f.suitability === "Possible",
-    );
+  // Regional surface datasets do not establish subsurface conditions or structural design.
+  for (const [id, label] of [
+    ["foundation", "Foundation suitability"],
+    ["groundwater", "Groundwater / waterlogging"],
+    ["bedrock", "Bedrock depth"],
+    ["bearing", "Bearing capacity"],
+    ["erosion", "Erosion risk"],
+  ]) {
     add({
-      id: "foundation",
+      id,
       chapter: "build",
-      label: "Indicative foundation types",
-      value: pref.length
-        ? pref.map((f) => `${f.type} (${f.suitability.toLowerCase()})`).join(", ")
-        : "None rated preferred",
-      source: "HALISIA rules on SoilGrids + ASTER terrain",
-      method: "Rule-based guidance. Requires a site geotechnical investigation.",
-      usedFor: ["Construction cost drivers"],
-      cls: "ai",
-      confidence: g.confidence >= 70 ? "medium" : "low",
-    });
-    add({
-      id: "groundwater",
-      chapter: "build",
-      label: "Shallow groundwater / waterlogging",
-      value: `${g.groundwater.shallowLikelihood} / ${g.groundwater.seasonalWaterlogging}`,
-      source: "Derived from rainfall, soil and terrain",
-      method: "Rule-based likelihood, not a borehole reading.",
-      usedFor: ["Foundations", "Drainage design"],
-      cls: "ai",
-      confidence: "low",
-    });
-    add({
-      id: "bedrock",
-      chapter: "build",
-      label: "Estimated depth to bedrock",
-      value: `${r(g.bedrock.minM, 1)}–${r(g.bedrock.maxM, 1)} m, excavation ${g.bedrock.excavation.toLowerCase()}`,
-      source: "Derived from terrain + geology setting",
-      method: "Heuristic range; confidence " + g.bedrock.confidence.toLowerCase() + ".",
-      usedFor: ["Excavation cost"],
-      cls: "ai",
-      confidence: g.bedrock.confidence === "High" ? "medium" : "low",
-    });
-    for (const risk of g.risks.filter((x) => x.level !== "Low").slice(0, 3))
-      add({
-        id: `risk-${risk.label}`,
-        chapter: "build",
-        label: risk.label,
-        value: `${risk.level} — ${risk.note}`,
-        source: "HALISIA geotech rules",
-        method: "Indicative screening. Mitigation: " + risk.mitigation.slice(0, 2).join("; "),
-        usedFor: ["Construction cost drivers"],
-        cls: "ai",
-        confidence: "low",
-      });
-  } else {
-    add({
-      id: "foundation",
-      chapter: "build",
-      label: "Foundation & ground conditions",
+      label,
       value: null,
-      source: "Geotech screening",
-      method: "Needs soil and terrain data.",
-      usedFor: ["Construction"],
+      source: "No site investigation supplied",
+      method: "Not assessed. Requires site-specific investigation by a licensed professional.",
+      usedFor: ["Ground investigation planning"],
       cls: "gap",
       confidence: "not_assessed",
-      note: stateGap(i.geoState, "Geotech"),
+      note: "Regional elevation and soil models cannot establish this finding.",
     });
   }
   add({
@@ -697,7 +651,8 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
     {
       id: "soil",
       provider: "ISRIC SoilGrids v2.0",
-      status: st(i.geoState, srcUsed(g?.sources, "SoilGrids")),
+      status:
+        g?.soilStatus === "failed" ? "failed" : st(i.geoState, srcUsed(g?.sources, "SoilGrids")),
       detail: "",
       chapters: ["physical", "build"],
     },
