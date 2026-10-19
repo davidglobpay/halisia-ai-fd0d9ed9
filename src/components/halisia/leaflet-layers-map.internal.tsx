@@ -46,18 +46,11 @@ const BASEMAPS: Array<{
     max: 19,
   },
   {
-    id: "carto-dark",
-    name: "Carto Dark",
-    url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-    attribution: "© OpenStreetMap contributors",
-    max: 20,
-  },
-  {
-    id: "carto-light",
-    name: "Carto Light",
-    url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-    attribution: "© OpenStreetMap contributors",
-    max: 20,
+    id: "esri-street",
+    name: "Esri Street Map",
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+    attribution: "Tiles © Esri and contributors",
+    max: 19,
   },
   {
     id: "esri-sat",
@@ -67,10 +60,10 @@ const BASEMAPS: Array<{
     max: 19,
   },
   {
-    id: "opentopo",
-    name: "OpenTopoMap",
-    url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
-    attribution: "© OpenTopoMap (CC-BY-SA)",
+    id: "esri-topo",
+    name: "Esri Topographic",
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+    attribution: "Tiles © Esri and contributors",
     max: 17,
   },
 ];

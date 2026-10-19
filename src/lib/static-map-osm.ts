@@ -3,6 +3,8 @@
 // unavailable (missing key, 403 referrer restriction, quota, etc.) so
 // the PDF dossier and any other consumer always has map imagery.
 
+import { hasMapDetail } from "./map-image-quality";
+
 type Layer = "roadmap-light" | "terrain" | "satellite" | "hybrid";
 
 const TILE = 256;
@@ -23,13 +25,13 @@ function tileUrl(layer: Layer, z: number, x: number, y: number): string {
   const xw = wrap(x);
   switch (layer) {
     case "terrain":
-      return `https://a.tile.opentopomap.org/${z}/${xw}/${y}.png`;
+      return `https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/${z}/${y}/${xw}`;
     case "satellite":
     case "hybrid":
       return `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${xw}`;
     case "roadmap-light":
     default:
-      return `https://tile.openstreetmap.org/${z}/${xw}/${y}.png`;
+      return `https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/${z}/${y}/${xw}`;
   }
 }
 
@@ -85,7 +87,14 @@ export async function fetchStaticMapOSM(args: {
     }
   }
   await Promise.all(jobs);
-  if (ok === 0) return { ok: false, error: "all_tiles_failed" };
+  if (ok !== COLS * ROWS) return { ok: false, error: "all_tiles_failed" };
+
+  try {
+    if (!hasMapDetail(ctx.getImageData(0, 0, canvas.width, canvas.height).data))
+      return { ok: false, error: "uniform_map" };
+  } catch {
+    return { ok: false, error: "unreadable_map" };
+  }
 
   // Marker
   const px = (cx - x0) * TILE;
@@ -107,8 +116,8 @@ export async function fetchStaticMapOSM(args: {
     args.layer === "satellite" || args.layer === "hybrid"
       ? "© Esri, Maxar, Earthstar Geographics"
       : args.layer === "terrain"
-        ? "© OpenTopoMap (CC-BY-SA) · © OpenStreetMap"
-        : "© OpenStreetMap contributors";
+        ? "© Esri and contributors"
+        : "© Esri and contributors";
   ctx.fillText(attribution, 6, canvas.height - 4);
 
   try {

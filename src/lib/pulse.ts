@@ -161,6 +161,7 @@ export async function fetchArticle(id: string): Promise<PulseArticle | null> {
     .from("news_articles")
     .select(ARTICLE_COLUMNS)
     .eq("id", id)
+    .eq("archived", false)
     .maybeSingle();
   if (error) throw error;
   return data ? toArticle(data as Row) : null;
@@ -266,6 +267,7 @@ export async function fetchIngestionLogs(limit = 25): Promise<PulseIngestionLog[
     insertedCount: Number(r["inserted_count"] ?? 0),
     duplicateCount: Number(r["duplicate_count"] ?? 0),
     failedCount: Number(r["failed_count"] ?? 0),
+    rejectedCount: Number(r["rejected_count"] ?? 0),
     ok: Boolean(r["ok"]),
     errorMessage: (r["error_message"] as string) ?? null,
   }));
@@ -315,6 +317,7 @@ export type PulseStats = {
   inserted7d: number;
   duplicates7d: number;
   failed7d: number;
+  rejected7d: number;
   fetched7d: number;
 };
 
@@ -338,7 +341,9 @@ export async function fetchPulseStats(): Promise<PulseStats> {
 
   const { data: logs } = await supabase
     .from("news_ingestion_logs")
-    .select("started_at, fetched_count, inserted_count, duplicate_count, failed_count")
+    .select(
+      "started_at, fetched_count, inserted_count, duplicate_count, failed_count, rejected_count",
+    )
     .gte("started_at", since7)
     .order("started_at", { ascending: false })
     .limit(500);
@@ -358,6 +363,7 @@ export async function fetchPulseStats(): Promise<PulseStats> {
     inserted7d: sum("inserted_count"),
     duplicates7d: sum("duplicate_count"),
     failed7d: sum("failed_count"),
+    rejected7d: sum("rejected_count"),
   };
 }
 

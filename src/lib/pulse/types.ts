@@ -104,6 +104,7 @@ export type PulseIngestionLog = {
   fetchedCount: number;
   insertedCount: number;
   duplicateCount: number;
+  rejectedCount: number;
   failedCount: number;
   ok: boolean;
   errorMessage: string | null;

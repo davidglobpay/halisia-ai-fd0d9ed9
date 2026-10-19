@@ -2,22 +2,34 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { TtsEngine } from "./pulse/tts.server";
 
-/** Increment the read counter for an article. Public, idempotent-ish. */
+/** Sampled public view signals. Atomic in the database; never used for ranking.
+ * The process-local cooldown is best-effort and is not a rate limiter.
+ */
+const VIEW_COOLDOWN_MS = 60_000;
+const recentViews = new Map<string, number>();
+
 export const trackArticleView = createServerFn({ method: "POST" })
-  .inputValidator((input: { articleId: string }) => input)
+  .inputValidator((input: { articleId: string }) => {
+    if (!input || typeof input.articleId !== "string") return { articleId: "" };
+    return { articleId: input.articleId.toLowerCase() };
+  })
   .handler(async ({ data }) => {
+    const id = data.articleId;
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))
+      return { ok: false as const };
+
+    const now = Date.now();
+    const last = recentViews.get(id);
+    if (last != null && now - last < VIEW_COOLDOWN_MS) return { ok: true as const };
+    if (recentViews.size > 5000) recentViews.clear();
+    recentViews.set(id, now);
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: row } = await supabaseAdmin
-      .from("news_articles")
-      .select("view_count")
-      .eq("id", data.articleId)
-      .maybeSingle();
-    if (!row) return { ok: false };
-    await supabaseAdmin
-      .from("news_articles")
-      .update({ view_count: (row.view_count ?? 0) + 1 })
-      .eq("id", data.articleId);
-    return { ok: true };
+    const { error } = await supabaseAdmin.rpc("increment_article_view", {
+      _article_id: id,
+    });
+    if (error && recentViews.get(id) === now) recentViews.delete(id);
+    return { ok: !error } as const;
   });
 
 /** Admin-only manual refresh of the Pulse feed. */

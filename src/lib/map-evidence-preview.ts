@@ -3,10 +3,10 @@ import type { EvidencePosition } from "./map-evidence";
 export type EvidenceMapLayer = "satellite" | "map" | "terrain";
 export const PREVIEW_LAYERS = {
   satellite: { label: "Satellite", attribution: "Tiles © Esri, Maxar" },
-  map: { label: "Map", attribution: "© OpenStreetMap contributors" },
+  map: { label: "Map", attribution: "Tiles © Esri and contributors" },
   terrain: {
     label: "Terrain",
-    attribution: "© OpenStreetMap contributors · © OpenTopoMap (CC-BY-SA)",
+    attribution: "Tiles © Esri and contributors",
   },
 } as const;
 
@@ -39,8 +39,8 @@ export function mapPreviewTiles(position: EvidencePosition, layer: EvidenceMapLa
         layer === "satellite"
           ? `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${zoom}/${row}/${wrapped}`
           : layer === "terrain"
-            ? `https://a.tile.opentopomap.org/${zoom}/${wrapped}/${row}.png`
-            : `https://tile.openstreetmap.org/${zoom}/${wrapped}/${row}.png`;
+            ? `https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/${zoom}/${row}/${wrapped}`
+            : `https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/${zoom}/${row}/${wrapped}`;
       tiles.push({
         src,
         left: (column - x) * 256,

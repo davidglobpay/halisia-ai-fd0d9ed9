@@ -24,6 +24,7 @@ export type IngestSummary = {
     fetched: number;
     inserted: number;
     duplicates: number;
+    rejected: number;
     failed: number;
     error: string | null;
     latencyMs: number;
@@ -99,7 +100,7 @@ export async function fetchAllProviders(limitPerProvider = 30): Promise<Provider
 async function storeArticle(
   raw: RawArticle,
   useAi: boolean,
-): Promise<"inserted" | "duplicate" | "failed"> {
+): Promise<"inserted" | "duplicate" | "failed" | "irrelevant"> {
   const db = await admin();
   const urlHash = hashUrl(raw.url);
   const titleNorm = normalizeTitle(raw.title);
@@ -112,6 +113,9 @@ async function storeArticle(
   if (existing && existing.length > 0) return "duplicate";
 
   const base = classify(raw);
+  // Before the AI call, not after: an article we will not publish should not
+  // cost a gateway request either.
+  if (!base.relevant) return "irrelevant";
   const ai = useAi ? await enrichWithAi(raw, base) : null;
 
   const county = ai?.county ?? base.county;
@@ -252,6 +256,7 @@ export async function runIngestion(opts: { useAi?: boolean; maxPerProvider?: num
     const logStart = new Date().toISOString();
     let inserted = 0;
     let duplicates = 0;
+    let rejected = 0;
     let failed = 0;
     const articles = group.flatMap((g) => g.articles);
     const ok = group.some((g) => g.ok);
@@ -263,6 +268,7 @@ export async function runIngestion(opts: { useAi?: boolean; maxPerProvider?: num
         const outcome = await storeArticle(raw, useAi);
         if (outcome === "inserted") inserted++;
         else if (outcome === "duplicate") duplicates++;
+        else if (outcome === "irrelevant") rejected++;
         else failed++;
       } catch {
         failed++;
@@ -275,6 +281,7 @@ export async function runIngestion(opts: { useAi?: boolean; maxPerProvider?: num
       fetched: articles.length,
       inserted,
       duplicates,
+      rejected,
       failed,
       error,
       latencyMs,
@@ -288,6 +295,7 @@ export async function runIngestion(opts: { useAi?: boolean; maxPerProvider?: num
       fetched_count: articles.length,
       inserted_count: inserted,
       duplicate_count: duplicates,
+      rejected_count: rejected,
       failed_count: failed,
       ok,
       error_message: error,
@@ -340,7 +348,7 @@ export async function recomputeTrending(): Promise<number> {
     const ageH = (now - new Date(r.published_at ?? r.ingested_at).getTime()) / 3600_000;
     const freshness = Math.max(0, 100 - (ageH / 72) * 100);
     const sourceSpread = Math.min(100, (spread.get(r.cluster_id ?? "") ?? 1) * 20);
-    const engagement = Math.min(100, r.view_count * 0.5 + r.save_count * 5 + r.share_count * 8);
+    const engagement = Math.min(100, r.save_count * 5 + r.share_count * 8);
     const { data: prior } = await db
       .from("trending_scores")
       .select("ai_importance")

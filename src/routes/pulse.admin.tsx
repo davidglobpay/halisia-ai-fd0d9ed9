@@ -218,6 +218,7 @@ function PulseAdmin() {
         <Stat label="Fetched (7d)" value={s?.fetched7d ?? "—"} hint="API + RSS requests" />
         <Stat label="Inserted (7d)" value={s?.inserted7d ?? "—"} />
         <Stat label="Duplicates removed (7d)" value={s?.duplicates7d ?? "—"} />
+        <Stat label="Off-topic rejected (7d)" value={s?.rejected7d ?? "—"} />
         <Stat label="Failed imports (7d)" value={s?.failed7d ?? "—"} />
       </section>
 
@@ -313,6 +314,7 @@ function PulseAdmin() {
                 <th className="p-3">Fetched</th>
                 <th className="p-3">Inserted</th>
                 <th className="p-3">Duplicates</th>
+                <th className="p-3">Rejected</th>
                 <th className="p-3">Failed</th>
                 <th className="p-3">Result</th>
               </tr>
@@ -325,6 +327,7 @@ function PulseAdmin() {
                   <td className="p-3">{l.fetchedCount}</td>
                   <td className="p-3">{l.insertedCount}</td>
                   <td className="p-3">{l.duplicateCount}</td>
+                  <td className="p-3">{l.rejectedCount}</td>
                   <td className="p-3">{l.failedCount}</td>
                   <td className="p-3">
                     {l.ok ? (

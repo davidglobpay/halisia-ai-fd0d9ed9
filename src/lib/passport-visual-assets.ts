@@ -1,4 +1,5 @@
 import { loadBrandImage, type BrandImage } from "./brand-asset";
+import { hasMapDetail } from "./map-image-quality";
 import { mapPreviewTiles, type EvidenceMapLayer } from "./map-evidence-preview";
 
 /** Captures only the existing reference tiles, with a location marker. No generated imagery. */
@@ -12,7 +13,12 @@ export async function passportMapImage(
     const tiles = mapPreviewTiles({ lat, lng, accuracyM: null }, layer, zoom);
     if (!tiles || typeof document === "undefined") return null;
     const images = await Promise.all(
-      tiles.map(async (tile) => ({ tile, image: await loadBrandImage(tile.src) })),
+      tiles
+        .filter(
+          (tile) =>
+            tile.left < 256 && tile.left + 256 > -256 && tile.top < 160 && tile.top + 256 > -160,
+        )
+        .map(async (tile) => ({ tile, image: await loadBrandImage(tile.src) })),
     );
     if (images.some((x) => !x.image)) return null;
     const canvas = document.createElement("canvas");
@@ -26,6 +32,7 @@ export async function passportMapImage(
       await img.decode();
       ctx.drawImage(img, 256 + tile.left, 160 + tile.top, 256, 256);
     }
+    if (!hasMapDetail(ctx.getImageData(0, 0, 512, 320).data)) return null;
     ctx.fillStyle = "#b3261e";
     ctx.strokeStyle = "white";
     ctx.lineWidth = 3;

@@ -1800,6 +1800,7 @@ export type Database = {
       news_ingestion_logs: {
         Row: {
           created_at: string
+          rejected_count: number
           duplicate_count: number
           error_message: string | null
           failed_count: number
@@ -1814,6 +1815,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          rejected_count?: number
           duplicate_count?: number
           error_message?: string | null
           failed_count?: number
@@ -1828,6 +1830,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          rejected_count?: number
           duplicate_count?: number
           error_message?: string | null
           failed_count?: number
@@ -3888,6 +3891,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      increment_article_view: { Args: { _article_id: string }; Returns: undefined }
       halisia_account_active: { Args: never; Returns: boolean }
       halisia_admin_action: {
         Args: {

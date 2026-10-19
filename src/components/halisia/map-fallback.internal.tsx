@@ -51,28 +51,18 @@ export default function MapFallback({
   onMapClick?: (loc: { lat: number; lng: number }) => void;
   onTileError?: () => void;
 }) {
-  // Each provider stops serving real tiles at a different level. One shared
-  // cap meant OpenTopoMap (which ends at 17) was asked for 19, every request
-  // 404'd, and the tile-error alert fired as soon as a user zoomed in. The
-  // cap now follows the provider; Leaflet upscales beyond it instead of
-  // requesting tiles that do not exist.
-  const maxNative =
-    mapType === "satellite" || mapType === "hybrid" ? 19 : mapType === "terrain" ? 17 : 19;
-
+  // Retain a conservative native cap; Leaflet upscales beyond it.
+  const maxNative = mapType === "terrain" ? 17 : 19;
   const url =
     mapType === "satellite" || mapType === "hybrid"
       ? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
       : mapType === "terrain"
-        ? "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png"
-        : theme === "light"
-          ? "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-          : "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+        ? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
+        : "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}";
   const attribution =
     mapType === "satellite" || mapType === "hybrid"
-      ? "Tiles © Esri, Maxar"
-      : mapType === "terrain"
-        ? "© OpenTopoMap (CC-BY-SA)"
-        : "© OpenStreetMap contributors";
+      ? "Tiles © Esri, Maxar, Earthstar Geographics"
+      : "Tiles © Esri and contributors";
   return (
     <MapContainer
       center={[lat, lng]}

@@ -119,7 +119,8 @@ function ArticlePage() {
         </h1>
         <p className="mt-2 text-xs text-muted-foreground">
           {a.sourceName ?? a.provider}
-          {a.author ? ` · ${a.author}` : ""} · {a.confidence}% geo-confidence · {a.viewCount} reads
+          {a.author ? ` · ${a.author}` : ""} · {a.confidence}% geo-confidence · {a.viewCount}{" "}
+          sampled view signals
         </p>
       </header>
 

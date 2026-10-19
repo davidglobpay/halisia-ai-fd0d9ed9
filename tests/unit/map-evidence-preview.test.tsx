@@ -34,7 +34,7 @@ describe("inline map evidence", () => {
       const tiles = mapPreviewTiles({ ...target, lng }, "terrain", 12)!;
       expect(
         tiles.every((tile) => {
-          const column = Number(tile.src.split("/").at(-2));
+          const column = Number(tile.src.split("/").at(-1));
           return column >= 0 && column < 4096;
         }),
       ).toBe(true);
@@ -59,7 +59,7 @@ describe("inline map evidence", () => {
       createElement(MapEvidencePreview, { item, target, selected: false, onFocus }),
     );
     fireEvent.click(screen.getByRole("button", { name: "Terrain", exact: true }));
-    expect(container.querySelector("img")?.src).toContain("tile.opentopomap.org/12/");
+    expect(container.querySelector("img")?.src).toContain("World_Topo_Map/MapServer/tile/12/");
     fireEvent.click(screen.getByRole("button", { name: "Inspect map evidence for Soil" }));
     expect(onFocus).toHaveBeenCalledOnce();
     expect(screen.getByText(/-1.15123, 36.96123/)).toBeTruthy();
@@ -72,6 +72,6 @@ describe("inline map evidence", () => {
     expect(screen.getByText(/No substitute image has been generated/)).toBeTruthy();
     expect(container.querySelector("img")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Map", exact: true }));
-    expect(container.querySelector("img")?.src).toContain("tile.openstreetmap.org");
+    expect(container.querySelector("img")?.src).toContain("World_Street_Map/MapServer/tile/");
   });
 });
