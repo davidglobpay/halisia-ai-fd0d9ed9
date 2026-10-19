@@ -21,7 +21,11 @@ export const Route = createFileRoute("/api/public/hooks/pulse-refresh")({
 
         let mode: Mode = "refresh";
         try {
-          const body = (await request.json()) as { mode?: Mode };
+          const body = (await request.json()) as { mode?: Mode | "check" };
+          // Authenticate without importing ingestion or contacting providers.
+          if (body?.mode === "check") {
+            return Response.json({ ok: true, mode: "check" });
+          }
           if (body?.mode === "hourly" || body?.mode === "nightly") mode = body.mode;
         } catch {
           /* empty body is fine */
