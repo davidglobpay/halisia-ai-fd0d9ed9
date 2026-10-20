@@ -52,6 +52,17 @@ export function MapEvidencePreview({
         selected={selected}
         onFocus={onFocus}
       />
+      {item.positionScope === "place" && (
+        <a
+          href={`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${target.lat},${target.lng}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-2 inline-flex min-h-11 items-center rounded-lg border border-foreground/20 px-3 text-xs font-semibold"
+          aria-label={`Open Street View near ${item.label}`}
+        >
+          Street View · nearby coverage
+        </a>
+      )}
       <figcaption className="mt-2 space-y-1 text-xs text-muted-foreground">
         <p>
           {scope} · {target.lat.toFixed(5)}, {target.lng.toFixed(5)}

@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+import { landUseContext } from "@/lib/passport-land-use";
 import { CircleHelp, ArrowRight, Info, ShieldQuestion } from "lucide-react";
 import { OutputVisual, OutputIcon } from "@/components/halisia/output-tools";
 import { CLASS_LABEL, CONFIDENCE_LABEL, type EvidenceItem } from "@/lib/passport-evidence";
@@ -11,8 +13,10 @@ export function EvidenceRow({
   mapItem,
   selectedMapId,
   onMapFocus,
+  visual,
 }: {
   item: EvidenceItem;
+  visual?: ReactNode;
   mapItem?: MapEvidence;
   selectedMapId?: string | null;
   onMapFocus?: (id: string, position: EvidencePosition) => void;
@@ -80,7 +84,8 @@ export function EvidenceRow({
               : "Source-backed context · check scope and date"}
         </div>
       )}
-      {!gap && mapItem && target && onMapFocus ? (
+      {visual}
+      {!gap && item.chapter !== "climate" && mapItem && target && onMapFocus ? (
         <>
           <MapEvidencePreview
             item={mapItem}
@@ -99,6 +104,17 @@ export function EvidenceRow({
         </>
       ) : (
         <OutputVisual subject={item.label} value={item.value == null ? null : String(item.value)} />
+      )}
+      {!gap && (
+        <details className="mt-3 rounded-xl bg-primary/5 p-3 text-xs">
+          <summary className="min-h-11 cursor-pointer font-semibold">
+            Land-use considerations
+          </summary>
+          <p className="mt-1">{landUseContext(item)}</p>
+          <p className="mt-1 text-muted-foreground">
+            Decision guidance · not a measured finding or suitability verdict
+          </p>
+        </details>
       )}
       <details className="mt-1 text-[11px] text-muted-foreground">
         <summary className="cursor-pointer select-none min-h-[44px] inline-flex items-center">

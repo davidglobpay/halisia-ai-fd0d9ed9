@@ -9,8 +9,7 @@
  *
  * This fetches the PNG once per session, decodes it through a canvas, and
  * hands back a data URL plus its real dimensions. Every result is cached,
- * including failures, so a PDF never waits twice on an image that is not
- * coming. Nothing here throws: a dossier without its logo is still a dossier,
+ * except failures, so a temporary timeout can be retried. Nothing here throws: a dossier without its logo is still a dossier,
  * and a logo that will not load must never cost the user their download.
  */
 
@@ -41,7 +40,7 @@ function decode(url: string): Promise<BrandImage | null> {
       img.onload = null;
       img.onerror = null;
       resolve(null);
-    }, 6_000);
+    }, 15_000);
 
     img.onload = () => {
       window.clearTimeout(timer);
@@ -106,7 +105,10 @@ export function loadBrandImage(url: string): Promise<BrandImage | null> {
   if (!url) return Promise.resolve(null);
   const hit = cache.get(url);
   if (hit) return hit;
-  const p = decode(url);
+  const p = decode(url).then((image) => {
+    if (!image && cache.get(url) === p) cache.delete(url);
+    return image;
+  });
   cache.set(url, p);
   return p;
 }

@@ -1,3 +1,7 @@
+import {
+  ClimateEvidence,
+  PhysicalEvidence,
+} from "@/components/halisia/land-passport/evidence-charts";
 import { SignInPrompt } from "@/components/halisia/sign-in-prompt";
 import { isAuthError } from "@/lib/auth-error";
 import { useAuth } from "@/hooks/use-auth";
@@ -597,6 +601,13 @@ function PassportPage() {
                   <EvidenceRow
                     key={it.id}
                     item={it}
+                    visual={
+                      ch.id === "climate" ? (
+                        <ClimateEvidence id={it.id} data={w4Q.data} />
+                      ) : ch.id === "physical" ? (
+                        <PhysicalEvidence id={it.id} data={geoQ.data} />
+                      ) : undefined
+                    }
                     mapItem={mapEvidence.find((mapped) => mapped.id === it.id)}
                     selectedMapId={selected?.id ?? null}
                     onMapFocus={(id, position) => {

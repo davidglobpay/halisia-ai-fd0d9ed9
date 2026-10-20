@@ -20,6 +20,22 @@ const item: MapEvidence = {
   limitations: "Not a soil test",
 };
 describe("inline map evidence", () => {
+  it("offers Street View for a provider place without asserting panorama coverage", () => {
+    render(
+      createElement(MapEvidencePreview, {
+        item: { ...item, label: "Synthetic school", positionScope: "place" },
+        target,
+        selected: false,
+        onFocus: vi.fn(),
+      }),
+    );
+    const link = screen.getByRole("link", { name: "Open Street View near Synthetic school" });
+    expect(link).toHaveAttribute(
+      "href",
+      `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${target.lat},${target.lng}`,
+    );
+    expect(link).toHaveTextContent("nearby coverage");
+  });
   it("centers native satellite tiles on the exact supplied coordinate", () => {
     const tiles = mapPreviewTiles({ lat: 0, lng: 0, accuracyM: null }, "satellite", 16)!;
     expect(tiles).toHaveLength(9);

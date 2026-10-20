@@ -1,3 +1,4 @@
+import { landUseContext } from "./passport-land-use";
 import jsPDF from "jspdf";
 import { displayPlaceName, isQueryCentroid } from "./passport-quality";
 import { CHAPTERS, CLASS_LABEL, type EvidenceItem, type LedgerEntry } from "./passport-evidence";
@@ -11,8 +12,8 @@ import { PDF, brandPage, sanitize } from "./pdf-chrome";
 import { passportMapImage } from "./passport-visual-assets";
 import { PREVIEW_LAYERS, type EvidenceMapLayer } from "./map-evidence-preview";
 import { COUNTY_LOGOS } from "./county-logos";
-import lockupAsset from "@/assets/brand/halisia-lockup.png.asset.json";
-import symbolAsset from "@/assets/brand/halisia-mark.png.asset.json";
+import lockupUrl from "@/assets/brand/halisia-lockup.png?url";
+import symbolUrl from "@/assets/brand/halisia-mark.png?url";
 
 export type PassportPdfOptions = {
   place: string;
@@ -50,12 +51,12 @@ export type PassportPdfAssets = {
 
 async function collectAssets(o: PassportPdfOptions): Promise<PassportPdfAssets> {
   const [lockup, symbol, county] = await Promise.all([
-    loadBrandImage(lockupAsset.url),
-    loadBrandImage(symbolAsset.url),
+    loadBrandImage(lockupUrl),
+    loadBrandImage(symbolUrl),
     o.county ? loadBrandImage(COUNTY_LOGOS[o.county.code] ?? "") : null,
   ]);
-  if (!lockup || !symbol)
-    throw new Error("HALISIA branding could not load. Please retry the PDF download.");
+  // Artwork is bundled with this build. A transient decode failure must not
+  // block the user's evidence export; render the named text fallback below.
   const maps: PassportPdfAssets["maps"] = {};
   if (o.coords)
     await Promise.all(
@@ -133,6 +134,12 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     doc.setFillColor(...PDF.green);
     doc.rect(0, 0, W, 5, "F");
     if (a.lockup) image(a.lockup, M, 16, 150, 49);
+    else {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(18);
+      doc.setTextColor(...PDF.forest);
+      doc.text("HALISIA.AI", M, 43);
+    }
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
     doc.setTextColor(...PDF.goldInk);
@@ -234,7 +241,8 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
           align: "center",
         },
       );
-      doc.text(sanitize(r.label), M + i * bw + bw / 2, base + 13, { align: "center" });
+      if (i % Math.max(1, Math.ceil(rows.length / 8)) === 0 || i === rows.length - 1)
+        doc.text(sanitize(r.label), M + i * bw + bw / 2, base + 13, { align: "center" });
     }
     y = base + 29;
     meta(`Scale: ${unit}. Gaps represent missing samples, never zero.`);
@@ -288,7 +296,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     meta(
       `MET Norway / CC BY 4.0 | forecast issued ${weather.updatedAt ?? "not supplied"}. UTC timestamps below; Kenya is UTC+3.`,
     );
-    const points = weather.points.filter((_, i) => i % 3 === 0);
+    const points = weather.points;
     text("Temperature forecast", 14, true);
     bars(
       points.map((p) => ({ label: p.time.slice(11, 16), value: p.temperatureC })),
@@ -388,7 +396,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     } else map("terrain", 180);
     block(
       "Regional slope / aspect",
-      `${g.terrain.slopePct.toFixed(1)}% / ${g.terrain.aspectLabel}`,
+      `${g.terrain.slopePct.toFixed(1)}% / ${((Math.atan(g.terrain.slopePct / 100) * 180) / Math.PI).toFixed(1)} degrees / modelled aspect ${g.terrain.aspectLabel} (${g.terrain.aspectDeg} degrees)`,
     );
     block("Grid elevation range", `${g.terrain.minM.toFixed(0)} - ${g.terrain.maxM.toFixed(0)} m`);
     need(160);
@@ -524,13 +532,16 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       text(`${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}`, 8, false, PDF.stone2, M + 200, C - 214);
       y = Math.max(y, top + cardHeight - 30);
       text(
-        `${p.source} | map: OpenStreetMap | image date unknown`,
+        `${p.source} | map: Esri and contributors | image date unknown`,
         7,
         false,
         PDF.stone2,
         M + 10,
         C - 20,
       );
+      doc.textWithLink("Open Street View near this amenity", M + 10, top + cardHeight - 8, {
+        url: `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${p.lat},${p.lng}`,
+      });
       y = top + cardHeight + 12;
     });
   }
@@ -564,6 +575,11 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
         `${CLASS_LABEL[it.cls]} | ${it.source} | retrieved ${it.retrieved ?? "reference dataset"}`,
       );
       text(it.method, 8, false, PDF.stone2);
+      const use = landUseContext(it);
+      if (use) {
+        need(75);
+        meta(`Land-use considerations (interpretation): ${use}`);
+      }
       y += 7;
     }
   }

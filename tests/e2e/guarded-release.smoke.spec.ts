@@ -1,3 +1,4 @@
+import { BUILD_ID } from "../../src/lib/build-info";
 import { test, expect } from "@playwright/test";
 
 // Route-shell and logged-out checks deliberately do not authenticate, purchase,
@@ -29,10 +30,7 @@ test.describe("guarded release route shells", () => {
       expect(response?.status()).toBeLessThan(400);
       await expect(page.locator("body")).not.toContainText("Something went wrong");
       await expect(page.getByRole("heading").first()).toBeVisible();
-      await expect(page.locator('meta[name="halisia-build"]')).toHaveAttribute(
-        "content",
-        "2026-10-17.3",
-      );
+      await expect(page.locator('meta[name="halisia-build"]')).toHaveAttribute("content", BUILD_ID);
       expect(errors).toEqual([]);
     });
   }
