@@ -30,6 +30,11 @@ it.each([
   "Nairobi police recover stolen Land Rover",
   "Nairobi football team wins championship",
   "Karen Smith biography wins prize",
+  "London property prices and rents rise",
+  "Flooding damages homes in Pakistan",
+  "California expands railway infrastructure",
+  "Ireland unveils affordable housing programme",
+  "Brazil farmers expand maize agriculture",
 ])("rejects unrelated headline: %s", (title) =>
   expect(classify(article(title)).relevant).toBe(false),
 );
@@ -44,15 +49,35 @@ it.each([
   ["Nakuru farmers expand maize agriculture", "agriculture"],
   ["Kenya mineral mining permits reviewed", "land"],
   ["Ruiru water sanitation supply restored", "utilities"],
+  ["Ardhisasa title deed application services updated", "land"],
 ])("retains relevant headline: %s", (title, tag) => {
   const c = classify(article(title));
   expect(c.relevant).toBe(true);
   expect(c.tags).toContain(tag);
 });
 it("keeps plurals without matching landing or subwords", () => {
-  expect(classify(article("Farmers build roads in Kiambu")).tags).toContain("roads");
-  expect(classify(article("Aircraft landing in Ireland")).tags).not.toContain("land");
+  expect(classify(article("Farmers build roads in Kiambu")).tags).toContain(
+    "roads",
+  );
+  expect(classify(article("Aircraft landing in Ireland")).tags).not.toContain(
+    "land",
+  );
 });
-it.each(["", "中文", ".*+?^${}()|[]\\", "a".repeat(5000)])("handles arbitrary text", (title) =>
-  expect(() => classify(article(title))).not.toThrow(),
+it.each(["", "中文", ".*+?^${}()|[]\\", "a".repeat(5000)])(
+  "handles arbitrary text",
+  (title) => expect(() => classify(article(title))).not.toThrow(),
 );
+it("retains a Kenyan link in the excerpt rather than requiring it in the title", () => {
+  expect(
+    classify({
+      ...article("Housing construction programme expanded"),
+      excerpt: "The programme covers Kenya.",
+    }).relevant,
+  ).toBe(true);
+});
+it("does not use provider country hints to justify a foreign property story", () => {
+  expect(
+    classify({ ...article("London property prices rise"), countryHint: "ke" })
+      .relevant,
+  ).toBe(false);
+});

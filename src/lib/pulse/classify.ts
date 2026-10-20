@@ -11,11 +11,13 @@ import counties from "@/data/kenya-counties.json";
 import type { PulseGeoLevel } from "./types";
 import type { RawArticle } from "./providers.server";
 
-type CountyFeature = { properties: { code: number; name: string; lat: number; lng: number } };
+type CountyFeature = {
+  properties: { code: number; name: string; lat: number; lng: number };
+};
 
-export const COUNTIES = (counties as { features: CountyFeature[] }).features.map(
-  (f) => f.properties,
-);
+export const COUNTIES = (
+  counties as { features: CountyFeature[] }
+).features.map((f) => f.properties);
 
 /** Well-known towns / estates that should resolve to a county. */
 const PLACES: Array<{ label: string; county: string; level: PulseGeoLevel }> = [
@@ -46,7 +48,16 @@ const PLACES: Array<{ label: string; county: string; level: PulseGeoLevel }> = [
 ];
 
 export const CATEGORY_KEYWORDS: Record<string, string[]> = {
-  politics: ["parliament", "senate", "governor", "mp ", "president", "ruto", "cabinet", "bill"],
+  politics: [
+    "parliament",
+    "senate",
+    "governor",
+    "mp ",
+    "president",
+    "ruto",
+    "cabinet",
+    "bill",
+  ],
   infrastructure: [
     "infrastructure",
     "bypass",
@@ -58,9 +69,32 @@ export const CATEGORY_KEYWORDS: Record<string, string[]> = {
     "industrial park",
     "refinery",
   ],
-  roads: ["road", "highway", "expressway", "kenha", "kura", "tarmac", "dualling"],
-  transport: ["matatu", "bus", "brt", "commuter rail", "airport", "port", "transport"],
-  housing: ["housing", "affordable homes", "estate", "apartment", "levy", "tenant"],
+  roads: [
+    "road",
+    "highway",
+    "expressway",
+    "kenha",
+    "kura",
+    "tarmac",
+    "dualling",
+  ],
+  transport: [
+    "matatu",
+    "bus",
+    "brt",
+    "commuter rail",
+    "airport",
+    "port",
+    "transport",
+  ],
+  housing: [
+    "housing",
+    "affordable homes",
+    "estate",
+    "apartment",
+    "levy",
+    "tenant",
+  ],
   land: [
     "land",
     "title deed",
@@ -73,7 +107,14 @@ export const CATEGORY_KEYWORDS: Record<string, string[]> = {
     "mineral",
     "quarry",
   ],
-  property: ["property", "real estate", "rent", "developer", "valuation", "mortgage"],
+  property: [
+    "property",
+    "real estate",
+    "rent",
+    "developer",
+    "valuation",
+    "mortgage",
+  ],
   environment: [
     "environment",
     "nema",
@@ -93,25 +134,78 @@ export const CATEGORY_KEYWORDS: Record<string, string[]> = {
     "weather",
     "met department",
   ],
-  flooding: ["flood", "flooding", "burst banks", "displaced", "dam", "riparian"],
-  agriculture: ["farmer", "maize", "tea", "coffee", "irrigation", "agriculture", "livestock"],
-  business: ["business", "economy", "shilling", "inflation", "market", "company", "profit"],
-  technology: ["technology", "startup", "digital", "fintech", "ai ", "innovation", "broadband"],
+  flooding: [
+    "flood",
+    "flooding",
+    "burst banks",
+    "displaced",
+    "dam",
+    "riparian",
+  ],
+  agriculture: [
+    "farmer",
+    "maize",
+    "tea",
+    "coffee",
+    "irrigation",
+    "agriculture",
+    "livestock",
+  ],
+  business: [
+    "business",
+    "economy",
+    "shilling",
+    "inflation",
+    "market",
+    "company",
+    "profit",
+  ],
+  technology: [
+    "technology",
+    "startup",
+    "digital",
+    "fintech",
+    "ai ",
+    "innovation",
+    "broadband",
+  ],
   health: ["hospital", "health", "sha ", "nhif", "clinic", "disease"],
   education: ["school", "university", "students", "education", "cbc", "tvet"],
   security: ["police", "security", "crime", "insecurity", "bandits"],
-  investment: ["investment", "investor", "fund", "capital", "ipo", "bond", "fdi"],
-  energy: ["energy", "power", "kplc", "solar", "geothermal", "electricity", "fuel"],
+  investment: [
+    "investment",
+    "investor",
+    "fund",
+    "capital",
+    "ipo",
+    "bond",
+    "fdi",
+  ],
+  energy: [
+    "energy",
+    "power",
+    "kplc",
+    "solar",
+    "geothermal",
+    "electricity",
+    "fuel",
+  ],
   utilities: ["water", "sanitation", "utility", "supply", "borehole"],
   tourism: ["tourism", "tourist", "hotel", "safari", "park", "beach"],
-  "county-government": ["county government", "county assembly", "ward", "mca", "devolution"],
+  "county-government": [
+    "county government",
+    "county assembly",
+    "ward",
+    "mca",
+    "devolution",
+  ],
 };
 
 /**
  * Categories that are themselves about land, place or the built environment.
- * A hit in one of these is evidence on its own. A hit anywhere else ("market",
- * "school", "police") describes most news published anywhere on earth, so it
- * only counts when a Kenyan place was also detected.
+ * A hit establishes topic relevance only. Every accepted topic also needs a
+ * Kenyan context in the supplied text; foreign property news is not Kenyan
+ * land intelligence merely because it contains a land keyword.
  */
 const CORE_CATEGORIES = new Set([
   "land",
@@ -183,7 +277,14 @@ export function classify(article: RawArticle): Classification {
     if (score > 0) {
       tags.add(slug);
       if (
-        ["transport", "agriculture", "climate", "investment", "energy", "utilities"].includes(slug)
+        [
+          "transport",
+          "agriculture",
+          "climate",
+          "investment",
+          "energy",
+          "utilities",
+        ].includes(slug)
       )
         topicHits += score;
       if (CORE_CATEGORIES.has(slug)) coreHits += score;
@@ -217,6 +318,13 @@ export function classify(article: RawArticle): Classification {
     }
   }
   const centroid = county ? COUNTIES.find((c) => c.name === county) : undefined;
+  // Provider country filters may still return international stories. Require
+  // text evidence: a gazetteer match, Kenya/Kenyan(s), or a specific Kenyan
+  // land/infrastructure institution. This is a relevance heuristic, not
+  // verification of the story or its location.
+  const hasKenyanContext =
+    county !== null ||
+    /\b(?:kenya|kenyans?|ardhisasa|kenha|kplc)\b/i.test(text);
 
   const confidence = Math.max(
     25,
@@ -240,9 +348,7 @@ export function classify(article: RawArticle): Classification {
     latitude: centroid?.lat ?? null,
     longitude: centroid?.lng ?? null,
     confidence,
-    // A land/place category firing is evidence by itself. Anything else needs
-    // a Kenyan place beside it. Matching nothing is not a "business" story —
-    // it is a story we have no reason to publish.
-    relevant: coreHits > 0 || (topicHits > 0 && (county !== null || /\bkenya(?:n)?\b/i.test(text))),
+    // Neither a geographic mention alone nor a global land keyword suffices.
+    relevant: hasKenyanContext && (coreHits > 0 || topicHits > 0),
   };
 }
