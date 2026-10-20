@@ -124,6 +124,16 @@ const CORE_CATEGORIES = new Set([
   "county-government",
 ]);
 
+/**
+ * Terms that place a story in Kenya without naming a county. A headline can be
+ * unmistakably Kenyan with no placename in it — "Ardhisasa rollout stalls as
+ * Lands ministry clears title deed backlog" is one — so institutions, statutes
+ * and currency carry the anchor where a gazetteer lookup cannot. Dropping this
+ * list costs exactly that headline in the test corpus, which is why it exists.
+ */
+const KENYA_TERMS =
+  /\b(?:ardhisasa|kenha|kura|nema|matatu|shilling|kplc|nhif|mca|devolution|county assembly|county government|title deed|huduma|safaricom|ruto|national land commission|sacco|shamba|ksh|kes)\b/i;
+
 const escapeRx = (w: string) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /**
@@ -243,6 +253,14 @@ export function classify(article: RawArticle): Classification {
     // A land/place category firing is evidence by itself. Anything else needs
     // a Kenyan place beside it. Matching nothing is not a "business" story —
     // it is a story we have no reason to publish.
-    relevant: coreHits > 0 || (topicHits > 0 && (county !== null || /\bkenya(?:n)?\b/i.test(text))),
+    // A core category firing is a strong topical signal, but it is not a
+    // Kenyan one: "Forest fires rage across southern California" fired
+    // `environment`, and "Bridge collapses in Genoa" fired `infrastructure`.
+    // Nine of twelve foreign probe headlines were admitted this way. So the
+    // Kenyan anchor is now required of every article, not only of the ones
+    // that missed a core category.
+    relevant:
+      (county !== null || /\bkenyan?s?\b/i.test(text) || KENYA_TERMS.test(text)) &&
+      (coreHits > 0 || topicHits > 0),
   };
 }
