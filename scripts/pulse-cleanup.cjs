@@ -34,12 +34,6 @@ const pattern = (keys) =>
     .join("|") +
   ")\\y";
 const places = [...source.matchAll(/label: "([^"]+)"/g)].map((m) => m[1]);
-const geo =
-  "\\y(" +
-  [...m.exports.COUNTIES.map((c) => c.name), ...places, "Kenya", "Kenyan"]
-    .map((value) => escape(value.toLowerCase()))
-    .join("|") +
-  ")\\y";
 const text =
   "regexp_replace(lower(coalesce(title,'') || ' ' || coalesce(raw_excerpt,'')), '\\yland\\s+rover\\y', 'vehicle', 'g')";
 // Mirror classify(): a Kenyan anchor (county/place, Kenya/Kenyan(s), or a

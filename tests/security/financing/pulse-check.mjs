@@ -91,6 +91,13 @@ const samples = [
   "Kenya housing levy",
   "Bus fleet in Thika",
   "Business grows in Ireland",
+  "Forest fires rage across southern California",
+  "Bridge collapses in Genoa killing dozens",
+  "Tenants in New York rally against rent increases",
+  "Thousands displaced by conflict in Sudan",
+  "Ardhisasa rollout stalls as Lands ministry clears title deed backlog",
+  "Kenyans protest housing levy",
+  "Kenya names squad for the World Cup qualifier",
 ];
 for (const title of samples) {
   await db.query("UPDATE public.news_articles SET title=$1,raw_excerpt=null", [title]);
@@ -107,6 +114,6 @@ assert.equal((await db.query("select archived from news_articles")).rows[0].arch
 await db.exec(execFileSync("node", ["scripts/pulse-cleanup.cjs", "restore"], { encoding: "utf8" }));
 assert.equal((await db.query("select archived from news_articles")).rows[0].archived, false);
 console.log(
-  "33 Pulse database assertions passed: atomic increments, bounds, grants, classifier parity, archive/restore. Synthetic isolated PostgreSQL; no production write test.",
+  "40 Pulse database assertions passed: atomic increments, bounds, grants, classifier parity, archive/restore. Synthetic isolated PostgreSQL; no production write test.",
 );
 await db.close();
