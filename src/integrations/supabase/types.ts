@@ -1800,7 +1800,6 @@ export type Database = {
       news_ingestion_logs: {
         Row: {
           created_at: string
-          rejected_count: number
           duplicate_count: number
           error_message: string | null
           failed_count: number
@@ -1810,12 +1809,12 @@ export type Database = {
           inserted_count: number
           ok: boolean
           provider: Database["public"]["Enums"]["news_provider"]
+          rejected_count: number
           source_id: string | null
           started_at: string
         }
         Insert: {
           created_at?: string
-          rejected_count?: number
           duplicate_count?: number
           error_message?: string | null
           failed_count?: number
@@ -1825,12 +1824,12 @@ export type Database = {
           inserted_count?: number
           ok?: boolean
           provider: Database["public"]["Enums"]["news_provider"]
+          rejected_count?: number
           source_id?: string | null
           started_at?: string
         }
         Update: {
           created_at?: string
-          rejected_count?: number
           duplicate_count?: number
           error_message?: string | null
           failed_count?: number
@@ -1840,6 +1839,7 @@ export type Database = {
           inserted_count?: number
           ok?: boolean
           provider?: Database["public"]["Enums"]["news_provider"]
+          rejected_count?: number
           source_id?: string | null
           started_at?: string
         }
@@ -3891,7 +3891,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      increment_article_view: { Args: { _article_id: string }; Returns: undefined }
       halisia_account_active: { Args: never; Returns: boolean }
       halisia_admin_action: {
         Args: {
@@ -3914,6 +3913,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_article_view: {
+        Args: { _article_id: string }
+        Returns: undefined
       }
       is_approved_scout: { Args: { _uid: string }; Returns: boolean }
       is_privileged_role: {
