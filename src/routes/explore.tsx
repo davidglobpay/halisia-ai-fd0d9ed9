@@ -365,7 +365,7 @@ function Explore() {
           {/* MAP */}
           <div className="glass-strong rounded-3xl p-2 relative">
             <MapFrame
-              mobileAspect="aspect-[3/4]"
+              mobileAspect="aspect-[4/3] max-h-[58svh]"
               desktopAspect="md:aspect-[16/10] lg:aspect-[4/3]"
               className="rounded-[22px]"
               onLocateMe={({ lat, lng }) => void selectCoordinates(lat, lng)}

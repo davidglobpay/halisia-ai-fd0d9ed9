@@ -107,11 +107,11 @@ export function HoloTile({
               <OutputIcon subject={typeof title === "string" ? title : (eyebrow ?? "output")} />
             )}
             {hero ? (
-              <h2 className="intaglio font-display text-2xl font-semibold tracking-tight md:text-4xl">
+              <h2 className="tile-title-pill font-display text-xl font-bold tracking-tight md:text-3xl">
                 {title}
               </h2>
             ) : (
-              <h3 className="intaglio text-sm font-semibold leading-snug">{title}</h3>
+              <h3 className="tile-title-pill text-sm font-bold leading-snug">{title}</h3>
             )}
           </div>
           {summary && (
