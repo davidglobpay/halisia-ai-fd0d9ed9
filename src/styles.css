@@ -1356,3 +1356,21 @@ html[data-reduced-motion="1"] .tile-glow::before {
     display: none !important;
   }
 }
+
+/* Data output tiles: bold green title pill + sage/luminous green outer glow. */
+.tile-title-pill {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  border-radius: 9999px;
+  padding: 0.3em 0.85em;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  box-shadow: 0 2px 10px -2px color-mix(in oklab, var(--primary) 55%, transparent);
+}
+[data-output-card] {
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--primary) 28%, transparent),
+    0 0 22px -4px color-mix(in oklab, #8fbf8a 70%, transparent),
+    0 0 36px -10px color-mix(in oklab, var(--primary) 45%, transparent);
+}

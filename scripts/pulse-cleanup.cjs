@@ -34,15 +34,20 @@ const pattern = (keys) =>
     .join("|") +
   ")\\y";
 const places = [...source.matchAll(/label: "([^"]+)"/g)].map((m) => m[1]);
-const geo =
-  "\\y(" +
-  [...m.exports.COUNTIES.map((c) => c.name), ...places, "Kenya", "Kenyan"]
-    .map((value) => escape(value.toLowerCase()))
-    .join("|") +
-  ")\\y";
 const text =
   "regexp_replace(lower(coalesce(title,'') || ' ' || coalesce(raw_excerpt,'')), '\\yland\\s+rover\\y', 'vehicle', 'g')";
-const relevant = `(${text} ~ ${literal(pattern(core))} OR (${text} ~ ${literal(pattern(topics))} AND ${text} ~ ${literal(geo)}))`;
+// Mirror classify(): a Kenyan anchor (county/place, Kenya/Kenyan(s), or a
+// KENYA_TERMS institution) is required of EVERY article, core or topic.
+const termsSrc = source.match(/const KENYA_TERMS =\s*\/\\b\(\?:([^)]+)\)\\b\/i;/);
+if (!termsSrc) throw Error("KENYA_TERMS not found in classify.ts");
+const anchor =
+  "\\y(" +
+  [...m.exports.COUNTIES.map((c) => c.name), ...places]
+    .map((value) => escape(value.toLowerCase()))
+    .concat(["kenyan?s?"], termsSrc[1].split("|"))
+    .join("|") +
+  ")\\y";
+const relevant = `(${text} ~ ${literal(anchor)} AND (${text} ~ ${literal(pattern(core))} OR ${text} ~ ${literal(pattern(topics))}))`;
 // Preserve ambiguous topic stories for review when their excerpt omits Kenya.
 // New ingestion is stricter; legacy cleanup must not hide plausible local news.
 const rejected = `archived=false AND NOT ${relevant} AND NOT (${text} ~ ${literal(pattern(topics))})`;
