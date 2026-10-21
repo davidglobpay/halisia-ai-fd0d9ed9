@@ -69,3 +69,29 @@ describe("the anchor is necessary, not sufficient", () => {
     expect(classify(art("Kenya names squad for the World Cup qualifier")).relevant).toBe(false);
   });
 });
+
+describe("Kenyan stories from the 2026-10-21 dry run are preserved", () => {
+  it.each([
+    "Why High Court dismissed activist's petition accusing Alice Wahome of housing project irregularities",
+    "Govt, Tata Chemicals strike deal to unlock Magadi mining standoff",
+    "KFS defends Muthaiga Golf Club invasion, to hold meeting over Karura Forest encroachment",
+    "Mukuru homeowners move into affordable housing units as more set to take occupation",
+    "Six arrested in Syokimau sewage crackdown",
+    "MPs demand audit of KPA's Sh6bn per kilometre road",
+    "Ogiek calls on NLC to scrutinize land compensation register",
+    "Kindiki warns stalled new Nithi Bridge could remain idle over compensation row",
+    "Blow to Wamatangi as High Court Rules on Ksh813 Million Property Case",
+    "Court of Appeal backs Affordable Housing Act, dismisses 42 cases - Daily Nation",
+  ])("keeps %j", (title) => {
+    expect(classify(art(title)).relevant).toBe(true);
+  });
+
+  it.each([
+    "Sinza homeowners challenge development plan in Tanzania",
+    "Seattle Launches $170 Million Mount Baker Redevelopment with Affordable Housing",
+    "DRC tightens state control over mining data",
+    "Shower of rain floods the road in Sheffield",
+  ])("still rejects %j", (title) => {
+    expect(classify(art(title)).relevant).toBe(false);
+  });
+});
