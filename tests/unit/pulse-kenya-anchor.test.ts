@@ -76,7 +76,7 @@ describe("Kenyan stories from the 2026-10-21 dry run are preserved", () => {
     "Govt, Tata Chemicals strike deal to unlock Magadi mining standoff",
     "KFS defends Muthaiga Golf Club invasion, to hold meeting over Karura Forest encroachment",
     "Mukuru homeowners move into affordable housing units as more set to take occupation",
-    "Six arrested in Syokimau sewage crackdown",
+    "Syokimau residents protest new road closure",
     "MPs demand audit of KPA's Sh6bn per kilometre road",
     "Ogiek calls on NLC to scrutinize land compensation register",
     "Kindiki warns stalled new Nithi Bridge could remain idle over compensation row",
