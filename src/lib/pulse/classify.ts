@@ -131,8 +131,11 @@ const CORE_CATEGORIES = new Set([
  * and currency carry the anchor where a gazetteer lookup cannot. Dropping this
  * list costs exactly that headline in the test corpus, which is why it exists.
  */
+// Second tier (from the 2026-10-21 dry run): Kenyan agencies, office holders,
+// local places and Kenyan outlets that headlines name without "Kenya". No
+// parentheses inside this list: scripts/pulse-cleanup.cjs parses it to SQL.
 const KENYA_TERMS =
-  /\b(?:ardhisasa|kenha|kura|nema|matatu|shilling|kplc|nhif|mca|devolution|county assembly|county government|title deed|huduma|safaricom|ruto|national land commission|sacco|shamba|ksh|kes)\b/i;
+  /\b(?:ardhisasa|kenha|kura|nema|matatu|shilling|kplc|nhif|mca|devolution|county assembly|county government|title deed|huduma|safaricom|ruto|national land commission|sacco|shamba|ksh|kes|ksh[0-9][0-9.,]*[a-z]*|sh[0-9][0-9.,]*[a-z]*|ntsa|kfs|nlc|kpa|cbk|kenya forest service|lands cs|affordable housing act|housing levy|daily nation|citizen digital|wahome|gachagua|kindiki|sakaja|joho|duale|nyoro|arati|wamatangi|matiang'?i|kalonzo|sifuna|raila|odm|magadi|muthaiga|karura|mukuru|syokimau|kihoto|nyari|mrima hills|masinga|imenti|nithi|migwani|kanyotu|lavington|kengen|aberdare|ecde|lbda|environment and land court|mazingira day)\b/i;
 
 const escapeRx = (w: string) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
