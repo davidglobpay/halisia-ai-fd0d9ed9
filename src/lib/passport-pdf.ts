@@ -1,3 +1,4 @@
+import { passportLocationNews } from "./pulse.functions";
 import { landUseContext } from "./passport-land-use";
 import jsPDF from "jspdf";
 import { displayPlaceName, isQueryCentroid } from "./passport-quality";
@@ -46,6 +47,13 @@ export type PassportPdfAssets = {
     source: string;
     image: BrandImage | null;
     photo: BrandImage | null;
+  }>;
+  news: Array<{
+    title: string;
+    source_name: string | null;
+    published_at: string | null;
+    url: string | null;
+    category: string | null;
   }>;
 };
 
@@ -109,7 +117,17 @@ async function collectAssets(o: PassportPdfOptions): Promise<PassportPdfAssets> 
     );
     amenities.push(...batch);
   }
-  return { lockup, symbol, county, maps, amenities };
+  // County news is a nice-to-have: a failure here must never cost the export.
+  let news: PassportPdfAssets["news"] = [];
+  if (o.county?.name) {
+    try {
+      const res = await passportLocationNews({ data: { county: o.county.name } });
+      news = res.articles ?? [];
+    } catch {
+      news = [];
+    }
+  }
+  return { lockup, symbol, county, maps, amenities, news };
 }
 
 /** Rendering separated from download for PDF layout tests with explicitly synthetic fixtures. */
@@ -203,6 +221,32 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     text(label.toUpperCase(), 7, true, PDF.goldInk, M + 12, C - 24);
     text(value, 12, true, PDF.forest, M + 12, C - 24);
     y = top + height + 10;
+  };
+  /**
+   * A short reading of the evidence already printed above it.
+   *
+   * Strictly derived: every sentence restates, aggregates or compares numbers
+   * that appear on the same page. It carries no rating, no suitability verdict
+   * and no claim about anything unmeasured. A fabricated scoring layer was
+   * removed from this product on purpose; this is a summary, not its return.
+   */
+  const conclusion = (lines: Array<string | false | null | undefined>) => {
+    const body = lines.filter((l): l is string => !!l && l.trim().length > 0).join(" ");
+    if (!body) return;
+    const rows = doc.splitTextToSize(sanitize(body), C - 24) as string[];
+    const height = 26 + rows.length * 12.6;
+    need(height + 12);
+    const top = y;
+    doc.setFillColor(...PDF.paper);
+    doc.roundedRect(M, top, C, height, 8, 8, "F");
+    doc.setDrawColor(...PDF.gold);
+    doc.setLineWidth(2);
+    doc.line(M, top + 4, M, top + height - 4);
+    doc.setLineWidth(0.6);
+    y = top + 7;
+    text("READING THIS EVIDENCE (INTERPRETATION)", 7, true, PDF.goldInk, M + 12, C - 24);
+    text(body, 9, false, PDF.forest, M + 12, C - 24);
+    y = top + height + 12;
   };
   const map = (layer: EvidenceMapLayer, h = 235) => {
     const im = a.maps[layer];
@@ -303,6 +347,19 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     text("Economy, farming & local livelihoods", 15, true);
     y += 8;
     for (const v of o.county.economy) text(`+ ${v}`, 12);
+    // Real imagery of the surrounding area rather than stock photographs of
+    // crops or industry. Field patterns, plot sizes and built-up extent are
+    // visible in the image itself; the crop list above stays a county-level
+    // reference and is deliberately NOT presented as identified from imagery.
+    if (a.maps.satellite) {
+      y += 6;
+      need(170);
+      image(a.maps.satellite, M, y, C, 150);
+      y += 156;
+      meta(
+        "Land cover around the point - Tiles (c) Esri, Maxar. Field patterns and built-up areas are visible in the imagery; crop types above are county reference data and are not identified from this image.",
+      );
+    }
     y += 12;
     text("Landmarks & wider social context", 15, true);
     for (const v of o.county.landmarks) text(`+ ${v}`, 11);
@@ -369,6 +426,23 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       climate.monthly.map((m) => ({ label: m.month, value: m.temperatureC })),
       "degrees C",
     );
+    const wetMonths = climate.monthly.filter(
+      (m): m is typeof m & { rainfallMm: number } =>
+        m.rainfallMm != null && Number.isFinite(m.rainfallMm),
+    );
+    if (wetMonths.length >= 3) {
+      const wet = wetMonths.reduce((a, b) => (b.rainfallMm > a.rainfallMm ? b : a));
+      const dry = wetMonths.reduce((a, b) => (b.rainfallMm < a.rainfallMm ? b : a));
+      const annual = wetMonths.reduce((n, m) => n + m.rainfallMm, 0);
+      const ratio = wet.rainfallMm / Math.max(dry.rainfallMm, 0.1);
+      conclusion([
+        `Across the reference period the wettest month is ${wet.month} at ${wet.rainfallMm.toFixed(0)} mm and the driest is ${dry.month} at ${dry.rainfallMm.toFixed(0)} mm, summing to about ${annual.toFixed(0)} mm over the twelve monthly means.`,
+        ratio >= 3
+          ? "Rainfall is concentrated rather than spread evenly, so water storage and planting calendars matter more here than the annual total alone suggests."
+          : "Rainfall is relatively evenly distributed through the year in this model.",
+        "These are modelled monthly means for a wide grid cell over a multi-year period, not measurements at this plot and not a forecast.",
+      ]);
+    }
   } else if (climate && (climate.annualRainfallMm != null || climate.meanTempC != null)) {
     next("Climate model");
     title("Climate snapshot");
@@ -445,6 +519,11 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     meta(
       "ASTER 30 m regional elevation-grid model. Slope direction and exact ground profile require a survey.",
     );
+    conclusion([
+      `Modelled slope is ${g.terrain.slopePct.toFixed(1)}% (${((Math.atan(g.terrain.slopePct / 100) * 180) / Math.PI).toFixed(1)} degrees) facing ${g.terrain.aspectLabel}, across an elevation range of ${(g.terrain.maxM - g.terrain.minM).toFixed(0)} m in the sampled grid.`,
+      "Aspect indicates which way surface water runs off; it does not establish where water collects, which depends on ground detail this raster cannot see.",
+      "Earthworks quantities, drainage design and buildability need a survey. A 30 m regional grid cannot supply them.",
+    ]);
   }
   if (g?.soilLayers.length && g.sources.some((s) => s.used && s.label.includes("SoilGrids"))) {
     next("Regional soil model");
@@ -494,6 +573,19 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     meta(
       "Concept diagram: surface soil / unknown deeper geology. Dashed line has no assigned depth.",
     );
+    const clayVals = g.soilLayers.map((l) => l.clayPct).filter((v) => Number.isFinite(v));
+    if (clayVals.length) {
+      const lo = Math.min(...clayVals),
+        hi = Math.max(...clayVals);
+      const deepest = g.soilLayers[g.soilLayers.length - 1];
+      conclusion([
+        `Mapped clay content runs ${lo.toFixed(0)}-${hi.toFixed(0)}% across ${g.soilLayers.length} depth bands, with the deepest mapped band (${deepest.depth}) at ${deepest.clayPct.toFixed(0)}% clay.`,
+        hi >= 35
+          ? "Clay-rich soils in this range are generally associated with shrink-swell movement and slower drainage. That is a general property of such soils, not a measurement of how this ground behaves."
+          : "",
+        "Bedrock depth, water table and bearing capacity are not measured and cannot be derived from a composition model. A site investigation by a licensed professional is required before any foundation or earthworks decision.",
+      ]);
+    }
   }
   if (g && !g.soilLayers.length) {
     next("Soil data availability");
@@ -581,6 +673,46 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       });
       y = top + cardHeight + 12;
     });
+    const byCategory = new Map<string, number>();
+    for (const p of a.amenities) {
+      const d = p.distanceKm;
+      if (d == null || !Number.isFinite(d)) continue;
+      const prev = byCategory.get(p.category);
+      if (prev == null || d < prev) byCategory.set(p.category, d);
+    }
+    const nearest = [...byCategory.entries()]
+      .sort((x, z) => x[1] - z[1])
+      .map(([c, d]) => `${c} ${d.toFixed(2)} km`)
+      .join(", ");
+    conclusion([
+      `${a.amenities.length} located facilities were returned around the point.`,
+      nearest ? `Nearest by category, straight-line: ${nearest}.` : "",
+      "Straight-line distance is not travel distance, and a facility appearing here is not a check of whether it is open, operating or accepting new users. Absence from this list is not evidence that nothing exists.",
+    ]);
+  }
+  if (a.news.length) {
+    next("Recent county news / HALISIA Pulse");
+    title("Recent news in this county");
+    meta(
+      `Most recent ${a.news.length} stories tagged to ${o.county?.name ?? "this county"} in the HALISIA Pulse feed. County-level reporting, not parcel-specific, and not verified by HALISIA.`,
+    );
+    for (const n of a.news) {
+      need(74);
+      const when = n.published_at ? n.published_at.slice(0, 10) : "date not supplied";
+      text(n.title, 11, true);
+      meta(`${n.source_name ?? "source not supplied"} | ${when}${n.category ? ` | ${n.category}` : ""}`);
+      if (n.url) {
+        doc.setFontSize(8);
+        doc.setTextColor(...PDF.goldInk);
+        doc.textWithLink("Open the original report", M, y + 8, { url: n.url });
+        y += 18;
+      }
+      y += 6;
+    }
+    conclusion([
+      `${a.news.length} recent stories were tagged to this county.`,
+      "Headlines indicate what is being reported in the county, not what is true of this plot. Confirm anything material with the county planning office or the original publisher before relying on it.",
+    ]);
   }
   next("Sources & supporting findings");
   title("Evidence directory");

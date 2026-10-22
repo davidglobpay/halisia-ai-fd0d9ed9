@@ -20,6 +20,7 @@ it("renders charts, mapped amenities and branded pages without inventing subsurf
     county: null,
     maps: {},
     amenities: [],
+    news: [],
   };
   // Optional local visual inspection uses the exact downloaded app branding.
   if (process.env.HALISIA_PDF_QA) {
