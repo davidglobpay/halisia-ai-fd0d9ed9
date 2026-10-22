@@ -1,4 +1,5 @@
 import { landUseContext } from "./passport-land-use";
+import { buildEvidenceConclusion } from "./passport-conclusion";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import jsPDF from "jspdf";
@@ -230,11 +231,13 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     text(s, 8, false, PDF.stone2);
     y += 5;
   };
-  // Short conclusions restate displayed values only; they are not verdicts.
+  // Short conclusions restate displayed values only; unsafe verdict-like text is suppressed.
   const conclusion = (label: string, summary: string) => {
+    const body = buildEvidenceConclusion([summary]);
+    if (!body) return;
     need(42, label + " evidence conclusion");
     text(label + " evidence conclusion", 9, true, PDF.goldInk);
-    text(summary, 8.5, false, PDF.stone2);
+    text(body, 8.5, false, PDF.stone2);
     y += 2;
   };
   const block = (label: string, value: string) => {
@@ -341,6 +344,14 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     text("Economy, farming & local livelihoods", 15, true);
     y += 8;
     for (const v of o.county.economy) text(`+ ${v}`, 12);
+    if (a.maps.satellite) {
+      need(175, "Economy, farming & local livelihoods");
+      image(a.maps.satellite, M, y, C, 150);
+      y += 158;
+      meta(
+        "Land cover around the point - Tiles (c) Esri, Maxar. Field patterns and built-up areas are visible in the imagery; crop types above are county reference data and are not identified from this image.",
+      );
+    }
     y += 12;
     text("Landmarks & wider social context", 15, true);
     for (const v of o.county.landmarks) text(`+ ${v}`, 11);
@@ -370,6 +381,12 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
         }
       }
     }
+    conclusion(
+      "County news",
+      "These headlines indicate what is reported in " +
+        o.county.name +
+        " County, not what is true of this plot. County-level reporting is not parcel-specific and is not verified by HALISIA.",
+    );
   }
   const weather = o.wave4?.weather;
   if (weather?.points.length) {
@@ -554,7 +571,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     meta(
       "Concept diagram: surface soil / unknown deeper geology. Dashed line has no assigned depth.",
     );
-    conclusion("Soil", g.soilLayers.length + " modelled soil layer(s) are listed above. Bedrock depth and water-table level have not been measured; the dashed line has no assigned depth.");
+    conclusion("Soil", g.soilLayers.length + " modelled soil layer(s) are listed above. Deeper ground conditions have not been measured; the dashed line has no assigned depth.");
   }
   if (g && !g.soilLayers.length) {
     next("Soil data availability");
