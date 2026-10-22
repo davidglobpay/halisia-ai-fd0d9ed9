@@ -349,7 +349,8 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       image(a.maps.satellite, M, y, C, 150);
       y += 158;
       meta(
-        "Land cover around the point - Tiles (c) Esri, Maxar. Field patterns and built-up areas are visible in the imagery; crop types above are county reference data and are not identified from this image.",
+        "Land cover around the point - Tiles (c) Esri, Maxar. Field patterns and built-up areas are visible in the imagery; " +
+          "crop types above are county reference data and are not identified from this image.",
       );
     }
     y += 12;
@@ -363,16 +364,30 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
   if (o.county) {
     next("County news context");
     title(o.county.name + " County news");
-    meta("County-level news context only. These articles are not verified by HALISIA and are not parcel-specific findings.");
+    meta(
+      "County-level news context only. These articles are not verified by HALISIA and are not parcel-specific findings.",
+    );
     const news = o.news ?? [];
     if (!news.length) {
-      text("No non-archived county news articles were returned. The optional news lookup does not affect the evidence export.", 9, false, PDF.stone2);
+      text(
+        "No non-archived county news articles were returned. The optional news lookup does not affect the evidence export.",
+        9,
+        false,
+        PDF.stone2,
+      );
     } else {
       for (const item of news.slice(0, 6)) {
         need(65, "County news context");
         text(item.title, 10, true);
         if (item.summary) text(item.summary, 8.5);
-        meta(item.sourceName + " | " + (item.publishedAt ?? "Publication date not supplied") + " | " + item.geoLevel + (item.placeLabel ? " | " + item.placeLabel : ""));
+        meta(
+          item.sourceName +
+            " | " +
+            (item.publishedAt ?? "Publication date not supplied") +
+            " | " +
+            item.geoLevel +
+            (item.placeLabel ? " | " + item.placeLabel : ""),
+        );
         if (/^https?:\/\//i.test(item.url)) {
           doc.setTextColor(...PDF.green);
           doc.setFontSize(8);
@@ -385,7 +400,8 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       "County news",
       "These headlines indicate what is reported in " +
         o.county.name +
-        " County, not what is true of this plot. County-level reporting is not parcel-specific and is not verified by HALISIA.",
+        " County, not what is true of this plot. County-level reporting is not parcel-specific " +
+        "and is not verified by HALISIA.",
     );
   }
   const weather = o.wave4?.weather;
@@ -471,14 +487,16 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       [
         `Monthly climate values returned for ${returnedMonths} of ${climate.monthly.length} months.`,
         wettest && driest
-          ? `Wettest month: ${wettest.month} (${(wettest.rainfallMm ?? 0).toFixed(0)} mm); driest month: ${driest.month} (${(driest.rainfallMm ?? 0).toFixed(0)} mm).`
+          ? `Wettest month: ${wettest.month} (${(wettest.rainfallMm ?? 0).toFixed(0)} mm); ` +
+            `driest month: ${driest.month} (${(driest.rainfallMm ?? 0).toFixed(0)} mm).`
           : null,
         rainfallMonths.length
           ? `Sum of returned monthly rainfall values: ${annualMonthlyRainfall.toFixed(0)} mm/year.`
           : null,
         rainfallRatio != null
           ? rainfallRatio >= 3
-            ? `Wettest-to-driest monthly rainfall ratio: ${rainfallRatio.toFixed(1)}; rainfall is concentrated rather than evenly spread.`
+            ? `Wettest-to-driest monthly rainfall ratio: ${rainfallRatio.toFixed(1)}; ` +
+              "rainfall is concentrated rather than evenly spread."
             : `Wettest-to-driest monthly rainfall ratio: ${rainfallRatio.toFixed(1)}.`
           : null,
         climate.annualRainfallMm != null
@@ -487,7 +505,8 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
         climate.meanTempC != null
           ? `Mean temperature: ${climate.meanTempC.toFixed(1)} degrees C.`
           : null,
-        "These are modelled multi-year means for a wide grid cell, not measurements at the plot or a forecast.",
+        "These are modelled multi-year means for a wide grid cell, not measurements at the plot " +
+          "or a forecast.",
       ]
         .filter((line): line is string => Boolean(line))
         .join(" "),
@@ -511,7 +530,8 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
         climate.meanTempC != null
           ? `Mean temperature: ${climate.meanTempC.toFixed(1)} degrees C.`
           : null,
-        "Regional model estimate; no monthly series was returned. Values are not measurements at the plot or a forecast.",
+        "Regional model estimate; no monthly series was returned. Values are not measurements " +
+          "at the plot or a forecast.",
       ]
         .filter((line): line is string => Boolean(line))
         .join(" "),
@@ -560,7 +580,10 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     block("Grid elevation range", `${g.terrain.minM.toFixed(0)} - ${g.terrain.maxM.toFixed(0)} m`);
     conclusion(
       "Terrain",
-      `Regional slope ${g.terrain.slopePct.toFixed(1)}%; modelled aspect ${g.terrain.aspectLabel} (${g.terrain.aspectDeg} degrees); grid elevation ${g.terrain.minM.toFixed(0)} to ${g.terrain.maxM.toFixed(0)} m. Aspect suggests run-off direction, not where water collects. Earthworks quantities and buildability need a survey; these are regional model values, not a survey.`,
+      `Regional slope ${g.terrain.slopePct.toFixed(1)}%; modelled aspect ${g.terrain.aspectLabel} ` +
+        `(${g.terrain.aspectDeg} degrees); grid elevation ${g.terrain.minM.toFixed(0)} to ${g.terrain.maxM.toFixed(0)} m. ` +
+        "Aspect suggests run-off direction, not where water collects. Earthworks quantities and " +
+        "buildability need a survey; these are regional model values, not a survey.",
     );
     need(160);
     const x = M + 30,
@@ -648,7 +671,8 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
           ? `Deepest listed band: ${deepestLayer.depth}, clay ${deepestLayer.clayPct.toFixed(1)}%.`
           : null,
         clayMax != null && clayMax >= 35
-          ? "Clay-rich soils in this modelled range are generally associated with shrink-swell movement and slower drainage; this is not a measurement of this ground."
+          ? "Clay-rich soils in this modelled range are generally associated with shrink-swell " +
+            "movement and slower drainage; this is not a measurement of this ground."
           : null,
         "Deeper ground conditions have not been measured; the dashed line has no assigned depth.",
       ]
@@ -712,13 +736,17 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
           )
           .sort((left, right) => (left.distanceKm ?? Infinity) - (right.distanceKm ?? Infinity))[0];
         return nearest
-          ? `Nearest returned ${category.toLowerCase()} record: ${nearest.name}, ${nearest.distanceKm!.toFixed(1)} km straight-line.`
+          ? `Nearest returned ${category.toLowerCase()} record: ${nearest.name}, ` +
+            `${nearest.distanceKm!.toFixed(1)} km straight-line.`
           : `No straight-line distance was returned for ${category.toLowerCase()} records.`;
       })
       .join(" ");
     conclusion(
       "Amenities",
-      `${a.amenities.length} located named amenity record(s) are listed${amenityCounts ? " (" + amenityCounts + ")" : ""}. ${nearestByCategory} Straight-line distances are not travel distances. A listing does not confirm a facility is open or operating, and absence from these results is not evidence that nothing exists.`,
+      `${a.amenities.length} located named amenity record(s) are listed${amenityCounts ? " (" + amenityCounts + ")" : ""}. ` +
+        `${nearestByCategory} Straight-line distances are not travel distances. ` +
+        "A listing does not confirm a facility is open or operating, and absence from these results " +
+        "is not evidence that nothing exists.",
     );
     a.amenities.forEach((p, i) => {
       doc.setFont("helvetica", "bold");
