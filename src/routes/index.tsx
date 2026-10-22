@@ -1,5 +1,5 @@
 import { SignInPrompt } from "@/components/halisia/sign-in-prompt";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { FeatureRail } from "@/components/halisia/feature-rail";
 import { z } from "zod";
 import { fallback } from "@tanstack/zod-adapter";
@@ -33,6 +33,7 @@ import {
 import halisiaSymbol from "@/assets/brand/halisia-mark.png.asset.json";
 import halisiaWordmark from "@/assets/brand/halisia-lockup.png.asset.json";
 import { HeroMap } from "@/components/halisia/hero-map";
+import { SearchBar } from "@/components/halisia/search-bar";
 import {
   lowestOneOffKes,
   lowestBundleKes,
@@ -47,7 +48,8 @@ export const Route = createFileRoute("/")({
 });
 
 function Landing() {
-  return <LandingBody />;
+  const navigate = useNavigate();
+  return <LandingBody navigate={navigate} />;
 }
 
 /**
@@ -81,7 +83,7 @@ function HeroStage({ children }: { children?: ReactNode }) {
   );
 }
 
-function LandingBody() {
+function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> }) {
   return (
     <div className="min-h-screen">
       {/* HERO — static cinematic stage (videos removed) */}
@@ -152,7 +154,11 @@ function LandingBody() {
             </p>
 
             <div className="mx-auto mt-6 w-full max-w-xl">
-              {/* One search, attached to the map that answers it. */}
+              <SearchBar
+                size="lg"
+                placeholder="Search a county, town, parcel, LR number, ward, or coordinates…"
+                onSearch={(q) => navigate({ to: "/explore", search: { q } })}
+              />
               <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
                 <Link
                   to="/"
