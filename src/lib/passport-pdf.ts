@@ -446,8 +446,52 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       climate.monthly.map((m) => ({ label: m.month, value: m.temperatureC })),
       "degrees C",
     );
-    const returnedMonths = climate.monthly.filter((m) => m.temperatureC != null || m.rainfallMm != null).length;
-    conclusion("Climate", "Monthly climate values returned for " + returnedMonths + " of " + climate.monthly.length + " months. " + (climate.annualRainfallMm != null ? "Mean annual rainfall: " + climate.annualRainfallMm.toFixed(0) + " mm/year. " : "") + (climate.meanTempC != null ? "Mean temperature: " + climate.meanTempC.toFixed(1) + " degrees C." : ""));
+    const returnedMonths = climate.monthly.filter(
+      (month) => month.temperatureC != null || month.rainfallMm != null,
+    ).length;
+    const rainfallMonths = climate.monthly.filter(
+      (month) => month.rainfallMm != null && Number.isFinite(month.rainfallMm),
+    );
+    const wettest = [...rainfallMonths].sort(
+      (a, b) => (b.rainfallMm ?? -Infinity) - (a.rainfallMm ?? -Infinity),
+    )[0];
+    const driest = [...rainfallMonths].sort(
+      (a, b) => (a.rainfallMm ?? Infinity) - (b.rainfallMm ?? Infinity),
+    )[0];
+    const annualMonthlyRainfall = rainfallMonths.reduce(
+      (sum, month) => sum + (month.rainfallMm ?? 0),
+      0,
+    );
+    const rainfallRatio =
+      wettest && driest && (driest.rainfallMm ?? 0) > 0
+        ? (wettest.rainfallMm ?? 0) / (driest.rainfallMm ?? 1)
+        : null;
+    conclusion(
+      "Climate",
+      [
+        `Monthly climate values returned for ${returnedMonths} of ${climate.monthly.length} months.`,
+        wettest && driest
+          ? `Wettest month: ${wettest.month} (${(wettest.rainfallMm ?? 0).toFixed(0)} mm); driest month: ${driest.month} (${(driest.rainfallMm ?? 0).toFixed(0)} mm).`
+          : null,
+        rainfallMonths.length
+          ? `Sum of returned monthly rainfall values: ${annualMonthlyRainfall.toFixed(0)} mm/year.`
+          : null,
+        rainfallRatio != null
+          ? rainfallRatio >= 3
+            ? `Wettest-to-driest monthly rainfall ratio: ${rainfallRatio.toFixed(1)}; rainfall is concentrated rather than evenly spread.`
+            : `Wettest-to-driest monthly rainfall ratio: ${rainfallRatio.toFixed(1)}.`
+          : null,
+        climate.annualRainfallMm != null
+          ? `Model annual rainfall value: ${climate.annualRainfallMm.toFixed(0)} mm/year.`
+          : null,
+        climate.meanTempC != null
+          ? `Mean temperature: ${climate.meanTempC.toFixed(1)} degrees C.`
+          : null,
+        "These are modelled multi-year means for a wide grid cell, not measurements at the plot or a forecast.",
+      ]
+        .filter((line): line is string => Boolean(line))
+        .join(" "),
+    );
   } else if (climate && (climate.annualRainfallMm != null || climate.meanTempC != null)) {
     next("Climate model");
     title("Climate snapshot");
@@ -458,7 +502,20 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     meta(
       "Regional model estimate. No monthly series was returned; a seasonal graph is not invented.",
     );
-    conclusion("Climate", (climate.annualRainfallMm != null ? "Mean annual rainfall: " + climate.annualRainfallMm.toFixed(0) + " mm/year. " : "") + (climate.meanTempC != null ? "Mean temperature: " + climate.meanTempC.toFixed(1) + " degrees C." : ""));
+    conclusion(
+      "Climate",
+      [
+        climate.annualRainfallMm != null
+          ? `Mean annual rainfall: ${climate.annualRainfallMm.toFixed(0)} mm/year.`
+          : null,
+        climate.meanTempC != null
+          ? `Mean temperature: ${climate.meanTempC.toFixed(1)} degrees C.`
+          : null,
+        "Regional model estimate; no monthly series was returned. Values are not measurements at the plot or a forecast.",
+      ]
+        .filter((line): line is string => Boolean(line))
+        .join(" "),
+    );
   }
   const g = o.geotech;
   if (g?.terrainMeasured && g.terrain) {
@@ -501,7 +558,10 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       `${g.terrain.slopePct.toFixed(1)}% / ${((Math.atan(g.terrain.slopePct / 100) * 180) / Math.PI).toFixed(1)} degrees / modelled aspect ${g.terrain.aspectLabel} (${g.terrain.aspectDeg} degrees)`,
     );
     block("Grid elevation range", `${g.terrain.minM.toFixed(0)} - ${g.terrain.maxM.toFixed(0)} m`);
-    conclusion("Terrain", "Regional slope " + g.terrain.slopePct.toFixed(1) + "%; modelled aspect " + g.terrain.aspectLabel + " (" + g.terrain.aspectDeg + " degrees); grid elevation " + g.terrain.minM.toFixed(0) + " to " + g.terrain.maxM.toFixed(0) + " m. Regional model values, not a survey.");
+    conclusion(
+      "Terrain",
+      `Regional slope ${g.terrain.slopePct.toFixed(1)}%; modelled aspect ${g.terrain.aspectLabel} (${g.terrain.aspectDeg} degrees); grid elevation ${g.terrain.minM.toFixed(0)} to ${g.terrain.maxM.toFixed(0)} m. Aspect suggests run-off direction, not where water collects. Earthworks quantities and buildability need a survey; these are regional model values, not a survey.`,
+    );
     need(160);
     const x = M + 30,
       base = y + 90,
@@ -571,7 +631,30 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     meta(
       "Concept diagram: surface soil / unknown deeper geology. Dashed line has no assigned depth.",
     );
-    conclusion("Soil", g.soilLayers.length + " modelled soil layer(s) are listed above. Deeper ground conditions have not been measured; the dashed line has no assigned depth.");
+    const clayValues = g.soilLayers
+      .map((layer) => layer.clayPct)
+      .filter((value) => Number.isFinite(value));
+    const clayMin = clayValues.length ? Math.min(...clayValues) : null;
+    const clayMax = clayValues.length ? Math.max(...clayValues) : null;
+    const deepestLayer = g.soilLayers[g.soilLayers.length - 1];
+    conclusion(
+      "Soil",
+      [
+        `${g.soilLayers.length} modelled soil layer(s) are listed above.`,
+        clayMin != null && clayMax != null
+          ? `Mapped clay content ranges from ${clayMin.toFixed(1)}% to ${clayMax.toFixed(1)}%.`
+          : null,
+        deepestLayer
+          ? `Deepest listed band: ${deepestLayer.depth}, clay ${deepestLayer.clayPct.toFixed(1)}%.`
+          : null,
+        clayMax != null && clayMax >= 35
+          ? "Clay-rich soils in this modelled range are generally associated with shrink-swell movement and slower drainage; this is not a measurement of this ground."
+          : null,
+        "Deeper ground conditions have not been measured; the dashed line has no assigned depth.",
+      ]
+        .filter((line): line is string => Boolean(line))
+        .join(" "),
+    );
   }
   if (g && !g.soilLayers.length) {
     next("Soil data availability");
@@ -609,8 +692,34 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     meta(
       "Numbered location cards use provider-reported points; distances are labelled by measurement type.",
     );
-    const amenityCounts = [...new Set(a.amenities.map((p) => p.category))].map((category) => category + ": " + a.amenities.filter((p) => p.category === category).length).join(", ");
-    conclusion("Amenities", a.amenities.length + " located named amenity record(s) are listed below" + (amenityCounts ? " (" + amenityCounts + ")" : "") + ". This is a count of returned records, not a completeness or suitability assessment.");
+    const categories = [...new Set(a.amenities.map((place) => place.category))];
+    const amenityCounts = categories
+      .map(
+        (category) =>
+          category +
+          ": " +
+          a.amenities.filter((place) => place.category === category).length,
+      )
+      .join(", ");
+    const nearestByCategory = categories
+      .map((category) => {
+        const nearest = a.amenities
+          .filter(
+            (place) =>
+              place.category === category &&
+              place.distanceKm != null &&
+              Number.isFinite(place.distanceKm),
+          )
+          .sort((left, right) => (left.distanceKm ?? Infinity) - (right.distanceKm ?? Infinity))[0];
+        return nearest
+          ? `Nearest returned ${category.toLowerCase()} record: ${nearest.name}, ${nearest.distanceKm!.toFixed(1)} km straight-line.`
+          : `No straight-line distance was returned for ${category.toLowerCase()} records.`;
+      })
+      .join(" ");
+    conclusion(
+      "Amenities",
+      `${a.amenities.length} located named amenity record(s) are listed${amenityCounts ? " (" + amenityCounts + ")" : ""}. ${nearestByCategory} Straight-line distances are not travel distances. A listing does not confirm a facility is open or operating, and absence from these results is not evidence that nothing exists.`,
+    );
     a.amenities.forEach((p, i) => {
       doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
