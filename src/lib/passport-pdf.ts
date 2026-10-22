@@ -97,7 +97,10 @@ async function collectAssets(o: PassportPdfOptions): Promise<PassportPdfAssets> 
     const batch = await Promise.all(
       places.slice(i, i + 4).map(async (p) => ({
         ...p,
-        image: Date.now() < imageDeadline ? await passportMapImage(p.lat, p.lng, "map", 16) : null,
+        // Satellite imagery frames the actual facility and frontage better than
+        // a sparse street layer in rural locations.
+        image:
+          Date.now() < imageDeadline ? await passportMapImage(p.lat, p.lng, "satellite", 18) : null,
         photo: null,
       })),
     );
@@ -215,6 +218,10 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       (r): r is { label: string; value: number } => r.value != null && Number.isFinite(r.value),
     );
     if (!valid.length) return;
+    if (valid.every((r) => r.value === 0)) {
+      meta(`All returned values are zero for this period. Scale: ${unit}.`);
+      return;
+    }
     need(200);
     const lo = Math.min(0, ...valid.map((r) => r.value)),
       hi = Math.max(0, ...valid.map((r) => r.value)),
@@ -257,9 +264,10 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
   const directory = o.items.filter((it) => it.value);
   const sourced = directory.filter((it) => it.cls === "measured" || it.cls === "official").length,
     estimates = directory.filter((it) => it.cls === "modelled" || it.cls === "ai").length;
+  const interpreted = directory.length - sourced - estimates;
   block(
     "Report contents",
-    `Evidence directory: ${directory.length} entries / ${sourced} sourced or reference / ${estimates} modelled or AI. Maps, amenities and charts are additional context.`,
+    `Evidence directory: ${directory.length} entries / ${sourced} sourced or reference / ${estimates} modelled or AI${interpreted > 0 ? ` / ${interpreted} interpretation` : ""}. Maps, amenities and charts are additional context.`,
   );
   meta(
     "Imagery is location context. Estimates and conceptual diagrams are distinct from site observations. Registry, ownership and surveyed boundary verification are outside this report.",
@@ -403,7 +411,9 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     const x = M + 30,
       base = y + 90,
       run = C - 60,
-      rise = Math.min(75, Math.max(2, g.terrain.slopePct * 3));
+      rise = Math.min(75, Math.max(18, g.terrain.slopePct * 3)),
+      trueRise = (run * g.terrain.slopePct) / 100,
+      exaggeration = trueRise > 0 ? rise / trueRise : 0;
     doc.setDrawColor(...PDF.green);
     doc.setLineWidth(3);
     doc.line(x, base, x + run, base - rise);
@@ -412,7 +422,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     doc.line(x + run, base, x + run, base - rise);
     y = base + 12;
     meta(
-      `Gradient explanation: ${g.terrain.slopePct.toFixed(1)} m rise over 100 m horizontal run. Schematic with vertical exaggeration, not a surveyed cross-section.`,
+      `Gradient explanation: ${g.terrain.slopePct.toFixed(1)} m rise over 100 m horizontal run. Schematic, vertical exaggeration approximately ${exaggeration.toFixed(0)}x, not a surveyed cross-section.`,
     );
     meta(
       "ASTER 30 m regional elevation-grid model. Slope direction and exact ground profile require a survey.",
@@ -482,13 +492,18 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
   }
   next("Roads & access context");
   title("Roads & access");
-  map("map", 300);
+  // Satellite context carries visible road geometry; street labels follow.
+  map("satellite", 230);
+  map("map", 230);
   meta(
     "Road labels come from the rendered map. A visible road does not establish a legal right of access, road condition or a connected driveway.",
   );
   const access = o.items.filter((it) => it.chapter === "access" && it.value);
   for (const it of access) {
-    need(110 + doc.splitTextToSize(sanitize(it.value!), C - 24).length * 16);
+    need(
+      110 + doc.splitTextToSize(sanitize(it.value!), C - 24).length * 16,
+      "Roads & access context",
+    );
     block(it.label, it.value!);
     meta(it.source);
   }
