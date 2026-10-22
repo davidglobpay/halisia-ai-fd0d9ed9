@@ -734,7 +734,10 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
               place.distanceKm != null &&
               Number.isFinite(place.distanceKm),
           )
-          .sort((left, right) => (left.distanceKm ?? Infinity) - (right.distanceKm ?? Infinity))[0];
+          .sort(
+            (left, right) =>
+              (left.distanceKm ?? Infinity) - (right.distanceKm ?? Infinity),
+          )[0];
         return nearest
           ? `Nearest returned ${category.toLowerCase()} record: ${nearest.name}, ` +
             `${nearest.distanceKm!.toFixed(1)} km straight-line.`
