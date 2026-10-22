@@ -30,8 +30,12 @@ export type PassportLocationNewsItem = {
 
 /** Public county-level Pulse context. News is optional and never gates a PDF export. */
 export const passportLocationNews = createServerFn({ method: "GET" })
-  .inputValidator((input: unknown) => z.object({ county: z.string().trim().min(2).max(80) }).parse(input))
+  .inputValidator((input: unknown) => {
+    const parsed = z.object({ county: z.string().trim().min(2).max(80) }).safeParse(input);
+    return parsed.success ? parsed.data : { county: "" };
+  })
   .handler(async ({ data }): Promise<PassportLocationNewsItem[]> => {
+    if (!data.county) return [];
     try {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const { data: rows, error } = await supabaseAdmin
