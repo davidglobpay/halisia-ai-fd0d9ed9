@@ -1,4 +1,6 @@
 import { landUseContext } from "./passport-land-use";
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 import jsPDF from "jspdf";
 import { displayPlaceName, isQueryCentroid } from "./passport-quality";
 import { CHAPTERS, CLASS_LABEL, type EvidenceItem, type LedgerEntry } from "./passport-evidence";
@@ -15,6 +17,48 @@ import { COUNTY_LOGOS } from "./county-logos";
 import lockupUrl from "@/assets/brand/halisia-lockup.png?url";
 import symbolUrl from "@/assets/brand/halisia-mark.png?url";
 
+export type PassportLocationNewsItem = {
+  title: string;
+  summary: string;
+  sourceName: string;
+  url: string;
+  publishedAt: string | null;
+  geoLevel: string;
+  placeLabel: string | null;
+};
+
+/** Public county-level Pulse context. News is optional and never gates a PDF export. */
+export const passportLocationNews = createServerFn({ method: "GET" })
+  .inputValidator((input: unknown) => z.object({ county: z.string().trim().min(2).max(80) }).parse(input))
+  .handler(async ({ data }): Promise<PassportLocationNewsItem[]> => {
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: rows, error } = await supabaseAdmin
+        .from("news_articles")
+        .select("title, summary, raw_excerpt, source_name, url, published_at, geo_level, place_label")
+        .eq("county", data.county)
+        .eq("archived", false)
+        .order("published_at", { ascending: false, nullsFirst: false })
+        .limit(6);
+      if (error) {
+        console.error("Passport county news lookup failed", error.message);
+        return [];
+      }
+      return (rows ?? []).map((row) => ({
+        title: row.title,
+        summary: row.summary ?? row.raw_excerpt ?? "",
+        sourceName: row.source_name ?? "Source not supplied",
+        url: row.url,
+        publishedAt: row.published_at,
+        geoLevel: row.geo_level ?? "national",
+        placeLabel: row.place_label,
+      }));
+    } catch (error) {
+      console.error("Passport county news lookup unavailable", error);
+      return [];
+    }
+  });
+
 export type PassportPdfOptions = {
   place: string;
   locationLine: string;
@@ -29,6 +73,7 @@ export type PassportPdfOptions = {
   intel?: LocationIntel | null;
   geotech?: GeotechIntel | null;
   wave4?: Wave4Intel | null;
+  news?: PassportLocationNewsItem[] | null;
 };
 export type PassportPdfAssets = {
   lockup: BrandImage | null;
@@ -185,6 +230,13 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     text(s, 8, false, PDF.stone2);
     y += 5;
   };
+  // Short conclusions restate displayed values only; they are not verdicts.
+  const conclusion = (label: string, summary: string) => {
+    need(42, label + " evidence conclusion");
+    text(label + " evidence conclusion", 9, true, PDF.goldInk);
+    text(summary, 8.5, false, PDF.stone2);
+    y += 2;
+  };
   const block = (label: string, value: string) => {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
@@ -297,6 +349,28 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       "County reference profile, not a parcel finding or current political assessment. Emblem identifies the county; no endorsement or government integration is implied.",
     );
   }
+  if (o.county) {
+    next("County news context");
+    title(o.county.name + " County news");
+    meta("County-level news context only. These articles are not verified by HALISIA and are not parcel-specific findings.");
+    const news = o.news ?? [];
+    if (!news.length) {
+      text("No non-archived county news articles were returned. The optional news lookup does not affect the evidence export.", 9, false, PDF.stone2);
+    } else {
+      for (const item of news.slice(0, 6)) {
+        need(65, "County news context");
+        text(item.title, 10, true);
+        if (item.summary) text(item.summary, 8.5);
+        meta(item.sourceName + " | " + (item.publishedAt ?? "Publication date not supplied") + " | " + item.geoLevel + (item.placeLabel ? " | " + item.placeLabel : ""));
+        if (/^https?:\/\//i.test(item.url)) {
+          doc.setTextColor(...PDF.green);
+          doc.setFontSize(8);
+          doc.textWithLink("Open source article", M, y + 8, { url: item.url });
+          y += 14;
+        }
+      }
+    }
+  }
   const weather = o.wave4?.weather;
   if (weather?.points.length) {
     next("Weather forecast / MET Norway");
@@ -355,6 +429,8 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       climate.monthly.map((m) => ({ label: m.month, value: m.temperatureC })),
       "degrees C",
     );
+    const returnedMonths = climate.monthly.filter((m) => m.temperatureC != null || m.rainfallMm != null).length;
+    conclusion("Climate", "Monthly climate values returned for " + returnedMonths + " of " + climate.monthly.length + " months. " + (climate.annualRainfallMm != null ? "Mean annual rainfall: " + climate.annualRainfallMm.toFixed(0) + " mm/year. " : "") + (climate.meanTempC != null ? "Mean temperature: " + climate.meanTempC.toFixed(1) + " degrees C." : ""));
   } else if (climate && (climate.annualRainfallMm != null || climate.meanTempC != null)) {
     next("Climate model");
     title("Climate snapshot");
@@ -365,6 +441,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     meta(
       "Regional model estimate. No monthly series was returned; a seasonal graph is not invented.",
     );
+    conclusion("Climate", (climate.annualRainfallMm != null ? "Mean annual rainfall: " + climate.annualRainfallMm.toFixed(0) + " mm/year. " : "") + (climate.meanTempC != null ? "Mean temperature: " + climate.meanTempC.toFixed(1) + " degrees C." : ""));
   }
   const g = o.geotech;
   if (g?.terrainMeasured && g.terrain) {
@@ -407,6 +484,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       `${g.terrain.slopePct.toFixed(1)}% / ${((Math.atan(g.terrain.slopePct / 100) * 180) / Math.PI).toFixed(1)} degrees / modelled aspect ${g.terrain.aspectLabel} (${g.terrain.aspectDeg} degrees)`,
     );
     block("Grid elevation range", `${g.terrain.minM.toFixed(0)} - ${g.terrain.maxM.toFixed(0)} m`);
+    conclusion("Terrain", "Regional slope " + g.terrain.slopePct.toFixed(1) + "%; modelled aspect " + g.terrain.aspectLabel + " (" + g.terrain.aspectDeg + " degrees); grid elevation " + g.terrain.minM.toFixed(0) + " to " + g.terrain.maxM.toFixed(0) + " m. Regional model values, not a survey.");
     need(160);
     const x = M + 30,
       base = y + 90,
@@ -476,6 +554,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     meta(
       "Concept diagram: surface soil / unknown deeper geology. Dashed line has no assigned depth.",
     );
+    conclusion("Soil", g.soilLayers.length + " modelled soil layer(s) are listed above. Bedrock depth and water-table level have not been measured; the dashed line has no assigned depth.");
   }
   if (g && !g.soilLayers.length) {
     next("Soil data availability");
@@ -513,6 +592,8 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     meta(
       "Numbered location cards use provider-reported points; distances are labelled by measurement type.",
     );
+    const amenityCounts = [...new Set(a.amenities.map((p) => p.category))].map((category) => category + ": " + a.amenities.filter((p) => p.category === category).length).join(", ");
+    conclusion("Amenities", a.amenities.length + " located named amenity record(s) are listed below" + (amenityCounts ? " (" + amenityCounts + ")" : "") + ". This is a count of returned records, not a completeness or suitability assessment.");
     a.amenities.forEach((p, i) => {
       doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
@@ -627,8 +708,17 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
 }
 
 export async function downloadPassportPdf(o: PassportPdfOptions): Promise<string> {
+  let news: PassportLocationNewsItem[] = [];
+  if (o.county) {
+    try {
+      news = await passportLocationNews({ data: { county: o.county.name } });
+    } catch {
+      // County news is optional; never block the PDF export on a feed failure.
+      news = [];
+    }
+  }
   const assets = await collectAssets(o);
-  const doc = renderPassportPdf(o, assets);
+  const doc = renderPassportPdf({ ...o, news }, assets);
   const filename = `halisia-land-passport-${
     o.place
       .replace(/[^a-z0-9]+/gi, "-")
