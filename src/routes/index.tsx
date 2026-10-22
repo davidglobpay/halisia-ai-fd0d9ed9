@@ -1,5 +1,5 @@
 import { SignInPrompt } from "@/components/halisia/sign-in-prompt";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { FeatureRail } from "@/components/halisia/feature-rail";
 import { z } from "zod";
 import { fallback } from "@tanstack/zod-adapter";
@@ -20,7 +20,6 @@ import {
   FileText,
 } from "lucide-react";
 import { KenyaCountyMap } from "@/components/halisia/kenya-county-map";
-import { SearchBar } from "@/components/halisia/search-bar";
 import { AIOrb } from "@/components/halisia/ai-orb";
 import { HoloStack } from "@/components/halisia/ds/holo-stack";
 
@@ -31,7 +30,6 @@ import {
   MarketplaceSection,
   ContributorAndDashboardSection,
 } from "@/components/halisia/landing-sections";
-import { recordSearchConversion } from "@/lib/analytics";
 import halisiaSymbol from "@/assets/brand/halisia-mark.png.asset.json";
 import halisiaWordmark from "@/assets/brand/halisia-lockup.png.asset.json";
 import { HeroMap } from "@/components/halisia/hero-map";
@@ -49,8 +47,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Landing() {
-  const navigate = useNavigate();
-  return <LandingBody navigate={navigate} />;
+  return <LandingBody />;
 }
 
 /**
@@ -84,7 +81,7 @@ function HeroStage({ children }: { children?: ReactNode }) {
   );
 }
 
-function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> }) {
+function LandingBody() {
   return (
     <div className="min-h-screen">
       {/* HERO — static cinematic stage (videos removed) */}
@@ -155,14 +152,7 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
             </p>
 
             <div className="mx-auto mt-6 w-full max-w-xl">
-              <SearchBar
-                size="lg"
-                placeholder="Search a county, town, parcel, LR number, ward, or coordinates…"
-                onSearch={(q) => {
-                  recordSearchConversion();
-                  navigate({ to: "/explore", search: { q } });
-                }}
-              />
+              {/* One search, attached to the map that answers it. */}
               <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
                 <Link
                   to="/"
@@ -172,12 +162,12 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
                 >
                   Explore Counties <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
-                <Link
-                  to="/explore"
+                <a
+                  href="#hero-map"
                   className="inline-flex items-center gap-1.5 rounded-full glass border border-foreground/15 px-4 py-2 text-xs font-medium text-foreground hover:bg-foreground/5 transition"
                 >
-                  View Intelligence Dashboard
-                </Link>
+                  Pick a point on the map
+                </a>
                 <Link
                   to="/spatial"
                   search={{ parcel: "" }}
@@ -185,18 +175,6 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
                 >
                   Spatial AR Studio
                 </Link>
-              </div>
-              <div className="mt-3 hidden sm:flex flex-wrap justify-center gap-2 text-xs text-muted-foreground">
-                <span className="mr-1">Popular:</span>
-                {["Kilimani", "Kiambu Road", "Nyali", "Naivasha", "Ruiru"].map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => navigate({ to: "/explore", search: { q: t } })}
-                    className="glass rounded-full px-3 py-1 hover:text-foreground transition"
-                  >
-                    {t}
-                  </button>
-                ))}
               </div>
             </div>
 
@@ -382,13 +360,13 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
               <Link to="/pricing" className="glass rounded-full px-6 py-3 text-sm">
                 See all prices
               </Link>
-              <Link
-                to="/explore"
+              <a
+                href="#hero-map"
                 data-testid="launch-cta"
                 className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground font-medium px-6 py-3 shadow-[0_10px_40px_-10px_rgba(20,123,53,0.55)]"
               >
-                Launch HALISIA <ArrowRight className="h-4 w-4" />
-              </Link>
+                Start with a point <ArrowRight className="h-4 w-4" />
+              </a>
               <a href="#intelligence" className="glass rounded-full px-6 py-3 text-sm">
                 How it works
               </a>
@@ -441,9 +419,6 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
               Land · Intelligence · Platform
             </div>
             <div className="mt-2 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
-              <Link to="/explore" className="hover:text-white transition">
-                Explore
-              </Link>
               <Link to="/compare" search={{ codes: "" }} className="hover:text-white transition">
                 Compare
               </Link>
@@ -464,18 +439,6 @@ function LandingBody({ navigate }: { navigate: ReturnType<typeof useNavigate> })
           </div>
         </div>
       </footer>
-
-      <Link
-        to="/explore"
-        preload="intent"
-        className="fixed z-50 inline-flex min-h-9 items-center gap-1.5 rounded-full bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background left-3 sm:left-5 bottom-[max(0.75rem,env(safe-area-inset-bottom))] sm:bottom-5"
-        aria-label="Launch HALISIA intelligence workspace"
-        title="Launch HALISIA app"
-      >
-        <span className="hidden xs:inline sm:inline">Launch app</span>
-        <span className="sm:hidden">Launch</span>
-        <ArrowRight className="h-4 w-4" aria-hidden="true" />
-      </Link>
 
       <AIOrb />
     </div>
