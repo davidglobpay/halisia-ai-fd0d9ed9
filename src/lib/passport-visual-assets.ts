@@ -7,7 +7,7 @@ export async function passportMapImage(
   lat: number,
   lng: number,
   layer: EvidenceMapLayer,
-  zoom = 15,
+  zoom = 17,
 ): Promise<BrandImage | null> {
   try {
     const tiles = mapPreviewTiles({ lat, lng, accuracyM: null }, layer, zoom);
@@ -20,13 +20,18 @@ export async function passportMapImage(
         )
         .map(async (tile) => ({ tile, image: await loadBrandImage(tile.src) })),
     );
-    if (images.some((x) => !x.image)) return null;
+    // 26 amenities x 9 tiles is over 200 requests in one export, so a single
+    // transient failure is likely - four cards in the 20 Oct Katani export
+    // read "Map image unavailable". Draw the tiles that did arrive instead of
+    // discarding a usable image; hasMapDetail below still holds the veto.
+    const loaded = images.filter((x) => x.image);
+    if (!loaded.length) return null;
     const canvas = document.createElement("canvas");
     canvas.width = 512;
     canvas.height = 320;
     const ctx = canvas.getContext("2d");
     if (!ctx) return null;
-    for (const { tile, image } of images) {
+    for (const { tile, image } of loaded) {
       const img = new Image();
       img.src = image!.dataUrl;
       await img.decode();

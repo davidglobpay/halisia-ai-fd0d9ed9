@@ -113,6 +113,47 @@ export const synthesizeArticleAudio = createServerFn({ method: "POST" })
     };
   });
 
+/**
+ * Recent county news for a Land Passport.
+ *
+ * Read-only and public, like the rest of the Pulse feed. County-level only:
+ * these are stories about the county, never about the parcel, and the export
+ * must label them that way.
+ */
+export const passportLocationNews = createServerFn({ method: "POST" })
+  .inputValidator((input: { county: string }) => {
+    if (!input || typeof input.county !== "string") throw new Error("County is required");
+    return { county: input.county.trim() };
+  })
+  .handler(async ({ data }) => {
+    if (!data.county || data.county.length > 64) return { articles: [] };
+    const { createClient } = await import("@supabase/supabase-js");
+    const url = process.env["SUPABASE_URL"];
+    const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
+    if (!url || !key) throw new Error("County news is temporarily unavailable");
+    const publicClient = createClient(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false },
+      global: {
+        fetch: (input, init) => {
+          const headers = new Headers(init?.headers);
+          if (key.startsWith("sb_") && headers.get("Authorization") === `Bearer ${key}`)
+            headers.delete("Authorization");
+          headers.set("apikey", key);
+          return fetch(input, { ...init, headers });
+        },
+      },
+    });
+    const { data: rows, error } = await publicClient
+      .from("news_articles")
+      .select("title, source_name, published_at, url, category")
+      .eq("county", data.county)
+      .eq("archived", false)
+      .order("published_at", { ascending: false })
+      .limit(6);
+    if (error) throw new Error("County news is temporarily unavailable");
+    return { articles: rows ?? [] };
+  });
+
 /** Which cloud voices are usable right now (for the audio engine switch). */
 export const listTtsEngines = createServerFn({ method: "GET" }).handler(async () => {
   const { availableEngines } = await import("./pulse/tts.server");
