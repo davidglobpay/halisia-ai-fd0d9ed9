@@ -61,7 +61,7 @@ export function HeroMap() {
   const center = picked ?? { lat: -1.2921, lng: 36.8219 };
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-8" data-testid="hero-map">
+    <section id="hero-map" className="mx-auto max-w-7xl px-4 py-8" data-testid="hero-map">
       <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
         <div>
           <div className="text-[11px] uppercase tracking-[0.25em] text-accent">Live map</div>
