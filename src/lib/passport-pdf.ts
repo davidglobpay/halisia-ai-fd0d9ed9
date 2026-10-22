@@ -133,22 +133,22 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     brandPage(doc, a.symbol);
     doc.setFillColor(...PDF.green);
     doc.rect(0, 0, W, 5, "F");
-    if (a.lockup) image(a.lockup, M, 16, 150, 49);
+    if (a.lockup) image(a.lockup, (W - 170) / 2, 12, 170, 45);
     else {
       doc.setFont("helvetica", "bold");
       doc.setFontSize(18);
       doc.setTextColor(...PDF.forest);
-      doc.text("HALISIA.AI", M, 43);
+      doc.text("HALISIA.AI", W / 2, 43, { align: "center" });
     }
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
     doc.setTextColor(...PDF.goldInk);
-    doc.text("LAND PASSPORT", W - M, 30, { align: "right" });
+    doc.text("LAND PASSPORT", M, 68);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7);
-    doc.text(sanitize(title), W - M, 45, { align: "right" });
+    doc.text(sanitize(title), W - M, 68, { align: "right" });
     doc.setDrawColor(...PDF.gold);
-    doc.line(M, 73, W - M, 73);
+    doc.line(M, 78, W - M, 78);
     y = 92;
   };
   const next = (title: string) => {
@@ -230,7 +230,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       const end = base - ((r.value - lo) / range) * 110;
       const h = Math.abs(end - zero);
       doc.setFillColor(...PDF.green);
-      if (h > 0) doc.rect(M + i * bw + 5, Math.min(end, zero), bw - 10, h, "F");
+      if (h > 0) doc.rect(M + i * bw + bw * 0.14, Math.min(end, zero), bw * 0.72, h, "F");
       doc.setTextColor(...PDF.forest);
       doc.setFontSize(7);
       doc.text(

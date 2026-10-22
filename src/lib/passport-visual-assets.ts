@@ -18,7 +18,13 @@ export async function passportMapImage(
           (tile) =>
             tile.left < 256 && tile.left + 256 > -256 && tile.top < 160 && tile.top + 256 > -160,
         )
-        .map(async (tile) => ({ tile, image: await loadBrandImage(tile.src) })),
+        .map(async (tile) => {
+          let image = await loadBrandImage(tile.src);
+          // A transient tile failure must not discard the whole export map.
+          // Retry only the failed URL once; the loader evicts failed requests.
+          if (!image) image = await loadBrandImage(tile.src);
+          return { tile, image };
+        }),
     );
     if (images.some((x) => !x.image)) return null;
     const canvas = document.createElement("canvas");
