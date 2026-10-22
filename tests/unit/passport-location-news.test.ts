@@ -8,7 +8,13 @@ const { query, client, result } = vi.hoisted(() => {
     order: vi.fn().mockReturnThis(),
     limit: vi.fn().mockImplementation(async () => result),
   };
-  return { query, client: vi.fn(() => ({ from: vi.fn(() => query) })), result };
+  const client = vi.fn((url: string, key: string, options: unknown) => {
+    void url;
+    void key;
+    void options;
+    return { from: vi.fn(() => query) };
+  });
+  return { query, client, result };
 });
 
 vi.mock("@tanstack/react-start", () => ({

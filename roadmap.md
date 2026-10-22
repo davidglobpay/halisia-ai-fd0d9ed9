@@ -4,8 +4,9 @@
 
 - [x] Apply the nine exact PDF fixes and preserve newer Pulse anchors
 - [x] Add derived evidence readings, public county news and existing satellite imagery
-- [ ] Run full unit suite, scoped formatting/lint and preview validation
-- [ ] Validate Bungoma export with real provider data; do not publish
+- [x] Run full unit suite (765 tests) and preview validation; retain unrelated repository lint drift
+- [x] Validate public Bungoma PDF, centred branding, satellite imagery and six dated news stories
+- [ ] Validate signed-in climate, terrain, soil and amenities export; blocked until the user signs in to preview
 
 ## Isolated map evidence foundation
 

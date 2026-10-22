@@ -700,7 +700,9 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       need(74);
       const when = n.published_at ? n.published_at.slice(0, 10) : "date not supplied";
       text(n.title, 11, true);
-      meta(`${n.source_name ?? "source not supplied"} | ${when}${n.category ? ` | ${n.category}` : ""}`);
+      meta(
+        `${n.source_name ?? "source not supplied"} | ${when}${n.category ? ` | ${n.category}` : ""}`,
+      );
       if (n.url) {
         doc.setFontSize(8);
         doc.setTextColor(...PDF.goldInk);
