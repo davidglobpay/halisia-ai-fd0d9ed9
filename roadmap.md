@@ -1,5 +1,12 @@
 # Current work
 
+## Uploaded Passport corrections
+
+- [x] Apply the nine exact PDF fixes and preserve newer Pulse anchors
+- [x] Add derived evidence readings, public county news and existing satellite imagery
+- [ ] Run full unit suite, scoped formatting/lint and preview validation
+- [ ] Validate Bungoma export with real provider data; do not publish
+
 ## Isolated map evidence foundation
 
 - [x] Apply uploaded additions with design-system controls and truthful metadata
