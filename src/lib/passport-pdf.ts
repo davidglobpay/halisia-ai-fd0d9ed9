@@ -97,7 +97,13 @@ async function collectAssets(o: PassportPdfOptions): Promise<PassportPdfAssets> 
     const batch = await Promise.all(
       places.slice(i, i + 4).map(async (p) => ({
         ...p,
-        image: Date.now() < imageDeadline ? await passportMapImage(p.lat, p.lng, "map", 16) : null,
+        // Satellite, not street. Esri's street basemap has almost no vector
+        // data for rural Machakos - the Katani export produced 26 near-blank
+        // pale cards from it - while its imagery of the same coordinates is
+        // detailed. Zoom 18 frames a plot and its frontage rather than two
+        // kilometres of nothing.
+        image:
+          Date.now() < imageDeadline ? await passportMapImage(p.lat, p.lng, "satellite", 18) : null,
         photo: null,
       })),
     );
@@ -133,12 +139,14 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     brandPage(doc, a.symbol);
     doc.setFillColor(...PDF.green);
     doc.rect(0, 0, W, 5, "F");
-    if (a.lockup) image(a.lockup, M, 16, 150, 49);
+    // Centred on every page. The text fallback is centred too, so a failed
+    // artwork load changes the mark but never the layout.
+    if (a.lockup) image(a.lockup, (W - 150) / 2, 16, 150, 49);
     else {
       doc.setFont("helvetica", "bold");
       doc.setFontSize(18);
       doc.setTextColor(...PDF.forest);
-      doc.text("HALISIA.AI", M, 43);
+      doc.text("HALISIA.AI", W / 2, 43, { align: "center" });
     }
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
@@ -215,6 +223,13 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       (r): r is { label: string; value: number } => r.value != null && Number.isFinite(r.value),
     );
     if (!valid.length) return;
+    // An all-zero series drew a full-height chart of invisible bars above a
+    // large void, captioned "never zero" - which reads as broken rather than
+    // informative. The Katani rainfall forecast was 24 zeros. State it.
+    if (valid.every((r) => r.value === 0)) {
+      meta(`All returned values are zero for this period. Scale: ${unit}.`);
+      return;
+    }
     need(200);
     const lo = Math.min(0, ...valid.map((r) => r.value)),
       hi = Math.max(0, ...valid.map((r) => r.value)),
@@ -257,9 +272,16 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
   const directory = o.items.filter((it) => it.value);
   const sourced = directory.filter((it) => it.cls === "measured" || it.cls === "official").length,
     estimates = directory.filter((it) => it.cls === "modelled" || it.cls === "ai").length;
+  // The Katani cover read "16 entries / 8 sourced / 7 modelled" - 15, not 16.
+  // The arithmetic was right and the label was wrong: interpretation items are
+  // counted in the total but belong to neither named bucket. Name the
+  // remainder rather than let the line appear not to add up.
+  const interpreted = directory.length - sourced - estimates;
   block(
     "Report contents",
-    `Evidence directory: ${directory.length} entries / ${sourced} sourced or reference / ${estimates} modelled or AI. Maps, amenities and charts are additional context.`,
+    `Evidence directory: ${directory.length} entries / ${sourced} sourced or reference / ${estimates} modelled or AI${
+      interpreted > 0 ? ` / ${interpreted} interpretation` : ""
+    }. Maps, amenities and charts are additional context.`,
   );
   meta(
     "Imagery is location context. Estimates and conceptual diagrams are distinct from site observations. Registry, ownership and surveyed boundary verification are outside this report.",
@@ -403,7 +425,13 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     const x = M + 30,
       base = y + 90,
       run = C - 60,
-      rise = Math.min(75, Math.max(2, g.terrain.slopePct * 3));
+      // A 1.0% slope drew a 3 pt rise across a 515 pt run: a flat line under a
+      // caption promising vertical exaggeration. Floor the rise so the
+      // gradient reads, and state the factor below - an exaggerated section is
+      // honest only when the reader knows by how much.
+      rise = Math.min(75, Math.max(18, g.terrain.slopePct * 3)),
+      trueRise = (run * g.terrain.slopePct) / 100,
+      exaggeration = trueRise > 0 ? rise / trueRise : 0;
     doc.setDrawColor(...PDF.green);
     doc.setLineWidth(3);
     doc.line(x, base, x + run, base - rise);
@@ -412,7 +440,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     doc.line(x + run, base, x + run, base - rise);
     y = base + 12;
     meta(
-      `Gradient explanation: ${g.terrain.slopePct.toFixed(1)} m rise over 100 m horizontal run. Schematic with vertical exaggeration, not a surveyed cross-section.`,
+      `Gradient explanation: ${g.terrain.slopePct.toFixed(1)} m rise over 100 m horizontal run. Schematic, vertical exaggeration approximately ${exaggeration.toFixed(0)}x, not a surveyed cross-section.`,
     );
     meta(
       "ASTER 30 m regional elevation-grid model. Slope direction and exact ground profile require a survey.",
@@ -482,13 +510,22 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
   }
   next("Roads & access context");
   title("Roads & access");
-  map("map", 300);
+  // Imagery first: it carries road geometry even where the street basemap has
+  // no vector data for the area. The street layer follows, for its labels.
+  map("satellite", 230);
+  map("map", 230);
   meta(
     "Road labels come from the rendered map. A visible road does not establish a legal right of access, road condition or a connected driveway.",
   );
   const access = o.items.filter((it) => it.chapter === "access" && it.value);
   for (const it of access) {
-    need(110 + doc.splitTextToSize(sanitize(it.value!), C - 24).length * 16);
+    // Without an explicit title this falls back to need()'s default,
+    // "Evidence directory", which is why page 8 of the Katani export carried
+    // that header above amenity counts.
+    need(
+      110 + doc.splitTextToSize(sanitize(it.value!), C - 24).length * 16,
+      "Roads & access context",
+    );
     block(it.label, it.value!);
     meta(it.source);
   }
