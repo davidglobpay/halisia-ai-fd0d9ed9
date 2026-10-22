@@ -7,7 +7,7 @@ export async function passportMapImage(
   lat: number,
   lng: number,
   layer: EvidenceMapLayer,
-  zoom = 15,
+  zoom = 17,
 ): Promise<BrandImage | null> {
   try {
     const tiles = mapPreviewTiles({ lat, lng, accuracyM: null }, layer, zoom);
@@ -26,13 +26,17 @@ export async function passportMapImage(
           return { tile, image };
         }),
     );
-    if (images.some((x) => !x.image)) return null;
+    // A transient tile failure should not discard the entire map.
+    // Keep every successfully loaded tile; the detail check below still
+    // rejects near-blank imagery rather than exporting a misleading image.
+    const loaded = images.filter((x) => x.image);
+    if (!loaded.length) return null;
     const canvas = document.createElement("canvas");
     canvas.width = 512;
     canvas.height = 320;
     const ctx = canvas.getContext("2d");
     if (!ctx) return null;
-    for (const { tile, image } of images) {
+    for (const { tile, image } of loaded) {
       const img = new Image();
       img.src = image!.dataUrl;
       await img.decode();

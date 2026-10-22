@@ -1,4 +1,7 @@
 import { landUseContext } from "./passport-land-use";
+import { buildEvidenceConclusion } from "./passport-conclusion";
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 import jsPDF from "jspdf";
 import { displayPlaceName, isQueryCentroid } from "./passport-quality";
 import { CHAPTERS, CLASS_LABEL, type EvidenceItem, type LedgerEntry } from "./passport-evidence";
@@ -15,6 +18,52 @@ import { COUNTY_LOGOS } from "./county-logos";
 import lockupUrl from "@/assets/brand/halisia-lockup.png?url";
 import symbolUrl from "@/assets/brand/halisia-mark.png?url";
 
+export type PassportLocationNewsItem = {
+  title: string;
+  summary: string;
+  sourceName: string;
+  url: string;
+  publishedAt: string | null;
+  geoLevel: string;
+  placeLabel: string | null;
+};
+
+/** Public county-level Pulse context. News is optional and never gates a PDF export. */
+export const passportLocationNews = createServerFn({ method: "GET" })
+  .inputValidator((input: unknown) => {
+    const parsed = z.object({ county: z.string().trim().min(2).max(80) }).safeParse(input);
+    return parsed.success ? parsed.data : { county: "" };
+  })
+  .handler(async ({ data }): Promise<PassportLocationNewsItem[]> => {
+    if (!data.county) return [];
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: rows, error } = await supabaseAdmin
+        .from("news_articles")
+        .select("title, summary, raw_excerpt, source_name, url, published_at, geo_level, place_label")
+        .eq("county", data.county)
+        .eq("archived", false)
+        .order("published_at", { ascending: false, nullsFirst: false })
+        .limit(6);
+      if (error) {
+        console.error("Passport county news lookup failed", error.message);
+        return [];
+      }
+      return (rows ?? []).map((row) => ({
+        title: row.title,
+        summary: row.summary ?? row.raw_excerpt ?? "",
+        sourceName: row.source_name ?? "Source not supplied",
+        url: row.url,
+        publishedAt: row.published_at,
+        geoLevel: row.geo_level ?? "national",
+        placeLabel: row.place_label,
+      }));
+    } catch (error) {
+      console.error("Passport county news lookup unavailable", error);
+      return [];
+    }
+  });
+
 export type PassportPdfOptions = {
   place: string;
   locationLine: string;
@@ -29,6 +78,7 @@ export type PassportPdfOptions = {
   intel?: LocationIntel | null;
   geotech?: GeotechIntel | null;
   wave4?: Wave4Intel | null;
+  news?: PassportLocationNewsItem[] | null;
 };
 export type PassportPdfAssets = {
   lockup: BrandImage | null;
@@ -97,7 +147,10 @@ async function collectAssets(o: PassportPdfOptions): Promise<PassportPdfAssets> 
     const batch = await Promise.all(
       places.slice(i, i + 4).map(async (p) => ({
         ...p,
-        image: Date.now() < imageDeadline ? await passportMapImage(p.lat, p.lng, "map", 16) : null,
+        // Satellite imagery frames the actual facility and frontage better than
+        // a sparse street layer in rural locations.
+        image:
+          Date.now() < imageDeadline ? await passportMapImage(p.lat, p.lng, "satellite", 18) : null,
         photo: null,
       })),
     );
@@ -182,6 +235,15 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     text(s, 8, false, PDF.stone2);
     y += 5;
   };
+  // Short conclusions restate displayed values only; unsafe verdict-like text is suppressed.
+  const conclusion = (label: string, summary: string) => {
+    const body = buildEvidenceConclusion([summary]);
+    if (!body) return;
+    need(42, label + " evidence conclusion");
+    text(label + " evidence conclusion", 9, true, PDF.goldInk);
+    text(body, 8.5, false, PDF.stone2);
+    y += 2;
+  };
   const block = (label: string, value: string) => {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
@@ -215,6 +277,10 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       (r): r is { label: string; value: number } => r.value != null && Number.isFinite(r.value),
     );
     if (!valid.length) return;
+    if (valid.every((r) => r.value === 0)) {
+      meta(`All returned values are zero for this period. Scale: ${unit}.`);
+      return;
+    }
     need(200);
     const lo = Math.min(0, ...valid.map((r) => r.value)),
       hi = Math.max(0, ...valid.map((r) => r.value)),
@@ -257,9 +323,10 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
   const directory = o.items.filter((it) => it.value);
   const sourced = directory.filter((it) => it.cls === "measured" || it.cls === "official").length,
     estimates = directory.filter((it) => it.cls === "modelled" || it.cls === "ai").length;
+  const interpreted = directory.length - sourced - estimates;
   block(
     "Report contents",
-    `Evidence directory: ${directory.length} entries / ${sourced} sourced or reference / ${estimates} modelled or AI. Maps, amenities and charts are additional context.`,
+    `Evidence directory: ${directory.length} entries / ${sourced} sourced or reference / ${estimates} modelled or AI${interpreted > 0 ? ` / ${interpreted} interpretation` : ""}. Maps, amenities and charts are additional context.`,
   );
   meta(
     "Imagery is location context. Estimates and conceptual diagrams are distinct from site observations. Registry, ownership and surveyed boundary verification are outside this report.",
@@ -281,12 +348,64 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     text("Economy, farming & local livelihoods", 15, true);
     y += 8;
     for (const v of o.county.economy) text(`+ ${v}`, 12);
+    if (a.maps.satellite) {
+      need(175, "Economy, farming & local livelihoods");
+      image(a.maps.satellite, M, y, C, 150);
+      y += 158;
+      meta(
+        "Land cover around the point - Tiles (c) Esri, Maxar. Field patterns and built-up areas are visible in the imagery; " +
+          "crop types above are county reference data and are not identified from this image.",
+      );
+    }
     y += 12;
     text("Landmarks & wider social context", 15, true);
     for (const v of o.county.landmarks) text(`+ ${v}`, 11);
     y += 12;
     meta(
       "County reference profile, not a parcel finding or current political assessment. Emblem identifies the county; no endorsement or government integration is implied.",
+    );
+  }
+  if (o.county) {
+    next("County news context");
+    title(o.county.name + " County news");
+    meta(
+      "County-level news context only. These articles are not verified by HALISIA and are not parcel-specific findings.",
+    );
+    const news = o.news ?? [];
+    if (!news.length) {
+      text(
+        "No non-archived county news articles were returned. The optional news lookup does not affect the evidence export.",
+        9,
+        false,
+        PDF.stone2,
+      );
+    } else {
+      for (const item of news.slice(0, 6)) {
+        need(65, "County news context");
+        text(item.title, 10, true);
+        if (item.summary) text(item.summary, 8.5);
+        meta(
+          item.sourceName +
+            " | " +
+            (item.publishedAt ?? "Publication date not supplied") +
+            " | " +
+            item.geoLevel +
+            (item.placeLabel ? " | " + item.placeLabel : ""),
+        );
+        if (/^https?:\/\//i.test(item.url)) {
+          doc.setTextColor(...PDF.green);
+          doc.setFontSize(8);
+          doc.textWithLink("Open source article", M, y + 8, { url: item.url });
+          y += 14;
+        }
+      }
+    }
+    conclusion(
+      "County news",
+      "These headlines indicate what is reported in " +
+        o.county.name +
+        " County, not what is true of this plot. County-level reporting is not parcel-specific " +
+        "and is not verified by HALISIA.",
     );
   }
   const weather = o.wave4?.weather;
@@ -347,6 +466,55 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       climate.monthly.map((m) => ({ label: m.month, value: m.temperatureC })),
       "degrees C",
     );
+    const returnedMonths = climate.monthly.filter(
+      (month) => month.temperatureC != null || month.rainfallMm != null,
+    ).length;
+    const rainfallMonths = climate.monthly.filter(
+      (month) => month.rainfallMm != null && Number.isFinite(month.rainfallMm),
+    );
+    const wettest = [...rainfallMonths].sort(
+      (a, b) => (b.rainfallMm ?? -Infinity) - (a.rainfallMm ?? -Infinity),
+    )[0];
+    const driest = [...rainfallMonths].sort(
+      (a, b) => (a.rainfallMm ?? Infinity) - (b.rainfallMm ?? Infinity),
+    )[0];
+    const annualMonthlyRainfall = rainfallMonths.reduce(
+      (sum, month) => sum + (month.rainfallMm ?? 0),
+      0,
+    );
+    const rainfallRatio =
+      wettest && driest && (driest.rainfallMm ?? 0) > 0
+        ? (wettest.rainfallMm ?? 0) / (driest.rainfallMm ?? 1)
+        : null;
+    conclusion(
+      "Climate",
+      [
+        `Monthly climate values returned for ${returnedMonths} of ${climate.monthly.length} months.`,
+        wettest && driest
+          ? `Wettest month: ${wettest.month} (${(wettest.rainfallMm ?? 0).toFixed(0)} mm); ` +
+            `driest month: ${driest.month} (${(driest.rainfallMm ?? 0).toFixed(0)} mm).`
+          : null,
+        rainfallMonths.length
+          ? `Sum of returned monthly rainfall values: ${annualMonthlyRainfall.toFixed(0)} mm/year.`
+          : null,
+        rainfallRatio != null
+          ? rainfallRatio >= 3
+            ? `Wettest-to-driest monthly rainfall ratio: ${rainfallRatio.toFixed(1)}; ` +
+              "rainfall is concentrated rather than evenly spread."
+            : `Wettest-to-driest monthly rainfall ratio: ${rainfallRatio.toFixed(1)}.`
+          : null,
+        climate.annualRainfallMm != null
+          ? `Model annual rainfall value: ${climate.annualRainfallMm.toFixed(0)} mm/year.`
+          : null,
+        climate.meanTempC != null
+          ? `Mean temperature: ${climate.meanTempC.toFixed(1)} degrees C.`
+          : null,
+        "These are modelled multi-year means for a wide grid cell, not measurements at the plot " +
+          "or a forecast.",
+      ]
+        .filter((line): line is string => Boolean(line))
+        .join(" "),
+    );
   } else if (climate && (climate.annualRainfallMm != null || climate.meanTempC != null)) {
     next("Climate model");
     title("Climate snapshot");
@@ -356,6 +524,21 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       block("Mean temperature", `${climate.meanTempC.toFixed(1)} degrees C`);
     meta(
       "Regional model estimate. No monthly series was returned; a seasonal graph is not invented.",
+    );
+    conclusion(
+      "Climate",
+      [
+        climate.annualRainfallMm != null
+          ? `Mean annual rainfall: ${climate.annualRainfallMm.toFixed(0)} mm/year.`
+          : null,
+        climate.meanTempC != null
+          ? `Mean temperature: ${climate.meanTempC.toFixed(1)} degrees C.`
+          : null,
+        "Regional model estimate; no monthly series was returned. Values are not measurements " +
+          "at the plot or a forecast.",
+      ]
+        .filter((line): line is string => Boolean(line))
+        .join(" "),
     );
   }
   const g = o.geotech;
@@ -399,11 +582,20 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       `${g.terrain.slopePct.toFixed(1)}% / ${((Math.atan(g.terrain.slopePct / 100) * 180) / Math.PI).toFixed(1)} degrees / modelled aspect ${g.terrain.aspectLabel} (${g.terrain.aspectDeg} degrees)`,
     );
     block("Grid elevation range", `${g.terrain.minM.toFixed(0)} - ${g.terrain.maxM.toFixed(0)} m`);
+    conclusion(
+      "Terrain",
+      `Regional slope ${g.terrain.slopePct.toFixed(1)}%; modelled aspect ${g.terrain.aspectLabel} ` +
+        `(${g.terrain.aspectDeg} degrees); grid elevation ${g.terrain.minM.toFixed(0)} to ${g.terrain.maxM.toFixed(0)} m. ` +
+        "Aspect suggests run-off direction, not where water collects. Earthworks quantities and " +
+        "buildability need a survey; these are regional model values, not a survey.",
+    );
     need(160);
     const x = M + 30,
       base = y + 90,
       run = C - 60,
-      rise = Math.min(75, Math.max(2, g.terrain.slopePct * 3));
+      rise = Math.min(75, Math.max(18, g.terrain.slopePct * 3)),
+      trueRise = (run * g.terrain.slopePct) / 100,
+      exaggeration = trueRise > 0 ? rise / trueRise : 0;
     doc.setDrawColor(...PDF.green);
     doc.setLineWidth(3);
     doc.line(x, base, x + run, base - rise);
@@ -412,7 +604,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     doc.line(x + run, base, x + run, base - rise);
     y = base + 12;
     meta(
-      `Gradient explanation: ${g.terrain.slopePct.toFixed(1)} m rise over 100 m horizontal run. Schematic with vertical exaggeration, not a surveyed cross-section.`,
+      `Gradient explanation: ${g.terrain.slopePct.toFixed(1)} m rise over 100 m horizontal run. Schematic, vertical exaggeration approximately ${exaggeration.toFixed(0)}x, not a surveyed cross-section.`,
     );
     meta(
       "ASTER 30 m regional elevation-grid model. Slope direction and exact ground profile require a survey.",
@@ -466,6 +658,31 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     meta(
       "Concept diagram: surface soil / unknown deeper geology. Dashed line has no assigned depth.",
     );
+    const clayValues = g.soilLayers
+      .map((layer) => layer.clayPct)
+      .filter((value) => Number.isFinite(value));
+    const clayMin = clayValues.length ? Math.min(...clayValues) : null;
+    const clayMax = clayValues.length ? Math.max(...clayValues) : null;
+    const deepestLayer = g.soilLayers[g.soilLayers.length - 1];
+    conclusion(
+      "Soil",
+      [
+        `${g.soilLayers.length} modelled soil layer(s) are listed above.`,
+        clayMin != null && clayMax != null
+          ? `Mapped clay content ranges from ${clayMin.toFixed(1)}% to ${clayMax.toFixed(1)}%.`
+          : null,
+        deepestLayer
+          ? `Deepest listed band: ${deepestLayer.depth}, clay ${deepestLayer.clayPct.toFixed(1)}%.`
+          : null,
+        clayMax != null && clayMax >= 35
+          ? "Clay-rich soils in this modelled range are generally associated with shrink-swell " +
+            "movement and slower drainage; this is not a measurement of this ground."
+          : null,
+        "Deeper ground conditions have not been measured; the dashed line has no assigned depth.",
+      ]
+        .filter((line): line is string => Boolean(line))
+        .join(" "),
+    );
   }
   if (g && !g.soilLayers.length) {
     next("Soil data availability");
@@ -482,13 +699,18 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
   }
   next("Roads & access context");
   title("Roads & access");
-  map("map", 300);
+  // Satellite context carries visible road geometry; street labels follow.
+  map("satellite", 230);
+  map("map", 230);
   meta(
     "Road labels come from the rendered map. A visible road does not establish a legal right of access, road condition or a connected driveway.",
   );
   const access = o.items.filter((it) => it.chapter === "access" && it.value);
   for (const it of access) {
-    need(110 + doc.splitTextToSize(sanitize(it.value!), C - 24).length * 16);
+    need(
+      110 + doc.splitTextToSize(sanitize(it.value!), C - 24).length * 16,
+      "Roads & access context",
+    );
     block(it.label, it.value!);
     meta(it.source);
   }
@@ -497,6 +719,41 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     title("Amenities around the point");
     meta(
       "Numbered location cards use provider-reported points; distances are labelled by measurement type.",
+    );
+    const categories = [...new Set(a.amenities.map((place) => place.category))];
+    const amenityCounts = categories
+      .map(
+        (category) =>
+          category +
+          ": " +
+          a.amenities.filter((place) => place.category === category).length,
+      )
+      .join(", ");
+    const nearestByCategory = categories
+      .map((category) => {
+        const nearest = a.amenities
+          .filter(
+            (place) =>
+              place.category === category &&
+              place.distanceKm != null &&
+              Number.isFinite(place.distanceKm),
+          )
+          .sort(
+            (left, right) =>
+              (left.distanceKm ?? Infinity) - (right.distanceKm ?? Infinity),
+          )[0];
+        return nearest
+          ? `Nearest returned ${category.toLowerCase()} record: ${nearest.name}, ` +
+            `${nearest.distanceKm!.toFixed(1)} km straight-line.`
+          : `No straight-line distance was returned for ${category.toLowerCase()} records.`;
+      })
+      .join(" ");
+    conclusion(
+      "Amenities",
+      `${a.amenities.length} located named amenity record(s) are listed${amenityCounts ? " (" + amenityCounts + ")" : ""}. ` +
+        `${nearestByCategory} Straight-line distances are not travel distances. ` +
+        "A listing does not confirm a facility is open or operating, and absence from these results " +
+        "is not evidence that nothing exists.",
     );
     a.amenities.forEach((p, i) => {
       doc.setFont("helvetica", "bold");
@@ -612,8 +869,17 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
 }
 
 export async function downloadPassportPdf(o: PassportPdfOptions): Promise<string> {
+  let news: PassportLocationNewsItem[] = [];
+  if (o.county) {
+    try {
+      news = await passportLocationNews({ data: { county: o.county.name } });
+    } catch {
+      // County news is optional; never block the PDF export on a feed failure.
+      news = [];
+    }
+  }
   const assets = await collectAssets(o);
-  const doc = renderPassportPdf(o, assets);
+  const doc = renderPassportPdf({ ...o, news }, assets);
   const filename = `halisia-land-passport-${
     o.place
       .replace(/[^a-z0-9]+/gi, "-")

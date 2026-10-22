@@ -23,8 +23,6 @@ import { MAP_CONTEXT_LAYERS } from "@/lib/map-evidence";
 import {
   Layers,
   Satellite,
-  Ruler,
-  Bookmark,
   MapPinned,
   Mountain,
   Sun,
@@ -472,14 +470,6 @@ function Explore() {
                     </div>
                   )}
                 </div>
-              </div>
-              <div className="pointer-events-auto self-end flex gap-2">
-                <button className="glass rounded-full px-3 py-2 text-xs inline-flex items-center gap-1.5">
-                  <Ruler className="h-3.5 w-3.5 text-accent" /> Measure
-                </button>
-                <button className="glass rounded-full px-3 py-2 text-xs inline-flex items-center gap-1.5">
-                  <Bookmark className="h-3.5 w-3.5 text-accent" /> Save
-                </button>
               </div>
             </div>
             {geoStage && (

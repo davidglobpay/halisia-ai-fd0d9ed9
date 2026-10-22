@@ -16,7 +16,6 @@ import {
 
 const LINKS: Array<{ to: string; label: string }> = [
   { to: "/", label: "Home" },
-  { to: "/explore", label: "Explore" },
   { to: "/marketplace", label: "Marketplace" },
   { to: "/title-deed", label: "Title Deed" },
   { to: "/spatial", label: "Spatial AR" },
