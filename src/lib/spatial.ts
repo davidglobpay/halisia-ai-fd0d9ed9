@@ -59,7 +59,11 @@ export type CoordinateIssue = "none" | "out-of-bounds" | "invalid";
  * verified, and only when a reviewer recorded survey/registry/legal evidence.
  */
 export type VerificationState =
-  "unverified" | "submitted" | "in_review" | "evidence_backed" | "rejected";
+  | "unverified"
+  | "submitted"
+  | "in_review"
+  | "evidence_backed"
+  | "rejected";
 
 export const VERIFICATION_STATES: readonly VerificationState[] = [
   "unverified",

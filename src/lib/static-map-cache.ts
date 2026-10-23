@@ -4,7 +4,8 @@ import { fetchStaticMapOSM } from "@/lib/static-map-osm";
 type Layer = "roadmap-light" | "terrain" | "satellite" | "hybrid";
 type FetchArgs = { lat: number; lng: number; layer: Layer; zoom: number };
 type Result =
-  { ok: true; dataUrl: string } | { ok: false; error: string; status?: number; detail?: string };
+  | { ok: true; dataUrl: string }
+  | { ok: false; error: string; status?: number; detail?: string };
 
 const MEM = new Map<string, Result>();
 const INFLIGHT = new Map<string, Promise<Result>>();

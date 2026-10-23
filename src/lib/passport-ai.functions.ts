@@ -12,7 +12,8 @@ Rules:
 - 5 to 8 short bullet points starting with "- ", then one line starting "Biggest unknowns:".`;
 
 export type PassportAiResult =
-  { ok: true; text: string } | { ok: false; status: number; message: string };
+  | { ok: true; text: string }
+  | { ok: false; status: number; message: string };
 
 export const summarisePassport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

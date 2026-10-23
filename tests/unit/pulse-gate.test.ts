@@ -49,7 +49,9 @@ describe("Kenyan institutions anchor a story", () => {
 
 describe("foreign publishers are refused whatever they say", () => {
   it("refuses Tanzania's NSSF Dege Eco Village", () => {
-    const c = classify(article("NSSF's Dege Eco Village project now back on the drawing board", "The Citizen"));
+    const c = classify(
+      article("NSSF's Dege Eco Village project now back on the drawing board", "The Citizen"),
+    );
     expect(c.relevant).toBe(false);
   });
 
@@ -62,7 +64,10 @@ describe("foreign publishers are refused whatever they say", () => {
 
   it("refuses global climate copy", () => {
     const c = classify(
-      article('Nepal flood destruction shows "limits to adaptation", scientists say', "Climate Home News"),
+      article(
+        'Nepal flood destruction shows "limits to adaptation", scientists say',
+        "Climate Home News",
+      ),
     );
     expect(c.relevant).toBe(false);
   });
@@ -75,9 +80,9 @@ describe("foreign publishers are refused whatever they say", () => {
   });
 
   it("matches the publisher regardless of case or padding", () => {
-    expect(classify(article("Egypt rail link bypasses the Suez Canal", "  AFRICANEWS ")).relevant).toBe(
-      false,
-    );
+    expect(
+      classify(article("Egypt rail link bypasses the Suez Canal", "  AFRICANEWS ")).relevant,
+    ).toBe(false);
   });
 });
 
@@ -95,7 +100,9 @@ describe("the existing guarantees still hold", () => {
 
   it("does not let a Kenyan publisher alone carry a story", () => {
     // Publisher is a veto, never a licence: Kenyan outlets run foreign copy.
-    const c = classify(article("Hurricane Polo sweeps over Mexico's Pacific coast", "Citizen Digital"));
+    const c = classify(
+      article("Hurricane Polo sweeps over Mexico's Pacific coast", "Citizen Digital"),
+    );
     expect(c.relevant).toBe(false);
   });
 });
