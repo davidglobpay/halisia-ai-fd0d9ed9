@@ -135,7 +135,30 @@ const CORE_CATEGORIES = new Set([
 // local places and Kenyan outlets that headlines name without "Kenya". No
 // parentheses inside this list: scripts/pulse-cleanup.cjs parses it to SQL.
 const KENYA_TERMS =
-  /\b(?:ardhisasa|kenha|kura|nema|matatu|shilling|kplc|nhif|mca|devolution|county assembly|county government|title deed|huduma|safaricom|ruto|national land commission|sacco|shamba|ksh|kes|ksh[0-9][0-9.,]*[a-z]*|sh[0-9][0-9.,]*[a-z]*|ntsa|kfs|nlc|kpa|cbk|kenya forest service|lands cs|affordable housing act|housing levy|daily nation|citizen digital|wahome|gachagua|kindiki|sakaja|joho|duale|nyoro|arati|wamatangi|matiang'?i|kalonzo|sifuna|raila|odm|magadi|muthaiga|karura|mukuru|syokimau|kihoto|nyari|mrima hills|masinga|imenti|nithi|migwani|kanyotu|lavington|kengen|aberdare|ecde|lbda|environment and land court|mazingira day)\b/i;
+  /\b(?:ardhisasa|kenha|kura|nema|matatu|shilling|kplc|nhif|mca|devolution|county assembly|county government|title deed|huduma|safaricom|ruto|national land commission|sacco|shamba|ksh|kes|ksh[0-9][0-9.,]*[a-z]*|sh[0-9][0-9.,]*[a-z]*|ntsa|kfs|nlc|kpa|cbk|kenya forest service|lands cs|affordable housing act|housing levy|daily nation|citizen digital|wahome|gachagua|kindiki|sakaja|joho|duale|nyoro|arati|wamatangi|matiang'?i|kalonzo|sifuna|raila|odm|magadi|muthaiga|karura|mukuru|syokimau|kihoto|nyari|mrima hills|masinga|imenti|nithi|migwani|kanyotu|lavington|kengen|aberdare|ecde|lbda|environment and land court|mazingira day|eacc|epra|jkia|kerra|kws|kebs|nssf|nhc|dci|nse|kra|kcb|ardhi house|lands ministry|gazette notice|kenya airports authority|kenya railways|national construction authority)\b/i;
+
+/**
+ * Outlets that are not Kenyan newsrooms.
+ *
+ * Measured on the live feed, 22 Oct 2026: these seven accounted for 346
+ * published articles, 333 of which carried no Kenyan signal of any kind --
+ * Suez Canal, Nepal floods, Dar es Salaam governance, World of Warcraft.
+ * One of them, Tanzania's The Citizen, runs NSSF and NHC stories about
+ * Tanzanian institutions that share their acronyms with Kenyan ones.
+ *
+ * This is a veto, never a licence. A Kenyan masthead does not make a story
+ * Kenyan -- Citizen Digital carries Reuters hurricane copy -- so a
+ * publisher absent from this list still has to clear the anchor test.
+ */
+const FOREIGN_PUBLISHERS = new Set([
+  "the citizen",
+  "africanews",
+  "climate home news",
+  "menafn",
+  "good news network",
+  "ign africa",
+  "middle east monitor",
+]);
 
 const escapeRx = (w: string) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -181,6 +204,8 @@ export function classify(article: RawArticle): Classification {
   const text = `${article.title} ${article.excerpt ?? ""}`
     .toLowerCase()
     .replace(/\bland\s+rover\b/g, "vehicle");
+  // Trimmed and lowercased: feeds pad and recase the masthead.
+  const publisher = (article.sourceName ?? "").trim().toLowerCase();
 
   // Category scoring.
   let best =
@@ -262,7 +287,10 @@ export function classify(article: RawArticle): Classification {
     // Nine of twelve foreign probe headlines were admitted this way. So the
     // Kenyan anchor is now required of every article, not only of the ones
     // that missed a core category.
+    // The publisher veto runs first and is absolute: no keyword, county or
+    // institution rescues a story from an outlet that does not cover Kenya.
     relevant:
+      !FOREIGN_PUBLISHERS.has(publisher) &&
       (county !== null || /\bkenyan?s?\b/i.test(text) || KENYA_TERMS.test(text)) &&
       (coreHits > 0 || topicHits > 0),
   };
