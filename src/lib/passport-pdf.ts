@@ -477,7 +477,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       const end = base - ((r.value - lo) / range) * 110;
       const h = Math.abs(end - zero);
       doc.setFillColor(...PDF.green);
-      if (h > 0) doc.rect(M + i * bw + 5, Math.min(end, zero), bw - 10, h, "F");
+      if (h > 0) doc.rect(M + i * bw + bw * 0.14, Math.min(end, zero), bw * 0.72, h, "F");
       doc.setTextColor(...PDF.forest);
       doc.setFontSize(7);
       doc.text(
@@ -489,7 +489,9 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
         },
       );
       if (i % Math.max(1, Math.ceil(rows.length / 8)) === 0 || i === rows.length - 1)
-        doc.text(sanitize(r.label), M + i * bw + bw / 2, base + 13, { align: "center" });
+        doc.text(sanitize(r.label), M + i * bw + bw / 2, base + 13, {
+          align: "center",
+        });
     }
     y = base + 29;
     meta(`Scale: ${unit}. Gaps represent missing samples, never zero.`);

@@ -19,7 +19,12 @@ export async function passportMapImage(
           (tile) =>
             tile.left < 256 && tile.left + 256 > -256 && tile.top < 160 && tile.top + 256 > -160,
         )
-        .map(async (tile) => ({ tile, image: await loadBrandImage(tile.src) })),
+        .map(async (tile) => {
+          let image = await loadBrandImage(tile.src);
+          // Retry only failed URLs once; failed loads are evicted by the loader.
+          if (!image) image = await loadBrandImage(tile.src);
+          return { tile, image };
+        }),
     );
     // 26 amenities x 9 tiles is over 200 requests in one export, so a single
     // transient failure is likely - four cards in the 20 Oct Katani export
