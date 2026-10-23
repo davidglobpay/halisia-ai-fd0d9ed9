@@ -97,7 +97,12 @@ async function collectAssets(o: PassportPdfOptions): Promise<PassportPdfAssets> 
     for (const [category, list] of Object.entries(o.wave4.facilities))
       for (const p of list) {
         if (!isQueryCentroid(p, o.coords))
-          places.push({ ...p, name: displayPlaceName(p.name), category, source: "OpenStreetMap" });
+          places.push({
+            ...p,
+            name: displayPlaceName(p.name),
+            category,
+            source: "OpenStreetMap",
+          });
       }
   // Existing adapter results are bounded; preserve every located named result in the directory.
   const amenities: PassportPdfAssets["amenities"] = [];
@@ -121,7 +126,9 @@ async function collectAssets(o: PassportPdfOptions): Promise<PassportPdfAssets> 
   let news: PassportPdfAssets["news"] = [];
   if (o.county?.name) {
     try {
-      const res = await passportLocationNews({ data: { county: o.county.name } });
+      const res = await passportLocationNews({
+        data: { county: o.county.name },
+      });
       news = res.articles ?? [];
     } catch {
       news = [];
@@ -289,7 +296,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       const end = base - ((r.value - lo) / range) * 110;
       const h = Math.abs(end - zero);
       doc.setFillColor(...PDF.green);
-      if (h > 0) doc.rect(M + i * bw + 5, Math.min(end, zero), bw - 10, h, "F");
+      if (h > 0) doc.rect(M + i * bw + bw * 0.14, Math.min(end, zero), bw * 0.72, h, "F");
       doc.setTextColor(...PDF.forest);
       doc.setFontSize(7);
       doc.text(
@@ -301,7 +308,9 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
         },
       );
       if (i % Math.max(1, Math.ceil(rows.length / 8)) === 0 || i === rows.length - 1)
-        doc.text(sanitize(r.label), M + i * bw + bw / 2, base + 13, { align: "center" });
+        doc.text(sanitize(r.label), M + i * bw + bw / 2, base + 13, {
+          align: "center",
+        });
     }
     y = base + 29;
     meta(`Scale: ${unit}. Gaps represent missing samples, never zero.`);
@@ -378,7 +387,10 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     const points = weather.points;
     text("Temperature forecast", 14, true);
     bars(
-      points.map((p) => ({ label: p.time.slice(11, 16), value: p.temperatureC })),
+      points.map((p) => ({
+        label: p.time.slice(11, 16),
+        value: p.temperatureC,
+      })),
       "degrees C",
     );
     text("Rainfall forecast at shown hours", 14, true);
