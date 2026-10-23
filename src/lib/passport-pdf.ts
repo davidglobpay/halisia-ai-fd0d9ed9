@@ -494,7 +494,13 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       "Regional slope / aspect",
       `${g.terrain.slopePct.toFixed(1)}% / ${((Math.atan(g.terrain.slopePct / 100) * 180) / Math.PI).toFixed(1)} degrees / modelled aspect ${g.terrain.aspectLabel} (${g.terrain.aspectDeg} degrees)`,
     );
-    block("Grid elevation range", `${g.terrain.minM.toFixed(0)} - ${g.terrain.maxM.toFixed(0)} m`);
+    block(
+      "Grid elevation range",
+      g.terrain.reliefUsable
+        ? `${g.terrain.minM.toFixed(0)} - ${g.terrain.maxM.toFixed(0)} m`
+        : "Not reported - this elevation grid is dominated by raster error",
+    );
+    meta(g.terrain.reliefNote);
     need(160);
     const x = M + 30,
       base = y + 90,
@@ -520,7 +526,9 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       "ASTER 30 m regional elevation-grid model. Slope direction and exact ground profile require a survey.",
     );
     conclusion([
-      `Modelled slope is ${g.terrain.slopePct.toFixed(1)}% (${((Math.atan(g.terrain.slopePct / 100) * 180) / Math.PI).toFixed(1)} degrees) facing ${g.terrain.aspectLabel}, across an elevation range of ${(g.terrain.maxM - g.terrain.minM).toFixed(0)} m in the sampled grid.`,
+      g.terrain.reliefUsable
+        ? `Modelled slope is ${g.terrain.slopePct.toFixed(1)}% (${((Math.atan(g.terrain.slopePct / 100) * 180) / Math.PI).toFixed(1)} degrees) facing ${g.terrain.aspectLabel}, across an elevation range of ${g.terrain.reliefM.toFixed(0)} m in the sampled grid.`
+        : `Modelled slope is ${g.terrain.slopePct.toFixed(1)}% (${((Math.atan(g.terrain.slopePct / 100) * 180) / Math.PI).toFixed(1)} degrees) facing ${g.terrain.aspectLabel}. No elevation range is reported from this grid: too many of its samples disagree with every neighbouring sample to tell ground from raster error.`,
       "Aspect indicates which way surface water runs off; it does not establish where water collects, which depends on ground detail this raster cannot see.",
       "Earthworks quantities, drainage design and buildability need a survey. A 30 m regional grid cannot supply them.",
     ]);
