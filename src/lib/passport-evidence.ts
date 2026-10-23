@@ -13,7 +13,14 @@ import type { Wave4Intel } from "@/lib/wave4-intel.functions";
 import type { CountyFacts } from "@/lib/kenya-county-facts";
 
 export type ChapterId =
-  "identity" | "admin" | "physical" | "climate" | "access" | "build" | "market" | "trust";
+  | "identity"
+  | "admin"
+  | "physical"
+  | "climate"
+  | "access"
+  | "build"
+  | "market"
+  | "trust";
 
 export const CHAPTERS: Array<{ id: ChapterId; title: string; blurb: string }> = [
   {
