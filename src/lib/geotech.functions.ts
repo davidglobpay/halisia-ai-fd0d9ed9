@@ -1,4 +1,5 @@
 import { parseSoilGrids } from "./soilgrids-parser";
+import { robustRelief } from "./terrain-relief";
 import { fetchPowerClimate } from "./power-climate";
 import { createServerFn } from "@tanstack/react-start";
 
@@ -23,9 +24,19 @@ export type SoilLayer = {
 
 export type TerrainMetrics = {
   elevationM: number;
+  /** Lowest and highest cell that survived artifact rejection. */
   minM: number;
   maxM: number;
   reliefM: number;
+  /** The raw grid extremes, always kept so nothing is hidden. */
+  rawMinM: number;
+  rawMaxM: number;
+  /** How many cells were rejected as raster spikes. */
+  reliefOutliers: number;
+  /** False when the grid was too damaged to describe relief at all. */
+  reliefUsable: boolean;
+  /** One sentence explaining the relief figure. Never empty. */
+  reliefNote: string;
   slopePct: number;
   aspectDeg: number;
   aspectLabel: string;
@@ -167,7 +178,12 @@ function terrainAnalysis(g: number[][], n: number, step: number, lat: number): T
   const slopePct = Math.round(slope * 100 * 10) / 10;
   let aspectDeg = (Math.atan2(dzdy, -dzdx) * 180) / Math.PI;
   if (aspectDeg < 0) aspectDeg += 360;
-  const relief = mx - mn;
+  // min/max turns one ASTER spike into a headline number. The Usenge export
+  // of 22 Oct 2026 published 67 m of relief from a single 1198 m cell with
+  // 1133 m cells on either side, on the Lake Victoria shoreline, in the same
+  // panel as a 0.4% slope. Judge each cell against its own neighbours first.
+  const rr = robustRelief(g);
+  const relief = rr.usable && rr.reliefM != null ? rr.reliefM : 0;
   let landform: TerrainMetrics["landform"] = "flat";
   if (elev - mean > std * 0.75) landform = "ridge";
   else if (mean - elev > std * 0.75) landform = "valley";
@@ -175,9 +191,14 @@ function terrainAnalysis(g: number[][], n: number, step: number, lat: number): T
   else if (relief < 8) landform = "plain";
   return {
     elevationM: Math.round(elev),
-    minM: Math.round(mn),
-    maxM: Math.round(mx),
+    minM: rr.usable && rr.minM != null ? rr.minM : Math.round(mn),
+    maxM: rr.usable && rr.maxM != null ? rr.maxM : Math.round(mx),
     reliefM: Math.round(relief),
+    rawMinM: Math.round(mn),
+    rawMaxM: Math.round(mx),
+    reliefOutliers: rr.outliers.length,
+    reliefUsable: rr.usable,
+    reliefNote: rr.note,
     slopePct,
     aspectDeg: Math.round(aspectDeg),
     aspectLabel: aspectLabel(aspectDeg),
