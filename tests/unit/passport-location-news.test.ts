@@ -45,11 +45,13 @@ afterEach(() => {
 it("reads at most six unarchived stories for the requested county using public access", async () => {
   vi.stubEnv("SUPABASE_URL", "https://example.test");
   vi.stubEnv("SUPABASE_PUBLISHABLE_KEY", "sb_publishable_test");
-  expect(await read({ data: { county: "Bungoma" } })).toEqual({ articles: result.data });
+  expect(await read({ data: { county: "Bungoma" } })).toEqual({
+    articles: result.data.map((article) => ({ ...article, relevanceScore: 0 })),
+  });
   expect(query.select).toHaveBeenCalledWith("title, source_name, published_at, url, category");
   expect(query.eq).toHaveBeenCalledWith("county", "Bungoma");
   expect(query.eq).toHaveBeenCalledWith("archived", false);
-  expect(query.limit).toHaveBeenCalledWith(6);
+  expect(query.limit).toHaveBeenCalledWith(40);
   expect(client.mock.calls[0]?.[1]).toBe("sb_publishable_test");
 });
 
