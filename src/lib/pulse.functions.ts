@@ -121,9 +121,12 @@ export const synthesizeArticleAudio = createServerFn({ method: "POST" })
  * must label them that way.
  */
 export const passportLocationNews = createServerFn({ method: "POST" })
-  .inputValidator((input: { county: string }) => {
+  .inputValidator((input: { county: string; place?: string }) => {
     if (!input || typeof input.county !== "string") throw new Error("County is required");
-    return { county: input.county.trim() };
+    return {
+      county: input.county.trim(),
+      place: typeof input.place === "string" ? input.place.trim().slice(0, 120) : "",
+    };
   })
   .handler(async ({ data }) => {
     if (!data.county || data.county.length > 64) return { articles: [] };
@@ -149,9 +152,19 @@ export const passportLocationNews = createServerFn({ method: "POST" })
       .eq("county", data.county)
       .eq("archived", false)
       .order("published_at", { ascending: false })
-      .limit(6);
+      // Widen the window, then rank. Taking the six newest put a government
+      // pier project at the exact place being bought LAST, below a memorial
+      // service and two national political stories. Recency is a tie-break.
+      .limit(40);
     if (error) throw new Error("County news is temporarily unavailable");
-    return { articles: rows ?? [] };
+    const { rankCountyNews, placeTerms } = await import("./pulse/news-ranking");
+    return {
+      articles: rankCountyNews(rows ?? [], {
+        limit: 6,
+        terms: placeTerms(data.place),
+        countyTerms: placeTerms(data.county),
+      }),
+    };
   });
 
 /** Which cloud voices are usable right now (for the audio engine switch). */

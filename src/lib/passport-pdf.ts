@@ -121,7 +121,9 @@ async function collectAssets(o: PassportPdfOptions): Promise<PassportPdfAssets> 
   let news: PassportPdfAssets["news"] = [];
   if (o.county?.name) {
     try {
-      const res = await passportLocationNews({ data: { county: o.county.name } });
+      const res = await passportLocationNews({
+        data: { county: o.county.name, place: o.place },
+      });
       news = res.articles ?? [];
     } catch {
       news = [];

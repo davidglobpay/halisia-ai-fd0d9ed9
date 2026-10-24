@@ -93,9 +93,14 @@ export function robustRelief(grid: number[][]): ReliefResult {
   const flat = grid.flat().filter((v) => Number.isFinite(v));
   if (flat.length < 4)
     return {
-      reliefM: null, minM: null, maxM: null,
-      rawMinM: NaN, rawMaxM: NaN, medianM: NaN,
-      outliers: [], usable: false,
+      reliefM: null,
+      minM: null,
+      maxM: null,
+      rawMinM: NaN,
+      rawMaxM: NaN,
+      medianM: NaN,
+      outliers: [],
+      usable: false,
       note: "The elevation grid returned too few samples to describe relief.",
     };
 
@@ -130,8 +135,14 @@ export function robustRelief(grid: number[][]): ReliefResult {
   const share = outliers.length / flat.length;
   if (!kept.length || share > MAX_OUTLIER_SHARE)
     return {
-      reliefM: null, minM: null, maxM: null,
-      rawMinM, rawMaxM, medianM, outliers, usable: false,
+      reliefM: null,
+      minM: null,
+      maxM: null,
+      rawMinM,
+      rawMaxM,
+      medianM,
+      outliers,
+      usable: false,
       note:
         `The elevation grid is dominated by isolated samples that disagree with their ` +
         `neighbours: ${outliers.length} of ${flat.length}. No relief figure is reported ` +
@@ -144,8 +155,14 @@ export function robustRelief(grid: number[][]): ReliefResult {
   const reliefM = Math.round(maxM - minM);
 
   return {
-    reliefM, minM: Math.round(minM), maxM: Math.round(maxM),
-    rawMinM, rawMaxM, medianM, outliers, usable: true,
+    reliefM,
+    minM: Math.round(minM),
+    maxM: Math.round(maxM),
+    rawMinM,
+    rawMaxM,
+    medianM,
+    outliers,
+    usable: true,
     note: outliers.length
       ? `Relief of ${reliefM} m across the sampled grid, after setting aside ` +
         `${outliers.length} sample${outliers.length === 1 ? "" : "s"} that ` +

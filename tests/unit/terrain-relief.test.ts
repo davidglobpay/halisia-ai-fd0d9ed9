@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  robustRelief, reliefAgreesWithSlope, gridSpanM, median, mad,
-} from "@/lib/terrain-relief";
+import { robustRelief, reliefAgreesWithSlope, gridSpanM, median, mad } from "@/lib/terrain-relief";
 
 /**
  * The Usenge grid, transcribed from page 5 of the 22 Oct 2026 export.
@@ -111,8 +109,12 @@ describe("a grid that is mostly noise is refused, not cleaned", () => {
     // there is no terrain signal left to describe, so no figure is published.
     const corrupt = flat(1133).map((row) => [...row]);
     const spikes: Array<[number, number, number]> = [
-      [0, 0, 1200], [0, 2, 1210], [0, 4, 1190],
-      [2, 0, 1205], [2, 2, 1195], [2, 4, 1215],
+      [0, 0, 1200],
+      [0, 2, 1210],
+      [0, 4, 1190],
+      [2, 0, 1205],
+      [2, 2, 1195],
+      [2, 4, 1215],
     ];
     for (const [r0, c0, v] of spikes) corrupt[r0][c0] = v;
     const r = robustRelief(corrupt);
@@ -172,9 +174,15 @@ describe("relief is checked against the slope on the same grid", () => {
 });
 
 describe("statistics helpers", () => {
-  it("takes the median of an odd count", () => { expect(median([3, 1, 2])).toBe(2); });
-  it("takes the median of an even count", () => { expect(median([1, 2, 3, 4])).toBe(2.5); });
-  it("returns NaN for an empty median", () => { expect(Number.isNaN(median([]))).toBe(true); });
+  it("takes the median of an odd count", () => {
+    expect(median([3, 1, 2])).toBe(2);
+  });
+  it("takes the median of an even count", () => {
+    expect(median([1, 2, 3, 4])).toBe(2.5);
+  });
+  it("returns NaN for an empty median", () => {
+    expect(Number.isNaN(median([]))).toBe(true);
+  });
   it("computes a MAD a single wild value cannot move", () => {
     expect(mad([10, 10, 10, 10, 9999])).toBe(0);
   });
