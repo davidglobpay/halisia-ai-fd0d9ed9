@@ -278,7 +278,8 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
         ? `${r(g.terrain.slopePct, 1)}% slope, faces ${g.terrain.aspectLabel}`
         : null,
     source: "OpenTopoData ASTER 30 m grid",
-    method: "5×5 elevation grid around the point, finite-difference slope.",
+    method:
+      "5×5 elevation grid around the point; central-difference slope and aspect through the centre cell.",
     usedFor: ["Regional terrain context"],
     cls: "modelled",
     confidence: "medium",
@@ -374,7 +375,7 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
     chapter: "climate",
     label: "Air quality now",
     value: aq?.category
-      ? `${aq.category} (AQI ${aq.universalAqi ?? "—"}${aq.dominant ? `, main pollutant ${aq.dominant}` : ""})`
+      ? `${aq.category} (Universal AQI ${aq.universalAqi ?? "—"}${aq.dominant ? `, main pollutant ${aq.dominant}` : ""})`
       : null,
     source: "Google Air Quality API",
     method: "Current-conditions lookup; changes hourly.",
@@ -415,7 +416,18 @@ export function buildPassportEvidence(i: PassportEvidenceInput): {
   const cats = i.intel?.categories;
   const near = (k: keyof NonNullable<typeof cats>, label: string, used: string[]) => {
     const list = cats?.[k] ?? [];
-    const p = list[0];
+    // "Nearest" has to mean nearest. This took list[0] — the provider's own
+    // relevance order — so the Kajiado export of 24 Oct 2026 named a bank at
+    // 2.24 km as nearest while one at 1.32 km sat four cards below, and
+    // contradicted the amenity page of the same PDF, which computes the true
+    // minimum. The distance printed here is straight-line, so select on it.
+    const p = list.reduce(
+      (best, c) =>
+        c.distanceKm != null && (best.distanceKm == null || c.distanceKm < best.distanceKm)
+          ? c
+          : best,
+      list[0],
+    );
     add({
       id: `acc-${k}`,
       chapter: "access",

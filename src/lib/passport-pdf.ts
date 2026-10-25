@@ -121,8 +121,11 @@ async function collectAssets(o: PassportPdfOptions): Promise<PassportPdfAssets> 
   let news: PassportPdfAssets["news"] = [];
   if (o.county?.name) {
     try {
+      // o.place is the coordinate string for a dropped pin, so placeTerms
+      // returned nothing and PLACE_WEIGHT — the strongest local signal in the
+      // ranking — never fired. locationLine carries the town and ward.
       const res = await passportLocationNews({
-        data: { county: o.county.name, place: o.place },
+        data: { county: o.county.name, place: `${o.locationLine} ${o.place}` },
       });
       news = res.articles ?? [];
     } catch {
@@ -704,7 +707,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     next("Recent county news / HALISIA Pulse");
     title("Recent news in this county");
     meta(
-      `Most recent ${a.news.length} stories tagged to ${o.county?.name ?? "this county"} in the HALISIA Pulse feed. County-level reporting, not parcel-specific, and not verified by HALISIA.`,
+      `${a.news.length} stories tagged to ${o.county?.name ?? "this county"} in the HALISIA Pulse feed, ordered by relevance to land and the built environment, most recent first within equal standing. County-level reporting, not parcel-specific, and not verified by HALISIA.`,
     );
     for (const n of a.news) {
       need(74);
