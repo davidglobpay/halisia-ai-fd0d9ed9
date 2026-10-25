@@ -176,7 +176,12 @@ function terrainAnalysis(g: number[][], n: number, step: number, lat: number): T
   const dzdy = (g[mid + 1][mid] - g[mid - 1][mid]) / (2 * cellM);
   const slope = Math.sqrt(dzdx * dzdx + dzdy * dzdy);
   const slopePct = Math.round(slope * 100 * 10) / 10;
-  let aspectDeg = (Math.atan2(dzdy, -dzdx) * 180) / Math.PI;
+  // Compass bearing of the downslope direction: 0 = N, 90 = E. The previous
+  // atan2(dzdy, -dzdx) was this rotated by exactly 90 degrees, so the Kajiado
+  // export of 24 Oct 2026 printed "faces W (255 degrees)" for a grid that
+  // falls to the north. Aspect is published beside a sentence about which way
+  // surface water runs off, so the sign has to be right.
+  let aspectDeg = (Math.atan2(-dzdx, -dzdy) * 180) / Math.PI;
   if (aspectDeg < 0) aspectDeg += 360;
   // min/max turns one ASTER spike into a headline number. The Usenge export
   // of 22 Oct 2026 published 67 m of relief from a single 1198 m cell with
