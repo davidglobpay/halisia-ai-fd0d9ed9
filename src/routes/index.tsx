@@ -179,7 +179,6 @@ function LandingBody() {
                   Spatial AR Studio
                 </Link>
               </div>
-
             </div>
 
             <div className="mt-6 hidden md:flex items-center justify-center gap-6 text-xs text-white/75">
@@ -423,7 +422,6 @@ function LandingBody() {
               Land · Intelligence · Platform
             </div>
             <div className="mt-2 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
-
               <Link to="/compare" search={{ codes: "" }} className="hover:text-white transition">
                 Compare
               </Link>
@@ -444,8 +442,6 @@ function LandingBody() {
           </div>
         </div>
       </footer>
-
-
 
       <AIOrb />
     </div>

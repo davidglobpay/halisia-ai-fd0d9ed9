@@ -473,7 +473,6 @@ function Explore() {
                   )}
                 </div>
               </div>
-
             </div>
             {geoStage && (
               <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 glass-strong rounded-full px-4 py-2 text-xs text-foreground inline-flex items-center gap-2">
