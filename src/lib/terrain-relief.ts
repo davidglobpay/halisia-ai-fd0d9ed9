@@ -36,7 +36,7 @@ export type ReliefResult = {
   rawMaxM: number;
   /** Median of the whole grid — robust to the spikes by construction. */
   medianM: number;
-  /** Cells rejected as raster artifacts. */
+  /** Samples flagged as suspected raster artifacts by this heuristic. */
   outliers: ReliefCell[];
   /**
    * False when too much of the grid was rejected to describe terrain at all.
@@ -144,7 +144,7 @@ export function robustRelief(grid: number[][]): ReliefResult {
       outliers,
       usable: false,
       note:
-        `The elevation grid is dominated by isolated samples that disagree with their ` +
+        `The elevation grid exceeds the heuristic rejection threshold for samples that disagree with their ` +
         `neighbours: ${outliers.length} of ${flat.length}. No relief figure is reported ` +
         `from it. The raw sample range was ${Math.round(rawMinM)}-${Math.round(rawMaxM)} m, ` +
         `which this model cannot separate from raster error.`,
@@ -164,10 +164,10 @@ export function robustRelief(grid: number[][]): ReliefResult {
     outliers,
     usable: true,
     note: outliers.length
-      ? `Relief of ${reliefM} m across the sampled grid, after setting aside ` +
+      ? `Relief of ${reliefM} m across retained model samples, after setting aside ` +
         `${outliers.length} sample${outliers.length === 1 ? "" : "s"} that ` +
         `disagree${outliers.length === 1 ? "s" : ""} with every neighbouring sample by more ` +
-        `than ${MIN_SPIKE_M} m — the signature of raster error rather than ground. ` +
+        `than ${MIN_SPIKE_M} m. These are suspected artifacts; real terrain features may also be excluded. ` +
         `Including ${outliers.length === 1 ? "it" : "them"} the range would read ` +
         `${Math.round(rawMinM)}-${Math.round(rawMaxM)} m.`
       : `Relief of ${reliefM} m across the sampled grid, with no sample rejected.`,
