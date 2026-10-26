@@ -255,8 +255,8 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
   };
   const map = (layer: EvidenceMapLayer, h = 235) => {
     const im = a.maps[layer];
+    // Missing imagery is omitted, never replaced by a placeholder card.
     if (!im) {
-      block(`${PREVIEW_LAYERS[layer].label} imagery`, "Map imagery unavailable for this export");
       return;
     }
     need(h + 75);
@@ -378,41 +378,44 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     next("Weather forecast / MET Norway");
     title("Weather ahead");
     meta(
-      `MET Norway / CC BY 4.0 | forecast issued ${weather.updatedAt ?? "not supplied"}. UTC timestamps below; Kenya is UTC+3.`,
+      `MET Norway / CC BY 4.0 | forecast issued ${weather.updatedAt ?? "not supplied"}. Times shown in EAT (UTC+3).`,
     );
-    const points = weather.points;
-    text("Temperature forecast", 14, true);
+    const eat = (iso: string) => {
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return iso.slice(11, 16);
+      return new Date(d.getTime() + 3 * 3600_000).toISOString().slice(11, 16);
+    };
+    const points = weather.points.slice(0, 24);
+    text("Temperature forecast (next 24 h)", 14, true);
     bars(
-      points.map((p) => ({ label: p.time.slice(11, 16), value: p.temperatureC })),
+      points.map((p) => ({ label: eat(p.time), value: p.temperatureC })),
       "degrees C",
     );
     text("Rainfall forecast at shown hours", 14, true);
     bars(
-      points.map((p) => ({ label: p.time.slice(11, 16), value: p.rainfallMm })),
+      points.map((p) => ({ label: eat(p.time), value: p.rainfallMm })),
       "mm during the following one hour, not daily totals",
     );
-    for (const p of points.slice(0, 4)) {
-      need(38);
-      const label = (p.symbol ?? "condition not supplied").replaceAll("_", " ");
-      doc.setDrawColor(...PDF.gold);
-      doc.circle(M + 10, y + 13, 7, "S");
-      if (p.symbol?.includes("rain")) {
-        doc.setDrawColor(40, 110, 160);
-        for (let k = 0; k < 3; k++) doc.line(M + 5 + k * 5, y + 23, M + 3 + k * 5, y + 29);
-      }
-      text(
-        `${p.time.slice(11, 16)} UTC / ${label}${p.windMS != null ? ` / wind ${p.windMS.toFixed(1)} m/s` : ""}`,
-        9,
-        false,
-        PDF.forest,
-        M + 28,
-        C - 28,
-      );
-      y += 15;
-    }
-    meta(
-      "Forecast model output; local conditions can differ. Symbols reflect the provider's condition code.",
-    );
+    // Plain-text condition labels replace the drawn circle/hatch glyphs, which
+    // rendered as broken symbols in exported PDFs.
+    const cond = (s: string | null | undefined) => {
+      if (!s) return "condition not supplied";
+      const base = s.replace(/_(day|night|polartwilight)$/, "");
+      if (base.includes("thunder")) return "Thunder";
+      if (base.includes("snow") || base.includes("sleet")) return "Sleet/snow";
+      if (base.includes("rain")) return base.includes("heavy") ? "Heavy rain" : "Rain";
+      if (base === "fog") return "Fog";
+      if (base === "cloudy") return "Cloudy";
+      if (base.includes("partlycloudy") || base === "fair") return "Partly cloudy";
+      if (base === "clearsky") return "Clear";
+      return base.replaceAll("_", " ");
+    };
+    const strip = points
+      .filter((_, i) => i % 3 === 0)
+      .map((p) => `${eat(p.time)} ${cond(p.symbol)}`)
+      .join("  |  ");
+    if (strip) text(strip, 8, false, PDF.forest);
+    meta("Forecast model output; local conditions can differ. Labels map MET condition codes.");
   }
   const climate = o.wave4?.climate;
   if (climate?.monthly?.some((m) => m.temperatureC != null || m.rainfallMm != null)) {
@@ -441,7 +444,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       const annual = wetMonths.reduce((n, m) => n + m.rainfallMm, 0);
       const ratio = wet.rainfallMm / Math.max(dry.rainfallMm, 0.1);
       conclusion([
-        `Across the reference period the wettest month is ${wet.month} at ${wet.rainfallMm.toFixed(0)} mm and the driest is ${dry.month} at ${dry.rainfallMm.toFixed(0)} mm, summing to about ${annual.toFixed(0)} mm over the twelve monthly means.`,
+        `Across the reference period the wettest month is ${wet.month} at ${wet.rainfallMm.toFixed(0)} mm and the driest is ${dry.month} at ${dry.rainfallMm.toFixed(0)} mm. Annual rainfall (sum of monthly means): about ${annual.toFixed(0)} mm.`,
         ratio >= 3
           ? "Rainfall is concentrated rather than spread evenly, so water storage and planting calendars matter more here than the annual total alone suggests."
           : "Rainfall is relatively evenly distributed through the year in this model.",
@@ -617,7 +620,6 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
   title("Roads & access");
   // Imagery first: it carries road geometry even where the street basemap has
   // no vector data for the area. The street layer follows, for its labels.
-  map("satellite", 230);
   map("map", 230);
   meta(
     "Road labels come from the rendered map. A visible road does not establish a legal right of access, road condition or a connected driveway.",
@@ -707,9 +709,12 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     next("Recent county news / HALISIA Pulse");
     title("Recent news in this county");
     meta(
-      `${a.news.length} stories tagged to ${o.county?.name ?? "this county"} in the HALISIA Pulse feed, ordered by relevance to land and the built environment, most recent first within equal standing. County-level reporting, not parcel-specific, and not verified by HALISIA.`,
+      `${a.news.length} land-relevant stories tagged to ${o.county?.name ?? "this county"} in the HALISIA Pulse feed, newest first. County-level reporting, not parcel-specific, and not verified by HALISIA.`,
     );
-    for (const n of a.news) {
+    const byDate = [...a.news].sort((x, y2) =>
+      (y2.published_at ?? "").localeCompare(x.published_at ?? ""),
+    );
+    for (const n of byDate) {
       need(74);
       const when = n.published_at ? n.published_at.slice(0, 10) : "date not supplied";
       text(n.title, 11, true);
@@ -740,6 +745,8 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     need(65);
     text(c.title, 15, true);
     y += 7;
+    // Land-use considerations are printed once per section, not once per entry.
+    const sectionUses: string[] = [];
     for (const it of list) {
       doc.setFontSize(10);
       const findingHeight =
@@ -760,11 +767,12 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       );
       text(it.method, 8, false, PDF.stone2);
       const use = landUseContext(it);
-      if (use) {
-        need(75);
-        meta(`Land-use considerations (interpretation): ${use}`);
-      }
+      if (use && !sectionUses.includes(use)) sectionUses.push(use);
       y += 7;
+    }
+    for (const use of sectionUses) {
+      need(75);
+      meta(`Land-use considerations (interpretation): ${use}`);
     }
   }
   need(100);
