@@ -739,7 +739,15 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       }
       y = top + 10;
       text(`${i + 1}. ${p.name}`, 11, true, PDF.forest, M + 200, C - 214);
-      text(p.category, 8, false, PDF.goldInk, M + 200, C - 214);
+      // Calm category marker: a small filled disc with the category initial,
+      // so the card type reads at a glance without pictogram clipart.
+      const catTop = y;
+      text(p.category, 8, false, PDF.goldInk, M + 214, C - 228);
+      doc.setFillColor(...toneFor(p.category));
+      doc.circle(M + 204, catTop + 6, 4.5, "F");
+      doc.setTextColor(247, 243, 234);
+      doc.setFontSize(5.5);
+      doc.text(p.category.slice(0, 1).toUpperCase(), M + 204, catTop + 8, { align: "center" });
       if (p.distanceKm != null)
         text(`${p.distanceKm.toFixed(2)} km straight-line`, 9, false, PDF.forest, M + 200, C - 214);
       if (p.driveKm != null)
