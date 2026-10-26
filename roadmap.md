@@ -1,26 +1,20 @@
 # Current work
 
-## Uploaded Passport corrections
+## Land Passport PDF completion (2026-10-26)
+- [ ] Add top title page + table of contents describing entire report outputs
+- [ ] Finish partial items: amenity dedupe, category icons, blank-page/page-flow checks
+- [ ] Omit unsupported content (Street View, invented figures) rather than inventing
+- [ ] Rerun ESLint with real exit code, format check, vitest; generate + inspect sample PDF (-1.560328, 36.938554)
+- [ ] Keep BUILD_ID unchanged; no publish, no DB/secret/cron changes
 
-- [x] Apply the nine exact PDF fixes and preserve newer Pulse anchors
-- [x] Add derived evidence readings, public county news and existing satellite imagery
-- [x] Run full unit suite (765 tests) and preview validation; retain unrelated repository lint drift
-- [x] Validate public Bungoma PDF, centred branding, satellite imagery and six dated news stories
-- [ ] Validate signed-in climate, terrain, soil and amenities export; blocked until the user signs in to preview
+## Cost Intelligence Phase 1 (structure only, no invented data)
+- [ ] Supabase tables: land_price_obs, material_price, boq_template, labour_rate (RLS: public read, admin write) — tables start EMPTY
+- [ ] Admin CSV import per table with row validation
+- [ ] Land price per location (Passport + /explore): 5 plot sizes, ward→sub-county median, 12-month window, n≥5 gate, "Market estimate, not a valuation."
+- [ ] /build-cost calculator: structure × typology × finish, BoQ line items, 90%-priced gate, cheapest→highest comparison
+- [ ] /budget planner: deterministic ward ranking, leftover margin, data counts; AI summary of computed table only
+- [ ] Unit tests: unit conversion, n≥5 gate, 90%-priced gate
+- [ ] Checks: typecheck (auto), lint, vitest, production build — report honestly; do not publish
 
-## Isolated map evidence foundation
-
-- [x] Apply uploaded additions with design-system controls and truthful metadata
-- [x] Connect actual Passport findings to the existing map and correct reference-layer labels
-- [x] Validate changed-file formatting/lint, all unit tests and preview build
-- [ ] Full release gate: blocked by unrelated repository formatting/lint drift; publication and acceptance withheld
-
-- [x] Remove persistent floating search and decorative perpetual glow motion
-- [x] Add evidence-linked AI summary to Land Passport PDF
-- [x] Add parcel-context Design Studio with five concept scenes and generated massing
-- [x] Add focused tests and complete validation
-- [x] Correct title-deed mobile overflow and Design Studio framing/control affordances
-- [x] Add non-scoring evidence-based community and development proxy projections
-- [x] Strengthen title-deed location-match evidence and confidence
-- [x] Extend source-aware read-aloud controls to key intelligence outputs
-- [x] Add calm contextual icons and compact graphics to information cards
+## Prior backlog (unchanged)
+- [ ] Validate signed-in climate/terrain/soil/amenities export; blocked until user signs in to preview
