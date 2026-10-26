@@ -258,3 +258,102 @@ export function parseCsvRfc4180(csv: string): Array<Record<string, string>> {
     .slice(1)
     .map((cells) => Object.fromEntries(header.map((h, i) => [h, (cells[i] ?? "").trim()])));
 }
+
+/* ---------------- Pure decision helpers (extracted for tests) ---------------- */
+
+export type WardLandOption = {
+  ward: string;
+  sub_county: string | null;
+  county: string;
+  scope: "ward" | "sub_county";
+  landMedian: number;
+  landObservations: number;
+};
+
+/**
+ * Per-ward land medians for the budget planner. A ward meeting the n≥5 gate
+ * uses its own median; otherwise it falls back to its sub-county median,
+ * labelled scope "sub_county". Wards with neither are omitted.
+ */
+export function wardLandOptions(
+  rows: LandPriceObservation[],
+  county: string,
+  plotSqft: number,
+): WardLandOption[] {
+  const byWard = new Map<string, LandPriceObservation[]>();
+  const bySubCounty = new Map<string, LandPriceObservation[]>();
+  for (const r of rows) {
+    if (r.ward) {
+      const list = byWard.get(r.ward) ?? [];
+      list.push(r);
+      byWard.set(r.ward, list);
+    }
+    if (r.sub_county) {
+      const list = bySubCounty.get(r.sub_county) ?? [];
+      list.push(r);
+      bySubCounty.set(r.sub_county, list);
+    }
+  }
+  const subCountySummary = new Map<string, LandPriceSummary>();
+  for (const [sc, list] of bySubCounty) {
+    const s = summarizeLandPrices(list, "sub_county");
+    if (s) subCountySummary.set(sc, s);
+  }
+  return [...byWard.entries()].flatMap(([ward, list]): WardLandOption[] => {
+    const wardSummary = summarizeLandPrices(list, "ward");
+    const sub = list[0].sub_county;
+    if (wardSummary) {
+      return [
+        {
+          ward,
+          sub_county: sub,
+          county,
+          scope: "ward",
+          landMedian: Math.round(wardSummary.medianPerSqft * plotSqft),
+          landObservations: wardSummary.observations,
+        },
+      ];
+    }
+    const sc = sub ? subCountySummary.get(sub) : undefined;
+    if (!sub || !sc) return [];
+    return [
+      {
+        ward,
+        sub_county: sub,
+        county,
+        scope: "sub_county",
+        landMedian: Math.round(sc.medianPerSqft * plotSqft),
+        landObservations: sc.observations,
+      },
+    ];
+  });
+}
+
+/** Columns in the parsed CSV that the target table does not have, first-seen order. */
+export function droppedCsvColumns(
+  rows: Array<Record<string, string>>,
+  allowedColumns: readonly string[],
+): string[] {
+  const allowed = new Set(allowedColumns);
+  return [...new Set(rows.flatMap((r) => Object.keys(r).filter((k) => !allowed.has(k))))];
+}
+
+/** Keep only allowed, non-empty columns; coerce numeric and boolean columns. */
+export function cleanCsvRows(
+  rows: Array<Record<string, string>>,
+  allowedColumns: readonly string[],
+  numericColumns: readonly string[],
+  booleanColumns: readonly string[],
+): Array<Record<string, unknown>> {
+  const allowed = new Set(allowedColumns);
+  return rows.map((r) => {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(r)) {
+      if (!allowed.has(k) || v === "") continue;
+      if (numericColumns.includes(k)) out[k] = Number(v);
+      else if (booleanColumns.includes(k)) out[k] = ["true", "yes", "1"].includes(v.toLowerCase());
+      else out[k] = v;
+    }
+    return out;
+  });
+}
