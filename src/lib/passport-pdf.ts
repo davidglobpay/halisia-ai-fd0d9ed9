@@ -756,16 +756,20 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       "This is a data gap, not evidence that soil is absent. Bedrock, groundwater and foundation suitability have not been assessed. A site investigation is needed before structural design.",
     );
   }
-  section("Roads & access context");
-  title("Roads & access");
-  // Imagery first: it carries road geometry even where the street basemap has
-  // no vector data for the area. The street layer follows, for its labels.
-  map("map", 230);
-  meta(
-    "Road labels come from the rendered map. A visible road does not establish a legal right of access, road condition or a connected driveway.",
-  );
   const access = o.items.filter((it) => it.chapter === "access" && it.value);
-  for (const it of access) {
+  // Skip the section entirely when neither the street map nor any access
+  // finding came back — a title over an empty page reads as broken, and the
+  // contents page already explains that missing sections are data gaps.
+  if (a.maps.map || access.length) {
+    section("Roads & access context");
+    title("Roads & access");
+    // Imagery first: it carries road geometry even where the street basemap has
+    // no vector data for the area. The street layer follows, for its labels.
+    map("map", 230);
+    meta(
+      "Road labels come from the rendered map. A visible road does not establish a legal right of access, road condition or a connected driveway.",
+    );
+    for (const it of access) {
     // Without an explicit title this falls back to need()'s default,
     // "Evidence directory", which is why page 8 of the Katani export carried
     // that header above amenity counts.
