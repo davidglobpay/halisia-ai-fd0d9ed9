@@ -579,6 +579,14 @@ function PassportPage() {
           />
         </Section>
 
+        {county && (
+          <LandPricePanel
+            county={county.name}
+            subCounty={admin?.subCounty ?? undefined}
+            ward={admin?.ward ?? undefined}
+          />
+        )}
+
         {CHAPTERS.slice(1)
           .filter((ch) => byChapter(ch.id).length > 0)
           .map((ch, idx) => (
