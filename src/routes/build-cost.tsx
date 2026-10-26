@@ -119,7 +119,7 @@ function BuildCostPage() {
             data-testid="bc-county"
           >
             <option value="">National fallback</option>
-            {KENYA_COUNTY_FACTS.map((c) => (
+            {Object.values(KENYA_COUNTY_FACTS).map((c) => (
               <option key={c.code} value={c.name}>
                 {c.name}
               </option>

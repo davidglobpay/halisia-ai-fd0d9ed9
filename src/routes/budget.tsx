@@ -85,7 +85,7 @@ function BudgetPage() {
             onChange={(e) => setCounty(e.target.value)}
             data-testid="bp-county"
           >
-            {KENYA_COUNTY_FACTS.map((c) => (
+            {Object.values(KENYA_COUNTY_FACTS).map((c) => (
               <option key={c.code} value={c.name}>
                 {c.name}
               </option>
