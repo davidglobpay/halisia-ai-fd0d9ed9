@@ -7,6 +7,7 @@ const TABLES = [
   ["land_price_obs", "Land price observations"],
   ["material_price", "Material prices"],
   ["boq_template", "BoQ templates"],
+  ["boq_labour", "BoQ labour"],
   ["labour_rate", "Labour rates"],
 ] as const;
 
@@ -24,6 +25,7 @@ export function AdminCostImport() {
     inserted: number;
     rejected: number;
     errors: string[];
+    droppedColumns: string[];
   } | null>(null);
 
   async function submit() {
@@ -85,6 +87,11 @@ export function AdminCostImport() {
         <div className="text-xs" data-testid="aci-result">
           <p>
             Inserted {result.inserted} · rejected {result.rejected}
+            {result.droppedColumns.length > 0 && (
+              <span className="block text-muted-foreground">
+                Dropped columns not in the table: {result.droppedColumns.join(", ")}
+              </span>
+            )}
           </p>
           {result.errors.length ? (
             <ul className="mt-1 max-h-32 overflow-auto font-mono text-[10px] text-muted-foreground">

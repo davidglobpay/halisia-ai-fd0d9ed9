@@ -56,6 +56,12 @@ export function LandPricePanel(props: { county: string; subCounty?: string; ward
               </div>
             ))}
           </div>
+          {q.data.indexMedianPerSqft != null && (
+            <p className="mt-2 text-[11px]" data-testid="land-price-index">
+              Market index (cross-check): {kes(q.data.indexMedianPerSqft)} / sqft median across{" "}
+              {q.data.indexObservations} index observations — not part of the median above.
+            </p>
+          )}
           <p className="mt-2 text-[11px] text-muted-foreground">
             Market estimate, not a valuation. Median of observed asking/reported prices per square
             foot, expanded to standard plot sizes.

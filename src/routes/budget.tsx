@@ -184,6 +184,9 @@ function BudgetPage() {
                   <td className="py-1">
                     {o.ward}
                     {o.sub_county ? `, ${o.sub_county}` : ""}
+                    <span className="ml-1 text-[10px] text-muted-foreground">
+                      ({o.scope === "ward" ? "ward median" : "sub-county median"})
+                    </span>
                   </td>
                   <td className="py-1 font-mono">{kes(o.landMedian)}</td>
                   <td className="py-1 font-mono">{kes(o.buildTotal)}</td>

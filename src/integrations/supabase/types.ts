@@ -284,6 +284,36 @@ export type Database = {
           },
         ]
       }
+      boq_labour: {
+        Row: {
+          created_at: string
+          days: number
+          finish: string
+          id: string
+          structure: string
+          trade: string
+          typology: string
+        }
+        Insert: {
+          created_at?: string
+          days: number
+          finish: string
+          id?: string
+          structure: string
+          trade: string
+          typology: string
+        }
+        Update: {
+          created_at?: string
+          days?: number
+          finish?: string
+          id?: string
+          structure?: string
+          trade?: string
+          typology?: string
+        }
+        Relationships: []
+      }
       boq_template: {
         Row: {
           created_at: string
@@ -292,6 +322,7 @@ export type Database = {
           id: string
           item_code: string
           quantity: number
+          quantity_basis: string | null
           structure: string
           typology: string
         }
@@ -302,6 +333,7 @@ export type Database = {
           id?: string
           item_code: string
           quantity: number
+          quantity_basis?: string | null
           structure: string
           typology: string
         }
@@ -312,6 +344,7 @@ export type Database = {
           id?: string
           item_code?: string
           quantity?: number
+          quantity_basis?: string | null
           structure?: string
           typology?: string
         }
@@ -494,9 +527,12 @@ export type Database = {
           county: string | null
           created_at: string
           id: string
+          note: string | null
           observed_date: string
           rate_kes: number
+          rate_kes_high: number | null
           source: string | null
+          source_url: string | null
           trade: string
           unit: string
         }
@@ -504,9 +540,12 @@ export type Database = {
           county?: string | null
           created_at?: string
           id?: string
+          note?: string | null
           observed_date: string
           rate_kes: number
+          rate_kes_high?: number | null
           source?: string | null
+          source_url?: string | null
           trade: string
           unit: string
         }
@@ -514,9 +553,12 @@ export type Database = {
           county?: string | null
           created_at?: string
           id?: string
+          note?: string | null
           observed_date?: string
           rate_kes?: number
+          rate_kes_high?: number | null
           source?: string | null
+          source_url?: string | null
           trade?: string
           unit?: string
         }
@@ -527,11 +569,14 @@ export type Database = {
           county: string
           created_at: string
           id: string
+          include_in_median: boolean
           lat: number | null
           lng: number | null
+          locality: string | null
           observed_date: string
           plot_size_sqft: number
           price_kes: number
+          quality_note: string | null
           source_name: string | null
           source_type: string
           source_url: string | null
@@ -542,11 +587,14 @@ export type Database = {
           county: string
           created_at?: string
           id?: string
+          include_in_median?: boolean
           lat?: number | null
           lng?: number | null
+          locality?: string | null
           observed_date: string
           plot_size_sqft: number
           price_kes: number
+          quality_note?: string | null
           source_name?: string | null
           source_type: string
           source_url?: string | null
@@ -557,11 +605,14 @@ export type Database = {
           county?: string
           created_at?: string
           id?: string
+          include_in_median?: boolean
           lat?: number | null
           lng?: number | null
+          locality?: string | null
           observed_date?: string
           plot_size_sqft?: number
           price_kes?: number
+          quality_note?: string | null
           source_name?: string | null
           source_type?: string
           source_url?: string | null
@@ -1668,12 +1719,16 @@ export type Database = {
           id: string
           item_code: string
           name: string
+          note: string | null
           observed_date: string
           price_kes: number
+          price_kes_high: number | null
+          price_kes_low: number | null
           source_type: string
           source_url: string | null
           supplier: string | null
           unit: string
+          use_in_totals: boolean
         }
         Insert: {
           category?: string | null
@@ -1682,12 +1737,16 @@ export type Database = {
           id?: string
           item_code: string
           name: string
+          note?: string | null
           observed_date: string
           price_kes: number
+          price_kes_high?: number | null
+          price_kes_low?: number | null
           source_type: string
           source_url?: string | null
           supplier?: string | null
           unit: string
+          use_in_totals?: boolean
         }
         Update: {
           category?: string | null
@@ -1696,12 +1755,16 @@ export type Database = {
           id?: string
           item_code?: string
           name?: string
+          note?: string | null
           observed_date?: string
           price_kes?: number
+          price_kes_high?: number | null
+          price_kes_low?: number | null
           source_type?: string
           source_url?: string | null
           supplier?: string | null
           unit?: string
+          use_in_totals?: boolean
         }
         Relationships: []
       }
