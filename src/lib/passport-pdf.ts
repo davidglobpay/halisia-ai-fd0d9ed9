@@ -221,6 +221,51 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     for (const ch of cat) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
     return CATEGORY_TONES[h % CATEGORY_TONES.length];
   };
+  /**
+   * Small calm vector glyph per amenity category, drawn with jsPDF
+   * primitives inside a tinted disc. Unknown categories get a plain disc.
+   */
+  const drawCategoryIcon = (cat: string, cx: number, cy: number) => {
+    const tone = toneFor(cat);
+    doc.setFillColor(tone[0], tone[1], tone[2]);
+    doc.circle(cx, cy, 6, "F");
+    doc.setFillColor(247, 243, 234);
+    doc.setDrawColor(247, 243, 234);
+    doc.setLineWidth(1);
+    const k = cat.toLowerCase();
+    if (k.includes("health") || k.includes("hospital") || k.includes("clinic") || k.includes("pharm")) {
+      doc.rect(cx - 1.2, cy - 3.4, 2.4, 6.8, "F");
+      doc.rect(cx - 3.4, cy - 1.2, 6.8, 2.4, "F");
+    } else if (k.includes("educ") || k.includes("school") || k.includes("learn")) {
+      doc.rect(cx - 3.2, cy - 2.4, 6.4, 4.8, "F");
+      doc.setFillColor(tone[0], tone[1], tone[2]);
+      doc.rect(cx - 0.5, cy - 2.4, 1, 4.8, "F");
+    } else if (k.includes("shop") || k.includes("market") || k.includes("retail") || k.includes("super")) {
+      doc.rect(cx - 2.8, cy - 1, 5.6, 4, "F");
+      doc.setLineWidth(1.2);
+      doc.circle(cx, cy - 1.6, 1.8, "S");
+    } else if (k.includes("transport") || k.includes("bus") || k.includes("matatu") || k.includes("station")) {
+      doc.roundedRect(cx - 3, cy - 3, 6, 5, 1, 1, "F");
+      doc.circle(cx - 1.8, cy + 2.8, 0.9, "F");
+      doc.circle(cx + 1.8, cy + 2.8, 0.9, "F");
+    } else if (k.includes("worship") || k.includes("church") || k.includes("mosque") || k.includes("relig")) {
+      doc.triangle(cx, cy - 3.6, cx - 3, cy + 0.4, cx + 3, cy + 0.4, "F");
+      doc.rect(cx - 3, cy + 0.4, 6, 3, "F");
+    } else if (k.includes("food") || k.includes("restaurant") || k.includes("cafe") || k.includes("eat")) {
+      doc.circle(cx - 1.4, cy - 0.6, 2, "F");
+      doc.rect(cx + 1.2, cy - 3, 1.2, 6.4, "F");
+    } else if (k.includes("fuel") || k.includes("petrol") || k.includes("gas")) {
+      doc.rect(cx - 2.6, cy - 3, 4.4, 6, "F");
+      doc.rect(cx + 1.8, cy - 1.4, 1.4, 2.6, "F");
+    } else if (k.includes("bank") || k.includes("financ") || k.includes("atm") || k.includes("sacco")) {
+      doc.triangle(cx, cy - 3.4, cx - 3.4, cy - 0.8, cx + 3.4, cy - 0.8, "F");
+      doc.rect(cx - 2.6, cy - 0.4, 1.2, 3.2, "F");
+      doc.rect(cx - 0.6, cy - 0.4, 1.2, 3.2, "F");
+      doc.rect(cx + 1.4, cy - 0.4, 1.2, 3.2, "F");
+    } else {
+      doc.circle(cx, cy, 2, "F");
+    }
+  };
   const need = (h: number, title = "Evidence directory") => {
     if (y + h > H - 65) next(title);
   };
