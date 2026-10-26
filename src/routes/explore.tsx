@@ -560,6 +560,7 @@ function Explore() {
               </p>
             )}
             <IntelligenceDashboard lat={active.lat} lng={active.lng} address={active.address} />
+            {exploreCounty && <LandPricePanel county={exploreCounty.name} />}
           </div>
         </div>
       </div>
