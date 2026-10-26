@@ -287,6 +287,7 @@ function AdminPageView() {
               Public prices
             </Link>
           </nav>
+          <AdminCostImport />
           {scout ? (
             <ScoutHub uid={user.id} isAdmin={true} />
           ) : (
