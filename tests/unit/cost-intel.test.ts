@@ -205,7 +205,10 @@ describe("median source filter (fix 3)", () => {
     expect(summarizeLandPrices(rows, "ward")).toBeNull();
   });
   it("index rows alone never produce a median", () => {
-    const rows = Array.from({ length: 8 }, () => ({ ...obs(1_000_000, 5000), source_type: "index" }));
+    const rows = Array.from({ length: 8 }, () => ({
+      ...obs(1_000_000, 5000),
+      source_type: "index",
+    }));
     expect(summarizeLandPrices(rows, "ward")).toBeNull();
   });
 });
@@ -235,8 +238,22 @@ describe("RFC-4180 CSV parser (fix 5)", () => {
 describe("budget sub-county fallback (fix 6)", () => {
   it("keeps the scope label through ranking", () => {
     const wards = [
-      { ward: "WardWithData", sub_county: "X", county: "Kajiado", scope: "ward" as const, landMedian: 800_000, landObservations: 6 },
-      { ward: "SparseWard", sub_county: "X", county: "Kajiado", scope: "sub_county" as const, landMedian: 850_000, landObservations: 9 },
+      {
+        ward: "WardWithData",
+        sub_county: "X",
+        county: "Kajiado",
+        scope: "ward" as const,
+        landMedian: 800_000,
+        landObservations: 6,
+      },
+      {
+        ward: "SparseWard",
+        sub_county: "X",
+        county: "Kajiado",
+        scope: "sub_county" as const,
+        landMedian: 850_000,
+        landObservations: 9,
+      },
     ];
     const out = rankBudgetOptions(wards, 1_000_000, 3_000_000);
     expect(out.map((o) => [o.ward, o.scope])).toEqual([

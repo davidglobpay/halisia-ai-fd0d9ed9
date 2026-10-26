@@ -99,7 +99,11 @@ export function summarizeLandPrices(
   return {
     scope,
     observations: medianRows.length,
-    newestDate: medianRows.map((r) => r.observed_date).sort().at(-1) ?? "",
+    newestDate:
+      medianRows
+        .map((r) => r.observed_date)
+        .sort()
+        .at(-1) ?? "",
     sourceTypes: [...new Set(medianRows.map((r) => r.source_type))].sort(),
     medianPerSqft,
     bands: PLOT_SIZES.map((plot) => ({
@@ -205,9 +209,7 @@ export function rankBudgetOptions(
     .filter((o) => o.combined <= budget)
     .sort(
       (a, b) =>
-        a.combined - b.combined ||
-        a.county.localeCompare(b.county) ||
-        a.ward.localeCompare(b.ward),
+        a.combined - b.combined || a.county.localeCompare(b.county) || a.ward.localeCompare(b.ward),
     );
 }
 
@@ -252,7 +254,7 @@ export function parseCsvRfc4180(csv: string): Array<Record<string, string>> {
   const nonEmpty = rows.filter((r) => r.some((c) => c.trim().length > 0));
   if (nonEmpty.length < 2) return [];
   const header = nonEmpty[0].map((h) => h.trim());
-  return nonEmpty.slice(1).map((cells) =>
-    Object.fromEntries(header.map((h, i) => [h, (cells[i] ?? "").trim()])),
-  );
+  return nonEmpty
+    .slice(1)
+    .map((cells) => Object.fromEntries(header.map((h, i) => [h, (cells[i] ?? "").trim()])));
 }

@@ -400,7 +400,11 @@ export function validateCsvRow(table: CsvTable, row: Record<string, string>): st
     if (!STRUCTURE_VALUES.includes(row.structure)) return "unknown structure";
     if (!FINISH_VALUES.includes(row.finish)) return "unknown finish";
   }
-  if (table !== "boq_template" && table !== "boq_labour" && !/^\d{4}-\d{2}-\d{2}$/.test(row.observed_date))
+  if (
+    table !== "boq_template" &&
+    table !== "boq_labour" &&
+    !/^\d{4}-\d{2}-\d{2}$/.test(row.observed_date)
+  )
     return "observed_date must be YYYY-MM-DD";
   return null;
 }
@@ -424,7 +428,12 @@ export const importCostCsv = createServerFn({ method: "POST" })
       if (err) errors.push(`row ${i + 2}: ${err}`);
     });
     if (errors.length)
-      return { inserted: 0, rejected: errors.length, errors: errors.slice(0, 20), droppedColumns: [] as string[] };
+      return {
+        inserted: 0,
+        rejected: errors.length,
+        errors: errors.slice(0, 20),
+        droppedColumns: [] as string[],
+      };
 
     // Drop columns the table does not have, and say so in the result.
     const allowed = new Set(TABLE_COLUMNS[data.table]);
