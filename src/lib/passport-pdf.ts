@@ -535,16 +535,15 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
         "Land cover around the point - Tiles (c) Esri, Maxar. Field patterns and built-up areas are visible in the imagery; crop types above are county reference data and are not identified from this image.",
       );
     }
-    y += 12;
-    text("Landmarks & wider social context", 15, true);
-    for (const v of o.county.landmarks) text(`+ ${v}`, 11);
-    y += 12;
-    // Keep the closing disclaimer on the county page; spilling it alone onto
-    // a fresh page left a near-blank sheet under a wrong continuation header.
-    need(40, "County context");
+    y += 8;
+    // The disclaimer sits before the variable-length landmarks list so it can
+    // never spill alone onto a near-blank continuation page.
     meta(
       "County reference profile, not a parcel finding or current political assessment. Emblem identifies the county; no endorsement or government integration is implied.",
     );
+    y += 8;
+    text("Landmarks & wider social context", 15, true);
+    for (const v of o.county.landmarks) text(`+ ${v}`, 11);
   }
   const weather = o.wave4?.weather;
   if (weather?.points.length) {
