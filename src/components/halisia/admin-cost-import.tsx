@@ -7,6 +7,7 @@ const TABLES = [
   ["land_price_obs", "Land price observations"],
   ["material_price", "Material prices"],
   ["boq_template", "BoQ templates"],
+  ["boq_labour", "BoQ labour"],
   ["labour_rate", "Labour rates"],
 ] as const;
 
