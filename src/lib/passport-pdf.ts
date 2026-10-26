@@ -527,10 +527,10 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     // visible in the image itself; the crop list above stays a county-level
     // reference and is deliberately NOT presented as identified from imagery.
     if (a.maps.satellite) {
-      y += 6;
-      need(170);
-      image(a.maps.satellite, M, y, C, 150);
-      y += 156;
+      y += 4;
+      need(140);
+      image(a.maps.satellite, M, y, C, 120);
+      y += 126;
       meta(
         "Land cover around the point - Tiles (c) Esri, Maxar. Field patterns and built-up areas are visible in the imagery; crop types above are county reference data and are not identified from this image.",
       );
