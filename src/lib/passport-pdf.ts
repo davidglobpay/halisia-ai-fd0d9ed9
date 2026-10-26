@@ -506,6 +506,9 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     text("Landmarks & wider social context", 15, true);
     for (const v of o.county.landmarks) text(`+ ${v}`, 11);
     y += 12;
+    // Keep the closing disclaimer on the county page; spilling it alone onto
+    // a fresh page left a near-blank sheet under a wrong continuation header.
+    need(40, "County context");
     meta(
       "County reference profile, not a parcel finding or current political assessment. Emblem identifies the county; no endorsement or government integration is implied.",
     );
