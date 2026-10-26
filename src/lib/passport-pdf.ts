@@ -100,15 +100,30 @@ async function collectAssets(o: PassportPdfOptions): Promise<PassportPdfAssets> 
           places.push({ ...p, name: displayPlaceName(p.name), category, source: "OpenStreetMap" });
       }
   // Google Places and Overpass frequently return the same facility twice at
-  // slightly different coordinates. Dedupe by name within ~100 m so the
+  // slightly different coordinates. Dedupe similar names within 50 m so the
   // directory never prints the same amenity as two cards.
-  const seenPlace = new Set<string>();
-  const uniquePlaces = places.filter((p) => {
-    const key = `${p.name.trim().toLowerCase()}|${p.lat.toFixed(3)}|${p.lng.toFixed(3)}`;
-    if (seenPlace.has(key)) return false;
-    seenPlace.add(key);
-    return true;
-  });
+  const normName = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const similarName = (x: string, y: string) => {
+    const a = normName(x),
+      b = normName(y);
+    if (!a || !b) return false;
+    return (
+      a === b || a.includes(b) || b.includes(a) || (a.length >= 6 && b.startsWith(a.slice(0, 6)))
+    );
+  };
+  const distM = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) => {
+    const dLat = ((b.lat - a.lat) * Math.PI) / 180,
+      dLng = ((b.lng - a.lng) * Math.PI) / 180;
+    const h =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos((a.lat * Math.PI) / 180) *
+        Math.cos((b.lat * Math.PI) / 180) *
+        Math.sin(dLng / 2) ** 2;
+    return 2 * 6371000 * Math.asin(Math.sqrt(h));
+  };
+  const uniquePlaces = places.filter(
+    (p, i) => !places.slice(0, i).some((q) => distM(p, q) <= 50 && similarName(p.name, q.name)),
+  );
   // Existing adapter results are bounded; preserve every located named result in the directory.
   const amenities: PassportPdfAssets["amenities"] = [];
   for (let i = 0; i < uniquePlaces.length; i += 4) {
@@ -208,6 +223,81 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     let h = 0;
     for (const ch of cat) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
     return CATEGORY_TONES[h % CATEGORY_TONES.length];
+  };
+  /**
+   * Small calm vector glyph per amenity category, drawn with jsPDF
+   * primitives inside a tinted disc. Unknown categories get a plain disc.
+   */
+  const drawCategoryIcon = (cat: string, cx: number, cy: number) => {
+    const tone = toneFor(cat);
+    doc.setFillColor(tone[0], tone[1], tone[2]);
+    doc.circle(cx, cy, 6, "F");
+    doc.setFillColor(247, 243, 234);
+    doc.setDrawColor(247, 243, 234);
+    doc.setLineWidth(1);
+    const k = cat.toLowerCase();
+    if (
+      k.includes("health") ||
+      k.includes("hospital") ||
+      k.includes("clinic") ||
+      k.includes("pharm")
+    ) {
+      doc.rect(cx - 1.2, cy - 3.4, 2.4, 6.8, "F");
+      doc.rect(cx - 3.4, cy - 1.2, 6.8, 2.4, "F");
+    } else if (k.includes("educ") || k.includes("school") || k.includes("learn")) {
+      doc.rect(cx - 3.2, cy - 2.4, 6.4, 4.8, "F");
+      doc.setFillColor(tone[0], tone[1], tone[2]);
+      doc.rect(cx - 0.5, cy - 2.4, 1, 4.8, "F");
+    } else if (
+      k.includes("shop") ||
+      k.includes("market") ||
+      k.includes("retail") ||
+      k.includes("super")
+    ) {
+      doc.rect(cx - 2.8, cy - 1, 5.6, 4, "F");
+      doc.setLineWidth(1.2);
+      doc.circle(cx, cy - 1.6, 1.8, "S");
+    } else if (
+      k.includes("transport") ||
+      k.includes("bus") ||
+      k.includes("matatu") ||
+      k.includes("station")
+    ) {
+      doc.roundedRect(cx - 3, cy - 3, 6, 5, 1, 1, "F");
+      doc.circle(cx - 1.8, cy + 2.8, 0.9, "F");
+      doc.circle(cx + 1.8, cy + 2.8, 0.9, "F");
+    } else if (
+      k.includes("worship") ||
+      k.includes("church") ||
+      k.includes("mosque") ||
+      k.includes("relig")
+    ) {
+      doc.triangle(cx, cy - 3.6, cx - 3, cy + 0.4, cx + 3, cy + 0.4, "F");
+      doc.rect(cx - 3, cy + 0.4, 6, 3, "F");
+    } else if (
+      k.includes("food") ||
+      k.includes("restaurant") ||
+      k.includes("cafe") ||
+      k.includes("eat")
+    ) {
+      doc.circle(cx - 1.4, cy - 0.6, 2, "F");
+      doc.rect(cx + 1.2, cy - 3, 1.2, 6.4, "F");
+    } else if (k.includes("fuel") || k.includes("petrol") || k.includes("gas")) {
+      doc.rect(cx - 2.6, cy - 3, 4.4, 6, "F");
+      doc.rect(cx + 1.8, cy - 1.4, 1.4, 2.6, "F");
+    } else if (
+      k.includes("bank") ||
+      k.includes("financ") ||
+      k.includes("atm") ||
+      k.includes("sacco")
+    ) {
+      doc.triangle(cx, cy - 3.4, cx - 3.4, cy - 0.8, cx + 3.4, cy - 0.8, "F");
+      doc.rect(cx - 2.6, cy - 0.4, 1.2, 3.2, "F");
+      doc.rect(cx - 0.6, cy - 0.4, 1.2, 3.2, "F");
+      doc.rect(cx + 1.4, cy - 0.4, 1.2, 3.2, "F");
+    } else {
+      doc.circle(cx, cy, 2, "F");
+    }
   };
   const need = (h: number, title = "Evidence directory") => {
     if (y + h > H - 65) next(title);
@@ -437,21 +527,23 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     // visible in the image itself; the crop list above stays a county-level
     // reference and is deliberately NOT presented as identified from imagery.
     if (a.maps.satellite) {
-      y += 6;
-      need(170);
-      image(a.maps.satellite, M, y, C, 150);
-      y += 156;
+      y += 4;
+      need(140);
+      image(a.maps.satellite, M, y, C, 120);
+      y += 126;
       meta(
         "Land cover around the point - Tiles (c) Esri, Maxar. Field patterns and built-up areas are visible in the imagery; crop types above are county reference data and are not identified from this image.",
       );
     }
-    y += 12;
-    text("Landmarks & wider social context", 15, true);
-    for (const v of o.county.landmarks) text(`+ ${v}`, 11);
-    y += 12;
+    y += 8;
+    // The disclaimer sits before the variable-length landmarks list so it can
+    // never spill alone onto a near-blank continuation page.
     meta(
       "County reference profile, not a parcel finding or current political assessment. Emblem identifies the county; no endorsement or government integration is implied.",
     );
+    y += 8;
+    text("Landmarks & wider social context", 15, true);
+    for (const v of o.county.landmarks) text(`+ ${v}`, 11);
   }
   const weather = o.wave4?.weather;
   if (weather?.points.length) {
@@ -696,25 +788,30 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       "This is a data gap, not evidence that soil is absent. Bedrock, groundwater and foundation suitability have not been assessed. A site investigation is needed before structural design.",
     );
   }
-  section("Roads & access context");
-  title("Roads & access");
-  // Imagery first: it carries road geometry even where the street basemap has
-  // no vector data for the area. The street layer follows, for its labels.
-  map("map", 230);
-  meta(
-    "Road labels come from the rendered map. A visible road does not establish a legal right of access, road condition or a connected driveway.",
-  );
   const access = o.items.filter((it) => it.chapter === "access" && it.value);
-  for (const it of access) {
-    // Without an explicit title this falls back to need()'s default,
-    // "Evidence directory", which is why page 8 of the Katani export carried
-    // that header above amenity counts.
-    need(
-      110 + doc.splitTextToSize(sanitize(it.value!), C - 24).length * 16,
-      "Roads & access context",
+  // Skip the section entirely when neither the street map nor any access
+  // finding came back — a title over an empty page reads as broken, and the
+  // contents page already explains that missing sections are data gaps.
+  if (a.maps.map || access.length) {
+    section("Roads & access context");
+    title("Roads & access");
+    // Imagery first: it carries road geometry even where the street basemap has
+    // no vector data for the area. The street layer follows, for its labels.
+    map("map", 230);
+    meta(
+      "Road labels come from the rendered map. A visible road does not establish a legal right of access, road condition or a connected driveway.",
     );
-    block(it.label, it.value!);
-    meta(it.source);
+    for (const it of access) {
+      // Without an explicit title this falls back to need()'s default,
+      // "Evidence directory", which is why page 8 of the Katani export carried
+      // that header above amenity counts.
+      need(
+        110 + doc.splitTextToSize(sanitize(it.value!), C - 24).length * 16,
+        "Roads & access context",
+      );
+      block(it.label, it.value!);
+      meta(it.source);
+    }
   }
   if (a.amenities.length) {
     section("Located amenities");
@@ -739,15 +836,11 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       }
       y = top + 10;
       text(`${i + 1}. ${p.name}`, 11, true, PDF.forest, M + 200, C - 214);
-      // Calm category marker: a small filled disc with the category initial,
-      // so the card type reads at a glance without pictogram clipart.
+      // Calm category marker: a small vector glyph so the card type reads at
+      // a glance without pictogram clipart.
       const catTop = y;
       text(p.category, 8, false, PDF.goldInk, M + 214, C - 228);
-      doc.setFillColor(...toneFor(p.category));
-      doc.circle(M + 204, catTop + 6, 4.5, "F");
-      doc.setTextColor(247, 243, 234);
-      doc.setFontSize(5.5);
-      doc.text(p.category.slice(0, 1).toUpperCase(), M + 204, catTop + 8, { align: "center" });
+      drawCategoryIcon(p.category, M + 204, catTop + 6);
       if (p.distanceKm != null)
         text(`${p.distanceKm.toFixed(2)} km straight-line`, 9, false, PDF.forest, M + 200, C - 214);
       if (p.driveKm != null)
