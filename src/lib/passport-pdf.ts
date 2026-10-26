@@ -100,15 +100,27 @@ async function collectAssets(o: PassportPdfOptions): Promise<PassportPdfAssets> 
           places.push({ ...p, name: displayPlaceName(p.name), category, source: "OpenStreetMap" });
       }
   // Google Places and Overpass frequently return the same facility twice at
-  // slightly different coordinates. Dedupe by name within ~100 m so the
+  // slightly different coordinates. Dedupe similar names within 50 m so the
   // directory never prints the same amenity as two cards.
-  const seenPlace = new Set<string>();
-  const uniquePlaces = places.filter((p) => {
-    const key = `${p.name.trim().toLowerCase()}|${p.lat.toFixed(3)}|${p.lng.toFixed(3)}`;
-    if (seenPlace.has(key)) return false;
-    seenPlace.add(key);
-    return true;
-  });
+  const normName = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const similarName = (x: string, y: string) => {
+    const a = normName(x),
+      b = normName(y);
+    if (!a || !b) return false;
+    return a === b || a.includes(b) || b.includes(a) || (a.length >= 6 && b.startsWith(a.slice(0, 6)));
+  };
+  const distM = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) => {
+    const dLat = ((b.lat - a.lat) * Math.PI) / 180,
+      dLng = ((b.lng - a.lng) * Math.PI) / 180;
+    const h =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+    return 2 * 6371000 * Math.asin(Math.sqrt(h));
+  };
+  const uniquePlaces = places.filter(
+    (p, i) =>
+      !places.slice(0, i).some((q) => distM(p, q) <= 50 && similarName(p.name, q.name)),
+  );
   // Existing adapter results are bounded; preserve every located named result in the directory.
   const amenities: PassportPdfAssets["amenities"] = [];
   for (let i = 0; i < uniquePlaces.length; i += 4) {
