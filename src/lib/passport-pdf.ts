@@ -113,7 +113,7 @@ async function collectAssets(o: PassportPdfOptions): Promise<PassportPdfAssets> 
   const amenities: PassportPdfAssets["amenities"] = [];
   for (let i = 0; i < uniquePlaces.length; i += 4) {
     const batch = await Promise.all(
-      places.slice(i, i + 4).map(async (p) => ({
+      uniquePlaces.slice(i, i + 4).map(async (p) => ({
         ...p,
         // Satellite, not street. Esri's street basemap has almost no vector
         // data for rural Machakos - the Katani export produced 26 near-blank
@@ -127,7 +127,6 @@ async function collectAssets(o: PassportPdfOptions): Promise<PassportPdfAssets> 
     );
     amenities.push(...batch);
   }
-  void places;
   // County news is a nice-to-have: a failure here must never cost the export.
   let news: PassportPdfAssets["news"] = [];
   if (o.county?.name) {
