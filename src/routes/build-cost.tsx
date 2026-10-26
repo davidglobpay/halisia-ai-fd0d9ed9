@@ -181,7 +181,7 @@ function BuildCostPage() {
                       {l.unit ? ` ${l.unit}` : ""}
                     </td>
                     <td className="py-1 font-mono">
-                      {l.price_kes != null ? kes(l.price_kes * areaScale === l.price_kes ? l.price_kes : l.price_kes) : "not priced"}
+                      {l.price_kes != null ? kes(l.price_kes) : "not priced"}
                     </td>
                     <td className="py-1 font-mono">
                       {l.lineTotal != null ? kes(l.lineTotal * areaScale) : "—"}

@@ -13,6 +13,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BudgetRouteImport } from './routes/budget'
+import { Route as BuildCostRouteImport } from './routes/build-cost'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as CompareLocationsRouteImport } from './routes/compare-locations'
 import { Route as ConnectionsRouteImport } from './routes/connections'
@@ -76,6 +78,16 @@ const AdminRoute = AdminRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BudgetRoute = BudgetRouteImport.update({
+  id: '/budget',
+  path: '/budget',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BuildCostRoute = BuildCostRouteImport.update({
+  id: '/build-cost',
+  path: '/build-cost',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CompareRoute = CompareRouteImport.update({
@@ -313,6 +325,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
+  '/budget': typeof BudgetRoute
+  '/build-cost': typeof BuildCostRoute
   '/compare': typeof CompareRoute
   '/compare-locations': typeof CompareLocationsRoute
   '/connections': typeof ConnectionsRoute
@@ -363,6 +377,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
+  '/budget': typeof BudgetRoute
+  '/build-cost': typeof BuildCostRoute
   '/compare': typeof CompareRoute
   '/compare-locations': typeof CompareLocationsRoute
   '/connections': typeof ConnectionsRoute
@@ -414,6 +430,8 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
+  '/budget': typeof BudgetRoute
+  '/build-cost': typeof BuildCostRoute
   '/compare': typeof CompareRoute
   '/compare-locations': typeof CompareLocationsRoute
   '/connections': typeof ConnectionsRoute
@@ -466,6 +484,8 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/budget'
+    | '/build-cost'
     | '/compare'
     | '/compare-locations'
     | '/connections'
@@ -516,6 +536,8 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/budget'
+    | '/build-cost'
     | '/compare'
     | '/compare-locations'
     | '/connections'
@@ -566,6 +588,8 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/admin'
     | '/auth'
+    | '/budget'
+    | '/build-cost'
     | '/compare'
     | '/compare-locations'
     | '/connections'
@@ -618,6 +642,8 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
+  BudgetRoute: typeof BudgetRoute
+  BuildCostRoute: typeof BuildCostRoute
   CompareRoute: typeof CompareRoute
   CompareLocationsRoute: typeof CompareLocationsRoute
   ConnectionsRoute: typeof ConnectionsRoute
@@ -676,6 +702,20 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/budget': {
+      id: '/budget'
+      path: '/budget'
+      fullPath: '/budget'
+      preLoaderRoute: typeof BudgetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/build-cost': {
+      id: '/build-cost'
+      path: '/build-cost'
+      fullPath: '/build-cost'
+      preLoaderRoute: typeof BuildCostRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/compare': {
@@ -1054,6 +1094,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
+  BudgetRoute: BudgetRoute,
+  BuildCostRoute: BuildCostRoute,
   CompareRoute: CompareRoute,
   CompareLocationsRoute: CompareLocationsRoute,
   ConnectionsRoute: ConnectionsRoute,
