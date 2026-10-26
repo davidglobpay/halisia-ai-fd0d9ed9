@@ -107,19 +107,22 @@ async function collectAssets(o: PassportPdfOptions): Promise<PassportPdfAssets> 
     const a = normName(x),
       b = normName(y);
     if (!a || !b) return false;
-    return a === b || a.includes(b) || b.includes(a) || (a.length >= 6 && b.startsWith(a.slice(0, 6)));
+    return (
+      a === b || a.includes(b) || b.includes(a) || (a.length >= 6 && b.startsWith(a.slice(0, 6)))
+    );
   };
   const distM = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) => {
     const dLat = ((b.lat - a.lat) * Math.PI) / 180,
       dLng = ((b.lng - a.lng) * Math.PI) / 180;
     const h =
       Math.sin(dLat / 2) ** 2 +
-      Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+      Math.cos((a.lat * Math.PI) / 180) *
+        Math.cos((b.lat * Math.PI) / 180) *
+        Math.sin(dLng / 2) ** 2;
     return 2 * 6371000 * Math.asin(Math.sqrt(h));
   };
   const uniquePlaces = places.filter(
-    (p, i) =>
-      !places.slice(0, i).some((q) => distM(p, q) <= 50 && similarName(p.name, q.name)),
+    (p, i) => !places.slice(0, i).some((q) => distM(p, q) <= 50 && similarName(p.name, q.name)),
   );
   // Existing adapter results are bounded; preserve every located named result in the directory.
   const amenities: PassportPdfAssets["amenities"] = [];
@@ -233,31 +236,61 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     doc.setDrawColor(247, 243, 234);
     doc.setLineWidth(1);
     const k = cat.toLowerCase();
-    if (k.includes("health") || k.includes("hospital") || k.includes("clinic") || k.includes("pharm")) {
+    if (
+      k.includes("health") ||
+      k.includes("hospital") ||
+      k.includes("clinic") ||
+      k.includes("pharm")
+    ) {
       doc.rect(cx - 1.2, cy - 3.4, 2.4, 6.8, "F");
       doc.rect(cx - 3.4, cy - 1.2, 6.8, 2.4, "F");
     } else if (k.includes("educ") || k.includes("school") || k.includes("learn")) {
       doc.rect(cx - 3.2, cy - 2.4, 6.4, 4.8, "F");
       doc.setFillColor(tone[0], tone[1], tone[2]);
       doc.rect(cx - 0.5, cy - 2.4, 1, 4.8, "F");
-    } else if (k.includes("shop") || k.includes("market") || k.includes("retail") || k.includes("super")) {
+    } else if (
+      k.includes("shop") ||
+      k.includes("market") ||
+      k.includes("retail") ||
+      k.includes("super")
+    ) {
       doc.rect(cx - 2.8, cy - 1, 5.6, 4, "F");
       doc.setLineWidth(1.2);
       doc.circle(cx, cy - 1.6, 1.8, "S");
-    } else if (k.includes("transport") || k.includes("bus") || k.includes("matatu") || k.includes("station")) {
+    } else if (
+      k.includes("transport") ||
+      k.includes("bus") ||
+      k.includes("matatu") ||
+      k.includes("station")
+    ) {
       doc.roundedRect(cx - 3, cy - 3, 6, 5, 1, 1, "F");
       doc.circle(cx - 1.8, cy + 2.8, 0.9, "F");
       doc.circle(cx + 1.8, cy + 2.8, 0.9, "F");
-    } else if (k.includes("worship") || k.includes("church") || k.includes("mosque") || k.includes("relig")) {
+    } else if (
+      k.includes("worship") ||
+      k.includes("church") ||
+      k.includes("mosque") ||
+      k.includes("relig")
+    ) {
       doc.triangle(cx, cy - 3.6, cx - 3, cy + 0.4, cx + 3, cy + 0.4, "F");
       doc.rect(cx - 3, cy + 0.4, 6, 3, "F");
-    } else if (k.includes("food") || k.includes("restaurant") || k.includes("cafe") || k.includes("eat")) {
+    } else if (
+      k.includes("food") ||
+      k.includes("restaurant") ||
+      k.includes("cafe") ||
+      k.includes("eat")
+    ) {
       doc.circle(cx - 1.4, cy - 0.6, 2, "F");
       doc.rect(cx + 1.2, cy - 3, 1.2, 6.4, "F");
     } else if (k.includes("fuel") || k.includes("petrol") || k.includes("gas")) {
       doc.rect(cx - 2.6, cy - 3, 4.4, 6, "F");
       doc.rect(cx + 1.8, cy - 1.4, 1.4, 2.6, "F");
-    } else if (k.includes("bank") || k.includes("financ") || k.includes("atm") || k.includes("sacco")) {
+    } else if (
+      k.includes("bank") ||
+      k.includes("financ") ||
+      k.includes("atm") ||
+      k.includes("sacco")
+    ) {
       doc.triangle(cx, cy - 3.4, cx - 3.4, cy - 0.8, cx + 3.4, cy - 0.8, "F");
       doc.rect(cx - 2.6, cy - 0.4, 1.2, 3.2, "F");
       doc.rect(cx - 0.6, cy - 0.4, 1.2, 3.2, "F");
@@ -770,13 +803,13 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       "Road labels come from the rendered map. A visible road does not establish a legal right of access, road condition or a connected driveway.",
     );
     for (const it of access) {
-    // Without an explicit title this falls back to need()'s default,
-    // "Evidence directory", which is why page 8 of the Katani export carried
-    // that header above amenity counts.
-    need(
-      110 + doc.splitTextToSize(sanitize(it.value!), C - 24).length * 16,
-      "Roads & access context",
-    );
+      // Without an explicit title this falls back to need()'s default,
+      // "Evidence directory", which is why page 8 of the Katani export carried
+      // that header above amenity counts.
+      need(
+        110 + doc.splitTextToSize(sanitize(it.value!), C - 24).length * 16,
+        "Roads & access context",
+      );
       block(it.label, it.value!);
       meta(it.source);
     }
