@@ -196,6 +196,19 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     doc.addPage();
     page(title);
   };
+  // Section starts are recorded for the table of contents; continuation pages
+  // created by need() are not sections and must not appear in it.
+  const toc: Array<{ label: string; page: number }> = [];
+  const section = (t: string) => {
+    next(t);
+    toc.push({ label: t, page: doc.getNumberOfPages() });
+  };
+  const CATEGORY_TONES: [number, number, number][] = [PDF.green, PDF.gold, PDF.forest, PDF.goldInk];
+  const toneFor = (cat: string) => {
+    let h = 0;
+    for (const ch of cat) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+    return CATEGORY_TONES[h % CATEGORY_TONES.length];
+  };
   const need = (h: number, title = "Evidence directory") => {
     if (y + h > H - 65) next(title);
   };
