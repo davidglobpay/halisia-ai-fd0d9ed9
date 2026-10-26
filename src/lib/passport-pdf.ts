@@ -334,7 +334,64 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     y = base + 29;
     meta(`Scale: ${unit}. Gaps represent missing samples, never zero.`);
   };
-  page("Location & satellite evidence");
+  // Page 1: cover. Subject, scope and provenance posture up front, before any
+  // evidence, so the report can be identified and bounded from its first page.
+  doc.setFillColor(...PDF.ivory);
+  doc.rect(0, 0, W, H, "F");
+  brandPage(doc, a.symbol);
+  doc.setFillColor(...PDF.green);
+  doc.rect(0, 0, W, 5, "F");
+  if (a.lockup) image(a.lockup, (W - 220) / 2, 110, 220, 72);
+  else {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(26);
+    doc.setTextColor(...PDF.forest);
+    doc.text("HALISIA.AI", W / 2, 160, { align: "center" });
+  }
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  doc.setTextColor(...PDF.goldInk);
+  doc.text("L A N D   P A S S P O R T", W / 2, 224, { align: "center" });
+  doc.setDrawColor(...PDF.gold);
+  doc.line(W / 2 - 60, 238, W / 2 + 60, 238);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(24);
+  doc.setTextColor(...PDF.forest);
+  const placeLines = doc.splitTextToSize(sanitize(o.place), C - 60) as string[];
+  doc.text(placeLines, W / 2, 290, { align: "center" });
+  let coverY = 290 + placeLines.length * 26;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+  doc.setTextColor(...PDF.stone2);
+  const locLines = doc.splitTextToSize(sanitize(o.locationLine), C - 100) as string[];
+  doc.text(locLines, W / 2, coverY, { align: "center" });
+  coverY += locLines.length * 15 + 8;
+  doc.setFontSize(9);
+  doc.text(`${o.positionLabel} | Generated ${o.generatedAt}`, W / 2, coverY, {
+    align: "center",
+  });
+  if (o.coords) {
+    coverY += 16;
+    doc.text(
+      `Selected coordinates ${o.coords.lat.toFixed(6)}, ${o.coords.lng.toFixed(6)}`,
+      W / 2,
+      coverY,
+      { align: "center" },
+    );
+  }
+  doc.setFontSize(8);
+  doc.setTextColor(...PDF.stone2);
+  const scopeLines = doc.splitTextToSize(
+    sanitize(
+      `Source-backed context with modelled estimates labelled by class. Coverage of the evidence checklist: ${o.coveragePct}%. This report does not establish title, ownership, a surveyed boundary, planning approval or investment return; registry and legal verification are outside its scope.`,
+    ),
+    C - 120,
+  ) as string[];
+  doc.text(scopeLines, W / 2, H - 150, { align: "center" });
+  // Page 2: table-of-contents placeholder, filled after every section has
+  // rendered so its page numbers are the true final ones.
+  next("Contents");
+  section("Location & satellite evidence");
   title(o.place);
   meta(o.locationLine);
   meta(`${o.positionLabel} | Generated ${o.generatedAt}`);
