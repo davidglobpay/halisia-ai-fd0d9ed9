@@ -170,16 +170,30 @@ function BuildCostPage() {
                     className={l.lineTotal == null ? "opacity-40" : undefined}
                     data-testid={`bc-line-${l.item_code}`}
                   >
-                    <td className="py-1">{l.name ?? l.item_code}</td>
+                    <td className="py-1">
+                      {l.name ?? l.item_code}
+                      {l.kind === "labour" ? (
+                        <span className="ml-1 text-[10px] text-muted-foreground">(labour)</span>
+                      ) : null}
+                    </td>
                     <td className="py-1 font-mono">
                       {l.quantity}
                       {l.unit ? ` ${l.unit}` : ""}
+                      {l.quantity_basis ? ` · ${l.quantity_basis}` : ""}
                     </td>
                     <td className="py-1 font-mono">
-                      {l.price_kes != null ? kes(l.price_kes) : "not priced"}
+                      {l.price_kes != null
+                        ? l.price_kes_high != null && l.price_kes_high > l.price_kes
+                          ? `${kes(l.price_kes)}–${kes(l.price_kes_high)}`
+                          : kes(l.price_kes)
+                        : "not priced"}
                     </td>
                     <td className="py-1 font-mono">
-                      {l.lineTotal != null ? kes(l.lineTotal * areaScale) : "—"}
+                      {l.lineTotal != null
+                        ? l.lineTotalHigh != null && l.lineTotalHigh > l.lineTotal
+                          ? `${kes(l.lineTotal * areaScale)}–${kes(l.lineTotalHigh * areaScale)}`
+                          : kes(l.lineTotal * areaScale)
+                        : "—"}
                     </td>
                     <td className="py-1 text-muted-foreground">
                       {l.price_source
@@ -193,6 +207,10 @@ function BuildCostPage() {
             {costQ.data.costing.total != null ? (
               <p className="mt-3 font-mono text-lg" data-testid="bc-total">
                 Estimated total: {kes(costQ.data.costing.total * areaScale)}
+                {costQ.data.costing.totalHigh != null &&
+                costQ.data.costing.totalHigh > costQ.data.costing.total
+                  ? ` – ${kes(costQ.data.costing.totalHigh * areaScale)}`
+                  : ""}
               </p>
             ) : (
               <p className="mt-3 text-sm" data-testid="bc-no-total">
