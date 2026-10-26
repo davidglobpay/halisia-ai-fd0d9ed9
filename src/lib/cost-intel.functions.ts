@@ -4,10 +4,13 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
 import {
   LAND_OBSERVATION_WINDOW_MONTHS,
+  cleanCsvRows,
   costBoq,
+  droppedCsvColumns,
   parseCsvRfc4180,
   rankBudgetOptions,
   summarizeLandPrices,
+  wardLandOptions,
   type BoqLine,
   type LandPriceObservation,
 } from "@/lib/cost-intel";
@@ -236,64 +239,7 @@ export const getBudgetOptions = createServerFn({ method: "GET" })
   )
   .handler(async ({ data }) => {
     const rows = await fetchObservations({ county: data.county });
-    const byWard = new Map<string, ObsRow[]>();
-    const bySubCounty = new Map<string, ObsRow[]>();
-    for (const r of rows) {
-      if (r.ward) {
-        const list = byWard.get(r.ward) ?? [];
-        list.push(r);
-        byWard.set(r.ward, list);
-      }
-      if (r.sub_county) {
-        const list = bySubCounty.get(r.sub_county) ?? [];
-        list.push(r);
-        bySubCounty.set(r.sub_county, list);
-      }
-    }
-    const subCountyMedian = new Map<string, number>();
-    for (const [sc, list] of bySubCounty) {
-      const s = summarizeLandPrices(list, "sub_county");
-      if (s) subCountyMedian.set(sc, s.medianPerSqft);
-    }
-    type WardOption = {
-      ward: string;
-      sub_county: string | null;
-      county: string;
-      scope: "ward" | "sub_county";
-      landMedian: number;
-      landObservations: number;
-    };
-    const wards = [...byWard.entries()].flatMap(([ward, list]): WardOption[] => {
-      const wardSummary = summarizeLandPrices(list, "ward");
-      const sub = list[0].sub_county;
-      if (wardSummary) {
-        return [
-          {
-            ward,
-            sub_county: sub,
-            county: data.county,
-            scope: "ward" as const,
-            landMedian: Math.round(wardSummary.medianPerSqft * data.plotSqft),
-            landObservations: wardSummary.observations,
-          },
-        ];
-      }
-      // Ward below the n≥5 gate: fall back to the sub-county median, labelled.
-      const scMedian = sub ? subCountyMedian.get(sub) : undefined;
-      if (scMedian == null || !sub) return [];
-      const scRows = bySubCounty.get(sub) ?? [];
-      const scSummary = summarizeLandPrices(scRows, "sub_county");
-      return [
-        {
-          ward,
-          sub_county: sub,
-          county: data.county,
-          scope: "sub_county" as const,
-          landMedian: Math.round(scMedian * data.plotSqft),
-          landObservations: scSummary?.observations ?? 0,
-        },
-      ];
-    });
+    const wards = wardLandOptions(rows, data.county, data.plotSqft);
     return rankBudgetOptions(wards, data.buildTotal, data.budget);
   });
 
@@ -444,22 +390,13 @@ export const importCostCsv = createServerFn({ method: "POST" })
       };
 
     // Drop columns the table does not have, and say so in the result.
-    const allowed = new Set(TABLE_COLUMNS[data.table]);
-    const droppedColumns = [
-      ...new Set(rows.flatMap((r) => Object.keys(r).filter((k) => !allowed.has(k)))),
-    ];
-    const cleaned = rows.map((r) => {
-      const out: Record<string, unknown> = {};
-      for (const [k, v] of Object.entries(r)) {
-        if (!allowed.has(k)) continue;
-        if (v === "") continue;
-        if (NUMERIC_COLUMNS[data.table].includes(k)) out[k] = Number(v);
-        else if (BOOLEAN_COLUMNS[data.table].includes(k))
-          out[k] = ["true", "yes", "1"].includes(v.toLowerCase());
-        else out[k] = v;
-      }
-      return out;
-    });
+    const droppedColumns = droppedCsvColumns(rows, TABLE_COLUMNS[data.table]);
+    const cleaned = cleanCsvRows(
+      rows,
+      TABLE_COLUMNS[data.table],
+      NUMERIC_COLUMNS[data.table],
+      BOOLEAN_COLUMNS[data.table],
+    );
     const { error } = await context.supabase.from(data.table).insert(cleaned as never);
     if (error) throw new Error(error.message);
     return { inserted: rows.length, rejected: 0, errors: [] as string[], droppedColumns };
