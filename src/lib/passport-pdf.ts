@@ -99,11 +99,21 @@ async function collectAssets(o: PassportPdfOptions): Promise<PassportPdfAssets> 
         if (!isQueryCentroid(p, o.coords))
           places.push({ ...p, name: displayPlaceName(p.name), category, source: "OpenStreetMap" });
       }
+  // Google Places and Overpass frequently return the same facility twice at
+  // slightly different coordinates. Dedupe by name within ~100 m so the
+  // directory never prints the same amenity as two cards.
+  const seenPlace = new Set<string>();
+  const uniquePlaces = places.filter((p) => {
+    const key = `${p.name.trim().toLowerCase()}|${p.lat.toFixed(3)}|${p.lng.toFixed(3)}`;
+    if (seenPlace.has(key)) return false;
+    seenPlace.add(key);
+    return true;
+  });
   // Existing adapter results are bounded; preserve every located named result in the directory.
   const amenities: PassportPdfAssets["amenities"] = [];
-  for (let i = 0; i < places.length; i += 4) {
+  for (let i = 0; i < uniquePlaces.length; i += 4) {
     const batch = await Promise.all(
-      places.slice(i, i + 4).map(async (p) => ({
+      uniquePlaces.slice(i, i + 4).map(async (p) => ({
         ...p,
         // Satellite, not street. Esri's street basemap has almost no vector
         // data for rural Machakos - the Katani export produced 26 near-blank
@@ -185,6 +195,19 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
   const next = (title: string) => {
     doc.addPage();
     page(title);
+  };
+  // Section starts are recorded for the table of contents; continuation pages
+  // created by need() are not sections and must not appear in it.
+  const toc: Array<{ label: string; page: number }> = [];
+  const section = (t: string) => {
+    next(t);
+    toc.push({ label: t, page: doc.getNumberOfPages() });
+  };
+  const CATEGORY_TONES: [number, number, number][] = [PDF.green, PDF.gold, PDF.forest, PDF.goldInk];
+  const toneFor = (cat: string) => {
+    let h = 0;
+    for (const ch of cat) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+    return CATEGORY_TONES[h % CATEGORY_TONES.length];
   };
   const need = (h: number, title = "Evidence directory") => {
     if (y + h > H - 65) next(title);
@@ -311,7 +334,64 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     y = base + 29;
     meta(`Scale: ${unit}. Gaps represent missing samples, never zero.`);
   };
-  page("Location & satellite evidence");
+  // Page 1: cover. Subject, scope and provenance posture up front, before any
+  // evidence, so the report can be identified and bounded from its first page.
+  doc.setFillColor(...PDF.ivory);
+  doc.rect(0, 0, W, H, "F");
+  brandPage(doc, a.symbol);
+  doc.setFillColor(...PDF.green);
+  doc.rect(0, 0, W, 5, "F");
+  if (a.lockup) image(a.lockup, (W - 220) / 2, 110, 220, 72);
+  else {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(26);
+    doc.setTextColor(...PDF.forest);
+    doc.text("HALISIA.AI", W / 2, 160, { align: "center" });
+  }
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  doc.setTextColor(...PDF.goldInk);
+  doc.text("L A N D   P A S S P O R T", W / 2, 224, { align: "center" });
+  doc.setDrawColor(...PDF.gold);
+  doc.line(W / 2 - 60, 238, W / 2 + 60, 238);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(24);
+  doc.setTextColor(...PDF.forest);
+  const placeLines = doc.splitTextToSize(sanitize(o.place), C - 60) as string[];
+  doc.text(placeLines, W / 2, 290, { align: "center" });
+  let coverY = 290 + placeLines.length * 26;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+  doc.setTextColor(...PDF.stone2);
+  const locLines = doc.splitTextToSize(sanitize(o.locationLine), C - 100) as string[];
+  doc.text(locLines, W / 2, coverY, { align: "center" });
+  coverY += locLines.length * 15 + 8;
+  doc.setFontSize(9);
+  doc.text(`${o.positionLabel} | Generated ${o.generatedAt}`, W / 2, coverY, {
+    align: "center",
+  });
+  if (o.coords) {
+    coverY += 16;
+    doc.text(
+      `Selected coordinates ${o.coords.lat.toFixed(6)}, ${o.coords.lng.toFixed(6)}`,
+      W / 2,
+      coverY,
+      { align: "center" },
+    );
+  }
+  doc.setFontSize(8);
+  doc.setTextColor(...PDF.stone2);
+  const scopeLines = doc.splitTextToSize(
+    sanitize(
+      `Source-backed context with modelled estimates labelled by class. Coverage of the evidence checklist: ${o.coveragePct}%. This report does not establish title, ownership, a surveyed boundary, planning approval or investment return; registry and legal verification are outside its scope.`,
+    ),
+    C - 120,
+  ) as string[];
+  doc.text(scopeLines, W / 2, H - 150, { align: "center" });
+  // Page 2: table-of-contents placeholder, filled after every section has
+  // rendered so its page numbers are the true final ones.
+  next("Contents");
+  section("Location & satellite evidence");
   title(o.place);
   meta(o.locationLine);
   meta(`${o.positionLabel} | Generated ${o.generatedAt}`);
@@ -336,7 +416,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     "Imagery is location context. Estimates and conceptual diagrams are distinct from site observations. Registry, ownership and surveyed boundary verification are outside this report.",
   );
   if (o.county) {
-    next("County context");
+    section("County context");
     title(`${o.county.name} County`);
     if (a.county) {
       image(a.county, W - M - 80, y - 34, 70, 70);
@@ -375,7 +455,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
   }
   const weather = o.wave4?.weather;
   if (weather?.points.length) {
-    next("Weather forecast / MET Norway");
+    section("Weather forecast / MET Norway");
     title("Weather ahead");
     meta(
       `MET Norway / CC BY 4.0 | forecast issued ${weather.updatedAt ?? "not supplied"}. Times shown in EAT (UTC+3).`,
@@ -419,7 +499,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
   }
   const climate = o.wave4?.climate;
   if (climate?.monthly?.some((m) => m.temperatureC != null || m.rainfallMm != null)) {
-    next("Climate model / historical period");
+    section("Climate model / historical period");
     title("Climate through the year");
     meta(
       `${climate.source ?? "Regional climate model"} | ${climate.period ?? "Reference period not supplied"}. Monthly climate context, not today's weather.`,
@@ -452,7 +532,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       ]);
     }
   } else if (climate && (climate.annualRainfallMm != null || climate.meanTempC != null)) {
-    next("Climate model");
+    section("Climate snapshot");
     title("Climate snapshot");
     if (climate.annualRainfallMm != null)
       block("Mean annual rainfall", `${climate.annualRainfallMm.toFixed(0)} mm/year`);
@@ -464,7 +544,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
   }
   const g = o.geotech;
   if (g?.terrainMeasured && g.terrain) {
-    next("Terrain & regional slope model");
+    section("Terrain & regional slope model");
     title("Terrain & topography");
     if (g.elevationGrid?.values.length) {
       const values = g.elevationGrid.values;
@@ -542,7 +622,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     ]);
   }
   if (g?.soilLayers.length && g.sources.some((s) => s.used && s.label.includes("SoilGrids"))) {
-    next("Regional soil model");
+    section("Regional soil model");
     title("Soils by depth");
     meta(
       "ISRIC SoilGrids 250 m model. Coloured bands describe composition; they are not a borehole log.",
@@ -604,7 +684,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     }
   }
   if (g && !g.soilLayers.length) {
-    next("Soil data availability");
+    section("Soil data availability");
     title("Soil model unavailable");
     block(
       "ISRIC SoilGrids",
@@ -616,7 +696,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       "This is a data gap, not evidence that soil is absent. Bedrock, groundwater and foundation suitability have not been assessed. A site investigation is needed before structural design.",
     );
   }
-  next("Roads & access context");
+  section("Roads & access context");
   title("Roads & access");
   // Imagery first: it carries road geometry even where the street basemap has
   // no vector data for the area. The street layer follows, for its labels.
@@ -637,7 +717,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     meta(it.source);
   }
   if (a.amenities.length) {
-    next("Located amenities");
+    section("Located amenities");
     title("Amenities around the point");
     meta(
       "Numbered location cards use provider-reported points; distances are labelled by measurement type.",
@@ -659,7 +739,15 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       }
       y = top + 10;
       text(`${i + 1}. ${p.name}`, 11, true, PDF.forest, M + 200, C - 214);
-      text(p.category, 8, false, PDF.goldInk, M + 200, C - 214);
+      // Calm category marker: a small filled disc with the category initial,
+      // so the card type reads at a glance without pictogram clipart.
+      const catTop = y;
+      text(p.category, 8, false, PDF.goldInk, M + 214, C - 228);
+      doc.setFillColor(...toneFor(p.category));
+      doc.circle(M + 204, catTop + 6, 4.5, "F");
+      doc.setTextColor(247, 243, 234);
+      doc.setFontSize(5.5);
+      doc.text(p.category.slice(0, 1).toUpperCase(), M + 204, catTop + 8, { align: "center" });
       if (p.distanceKm != null)
         text(`${p.distanceKm.toFixed(2)} km straight-line`, 9, false, PDF.forest, M + 200, C - 214);
       if (p.driveKm != null)
@@ -706,7 +794,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     ]);
   }
   if (a.news.length) {
-    next("Recent county news / HALISIA Pulse");
+    section("Recent county news / HALISIA Pulse");
     title("Recent news in this county");
     meta(
       `${a.news.length} land-relevant stories tagged to ${o.county?.name ?? "this county"} in the HALISIA Pulse feed, newest first. County-level reporting, not parcel-specific, and not verified by HALISIA.`,
@@ -734,7 +822,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       "Headlines indicate what is being reported in the county, not what is true of this plot. Confirm anything material with the county planning office or the original publisher before relying on it.",
     ]);
   }
-  next("Sources & supporting findings");
+  section("Sources & supporting findings");
   title("Evidence directory");
   meta(
     "Measured / reference / modelled / interpretation labels describe the source, not legal verification.",
@@ -787,6 +875,33 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
   }
   meta(
     "Missing sources never establish absence, safety, ownership, approval, mineral reserves or investment returns. Political, mining and parcel-specific economic findings are omitted without supporting records.",
+  );
+  // Fill the table of contents on page 2 with the sections that actually
+  // rendered, in order, with their final page numbers. Sections appear only
+  // when their source returned data, so the contents list is also an honest
+  // map of what this export does and does not cover.
+  doc.setPage(2);
+  page("Contents");
+  title("What this report contains");
+  meta(
+    "Sections appear only when their underlying source returned data for this export. A missing section is a data gap, not a finding.",
+  );
+  y += 8;
+  for (const entry of toc) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.setTextColor(...PDF.forest);
+    doc.text(sanitize(entry.label), M, y + 11);
+    doc.setTextColor(...PDF.goldInk);
+    doc.text(String(entry.page), W - M, y + 11, { align: "right" });
+    doc.setDrawColor(...PDF.stone2);
+    doc.setLineWidth(0.4);
+    doc.line(M, y + 17, W - M, y + 17);
+    y += 26;
+  }
+  y += 10;
+  meta(
+    "Every figure is labelled by source class: measured, reference, modelled or interpretation. Imagery is location context; estimates and concept diagrams are distinct from site observations.",
   );
   const total = doc.getNumberOfPages();
   for (let n = 1; n <= total; n++) {

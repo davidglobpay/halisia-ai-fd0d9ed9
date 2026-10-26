@@ -30,6 +30,7 @@ import { getLocationIntel, type LocationIntel } from "@/lib/location-intel.funct
 import { reverseGeocode } from "@/lib/reverse-geocode.functions";
 import { runIntelligenceEngine } from "@/lib/intelligence-engine";
 import { getCountyFacts } from "@/lib/kenya-county-facts";
+import { LandPricePanel } from "@/components/halisia/land-price-panel";
 import { fetchFeed, relativeTime } from "@/lib/pulse";
 import {
   STATUS_META,
@@ -578,6 +579,14 @@ function PassportPage() {
             issues={check.issues}
           />
         </Section>
+
+        {county && (
+          <LandPricePanel
+            county={county.name}
+            subCounty={admin?.subCounty ?? undefined}
+            ward={admin?.ward ?? undefined}
+          />
+        )}
 
         {CHAPTERS.slice(1)
           .filter((ch) => byChapter(ch.id).length > 0)
