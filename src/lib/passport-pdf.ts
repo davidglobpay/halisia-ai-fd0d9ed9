@@ -777,8 +777,9 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       110 + doc.splitTextToSize(sanitize(it.value!), C - 24).length * 16,
       "Roads & access context",
     );
-    block(it.label, it.value!);
-    meta(it.source);
+      block(it.label, it.value!);
+      meta(it.source);
+    }
   }
   if (a.amenities.length) {
     section("Located amenities");
