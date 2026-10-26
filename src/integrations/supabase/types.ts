@@ -284,6 +284,39 @@ export type Database = {
           },
         ]
       }
+      boq_template: {
+        Row: {
+          created_at: string
+          finish: string
+          floor_area_m2: number
+          id: string
+          item_code: string
+          quantity: number
+          structure: string
+          typology: string
+        }
+        Insert: {
+          created_at?: string
+          finish: string
+          floor_area_m2: number
+          id?: string
+          item_code: string
+          quantity: number
+          structure: string
+          typology: string
+        }
+        Update: {
+          created_at?: string
+          finish?: string
+          floor_area_m2?: number
+          id?: string
+          item_code?: string
+          quantity?: number
+          structure?: string
+          typology?: string
+        }
+        Relationships: []
+      }
       contributions: {
         Row: {
           body: string | null
@@ -455,6 +488,87 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      labour_rate: {
+        Row: {
+          county: string | null
+          created_at: string
+          id: string
+          observed_date: string
+          rate_kes: number
+          source: string | null
+          trade: string
+          unit: string
+        }
+        Insert: {
+          county?: string | null
+          created_at?: string
+          id?: string
+          observed_date: string
+          rate_kes: number
+          source?: string | null
+          trade: string
+          unit: string
+        }
+        Update: {
+          county?: string | null
+          created_at?: string
+          id?: string
+          observed_date?: string
+          rate_kes?: number
+          source?: string | null
+          trade?: string
+          unit?: string
+        }
+        Relationships: []
+      }
+      land_price_obs: {
+        Row: {
+          county: string
+          created_at: string
+          id: string
+          lat: number | null
+          lng: number | null
+          observed_date: string
+          plot_size_sqft: number
+          price_kes: number
+          source_name: string | null
+          source_type: string
+          source_url: string | null
+          sub_county: string | null
+          ward: string | null
+        }
+        Insert: {
+          county: string
+          created_at?: string
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          observed_date: string
+          plot_size_sqft: number
+          price_kes: number
+          source_name?: string | null
+          source_type: string
+          source_url?: string | null
+          sub_county?: string | null
+          ward?: string | null
+        }
+        Update: {
+          county?: string
+          created_at?: string
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          observed_date?: string
+          plot_size_sqft?: number
+          price_kes?: number
+          source_name?: string | null
+          source_type?: string
+          source_url?: string | null
+          sub_county?: string | null
+          ward?: string | null
+        }
+        Relationships: []
       }
       leads: {
         Row: {
@@ -1545,6 +1659,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      material_price: {
+        Row: {
+          category: string | null
+          county: string | null
+          created_at: string
+          id: string
+          item_code: string
+          name: string
+          observed_date: string
+          price_kes: number
+          source_type: string
+          source_url: string | null
+          supplier: string | null
+          unit: string
+        }
+        Insert: {
+          category?: string | null
+          county?: string | null
+          created_at?: string
+          id?: string
+          item_code: string
+          name: string
+          observed_date: string
+          price_kes: number
+          source_type: string
+          source_url?: string | null
+          supplier?: string | null
+          unit: string
+        }
+        Update: {
+          category?: string | null
+          county?: string | null
+          created_at?: string
+          id?: string
+          item_code?: string
+          name?: string
+          observed_date?: string
+          price_kes?: number
+          source_type?: string
+          source_url?: string | null
+          supplier?: string | null
+          unit?: string
+        }
+        Relationships: []
       }
       news_articles: {
         Row: {

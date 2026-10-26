@@ -15,6 +15,13 @@
       "when": 1792252811212,
       "tag": "0001_harden_listing_review_and_scout_reads",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793031590649,
+      "tag": "0002_create_cost_intelligence_tables",
+      "breakpoints": true
     }
   ]
 }
