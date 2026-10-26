@@ -198,8 +198,8 @@ const SOURCE_TYPES: Record<string, string[]> = {
   land_price_obs: ["index", "listing", "user_report", "agent"],
   material_price: ["supplier_list", "quote", "receipt"],
 };
-const STRUCTURE_VALUES = [...STRUCTURES];
-const FINISH_VALUES = [...FINISHES];
+const STRUCTURE_VALUES: readonly string[] = [...STRUCTURES];
+const FINISH_VALUES: readonly string[] = [...FINISHES];
 
 export function parseCsv(csv: string): Array<Record<string, string>> {
   const lines = csv.split(/\r?\n/).filter((l) => l.trim().length > 0);
