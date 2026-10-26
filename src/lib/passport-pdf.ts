@@ -127,6 +127,7 @@ async function collectAssets(o: PassportPdfOptions): Promise<PassportPdfAssets> 
     );
     amenities.push(...batch);
   }
+  void places;
   // County news is a nice-to-have: a failure here must never cost the export.
   let news: PassportPdfAssets["news"] = [];
   if (o.county?.name) {
