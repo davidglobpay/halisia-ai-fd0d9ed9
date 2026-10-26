@@ -868,6 +868,33 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
   meta(
     "Missing sources never establish absence, safety, ownership, approval, mineral reserves or investment returns. Political, mining and parcel-specific economic findings are omitted without supporting records.",
   );
+  // Fill the table of contents on page 2 with the sections that actually
+  // rendered, in order, with their final page numbers. Sections appear only
+  // when their source returned data, so the contents list is also an honest
+  // map of what this export does and does not cover.
+  doc.setPage(2);
+  page("Contents");
+  title("What this report contains");
+  meta(
+    "Sections appear only when their underlying source returned data for this export. A missing section is a data gap, not a finding.",
+  );
+  y += 8;
+  for (const entry of toc) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.setTextColor(...PDF.forest);
+    doc.text(sanitize(entry.label), M, y + 11);
+    doc.setTextColor(...PDF.goldInk);
+    doc.text(String(entry.page), W - M, y + 11, { align: "right" });
+    doc.setDrawColor(...PDF.stone2);
+    doc.setLineWidth(0.4);
+    doc.line(M, y + 17, W - M, y + 17);
+    y += 26;
+  }
+  y += 10;
+  meta(
+    "Every figure is labelled by source class: measured, reference, modelled or interpretation. Imagery is location context; estimates and concept diagrams are distinct from site observations.",
+  );
   const total = doc.getNumberOfPages();
   for (let n = 1; n <= total; n++) {
     doc.setPage(n);
