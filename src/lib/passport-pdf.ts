@@ -99,9 +99,19 @@ async function collectAssets(o: PassportPdfOptions): Promise<PassportPdfAssets> 
         if (!isQueryCentroid(p, o.coords))
           places.push({ ...p, name: displayPlaceName(p.name), category, source: "OpenStreetMap" });
       }
+  // Google Places and Overpass frequently return the same facility twice at
+  // slightly different coordinates. Dedupe by name within ~100 m so the
+  // directory never prints the same amenity as two cards.
+  const seenPlace = new Set<string>();
+  const uniquePlaces = places.filter((p) => {
+    const key = `${p.name.trim().toLowerCase()}|${p.lat.toFixed(3)}|${p.lng.toFixed(3)}`;
+    if (seenPlace.has(key)) return false;
+    seenPlace.add(key);
+    return true;
+  });
   // Existing adapter results are bounded; preserve every located named result in the directory.
   const amenities: PassportPdfAssets["amenities"] = [];
-  for (let i = 0; i < places.length; i += 4) {
+  for (let i = 0; i < uniquePlaces.length; i += 4) {
     const batch = await Promise.all(
       places.slice(i, i + 4).map(async (p) => ({
         ...p,
