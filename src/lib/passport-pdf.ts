@@ -416,7 +416,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     "Imagery is location context. Estimates and conceptual diagrams are distinct from site observations. Registry, ownership and surveyed boundary verification are outside this report.",
   );
   if (o.county) {
-    next("County context");
+    section("County context");
     title(`${o.county.name} County`);
     if (a.county) {
       image(a.county, W - M - 80, y - 34, 70, 70);
@@ -455,7 +455,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
   }
   const weather = o.wave4?.weather;
   if (weather?.points.length) {
-    next("Weather forecast / MET Norway");
+    section("Weather forecast / MET Norway");
     title("Weather ahead");
     meta(
       `MET Norway / CC BY 4.0 | forecast issued ${weather.updatedAt ?? "not supplied"}. Times shown in EAT (UTC+3).`,
@@ -499,7 +499,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
   }
   const climate = o.wave4?.climate;
   if (climate?.monthly?.some((m) => m.temperatureC != null || m.rainfallMm != null)) {
-    next("Climate model / historical period");
+    section("Climate model / historical period");
     title("Climate through the year");
     meta(
       `${climate.source ?? "Regional climate model"} | ${climate.period ?? "Reference period not supplied"}. Monthly climate context, not today's weather.`,
@@ -532,7 +532,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       ]);
     }
   } else if (climate && (climate.annualRainfallMm != null || climate.meanTempC != null)) {
-    next("Climate model");
+    section("Climate snapshot");
     title("Climate snapshot");
     if (climate.annualRainfallMm != null)
       block("Mean annual rainfall", `${climate.annualRainfallMm.toFixed(0)} mm/year`);
@@ -544,7 +544,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
   }
   const g = o.geotech;
   if (g?.terrainMeasured && g.terrain) {
-    next("Terrain & regional slope model");
+    section("Terrain & regional slope model");
     title("Terrain & topography");
     if (g.elevationGrid?.values.length) {
       const values = g.elevationGrid.values;
@@ -622,7 +622,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     ]);
   }
   if (g?.soilLayers.length && g.sources.some((s) => s.used && s.label.includes("SoilGrids"))) {
-    next("Regional soil model");
+    section("Regional soil model");
     title("Soils by depth");
     meta(
       "ISRIC SoilGrids 250 m model. Coloured bands describe composition; they are not a borehole log.",
@@ -684,7 +684,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     }
   }
   if (g && !g.soilLayers.length) {
-    next("Soil data availability");
+    section("Soil data availability");
     title("Soil model unavailable");
     block(
       "ISRIC SoilGrids",
@@ -696,7 +696,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       "This is a data gap, not evidence that soil is absent. Bedrock, groundwater and foundation suitability have not been assessed. A site investigation is needed before structural design.",
     );
   }
-  next("Roads & access context");
+  section("Roads & access context");
   title("Roads & access");
   // Imagery first: it carries road geometry even where the street basemap has
   // no vector data for the area. The street layer follows, for its labels.
@@ -717,7 +717,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     meta(it.source);
   }
   if (a.amenities.length) {
-    next("Located amenities");
+    section("Located amenities");
     title("Amenities around the point");
     meta(
       "Numbered location cards use provider-reported points; distances are labelled by measurement type.",
@@ -786,7 +786,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     ]);
   }
   if (a.news.length) {
-    next("Recent county news / HALISIA Pulse");
+    section("Recent county news / HALISIA Pulse");
     title("Recent news in this county");
     meta(
       `${a.news.length} land-relevant stories tagged to ${o.county?.name ?? "this county"} in the HALISIA Pulse feed, newest first. County-level reporting, not parcel-specific, and not verified by HALISIA.`,
@@ -814,7 +814,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       "Headlines indicate what is being reported in the county, not what is true of this plot. Confirm anything material with the county planning office or the original publisher before relying on it.",
     ]);
   }
-  next("Sources & supporting findings");
+  section("Sources & supporting findings");
   title("Evidence directory");
   meta(
     "Measured / reference / modelled / interpretation labels describe the source, not legal verification.",
