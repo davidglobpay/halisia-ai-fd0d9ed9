@@ -5,6 +5,7 @@ import type { Database } from "@/integrations/supabase/types";
 import {
   LAND_OBSERVATION_WINDOW_MONTHS,
   costBoq,
+  parseCsvRfc4180,
   rankBudgetOptions,
   summarizeLandPrices,
   type BoqLine,
@@ -39,7 +40,9 @@ type ObsRow = LandPriceObservation;
 async function fetchObservations(filter: Record<string, string>): Promise<ObsRow[]> {
   let q = publicClient()
     .from("land_price_obs")
-    .select("county, sub_county, ward, plot_size_sqft, price_kes, source_type, observed_date")
+    .select(
+      "county, sub_county, ward, plot_size_sqft, price_kes, source_type, observed_date, include_in_median",
+    )
     .gte("observed_date", windowStart())
     .order("observed_date", { ascending: false })
     .limit(500);
@@ -51,8 +54,10 @@ async function fetchObservations(filter: Record<string, string>): Promise<ObsRow
 
 /**
  * Land price summary for a location: ward-level median per sqft over the
- * last 12 months, falling back to sub-county. Returns null when either scope
- * has fewer than 5 observations — the UI shows "Not enough priced data yet".
+ * last 12 months, falling back to sub-county. Only listing / user_report /
+ * agent rows with include_in_median feed the median; index rows come back
+ * separately as a cross-check. Returns null when either scope has fewer
+ * than 5 qualifying observations — the UI shows "Not enough priced data yet".
  */
 export const getLandPriceSummary = createServerFn({ method: "GET" })
   .inputValidator((input: { county: string; subCounty?: string; ward?: string }) => input)
@@ -81,11 +86,19 @@ export const STRUCTURES = [
 export const FINISHES = ["basic", "standard", "premium"] as const;
 export const TYPOLOGIES = ["bedsitter", "1br", "2br", "3br", "4br", "5br", "6br"] as const;
 
+export const SOURCE_TYPE_LABELS: Record<string, string> = {
+  supplier_list: "Supplier list",
+  quote: "Quote",
+  receipt: "Receipt",
+  published_guide: "Published guide",
+};
+
 /**
  * BoQ for structure × typology × finish, costed with the latest material
  * price in the county (falling back to the latest national price) plus
- * labour rates. Lines without any price come back unpriced; the total is
- * null unless at least 90% of lines are priced.
+ * labour (boq_labour days × latest labour rate, county then national).
+ * Lines without any price come back unpriced; totals are null unless at
+ * least 90% of lines are priced. Ranged prices yield low–high totals.
  */
 export const getBuildCost = createServerFn({ method: "GET" })
   .inputValidator(
@@ -95,62 +108,127 @@ export const getBuildCost = createServerFn({ method: "GET" })
     const sb = publicClient();
     const { data: template, error } = await sb
       .from("boq_template")
-      .select("item_code, quantity, floor_area_m2")
+      .select("item_code, quantity, floor_area_m2, quantity_basis")
       .eq("typology", data.typology)
       .eq("structure", data.structure)
       .eq("finish", data.finish);
     if (error) throw new Error(error.message);
     const floorArea = template?.[0]?.floor_area_m2 ?? null;
-    if (!template?.length)
-      return { lines: [] as BoqLine[], floorAreaM2: floorArea, costing: costBoq([]) };
 
-    const codes = [...new Set(template.map((t) => t.item_code))];
-    const { data: prices } = await sb
-      .from("material_price")
-      .select("item_code, name, unit, price_kes, county, source_type, observed_date")
-      .in("item_code", codes)
-      .order("observed_date", { ascending: false })
-      .limit(2000);
+    const codes = [...new Set((template ?? []).map((t) => t.item_code))];
+    const { data: prices } = codes.length
+      ? await sb
+          .from("material_price")
+          .select(
+            "item_code, name, unit, price_kes, price_kes_low, price_kes_high, county, source_type, observed_date, use_in_totals",
+          )
+          .in("item_code", codes)
+          .order("observed_date", { ascending: false })
+          .limit(2000)
+      : { data: [] };
 
-    // Latest price per item: county match wins over the national fallback.
+    // Latest usable price per item: county match wins over national fallback.
     const latest = new Map<
       string,
-      { name: string; unit: string; price_kes: number; source: string; date: string }
+      {
+        name: string;
+        unit: string;
+        price_kes: number;
+        price_kes_high: number | null;
+        source: string;
+        date: string;
+      }
     >();
     for (const p of prices ?? []) {
+      if (p.use_in_totals === false) continue;
       const existing = latest.get(p.item_code);
       const countyMatch = data.county && p.county === data.county;
       if (!existing || (countyMatch && existing.source !== `county:${data.county}`)) {
-        if (!existing || countyMatch || !latest.has(p.item_code))
-          latest.set(p.item_code, {
-            name: p.name,
-            unit: p.unit,
-            price_kes: p.price_kes,
-            source: countyMatch ? `county:${data.county}` : "national",
-            date: p.observed_date,
-          });
+        latest.set(p.item_code, {
+          name: p.name,
+          unit: p.unit,
+          price_kes: p.price_kes_low ?? p.price_kes,
+          price_kes_high: p.price_kes_high ?? null,
+          source: countyMatch ? `county:${data.county}` : "national",
+          date: p.observed_date,
+        });
       }
     }
 
-    const lines: BoqLine[] = template.map((t) => {
+    const materialLines: BoqLine[] = (template ?? []).map((t) => {
       const price = latest.get(t.item_code);
       return {
         item_code: t.item_code,
         quantity: t.quantity,
+        kind: "material",
         name: price?.name,
         unit: price?.unit,
+        quantity_basis: t.quantity_basis,
         price_kes: price?.price_kes ?? null,
+        price_kes_high: price?.price_kes_high ?? null,
         price_source: price?.source ?? null,
         price_date: price?.date ?? null,
       };
     });
+
+    // Labour: boq_labour days × latest rate for the trade (county, then national).
+    const { data: labourTemplate } = await sb
+      .from("boq_labour")
+      .select("trade, days")
+      .eq("typology", data.typology)
+      .eq("structure", data.structure)
+      .eq("finish", data.finish);
+    const trades = [...new Set((labourTemplate ?? []).map((l) => l.trade))];
+    const { data: rates } = trades.length
+      ? await sb
+          .from("labour_rate")
+          .select("trade, unit, rate_kes, rate_kes_high, county, source, observed_date")
+          .in("trade", trades)
+          .order("observed_date", { ascending: false })
+          .limit(1000)
+      : { data: [] };
+    const latestRate = new Map<
+      string,
+      { unit: string; rate_kes: number; rate_kes_high: number | null; source: string; date: string }
+    >();
+    for (const r of rates ?? []) {
+      const existing = latestRate.get(r.trade);
+      const countyMatch = data.county && r.county === data.county;
+      if (!existing || (countyMatch && existing.source !== `county:${data.county}`)) {
+        latestRate.set(r.trade, {
+          unit: r.unit,
+          rate_kes: r.rate_kes,
+          rate_kes_high: r.rate_kes_high ?? null,
+          source: countyMatch ? `county:${data.county}` : "national",
+          date: r.observed_date,
+        });
+      }
+    }
+    const labourLines: BoqLine[] = (labourTemplate ?? []).map((l) => {
+      const rate = latestRate.get(l.trade);
+      return {
+        item_code: `labour:${l.trade}`,
+        quantity: l.days,
+        kind: "labour",
+        name: `Labour — ${l.trade}`,
+        unit: rate?.unit ?? "day",
+        quantity_basis: "days",
+        price_kes: rate?.rate_kes ?? null,
+        price_kes_high: rate?.rate_kes_high ?? null,
+        price_source: rate?.source ?? null,
+        price_date: rate?.date ?? null,
+      };
+    });
+
+    const lines = [...materialLines, ...labourLines];
     return { lines, floorAreaM2: floorArea, costing: costBoq(lines) };
   });
 
 /**
  * Budget planner: wards in the county whose median land price (chosen plot
  * size, last 12 months, n≥5) plus the computed build total fit the budget.
- * Deterministic ranking only; no AI-generated prices.
+ * A ward with fewer than 5 observations falls back to its sub-county median,
+ * labelled by scope. Deterministic ranking only; no AI-generated prices.
  */
 export const getBudgetOptions = createServerFn({ method: "GET" })
   .inputValidator(
@@ -159,23 +237,52 @@ export const getBudgetOptions = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const rows = await fetchObservations({ county: data.county });
     const byWard = new Map<string, ObsRow[]>();
+    const bySubCounty = new Map<string, ObsRow[]>();
     for (const r of rows) {
-      if (!r.ward) continue;
-      const list = byWard.get(r.ward) ?? [];
-      list.push(r);
-      byWard.set(r.ward, list);
+      if (r.ward) {
+        const list = byWard.get(r.ward) ?? [];
+        list.push(r);
+        byWard.set(r.ward, list);
+      }
+      if (r.sub_county) {
+        const list = bySubCounty.get(r.sub_county) ?? [];
+        list.push(r);
+        bySubCounty.set(r.sub_county, list);
+      }
+    }
+    const subCountyMedian = new Map<string, number>();
+    for (const [sc, list] of bySubCounty) {
+      const s = summarizeLandPrices(list, "sub_county");
+      if (s) subCountyMedian.set(sc, s.medianPerSqft);
     }
     const wards = [...byWard.entries()].flatMap(([ward, list]) => {
-      const summary = summarizeLandPrices(list, "ward");
-      if (!summary) return [];
-      const perSqft = summary.medianPerSqft;
+      const wardSummary = summarizeLandPrices(list, "ward");
+      const sub = list[0].sub_county;
+      if (wardSummary) {
+        return [
+          {
+            ward,
+            sub_county: sub,
+            county: data.county,
+            scope: "ward" as const,
+            landMedian: Math.round(wardSummary.medianPerSqft * data.plotSqft),
+            landObservations: wardSummary.observations,
+          },
+        ];
+      }
+      // Ward below the n≥5 gate: fall back to the sub-county median, labelled.
+      const scMedian = sub ? subCountyMedian.get(sub) : undefined;
+      if (scMedian == null || !sub) return [];
+      const scRows = bySubCounty.get(sub) ?? [];
+      const scSummary = summarizeLandPrices(scRows, "sub_county");
       return [
         {
           ward,
-          sub_county: list[0].sub_county,
+          sub_county: sub,
           county: data.county,
-          landMedian: Math.round(perSqft * data.plotSqft),
-          landObservations: summary.observations,
+          scope: "sub_county" as const,
+          landMedian: Math.round(scMedian * data.plotSqft),
+          landObservations: scSummary?.observations ?? 0,
         },
       ];
     });
@@ -184,53 +291,116 @@ export const getBudgetOptions = createServerFn({ method: "GET" })
 
 /* ---------------- Admin CSV import ---------------- */
 
-const CSV_TABLES = ["land_price_obs", "material_price", "boq_template", "labour_rate"] as const;
+const CSV_TABLES = [
+  "land_price_obs",
+  "material_price",
+  "boq_template",
+  "boq_labour",
+  "labour_rate",
+] as const;
 type CsvTable = (typeof CSV_TABLES)[number];
+
+/** Columns each table accepts; anything else in the CSV is dropped and reported. */
+const TABLE_COLUMNS: Record<CsvTable, string[]> = {
+  land_price_obs: [
+    "county",
+    "sub_county",
+    "ward",
+    "locality",
+    "lat",
+    "lng",
+    "plot_size_sqft",
+    "price_kes",
+    "source_type",
+    "source_name",
+    "source_url",
+    "observed_date",
+    "include_in_median",
+    "quality_note",
+  ],
+  material_price: [
+    "item_code",
+    "name",
+    "unit",
+    "category",
+    "price_kes",
+    "price_kes_low",
+    "price_kes_high",
+    "supplier",
+    "county",
+    "source_type",
+    "source_url",
+    "observed_date",
+    "use_in_totals",
+    "note",
+  ],
+  boq_template: [
+    "typology",
+    "structure",
+    "finish",
+    "floor_area_m2",
+    "item_code",
+    "quantity",
+    "quantity_basis",
+  ],
+  boq_labour: ["typology", "structure", "finish", "trade", "days"],
+  labour_rate: [
+    "trade",
+    "unit",
+    "rate_kes",
+    "rate_kes_high",
+    "county",
+    "source",
+    "source_url",
+    "observed_date",
+    "note",
+  ],
+};
 
 const REQUIRED_COLUMNS: Record<CsvTable, string[]> = {
   land_price_obs: ["county", "plot_size_sqft", "price_kes", "source_type", "observed_date"],
   material_price: ["item_code", "name", "unit", "price_kes", "source_type", "observed_date"],
   boq_template: ["typology", "structure", "finish", "floor_area_m2", "item_code", "quantity"],
+  boq_labour: ["typology", "structure", "finish", "trade", "days"],
   labour_rate: ["trade", "unit", "rate_kes", "observed_date"],
 };
 
 const SOURCE_TYPES: Record<string, string[]> = {
   land_price_obs: ["index", "listing", "user_report", "agent"],
-  material_price: ["supplier_list", "quote", "receipt"],
+  material_price: ["supplier_list", "quote", "receipt", "published_guide"],
 };
 const STRUCTURE_VALUES: readonly string[] = [...STRUCTURES];
 const FINISH_VALUES: readonly string[] = [...FINISHES];
 
-export function parseCsv(csv: string): Array<Record<string, string>> {
-  const lines = csv.split(/\r?\n/).filter((l) => l.trim().length > 0);
-  if (lines.length < 2) return [];
-  const header = lines[0].split(",").map((h) => h.trim());
-  return lines.slice(1).map((line) => {
-    const cells = line.split(",").map((c) => c.trim());
-    return Object.fromEntries(header.map((h, i) => [h, cells[i] ?? ""]));
-  });
-}
+const NUMERIC_COLUMNS: Record<CsvTable, string[]> = {
+  land_price_obs: ["plot_size_sqft", "price_kes", "lat", "lng"],
+  material_price: ["price_kes", "price_kes_low", "price_kes_high"],
+  boq_template: ["floor_area_m2", "quantity"],
+  boq_labour: ["days"],
+  labour_rate: ["rate_kes", "rate_kes_high"],
+};
+const BOOLEAN_COLUMNS: Record<CsvTable, string[]> = {
+  land_price_obs: ["include_in_median"],
+  material_price: ["use_in_totals"],
+  boq_template: [],
+  boq_labour: [],
+  labour_rate: [],
+};
 
 /** Validate one CSV row for a table; returns an error string or null. */
 export function validateCsvRow(table: CsvTable, row: Record<string, string>): string | null {
   for (const col of REQUIRED_COLUMNS[table])
     if (!row[col]?.trim()) return `missing required column "${col}"`;
-  const numeric: Record<CsvTable, string[]> = {
-    land_price_obs: ["plot_size_sqft", "price_kes"],
-    material_price: ["price_kes"],
-    boq_template: ["floor_area_m2", "quantity"],
-    labour_rate: ["rate_kes"],
-  };
-  for (const col of numeric[table])
+  for (const col of REQUIRED_COLUMNS[table].filter((c) => NUMERIC_COLUMNS[table].includes(c)))
     if (!(Number(row[col]) > 0)) return `"${col}" must be a positive number`;
   const allowed = SOURCE_TYPES[table];
   if (allowed && !allowed.includes(row.source_type))
     return `source_type must be one of ${allowed.join(", ")}`;
-  if (table === "boq_template") {
+  if (table === "boq_template" || table === "boq_labour") {
     if (!STRUCTURE_VALUES.includes(row.structure)) return "unknown structure";
     if (!FINISH_VALUES.includes(row.finish)) return "unknown finish";
   }
-  if (table !== "boq_template" && !/^\d{4}-\d{2}-\d{2}$/.test(row.observed_date))
+  if (table !== "boq_template" && table !== "boq_labour" && !/^\d{4}-\d{2}-\d{2}$/.test(row.observed_date))
     return "observed_date must be YYYY-MM-DD";
   return null;
 }
@@ -246,19 +416,34 @@ export const importCostCsv = createServerFn({ method: "POST" })
     });
     if (!isAdmin) throw new Error("Forbidden: administrator role required");
 
-    const rows = parseCsv(data.csv);
+    const rows = parseCsvRfc4180(data.csv);
     if (!rows.length) throw new Error("No data rows found in the CSV");
     const errors: string[] = [];
     rows.forEach((row, i) => {
       const err = validateCsvRow(data.table, row);
       if (err) errors.push(`row ${i + 2}: ${err}`);
     });
-    if (errors.length) return { inserted: 0, rejected: errors.length, errors: errors.slice(0, 20) };
+    if (errors.length)
+      return { inserted: 0, rejected: errors.length, errors: errors.slice(0, 20), droppedColumns: [] as string[] };
 
-    const cleaned = rows.map((r) =>
-      Object.fromEntries(Object.entries(r).map(([k, v]) => [k, v === "" ? null : v])),
-    );
+    // Drop columns the table does not have, and say so in the result.
+    const allowed = new Set(TABLE_COLUMNS[data.table]);
+    const droppedColumns = [
+      ...new Set(rows.flatMap((r) => Object.keys(r).filter((k) => !allowed.has(k)))),
+    ];
+    const cleaned = rows.map((r) => {
+      const out: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(r)) {
+        if (!allowed.has(k)) continue;
+        if (v === "") continue;
+        if (NUMERIC_COLUMNS[data.table].includes(k)) out[k] = Number(v);
+        else if (BOOLEAN_COLUMNS[data.table].includes(k))
+          out[k] = ["true", "yes", "1"].includes(v.toLowerCase());
+        else out[k] = v;
+      }
+      return out;
+    });
     const { error } = await context.supabase.from(data.table).insert(cleaned as never);
     if (error) throw new Error(error.message);
-    return { inserted: rows.length, rejected: 0, errors: [] as string[] };
+    return { inserted: rows.length, rejected: 0, errors: [] as string[], droppedColumns };
   });
