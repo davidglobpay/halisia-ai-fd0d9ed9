@@ -38,8 +38,8 @@ export function LandPricePanel(props: { county: string; subCounty?: string; ward
         <>
           <p className="mt-1 text-[11px] text-muted-foreground">
             {q.data.observations} observations in the last 12 months (
-            {q.data.scope === "ward" ? "ward" : "sub-county"} scope) · newest{" "}
-            {q.data.newestDate} · sources: {q.data.sourceTypes.join(", ")}
+            {q.data.scope === "ward" ? "ward" : "sub-county"} scope) · newest {q.data.newestDate} ·
+            sources: {q.data.sourceTypes.join(", ")}
           </p>
           <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {q.data.bands.map((b) => (

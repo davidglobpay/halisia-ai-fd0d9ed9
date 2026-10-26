@@ -108,10 +108,34 @@ describe("90%-priced gate", () => {
 describe("budget ranking", () => {
   it("ranks wards by combined cost, excludes over-budget, breaks ties by name", () => {
     const wards = [
-      { ward: "B Ward", sub_county: null, county: "Kiambu", landMedian: 900_000, landObservations: 7 },
-      { ward: "A Ward", sub_county: null, county: "Kiambu", landMedian: 900_000, landObservations: 5 },
-      { ward: "C Ward", sub_county: null, county: "Kiambu", landMedian: 2_000_000, landObservations: 9 },
-      { ward: "D Ward", sub_county: null, county: "Kiambu", landMedian: 500_000, landObservations: 6 },
+      {
+        ward: "B Ward",
+        sub_county: null,
+        county: "Kiambu",
+        landMedian: 900_000,
+        landObservations: 7,
+      },
+      {
+        ward: "A Ward",
+        sub_county: null,
+        county: "Kiambu",
+        landMedian: 900_000,
+        landObservations: 5,
+      },
+      {
+        ward: "C Ward",
+        sub_county: null,
+        county: "Kiambu",
+        landMedian: 2_000_000,
+        landObservations: 9,
+      },
+      {
+        ward: "D Ward",
+        sub_county: null,
+        county: "Kiambu",
+        landMedian: 500_000,
+        landObservations: 6,
+      },
     ];
     const out = rankBudgetOptions(wards, 1_000_000, 2_000_000);
     expect(out.map((o) => o.ward)).toEqual(["D Ward", "A Ward", "B Ward"]);

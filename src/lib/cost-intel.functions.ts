@@ -212,10 +212,7 @@ export function parseCsv(csv: string): Array<Record<string, string>> {
 }
 
 /** Validate one CSV row for a table; returns an error string or null. */
-export function validateCsvRow(
-  table: CsvTable,
-  row: Record<string, string>,
-): string | null {
+export function validateCsvRow(table: CsvTable, row: Record<string, string>): string | null {
   for (const col of REQUIRED_COLUMNS[table])
     if (!row[col]?.trim()) return `missing required column "${col}"`;
   const numeric: Record<CsvTable, string[]> = {

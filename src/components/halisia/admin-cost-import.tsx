@@ -20,9 +20,11 @@ export function AdminCostImport() {
   const [table, setTable] = useState<(typeof TABLES)[number][0]>("land_price_obs");
   const [csv, setCsv] = useState("");
   const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState<{ inserted: number; rejected: number; errors: string[] } | null>(
-    null,
-  );
+  const [result, setResult] = useState<{
+    inserted: number;
+    rejected: number;
+    errors: string[];
+  } | null>(null);
 
   async function submit() {
     setBusy(true);
@@ -40,7 +42,10 @@ export function AdminCostImport() {
   }
 
   return (
-    <section className="space-y-2 rounded-xl border border-white/10 bg-white/5 p-3" data-testid="admin-cost-import">
+    <section
+      className="space-y-2 rounded-xl border border-white/10 bg-white/5 p-3"
+      data-testid="admin-cost-import"
+    >
       <h2 className="text-sm font-medium">Cost intelligence CSV import</h2>
       <p className="text-[11px] text-muted-foreground">
         Header row required. Rows are validated; anything invalid is rejected and listed.

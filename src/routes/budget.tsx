@@ -1,7 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { FINISHES, STRUCTURES, TYPOLOGIES, getBudgetOptions, getBuildCost } from "@/lib/cost-intel.functions";
+import {
+  FINISHES,
+  STRUCTURES,
+  TYPOLOGIES,
+  getBudgetOptions,
+  getBuildCost,
+} from "@/lib/cost-intel.functions";
 import { PLOT_SIZES, kes } from "@/lib/cost-intel";
 import { Surface, SectionHeading } from "@/components/halisia/ds";
 import { KENYA_COUNTY_FACTS } from "@/lib/kenya-county-facts";
@@ -18,7 +24,8 @@ export const Route = createFileRoute("/budget")({
       { property: "og:title", content: "Budget planner — HALISIA" },
       {
         property: "og:description",
-        content: "Ward ranking from observed land prices and priced BoQs; unpriced data is never estimated.",
+        content:
+          "Ward ranking from observed land prices and priced BoQs; unpriced data is never estimated.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -156,8 +163,8 @@ function BudgetPage() {
           <p className="text-xs text-muted-foreground">Ranking wards…</p>
         ) : !optionsQ.data?.length ? (
           <p className="text-sm" data-testid="bp-empty">
-            Not enough priced data yet — no ward in {county} has at least 5 recent land
-            observations within budget.
+            Not enough priced data yet — no ward in {county} has at least 5 recent land observations
+            within budget.
           </p>
         ) : (
           <table className="w-full text-xs" data-testid="bp-results">
@@ -190,8 +197,8 @@ function BudgetPage() {
         )}
       </Surface>
       <p className="mt-3 text-[11px] text-muted-foreground">
-        Market estimate, not a valuation. Land figures are medians of observed prices over the
-        last 12 months; wards with fewer than 5 observations are excluded.
+        Market estimate, not a valuation. Land figures are medians of observed prices over the last
+        12 months; wards with fewer than 5 observations are excluded.
       </p>
     </main>
   );

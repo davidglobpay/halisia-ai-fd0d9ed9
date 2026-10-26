@@ -81,7 +81,11 @@ export function summarizeLandPrices(
   return {
     scope,
     observations: usable.length,
-    newestDate: usable.map((r) => r.observed_date).sort().at(-1) ?? "",
+    newestDate:
+      usable
+        .map((r) => r.observed_date)
+        .sort()
+        .at(-1) ?? "",
     sourceTypes: [...new Set(usable.map((r) => r.source_type))].sort(),
     medianPerSqft,
     bands: PLOT_SIZES.map((plot) => ({
@@ -124,9 +128,7 @@ export function costBoq(lines: BoqLine[]): BoqCosting {
   const pricedLines = costed.filter((l) => l.lineTotal != null).length;
   const pricedShare = lines.length ? pricedLines / lines.length : 0;
   const total =
-    pricedShare >= MIN_PRICED_SHARE
-      ? costed.reduce((sum, l) => sum + (l.lineTotal ?? 0), 0)
-      : null;
+    pricedShare >= MIN_PRICED_SHARE ? costed.reduce((sum, l) => sum + (l.lineTotal ?? 0), 0) : null;
   return { lines: costed, pricedLines, totalLines: lines.length, pricedShare, total };
 }
 
@@ -165,9 +167,7 @@ export function rankBudgetOptions(
     .filter((o) => o.combined <= budget)
     .sort(
       (a, b) =>
-        a.combined - b.combined ||
-        a.county.localeCompare(b.county) ||
-        a.ward.localeCompare(b.ward),
+        a.combined - b.combined || a.county.localeCompare(b.county) || a.ward.localeCompare(b.ward),
     );
 }
 

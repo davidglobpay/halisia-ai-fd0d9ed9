@@ -1,12 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import {
-  FINISHES,
-  STRUCTURES,
-  TYPOLOGIES,
-  getBuildCost,
-} from "@/lib/cost-intel.functions";
+import { FINISHES, STRUCTURES, TYPOLOGIES, getBuildCost } from "@/lib/cost-intel.functions";
 import { kes } from "@/lib/cost-intel";
 import { Surface, SectionHeading } from "@/components/halisia/ds";
 import { KENYA_COUNTY_FACTS } from "@/lib/kenya-county-facts";
@@ -43,7 +38,8 @@ function BuildCostPage() {
 
   const costQ = useQuery({
     queryKey: ["build-cost", typology, structure, finish, county],
-    queryFn: () => getBuildCost({ data: { typology, structure, finish, county: county || undefined } }),
+    queryFn: () =>
+      getBuildCost({ data: { typology, structure, finish, county: county || undefined } }),
   });
   const comparisonQ = useQuery({
     queryKey: ["build-cost-compare", typology, finish, county],
@@ -59,8 +55,7 @@ function BuildCostPage() {
   });
 
   const effectiveArea = floorArea ?? costQ.data?.floorAreaM2 ?? null;
-  const areaScale =
-    floorArea && costQ.data?.floorAreaM2 ? floorArea / costQ.data.floorAreaM2 : 1;
+  const areaScale = floorArea && costQ.data?.floorAreaM2 ? floorArea / costQ.data.floorAreaM2 : 1;
 
   return (
     <main className="mx-auto max-w-4xl px-4 pb-28 pt-6" data-testid="build-cost-page">
@@ -216,7 +211,10 @@ function BuildCostPage() {
           <ul className="mt-2 space-y-1 text-xs">
             {(comparisonQ.data ?? [])
               .map((c) => ({ ...c, total: c.result.costing.total }))
-              .sort((a, b) => (a.total ?? Number.MAX_SAFE_INTEGER) - (b.total ?? Number.MAX_SAFE_INTEGER))
+              .sort(
+                (a, b) =>
+                  (a.total ?? Number.MAX_SAFE_INTEGER) - (b.total ?? Number.MAX_SAFE_INTEGER),
+              )
               .map((c) => (
                 <li key={c.structure} className="flex justify-between font-mono">
                   <span>{label(c.structure)}</span>
@@ -231,8 +229,8 @@ function BuildCostPage() {
         )}
       </Surface>
       <p className="mt-3 text-[11px] text-muted-foreground">
-        Market estimate, not a valuation or a contractor's quote. Computed only from observed
-        prices in the cost database.
+        Market estimate, not a valuation or a contractor's quote. Computed only from observed prices
+        in the cost database.
       </p>
     </main>
   );
