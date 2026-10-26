@@ -255,7 +255,15 @@ export const getBudgetOptions = createServerFn({ method: "GET" })
       const s = summarizeLandPrices(list, "sub_county");
       if (s) subCountyMedian.set(sc, s.medianPerSqft);
     }
-    const wards = [...byWard.entries()].flatMap(([ward, list]) => {
+    type WardOption = {
+      ward: string;
+      sub_county: string | null;
+      county: string;
+      scope: "ward" | "sub_county";
+      landMedian: number;
+      landObservations: number;
+    };
+    const wards = [...byWard.entries()].flatMap(([ward, list]): WardOption[] => {
       const wardSummary = summarizeLandPrices(list, "ward");
       const sub = list[0].sub_county;
       if (wardSummary) {
