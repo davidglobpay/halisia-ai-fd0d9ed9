@@ -11,6 +11,7 @@ import {
   type AdminRow,
 } from "@/lib/admin";
 import { AdminSecurity } from "@/components/halisia/admin-security";
+import { AdminCostImport } from "@/components/halisia/admin-cost-import";
 import { ScoutHub } from "@/components/halisia/scout-hub";
 import { ROLE_CATALOG } from "@/lib/roles";
 import { toast } from "sonner";
