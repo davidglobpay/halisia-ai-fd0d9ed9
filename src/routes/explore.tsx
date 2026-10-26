@@ -19,6 +19,8 @@ import { reverseGeocode } from "@/lib/reverse-geocode.functions";
 import { generateLocationDossier } from "@/lib/pdf-dossier";
 import { classifyMapError } from "@/lib/static-map-cache";
 import { PassportLinks } from "@/components/halisia/land-passport/passport-links";
+import { LandPricePanel } from "@/components/halisia/land-price-panel";
+import { countyForPoint } from "@/lib/passport-quality";
 import { MAP_CONTEXT_LAYERS } from "@/lib/map-evidence";
 import {
   Layers,
@@ -200,6 +202,7 @@ function Explore() {
   useEffect(() => () => stopLiveTracking(), []);
 
   const active = loc ?? DEFAULT;
+  const exploreCounty = countyForPoint(active.lat, active.lng);
 
   const applySimulatedInput = () => {
     const parsed = parseCoordQuery(simInput);
