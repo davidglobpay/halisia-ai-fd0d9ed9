@@ -378,3 +378,8 @@ export function cleanCsvRows(
     return out;
   });
 }
+
+/** Budget planner fits conservatively against the upper priced build total. */
+export function budgetBuildFigure(costing: Pick<BoqCosting, "total" | "totalHigh">): number | null {
+  return costing.totalHigh ?? costing.total;
+}

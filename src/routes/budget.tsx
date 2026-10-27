@@ -8,7 +8,7 @@ import {
   getBudgetOptions,
   getBuildCost,
 } from "@/lib/cost-intel.functions";
-import { PLOT_SIZES, kes } from "@/lib/cost-intel";
+import { PLOT_SIZES, budgetBuildFigure, kes } from "@/lib/cost-intel";
 import { Surface, SectionHeading } from "@/components/halisia/ds";
 import { KENYA_COUNTY_FACTS } from "@/lib/kenya-county-facts";
 
