@@ -26,6 +26,7 @@ type PlaceLite = {
   distanceKm?: number;
   rating?: number;
   userRatingCount?: number;
+  primaryType?: string;
   types?: string[];
   photoRef?: string;
   photoRefs?: string[];
@@ -203,7 +204,7 @@ async function fetchNearby(
       headers: {
         "Content-Type": "application/json",
         "X-Goog-FieldMask":
-          "places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.types,places.photos,places.regularOpeningHours,places.currentOpeningHours,places.nationalPhoneNumber,places.internationalPhoneNumber,places.websiteUri,places.googleMapsUri,places.businessStatus,places.priceLevel",
+          "places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.userRatingCount,places.types,places.primaryType,places.photos,places.regularOpeningHours,places.currentOpeningHours,places.nationalPhoneNumber,places.internationalPhoneNumber,places.websiteUri,places.googleMapsUri,places.businessStatus,places.priceLevel",
       },
       body: JSON.stringify({
         includedTypes,
@@ -226,6 +227,7 @@ async function fetchNearby(
         location?: { latitude: number; longitude: number };
         rating?: number;
         userRatingCount?: number;
+        primaryType?: string;
         types?: string[];
         photos?: Array<{ name: string }>;
         regularOpeningHours?: { openNow?: boolean; weekdayDescriptions?: string[] };
@@ -253,6 +255,7 @@ async function fetchNearby(
         distanceKm: loc ? haversineKm({ lat, lng }, loc) : undefined,
         rating: p.rating,
         userRatingCount: p.userRatingCount,
+        primaryType: p.primaryType,
         types: p.types,
         photoRef: photoRefs[0],
         photoRefs,
