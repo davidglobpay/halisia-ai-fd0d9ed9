@@ -59,9 +59,11 @@ function BuildCostPage() {
       ),
   });
 
-  const effectiveArea = (isFixedSizeStructure(structure) ? null : floorArea) ?? costQ.data?.floorAreaM2 ?? null;
+  const effectiveArea =
+    (isFixedSizeStructure(structure) ? null : floorArea) ?? costQ.data?.floorAreaM2 ?? null;
   const fixedSize = isFixedSizeStructure(structure);
-  const areaScale = !fixedSize && floorArea && costQ.data?.floorAreaM2 ? floorArea / costQ.data.floorAreaM2 : 1;
+  const areaScale =
+    !fixedSize && floorArea && costQ.data?.floorAreaM2 ? floorArea / costQ.data.floorAreaM2 : 1;
 
   return (
     <main className="mx-auto max-w-4xl px-4 pb-28 pt-6" data-testid="build-cost-page">
@@ -204,9 +206,7 @@ function BuildCostPage() {
                         : "—"}
                     </td>
                     <td className="py-1 text-muted-foreground">
-                      {l.price_source
-                        ? `${l.price_source} · ${l.price_date}`
-                        : "—"}
+                      {l.price_source ? `${l.price_source} · ${l.price_date}` : "—"}
                     </td>
                   </tr>
                 ))}
