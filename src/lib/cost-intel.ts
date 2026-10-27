@@ -372,7 +372,7 @@ export function cleanCsvRows(
   return rows.map((r) => {
     const out: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(r)) {
-      if (!allowed.has(k) || v === "") continue;
+      if (!allowed.has(k) || v.trim() === "") continue;
       if (numericColumns.includes(k)) out[k] = Number(v);
       else if (booleanColumns.includes(k)) out[k] = ["true", "yes", "1"].includes(v.toLowerCase());
       else out[k] = v;
