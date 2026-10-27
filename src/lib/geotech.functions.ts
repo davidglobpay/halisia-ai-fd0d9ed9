@@ -150,7 +150,16 @@ async function fetchElevGrid(lat: number, lng: number, signal?: AbortSignal) {
   return { grid: g, n, step };
 }
 
-function terrainAnalysis(g: number[][], n: number, step: number, lat: number): TerrainMetrics {
+function terrainAnalysis(
+  g: number[][],
+  n: number,
+  step: number,
+  lat: number,
+): TerrainMetrics | null {
+  // Withhold derived conclusions when the supporting raster is suspect.
+  // Raw samples remain available in elevationGrid for inspection.
+  const quality = robustRelief(g);
+  if (!quality.usable || quality.outliers.length > 0) return null;
   const mid = (n - 1) >> 1;
   const elev = g[mid][mid];
   let mn = Infinity,
@@ -236,7 +245,6 @@ export const getGeotechIntel = createServerFn({ method: "POST" })
       fetchElevGrid(lat, lng).catch(() => null),
       fetchClimate(lat, lng),
     ]);
-    const terrainMeasured = gridInfo != null;
     const terrain = gridInfo
       ? terrainAnalysis(gridInfo.grid, gridInfo.n, gridInfo.step, lat)
       : null;
@@ -258,7 +266,7 @@ export const getGeotechIntel = createServerFn({ method: "POST" })
       foundations: [],
       risks: [],
       confidence: null,
-      terrainMeasured,
+      terrainMeasured: terrain != null,
       elevationGrid: gridInfo
         ? { values: gridInfo.grid, stepDeg: gridInfo.step, source: "Open-Topo-Data ASTER30m" }
         : undefined,
