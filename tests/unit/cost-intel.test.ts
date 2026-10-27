@@ -19,6 +19,7 @@ const obs = (price: number, sqft: number, date = "2026-09-01"): LandPriceObserva
   price_kes: price,
   source_type: "listing",
   observed_date: date,
+  include_in_median: true,
 });
 
 describe("unit conversion", () => {
@@ -203,6 +204,26 @@ describe("median source filter (fix 3)", () => {
       { ...obs(1_000_000, 5000), include_in_median: false },
     ];
     expect(summarizeLandPrices(rows, "ward")).toBeNull();
+  });
+  it("excludes rows with omitted include_in_median", () => {
+    const omitted: LandPriceObservation = {
+      county: "Kajiado",
+      sub_county: "Kajiado East",
+      ward: "Kitengela",
+      plot_size_sqft: 5000,
+      price_kes: 20_000_000,
+      source_type: "listing",
+      observed_date: "2026-10-27",
+    };
+    const eligible = Array.from({ length: 4 }, () => obs(1_000_000, 5000));
+    expect(summarizeLandPrices([...eligible, omitted], "ward")).toBeNull();
+    expect(
+      summarizeLandPrices([...eligible, obs(1_000_000, 5000), omitted], "ward"),
+    ).toMatchObject({
+      observations: 5,
+      medianPerSqft: 200,
+      newestDate: "2026-09-01",
+    });
   });
   it("index rows alone never produce a median", () => {
     const rows = Array.from({ length: 8 }, () => ({

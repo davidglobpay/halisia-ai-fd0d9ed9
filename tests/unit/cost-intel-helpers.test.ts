@@ -20,6 +20,7 @@ const o = (
   price_kes: price,
   source_type: "listing",
   observed_date: "2026-09-01",
+  include_in_median: true,
   ...extra,
 });
 
@@ -88,4 +89,12 @@ describe("budget sub-county fallback decision", () => {
     );
     expect(wardLandOptions(rows, "Kajiado", 1000)).toEqual([]);
   });
+  it.each([false, undefined])(
+    "does not count include_in_median=%s toward ward or sub-county gates",
+    (include_in_median) => {
+      const eligible = [1, 2, 3, 4].map((p) => o("Isinya", "Kajiado East", p * 1000));
+      const excluded = o("Isinya", "Kajiado East", 100_000, { include_in_median });
+      expect(wardLandOptions([...eligible, excluded], "Kajiado", 1000)).toEqual([]);
+    },
+  );
 });
