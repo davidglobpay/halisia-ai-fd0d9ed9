@@ -73,12 +73,14 @@ export const Route = createFileRoute("/marketplace/")({
       { title: "Property marketplace — HALISIA AI" },
       {
         name: "description",
-        content: "Browse Kenyan property listings by county and preferences. Sources and detail completeness are distinct from legal verification.",
+        content:
+          "Browse Kenyan property listings by county and preferences. Sources and detail completeness are distinct from legal verification.",
       },
       { property: "og:title", content: "Property marketplace — HALISIA AI" },
       {
         property: "og:description",
-        content: "Browse Kenyan property listings by county and preferences. Sources and detail completeness are distinct from legal verification.",
+        content:
+          "Browse Kenyan property listings by county and preferences. Sources and detail completeness are distinct from legal verification.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

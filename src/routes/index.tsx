@@ -49,12 +49,14 @@ export const Route = createFileRoute("/")({
       { title: "HALISIA AI — Kenya land intelligence" },
       {
         name: "description",
-        content: "Explore Kenyan locations, county context and sourced land intelligence, with evidence limitations clearly identified.",
+        content:
+          "Explore Kenyan locations, county context and sourced land intelligence, with evidence limitations clearly identified.",
       },
       { property: "og:title", content: "HALISIA AI — Kenya land intelligence" },
       {
         property: "og:description",
-        content: "Explore Kenyan locations, county context and sourced land intelligence, with evidence limitations clearly identified.",
+        content:
+          "Explore Kenyan locations, county context and sourced land intelligence, with evidence limitations clearly identified.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
