@@ -85,10 +85,11 @@ async function collectAssets(o: PassportPdfOptions): Promise<PassportPdfAssets> 
   // Artwork is bundled with this build. A transient decode failure must not
   // block the user's evidence export; render the named text fallback below.
   const maps: PassportPdfAssets["maps"] = {};
-  if (o.coords)
+  const coords = o.coords;
+  if (coords)
     await Promise.all(
       (["satellite", "map", "terrain"] as const).map(async (layer) => {
-        maps[layer] = await passportMapImage(o.coords!.lat, o.coords!.lng, layer);
+        maps[layer] = await passportMapImage(coords.lat, coords.lng, layer);
       }),
     );
   const imageDeadline = Date.now() + 45_000;
@@ -684,7 +685,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
         "These are modelled monthly means for a wide grid cell over a multi-year period, not measurements at this plot and not a forecast.",
       ]);
     }
-  } else if (climate && (climate.annualRainfallMm != null || climate.meanTempC != null)) {
+  } else if (climate?.meanTempC != null) {
     section("Climate snapshot");
     title("Climate snapshot");
 
@@ -851,6 +852,9 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     meta("A mapped road does not establish legal access, road condition or a connected driveway.");
     for (const it of access) {
       need(55, "Roads & access");
+      doc.setDrawColor(...PDF.gold);
+      doc.line(M,y,W-M,y);
+      y += 5;
       text(`${it.label}: ${it.value}`, 9, true);
       meta(it.source);
     }
@@ -895,18 +899,22 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     const cardW = (C - 12) / 2,
       cardHeight = 154;
     for (let i = 0; i < a.amenities.length; i += 2) {
-      need(cardHeight + 10, "Amenities continued");
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      const nameHeight = Math.max(...a.amenities.slice(i,i+2).map(p => doc.splitTextToSize(sanitize(`${i+1}. ${p.name}`),cardW-144).length*12.15));
+      const rowHeight = Math.max(cardHeight, nameHeight+76);
+      need(rowHeight + 10, "Amenities continued");
       const top = y;
       for (let col = 0; col < 2; col++) {
         const p = a.amenities[i + col];
         if (!p) continue;
         const x = M + col * (cardW + 12);
         doc.setFillColor(...PDF.paper);
-        doc.roundedRect(x, top, cardW, cardHeight, 6, 6, "F");
+        doc.roundedRect(x, top, cardW, rowHeight, 6, 6, "F");
         if (p.image) image(p.image, x + 8, top + 8, 120, 80);
         y = top + 10;
         text(`${i + col + 1}. ${p.name}`, 9, true, PDF.forest, x + 136, cardW - 144);
-        y = top + 94;
+        y = top + Math.max(94,nameHeight+14);
         drawCategoryIcon(p.category, x + 14, y + 6);
         text(p.category, 8, false, PDF.goldInk, x + 24, cardW - 32);
         if (p.distanceKm != null)
@@ -922,7 +930,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
           text(`${p.driveKm.toFixed(2)} km driving route`, 7, false, PDF.stone2, x + 8, cardW - 16);
         text(`${p.source} | imagery: Esri; date unknown`, 6, false, PDF.stone2, x + 8, cardW - 16);
       }
-      y = top + cardHeight + 10;
+      y = top + rowHeight + 10;
     }
     const byCategory = new Map<string, number>();
     for (const p of a.amenities) {

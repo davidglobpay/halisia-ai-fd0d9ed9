@@ -132,10 +132,12 @@ export function collectLocatedAmenities(
               shopping: "groceries",
               transport: "transit",
               food: "restaurants",
+              markets: "groceries",
             } as Record<string, string>
           )[category] ?? category;
-        if (CATEGORY_TYPES[osmCategory])
-          places.push({ ...p, category: osmCategory, source: "OpenStreetMap" });
+        const facilityCategory = p.facilityType === "pharmacy" ? "pharmacy" : osmCategory;
+        if (CATEGORY_TYPES[facilityCategory])
+          places.push({ ...p, category: facilityCategory, source: "OpenStreetMap" });
       }
   return filteredAmenities(places, origin);
 }

@@ -33,6 +33,7 @@ type OverpassElement = {
 type OverpassResp = { elements: OverpassElement[] };
 
 export type Wave4Facility = {
+  facilityType?: string;
   id: string;
   name: string;
   category: string;
@@ -248,6 +249,7 @@ function extractFacilities(
     if (!key) continue;
 
     out[key].push({
+      facilityType: tags.amenity ?? tags.highway ?? tags.office,
       id: `${el.type}/${el.id}`,
       name: tags.name ?? tags["name:en"] ?? "(unnamed)",
       category: key,
