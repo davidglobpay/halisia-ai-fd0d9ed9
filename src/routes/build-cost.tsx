@@ -1,11 +1,16 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
+import {
+  SITE_STRUCTURES,
+  readLastPassportLocation,
+  siteModeSearch,
+} from "@/components/halisia/model-lab/site/site-params";
 import {
   DEFAULT_BUILD_SELECTION,
   comparisonTotalText,
   isFixedSizeStructure,
 } from "@/lib/cost-intel";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FINISHES, STRUCTURES, TYPOLOGIES, getBuildCost } from "@/lib/cost-intel.functions";
 import { kes } from "@/lib/cost-intel";
 import { Surface, SectionHeading } from "@/components/halisia/ds";
@@ -40,6 +45,8 @@ function BuildCostPage() {
   const [finish, setFinish] = useState<string>(DEFAULT_BUILD_SELECTION.finish);
   const [county, setCounty] = useState<string>("");
   const [floorArea, setFloorArea] = useState<number | null>(null);
+  const [lastLoc, setLastLoc] = useState<{ lat: number; lng: number } | null>(null);
+  useEffect(() => setLastLoc(readLastPassportLocation()), []);
 
   const costQ = useQuery({
     queryKey: ["build-cost", typology, structure, finish, county],
@@ -72,6 +79,23 @@ function BuildCostPage() {
         title="Build cost calculator"
         description="Line-item bill of quantities costed from observed material prices. Unpriced lines are greyed out, never estimated; no total is shown unless at least 90% of the BoQ is priced."
       />
+      {(SITE_STRUCTURES as readonly string[]).includes(structure) && (
+        <p className="mt-3 text-sm">
+          <Link
+            to="/model-lab"
+            search={siteModeSearch(typology, structure, lastLoc, effectiveArea)}
+            className="underline"
+            data-testid="bc-view-3d"
+          >
+            View in 3D
+          </Link>{" "}
+          <span className="text-xs text-muted-foreground">
+            {lastLoc
+              ? "Schematic massing on terrain at your last Passport location — illustrative only."
+              : "Schematic massing on a flat plane (no Passport location yet)."}
+          </span>
+        </p>
+      )}
       <div className="mt-4 flex flex-wrap gap-3">
         <label className="text-xs">
           Typology

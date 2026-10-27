@@ -23,6 +23,11 @@ import {
 } from "@/components/halisia/model-lab/device";
 import { KitButton } from "@/components/halisia/ds/button";
 import { humanBytes } from "@/components/halisia/model-lab/loader";
+import SiteViewer from "@/components/halisia/model-lab/site/site-viewer";
+import { parseSiteParams } from "@/components/halisia/model-lab/site/site-params";
+import { structureLabel } from "@/components/halisia/model-lab/site/house-spec";
+
+type ModelLabSearch = { type?: string; lat?: string; lng?: string; area?: string };
 
 export const Route = createFileRoute("/model-lab")({
   head: () => ({
@@ -43,8 +48,42 @@ export const Route = createFileRoute("/model-lab")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: ModelLabPage,
+  validateSearch: (s: Record<string, unknown>): ModelLabSearch => ({
+    type: typeof s.type === "string" ? s.type : undefined,
+    lat: typeof s.lat === "string" || typeof s.lat === "number" ? String(s.lat) : undefined,
+    lng: typeof s.lng === "string" || typeof s.lng === "number" ? String(s.lng) : undefined,
+    area: typeof s.area === "string" || typeof s.area === "number" ? String(s.area) : undefined,
+  }),
+  component: ModelLabRoute,
 });
+
+function ModelLabRoute() {
+  const search = Route.useSearch();
+  const site = useMemo(() => parseSiteParams(search), [search]);
+  if (search.type && !site) {
+    return (
+      <main className="mx-auto max-w-3xl px-4 pb-28 pt-6">
+        <h1 className="text-xl font-semibold">Site mode</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          No schematic exists for “{search.type}”. Supported: 20 ft or 40 ft container, or 3-bedroom
+          stone masonry.
+        </p>
+      </main>
+    );
+  }
+  if (site) {
+    return (
+      <main className="mx-auto max-w-5xl px-4 pb-28 pt-6" key={JSON.stringify(search)}>
+        <h1 className="text-xl font-semibold">Site mode — {structureLabel(site.structure)}</h1>
+        <p className="mb-4 mt-1 text-sm text-muted-foreground">
+          Visualization only. No parcel, boundary, title, survey or fit is implied.
+        </p>
+        <SiteViewer params={site} />
+      </main>
+    );
+  }
+  return <ModelLabPage />;
+}
 
 const DESKTOP_DEFAULT = "apartment-3";
 const MOBILE_DEFAULT = "market-day";
