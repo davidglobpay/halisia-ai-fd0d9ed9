@@ -8,6 +8,7 @@ export async function passportMapImage(
   lng: number,
   layer: EvidenceMapLayer,
   zoom = 17,
+  thumbnail = false,
 ): Promise<BrandImage | null> {
   try {
     const tiles = mapPreviewTiles({ lat, lng, accuracyM: null }, layer, zoom);
@@ -33,7 +34,8 @@ export async function passportMapImage(
     if (!ctx) return null;
     for (const { tile, image } of loaded) {
       const img = new Image();
-      img.src = image!.dataUrl;
+      if (!image) continue;
+      img.src = image.dataUrl;
       await img.decode();
       ctx.drawImage(img, 256 + tile.left, 160 + tile.top, 256, 256);
     }
@@ -45,7 +47,16 @@ export async function passportMapImage(
     ctx.arc(256, 160, 7, 0, 2 * Math.PI);
     ctx.fill();
     ctx.stroke();
-    return { dataUrl: canvas.toDataURL("image/png"), width: 512, height: 320, ratio: 1.6 };
+    if (thumbnail) {
+      const small = document.createElement("canvas");
+      small.width = 240;
+      small.height = 160;
+      const context = small.getContext("2d");
+      if (!context) return null;
+      context.drawImage(canvas, 0, 0, 240, 160);
+      return { dataUrl: small.toDataURL("image/jpeg", 0.7), width: 240, height: 160, ratio: 1.5 };
+    }
+    return { dataUrl: canvas.toDataURL("image/jpeg", 0.7), width: 512, height: 320, ratio: 1.6 };
   } catch {
     return null;
   }

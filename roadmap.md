@@ -1,5 +1,14 @@
 # Current work
 
+## Passport PDF quality (2026-10-28)
+
+- [x] Canonical amenity filtering, compact cards and matching access directory
+- [x] Compact flowing layout, correct location/climate/weather/news provenance
+- [x] Existing land-price summary, dated county officers, optional Street View
+- [x] Rule tests and requested build marker; permitted checks recorded in final reply
+- [x] Two real-coordinate signed-out partial exports inspected: Kitengela 7 pages / approximately 380 KB; Kamulu 6 pages / approximately 336 KB; content depth ≥40% except cover
+- [ ] Real Google-dependent export validation is unavailable in the agent sandbox; no publication
+
 ## Cost Intelligence regression repair and release (2026-10-27)
 
 - [x] Confirm edit branch, not main; reproduce seven fixture failures
