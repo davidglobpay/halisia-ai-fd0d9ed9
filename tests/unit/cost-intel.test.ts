@@ -217,13 +217,13 @@ describe("median source filter (fix 3)", () => {
     };
     const eligible = Array.from({ length: 4 }, () => obs(1_000_000, 5000));
     expect(summarizeLandPrices([...eligible, omitted], "ward")).toBeNull();
-    expect(
-      summarizeLandPrices([...eligible, obs(1_000_000, 5000), omitted], "ward"),
-    ).toMatchObject({
-      observations: 5,
-      medianPerSqft: 200,
-      newestDate: "2026-09-01",
-    });
+    expect(summarizeLandPrices([...eligible, obs(1_000_000, 5000), omitted], "ward")).toMatchObject(
+      {
+        observations: 5,
+        medianPerSqft: 200,
+        newestDate: "2026-09-01",
+      },
+    );
   });
   it("index rows alone never produce a median", () => {
     const rows = Array.from({ length: 8 }, () => ({
