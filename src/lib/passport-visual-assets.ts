@@ -48,12 +48,15 @@ export async function passportMapImage(
     ctx.fill();
     ctx.stroke();
     if (thumbnail) {
-      const small = document.createElement("canvas"); small.width=240; small.height=160;
-      const context=small.getContext("2d"); if (!context) return null;
-      context.drawImage(canvas,0,0,240,160);
-      return {dataUrl:small.toDataURL("image/jpeg",0.7),width:240,height:160,ratio:1.5};
+      const small = document.createElement("canvas");
+      small.width = 240;
+      small.height = 160;
+      const context = small.getContext("2d");
+      if (!context) return null;
+      context.drawImage(canvas, 0, 0, 240, 160);
+      return { dataUrl: small.toDataURL("image/jpeg", 0.7), width: 240, height: 160, ratio: 1.5 };
     }
-    return { dataUrl: canvas.toDataURL("image/jpeg",0.7), width: 512, height: 320, ratio: 1.6 };
+    return { dataUrl: canvas.toDataURL("image/jpeg", 0.7), width: 512, height: 320, ratio: 1.6 };
   } catch {
     return null;
   }

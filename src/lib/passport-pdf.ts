@@ -1,7 +1,17 @@
 import { passportLocationNews } from "./pulse.functions";
 import { landUseContext } from "./passport-land-use";
 import jsPDF from "jspdf";
-import { collectLocatedAmenities, amenityAccessItems, agreedPdfAdmin, pdfLocationLine, driveTime, distinctPdfNews, eatTimestamp, annualMonthlyRainfall, landPriceSection } from "./passport-pdf-quality";
+import {
+  collectLocatedAmenities,
+  amenityAccessItems,
+  agreedPdfAdmin,
+  pdfLocationLine,
+  driveTime,
+  distinctPdfNews,
+  eatTimestamp,
+  annualMonthlyRainfall,
+  landPriceSection,
+} from "./passport-pdf-quality";
 import type { AdminHierarchy } from "./reverse-geocode-admin";
 import type { LandPriceSummary } from "./cost-intel";
 import { landScopeLabel } from "./cost-intel";
@@ -95,7 +105,9 @@ async function collectAssets(o: PassportPdfOptions): Promise<PassportPdfAssets> 
         // detailed. Zoom 18 frames a plot and its frontage rather than two
         // kilometres of nothing.
         image:
-          Date.now() < imageDeadline ? await passportMapImage(p.lat, p.lng, "satellite", 18, true) : null,
+          Date.now() < imageDeadline
+            ? await passportMapImage(p.lat, p.lng, "satellite", 18, true)
+            : null,
         photo: null,
       })),
     );
@@ -119,31 +131,96 @@ async function collectAssets(o: PassportPdfOptions): Promise<PassportPdfAssets> 
   const admin = agreedPdfAdmin(o.admin, o.wave4?.admin?.constituency);
   let landPrices: LandPriceSummary | null = null;
   if (o.county) {
-    try { landPrices = await getLandPriceSummary({ data: {county:o.county.name, subCounty:admin.subCounty ?? undefined, ward:admin.ward ?? undefined} }); } catch { /* Optional public-price data unavailable; omit. */ }
+    try {
+      landPrices = await getLandPriceSummary({
+        data: {
+          county: o.county.name,
+          subCounty: admin.subCounty ?? undefined,
+          ward: admin.ward ?? undefined,
+        },
+      });
+    } catch {
+      /* Optional public-price data unavailable; omit. */
+    }
   }
   const streetView: NonNullable<PassportPdfAssets["streetView"]> = [];
   if (o.coords && o.admin) {
     try {
-      const result = await passportStreetView({data:o.coords});
+      const result = await passportStreetView({ data: o.coords });
       for (const view of result.images) {
         const image = await loadBrandImage(view.dataUrl);
-        if (image) streetView.push({image,date:result.date});
+        if (image) streetView.push({ image, date: result.date });
       }
-    } catch { /* Optional imagery only; never block export. */ }
+    } catch {
+      /* Optional imagery only; never block export. */
+    }
   }
-  return { lockup, symbol, county, maps, amenities, news:distinctPdfNews(news), landPrices, streetView };
+  return {
+    lockup,
+    symbol,
+    county,
+    maps,
+    amenities,
+    news: distinctPdfNews(news),
+    landPrices,
+    streetView,
+  };
 }
 
 /** Rendering separated from download for PDF layout tests with explicitly synthetic fixtures. */
 export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): jsPDF {
   const admin = agreedPdfAdmin(o.admin, o.wave4?.admin?.constituency);
-  if (o.admin) o = {...o, place:admin.locality ?? (o.coords ? `${o.coords.lat.toFixed(6)}, ${o.coords.lng.toFixed(6)}` : "Selected location"), locationLine:pdfLocationLine(admin,o.county?.name)};
-  const access = amenityAccessItems(a.amenities,o.generatedAt);
+  if (o.admin)
+    o = {
+      ...o,
+      place:
+        admin.locality ??
+        (o.coords ? `${o.coords.lat.toFixed(6)}, ${o.coords.lng.toFixed(6)}` : "Selected location"),
+      locationLine: pdfLocationLine(admin, o.county?.name),
+    };
+  const access = amenityAccessItems(a.amenities, o.generatedAt);
   const annualRain = annualMonthlyRainfall(o.wave4?.climate?.monthly);
-  const items = o.items.filter(it => it.chapter !== "access" && it.id !== "subcounty" && it.id !== "rain").map(it => it.id === "weather" ? {...it, value:o.wave4?.weather?.points[0] ? `${o.wave4.weather.points[0].temperatureC?.toFixed(1) ?? "Not supplied"} degrees C at ${eatTimestamp(o.wave4.weather.points[0].time)}` : null, retrieved:it.retrieved ? eatTimestamp(it.retrieved) : null} : it);
+  const items = o.items
+    .filter((it) => it.chapter !== "access" && it.id !== "subcounty" && it.id !== "rain")
+    .map((it) =>
+      it.id === "weather"
+        ? {
+            ...it,
+            value: o.wave4?.weather?.points[0]
+              ? `${o.wave4.weather.points[0].temperatureC?.toFixed(1) ?? "Not supplied"} degrees C at ${eatTimestamp(o.wave4.weather.points[0].time)}`
+              : null,
+            retrieved: it.retrieved ? eatTimestamp(it.retrieved) : null,
+          }
+        : it,
+    );
   items.push(...access);
-  if (admin.subCounty) items.push({id:"subcounty",chapter:"admin",label:"Sub-county / constituency",value:admin.subCounty,source:"Google reverse geocoding / OpenStreetMap",method:"Provider names agree; conflicting or missing names omitted.",usedFor:["Location hierarchy"],cls:"modelled",confidence:"medium",retrieved:o.generatedAt});
-  if (annualRain != null) items.push({id:"rain",chapter:"climate",label:"Annual rainfall (sum of monthly means)",value:`${annualRain.toFixed(0)} mm / year`,source:o.wave4?.climate.source ?? "NASA POWER",method:"Sum of twelve monthly means. NASA POWER grid cell approximately 0.5 degrees x 0.625 degrees (~55 x 70 km); nearby locations share these values.",usedFor:["Climate normals"],cls:"modelled",confidence:"medium",retrieved:o.wave4?.generatedAt ?? null});
+  if (admin.subCounty)
+    items.push({
+      id: "subcounty",
+      chapter: "admin",
+      label: "Sub-county / constituency",
+      value: admin.subCounty,
+      source: "Google reverse geocoding / OpenStreetMap",
+      method: "Provider names agree; conflicting or missing names omitted.",
+      usedFor: ["Location hierarchy"],
+      cls: "modelled",
+      confidence: "medium",
+      retrieved: o.generatedAt,
+    });
+  if (annualRain != null)
+    items.push({
+      id: "rain",
+      chapter: "climate",
+      label: "Annual rainfall (sum of monthly means)",
+      value: `${annualRain.toFixed(0)} mm / year`,
+      source: o.wave4?.climate.source ?? "NASA POWER",
+      method:
+        "Sum of twelve monthly means. NASA POWER grid cell approximately 0.5 degrees x 0.625 degrees (~55 x 70 km); nearby locations share these values.",
+      usedFor: ["Climate normals"],
+      cls: "modelled",
+      confidence: "medium",
+      retrieved: o.wave4?.generatedAt ?? null,
+    });
   const news = distinctPdfNews(a.news);
   const doc = new jsPDF({ unit: "pt", format: "a4", compress: true });
   const W = doc.internal.pageSize.getWidth(),
@@ -199,7 +276,11 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
   const toc: Array<{ label: string; page: number }> = [];
   const section = (t: string) => {
     if (doc.getNumberOfPages() === 2 || H - 65 - y < (H - 157) * 0.35) next(t);
-    else { doc.setDrawColor(...PDF.gold); doc.line(M,y+8,W-M,y+8); y += 24; }
+    else {
+      doc.setDrawColor(...PDF.gold);
+      doc.line(M, y + 8, W - M, y + 8);
+      y += 24;
+    }
     toc.push({ label: t, page: doc.getNumberOfPages() });
   };
   const CATEGORY_TONES: [number, number, number][] = [PDF.green, PDF.gold, PDF.forest, PDF.goldInk];
@@ -504,8 +585,8 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       `${o.county.constituencies} constituencies / ${o.county.wards} wards`,
     );
     block("Headquarters", o.county.headquarters);
-    text(`Governor: ${o.county.governor}`,10,true);
-    text(`Senator: ${o.county.senator}`,10,true);
+    text(`Governor: ${o.county.governor}`, 10, true);
+    text(`Senator: ${o.county.senator}`, 10, true);
     meta("Reference file — elected Aug 2022 (IEBC); verify current office-holders");
     text("Economy, farming & local livelihoods", 15, true);
     y += 8;
@@ -530,7 +611,10 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       "County reference profile, not a parcel finding or current political assessment. Emblem identifies the county; no endorsement or government integration is implied.",
     );
     y += 8;
-    need(45 + o.county.landmarks.reduce((n,v) => n + doc.splitTextToSize(sanitize(v),C).length*15,0));
+    need(
+      45 +
+        o.county.landmarks.reduce((n, v) => n + doc.splitTextToSize(sanitize(v), C).length * 15, 0),
+    );
     text("Landmarks & wider social context", 15, true);
     for (const v of o.county.landmarks) text(`+ ${v}`, 11);
   }
@@ -765,29 +849,55 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     }
   }
   if (g && !g.soilLayers.length) {
-    need(75,"Terrain & topography");
-    text("Soil model unavailable",11,true);
-    meta(g.soilStatus === "failed" ? "ISRIC SoilGrids request failed or timed out. No site investigation is implied." : "No complete soil-composition band returned. No site investigation is implied.");
+    need(75, "Terrain & topography");
+    text("Soil model unavailable", 11, true);
+    meta(
+      g.soilStatus === "failed"
+        ? "ISRIC SoilGrids request failed or timed out. No site investigation is implied."
+        : "No complete soil-composition band returned. No site investigation is implied.",
+    );
   }
   if (a.maps.map || access.length) {
     section("Roads & access context");
     title("Roads & access");
-    map("map",180);
+    map("map", 180);
     meta("A mapped road does not establish legal access, road condition or a connected driveway.");
-    for (const it of access) { need(55,"Roads & access"); text(`${it.label}: ${it.value}`,9,true); meta(it.source); }
+    for (const it of access) {
+      need(55, "Roads & access");
+      text(`${it.label}: ${it.value}`, 9, true);
+      meta(it.source);
+    }
   }
   const prices = landPriceSection(a.landPrices);
   if (prices) {
-    section("Observed land prices"); title("Observed land prices");
-    meta(`${landScopeLabel(prices.scope)} scope | n=${prices.observations} | newest ${prices.newestDate} | sources: ${prices.sourceTypes.join(", ")}`);
-    text("Plot size / low – median – high (KES)",10,true);
-    for (const band of prices.bands) text(`${band.plot.label}: ${band.low.toLocaleString("en-KE")} – ${band.median.toLocaleString("en-KE")} – ${band.high.toLocaleString("en-KE")}`,10);
-    if (prices.indexMedianPerSqft != null) meta(`Index cross-check: KES ${prices.indexMedianPerSqft.toFixed(2)} / sqft (n=${prices.indexObservations}); not included in the median.`);
-    meta("Market estimate, not a valuation. Based on eligible observations within the existing 12-month window.");
+    section("Observed land prices");
+    title("Observed land prices");
+    meta(
+      `${landScopeLabel(prices.scope)} scope | n=${prices.observations} | newest ${prices.newestDate} | sources: ${prices.sourceTypes.join(", ")}`,
+    );
+    text("Plot size / low – median – high (KES)", 10, true);
+    for (const band of prices.bands)
+      text(
+        `${band.plot.label}: ${band.low.toLocaleString("en-KE")} – ${band.median.toLocaleString("en-KE")} – ${band.high.toLocaleString("en-KE")}`,
+        10,
+      );
+    if (prices.indexMedianPerSqft != null)
+      meta(
+        `Index cross-check: KES ${prices.indexMedianPerSqft.toFixed(2)} / sqft (n=${prices.indexObservations}); not included in the median.`,
+      );
+    meta(
+      "Market estimate, not a valuation. Based on eligible observations within the existing 12-month window.",
+    );
   }
   if (a.streetView?.length) {
-    section("Street View context"); title("Street View near the pin");
-    for (const view of a.streetView.slice(0,2)) {need(165); image(view.image,M,y,C,140); y+=146; meta(`Google Street View | capture ${view.date ?? "date not supplied"} | © Google`);}
+    section("Street View context");
+    title("Street View near the pin");
+    for (const view of a.streetView.slice(0, 2)) {
+      need(165);
+      image(view.image, M, y, C, 140);
+      y += 146;
+      meta(`Google Street View | capture ${view.date ?? "date not supplied"} | © Google`);
+    }
   }
   if (a.amenities.length) {
     section("Located amenities");
@@ -795,25 +905,37 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     meta(
       "Numbered location cards use provider-reported points; distances are labelled by measurement type.",
     );
-    const cardW = (C-12)/2, cardHeight = 154;
-    for (let i=0;i<a.amenities.length;i+=2) {
-      need(cardHeight+10,"Amenities continued");
-      const top=y;
-      for (let col=0;col<2;col++) {
-        const p=a.amenities[i+col]; if (!p) continue;
-        const x=M+col*(cardW+12);
-        doc.setFillColor(...PDF.paper); doc.roundedRect(x,top,cardW,cardHeight,6,6,"F");
-        if (p.image) image(p.image,x+8,top+8,120,80);
-        y=top+10;
-        text(`${i+col+1}. ${p.name}`,9,true,PDF.forest,x+136,cardW-144);
-        y=top+94;
-        drawCategoryIcon(p.category,x+14,y+6);
-        text(p.category,8,false,PDF.goldInk,x+24,cardW-32);
-        if (p.distanceKm != null) text(`${p.distanceKm.toFixed(2)} km straight-line${p.driveMin != null ? ` | ${driveTime(p.driveMin)} drive` : ""}`,8,false,PDF.forest,x+8,cardW-16);
-        if (p.driveKm != null) text(`${p.driveKm.toFixed(2)} km driving route`,7,false,PDF.stone2,x+8,cardW-16);
-        text(`${p.source} | imagery: Esri; date unknown`,6,false,PDF.stone2,x+8,cardW-16);
+    const cardW = (C - 12) / 2,
+      cardHeight = 154;
+    for (let i = 0; i < a.amenities.length; i += 2) {
+      need(cardHeight + 10, "Amenities continued");
+      const top = y;
+      for (let col = 0; col < 2; col++) {
+        const p = a.amenities[i + col];
+        if (!p) continue;
+        const x = M + col * (cardW + 12);
+        doc.setFillColor(...PDF.paper);
+        doc.roundedRect(x, top, cardW, cardHeight, 6, 6, "F");
+        if (p.image) image(p.image, x + 8, top + 8, 120, 80);
+        y = top + 10;
+        text(`${i + col + 1}. ${p.name}`, 9, true, PDF.forest, x + 136, cardW - 144);
+        y = top + 94;
+        drawCategoryIcon(p.category, x + 14, y + 6);
+        text(p.category, 8, false, PDF.goldInk, x + 24, cardW - 32);
+        if (p.distanceKm != null)
+          text(
+            `${p.distanceKm.toFixed(2)} km straight-line${p.driveMin != null ? ` | ${driveTime(p.driveMin)} drive` : ""}`,
+            8,
+            false,
+            PDF.forest,
+            x + 8,
+            cardW - 16,
+          );
+        if (p.driveKm != null)
+          text(`${p.driveKm.toFixed(2)} km driving route`, 7, false, PDF.stone2, x + 8, cardW - 16);
+        text(`${p.source} | imagery: Esri; date unknown`, 6, false, PDF.stone2, x + 8, cardW - 16);
       }
-      y=top+cardHeight+10;
+      y = top + cardHeight + 10;
     }
     const byCategory = new Map<string, number>();
     for (const p of a.amenities) {
@@ -871,7 +993,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     const list = items.filter((it) => it.chapter === c.id && it.value);
     if (!list.length) continue;
     const first = list[0];
-    need(100 + doc.splitTextToSize(sanitize(`${first.label}: ${first.value}`),C).length*14);
+    need(100 + doc.splitTextToSize(sanitize(`${first.label}: ${first.value}`), C).length * 14);
     text(c.title, 15, true);
     y += 7;
     // Land-use considerations are printed once per section, not once per entry.
