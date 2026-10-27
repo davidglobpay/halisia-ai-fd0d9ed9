@@ -22,6 +22,7 @@ const o = (ward: string | null, sub: string | null, price: number): LandPriceObs
   price_kes: price,
   source_type: "listing",
   observed_date: new Date().toISOString().slice(0, 10),
+  include_in_median: true,
 });
 
 describe("1. sub-county rows without ward values", () => {
@@ -48,6 +49,14 @@ describe("1. sub-county rows without ward values", () => {
     const rows = [1, 2, 3, 4].map((i) => o(null, "Isinya", i * 1000));
     expect(wardLandOptions(rows, "Kajiado", 1000)).toEqual([]);
   });
+  it.each([false, undefined])(
+    "excludes include_in_median=%s from the ward-less sub-county gate",
+    (include_in_median) => {
+      const rows = [1, 2, 3, 4].map((i) => o(null, "Isinya", i * 1000));
+      rows.push({ ...o(null, "Isinya", 100_000), include_in_median });
+      expect(wardLandOptions(rows, "Kajiado", 1000)).toEqual([]);
+    },
+  );
 });
 
 describe("2. budget fits against the upper build figure", () => {

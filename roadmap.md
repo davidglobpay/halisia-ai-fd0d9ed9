@@ -1,5 +1,14 @@
 # Current work
 
+## Cost Intelligence regression repair and release (2026-10-27)
+
+- [x] Confirm edit branch, not main; reproduce seven fixture failures
+- [x] Preserve explicit inclusion rule; repair eligible fixtures and add exclusion coverage
+- [x] Format and zero-warning ESLint exit 0; full Vitest 896/896; preview build OK
+- [x] Verify real Kajiado calculator flow; 90% gate withholds totals; no browser errors
+- [ ] Separate typecheck result unavailable from permitted automatic evidence
+- [ ] Publish authorized release and inspect deployment result
+
 ## Land Passport PDF completion (2026-10-26)
 
 - [x] Add top title page + table of contents describing entire report outputs
