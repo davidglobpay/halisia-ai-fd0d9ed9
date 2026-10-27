@@ -31,6 +31,7 @@ import { reverseGeocode } from "@/lib/reverse-geocode.functions";
 import { runIntelligenceEngine } from "@/lib/intelligence-engine";
 import { getCountyFacts } from "@/lib/kenya-county-facts";
 import { LandPricePanel } from "@/components/halisia/land-price-panel";
+import { saveLastPassportLocation } from "@/components/halisia/model-lab/site/site-params";
 import { fetchFeed, relativeTime } from "@/lib/pulse";
 import {
   STATUS_META,
@@ -217,6 +218,9 @@ function PassportPage() {
   const ok = check.ok && check.lat != null && check.lng != null;
   const lat = check.lat ?? 0;
   const lng = check.lng ?? 0;
+  useEffect(() => {
+    if (ok) saveLastPassportLocation(lat, lng);
+  }, [ok, lat, lng]);
 
   const intelQ = useQuery({
     queryKey: ["passport-intel", lat, lng],
