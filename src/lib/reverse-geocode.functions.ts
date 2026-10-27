@@ -1,3 +1,4 @@
+import { adminFromGeocodeResults } from "@/lib/reverse-geocode-admin";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
@@ -41,22 +42,10 @@ export const reverseGeocode = createServerFn({ method: "POST" })
         admin: { locality: null, subCounty: null, ward: null },
       };
     }
-    // Pull the administrative hierarchy Google reports across all results.
-    const pick = (type: string) => {
-      for (const r of json.results) {
-        const c = r.address_components?.find((x) => x.types.includes(type));
-        if (c) return c.long_name;
-      }
-      return null;
-    };
     return {
       ok: true as const,
       address: json.results[0].formatted_address,
       placeId: json.results[0].place_id,
-      admin: {
-        locality: pick("locality") ?? pick("sublocality"),
-        subCounty: pick("administrative_area_level_2"),
-        ward: pick("administrative_area_level_3") ?? pick("sublocality_level_1"),
-      },
+      admin: adminFromGeocodeResults(json.results),
     };
   });

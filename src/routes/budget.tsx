@@ -8,7 +8,7 @@ import {
   getBudgetOptions,
   getBuildCost,
 } from "@/lib/cost-intel.functions";
-import { PLOT_SIZES, kes } from "@/lib/cost-intel";
+import { PLOT_SIZES, budgetBuildFigure, kes } from "@/lib/cost-intel";
 import { Surface, SectionHeading } from "@/components/halisia/ds";
 import { KENYA_COUNTY_FACTS } from "@/lib/kenya-county-facts";
 
@@ -48,7 +48,7 @@ function BudgetPage() {
     queryKey: ["budget-build", typology, structure, finish, county],
     queryFn: () => getBuildCost({ data: { typology, structure, finish, county } }),
   });
-  const buildTotal = buildQ.data?.costing.total ?? null;
+  const buildTotal = buildQ.data ? budgetBuildFigure(buildQ.data.costing) : null;
 
   const optionsQ = useQuery({
     queryKey: ["budget-options", county, budget, plotSqft, buildTotal],
@@ -172,7 +172,7 @@ function BudgetPage() {
               <tr className="text-left text-muted-foreground">
                 <th className="py-1">Ward</th>
                 <th className="py-1">Median land</th>
-                <th className="py-1">Build</th>
+                <th className="py-1">Build (upper)</th>
                 <th className="py-1">Combined</th>
                 <th className="py-1">Margin left</th>
                 <th className="py-1">n</th>
@@ -201,7 +201,8 @@ function BudgetPage() {
       </Surface>
       <p className="mt-3 text-[11px] text-muted-foreground">
         Market estimate, not a valuation. Land figures are medians of observed prices over the last
-        12 months; wards with fewer than 5 observations are excluded.
+        12 months; wards with fewer than 5 observations fall back to their sub-county median, and
+        areas with fewer than 5 observations are excluded. Build uses the upper priced estimate.
       </p>
     </main>
   );
