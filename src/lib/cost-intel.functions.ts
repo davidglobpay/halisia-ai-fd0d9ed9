@@ -187,6 +187,8 @@ export const getBuildCost = createServerFn({ method: "GET" })
           .from("labour_rate")
           .select("trade, unit, rate_kes, rate_kes_high, county, source, observed_date")
           .in("trade", trades)
+          // Only per-day rates may multiply BoQ labour days.
+          .eq("unit", "day")
           .order("observed_date", { ascending: false })
           .limit(1000)
       : { data: [] };
@@ -347,6 +349,24 @@ export function validateCsvRow(table: CsvTable, row: Record<string, string>): st
     if (!row[col]?.trim()) return `missing required column "${col}"`;
   for (const col of REQUIRED_COLUMNS[table].filter((c) => NUMERIC_COLUMNS[table].includes(c)))
     if (!(Number(row[col]) > 0)) return `"${col}" must be a positive number`;
+  for (const col of NUMERIC_COLUMNS[table]) {
+    const v = row[col]?.trim();
+    if (v && !Number.isFinite(Number(v))) return `"${col}" must be a finite number`;
+  }
+  for (const col of BOOLEAN_COLUMNS[table]) {
+    const v = row[col]?.trim();
+    if (v && !["yes", "no", "true", "false", "1", "0"].includes(v.toLowerCase()))
+      return `"${col}" must be yes/no/true/false/1/0`;
+  }
+  const num = (c: string) => (row[c]?.trim() ? Number(row[c]) : null);
+  const high = num("price_kes_high");
+  const low = num("price_kes_low") ?? num("price_kes");
+  if (table === "material_price" && high != null && low != null && high < low)
+    return "price_kes_high must not be below price_kes_low / price_kes";
+  const rateHigh = num("rate_kes_high");
+  const rate = num("rate_kes");
+  if (table === "labour_rate" && rateHigh != null && rate != null && rateHigh < rate)
+    return "rate_kes_high must not be below rate_kes";
   const allowed = SOURCE_TYPES[table];
   if (allowed && !allowed.includes(row.source_type))
     return `source_type must be one of ${allowed.join(", ")}`;

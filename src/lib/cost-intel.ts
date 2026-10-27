@@ -221,7 +221,9 @@ export function kes(n: number): string {
  * RFC-4180 CSV parser: quoted fields, embedded commas, escaped quotes (""),
  * and CRLF line endings. Returns rows keyed by the header line.
  */
-export function parseCsvRfc4180(csv: string): Array<Record<string, string>> {
+export function parseCsvRfc4180(input: string): Array<Record<string, string>> {
+  // Strip a leading UTF-8 BOM so the first header name matches its column.
+  const csv = input.charCodeAt(0) === 0xfeff ? input.slice(1) : input;
   const rows: string[][] = [];
   let field = "",
     row: string[] = [],
@@ -299,7 +301,7 @@ export function wardLandOptions(
     const s = summarizeLandPrices(list, "sub_county");
     if (s) subCountySummary.set(sc, s);
   }
-  return [...byWard.entries()].flatMap(([ward, list]): WardLandOption[] => {
+  const wardOptions = [...byWard.entries()].flatMap(([ward, list]): WardLandOption[] => {
     const wardSummary = summarizeLandPrices(list, "ward");
     const sub = list[0].sub_county;
     if (wardSummary) {
@@ -327,6 +329,25 @@ export function wardLandOptions(
       },
     ];
   });
+  // Sub-counties whose rows carry no ward at all are listed once at sub-county scope.
+  const representedSubCounties = new Set(
+    [...byWard.values()].flatMap((list) => list.map((r) => r.sub_county).filter(Boolean)),
+  );
+  const subCountyOnly: WardLandOption[] = [];
+  for (const [sc, list] of bySubCounty) {
+    if (representedSubCounties.has(sc) || list.some((r) => r.ward)) continue;
+    const s = subCountySummary.get(sc);
+    if (!s) continue;
+    subCountyOnly.push({
+      ward: sc,
+      sub_county: null,
+      county,
+      scope: "sub_county",
+      landMedian: Math.round(s.medianPerSqft * plotSqft),
+      landObservations: s.observations,
+    });
+  }
+  return [...wardOptions, ...subCountyOnly];
 }
 
 /** Columns in the parsed CSV that the target table does not have, first-seen order. */
