@@ -225,6 +225,9 @@ export function distinctPdfNews(news: PdfNews[]): PdfNews[] {
   for (const n of [...news].sort((a, b) =>
     (b.published_at ?? "").localeCompare(a.published_at ?? ""),
   )) {
+    // Syndicated Google News links can conceal a social destination; the
+    // runtime headline/source frequently supplies its host explicitly.
+    if (/\b(facebook\.com|x\.com|tiktok\.com|instagram\.com)\b/i.test(`${n.title} ${n.source_name ?? ""}`)) continue;
     try {
       if (
         n.url &&

@@ -591,19 +591,6 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     text("Economy, farming & local livelihoods", 15, true);
     y += 8;
     for (const v of o.county.economy) text(`+ ${v}`, 12);
-    // Real imagery of the surrounding area rather than stock photographs of
-    // crops or industry. Field patterns, plot sizes and built-up extent are
-    // visible in the image itself; the crop list above stays a county-level
-    // reference and is deliberately NOT presented as identified from imagery.
-    if (a.maps.satellite) {
-      y += 4;
-      need(140);
-      image(a.maps.satellite, M, y, C, 120);
-      y += 126;
-      meta(
-        "Land cover around the point - Tiles (c) Esri, Maxar. Field patterns and built-up areas are visible in the imagery; crop types above are county reference data and are not identified from this image.",
-      );
-    }
     y += 8;
     // The disclaimer sits before the variable-length landmarks list so it can
     // never spill alone onto a near-blank continuation page.
@@ -1063,6 +1050,22 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     y += 26;
   }
   y += 10;
+  const descriptions: Record<string,string> = {
+    "Location & satellite evidence":"Selected coordinates and available reference imagery; no cadastral boundary or ownership finding.",
+    "County context":"Dated county population, area, economy, landmarks and election-period office-holder reference.",
+    "Weather forecast / MET Norway":"Hourly model forecasts with timestamps in EAT; not on-site observations.",
+    "Climate model / historical period":"Monthly temperature and rainfall means over the provider reference period and grid cell.",
+    "Terrain & regional slope model":"Regional elevation samples, slope and aspect; no surveyed ground profile.",
+    "Regional soil model":"Available SoilGrids depth bands; no borehole, groundwater or bearing-capacity measurement.",
+    "Roads & access context":"Reference road map and nearest filtered facilities; no legal right-of-access assessment.",
+    "Observed land prices":"Eligible source observations by available area scope, plot-size ranges and separate index cross-check.",
+    "Street View context":"Available Google panoramas near the pin with capture date and attribution.",
+    "Located amenities":"Nearest four provider-located facilities per category, with labelled straight-line and driving estimates.",
+    "Recent county news / HALISIA Pulse":"Distinct dated county stories and additional reporting sources; not parcel evidence.",
+    "Sources & supporting findings":"Source classes, methods, timestamps, interpretations and provider availability."
+  };
+  text("Outputs included",12,true);
+  for (const entry of toc) meta(`${entry.label}: ${descriptions[entry.label] ?? "Available source-backed context with missing values omitted."}`);
   meta(
     "Every figure is labelled by source class: measured, reference, modelled or interpretation. Imagery is location context; estimates and concept diagrams are distinct from site observations.",
   );
