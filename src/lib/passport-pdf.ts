@@ -972,6 +972,9 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     ]);
   }
   section("Sources & supporting findings");
+  // A short directory is one complete list: keep its heading, findings and
+  // availability ledger together rather than leaving a short tail page.
+  if (directory.length <= 3) need(490, "Sources & supporting findings");
   title("Evidence directory");
   meta(
     "Measured / reference / modelled / interpretation labels describe the source, not legal verification.",
@@ -1049,7 +1052,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     doc.line(M, y + 17, W - M, y + 17);
     y += 26;
   }
-  y += 10;
+  y += 18;
   const descriptions: Record<string, string> = {
     "Location & satellite evidence":
       "Selected coordinates and available reference imagery; no cadastral boundary or ownership finding.",
