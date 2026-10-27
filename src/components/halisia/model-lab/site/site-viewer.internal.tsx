@@ -286,11 +286,8 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
           if (dz && !blocked(p.x, p.z + dz, feetAt(p.x, p.z + dz))) p.z += dz;
           p.x = Math.max(-95, Math.min(95, p.x));
           p.z = Math.max(-95, Math.min(95, p.z));
-          p.y = Math.max(feetAt(p.x, p.z), 0) + EYE_M;
-          if (Math.abs(p.x) < 50 && Math.abs(p.z) < 50) {
-            // Inside the house the slab is the floor.
-            p.y = Math.max(feetAt(p.x, p.z), inside(e, p.x, p.z) ? 0.1 : -Infinity) + EYE_M;
-          }
+          // Inside the house the slab is the floor.
+          p.y = Math.max(feetAt(p.x, p.z), inside(e, p.x, p.z) ? 0.1 : -Infinity) + EYE_M;
           e.camera.rotation.set(e.pitch, e.yaw, 0, "YXZ");
         } else {
           e.controls.update();
