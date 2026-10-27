@@ -108,6 +108,18 @@ describe("4. CSV import validation", () => {
     expect(validateCsvRow("labour_rate", { ...rate, rate_kes_high: "1200" })).toMatch(/high/);
     expect(validateCsvRow("labour_rate", { ...rate, rate_kes_high: "1800" })).toBeNull();
   });
+  it("treats whitespace-only optional numeric and boolean fields as empty", () => {
+    const row = { ...land, lat: "   ", include_in_median: "   " };
+    expect(validateCsvRow("land_price_obs", row)).toBeNull();
+    const cleaned = cleanCsvRows(
+      [row],
+      [...Object.keys(row)],
+      ["plot_size_sqft", "price_kes", "lat"],
+      ["include_in_median"],
+    );
+    expect(cleaned[0]).not.toHaveProperty("lat");
+    expect(cleaned[0]).not.toHaveProperty("include_in_median");
+  });
   it("valid rows import exactly as before", () => {
     expect(validateCsvRow("land_price_obs", land)).toBeNull();
     const cleaned = cleanCsvRows(
