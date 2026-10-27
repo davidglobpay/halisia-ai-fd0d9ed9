@@ -189,7 +189,8 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
     };
     const onKey = (down: boolean) => (ev: KeyboardEvent) => {
       const k = ev.key.toLowerCase();
-      if (!["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(k)) return;
+      if (!["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(k))
+        return;
       if (modeRef.current !== "walk") return;
       if (down) keys.current.add(k);
       else keys.current.delete(k);
@@ -210,7 +211,10 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
     const teleportTo = (p: THREE.Vector3) => {
       const e = eng.current;
       if (!e?.baseRef || typeof XRRigidTransform === "undefined") return;
-      const t = new XRRigidTransform({ x: -p.x, y: -p.y, z: -p.z, w: 1 }, { x: 0, y: 0, z: 0, w: 1 });
+      const t = new XRRigidTransform(
+        { x: -p.x, y: -p.y, z: -p.z, w: 1 },
+        { x: 0, y: 0, z: 0, w: 1 },
+      );
       renderer.xr.setReferenceSpace(e.baseRef.getOffsetReferenceSpace(t));
     };
     for (const i of [0, 1]) {
@@ -221,7 +225,10 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
         tmpM.identity().extractRotation(ctrl.matrixWorld);
         raycaster.ray.origin.setFromMatrixPosition(ctrl.matrixWorld);
         raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tmpM);
-        const hit = raycaster.intersectObjects([...(e.ground ? [e.ground] : []), ...e.floors], true)[0];
+        const hit = raycaster.intersectObjects(
+          [...(e.ground ? [e.ground] : []), ...e.floors],
+          true,
+        )[0];
         if (hit) teleportTo(hit.point);
       });
       scene.add(ctrl);
@@ -308,7 +315,10 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
       window.removeEventListener("keyup", ku);
       renderer.xr.removeEventListener("sessionstart", onSessionStart);
       renderer.xr.removeEventListener("sessionend", onSessionEnd);
-      void renderer.xr.getSession()?.end().catch(() => undefined);
+      void renderer.xr
+        .getSession()
+        ?.end()
+        .catch(() => undefined);
       controls.dispose();
       disposeSubtree(scene);
       renderer.dispose();
@@ -406,7 +416,9 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
       setGlbUrl(URL.createObjectURL(new Blob([glb], { type: "model/gltf-binary" })));
       try {
         const usdz = await new USDZExporter().parseAsync(e.house);
-        setUsdzUrl(URL.createObjectURL(new Blob([usdz as BlobPart], { type: "model/vnd.usdz+zip" })));
+        setUsdzUrl(
+          URL.createObjectURL(new Blob([usdz as BlobPart], { type: "model/vnd.usdz+zip" })),
+        );
       } catch {
         setUsdzUrl(null);
       }
@@ -570,7 +582,11 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
               : "no GLB generated"}
           </dd>
           <dt>Quick Look</dt>
-          <dd>{usdzUrl ? "USDZ generated" : `${QUICK_LOOK_UNAVAILABLE_MESSAGE} (QUICK_LOOK_UNAVAILABLE)`}</dd>
+          <dd>
+            {usdzUrl
+              ? "USDZ generated"
+              : `${QUICK_LOOK_UNAVAILABLE_MESSAGE} (QUICK_LOOK_UNAVAILABLE)`}
+          </dd>
           <dt>iOS AR</dt>
           <dd>unverified on device</dd>
           <dt>Platform</dt>

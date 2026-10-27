@@ -39,8 +39,7 @@ export function solarPosition(
         1.25 * e * e * Math.sin(2 * rad(m)),
     );
 
-  const utcMin =
-    date.getUTCHours() * 60 + date.getUTCMinutes() + date.getUTCSeconds() / 60;
+  const utcMin = date.getUTCHours() * 60 + date.getUTCMinutes() + date.getUTCSeconds() / 60;
   const trueSolarMin = (((utcMin + eqTime + 4 * lng) % 1440) + 1440) % 1440;
   let hourAngle = trueSolarMin / 4 - 180;
   if (hourAngle < -180) hourAngle += 360;

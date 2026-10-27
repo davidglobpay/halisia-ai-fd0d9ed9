@@ -60,7 +60,9 @@ function buildContainer(s: "container_20ft" | "container_40ft"): HouseBuild {
 
   return {
     group,
-    colliders: [new THREE.Box3(new THREE.Vector3(-L / 2, 0, -W / 2), new THREE.Vector3(L / 2, H, W / 2))],
+    colliders: [
+      new THREE.Box3(new THREE.Vector3(-L / 2, 0, -W / 2), new THREE.Vector3(L / 2, H, W / 2)),
+    ],
   };
 }
 
@@ -94,7 +96,12 @@ function buildMasonry(floorAreaM2: number | null): HouseBuild {
   const stone = mat(0xcdbf9f, 0.95);
   const win: Opening = { at: 0, width: 1.2, bottom: 0.9, top: 2.1 };
 
-  const walls: Array<{ len: number; ops: Opening[]; place: (x: number, z: number) => [number, number]; alongX: boolean }> = [
+  const walls: Array<{
+    len: number;
+    ops: Opening[];
+    place: (x: number, z: number) => [number, number];
+    alongX: boolean;
+  }> = [
     // South (front): door + two windows.
     {
       len: L,
@@ -107,7 +114,15 @@ function buildMasonry(floorAreaM2: number | null): HouseBuild {
       alongX: true,
     },
     // North: two windows.
-    { len: L, ops: [{ ...win, at: -L / 4 }, { ...win, at: L / 4 }], place: (x) => [x, -W / 2 + T / 2], alongX: true },
+    {
+      len: L,
+      ops: [
+        { ...win, at: -L / 4 },
+        { ...win, at: L / 4 },
+      ],
+      place: (x) => [x, -W / 2 + T / 2],
+      alongX: true,
+    },
     // East / West: one window each (between the long walls).
     { len: W - 2 * T, ops: [{ ...win }], place: (x) => [L / 2 - T / 2, x], alongX: false },
     { len: W - 2 * T, ops: [{ ...win }], place: (x) => [-L / 2 + T / 2, x], alongX: false },
@@ -158,8 +173,7 @@ function buildMasonry(floorAreaM2: number | null): HouseBuild {
 }
 
 export function buildHouse(structure: SiteStructure, floorAreaM2: number | null): HouseBuild {
-  const b =
-    structure === "masonry_stone" ? buildMasonry(floorAreaM2) : buildContainer(structure);
+  const b = structure === "masonry_stone" ? buildMasonry(floorAreaM2) : buildContainer(structure);
   b.group.name = `schematic-${structure}`;
   return b;
 }

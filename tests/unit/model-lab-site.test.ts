@@ -40,10 +40,18 @@ describe("solar position (NOAA)", () => {
 
 describe("container dimensions (ISO external)", () => {
   it("20 ft = 6.058 × 2.438 × 2.591 m", () => {
-    expect(CONTAINER_DIMS.container_20ft).toEqual({ lengthM: 6.058, widthM: 2.438, heightM: 2.591 });
+    expect(CONTAINER_DIMS.container_20ft).toEqual({
+      lengthM: 6.058,
+      widthM: 2.438,
+      heightM: 2.591,
+    });
   });
   it("40 ft high cube = 12.192 × 2.438 × 2.896 m", () => {
-    expect(CONTAINER_DIMS.container_40ft).toEqual({ lengthM: 12.192, widthM: 2.438, heightM: 2.896 });
+    expect(CONTAINER_DIMS.container_40ft).toEqual({
+      lengthM: 12.192,
+      widthM: 2.438,
+      heightM: 2.896,
+    });
   });
 });
 
@@ -98,7 +106,10 @@ describe("elevation grid fallback", () => {
 
 describe("site-mode URL parsing", () => {
   it("parses typology and structure", () => {
-    expect(parseSiteType("3br_masonry_stone")).toEqual({ typology: "3br", structure: "masonry_stone" });
+    expect(parseSiteType("3br_masonry_stone")).toEqual({
+      typology: "3br",
+      structure: "masonry_stone",
+    });
     expect(parseSiteType("bedsitter_container_40ft")).toEqual({
       typology: "bedsitter",
       structure: "container_40ft",
@@ -110,7 +121,9 @@ describe("site-mode URL parsing", () => {
     expect(parseSiteParams({})).toBeNull();
   });
   it("parses coordinates and drops invalid ones", () => {
-    expect(parseSiteParams({ type: "3br_masonry_stone", lat: "-1.56", lng: "36.93" })).toMatchObject({
+    expect(
+      parseSiteParams({ type: "3br_masonry_stone", lat: "-1.56", lng: "36.93" }),
+    ).toMatchObject({
       lat: -1.56,
       lng: 36.93,
     });
@@ -118,6 +131,8 @@ describe("site-mode URL parsing", () => {
       lat: null,
       lng: null,
     });
-    expect(parseSiteParams({ type: "3br_masonry_stone", lat: "-1.5" })).toMatchObject({ lat: null });
+    expect(parseSiteParams({ type: "3br_masonry_stone", lat: "-1.5" })).toMatchObject({
+      lat: null,
+    });
   });
 });

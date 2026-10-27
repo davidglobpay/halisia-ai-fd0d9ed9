@@ -16,7 +16,9 @@ export type SiteParams = {
 const TYPOLOGY_RE = /^(bedsitter|[1-6]br)$/;
 
 /** Parse `type=<typology>_<structure>`; null when unsupported. */
-export function parseSiteType(type: unknown): { typology: string; structure: SiteStructure } | null {
+export function parseSiteType(
+  type: unknown,
+): { typology: string; structure: SiteStructure } | null {
   if (typeof type !== "string") return null;
   const i = type.indexOf("_");
   if (i <= 0) return null;
