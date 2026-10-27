@@ -88,8 +88,10 @@ export function siteModeSearch(
   structure: string,
   loc: { lat: number; lng: number } | null,
   floorAreaM2?: number | null,
-): Record<string, string> {
-  const out: Record<string, string> = { type: `${typology}_${structure}` };
+): { type: string; lat?: string; lng?: string; area?: string } {
+  const out: { type: string; lat?: string; lng?: string; area?: string } = {
+    type: `${typology}_${structure}`,
+  };
   if (loc) {
     out.lat = loc.lat.toFixed(6);
     out.lng = loc.lng.toFixed(6);

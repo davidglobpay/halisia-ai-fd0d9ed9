@@ -27,6 +27,8 @@ import SiteViewer from "@/components/halisia/model-lab/site/site-viewer";
 import { parseSiteParams } from "@/components/halisia/model-lab/site/site-params";
 import { structureLabel } from "@/components/halisia/model-lab/site/house-spec";
 
+type ModelLabSearch = { type?: string; lat?: string; lng?: string; area?: string };
+
 export const Route = createFileRoute("/model-lab")({
   head: () => ({
     meta: [
@@ -46,7 +48,7 @@ export const Route = createFileRoute("/model-lab")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  validateSearch: (s: Record<string, unknown>) => ({
+  validateSearch: (s: Record<string, unknown>): ModelLabSearch => ({
     type: typeof s.type === "string" ? s.type : undefined,
     lat: typeof s.lat === "string" || typeof s.lat === "number" ? String(s.lat) : undefined,
     lng: typeof s.lng === "string" || typeof s.lng === "number" ? String(s.lng) : undefined,
