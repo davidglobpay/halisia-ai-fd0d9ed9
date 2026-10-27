@@ -227,7 +227,12 @@ export function distinctPdfNews(news: PdfNews[]): PdfNews[] {
   )) {
     // Syndicated Google News links can conceal a social destination; the
     // runtime headline/source frequently supplies its host explicitly.
-    if (/\b(facebook\.com|x\.com|tiktok\.com|instagram\.com)\b/i.test(`${n.title} ${n.source_name ?? ""}`)) continue;
+    if (
+      /\b(facebook\.com|x\.com|tiktok\.com|instagram\.com)\b/i.test(
+        `${n.title} ${n.source_name ?? ""}`,
+      )
+    )
+      continue;
     try {
       if (
         n.url &&
