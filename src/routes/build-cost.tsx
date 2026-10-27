@@ -1,4 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
+import {
+  DEFAULT_BUILD_SELECTION,
+  comparisonTotalText,
+  isFixedSizeStructure,
+} from "@/lib/cost-intel";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { FINISHES, STRUCTURES, TYPOLOGIES, getBuildCost } from "@/lib/cost-intel.functions";
@@ -30,9 +35,9 @@ export const Route = createFileRoute("/build-cost")({
 const label = (s: string) => s.replaceAll("_", " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 function BuildCostPage() {
-  const [typology, setTypology] = useState<string>("2br");
-  const [structure, setStructure] = useState<string>("masonry_stone");
-  const [finish, setFinish] = useState<string>("standard");
+  const [typology, setTypology] = useState<string>(DEFAULT_BUILD_SELECTION.typology);
+  const [structure, setStructure] = useState<string>(DEFAULT_BUILD_SELECTION.structure);
+  const [finish, setFinish] = useState<string>(DEFAULT_BUILD_SELECTION.finish);
   const [county, setCounty] = useState<string>("");
   const [floorArea, setFloorArea] = useState<number | null>(null);
 
@@ -54,8 +59,11 @@ function BuildCostPage() {
       ),
   });
 
-  const effectiveArea = floorArea ?? costQ.data?.floorAreaM2 ?? null;
-  const areaScale = floorArea && costQ.data?.floorAreaM2 ? floorArea / costQ.data.floorAreaM2 : 1;
+  const effectiveArea =
+    (isFixedSizeStructure(structure) ? null : floorArea) ?? costQ.data?.floorAreaM2 ?? null;
+  const fixedSize = isFixedSizeStructure(structure);
+  const areaScale =
+    !fixedSize && floorArea && costQ.data?.floorAreaM2 ? floorArea / costQ.data.floorAreaM2 : 1;
 
   return (
     <main className="mx-auto max-w-4xl px-4 pb-28 pt-6" data-testid="build-cost-page">
@@ -133,6 +141,8 @@ function BuildCostPage() {
             min={1}
             className="ml-2 min-h-11 w-24 rounded-lg border border-white/15 bg-background px-2"
             placeholder={costQ.data?.floorAreaM2 != null ? String(costQ.data.floorAreaM2) : "—"}
+            disabled={fixedSize}
+            title={fixedSize ? "Container units are fixed-size" : undefined}
             onChange={(e) => setFloorArea(e.target.value ? Number(e.target.value) : null)}
             data-testid="bc-area"
           />
@@ -196,9 +206,7 @@ function BuildCostPage() {
                         : "—"}
                     </td>
                     <td className="py-1 text-muted-foreground">
-                      {l.price_source
-                        ? `${l.price_source === "national" ? "National" : "County"} · ${l.price_date}`
-                        : "—"}
+                      {l.price_source ? `${l.price_source} · ${l.price_date}` : "—"}
                     </td>
                   </tr>
                 ))}
@@ -211,6 +219,11 @@ function BuildCostPage() {
                 costQ.data.costing.totalHigh > costQ.data.costing.total
                   ? ` – ${kes(costQ.data.costing.totalHigh * areaScale)}`
                   : ""}
+                {areaScale !== 1 && costQ.data.floorAreaM2 ? (
+                  <span className="block text-[11px] text-muted-foreground">
+                    scaled pro-rata from the {costQ.data.floorAreaM2} m² template
+                  </span>
+                ) : null}
               </p>
             ) : (
               <p className="mt-3 text-sm" data-testid="bc-no-total">
@@ -228,7 +241,11 @@ function BuildCostPage() {
         ) : (
           <ul className="mt-2 space-y-1 text-xs">
             {(comparisonQ.data ?? [])
-              .map((c) => ({ ...c, total: c.result.costing.total }))
+              .map((c) => ({
+                ...c,
+                total: c.result.costing.total,
+                totalHigh: c.result.costing.totalHigh,
+              }))
               .sort(
                 (a, b) =>
                   (a.total ?? Number.MAX_SAFE_INTEGER) - (b.total ?? Number.MAX_SAFE_INTEGER),
@@ -238,7 +255,7 @@ function BuildCostPage() {
                   <span>{label(c.structure)}</span>
                   <span>
                     {c.total != null
-                      ? kes(c.total)
+                      ? comparisonTotalText(c.total, c.totalHigh, kes)
                       : `${Math.round(c.result.costing.pricedShare * 100)}% priced — no total`}
                   </span>
                 </li>

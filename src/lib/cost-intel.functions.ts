@@ -10,7 +10,8 @@ import {
   isPerDayRate,
   parseCsvRfc4180,
   rankBudgetOptions,
-  summarizeLandPrices,
+  resolveLandPriceSummary,
+  provenanceLabel,
   wardLandOptions,
   type BoqLine,
   type LandPriceObservation,
@@ -58,26 +59,14 @@ async function fetchObservations(filter: Record<string, string>): Promise<ObsRow
 
 /**
  * Land price summary for a location: ward-level median per sqft over the
- * last 12 months, falling back to sub-county. Only listing / user_report /
+ * last 12 months, falling back to sub-county, then county. Only listing / user_report /
  * agent rows with include_in_median feed the median; index rows come back
- * separately as a cross-check. Returns null when either scope has fewer
+ * separately as a cross-check. Returns null when every scope has fewer
  * than 5 qualifying observations — the UI shows "Not enough priced data yet".
  */
 export const getLandPriceSummary = createServerFn({ method: "GET" })
   .inputValidator((input: { county: string; subCounty?: string; ward?: string }) => input)
-  .handler(async ({ data }) => {
-    if (data.ward) {
-      const rows = await fetchObservations({ county: data.county, ward: data.ward });
-      const summary = summarizeLandPrices(rows, "ward");
-      if (summary) return summary;
-    }
-    if (data.subCounty) {
-      const rows = await fetchObservations({ county: data.county, sub_county: data.subCounty });
-      const summary = summarizeLandPrices(rows, "sub_county");
-      if (summary) return summary;
-    }
-    return null;
-  });
+  .handler(async ({ data }) => resolveLandPriceSummary(data, fetchObservations));
 
 export const STRUCTURES = [
   "container_20ft",
@@ -140,6 +129,7 @@ export const getBuildCost = createServerFn({ method: "GET" })
         price_kes: number;
         price_kes_high: number | null;
         source: string;
+        label: string;
         date: string;
       }
     >();
@@ -154,6 +144,7 @@ export const getBuildCost = createServerFn({ method: "GET" })
           price_kes: p.price_kes_low ?? p.price_kes,
           price_kes_high: p.price_kes_high ?? null,
           source: countyMatch ? `county:${data.county}` : "national",
+          label: provenanceLabel(p.county, SOURCE_TYPE_LABELS[p.source_type] ?? p.source_type),
           date: p.observed_date,
         });
       }
@@ -170,7 +161,7 @@ export const getBuildCost = createServerFn({ method: "GET" })
         quantity_basis: t.quantity_basis,
         price_kes: price?.price_kes ?? null,
         price_kes_high: price?.price_kes_high ?? null,
-        price_source: price?.source ?? null,
+        price_source: price?.label ?? null,
         price_date: price?.date ?? null,
       };
     });
@@ -195,7 +186,14 @@ export const getBuildCost = createServerFn({ method: "GET" })
       : { data: [] };
     const latestRate = new Map<
       string,
-      { unit: string; rate_kes: number; rate_kes_high: number | null; source: string; date: string }
+      {
+        unit: string;
+        rate_kes: number;
+        rate_kes_high: number | null;
+        source: string;
+        label: string;
+        date: string;
+      }
     >();
     for (const r of rates ?? []) {
       if (!isPerDayRate(r.unit)) continue;
@@ -207,6 +205,7 @@ export const getBuildCost = createServerFn({ method: "GET" })
           rate_kes: r.rate_kes,
           rate_kes_high: r.rate_kes_high ?? null,
           source: countyMatch ? `county:${data.county}` : "national",
+          label: provenanceLabel(r.county, r.source ?? "Labour rate"),
           date: r.observed_date,
         });
       }
@@ -222,7 +221,7 @@ export const getBuildCost = createServerFn({ method: "GET" })
         quantity_basis: "days",
         price_kes: rate?.rate_kes ?? null,
         price_kes_high: rate?.rate_kes_high ?? null,
-        price_source: rate?.source ?? null,
+        price_source: rate?.label ?? null,
         price_date: rate?.date ?? null,
       };
     });

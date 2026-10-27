@@ -45,8 +45,10 @@ export type PlotPriceBand = {
   high: number;
 };
 
+export type LandPriceScope = "ward" | "sub_county" | "county";
+
 export type LandPriceSummary = {
-  scope: "ward" | "sub_county";
+  scope: LandPriceScope;
   observations: number;
   newestDate: string;
   sourceTypes: string[];
@@ -73,7 +75,7 @@ export function median(values: number[]): number {
  */
 export function summarizeLandPrices(
   rows: LandPriceObservation[],
-  scope: "ward" | "sub_county",
+  scope: LandPriceScope,
 ): LandPriceSummary | null {
   const usable = rows.filter(
     (r) =>
@@ -387,4 +389,63 @@ export function budgetBuildFigure(costing: Pick<BoqCosting, "total" | "totalHigh
 /** Only per-day labour rates may multiply BoQ labour days. */
 export function isPerDayRate(unit: string | null | undefined): boolean {
   return unit?.trim().toLowerCase() === "day";
+}
+
+/** Ordered lookup tiers for a land price summary: ward → sub-county → county. */
+export function landPriceTiers(input: {
+  county: string;
+  subCounty?: string;
+  ward?: string;
+}): { scope: LandPriceScope; filter: Record<string, string> }[] {
+  const tiers: { scope: LandPriceScope; filter: Record<string, string> }[] = [];
+  if (input.ward) tiers.push({ scope: "ward", filter: { county: input.county, ward: input.ward } });
+  if (input.subCounty)
+    tiers.push({
+      scope: "sub_county",
+      filter: { county: input.county, sub_county: input.subCounty },
+    });
+  if (input.county) tiers.push({ scope: "county", filter: { county: input.county } });
+  return tiers;
+}
+
+/** First tier whose rows pass the n≥5 gate, or null. */
+export async function resolveLandPriceSummary(
+  input: { county: string; subCounty?: string; ward?: string },
+  fetchRows: (filter: Record<string, string>) => Promise<LandPriceObservation[]>,
+): Promise<LandPriceSummary | null> {
+  for (const tier of landPriceTiers(input)) {
+    const summary = summarizeLandPrices(await fetchRows(tier.filter), tier.scope);
+    if (summary) return summary;
+  }
+  return null;
+}
+
+export function landScopeLabel(scope: LandPriceScope): string {
+  return scope === "ward" ? "ward" : scope === "sub_county" ? "sub-county" : "county";
+}
+
+/** Provenance text: the row's county (or National when null) plus source label. */
+export function provenanceLabel(county: string | null | undefined, sourceLabel: string): string {
+  return `${county ? county : "National"} · ${sourceLabel}`;
+}
+
+/** Container units are fixed-size; their floor area cannot be overridden. */
+export function isFixedSizeStructure(structure: string): boolean {
+  return structure === "container_20ft" || structure === "container_40ft";
+}
+
+/** Default selection: the combination that has a BoQ. */
+export const DEFAULT_BUILD_SELECTION = {
+  typology: "3br",
+  structure: "masonry_stone",
+  finish: "basic",
+} as const;
+
+/** Comparison text: low–high when totalHigh exceeds total. */
+export function comparisonTotalText(
+  total: number,
+  totalHigh: number | null | undefined,
+  fmt: (n: number) => string,
+): string {
+  return totalHigh != null && totalHigh > total ? `${fmt(total)}–${fmt(totalHigh)}` : fmt(total);
 }
