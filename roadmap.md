@@ -7,7 +7,8 @@
 - [x] Format and zero-warning ESLint exit 0; full Vitest 896/896; preview build OK
 - [x] Verify real Kajiado calculator flow; 90% gate withholds totals; no browser errors
 - [ ] Separate typecheck result unavailable from permitted automatic evidence
-- [ ] Publish authorized release and inspect deployment result
+- [x] Request authorized publication at halisia-ai.lovable.app
+- [ ] Deployment completion and production-build result not yet exposed
 
 ## Land Passport PDF completion (2026-10-26)
 
