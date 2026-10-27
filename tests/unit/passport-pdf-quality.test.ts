@@ -125,7 +125,9 @@ describe("Passport PDF quality rules", () => {
     ).toHaveLength(6);
   });
   it("excludes social destinations identified in syndicated headline metadata", () => {
-    expect(distinctPdfNews([article("Housing progress - facebook.com", "Google News")])).toEqual([]);
+    expect(distinctPdfNews([article("Housing progress - facebook.com", "Google News")])).toEqual(
+      [],
+    );
   });
   it("uses twelve monthly means and omits incomplete annual rainfall", () => {
     expect(annualMonthlyRainfall(Array.from({ length: 12 }, () => ({ rainfallMm: 10 })))).toBe(120);
