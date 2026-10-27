@@ -197,6 +197,7 @@ export const getBuildCost = createServerFn({ method: "GET" })
       { unit: string; rate_kes: number; rate_kes_high: number | null; source: string; date: string }
     >();
     for (const r of rates ?? []) {
+      if (!isPerDayRate(r.unit)) continue;
       const existing = latestRate.get(r.trade);
       const countyMatch = data.county && r.county === data.county;
       if (!existing || (countyMatch && existing.source !== `county:${data.county}`)) {

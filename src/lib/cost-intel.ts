@@ -383,3 +383,8 @@ export function cleanCsvRows(
 export function budgetBuildFigure(costing: Pick<BoqCosting, "total" | "totalHigh">): number | null {
   return costing.totalHigh ?? costing.total;
 }
+
+/** Only per-day labour rates may multiply BoQ labour days. */
+export function isPerDayRate(unit: string | null | undefined): boolean {
+  return unit?.trim().toLowerCase() === "day";
+}

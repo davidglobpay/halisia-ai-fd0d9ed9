@@ -18,4 +18,4 @@ export const BUILD_ID = "2026-10-26.1";
 
 /** What this build changed, in a few words. Non-sensitive by design. */
 export const BUILD_NOTE =
-  "Landing declutter, Pulse publisher veto, terrain relief correction and county-news ranking";
+  "Cost intelligence phase 1 + Land Passport PDF fixes";
