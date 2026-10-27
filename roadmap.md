@@ -1,5 +1,13 @@
 # Current work
 
+## Passport PDF quality (2026-10-28)
+
+- [ ] Canonical amenity filtering, compact cards and matching access directory
+- [ ] Compact flowing layout, correct location/climate/weather/news provenance
+- [ ] Existing land-price summary, dated county officers, optional Street View
+- [ ] Rule tests, permitted checks, two real export inspections, requested build marker
+- [ ] Real Google-dependent export validation is unavailable in the agent sandbox; no publication
+
 ## Cost Intelligence regression repair and release (2026-10-27)
 
 - [x] Confirm edit branch, not main; reproduce seven fixture failures
