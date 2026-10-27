@@ -985,10 +985,10 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       "Headlines indicate what is being reported in the county, not what is true of this plot. Confirm anything material with the county planning office or the original publisher before relying on it.",
     ]);
   }
-  section("Sources & supporting findings");
   // A short directory is one complete list: keep its heading, findings and
   // availability ledger together rather than leaving a short tail page.
   if (directory.length <= 3) need(490, "Sources & supporting findings");
+  section("Sources & supporting findings");
   title("Evidence directory");
   meta(
     "Measured / reference / modelled / interpretation labels describe the source, not legal verification.",
