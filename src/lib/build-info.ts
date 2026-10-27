@@ -17,5 +17,4 @@
 export const BUILD_ID = "2026-10-26.1";
 
 /** What this build changed, in a few words. Non-sensitive by design. */
-export const BUILD_NOTE =
-  "Cost intelligence phase 1 + Land Passport PDF fixes";
+export const BUILD_NOTE = "Cost intelligence phase 1 + Land Passport PDF fixes";
