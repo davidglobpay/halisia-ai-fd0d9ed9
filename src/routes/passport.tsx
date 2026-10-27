@@ -509,6 +509,7 @@ function PassportPage() {
             try {
               const { downloadPassportPdf } = await import("@/lib/passport-pdf");
               await downloadPassportPdf({
+                admin,
                 coords: { lat, lng },
                 county: facts,
                 intel,
