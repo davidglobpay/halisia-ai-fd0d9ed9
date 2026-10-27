@@ -88,7 +88,7 @@ export function summarizeLandPrices(
   const medianRows = usable.filter(
     (r) =>
       (MEDIAN_SOURCE_TYPES as readonly string[]).includes(r.source_type) &&
-      r.include_in_median !== false,
+      r.include_in_median === true,
   );
   const indexMedianPerSqft = indexRows.length
     ? median(indexRows.map((r) => r.price_kes / r.plot_size_sqft))
