@@ -44,6 +44,22 @@ import {
 import { previewQuote } from "@/lib/scout-pricing";
 
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "HALISIA AI — Kenya land intelligence" },
+      {
+        name: "description",
+        content: "Explore Kenyan locations, county context and sourced land intelligence, with evidence limitations clearly identified.",
+      },
+      { property: "og:title", content: "HALISIA AI — Kenya land intelligence" },
+      {
+        property: "og:description",
+        content: "Explore Kenyan locations, county context and sourced land intelligence, with evidence limitations clearly identified.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   validateSearch: (s) => z.object({ compare: fallback(z.string(), "").default("") }).parse(s),
   component: Landing,
 });

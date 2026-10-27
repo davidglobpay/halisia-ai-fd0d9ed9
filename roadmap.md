@@ -4,8 +4,10 @@
 
 - [x] Confirm edit branch, not main; reproduce seven fixture failures
 - [x] Preserve explicit inclusion rule; repair eligible fixtures and add exclusion coverage
-- [ ] Run format, zero-warning ESLint, full Vitest and inspect automatic typecheck evidence
-- [ ] Verify cost calculator flow and release blockers before publishing
+- [x] Format and zero-warning ESLint exit 0; full Vitest 896/896; preview build OK
+- [x] Verify real Kajiado calculator flow; 90% gate withholds totals; no browser errors
+- [ ] Separate typecheck result unavailable from permitted automatic evidence
+- [ ] Publish authorized release and inspect deployment result
 
 ## Land Passport PDF completion (2026-10-26)
 

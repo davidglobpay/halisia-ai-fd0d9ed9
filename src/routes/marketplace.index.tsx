@@ -68,6 +68,22 @@ const searchSchema = z.object({
 });
 
 export const Route = createFileRoute("/marketplace/")({
+  head: () => ({
+    meta: [
+      { title: "Property marketplace — HALISIA AI" },
+      {
+        name: "description",
+        content: "Browse Kenyan property listings by county and preferences. Sources and detail completeness are distinct from legal verification.",
+      },
+      { property: "og:title", content: "Property marketplace — HALISIA AI" },
+      {
+        property: "og:description",
+        content: "Browse Kenyan property listings by county and preferences. Sources and detail completeness are distinct from legal verification.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   validateSearch: (s) => searchSchema.parse(s),
   component: MarketplaceIndex,
 });
