@@ -853,7 +853,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     for (const it of access) {
       need(55, "Roads & access");
       doc.setDrawColor(...PDF.gold);
-      doc.line(M,y,W-M,y);
+      doc.line(M, y, W - M, y);
       y += 5;
       text(`${it.label}: ${it.value}`, 9, true);
       meta(it.source);
@@ -901,8 +901,14 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
     for (let i = 0; i < a.amenities.length; i += 2) {
       doc.setFontSize(9);
       doc.setFont("helvetica", "bold");
-      const nameHeight = Math.max(...a.amenities.slice(i,i+2).map(p => doc.splitTextToSize(sanitize(`${i+1}. ${p.name}`),cardW-144).length*12.15));
-      const rowHeight = Math.max(cardHeight, nameHeight+76);
+      const nameHeight = Math.max(
+        ...a.amenities
+          .slice(i, i + 2)
+          .map(
+            (p) => doc.splitTextToSize(sanitize(`${i + 1}. ${p.name}`), cardW - 144).length * 12.15,
+          ),
+      );
+      const rowHeight = Math.max(cardHeight, nameHeight + 76);
       need(rowHeight + 10, "Amenities continued");
       const top = y;
       for (let col = 0; col < 2; col++) {
@@ -914,7 +920,7 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
         if (p.image) image(p.image, x + 8, top + 8, 120, 80);
         y = top + 10;
         text(`${i + col + 1}. ${p.name}`, 9, true, PDF.forest, x + 136, cardW - 144);
-        y = top + Math.max(94,nameHeight+14);
+        y = top + Math.max(94, nameHeight + 14);
         drawCategoryIcon(p.category, x + 14, y + 6);
         text(p.category, 8, false, PDF.goldInk, x + 24, cardW - 32);
         if (p.distanceKm != null)
