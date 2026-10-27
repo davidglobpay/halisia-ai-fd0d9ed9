@@ -6,6 +6,7 @@ import {
   landPriceTiers,
   landScopeLabel,
   resolveLandPriceSummary,
+  summarizeLandPrices,
   type LandPriceObservation,
 } from "@/lib/cost-intel";
 
@@ -44,6 +45,18 @@ describe("land price fallback (1)", () => {
   it("county tier still applies the n≥5 and include_in_median rules", async () => {
     const rows = [...Array.from({ length: 4 }, () => row({})), row({ include_in_median: false })];
     expect(await resolveLandPriceSummary({ county: "Kajiado" }, async () => rows)).toBeNull();
+  });
+
+  it("requires include_in_median to be explicitly true", () => {
+    const rows = [
+      ...Array.from({ length: 4 }, () => row({ include_in_median: true })),
+      row({ include_in_median: false }),
+      row({ include_in_median: undefined }),
+    ];
+    expect(summarizeLandPrices(rows, "county")).toBeNull();
+
+    const enough = [...rows, row({ include_in_median: true })];
+    expect(summarizeLandPrices(enough, "county")?.observations).toBe(5);
   });
   it("labels all three scopes", () => {
     expect(["ward", "sub_county", "county"].map((s) => landScopeLabel(s as never))).toEqual([
