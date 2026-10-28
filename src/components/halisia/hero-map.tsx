@@ -6,6 +6,7 @@ import { PassportLinks } from "@/components/halisia/land-passport/passport-links
 import { geocodeAddress } from "@/lib/geocode.functions";
 import { classifyGeocode, STATUS_META, type LocationStatus } from "@/lib/location-validation";
 import { GlobeIntro } from "@/components/halisia/globe-intro";
+import { PARCEL_IDENTIFIER_NOTICE } from "@/lib/parcel-identifier";
 
 type Mode = "map" | "satellite" | "street";
 type Picked = {
@@ -39,7 +40,12 @@ export function HeroMap() {
     setErr(null);
     try {
       const r = await geocodeAddress({ data: { query: q } });
-      if (!r.ok) setErr("No match in Kenya. Try a town, road or estate name.");
+      if (!r.ok)
+        setErr(
+          r.reason === "parcel_identifier"
+            ? PARCEL_IDENTIFIER_NOTICE
+            : "No match in Kenya. Try a town, road or estate name.",
+        );
       else
         setPicked({
           lat: r.lat,

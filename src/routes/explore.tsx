@@ -1,5 +1,5 @@
 import { SignInPrompt } from "@/components/halisia/sign-in-prompt";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { AIOrb } from "@/components/halisia/ai-orb";
@@ -21,6 +21,7 @@ import { classifyMapError } from "@/lib/static-map-cache";
 import { PassportLinks } from "@/components/halisia/land-passport/passport-links";
 import { LandPricePanel } from "@/components/halisia/land-price-panel";
 import { countyForPoint } from "@/lib/location-validation";
+import { looksLikeParcelIdentifier, PARCEL_IDENTIFIER_NOTICE } from "@/lib/parcel-identifier";
 import { MAP_CONTEXT_LAYERS } from "@/lib/map-evidence";
 import {
   Layers,
@@ -104,6 +105,7 @@ function Explore() {
   } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [parcelIdQuery, setParcelIdQuery] = useState<string | null>(null);
   const [mapType, setMapType] = useState<MapTypeId>("roadmap");
   const [theme, setTheme] = useState<MapTheme>("dark");
   const [overlays, setOverlays] = useState<OverlayId[]>([]);
@@ -159,8 +161,14 @@ function Explore() {
 
   const runSearch = useCallback(
     async (query: string) => {
-      setLoading(true);
       setError(null);
+      setParcelIdQuery(null);
+      // A title or LR number is not an address: never geocode it into a guess.
+      if (looksLikeParcelIdentifier(query)) {
+        setParcelIdQuery(query);
+        return;
+      }
+      setLoading(true);
       try {
         // Detect "lat,lng" coordinate queries (from My Location or manual input)
         const coord = query.match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/);
@@ -286,7 +294,7 @@ function Explore() {
           <SearchBar
             size="lg"
             loading={loading}
-            placeholder="Search a town, road, plot number, coordinates…"
+            placeholder="Search a town, road, place or coordinates…"
             onSearch={(query) => {
               const next = query.trim();
               navigate({ to: "/explore", search: { q: next } });
@@ -362,6 +370,18 @@ function Explore() {
             )}
           </div>
           {error && <div className="mt-3 text-sm text-amber-glow">{error}</div>}
+          {parcelIdQuery && (
+            <div
+              className="mt-3 text-sm text-amber-glow"
+              role="status"
+              data-testid="parcel-identifier-notice"
+            >
+              {PARCEL_IDENTIFIER_NOTICE}{" "}
+              <Link to="/title-deed" className="underline underline-offset-2 font-medium">
+                Open the Title Deed tool
+              </Link>
+            </div>
+          )}
         </div>
 
         <div className="mt-6 grid lg:grid-cols-[1fr_420px] gap-4">

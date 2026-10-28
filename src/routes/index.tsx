@@ -509,7 +509,7 @@ const STEPS = [
   {
     icon: Search,
     title: "Search or drop a pin",
-    body: "Any town, road, plot number, or lat/lng in Kenya. The 3D map takes you there.",
+    body: "Any town, road, place or lat/lng in Kenya. The 3D map takes you there. Have a title deed? Use the Title Deed tool.",
   },
   {
     icon: MousePointerClick,

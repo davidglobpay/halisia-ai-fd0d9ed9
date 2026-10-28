@@ -86,7 +86,9 @@ export function SpatialSearch({
         const res = await geocodeAddress({ data: { query } });
         if (!res.ok) {
           setMessage(
-            `No parcel record or place matched “${query}”. Try an LR / title-deed number, a place name, or "lat, lng".`,
+            res.reason === "parcel_identifier"
+              ? `No parcel record you can view matches “${query}”. Title and LR numbers are matched only against parcel records, never guessed from a map search.`
+              : `No parcel record or place matched “${query}”. Try an LR / title-deed number, a place name, or "lat, lng".`,
           );
           return;
         }

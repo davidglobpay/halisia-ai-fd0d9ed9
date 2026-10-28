@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { looksLikeParcelIdentifier } from "@/lib/parcel-identifier";
 
 export const geocodeAddress = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -9,6 +10,12 @@ export const geocodeAddress = createServerFn({ method: "POST" })
     return { query: v.query.trim().slice(0, 200) };
   })
   .handler(async ({ data }) => {
+    // A title or LR number is a register entry, not an address. Geocoding it
+    // returns a town that shares a word with it, which would read as the
+    // parcel's location. Refuse before spending a lookup.
+    if (looksLikeParcelIdentifier(data.query)) {
+      return { ok: false as const, reason: "parcel_identifier" as const };
+    }
     const lovable = process.env.LOVABLE_API_KEY;
     const mapsKey = process.env.GOOGLE_MAPS_API_KEY;
     if (!lovable || !mapsKey) throw new Error("Google Maps not configured");
@@ -49,7 +56,7 @@ export const geocodeAddress = createServerFn({ method: "POST" })
       }>;
     };
     if (json.status !== "OK" || !json.results.length) {
-      return { ok: false as const };
+      return { ok: false as const, reason: "no_match" as const };
     }
     // Prefer the tightest match Google offers rather than blindly taking the
     // first. ROOFTOP is a building; APPROXIMATE is a neighbourhood.
