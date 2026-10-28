@@ -32,6 +32,7 @@ import {
 import { ListingEditor, type ListingAiWithMeta } from "@/components/halisia/listing-editor";
 import { ListingServices } from "@/components/halisia/listing-services";
 import { PassportLinks } from "@/components/halisia/land-passport/passport-links";
+import { SampleListingNotice } from "@/components/halisia/sample-listing-badge";
 
 export const Route = createFileRoute("/marketplace/$id")({
   validateSearch: (s: Record<string, unknown>): { preview?: "1" } =>
@@ -200,6 +201,7 @@ function ListingDetail() {
               {p.kind.replace("_", " ")} · {p.intent}
             </div>
             <h1 className="mt-1 text-2xl sm:text-3xl font-display font-semibold">{p.title}</h1>
+            <SampleListingNotice listing={p} />
             <div className="mt-1 text-sm text-muted-foreground flex items-center gap-1">
               <MapPin className="h-3.5 w-3.5" /> {p.address ?? p.county ?? "Kenya"}
             </div>

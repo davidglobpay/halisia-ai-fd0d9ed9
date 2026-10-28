@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
-  redact, ordersEnabled, checkOrderGates, checkDuplicate, checkAoi,
-  ringToWkt, shouldRetry, backoffMs, MAX_AOI_SQ_KM,
+  redact,
+  ordersEnabled,
+  checkOrderGates,
+  checkDuplicate,
+  checkAoi,
+  ringToWkt,
+  shouldRetry,
+  backoffMs,
+  MAX_AOI_SQ_KM,
 } from "@/lib/skyfi.server";
 
 /**
@@ -12,8 +19,10 @@ const TOKEN = "a".repeat(32) + "b".repeat(32);
 const KEY = `user@example.com:${TOKEN}`;
 
 const SQUARE = [
-  { lat: -1.3, lng: 36.8 }, { lat: -1.3, lng: 36.81 },
-  { lat: -1.29, lng: 36.81 }, { lat: -1.29, lng: 36.8 },
+  { lat: -1.3, lng: 36.8 },
+  { lat: -1.3, lng: 36.81 },
+  { lat: -1.29, lng: 36.81 },
+  { lat: -1.29, lng: 36.8 },
 ];
 
 describe("the credential never survives a path to a log", () => {
@@ -58,8 +67,11 @@ describe("spending is off unless the environment says exactly true", () => {
 describe("every order gate refuses on its own", () => {
   const ON = { SKYFI_ORDERS_ENABLED: "true" };
   const base = {
-    env: ON, quotedPriceCents: 4500, confirmedPriceCents: 4500,
-    idempotencyKey: "k1", store: new Map<string, number>(),
+    env: ON,
+    quotedPriceCents: 4500,
+    confirmedPriceCents: 4500,
+    idempotencyKey: "k1",
+    store: new Map<string, number>(),
   };
 
   it("allows an order only when all gates pass", () => {
@@ -119,7 +131,12 @@ describe("WKT", () => {
   });
 
   it("produces nothing from a shape that is not a polygon", () => {
-    expect(ringToWkt([{ lat: 1, lng: 1 }, { lat: 2, lng: 2 }])).toBeNull();
+    expect(
+      ringToWkt([
+        { lat: 1, lng: 1 },
+        { lat: 2, lng: 2 },
+      ]),
+    ).toBeNull();
   });
 });
 

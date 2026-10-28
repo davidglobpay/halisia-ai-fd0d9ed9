@@ -17,6 +17,7 @@ import { listProperties } from "@/lib/properties";
 import { formatPrice } from "@/lib/properties";
 import { PulseAudioPlayer } from "@/components/halisia/pulse-audio";
 import { HCarousel } from "@/components/halisia/ds/h-carousel";
+import { SampleListingBadge } from "@/components/halisia/sample-listing-badge";
 
 type CountyProps = { code: number; name: string };
 const COUNTIES = (countiesData as { features: { properties: CountyProps }[] }).features.map(
@@ -217,6 +218,7 @@ function ArticlePage() {
                 className="elev-1 block h-full rounded-2xl border border-white/10 p-3 hover:bg-white/5"
               >
                 <div className="text-[13px] font-semibold leading-snug">{p.title}</div>
+                <SampleListingBadge listing={p} className="mt-1" />
                 <div className="mt-1 text-[11px] text-muted-foreground">
                   {p.county ?? "Kenya"} · {formatPrice(p)}
                 </div>

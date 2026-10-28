@@ -12,8 +12,10 @@ function rect(c: LngLat, w: number, h: number): LngLat[] {
   const dLat = h / 2 / mLat;
   const dLng = w / 2 / mLng;
   return [
-    { lat: c.lat - dLat, lng: c.lng - dLng }, { lat: c.lat - dLat, lng: c.lng + dLng },
-    { lat: c.lat + dLat, lng: c.lng + dLng }, { lat: c.lat + dLat, lng: c.lng - dLng },
+    { lat: c.lat - dLat, lng: c.lng - dLng },
+    { lat: c.lat - dLat, lng: c.lng + dLng },
+    { lat: c.lat + dLat, lng: c.lng + dLng },
+    { lat: c.lat + dLat, lng: c.lng - dLng },
   ];
 }
 
@@ -58,7 +60,9 @@ describe("with no boundary, nothing is invented", () => {
 
   it("still states the imagery source and that no capture date is published", () => {
     expect(none.legend.rows.find((r) => r.label === "Imagery")).toBeDefined();
-    expect(none.legend.rows.find((r) => r.label === "Capture date")!.value).toContain("not published");
+    expect(none.legend.rows.find((r) => r.label === "Capture date")!.value).toContain(
+      "not published",
+    );
   });
 });
 

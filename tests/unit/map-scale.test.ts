@@ -1,12 +1,20 @@
 import { describe, expect, it } from "vitest";
 import {
-  metresPerPixel, niceScaleBar, formatGroundDistance, printScaleRatio,
-  zoomForGroundResolution, zoomToFitBBox, EQUATORIAL_CIRCUMFERENCE_M,
+  metresPerPixel,
+  niceScaleBar,
+  formatGroundDistance,
+  printScaleRatio,
+  zoomForGroundResolution,
+  zoomToFitBBox,
+  EQUATORIAL_CIRCUMFERENCE_M,
 } from "@/lib/map-scale";
 
 describe("metres per pixel matches the published Web Mercator table", () => {
   it.each([
-    [0, 156543.033928], [1, 78271.516964], [10, 152.874], [19, 0.29858],
+    [0, 156543.033928],
+    [1, 78271.516964],
+    [10, 152.874],
+    [19, 0.29858],
   ])("zoom %s on the equator is %s m/px", (zoom, want) => {
     expect(metresPerPixel(0, zoom as number)!).toBeCloseTo(want as number, 2);
   });
@@ -20,7 +28,12 @@ describe("metres per pixel matches the published Web Mercator table", () => {
     expect(metresPerPixel(0, 0)! * 256).toBeCloseTo(EQUATORIAL_CIRCUMFERENCE_M, 0);
   });
 
-  it.each([[91, 0], [0, -1], [0, 25], [NaN, 5]])("rejects lat %s zoom %s", (lat, zoom) => {
+  it.each([
+    [91, 0],
+    [0, -1],
+    [0, 25],
+    [NaN, 5],
+  ])("rejects lat %s zoom %s", (lat, zoom) => {
     expect(metresPerPixel(lat as number, zoom as number)).toBeNull();
   });
 });
@@ -47,10 +60,12 @@ describe("a scale bar always carries a round ground length", () => {
 });
 
 describe("ground distance labels", () => {
-  it.each([[200, "200 m"], [1000, "1 km"], [1500, "1.5 km"], [50, "50 m"]])(
-    "%s m reads as %s",
-    (m, want) => expect(formatGroundDistance(m as number)).toBe(want),
-  );
+  it.each([
+    [200, "200 m"],
+    [1000, "1 km"],
+    [1500, "1.5 km"],
+    [50, "50 m"],
+  ])("%s m reads as %s", (m, want) => expect(formatGroundDistance(m as number)).toBe(want));
 });
 
 describe("print scale", () => {
@@ -74,12 +89,20 @@ describe("choosing a zoom", () => {
   });
 
   it("frames a plot closer than a county", () => {
-    const plot = zoomToFitBBox({ west: 36.8, south: -1.3, east: 36.801, north: -1.299 }, { width: 512, height: 320 })!;
-    const county = zoomToFitBBox({ west: 36.5, south: -1.6, east: 37.2, north: -1.0 }, { width: 512, height: 320 })!;
+    const plot = zoomToFitBBox(
+      { west: 36.8, south: -1.3, east: 36.801, north: -1.299 },
+      { width: 512, height: 320 },
+    )!;
+    const county = zoomToFitBBox(
+      { west: 36.5, south: -1.6, east: 37.2, north: -1.0 },
+      { width: 512, height: 320 },
+    )!;
     expect(plot).toBeGreaterThan(county);
   });
 
   it("refuses a degenerate bounding box", () => {
-    expect(zoomToFitBBox({ west: 1, south: 1, east: 1, north: 1 }, { width: 512, height: 320 })).toBeNull();
+    expect(
+      zoomToFitBBox({ west: 1, south: 1, east: 1, north: 1 }, { width: 512, height: 320 }),
+    ).toBeNull();
   });
 });

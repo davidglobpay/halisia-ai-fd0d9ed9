@@ -24,26 +24,56 @@ export type SlopeBand = {
  * describes the gradient and nothing else.
  */
 const BANDS: readonly SlopeBand[] = [
-  { id: "level", label: "Nearly level", rangeLabel: "under 2%",
-    note: "Surface water moves slowly; drainage design matters more than earthworks." },
-  { id: "gentle", label: "Gentle", rangeLabel: "2–5%",
-    note: "Falls away enough to shed water without large cut and fill." },
-  { id: "moderate", label: "Moderate", rangeLabel: "5–10%",
-    note: "Access and platform levelling start to shape what a layout can do." },
-  { id: "strong", label: "Strong", rangeLabel: "10–15%",
-    note: "Terracing or stepped platforms are usually involved." },
-  { id: "steep", label: "Steep", rangeLabel: "over 15%",
-    note: "Earthworks and access dominate. A survey is needed before any layout." },
+  {
+    id: "level",
+    label: "Nearly level",
+    rangeLabel: "under 2%",
+    note: "Surface water moves slowly; drainage design matters more than earthworks.",
+  },
+  {
+    id: "gentle",
+    label: "Gentle",
+    rangeLabel: "2–5%",
+    note: "Falls away enough to shed water without large cut and fill.",
+  },
+  {
+    id: "moderate",
+    label: "Moderate",
+    rangeLabel: "5–10%",
+    note: "Access and platform levelling start to shape what a layout can do.",
+  },
+  {
+    id: "strong",
+    label: "Strong",
+    rangeLabel: "10–15%",
+    note: "Terracing or stepped platforms are usually involved.",
+  },
+  {
+    id: "steep",
+    label: "Steep",
+    rangeLabel: "over 15%",
+    note: "Earthworks and access dominate. A survey is needed before any layout.",
+  },
 ] as const;
 
-export function classifySlope(slopePct: number | null | undefined): (SlopeBand & {
-  slopePct: number;
-  slopeDeg: number;
-  basis: string;
-}) | null {
+export function classifySlope(slopePct: number | null | undefined):
+  | (SlopeBand & {
+      slopePct: number;
+      slopeDeg: number;
+      basis: string;
+    })
+  | null {
   if (slopePct == null || !Number.isFinite(slopePct) || slopePct < 0) return null;
   const band =
-    slopePct < 2 ? BANDS[0] : slopePct < 5 ? BANDS[1] : slopePct < 10 ? BANDS[2] : slopePct < 15 ? BANDS[3] : BANDS[4];
+    slopePct < 2
+      ? BANDS[0]
+      : slopePct < 5
+        ? BANDS[1]
+        : slopePct < 10
+          ? BANDS[2]
+          : slopePct < 15
+            ? BANDS[3]
+            : BANDS[4];
   return {
     ...band,
     slopePct,
@@ -81,8 +111,10 @@ export function contourEligibility(input: {
 }): ContourVerdict {
   const { gridSpacingM, verticalAccuracyM, reliefM, proposedIntervalM, siteSpanM } = input;
   for (const [v, name] of [
-    [gridSpacingM, "grid spacing"], [verticalAccuracyM, "vertical accuracy"],
-    [reliefM, "relief"], [proposedIntervalM, "proposed interval"],
+    [gridSpacingM, "grid spacing"],
+    [verticalAccuracyM, "vertical accuracy"],
+    [reliefM, "relief"],
+    [proposedIntervalM, "proposed interval"],
   ] as const) {
     if (!Number.isFinite(v) || v <= 0)
       return { ok: false, reason: `Cannot assess contours: ${name} was not supplied.` };

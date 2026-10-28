@@ -81,8 +81,8 @@ function PrivacyPage() {
       <div className="pt-28 pb-16 mx-auto max-w-3xl px-4">
         <h1 className="text-3xl font-semibold tracking-tight">Privacy and data handling</h1>
         <p className="mt-3 text-sm text-muted-foreground">
-          This page describes what the app does with your information today, in plain terms. It
-          has not yet been reviewed by legal counsel; a formal privacy policy will replace it.
+          This page describes what the app does with your information today, in plain terms. It has
+          not yet been reviewed by legal counsel; a formal privacy policy will replace it.
         </p>
         <nav aria-label="On this page" className="mt-6 flex flex-wrap gap-2 text-xs">
           {SECTIONS.map((s) => (
@@ -102,7 +102,10 @@ function PrivacyPage() {
           </section>
         ))}
         <p className="mt-12 text-xs text-muted-foreground">
-          Questions: <a href="mailto:hello@halisia.ai" className="underline">hello@halisia.ai</a>
+          Questions:{" "}
+          <a href="mailto:hello@halisia.ai" className="underline">
+            hello@halisia.ai
+          </a>
           {" · "}
           <Link to="/" className="underline">
             Back to HALISIA

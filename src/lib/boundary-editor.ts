@@ -11,7 +11,11 @@
  */
 
 import {
-  measureSite, pathLengthM, normalizeRing, type LngLat, type SiteMeasurement,
+  measureSite,
+  pathLengthM,
+  normalizeRing,
+  type LngLat,
+  type SiteMeasurement,
 } from "./site-geometry";
 
 /** How many steps back a user can go. Enough for a mis-click, not a session. */
@@ -27,10 +31,17 @@ export type BoundaryState = {
 };
 
 export const emptyBoundary: BoundaryState = {
-  vertices: [], closed: false, selected: null, past: [],
+  vertices: [],
+  closed: false,
+  selected: null,
+  past: [],
 };
 
-function push(state: BoundaryState, vertices: readonly LngLat[], extra: Partial<BoundaryState> = {}): BoundaryState {
+function push(
+  state: BoundaryState,
+  vertices: readonly LngLat[],
+  extra: Partial<BoundaryState> = {},
+): BoundaryState {
   const past = [...state.past, state.vertices].slice(-HISTORY_LIMIT);
   return { vertices, closed: state.closed, selected: state.selected, past, ...extra };
 }
@@ -108,24 +119,31 @@ export type BoundaryReadout =
  */
 export function readout(state: BoundaryState): BoundaryReadout {
   const n = state.vertices.length;
-  if (n === 0) return { status: "empty", hint: "Tap the map to place the first corner of the plot." };
+  if (n === 0)
+    return { status: "empty", hint: "Tap the map to place the first corner of the plot." };
   if (n < 3)
     return {
       status: "drawing",
       vertices: n,
       runningLengthM: n >= 2 ? (pathLengthM(state.vertices) ?? 0) : 0,
-      hint: n === 1 ? "Place at least two more corners." : "Place one more corner to enclose an area.",
+      hint:
+        n === 1 ? "Place at least two more corners." : "Place one more corner to enclose an area.",
     };
   const measurement = measureSite(state.vertices);
   if (!measurement)
-    return { status: "drawing", vertices: n, runningLengthM: pathLengthM(state.vertices) ?? 0,
-             hint: "Those corners do not form a usable shape. Move or remove one." };
+    return {
+      status: "drawing",
+      vertices: n,
+      runningLengthM: pathLengthM(state.vertices) ?? 0,
+      hint: "Those corners do not form a usable shape. Move or remove one.",
+    };
   return { status: "measurable", vertices: n, closed: state.closed, measurement };
 }
 
 /** GeoJSON for export or for saving against a listing. Closes the ring. */
 export function toGeoJsonPolygon(state: BoundaryState): {
-  type: "Polygon"; coordinates: number[][][];
+  type: "Polygon";
+  coordinates: number[][][];
 } | null {
   const r = normalizeRing(state.vertices);
   if (!r) return null;

@@ -1,7 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
-  addVertex, clearBoundary, closeRing, emptyBoundary, loadRing, moveVertex,
-  readout, removeVertex, reopenRing, toGeoJsonPolygon, undo, type BoundaryState,
+  addVertex,
+  clearBoundary,
+  closeRing,
+  emptyBoundary,
+  loadRing,
+  moveVertex,
+  readout,
+  removeVertex,
+  reopenRing,
+  toGeoJsonPolygon,
+  undo,
+  type BoundaryState,
 } from "@/lib/boundary-editor";
 import { SQM_PER_ACRE, type LngLat } from "@/lib/site-geometry";
 
@@ -24,7 +34,8 @@ function rect(c: LngLat, w: number, h: number): LngLat[] {
 
 /** A square of exactly one acre, in Nairobi. */
 const ACRE = rect(NAIROBI, 63.6149, 63.6149);
-const build = (pts: LngLat[]) => pts.reduce<BoundaryState>((s, p) => addVertex(s, p), emptyBoundary);
+const build = (pts: LngLat[]) =>
+  pts.reduce<BoundaryState>((s, p) => addVertex(s, p), emptyBoundary);
 
 describe("drawing", () => {
   it("starts empty and asks for the first corner", () => {
@@ -101,7 +112,8 @@ describe("undo", () => {
 
   it("walks back through a run of drags", () => {
     let s = build(ACRE);
-    for (let i = 0; i < 6; i++) s = moveVertex(s, 0, { lat: ACRE[0].lat - i * 1e-5, lng: ACRE[0].lng });
+    for (let i = 0; i < 6; i++)
+      s = moveVertex(s, 0, { lat: ACRE[0].lat - i * 1e-5, lng: ACRE[0].lng });
     for (let i = 0; i < 6; i++) s = undo(s);
     expect(s.vertices[0].lat).toBeCloseTo(ACRE[0].lat, 9);
   });

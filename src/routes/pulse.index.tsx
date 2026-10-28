@@ -13,6 +13,7 @@ import {
 import { HCarousel } from "@/components/halisia/ds/h-carousel";
 import { PulseImage } from "@/components/halisia/pulse-image";
 import { prefetchImage, warmSpeechEngine } from "@/lib/media-cache";
+import { pulseFreshness, pulseStaleMessage } from "@/lib/pulse-freshness";
 
 export const Route = createFileRoute("/pulse/")({
   component: PulsePage,
@@ -126,6 +127,13 @@ function PulsePage() {
     queryKey: ["pulse-trending-rail"],
     queryFn: () => fetchFeed({ sort: "trending", limit: 12 }),
   });
+  // Newest stored story regardless of filters: the only honest signal of
+  // whether ingestion is still running.
+  const newest = useQuery({
+    queryKey: ["pulse-newest"],
+    queryFn: () => fetchFeed({ sort: "latest", timeframe: "all", limit: 1 }),
+  });
+  const staleMessage = pulseStaleMessage(pulseFreshness(newest.data?.[0]?.publishedAt));
 
   // Warm the speech engine once so the first "Listen" tap has no cold start.
   useEffect(() => {
@@ -146,6 +154,16 @@ function PulsePage() {
           infrastructure, investment and the environment.
         </p>
       </header>
+
+      {staleMessage && (
+        <p
+          role="status"
+          data-testid="pulse-stale-notice"
+          className="mt-4 max-w-2xl rounded-xl border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-glow"
+        >
+          {staleMessage}
+        </p>
+      )}
 
       <div className="mt-6 flex flex-wrap items-center gap-2">
         <label className="elev-1 flex min-h-11 flex-1 min-w-[240px] items-center gap-2 rounded-full border border-white/10 px-4">

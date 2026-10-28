@@ -378,14 +378,18 @@ function FinancingCard({
           )}
           {ai.strengths.length > 0 && <ListBlock label="Strengths" items={ai.strengths} />}
           <ListBlock label="Documents to prepare" items={ai.recommendedDocuments} />
-          <ListBlock label="Suggested lenders" items={ai.suggestedLenders} />
+          <ListBlock
+            label="Kenyan lenders to compare (not checked against your eligibility)"
+            items={ai.suggestedLenders}
+          />
           <div className="rounded-lg border border-amber-400/20 bg-amber-500/5 p-2 text-[11px] text-amber-glow">
             {ai.disclaimers.map((d) => (
               <div key={d}>• {d}</div>
             ))}
           </div>
           <div className="text-[10px] text-muted-foreground">
-            Generated {new Date(ai.generatedAt).toLocaleString()} · confidence {ai.confidencePct}%
+            Generated {new Date(ai.generatedAt).toLocaleString()} · AI draft, not a credit
+            assessment
           </div>
           {f.property_id && (
             <button

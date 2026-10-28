@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
-  measureSite, ringAreaSqM, ringPerimeterM, haversineM, pointInRing,
-  normalizeRing, formatArea, SQM_PER_ACRE, type LngLat,
+  measureSite,
+  ringAreaSqM,
+  ringPerimeterM,
+  haversineM,
+  pointInRing,
+  normalizeRing,
+  formatArea,
+  SQM_PER_ACRE,
+  type LngLat,
 } from "@/lib/site-geometry";
 
 const R = 6371007.181;
@@ -28,7 +35,9 @@ function lawOfCosinesM(a: LngLat, b: LngLat): number {
   const p2 = b.lat * D2R;
   const dl = (b.lng - a.lng) * D2R;
   return (
-    Math.acos(Math.min(1, Math.sin(p1) * Math.sin(p2) + Math.cos(p1) * Math.cos(p2) * Math.cos(dl))) * R
+    Math.acos(
+      Math.min(1, Math.sin(p1) * Math.sin(p2) + Math.cos(p1) * Math.cos(p2) * Math.cos(dl)),
+    ) * R
   );
 }
 

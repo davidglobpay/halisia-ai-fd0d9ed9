@@ -48,6 +48,7 @@ import { SaveButton } from "@/components/halisia/save-button";
 import { PartnerListings } from "@/components/halisia/partner-listings";
 import { LeafletLayersMap } from "@/components/halisia/leaflet-layers-map";
 import { PassportLinks } from "@/components/halisia/land-passport/passport-links";
+import { SampleListingBadge } from "@/components/halisia/sample-listing-badge";
 
 const searchSchema = z.object({
   category: z.string().optional(),
@@ -626,6 +627,7 @@ function MapView({ listings }: { listings: PropertyRow[] }) {
             <Link to="/marketplace/$id" params={{ id: p.id }} className="text-sm font-medium">
               {p.title}
             </Link>
+            <SampleListingBadge listing={p} className="ml-2 align-middle" />
             <div className="mt-1 text-[11px] text-muted-foreground flex items-center gap-1">
               <MapPin className="h-3 w-3" /> {p.county ?? "Kenya"} · {formatPrice(p)}
             </div>
@@ -669,6 +671,7 @@ function ListingRow({
         <Link to="/marketplace/$id" params={{ id: p.id }} className="font-medium text-sm">
           {p.title}
         </Link>
+        <SampleListingBadge listing={p} className="ml-2 align-middle" />
         <PassportLinks
           compact
           className="mt-1.5"
@@ -768,6 +771,7 @@ function ListingCard({
         <div className="p-4">
           <div className="flex items-start justify-between gap-2">
             <h3 className="font-medium text-sm leading-tight line-clamp-2">{p.title}</h3>
+            <SampleListingBadge listing={p} />
           </div>
           <div className="mt-1 text-[11px] text-muted-foreground flex items-center gap-1">
             <MapPin className="h-3 w-3" /> {p.county ?? "Kenya"}

@@ -16,6 +16,7 @@ import { fetchFeed, relativeTime } from "@/lib/pulse";
 import { listProperties, formatPrice } from "@/lib/properties";
 import { listPartnerListings, formatPartnerPrice } from "@/lib/marketplace-external";
 import countiesData from "@/data/kenya-counties.json";
+import { SampleListingBadge } from "@/components/halisia/sample-listing-badge";
 
 type CountyProps = { code: number; name: string };
 
@@ -360,6 +361,7 @@ export function MarketplaceSection() {
                   {p.county ?? "Kenya"} · {p.intent}
                 </div>
                 <h3 className="line-clamp-2 text-[13px] font-semibold leading-snug">{p.title}</h3>
+                <SampleListingBadge listing={p} className="self-start" />
                 <div className="mt-auto pt-2 text-sm font-semibold text-gradient">
                   {formatPrice(p)}
                 </div>

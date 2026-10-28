@@ -14,7 +14,11 @@
 import type jsPDF from "jspdf";
 import { PDF, sanitize } from "./pdf-chrome";
 import {
-  metresPerPixel, niceScaleBar, printScaleRatio, zoomToFitBBox, type ScaleBar,
+  metresPerPixel,
+  niceScaleBar,
+  printScaleRatio,
+  zoomToFitBBox,
+  type ScaleBar,
 } from "./map-scale";
 import { formatArea, type BBox, type SiteMeasurement } from "./site-geometry";
 
@@ -95,7 +99,10 @@ export function computeSheetLayout(input: {
     });
   }
   rows.push({ label: "Imagery", value: input.imagerySource });
-  rows.push({ label: "Capture date", value: input.imageryDate ?? "not published by this provider" });
+  rows.push({
+    label: "Capture date",
+    value: input.imageryDate ?? "not published by this provider",
+  });
   if (printScale) rows.push({ label: "Scale at 100%", value: printScale });
 
   return {
@@ -173,7 +180,14 @@ export function drawSiteSheet(
 
   if (content.mapImage) {
     doc.addImage(
-      content.mapImage.dataUrl, "PNG", map.x, map.y, map.width, map.height, undefined, "FAST",
+      content.mapImage.dataUrl,
+      "PNG",
+      map.x,
+      map.y,
+      map.width,
+      map.height,
+      undefined,
+      "FAST",
     );
   } else {
     doc.setFillColor(...PDF.paper);
@@ -183,7 +197,8 @@ export function drawSiteSheet(
     doc.setTextColor(...PDF.stone2);
     doc.text(
       "Imagery unavailable for this export. The boundary and its measurements below are unaffected.",
-      map.x + 16, map.y + map.height / 2,
+      map.x + 16,
+      map.y + map.height / 2,
     );
   }
 
@@ -226,9 +241,7 @@ export function drawSiteSheet(
   y += 6;
   doc.setFontSize(8);
   doc.setTextColor(...PDF.stone2);
-  const lines = doc.splitTextToSize(
-    sanitize(content.limitation), layout.map.width,
-  ) as string[];
+  const lines = doc.splitTextToSize(sanitize(content.limitation), layout.map.width) as string[];
   doc.text(lines, layout.legend.x, y);
   return y + lines.length * 11 + 8;
 }

@@ -27,9 +27,7 @@ export function metresPerPixel(lat: number, zoom: number, tileSize = TILE_SIZE_P
   if (!Number.isFinite(lat) || Math.abs(lat) > 85.05112878) return null;
   if (!Number.isFinite(zoom) || zoom < 0 || zoom > 24) return null;
   if (!Number.isFinite(tileSize) || tileSize <= 0) return null;
-  return (
-    (EQUATORIAL_CIRCUMFERENCE_M * Math.cos((lat * Math.PI) / 180)) / (tileSize * 2 ** zoom)
-  );
+  return (EQUATORIAL_CIRCUMFERENCE_M * Math.cos((lat * Math.PI) / 180)) / (tileSize * 2 ** zoom);
 }
 
 export type ScaleBar = {

@@ -15,7 +15,8 @@ const SECTION_TITLE = /^[a-z][a-z .'-]*(?:\/[a-z0-9][a-z0-9 .'-]*)+\/\s*\d+[a-z]
 const LR_NUMBER = /^l\.?\s*r\.?\s*(?:no\.?|number)?\s*[:#]?\s*\d+(?:\s*\/\s*\d+)*\s*$/i;
 
 /** Explicit title or plot references, e.g. "title no. 1234", "plot no 45/2". */
-const EXPLICIT_REF = /^(?:title|title deed|plot|parcel|land ref(?:erence)?)\s*(?:no\.?|number)?\s*[:#]?\s*[a-z0-9]*\d[a-z0-9]*(?:\s*\/\s*[a-z0-9]+)*\s*$/i;
+const EXPLICIT_REF =
+  /^(?:title|title deed|plot|parcel|land ref(?:erence)?)\s*(?:no\.?|number)?\s*[:#]?\s*[a-z0-9]*\d[a-z0-9]*(?:\s*\/\s*[a-z0-9]+)*\s*$/i;
 
 /** Bare "212/345" style numbers with no place words. */
 const BARE_SLASHED = /^\d+(?:\s*\/\s*\d+)+$/;

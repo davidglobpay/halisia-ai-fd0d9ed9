@@ -108,7 +108,7 @@ Return STRICT JSON only, matching:
 }
 APPLICATION:
 ${JSON.stringify(data, null, 2)}
-Rules: neutral banker tone, no invented facts, Kenyan lender context (KCB, Stanbic, HF, NCBA, Absa, Co-op, KMRC), include disclaimers that this is not a credit decision.`;
+Rules: neutral banker tone, no invented facts, Kenyan lender context (KCB, Stanbic, HF, NCBA, Absa, Co-op, KMRC), include disclaimers that this is not a credit decision. "suggestedLenders" lists lenders worth comparing for this loan purpose only; do not claim the applicant qualifies with any of them.`;
     try {
       const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
