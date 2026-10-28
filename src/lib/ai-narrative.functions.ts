@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { parseServerInput, NarrativeSchema } from "@/lib/server-input";
 
 export type NarrativeInput = {
   address: string;
@@ -140,5 +141,7 @@ export function evidenceSummary(input: NarrativeInput): NarrativeOutput {
 }
 
 export const generateNarrative = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => input as NarrativeInput)
+  .inputValidator((input: unknown) =>
+    parseServerInput<NarrativeInput>(NarrativeSchema, input, "location summary"),
+  )
   .handler(async ({ data }): Promise<NarrativeOutput> => evidenceSummary(data));

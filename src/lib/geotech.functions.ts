@@ -2,6 +2,7 @@ import { parseSoilGrids } from "./soilgrids-parser";
 import { robustRelief } from "./terrain-relief";
 import { fetchPowerClimate } from "./power-climate";
 import { createServerFn } from "@tanstack/react-start";
+import { parseServerInput, GeotechSchema } from "@/lib/server-input";
 
 /**
  * AI Geotechnical Intelligence — preliminary subsurface assessment from free
@@ -219,7 +220,9 @@ async function fetchClimate(lat: number, lng: number, _signal?: AbortSignal) {
 }
 
 export const getGeotechIntel = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => input as GeotechInput)
+  .inputValidator((input: unknown) =>
+    parseServerInput<GeotechInput>(GeotechSchema, input, "location"),
+  )
   .handler(async ({ data }): Promise<GeotechIntel> => {
     const { lat, lng } = data;
     let soilStatus: "ok" | "no_data" | "failed" = "no_data";

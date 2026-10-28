@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { parseServerInput, LenderSummarySchema } from "@/lib/server-input";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export type LenderSummaryInput = {
@@ -86,7 +87,9 @@ function heuristic(input: LenderSummaryInput): LenderSummaryOutput {
 
 export const generateLenderSummary = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: unknown) => i as LenderSummaryInput)
+  .inputValidator((input: unknown) =>
+    parseServerInput<LenderSummaryInput>(LenderSummarySchema, input, "financing"),
+  )
   .handler(async ({ data }): Promise<LenderSummaryOutput> => {
     const key = process.env.LOVABLE_API_KEY;
     if (!key) return heuristic(data);
