@@ -75,10 +75,27 @@ describe("the spine migration keeps its promises", () => {
     expect(sql).not.toMatch(/drop table|drop column|alter column .* set not null/i);
   });
 
+  it("lets an owner read back the project they just created", () => {
+    // createProject() inserts with .select().single(); the read policy is checked against
+    // the new row, which is_project_member() cannot see yet, so ownership is checked inline.
+    expect(sql).toMatch(
+      /create policy "members read projects"[^;]*using \(owner_id = auth\.uid\(\)\s+or public\.is_project_member\(id\)/,
+    );
+    const lib = readFileSync("src/lib/projects.ts", "utf8");
+    expect(lib).toMatch(/\.insert\([\s\S]*?\)\s*\.select\("\*"\)\s*\.single\(\)/);
+  });
+
   it("opens only public-place evidence to all signed-in users", () => {
     expect(sql).toContain("for select to authenticated using (subject_type = 'area');");
     expect(sql).not.toMatch(
       /resource_observations[\s\S]{0,80}for (insert|update|delete) to authenticated/,
+    );
+  });
+
+  it("grants read-only access to evidence sources, never write", () => {
+    expect(sql).toContain("grant select on public.resource_sources to authenticated;");
+    expect(sql).not.toMatch(
+      /grant (insert|update|delete|all)[^;]*resource_(sources|observations)/i,
     );
   });
 
