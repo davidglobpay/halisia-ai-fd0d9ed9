@@ -41,11 +41,11 @@ import { Route as AuthenticatedContributionsRouteImport } from './routes/_authen
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedFinancingRouteImport } from './routes/_authenticated/financing'
 import { Route as AuthenticatedProProfileRouteImport } from './routes/_authenticated/pro-profile'
+import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedProsRouteImport } from './routes/_authenticated/pros'
 import { Route as AuthenticatedRentalsRouteImport } from './routes/_authenticated/rentals'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedSavedRouteImport } from './routes/_authenticated/saved'
-import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedScoutRouteImport } from './routes/_authenticated/scout'
 import { Route as AuthenticatedSellerToolsRouteImport } from './routes/_authenticated/seller-tools'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
@@ -225,6 +225,11 @@ const AuthenticatedProProfileRoute = AuthenticatedProProfileRouteImport.update({
   path: '/pro-profile',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedProjectsRoute = AuthenticatedProjectsRouteImport.update({
+  id: '/projects',
+  path: '/projects',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedProsRoute = AuthenticatedProsRouteImport.update({
   id: '/pros',
   path: '/pros',
@@ -243,11 +248,6 @@ const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
 const AuthenticatedSavedRoute = AuthenticatedSavedRouteImport.update({
   id: '/saved',
   path: '/saved',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedProjectsRoute = AuthenticatedProjectsRouteImport.update({
-  id: '/projects',
-  path: '/projects',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedScoutRoute = AuthenticatedScoutRouteImport.update({
@@ -371,11 +371,11 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/financing': typeof AuthenticatedFinancingRoute
   '/pro-profile': typeof AuthenticatedProProfileRoute
+  '/projects': typeof AuthenticatedProjectsRoute
   '/pros': typeof AuthenticatedProsRoute
   '/rentals': typeof AuthenticatedRentalsRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/saved': typeof AuthenticatedSavedRoute
-  '/projects': typeof AuthenticatedProjectsRoute
   '/scout': typeof AuthenticatedScoutRoute
   '/seller-tools': typeof AuthenticatedSellerToolsRoute
   '/api/chat': typeof ApiChatRoute
@@ -425,11 +425,11 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/financing': typeof AuthenticatedFinancingRoute
   '/pro-profile': typeof AuthenticatedProProfileRoute
+  '/projects': typeof AuthenticatedProjectsRoute
   '/pros': typeof AuthenticatedProsRoute
   '/rentals': typeof AuthenticatedRentalsRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/saved': typeof AuthenticatedSavedRoute
-  '/projects': typeof AuthenticatedProjectsRoute
   '/scout': typeof AuthenticatedScoutRoute
   '/seller-tools': typeof AuthenticatedSellerToolsRoute
   '/api/chat': typeof ApiChatRoute
@@ -482,11 +482,11 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/financing': typeof AuthenticatedFinancingRoute
   '/_authenticated/pro-profile': typeof AuthenticatedProProfileRoute
+  '/_authenticated/projects': typeof AuthenticatedProjectsRoute
   '/_authenticated/pros': typeof AuthenticatedProsRoute
   '/_authenticated/rentals': typeof AuthenticatedRentalsRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/saved': typeof AuthenticatedSavedRoute
-  '/_authenticated/projects': typeof AuthenticatedProjectsRoute
   '/_authenticated/scout': typeof AuthenticatedScoutRoute
   '/_authenticated/seller-tools': typeof AuthenticatedSellerToolsRoute
   '/api/chat': typeof ApiChatRoute
@@ -539,11 +539,11 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/financing'
     | '/pro-profile'
+    | '/projects'
     | '/pros'
     | '/rentals'
     | '/reports'
     | '/saved'
-    | '/projects'
     | '/scout'
     | '/seller-tools'
     | '/api/chat'
@@ -593,11 +593,11 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/financing'
     | '/pro-profile'
+    | '/projects'
     | '/pros'
     | '/rentals'
     | '/reports'
     | '/saved'
-    | '/projects'
     | '/scout'
     | '/seller-tools'
     | '/api/chat'
@@ -649,11 +649,11 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/financing'
     | '/_authenticated/pro-profile'
+    | '/_authenticated/projects'
     | '/_authenticated/pros'
     | '/_authenticated/rentals'
     | '/_authenticated/reports'
     | '/_authenticated/saved'
-    | '/_authenticated/projects'
     | '/_authenticated/scout'
     | '/_authenticated/seller-tools'
     | '/api/chat'
@@ -937,6 +937,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProProfileRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/projects': {
+      id: '/_authenticated/projects'
+      path: '/projects'
+      fullPath: '/projects'
+      preLoaderRoute: typeof AuthenticatedProjectsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/pros': {
       id: '/_authenticated/pros'
       path: '/pros'
@@ -963,13 +970,6 @@ declare module '@tanstack/react-router' {
       path: '/saved'
       fullPath: '/saved'
       preLoaderRoute: typeof AuthenticatedSavedRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/projects': {
-      id: '/_authenticated/projects'
-      path: '/projects'
-      fullPath: '/projects'
-      preLoaderRoute: typeof AuthenticatedProjectsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/scout': {
@@ -1100,11 +1100,11 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFinancingRoute: typeof AuthenticatedFinancingRoute
   AuthenticatedProProfileRoute: typeof AuthenticatedProProfileRoute
+  AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
   AuthenticatedProsRoute: typeof AuthenticatedProsRoute
   AuthenticatedRentalsRoute: typeof AuthenticatedRentalsRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedSavedRoute: typeof AuthenticatedSavedRoute
-  AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
   AuthenticatedScoutRoute: typeof AuthenticatedScoutRoute
   AuthenticatedSellerToolsRoute: typeof AuthenticatedSellerToolsRoute
   AuthenticatedDevelopIdRoute: typeof AuthenticatedDevelopIdRoute
@@ -1120,11 +1120,11 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFinancingRoute: AuthenticatedFinancingRoute,
   AuthenticatedProProfileRoute: AuthenticatedProProfileRoute,
+  AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
   AuthenticatedProsRoute: AuthenticatedProsRoute,
   AuthenticatedRentalsRoute: AuthenticatedRentalsRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedSavedRoute: AuthenticatedSavedRoute,
-  AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
   AuthenticatedScoutRoute: AuthenticatedScoutRoute,
   AuthenticatedSellerToolsRoute: AuthenticatedSellerToolsRoute,
   AuthenticatedDevelopIdRoute: AuthenticatedDevelopIdRoute,

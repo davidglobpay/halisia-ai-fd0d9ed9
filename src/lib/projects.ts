@@ -27,7 +27,12 @@ export type Project = {
   created_at: string;
   updated_at: string;
 };
-type LinkedTable = "parcels" | "properties" | "financing_applications" | "saved_items" | "bid_requests";
+type LinkedTable =
+  | "parcels"
+  | "properties"
+  | "financing_applications"
+  | "saved_items"
+  | "bid_requests";
 type ExistingTables = Database["public"]["Tables"];
 type ProjectTables = {
   [K in keyof ExistingTables]: K extends LinkedTable
@@ -70,7 +75,11 @@ export async function listProjects(): Promise<Project[]> {
 }
 
 export async function getProject(id: string): Promise<Project | null> {
-  const { data, error } = await projectClient.from("projects").select("*").eq("id", id).maybeSingle();
+  const { data, error } = await projectClient
+    .from("projects")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
   if (error) throw error;
   return data;
 }
