@@ -15,6 +15,7 @@
  */
 
 import type { IntelSlice, SliceProvenance } from "@/lib/intel-snapshot.types";
+import { buildSliceObservation } from "@/lib/evidence-observation";
 import type { Database, Json } from "@/integrations/supabase/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -170,7 +171,63 @@ export async function writeSlice(args: {
   } catch {
     /* cache write failures must never break the response */
   }
+  await appendObservation(client, args, provenance);
   return provenance;
+}
+
+/** resource_sources ids by source_system, looked up once per server instance. */
+const sourceIds = new Map<string, string | null>();
+
+async function sourceIdFor(client: SnapshotDb, sourceSystem: string): Promise<string | null> {
+  if (sourceIds.has(sourceSystem)) return sourceIds.get(sourceSystem) ?? null;
+  const { data } = await client
+    .from("resource_sources")
+    .select("id")
+    .eq("source_system", sourceSystem)
+    .eq("active", true)
+    .maybeSingle();
+  const id = (data as { id?: string } | null)?.id ?? null;
+  sourceIds.set(sourceSystem, id);
+  return id;
+}
+
+/**
+ * The cache row above is overwritten on every refresh; this keeps the reading
+ * permanently in the evidence graph, so history and "why" can be shown.
+ * Best-effort: an evidence write failure never affects the response.
+ */
+async function appendObservation(
+  client: SnapshotDb,
+  args: Parameters<typeof writeSlice>[0],
+  provenance: SliceProvenance,
+): Promise<void> {
+  try {
+    const meta = SLICE_META[args.slice];
+    const sourceId = await sourceIdFor(client, meta.provider);
+    // An unregistered source would make an unattributable observation: skip it.
+    if (!sourceId) return;
+    const row = await buildSliceObservation({
+      locationKey: args.key,
+      lat: args.lat,
+      lng: args.lng,
+      parcelId: args.parcelId ?? null,
+      slice: args.slice,
+      status: args.status,
+      reason: args.reason ?? null,
+      payload: args.payload,
+      retrievedAt: provenance.retrievedAt,
+      expiresAt: provenance.expiresAt,
+      sourceId,
+      sourceSystem: meta.provider,
+      method: meta.method,
+      version: meta.version,
+    });
+    await client
+      .from("resource_observations")
+      .insert(row as unknown as Database["public"]["Tables"]["resource_observations"]["Insert"]);
+  } catch {
+    /* evidence history is best-effort and must never break the response */
+  }
 }
 
 /** Provenance for a provider that failed — nothing is persisted for it. */
