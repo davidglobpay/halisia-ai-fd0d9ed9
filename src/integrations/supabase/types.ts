@@ -227,7 +227,6 @@ export type Database = {
       }
       bid_requests: {
         Row: {
-          project_id: string | null
           budget_max: number | null
           budget_min: number | null
           category: Database["public"]["Enums"]["bid_category"]
@@ -244,7 +243,6 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          project_id?: string | null
           budget_max?: number | null
           budget_min?: number | null
           category?: Database["public"]["Enums"]["bid_category"]
@@ -261,7 +259,6 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          project_id?: string | null
           budget_max?: number | null
           budget_min?: number | null
           category?: Database["public"]["Enums"]["bid_category"]
@@ -403,7 +400,6 @@ export type Database = {
       }
       financing_applications: {
         Row: {
-          project_id: string | null
           ai_summary: Json | null
           applicant_id: string
           borrower_email: string | null
@@ -430,7 +426,6 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          project_id?: string | null
           ai_summary?: Json | null
           applicant_id: string
           borrower_email?: string | null
@@ -457,7 +452,6 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          project_id?: string | null
           ai_summary?: Json | null
           applicant_id?: string
           borrower_email?: string | null
@@ -2323,7 +2317,6 @@ export type Database = {
       }
       parcels: {
         Row: {
-          project_id: string | null
           area_sqm: number
           centroid_lat: number
           centroid_lng: number
@@ -2353,7 +2346,6 @@ export type Database = {
           zoning_type: string | null
         }
         Insert: {
-          project_id?: string | null
           area_sqm: number
           centroid_lat: number
           centroid_lng: number
@@ -2383,7 +2375,6 @@ export type Database = {
           zoning_type?: string | null
         }
         Update: {
-          project_id?: string | null
           area_sqm?: number
           centroid_lat?: number
           centroid_lng?: number
@@ -2659,107 +2650,8 @@ export type Database = {
         }
         Relationships: []
       }
-      project_members: {
-        Row: {
-          added_by: string | null
-          created_at: string
-          project_id: string
-          role: string
-          user_id: string
-        }
-        Insert: {
-          added_by?: string | null
-          created_at?: string
-          project_id: string
-          role?: string
-          user_id: string
-        }
-        Update: {
-          added_by?: string | null
-          created_at?: string
-          project_id?: string
-          role?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "project_members_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      projects: {
-        Row: {
-          boundary: Json | null
-          county: string | null
-          created_at: string
-          id: string
-          latitude: number | null
-          location_key: string | null
-          longitude: number | null
-          name: string
-          notes: string | null
-          owner_id: string
-          parcel_id: string | null
-          property_id: string | null
-          stage: string
-          updated_at: string
-        }
-        Insert: {
-          boundary?: Json | null
-          county?: string | null
-          created_at?: string
-          id?: string
-          latitude?: number | null
-          location_key?: string | null
-          longitude?: number | null
-          name: string
-          notes?: string | null
-          owner_id?: string
-          parcel_id?: string | null
-          property_id?: string | null
-          stage?: string
-          updated_at?: string
-        }
-        Update: {
-          boundary?: Json | null
-          county?: string | null
-          created_at?: string
-          id?: string
-          latitude?: number | null
-          location_key?: string | null
-          longitude?: number | null
-          name?: string
-          notes?: string | null
-          owner_id?: string
-          parcel_id?: string | null
-          property_id?: string | null
-          stage?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "projects_parcel_id_fkey"
-            columns: ["parcel_id"]
-            isOneToOne: false
-            referencedRelation: "parcels"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "projects_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       properties: {
         Row: {
-          project_id: string | null
           address: string | null
           ai_score: Json | null
           ai_summary: Json | null
@@ -2795,7 +2687,6 @@ export type Database = {
           view_count: number
         }
         Insert: {
-          project_id?: string | null
           address?: string | null
           ai_score?: Json | null
           ai_summary?: Json | null
@@ -2831,7 +2722,6 @@ export type Database = {
           view_count?: number
         }
         Update: {
-          project_id?: string | null
           address?: string | null
           ai_score?: Json | null
           ai_summary?: Json | null
@@ -3512,7 +3402,6 @@ export type Database = {
       }
       saved_items: {
         Row: {
-          project_id: string | null
           created_at: string
           id: string
           is_favorite: boolean
@@ -3526,7 +3415,6 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          project_id?: string | null
           created_at?: string
           id?: string
           is_favorite?: boolean
@@ -3540,7 +3428,6 @@ export type Database = {
           user_id: string
         }
         Update: {
-          project_id?: string | null
           created_at?: string
           id?: string
           is_favorite?: boolean
@@ -4264,8 +4151,6 @@ export type Database = {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
         Returns: boolean
       }
-      is_project_editor: { Args: { _project_id: string }; Returns: boolean }
-      is_project_member: { Args: { _project_id: string }; Returns: boolean }
       is_scout_request_participant: { Args: { _req: string }; Returns: boolean }
       is_source_member: { Args: { _source_id: string }; Returns: boolean }
       is_verified_surveyor: { Args: { _user_id: string }; Returns: boolean }
