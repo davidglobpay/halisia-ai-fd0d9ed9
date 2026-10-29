@@ -1,6 +1,15 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Menu, X, LogIn, LogOut, Bookmark, ChevronDown, User as UserIcon } from "lucide-react";
+import {
+  Menu,
+  X,
+  LogIn,
+  LogOut,
+  Bookmark,
+  FolderKanban,
+  ChevronDown,
+  User as UserIcon,
+} from "lucide-react";
 import halisiaLogo from "@/assets/brand/halisia-mark.png.asset.json";
 import { useAuth } from "@/hooks/use-auth";
 import { useQueryClient } from "@tanstack/react-query";
@@ -152,6 +161,13 @@ export function Navbar() {
           {!loading && user ? (
             <div className="hidden xl:flex items-center gap-1.5">
               <Link
+                to="/projects"
+                search={{}}
+                className="inline-flex h-9 items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 text-xs hover:bg-white/10"
+              >
+                <FolderKanban className="h-3.5 w-3.5 text-accent" aria-hidden="true" /> Projects
+              </Link>
+              <Link
                 to="/saved"
                 className="inline-flex h-9 items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 text-xs hover:bg-white/10"
               >
@@ -252,6 +268,13 @@ export function Navbar() {
             <li className="mt-1 border-t border-white/10 pt-2">
               {!loading && user ? (
                 <>
+                  <Link
+                    to="/projects"
+                    search={{}}
+                    className="flex items-center gap-2 px-4 py-3 rounded-xl text-[15px] text-muted-foreground hover:bg-white/5 hover:text-foreground"
+                  >
+                    <FolderKanban className="h-4 w-4 text-accent" aria-hidden="true" /> My projects
+                  </Link>
                   <Link
                     to="/saved"
                     className="flex items-center gap-2 px-4 py-3 rounded-xl text-[15px] text-muted-foreground hover:bg-white/5 hover:text-foreground"

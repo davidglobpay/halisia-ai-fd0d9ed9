@@ -45,6 +45,7 @@ import { Route as AuthenticatedProsRouteImport } from './routes/_authenticated/p
 import { Route as AuthenticatedRentalsRouteImport } from './routes/_authenticated/rentals'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedSavedRouteImport } from './routes/_authenticated/saved'
+import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedScoutRouteImport } from './routes/_authenticated/scout'
 import { Route as AuthenticatedSellerToolsRouteImport } from './routes/_authenticated/seller-tools'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
@@ -57,6 +58,7 @@ import { Route as PulseIdRouteImport } from './routes/pulse.$id'
 import { Route as PulseAdminRouteImport } from './routes/pulse.admin'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as AuthenticatedDevelopIdRouteImport } from './routes/_authenticated/develop.$id'
+import { Route as AuthenticatedProjectIdRouteImport } from './routes/_authenticated/project.$id'
 import { Route as AuthenticatedSellNewRouteImport } from './routes/_authenticated/sell.new'
 import { Route as AuthenticatedSharedReportTokenRouteImport } from './routes/_authenticated/shared-report.$token'
 import { Route as AuthenticatedSellEditIdRouteImport } from './routes/_authenticated/sell.edit.$id'
@@ -243,6 +245,11 @@ const AuthenticatedSavedRoute = AuthenticatedSavedRouteImport.update({
   path: '/saved',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedProjectsRoute = AuthenticatedProjectsRouteImport.update({
+  id: '/projects',
+  path: '/projects',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedScoutRoute = AuthenticatedScoutRouteImport.update({
   id: '/scout',
   path: '/scout',
@@ -304,6 +311,11 @@ const AuthenticatedDevelopIdRoute = AuthenticatedDevelopIdRouteImport.update({
   path: '/develop/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedProjectIdRoute = AuthenticatedProjectIdRouteImport.update({
+  id: '/project/$id',
+  path: '/project/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSellNewRoute = AuthenticatedSellNewRouteImport.update({
   id: '/sell/new',
   path: '/sell/new',
@@ -363,6 +375,7 @@ export interface FileRoutesByFullPath {
   '/rentals': typeof AuthenticatedRentalsRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/saved': typeof AuthenticatedSavedRoute
+  '/projects': typeof AuthenticatedProjectsRoute
   '/scout': typeof AuthenticatedScoutRoute
   '/seller-tools': typeof AuthenticatedSellerToolsRoute
   '/api/chat': typeof ApiChatRoute
@@ -375,6 +388,7 @@ export interface FileRoutesByFullPath {
   '/pulse/': typeof PulseIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/develop/$id': typeof AuthenticatedDevelopIdRoute
+  '/project/$id': typeof AuthenticatedProjectIdRoute
   '/sell/new': typeof AuthenticatedSellNewRoute
   '/shared-report/$token': typeof AuthenticatedSharedReportTokenRoute
   '/sell/edit/$id': typeof AuthenticatedSellEditIdRoute
@@ -415,6 +429,7 @@ export interface FileRoutesByTo {
   '/rentals': typeof AuthenticatedRentalsRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/saved': typeof AuthenticatedSavedRoute
+  '/projects': typeof AuthenticatedProjectsRoute
   '/scout': typeof AuthenticatedScoutRoute
   '/seller-tools': typeof AuthenticatedSellerToolsRoute
   '/api/chat': typeof ApiChatRoute
@@ -427,6 +442,7 @@ export interface FileRoutesByTo {
   '/pulse': typeof PulseIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/develop/$id': typeof AuthenticatedDevelopIdRoute
+  '/project/$id': typeof AuthenticatedProjectIdRoute
   '/sell/new': typeof AuthenticatedSellNewRoute
   '/shared-report/$token': typeof AuthenticatedSharedReportTokenRoute
   '/sell/edit/$id': typeof AuthenticatedSellEditIdRoute
@@ -470,6 +486,7 @@ export interface FileRoutesById {
   '/_authenticated/rentals': typeof AuthenticatedRentalsRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/saved': typeof AuthenticatedSavedRoute
+  '/_authenticated/projects': typeof AuthenticatedProjectsRoute
   '/_authenticated/scout': typeof AuthenticatedScoutRoute
   '/_authenticated/seller-tools': typeof AuthenticatedSellerToolsRoute
   '/api/chat': typeof ApiChatRoute
@@ -482,6 +499,7 @@ export interface FileRoutesById {
   '/pulse/': typeof PulseIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/_authenticated/develop/$id': typeof AuthenticatedDevelopIdRoute
+  '/_authenticated/project/$id': typeof AuthenticatedProjectIdRoute
   '/_authenticated/sell/new': typeof AuthenticatedSellNewRoute
   '/_authenticated/shared-report/$token': typeof AuthenticatedSharedReportTokenRoute
   '/_authenticated/sell/edit/$id': typeof AuthenticatedSellEditIdRoute
@@ -525,6 +543,7 @@ export interface FileRouteTypes {
     | '/rentals'
     | '/reports'
     | '/saved'
+    | '/projects'
     | '/scout'
     | '/seller-tools'
     | '/api/chat'
@@ -537,6 +556,7 @@ export interface FileRouteTypes {
     | '/pulse/'
     | '/.lovable/oauth/consent'
     | '/develop/$id'
+    | '/project/$id'
     | '/sell/new'
     | '/shared-report/$token'
     | '/sell/edit/$id'
@@ -577,6 +597,7 @@ export interface FileRouteTypes {
     | '/rentals'
     | '/reports'
     | '/saved'
+    | '/projects'
     | '/scout'
     | '/seller-tools'
     | '/api/chat'
@@ -589,6 +610,7 @@ export interface FileRouteTypes {
     | '/pulse'
     | '/.lovable/oauth/consent'
     | '/develop/$id'
+    | '/project/$id'
     | '/sell/new'
     | '/shared-report/$token'
     | '/sell/edit/$id'
@@ -631,6 +653,7 @@ export interface FileRouteTypes {
     | '/_authenticated/rentals'
     | '/_authenticated/reports'
     | '/_authenticated/saved'
+    | '/_authenticated/projects'
     | '/_authenticated/scout'
     | '/_authenticated/seller-tools'
     | '/api/chat'
@@ -643,6 +666,7 @@ export interface FileRouteTypes {
     | '/pulse/'
     | '/.lovable/oauth/consent'
     | '/_authenticated/develop/$id'
+    | '/_authenticated/project/$id'
     | '/_authenticated/sell/new'
     | '/_authenticated/shared-report/$token'
     | '/_authenticated/sell/edit/$id'
@@ -941,6 +965,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSavedRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/projects': {
+      id: '/_authenticated/projects'
+      path: '/projects'
+      fullPath: '/projects'
+      preLoaderRoute: typeof AuthenticatedProjectsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/scout': {
       id: '/_authenticated/scout'
       path: '/scout'
@@ -1025,6 +1056,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDevelopIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/project/$id': {
+      id: '/_authenticated/project/$id'
+      path: '/project/$id'
+      fullPath: '/project/$id'
+      preLoaderRoute: typeof AuthenticatedProjectIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/sell/new': {
       id: '/_authenticated/sell/new'
       path: '/sell/new'
@@ -1066,9 +1104,11 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedRentalsRoute: typeof AuthenticatedRentalsRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedSavedRoute: typeof AuthenticatedSavedRoute
+  AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
   AuthenticatedScoutRoute: typeof AuthenticatedScoutRoute
   AuthenticatedSellerToolsRoute: typeof AuthenticatedSellerToolsRoute
   AuthenticatedDevelopIdRoute: typeof AuthenticatedDevelopIdRoute
+  AuthenticatedProjectIdRoute: typeof AuthenticatedProjectIdRoute
   AuthenticatedSellNewRoute: typeof AuthenticatedSellNewRoute
   AuthenticatedSharedReportTokenRoute: typeof AuthenticatedSharedReportTokenRoute
   AuthenticatedSellEditIdRoute: typeof AuthenticatedSellEditIdRoute
@@ -1084,9 +1124,11 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedRentalsRoute: AuthenticatedRentalsRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedSavedRoute: AuthenticatedSavedRoute,
+  AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
   AuthenticatedScoutRoute: AuthenticatedScoutRoute,
   AuthenticatedSellerToolsRoute: AuthenticatedSellerToolsRoute,
   AuthenticatedDevelopIdRoute: AuthenticatedDevelopIdRoute,
+  AuthenticatedProjectIdRoute: AuthenticatedProjectIdRoute,
   AuthenticatedSellNewRoute: AuthenticatedSellNewRoute,
   AuthenticatedSharedReportTokenRoute: AuthenticatedSharedReportTokenRoute,
   AuthenticatedSellEditIdRoute: AuthenticatedSellEditIdRoute,
