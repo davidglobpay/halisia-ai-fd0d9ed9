@@ -22,8 +22,11 @@ import { PassportLinks } from "@/components/halisia/land-passport/passport-links
 import { LandPricePanel } from "@/components/halisia/land-price-panel";
 import { countyForPoint } from "@/lib/location-validation";
 import { looksLikeParcelIdentifier, PARCEL_IDENTIFIER_NOTICE } from "@/lib/parcel-identifier";
+import { EvidenceTrail } from "@/components/halisia/evidence-trail";
+import { areaKey } from "@/lib/projects";
 import { MAP_CONTEXT_LAYERS } from "@/lib/map-evidence";
 import {
+  FolderPlus,
   Layers,
   Satellite,
   Ruler,
@@ -567,16 +570,27 @@ function Explore() {
             {pdfError && <div className="mb-2 text-xs text-amber-glow">{pdfError}</div>}
             <ShareLinkButton lat={active.lat} lng={active.lng} address={active.address} />
             {loc ? (
-              <PassportLinks
-                className="mb-3"
-                target={{
-                  lat: loc.lat,
-                  lng: loc.lng,
-                  label: loc.address,
-                  source: "Explore search / map selection",
-                  status: "approximate",
-                }}
-              />
+              <>
+                <PassportLinks
+                  className="mb-3"
+                  target={{
+                    lat: loc.lat,
+                    lng: loc.lng,
+                    label: loc.address,
+                    source: "Explore search / map selection",
+                    status: "approximate",
+                  }}
+                />
+                <Link
+                  to="/projects"
+                  search={{ lat: loc.lat, lng: loc.lng, label: loc.address.slice(0, 160) }}
+                  data-testid="start-project-here"
+                  className="mb-3 inline-flex min-h-10 items-center gap-1.5 rounded-full border border-white/15 px-4 text-xs hover:bg-white/5"
+                >
+                  <FolderPlus className="h-3.5 w-3.5 text-accent" aria-hidden="true" /> Start a
+                  project here
+                </Link>
+              </>
             ) : (
               <p className="mb-3 text-[11px] text-muted-foreground">
                 Showing the default Nairobi view. Search or pick a point to open a Land Passport.
@@ -584,6 +598,7 @@ function Explore() {
             )}
             <IntelligenceDashboard lat={active.lat} lng={active.lng} address={active.address} />
             {exploreCounty && <LandPricePanel county={exploreCounty.name} />}
+            {loc && <EvidenceTrail locationKey={areaKey(loc.lat, loc.lng)} className="mt-4" />}
           </div>
         </div>
       </div>

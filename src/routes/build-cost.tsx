@@ -15,6 +15,7 @@ import { FINISHES, STRUCTURES, TYPOLOGIES, getBuildCost } from "@/lib/cost-intel
 import { kes } from "@/lib/cost-intel";
 import { Surface, SectionHeading } from "@/components/halisia/ds";
 import { KENYA_COUNTY_FACTS } from "@/lib/kenya-county-facts";
+import { priceRelevance, relevanceSummary, PRICE_STALE_MONTHS } from "@/lib/price-relevance";
 
 export const Route = createFileRoute("/build-cost")({
   head: () => ({
@@ -187,6 +188,10 @@ function BuildCostPage() {
               {Math.round(costQ.data.costing.pricedShare * 100)}% of BoQ priced)
               {effectiveArea ? ` · floor area ${effectiveArea} m²` : ""}
             </p>
+            <PriceRelevanceBanner
+              lines={costQ.data.costing.lines.filter((l) => l.price_kes != null)}
+              county={county}
+            />
             <table className="mt-3 w-full text-xs">
               <thead>
                 <tr className="text-left text-muted-foreground">
@@ -231,6 +236,21 @@ function BuildCostPage() {
                     </td>
                     <td className="py-1 text-muted-foreground">
                       {l.price_source ? `${l.price_source} · ${l.price_date}` : "—"}
+                      {l.price_kes != null
+                        ? priceRelevance({
+                            observedDate: l.price_date,
+                            priceCounty: l.price_county,
+                            requestedCounty: county,
+                          }).notes.map((n) => (
+                            <span
+                              key={n}
+                              data-testid="bc-price-note"
+                              className="ml-1 inline-block rounded-full border border-amber-400/40 bg-amber-500/10 px-1.5 text-[10px] text-amber-glow"
+                            >
+                              {n}
+                            </span>
+                          ))
+                        : null}
                     </td>
                   </tr>
                 ))}
@@ -292,5 +312,41 @@ function BuildCostPage() {
         in the cost database.
       </p>
     </main>
+  );
+}
+
+/** One line above the table: how many prices are old or from elsewhere. */
+function PriceRelevanceBanner({
+  lines,
+  county,
+}: {
+  lines: Array<{ price_date?: string | null; price_county?: string | null }>;
+  county: string;
+}) {
+  const sum = relevanceSummary(
+    lines.map((l) =>
+      priceRelevance({
+        observedDate: l.price_date,
+        priceCounty: l.price_county,
+        requestedCounty: county,
+      }),
+    ),
+  );
+  const parts: string[] = [];
+  if (sum.stale) parts.push(`${sum.stale} older than ${PRICE_STALE_MONTHS} months`);
+  if (sum.ageing) parts.push(`${sum.ageing} between 6 and ${PRICE_STALE_MONTHS} months old`);
+  if (sum.undated) parts.push(`${sum.undated} undated`);
+  if (sum.elsewhere) parts.push(`${sum.elsewhere} from another county`);
+  if (sum.unspecified) parts.push(`${sum.unspecified} with no recorded location`);
+  if (!parts.length) return null;
+  return (
+    <p
+      role="note"
+      data-testid="bc-price-relevance"
+      className="mt-2 rounded-xl border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-glow"
+    >
+      Of {sum.priced} priced lines: {parts.join(", ")}. These are shown for reference, not as
+      current local quotes{county ? "" : "; choose a county to check location"}.
+    </p>
   );
 }
