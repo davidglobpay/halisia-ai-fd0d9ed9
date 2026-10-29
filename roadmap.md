@@ -1,5 +1,13 @@
 # Current work
 
+## PR #35 verification
+
+- [x] Confirm connected merge and non-main edit branch; run lint, format and unit tests
+- [x] Repair preview project typing without changing generated files or runtime access
+- [ ] Apply migration and run rollback access tests; blocked by missing grants and prohibited Auth foreign keys in the exact supplied SQL
+- [ ] Signed-in project/evidence checks; blocked by pending migration
+- [ ] Production build; manual execution unavailable
+
 ## Passport PDF quality (2026-10-28)
 
 - [x] Canonical amenity filtering, compact cards and matching access directory
