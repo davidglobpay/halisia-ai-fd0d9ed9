@@ -6,7 +6,7 @@ on:
       ref:
         description: Branch or commit to validate
         required: true
-        default: fix/halisia-production-stability
+        default: codex/reconciled-release-20261015
 
 permissions:
   contents: read
