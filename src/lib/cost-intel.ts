@@ -130,6 +130,8 @@ export type BoqLine = {
   price_kes_high?: number | null;
   price_source?: string | null;
   price_date?: string | null;
+  /** County the price was observed in, as recorded (may be null). */
+  price_county?: string | null;
 };
 
 export type BoqCosting = {

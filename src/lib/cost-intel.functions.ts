@@ -131,6 +131,7 @@ export const getBuildCost = createServerFn({ method: "GET" })
         source: string;
         label: string;
         date: string;
+        county: string | null;
       }
     >();
     for (const p of prices ?? []) {
@@ -146,6 +147,7 @@ export const getBuildCost = createServerFn({ method: "GET" })
           source: countyMatch ? `county:${data.county}` : "national",
           label: provenanceLabel(p.county, SOURCE_TYPE_LABELS[p.source_type] ?? p.source_type),
           date: p.observed_date,
+          county: p.county ?? null,
         });
       }
     }
@@ -163,6 +165,7 @@ export const getBuildCost = createServerFn({ method: "GET" })
         price_kes_high: price?.price_kes_high ?? null,
         price_source: price?.label ?? null,
         price_date: price?.date ?? null,
+        price_county: price?.county ?? null,
       };
     });
 
@@ -193,6 +196,7 @@ export const getBuildCost = createServerFn({ method: "GET" })
         source: string;
         label: string;
         date: string;
+        county: string | null;
       }
     >();
     for (const r of rates ?? []) {
@@ -207,6 +211,7 @@ export const getBuildCost = createServerFn({ method: "GET" })
           source: countyMatch ? `county:${data.county}` : "national",
           label: provenanceLabel(r.county, r.source ?? "Labour rate"),
           date: r.observed_date,
+          county: r.county ?? null,
         });
       }
     }
@@ -223,6 +228,7 @@ export const getBuildCost = createServerFn({ method: "GET" })
         price_kes_high: rate?.rate_kes_high ?? null,
         price_source: rate?.label ?? null,
         price_date: rate?.date ?? null,
+        price_county: rate?.county ?? null,
       };
     });
 
