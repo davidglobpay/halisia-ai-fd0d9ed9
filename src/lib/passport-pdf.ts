@@ -30,6 +30,7 @@ import { PREVIEW_LAYERS, type EvidenceMapLayer } from "./map-evidence-preview";
 import { COUNTY_LOGOS } from "./county-logos";
 import lockupUrl from "@/assets/brand/halisia-lockup.png?url";
 import symbolUrl from "@/assets/brand/halisia-mark.png?url";
+import { buildEvidenceConclusion } from "./passport-conclusion";
 
 export type PassportPdfOptions = {
   admin?: AdminHierarchy | null;
@@ -416,7 +417,9 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
    * removed from this product on purpose; this is a summary, not its return.
    */
   const conclusion = (lines: Array<string | false | null | undefined>) => {
-    const body = lines.filter((l): l is string => !!l && l.trim().length > 0).join(" ");
+    // Empty, or carrying a rating, suitability verdict or money amount: omit
+    // the box entirely rather than print an interpretation that reads as one.
+    const body = buildEvidenceConclusion(lines);
     if (!body) return;
     const rows = doc.splitTextToSize(sanitize(body), C - 24) as string[];
     const height = 26 + rows.length * 12.6;
