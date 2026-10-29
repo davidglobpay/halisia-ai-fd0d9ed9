@@ -71,8 +71,13 @@ create policy halisia_active_account on public.project_members as restrictive fo
   using (public.halisia_account_active()) with check (public.halisia_account_active());
 
 drop policy if exists "members read projects" on public.projects;
+-- owner_id = auth.uid() is checked inline, not only through is_project_member():
+-- INSERT ... RETURNING tests this policy against the new row, which the stable
+-- helper function cannot yet see, so without it every "Create project" fails.
 create policy "members read projects" on public.projects for select to authenticated
-  using (public.is_project_member(id) or public.has_role(auth.uid(), 'administrator'::public.app_role));
+  using (owner_id = auth.uid()
+         or public.is_project_member(id)
+         or public.has_role(auth.uid(), 'administrator'::public.app_role));
 drop policy if exists "owner creates projects" on public.projects;
 create policy "owner creates projects" on public.projects for insert to authenticated
   with check (owner_id = auth.uid());
@@ -191,6 +196,9 @@ create policy "project members read project observations" on public.resource_obs
 drop policy if exists "signed-in users read active sources" on public.resource_sources;
 create policy "signed-in users read active sources" on public.resource_sources
   for select to authenticated using (active);
+-- The table had no grant for signed-in users, so the policy alone could not open it.
+-- Read-only; the table holds authority, URL, licence and method, no secrets.
+grant select on public.resource_sources to authenticated;
 
 create index if not exists resource_observations_subject_idx
   on public.resource_observations(subject_type, subject_ref, retrieved_at desc);
