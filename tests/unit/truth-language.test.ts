@@ -777,8 +777,13 @@ describe("a failed elevation grid is a gap, not a flat site", () => {
 
   it("records whether the terrain was actually measured", () => {
     expect(GEOTECH_FN).toContain("terrainMeasured: boolean;");
-    expect(GEOTECH_FN).toContain("const terrainMeasured = gridInfo != null;");
-    expect(GEOTECH_FN).toContain("terrainMeasured,");
+    // Measured means a grid loaded AND passed the robust-relief checks; a grid
+    // that loaded but failed them is recorded as rejected, not as measured.
+    expect(GEOTECH_FN).toContain(
+      "if (!quality.usable || quality.outliers.length > 0) return null;",
+    );
+    expect(GEOTECH_FN).toContain("terrainMeasured: terrain != null,");
+    expect(GEOTECH_FN).toContain("terrainRejected: gridInfo != null && terrain == null,");
   });
 
   it("withholds terrain figures on screen when it was not", () => {
@@ -789,7 +794,7 @@ describe("a failed elevation grid is a gap, not a flat site", () => {
   });
 
   it("withholds them in the PDF too, and claims no grid it did not read", () => {
-    expect(GEOTECH_PDF).toContain("geotechAvailability(g.terrainMeasured)");
+    expect(GEOTECH_PDF).toContain("geotechAvailability(g.terrainMeasured, g.terrainRejected)");
     expect(GEOTECH_PDF).toContain(
       "if (!availability.exportAvailable) throw new Error(availability.message)",
     );

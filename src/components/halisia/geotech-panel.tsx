@@ -55,7 +55,7 @@ export function GeotechPanel({ lat, lng, address }: { lat: number; lng: number; 
     );
   }
   const g = q.data;
-  const availability = geotechAvailability(g.terrainMeasured);
+  const availability = geotechAvailability(g.terrainMeasured, g.terrainRejected);
   const usedSources = g.sources.filter((source) => source.used).map((source) => source.label);
   const narration =
     availability.terrainDerivedAvailable && g.terrain
@@ -173,6 +173,18 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 function TerrainSection({ g }: { g: GeotechIntel }) {
   const t = g.terrain;
+  if (!g.terrainMeasured && g.terrainRejected)
+    return (
+      <Card title="Terrain analysis" icon={Mountain} hint="Grid failed checks">
+        <p className="text-sm text-muted-foreground">
+          The ASTER 30 m elevation grid loaded for this point, but some samples disagree sharply
+          with their neighbours, which is typical of raster errors. Slope, aspect, relief,
+          roughness, landform and drainage are withheld rather than drawn from suspect data, and the
+          geology, bedrock, groundwater and foundation sections below are unavailable for the same
+          reason.
+        </p>
+      </Card>
+    );
   if (!g.terrainMeasured)
     return (
       <Card title="Terrain analysis" icon={Mountain} hint="No elevation grid">
@@ -329,7 +341,9 @@ export function RiskSection({ g }: { g: GeotechIntel }) {
         conditions. A licensed geotechnical engineer should arrange sampling, testing and
         groundwater observations before structural design.
       </p>
-      {!g.terrainMeasured && <p role="status">{geotechAvailability(false).message}</p>}
+      {!g.terrainMeasured && (
+        <p role="status">{geotechAvailability(false, g.terrainRejected).message}</p>
+      )}
     </Card>
   );
 }

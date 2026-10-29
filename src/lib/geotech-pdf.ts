@@ -4,7 +4,7 @@ import { downloadPassportPdf } from "@/lib/passport-pdf";
 
 /** Shares the verified Passport renderer; no heuristic subsurface or foundation findings. */
 export async function downloadGeotechPdf(g: GeotechIntel, address: string) {
-  const availability = geotechAvailability(g.terrainMeasured);
+  const availability = geotechAvailability(g.terrainMeasured, g.terrainRejected);
   if (!availability.exportAvailable) throw new Error(availability.message);
   return downloadPassportPdf({
     place: address,

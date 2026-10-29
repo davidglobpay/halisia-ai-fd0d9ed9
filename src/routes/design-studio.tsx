@@ -53,18 +53,22 @@ function NumberField({
   label,
   value,
   onChange,
+  min = 12,
+  max = 500,
 }: {
   label: string;
   value: number;
   onChange: (value: number) => void;
+  min?: number;
+  max?: number;
 }) {
   return (
     <label className="grid gap-1 text-xs font-medium">
       {label}
       <input
         type="number"
-        min={12}
-        max={500}
+        min={min}
+        max={max}
         step={1}
         value={value}
         onChange={(event) => onChange(Number(event.target.value))}
@@ -265,6 +269,8 @@ function DesignStudioPage() {
                   </label>
                   <NumberField
                     label="Floors"
+                    min={1}
+                    max={12}
                     value={generatedFloors}
                     onChange={(value) => setGeneratedFloors(Math.max(1, Math.min(12, value)))}
                   />
