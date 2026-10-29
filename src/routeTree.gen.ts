@@ -27,6 +27,7 @@ import { Route as McpRouteImport } from './routes/mcp'
 import { Route as ModelLabRouteImport } from './routes/model-lab'
 import { Route as PassportRouteImport } from './routes/passport'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ReportRouteImport } from './routes/report'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SpatialRouteImport } from './routes/spatial'
@@ -148,6 +149,11 @@ const PassportRoute = PassportRouteImport.update({
 const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ReportRoute = ReportRouteImport.update({
@@ -339,6 +345,7 @@ export interface FileRoutesByFullPath {
   '/model-lab': typeof ModelLabRoute
   '/passport': typeof PassportRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/spatial': typeof SpatialRoute
@@ -390,6 +397,7 @@ export interface FileRoutesByTo {
   '/model-lab': typeof ModelLabRoute
   '/passport': typeof PassportRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/spatial': typeof SpatialRoute
@@ -444,6 +452,7 @@ export interface FileRoutesById {
   '/model-lab': typeof ModelLabRoute
   '/passport': typeof PassportRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/spatial': typeof SpatialRoute
@@ -498,6 +507,7 @@ export interface FileRouteTypes {
     | '/model-lab'
     | '/passport'
     | '/pricing'
+    | '/privacy'
     | '/report'
     | '/reset-password'
     | '/spatial'
@@ -549,6 +559,7 @@ export interface FileRouteTypes {
     | '/model-lab'
     | '/passport'
     | '/pricing'
+    | '/privacy'
     | '/report'
     | '/reset-password'
     | '/spatial'
@@ -602,6 +613,7 @@ export interface FileRouteTypes {
     | '/model-lab'
     | '/passport'
     | '/pricing'
+    | '/privacy'
     | '/report'
     | '/reset-password'
     | '/spatial'
@@ -656,6 +668,7 @@ export interface RootRouteChildren {
   ModelLabRoute: typeof ModelLabRoute
   PassportRoute: typeof PassportRoute
   PricingRoute: typeof PricingRoute
+  PrivacyRoute: typeof PrivacyRoute
   ReportRoute: typeof ReportRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SpatialRoute: typeof SpatialRoute
@@ -800,6 +813,13 @@ declare module '@tanstack/react-router' {
       path: '/pricing'
       fullPath: '/pricing'
       preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/report': {
@@ -1108,6 +1128,7 @@ const rootRouteChildren: RootRouteChildren = {
   ModelLabRoute: ModelLabRoute,
   PassportRoute: PassportRoute,
   PricingRoute: PricingRoute,
+  PrivacyRoute: PrivacyRoute,
   ReportRoute: ReportRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SpatialRoute: SpatialRoute,

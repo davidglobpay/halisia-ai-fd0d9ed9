@@ -452,6 +452,9 @@ function LandingBody() {
               <a href="#how" className="hover:text-white transition">
                 How it works
               </a>
+              <Link to="/privacy" className="hover:text-white transition">
+                Privacy
+              </Link>
             </div>
             <div className="mt-6 flex flex-col md:flex-row items-center justify-between gap-2 text-[11px] text-muted-foreground w-full">
               <div>© {new Date().getFullYear()} HALISIA AI · Land Intelligence Platform</div>
@@ -509,7 +512,7 @@ const STEPS = [
   {
     icon: Search,
     title: "Search or drop a pin",
-    body: "Any town, road, plot number, or lat/lng in Kenya. The 3D map takes you there.",
+    body: "Any town, road, place or lat/lng in Kenya. The 3D map takes you there. Have a title deed? Use the Title Deed tool.",
   },
   {
     icon: MousePointerClick,

@@ -5,7 +5,7 @@ import { useMyLocation } from "@/hooks/use-my-location";
 export function SearchBar({
   onSearch,
   loading,
-  placeholder = "Search a town, road, plot number, or coordinates…",
+  placeholder = "Search a town, road, place or coordinates…",
   size = "md",
   onUseMyLocation,
 }: {

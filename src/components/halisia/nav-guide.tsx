@@ -16,7 +16,7 @@ const STEPS = [
   {
     icon: Search,
     title: "Search anywhere in Kenya",
-    body: "Tap the search bar at the top, type a town, plot number, or coordinates. Press ⌘K (Ctrl+K) from any page to jump to search.",
+    body: "Tap the search bar at the top, type a town, road, place or coordinates. Title and LR numbers go in the Title Deed tool. Press ⌘K (Ctrl+K) from any page to jump to search.",
   },
   {
     icon: MapIcon,

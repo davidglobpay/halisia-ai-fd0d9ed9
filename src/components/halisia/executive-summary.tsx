@@ -172,8 +172,9 @@ export function ExecutiveSummary({
     simple ? 3 : 8,
   );
 
-  const confPct = narrative.confidencePct ?? 65;
-  const narration = `${narrative.headline}. ${narrative.overview ?? narrative.paragraphs?.[0] ?? ""} Confidence ${confPct} percent, ${narrative.confidence}. Sources: ${sources.join(", ")}. Limitations: predictions and value ranges are indicative and are not a licensed appraisal or legal opinion.`;
+  // No stand-in figure: when the summary carries no confidence, none is shown.
+  const confPct = narrative.confidencePct ?? null;
+  const narration = `${narrative.headline}. ${narrative.overview ?? narrative.paragraphs?.[0] ?? ""}${confPct != null ? ` Confidence ${confPct} percent, ${narrative.confidence}.` : ""} Sources: ${sources.join(", ")}. Limitations: predictions and value ranges are indicative and are not a licensed appraisal or legal opinion.`;
 
   return (
     <section
@@ -219,31 +220,33 @@ export function ExecutiveSummary({
         {narrative.headline}
       </h3>
 
-      <div className="mt-2 flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
-            Confidence
-          </span>
-          <span
-            className={`text-xs font-semibold tabular-nums ${
-              confPct >= 75
-                ? "text-emerald-glow"
-                : confPct >= 55
-                  ? "text-cyan-glow"
-                  : "text-amber-glow"
-            }`}
-            title="Reflects data completeness across geospatial, environmental and community signals."
-          >
-            {confPct}% · {narrative.confidence}
-          </span>
+      {confPct != null && (
+        <div className="mt-2 flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              Confidence
+            </span>
+            <span
+              className={`text-xs font-semibold tabular-nums ${
+                confPct >= 75
+                  ? "text-emerald-glow"
+                  : confPct >= 55
+                    ? "text-cyan-glow"
+                    : "text-amber-glow"
+              }`}
+              title="Reflects data completeness across geospatial, environmental and community signals."
+            >
+              {confPct}% · {narrative.confidence}
+            </span>
+          </div>
+          <div className="h-1.5 flex-1 min-w-[100px] rounded-full bg-white/10 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
+              style={{ width: `${confPct}%` }}
+            />
+          </div>
         </div>
-        <div className="h-1.5 flex-1 min-w-[100px] rounded-full bg-white/10 overflow-hidden">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
-            style={{ width: `${confPct}%` }}
-          />
-        </div>
-      </div>
+      )}
 
       {/* Sections */}
       <div className="mt-4 grid gap-2.5">

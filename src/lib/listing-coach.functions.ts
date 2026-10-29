@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { parseServerInput, CoachSchema } from "@/lib/server-input";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export type CoachInput = {
@@ -97,7 +98,9 @@ function fallback(d: CoachInput): CoachOutput {
 
 export const coachListing = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => input as CoachInput)
+  .inputValidator((input: unknown) =>
+    parseServerInput<CoachInput>(CoachSchema, input, "listing coach"),
+  )
   .handler(async ({ data }): Promise<CoachOutput> => {
     const key = process.env["LOVABLE_API_KEY"];
     if (!key) return fallback(data);

@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { parseServerInput, BriefSchema } from "@/lib/server-input";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { AiOptionPatch } from "@/lib/design-studio/core";
 
@@ -54,7 +55,9 @@ function unavailable(reason: string): BriefOutput {
 
 export const generateDesignBrief = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => input as BriefInput)
+  .inputValidator((input: unknown) =>
+    parseServerInput<BriefInput>(BriefSchema, input, "design brief"),
+  )
   .handler(async ({ data }): Promise<BriefOutput> => {
     const key = process.env["LOVABLE_API_KEY"];
     if (!key) return unavailable("No AI provider configured for this project.");

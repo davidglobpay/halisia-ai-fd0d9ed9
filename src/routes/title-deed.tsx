@@ -128,6 +128,9 @@ function TitleDeedPage() {
   const [queryType, setQueryType] = useState<"title" | "lr" | "parcel" | "registry">("title");
   const [queryValue, setQueryValue] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  // The recognised deed text can name the owner. It leaves the browser only
+  // after the person agrees, every time they pick a new file.
+  const [aiConsent, setAiConsent] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [stage, setStage] = useState<Stage>("idle");
   const [progress, setProgress] = useState(0);
@@ -304,6 +307,7 @@ function TitleDeedPage() {
   const onFile = (f: File | null) => {
     if (!f) return;
     setFile(f);
+    setAiConsent(false);
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     if (f.type.startsWith("image/")) setPreviewUrl(URL.createObjectURL(f));
     else setPreviewUrl(null);
@@ -361,7 +365,7 @@ function TitleDeedPage() {
   }, [fields, loc]);
 
   const processUpload = async () => {
-    if (!file) return;
+    if (!file || !aiConsent) return;
     setError(null);
     try {
       let text = "";
@@ -626,10 +630,33 @@ function TitleDeedPage() {
                   />
                 </div>
                 {file && (
+                  <label
+                    className="mt-3 flex items-start gap-2 text-xs leading-relaxed text-muted-foreground"
+                    data-testid="deed-ai-consent"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={aiConsent}
+                      onChange={(e) => setAiConsent(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 shrink-0 accent-[hsl(var(--primary))]"
+                    />
+                    <span>
+                      I agree that the text read from this deed in my browser — which can include
+                      the owner&apos;s name — is sent to Google&apos;s Gemini model through
+                      Lovable&apos;s AI service to extract the title details. The image is not
+                      uploaded and HALISIA does not store the text.{" "}
+                      <Link to="/privacy" hash="deeds" className="underline underline-offset-2">
+                        How deed data is handled
+                      </Link>
+                    </span>
+                  </label>
+                )}
+                {file && (
                   <div className="mt-3 flex gap-2">
                     <button
                       onClick={processUpload}
-                      disabled={busy}
+                      disabled={busy || !aiConsent}
+                      title={aiConsent ? undefined : "Tick the consent box first"}
                       className="flex-1 rounded-2xl px-4 py-3 text-sm bg-gradient-to-r from-primary to-accent text-primary-foreground font-medium inline-flex items-center justify-center gap-2 disabled:opacity-60"
                     >
                       {busy ? (
