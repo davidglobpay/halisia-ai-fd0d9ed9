@@ -19,7 +19,7 @@
       {
         "name": "search_listings",
         "title": "Search marketplace listings",
-        "description": "Search HALISIA marketplace listings visible to the signed-in user by county, text and max price. Listings are owner/source-listed, not title-verified.",
+        "description": "Search HALISIA marketplace listings visible to the signed-in user by county, text and max price. Listings are owner/source-listed, not title-verified. Listings with verification SAMPLE_NOT_FOR_SALE are demonstration examples, not real offers.",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,

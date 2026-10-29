@@ -2326,6 +2326,7 @@ export type Database = {
           elevation_masl: number | null
           geometry: Json
           id: string
+          is_sample: boolean
           legacy_parcel_code: string | null
           legacy_title_deed_no: string | null
           max_building_height_m: number | null
@@ -2354,6 +2355,7 @@ export type Database = {
           elevation_masl?: number | null
           geometry: Json
           id?: string
+          is_sample?: boolean
           legacy_parcel_code?: string | null
           legacy_title_deed_no?: string | null
           max_building_height_m?: number | null
@@ -2382,6 +2384,7 @@ export type Database = {
           elevation_masl?: number | null
           geometry?: Json
           id?: string
+          is_sample?: boolean
           legacy_parcel_code?: string | null
           legacy_title_deed_no?: string | null
           max_building_height_m?: number | null
@@ -2666,6 +2669,7 @@ export type Database = {
           id: string
           intent: Database["public"]["Enums"]["listing_intent"]
           investment_readiness: Json | null
+          is_sample: boolean
           kind: Database["public"]["Enums"]["property_kind"]
           latitude: number | null
           longitude: number | null
@@ -2700,6 +2704,7 @@ export type Database = {
           id?: string
           intent?: Database["public"]["Enums"]["listing_intent"]
           investment_readiness?: Json | null
+          is_sample?: boolean
           kind: Database["public"]["Enums"]["property_kind"]
           latitude?: number | null
           longitude?: number | null
@@ -2734,6 +2739,7 @@ export type Database = {
           id?: string
           intent?: Database["public"]["Enums"]["listing_intent"]
           investment_readiness?: Json | null
+          is_sample?: boolean
           kind?: Database["public"]["Enums"]["property_kind"]
           latitude?: number | null
           longitude?: number | null
