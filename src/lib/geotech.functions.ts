@@ -85,6 +85,8 @@ export type GeotechIntel = {
   /** Missing provider data stays null; terrainMeasured records grid availability. */
   soilStatus?: "ok" | "no_data" | "failed";
   terrainMeasured: boolean;
+  /** The grid loaded but failed quality checks, so terrain was withheld. */
+  terrainRejected?: boolean;
   elevationGrid?: { values: number[][]; stepDeg: number; source: string };
   sources: Array<{ label: string; url: string; used: boolean }>;
   disclaimer: string;
@@ -270,6 +272,7 @@ export const getGeotechIntel = createServerFn({ method: "POST" })
       risks: [],
       confidence: null,
       terrainMeasured: terrain != null,
+      terrainRejected: gridInfo != null && terrain == null,
       elevationGrid: gridInfo
         ? { values: gridInfo.grid, stepDeg: gridInfo.step, source: "Open-Topo-Data ASTER30m" }
         : undefined,
