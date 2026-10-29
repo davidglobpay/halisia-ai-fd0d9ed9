@@ -16,3 +16,4 @@
 - Adapt Passport findings to map evidence through an explicit sampling allowlist and existing runtime place geometry; never reinterpret retrieval as capture, statistics as registry evidence, or grid resolution as positional accuracy, because map focus must not strengthen evidence claims.
 - Passport county news uses a public-key server client and the existing unarchived-news RLS policy, never privileged access; safe projections and optional export failure preserve public-data boundaries.
 - Passport PDF adapters share pure quality helpers for amenities, location agreement, climate and story deduplication; this keeps cards and supporting findings consistent without changing Pulse relevance or other product views.
+- Pending project migration types stay local to the project adapter until schema regeneration includes them; never edit generated clients or weaken runtime access to resolve type errors.
