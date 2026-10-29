@@ -107,7 +107,7 @@ function PrivacyPage() {
             hello@halisia.ai
           </a>
           {" · "}
-          <Link to="/" className="underline">
+          <Link to="/" search={{ compare: "" }} className="underline">
             Back to HALISIA
           </Link>
         </p>

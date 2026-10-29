@@ -75,7 +75,7 @@ export function redact(text: string, key?: string | null): string {
     if (email && email.includes("@")) out = out.split(email).join("[redacted]");
   }
   out = out.replace(/\b[A-Fa-f0-9]{32,}\b/g, "[redacted]");
-  out = out.replace(/(bearer\s+)[\w.\-]+/gi, "$1[redacted]");
+  out = out.replace(/(bearer\s+)[\w.-]+/gi, "$1[redacted]");
   out = out.replace(/([?&](?:api[_-]?key|key|token|access_token)=)[^&\s]+/gi, "$1[redacted]");
   return out;
 }
