@@ -3,12 +3,13 @@ import { createClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
 import {
-  LAND_OBSERVATION_WINDOW_MONTHS,
   cleanCsvRows,
   costBoq,
   droppedCsvColumns,
   isPerDayRate,
+  observationWindow,
   parseCsvRfc4180,
+  parseIsoDateUtc,
   rankBudgetOptions,
   resolveLandPriceSummary,
   provenanceLabel,
@@ -34,21 +35,23 @@ function publicClient() {
   });
 }
 
-function windowStart(): string {
-  const d = new Date();
-  d.setMonth(d.getMonth() - LAND_OBSERVATION_WINDOW_MONTHS);
-  return d.toISOString().slice(0, 10);
-}
-
 type ObsRow = LandPriceObservation;
 
-async function fetchObservations(filter: Record<string, string>): Promise<ObsRow[]> {
+/**
+ * Land observations inside the canonical 12-month window ending on `asOf`
+ * (inclusive both ends, so future-dated rows are excluded at the query).
+ * The same `asOf` is passed to the pure summarizers, which re-apply the
+ * window — the query and the computation cannot disagree.
+ */
+async function fetchObservations(filter: Record<string, string>, asOf: Date): Promise<ObsRow[]> {
+  const w = observationWindow(asOf);
   let q = publicClient()
     .from("land_price_obs")
     .select(
       "county, sub_county, ward, plot_size_sqft, price_kes, source_type, observed_date, include_in_median",
     )
-    .gte("observed_date", windowStart())
+    .gte("observed_date", w.start)
+    .lte("observed_date", w.end)
     .order("observed_date", { ascending: false })
     .limit(500);
   for (const [col, val] of Object.entries(filter)) q = q.eq(col, val);
@@ -66,7 +69,10 @@ async function fetchObservations(filter: Record<string, string>): Promise<ObsRow
  */
 export const getLandPriceSummary = createServerFn({ method: "GET" })
   .inputValidator((input: { county: string; subCounty?: string; ward?: string }) => input)
-  .handler(async ({ data }) => resolveLandPriceSummary(data, fetchObservations));
+  .handler(async ({ data }) => {
+    const asOf = new Date();
+    return resolveLandPriceSummary(data, (filter) => fetchObservations(filter, asOf), { asOf });
+  });
 
 export const STRUCTURES = [
   "container_20ft",
@@ -247,8 +253,9 @@ export const getBudgetOptions = createServerFn({ method: "GET" })
     (input: { county: string; budget: number; plotSqft: number; buildTotal: number }) => input,
   )
   .handler(async ({ data }) => {
-    const rows = await fetchObservations({ county: data.county });
-    const wards = wardLandOptions(rows, data.county, data.plotSqft);
+    const asOf = new Date();
+    const rows = await fetchObservations({ county: data.county }, asOf);
+    const wards = wardLandOptions(rows, data.county, data.plotSqft, { asOf });
     return rankBudgetOptions(wards, data.buildTotal, data.budget);
   });
 
@@ -350,8 +357,16 @@ const BOOLEAN_COLUMNS: Record<CsvTable, string[]> = {
   labour_rate: [],
 };
 
-/** Validate one CSV row for a table; returns an error string or null. */
-export function validateCsvRow(table: CsvTable, row: Record<string, string>): string | null {
+/**
+ * Validate one CSV row for a table; returns an error string or null.
+ * `today` (defaults to now) bounds observed_date so future-dated
+ * observations are rejected at import rather than silently stored.
+ */
+export function validateCsvRow(
+  table: CsvTable,
+  row: Record<string, string>,
+  today: Date = new Date(),
+): string | null {
   for (const col of REQUIRED_COLUMNS[table])
     if (!row[col]?.trim()) return `missing required column "${col}"`;
   for (const col of REQUIRED_COLUMNS[table].filter((c) => NUMERIC_COLUMNS[table].includes(c)))
@@ -381,12 +396,13 @@ export function validateCsvRow(table: CsvTable, row: Record<string, string>): st
     if (!STRUCTURE_VALUES.includes(row.structure)) return "unknown structure";
     if (!FINISH_VALUES.includes(row.finish)) return "unknown finish";
   }
-  if (
-    table !== "boq_template" &&
-    table !== "boq_labour" &&
-    !/^\d{4}-\d{2}-\d{2}$/.test(row.observed_date)
-  )
-    return "observed_date must be YYYY-MM-DD";
+  if (table !== "boq_template" && table !== "boq_labour") {
+    const observed = parseIsoDateUtc(row.observed_date);
+    if (observed === null) return "observed_date must be a real date in YYYY-MM-DD form";
+    const todayIso = observationWindow(today).end;
+    if (observed > (parseIsoDateUtc(todayIso) as number))
+      return `observed_date must not be in the future (after ${todayIso})`;
+  }
   return null;
 }
 
@@ -404,8 +420,9 @@ export const importCostCsv = createServerFn({ method: "POST" })
     const rows = parseCsvRfc4180(data.csv);
     if (!rows.length) throw new Error("No data rows found in the CSV");
     const errors: string[] = [];
+    const today = new Date();
     rows.forEach((row, i) => {
-      const err = validateCsvRow(data.table, row);
+      const err = validateCsvRow(data.table, row, today);
       if (err) errors.push(`row ${i + 2}: ${err}`);
     });
     if (errors.length)

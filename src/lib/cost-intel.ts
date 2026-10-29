@@ -27,6 +27,74 @@ export const LAND_OBSERVATION_WINDOW_MONTHS = 12;
 /** Source types that feed the median. Index rows are cross-checks only. */
 export const MEDIAN_SOURCE_TYPES = ["listing", "user_report", "agent"] as const;
 
+/* ---------------- Observation-date eligibility (canonical) ---------------- */
+
+const ISO_DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/**
+ * Parse a strict YYYY-MM-DD calendar date to UTC-midnight milliseconds.
+ * Returns null for empty, malformed or impossible dates (e.g. 2026-02-30).
+ */
+export function parseIsoDateUtc(value: unknown): number | null {
+  if (typeof value !== "string") return null;
+  const m = ISO_DATE_RE.exec(value.trim());
+  if (!m) return null;
+  const y = Number(m[1]);
+  const mo = Number(m[2]);
+  const d = Number(m[3]);
+  const ms = Date.UTC(y, mo - 1, d);
+  const back = new Date(ms);
+  if (back.getUTCFullYear() !== y || back.getUTCMonth() !== mo - 1 || back.getUTCDate() !== d)
+    return null;
+  return ms;
+}
+
+function isoDay(ms: number): string {
+  return new Date(ms).toISOString().slice(0, 10);
+}
+
+/**
+ * The land-observation window for a reference instant, as inclusive UTC
+ * calendar dates. `end` is the reference date; `start` is the same calendar
+ * day LAND_OBSERVATION_WINDOW_MONTHS earlier, clamped to the month's last day
+ * (2028-02-29 → 2027-02-28). Both ends are inclusive.
+ */
+export function observationWindow(asOf: Date): { start: string; end: string } {
+  const y = asOf.getUTCFullYear();
+  const m = asOf.getUTCMonth();
+  const d = asOf.getUTCDate();
+  const totalMonths = y * 12 + m - LAND_OBSERVATION_WINDOW_MONTHS;
+  const sy = Math.floor(totalMonths / 12);
+  const sm = totalMonths - sy * 12;
+  const lastDay = new Date(Date.UTC(sy, sm + 1, 0)).getUTCDate();
+  const start = Date.UTC(sy, sm, Math.min(d, lastDay));
+  const end = Date.UTC(y, m, d);
+  return { start: isoDay(start), end: isoDay(end) };
+}
+
+/**
+ * True when the observation date is a valid calendar date inside the
+ * inclusive window for `asOf`. Malformed, empty and future dates are never
+ * eligible.
+ */
+export function isWithinObservationWindow(observedDate: unknown, asOf: Date): boolean {
+  const t = parseIsoDateUtc(observedDate);
+  if (t === null) return false;
+  const w = observationWindow(asOf);
+  return t >= (parseIsoDateUtc(w.start) as number) && t <= (parseIsoDateUtc(w.end) as number);
+}
+
+/**
+ * Options for land summaries. When `asOf` is given, only observations inside
+ * the 12-month window ending on that date are eligible (primary median and
+ * index cross-check alike). Production server functions always pass it.
+ * Without `asOf`, rows are assumed to be pre-windowed by the caller, but
+ * malformed dates are still rejected.
+ */
+export type LandSummaryOptions = { asOf?: Date };
+
+/* ---------------- Land prices ---------------- */
+
 export type LandPriceObservation = {
   county: string;
   sub_county: string | null;
@@ -70,19 +138,25 @@ export function median(values: number[]): number {
  * Median price per sqft from observations, expanded to the standard plot
  * sizes. Only listing / user_report / agent rows with include_in_median
  * true feed the median; index rows are returned separately as a cross-check.
+ * Rows with a malformed date — or, when `opts.asOf` is given, a date outside
+ * the 12-month window (including future dates) — are ignored everywhere.
  * Returns null when fewer than MIN_LAND_OBSERVATIONS qualifying rows exist —
  * the caller must show "Not enough priced data yet", never a fallback number.
  */
 export function summarizeLandPrices(
   rows: LandPriceObservation[],
   scope: LandPriceScope,
+  opts: LandSummaryOptions = {},
 ): LandPriceSummary | null {
   const usable = rows.filter(
     (r) =>
       Number.isFinite(r.price_kes) &&
       Number.isFinite(r.plot_size_sqft) &&
       r.price_kes > 0 &&
-      r.plot_size_sqft > 0,
+      r.plot_size_sqft > 0 &&
+      (opts.asOf
+        ? isWithinObservationWindow(r.observed_date, opts.asOf)
+        : parseIsoDateUtc(r.observed_date) !== null),
   );
   const indexRows = usable.filter((r) => r.source_type === "index");
   const medianRows = usable.filter(
@@ -279,12 +353,14 @@ export type WardLandOption = {
 /**
  * Per-ward land medians for the budget planner. A ward meeting the n≥5 gate
  * uses its own median; otherwise it falls back to its sub-county median,
- * labelled scope "sub_county". Wards with neither are omitted.
+ * labelled scope "sub_county". Wards with neither are omitted. `opts.asOf`
+ * applies the same observation-date window as summarizeLandPrices.
  */
 export function wardLandOptions(
   rows: LandPriceObservation[],
   county: string,
   plotSqft: number,
+  opts: LandSummaryOptions = {},
 ): WardLandOption[] {
   const byWard = new Map<string, LandPriceObservation[]>();
   const bySubCounty = new Map<string, LandPriceObservation[]>();
@@ -302,11 +378,11 @@ export function wardLandOptions(
   }
   const subCountySummary = new Map<string, LandPriceSummary>();
   for (const [sc, list] of bySubCounty) {
-    const s = summarizeLandPrices(list, "sub_county");
+    const s = summarizeLandPrices(list, "sub_county", opts);
     if (s) subCountySummary.set(sc, s);
   }
   const wardOptions = [...byWard.entries()].flatMap(([ward, list]): WardLandOption[] => {
-    const wardSummary = summarizeLandPrices(list, "ward");
+    const wardSummary = summarizeLandPrices(list, "ward", opts);
     const sub = list[0].sub_county;
     if (wardSummary) {
       return [
@@ -410,13 +486,14 @@ export function landPriceTiers(input: {
   return tiers;
 }
 
-/** First tier whose rows pass the n≥5 gate, or null. */
+/** First tier whose rows pass the n≥5 gate (within the date window when `asOf` is set), or null. */
 export async function resolveLandPriceSummary(
   input: { county: string; subCounty?: string; ward?: string },
   fetchRows: (filter: Record<string, string>) => Promise<LandPriceObservation[]>,
+  opts: LandSummaryOptions = {},
 ): Promise<LandPriceSummary | null> {
   for (const tier of landPriceTiers(input)) {
-    const summary = summarizeLandPrices(await fetchRows(tier.filter), tier.scope);
+    const summary = summarizeLandPrices(await fetchRows(tier.filter), tier.scope, opts);
     if (summary) return summary;
   }
   return null;
