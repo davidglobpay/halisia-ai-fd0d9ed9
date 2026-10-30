@@ -1,4 +1,5 @@
 import { fetchPowerClimate } from "./power-climate";
+import { parseCoordInput } from "./request-guards";
 import { fetchWeatherForecast, type WeatherForecast } from "./met-weather";
 import { fetchPublicJson } from "@/lib/public-json";
 import { createServerFn } from "@tanstack/react-start";
@@ -458,12 +459,7 @@ function distanceBuckets(facilities: Record<string, Wave4Facility[]>) {
 }
 
 export const getWave4Intel = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => {
-    const v = input as { lat?: number; lng?: number; refresh?: boolean };
-    if (typeof v?.lat !== "number" || typeof v?.lng !== "number")
-      throw new Error("lat/lng required");
-    return { lat: v.lat, lng: v.lng, refresh: !!v.refresh };
-  })
+  .inputValidator((input: unknown) => parseCoordInput(input))
   .handler(async ({ data }): Promise<Wave4Intel> => {
     const key = `${data.lat.toFixed(3)},${data.lng.toFixed(3)}`;
     if (!data.refresh) {

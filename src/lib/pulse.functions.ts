@@ -1,12 +1,17 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { TtsEngine } from "./pulse/tts.server";
+import { createRateLimiter, parseTtsInput } from "./request-guards";
 
 /** Sampled public view signals. Atomic in the database; never used for ranking.
  * The process-local cooldown is best-effort and is not a rate limiter.
  */
 const VIEW_COOLDOWN_MS = 60_000;
 const recentViews = new Map<string, number>();
+
+/** Cloud TTS calls per signed-in account per hour (best-effort, per instance). */
+const TTS_CALLS_PER_HOUR = 20;
+const allowTts = createRateLimiter({ limit: TTS_CALLS_PER_HOUR, windowMs: 60 * 60_000 });
 
 export const trackArticleView = createServerFn({ method: "POST" })
   .inputValidator((input: { articleId: string }) => {
@@ -80,8 +85,17 @@ export const archivePulseArticles = createServerFn({ method: "POST" })
  */
 export const synthesizeArticleAudio = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { articleId: string; engine?: TtsEngine }) => input)
-  .handler(async ({ data }) => {
+  .inputValidator((input: { articleId: string; engine?: TtsEngine }) => parseTtsInput(input))
+  .handler(async ({ data, context }) => {
+    // Each call can bill a cloud voice provider. The browser already caches
+    // audio per article and engine; this caps bursts from one account.
+    if (!allowTts(context.userId)) {
+      return {
+        ok: false as const,
+        reason: "Too many audio requests. Please try again later.",
+        engines: [] as string[],
+      };
+    }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row } = await supabaseAdmin
       .from("news_articles")
