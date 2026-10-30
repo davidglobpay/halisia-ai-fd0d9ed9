@@ -106,9 +106,11 @@ DROP TRIGGER IF EXISTS halisia_guard_admin_grant ON public.user_roles;
 CREATE TRIGGER halisia_guard_admin_grant BEFORE INSERT OR UPDATE ON public.user_roles
  FOR EACH ROW EXECUTE FUNCTION halisia_private.guard_admin_grant();
 
+-- Real administrator addresses are not kept in the repository. Replace the
+-- placeholders below before running this script on a fresh database; on the
+-- live database, manage the allowlist from /admin.
 INSERT INTO public.admin_allowed_emails(email) VALUES
- ('ceo@globpay.ai'),('sammyosore64@gmail.com'),('osoredavid644@gmail.com'),
- ('dicksonnandwa4@gmail.com'),('osoredickson04@gmail.com') ON CONFLICT DO NOTHING;
+ ('primary-admin@example.com'),('backup-admin@example.com') ON CONFLICT DO NOTHING;
 INSERT INTO public.user_roles(user_id,role)
  SELECT u.id,'administrator'::public.app_role FROM auth.users u
  JOIN public.admin_allowed_emails a ON a.email=lower(u.email)
@@ -352,6 +354,6 @@ BEGIN
  END LOOP;
 END $$;
 INSERT INTO public.admin_audit_events(action,target,reason,after_data)
-VALUES('bootstrap_allowlist','administrator accounts','User authorized supplied screenshot accounts; exact addresses readable or matched to confirmed app accounts',
- '{"emails":["ceo@globpay.ai","sammyosore64@gmail.com","osoredavid644@gmail.com","dicksonnandwa4@gmail.com","osoredickson04@gmail.com"],"requires_mfa":true}');
+VALUES('bootstrap_allowlist','administrator accounts','Initial allowlist installed by the owner',
+ '{"emails":["primary-admin@example.com","backup-admin@example.com"],"requires_mfa":true}');
 COMMIT;

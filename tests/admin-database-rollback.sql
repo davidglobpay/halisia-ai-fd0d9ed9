@@ -36,7 +36,7 @@ BEGIN
  IF NOT EXISTS(SELECT 1 FROM public.properties WHERE id=v_target AND status='draft') THEN RAISE EXCEPTION 'Moderation failed'; END IF;
  IF NOT EXISTS(SELECT 1 FROM public.admin_audit_events WHERE action='listing_status' AND target=v_target::text) THEN RAISE EXCEPTION 'Missing audit'; END IF;
  BEGIN
-  PERFORM public.halisia_admin_action('admin_email','sammyosore64@gmail.com','disable','Rollback test self removal');
+  PERFORM public.halisia_admin_action('admin_email',(SELECT lower(email) FROM auth.users WHERE id='3b58cba1-2713-40aa-896c-091e9b9f8463'),'disable','Rollback test self removal');
   RAISE EXCEPTION 'Self revoke allowed';
  EXCEPTION WHEN raise_exception THEN
   IF SQLERRM='Self revoke allowed' THEN RAISE; END IF;
