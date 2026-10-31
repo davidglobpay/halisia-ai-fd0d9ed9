@@ -395,6 +395,9 @@ function Explore() {
               desktopAspect="md:aspect-[16/10] lg:aspect-[4/3]"
               className="rounded-[22px]"
               onLocateMe={({ lat, lng }) => void selectCoordinates(lat, lng)}
+              // The map's own controls occupy the top-left corner here; the page
+              // already has navigation, so the frame's Back button would overlap them.
+              showBack={false}
             >
               <MapView
                 center={{ lat: active.lat, lng: active.lng }}
@@ -412,7 +415,7 @@ function Explore() {
             </MapFrame>
             {/* Overlay controls */}
             <div className="pointer-events-none absolute inset-0 p-4 flex flex-col justify-between">
-              <div className="pointer-events-auto flex flex-wrap items-start gap-2 self-start">
+              <div className="pointer-events-auto flex max-w-full flex-wrap items-start gap-2 self-start pr-12 sm:pr-14">
                 <div className="flex items-center gap-1 glass rounded-full p-1">
                   {[
                     { id: "roadmap" as const, icon: MapPinned, label: "Map" },
@@ -425,9 +428,14 @@ function Explore() {
                       <button
                         key={t.id}
                         onClick={() => setMapType(t.id)}
-                        className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs transition ${active ? "bg-white/15 text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                        aria-label={t.label}
+                        aria-pressed={active}
+                        title={t.label}
+                        className={`inline-flex min-h-9 min-w-9 items-center justify-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs transition sm:px-3 ${active ? "bg-white/15 text-foreground" : "text-muted-foreground hover:text-foreground"}`}
                       >
-                        <t.icon className="h-3.5 w-3.5" /> {t.label}
+                        <t.icon className="h-3.5 w-3.5" />
+                        {/* Phones show only the active label so the row fits. */}
+                        <span className={active ? "inline" : "hidden sm:inline"}>{t.label}</span>
                       </button>
                     );
                   })}
@@ -436,15 +444,23 @@ function Explore() {
                 <div className="flex items-center gap-1 glass rounded-full p-1">
                   <button
                     onClick={() => setTheme("light")}
-                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs ${theme === "light" ? "bg-white/15 text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                    aria-label={"Light map"}
+                    aria-pressed={theme === "light"}
+                    title="Light map"
+                    className={`inline-flex min-h-9 min-w-9 items-center justify-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs sm:px-3 ${theme === "light" ? "bg-white/15 text-foreground" : "text-muted-foreground hover:text-foreground"}`}
                   >
-                    <Sun className="h-3.5 w-3.5" /> Light
+                    <Sun className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Light</span>
                   </button>
                   <button
                     onClick={() => setTheme("dark")}
-                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs ${theme === "dark" ? "bg-white/15 text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                    aria-label={"Dark map"}
+                    aria-pressed={theme === "dark"}
+                    title="Dark map"
+                    className={`inline-flex min-h-9 min-w-9 items-center justify-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs sm:px-3 ${theme === "dark" ? "bg-white/15 text-foreground" : "text-muted-foreground hover:text-foreground"}`}
                   >
-                    <Moon className="h-3.5 w-3.5" /> Dark
+                    <Moon className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Dark</span>
                   </button>
                 </div>
 

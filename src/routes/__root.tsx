@@ -18,6 +18,7 @@ import { GlobeBackdrop } from "../components/halisia/globe-backdrop";
 
 import { BUILD_ID, BUILD_NOTE } from "../lib/build-info";
 import { NavGuide } from "../components/halisia/nav-guide";
+import { FileReadyPanel } from "../components/halisia/file-ready-panel";
 import { Navbar } from "../components/halisia/navbar";
 import { ServicePricing } from "../components/halisia/service-pricing";
 import { supabase } from "../integrations/supabase/client";
@@ -219,6 +220,7 @@ function RootComponent() {
       <Outlet />
       <ServicePricing />
       <NavGuide />
+      <FileReadyPanel />
     </QueryClientProvider>
   );
 }

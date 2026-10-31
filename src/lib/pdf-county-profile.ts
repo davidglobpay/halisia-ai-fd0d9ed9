@@ -27,6 +27,7 @@ import { TERM_CAVEAT } from "@/lib/county-politics";
 import { fetchStaticMapCached } from "@/lib/static-map-cache";
 import { brandPage, brandFooters, prepareMark } from "@/lib/pdf-chrome";
 import halisiaMark from "@/assets/brand/halisia-mark.png.asset.json";
+import { deliverPdf } from "@/lib/pdf-delivery";
 
 type Progress = (pct: number, stage: string) => void;
 
@@ -370,7 +371,7 @@ export async function generateCountyProfilePdf(
       year: "numeric",
     }),
   });
-  doc.save(`halisia-county-${slug}-${stamp}.pdf`);
+  deliverPdf(doc, `halisia-county-${slug}-${stamp}.pdf`);
   onProgress(100, "Done");
 }
 

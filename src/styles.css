@@ -228,6 +228,19 @@
     overflow-x: clip;
   }
 
+  /* Grids that only declare columns from a breakpoint up (e.g. "grid
+     lg:grid-cols-2") otherwise get one implicit "auto" column on phones,
+     which grows to the widest child's min-content and pushes the page past
+     the screen edge, where the overflow clip above cuts it off. Give them a
+     single shrinkable column instead. :where() keeps specificity at zero and
+     this sits in the base layer, so every sm:/md:/lg: grid-cols utility
+     still wins at its breakpoint. */
+  :where(
+    .grid:not([class^="grid-cols-"]):not([class*=" grid-cols-"]):not([class*="grid-flow-col"])
+  ) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   h1,
   h2,
   h3,

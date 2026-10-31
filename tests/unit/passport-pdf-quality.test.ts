@@ -138,3 +138,23 @@ describe("Passport PDF quality rules", () => {
     expect(landPriceSection(undefined)).toBeNull();
   });
 });
+
+describe("location line spelling variants", () => {
+  it("drops a one-letter variant of a name already shown", () => {
+    expect(
+      pdfLocationLine({ locality: "Kitengela", ward: "Kitenkela", subCounty: null }, "Kajiado"),
+    ).toBe("Kitengela, Kajiado County, Kenya");
+  });
+
+  it("keeps genuinely different and short names", () => {
+    expect(
+      pdfLocationLine(
+        { locality: "Kamulu", ward: "Kamulu Ward", subCounty: "Kasarani" },
+        "Nairobi",
+      ),
+    ).toBe("Kamulu, Kamulu Ward, Kasarani, Nairobi County, Kenya");
+    expect(pdfLocationLine({ locality: "Embu", ward: "Eldu", subCounty: null }, null)).toBe(
+      "Embu, Eldu, Kenya",
+    );
+  });
+});

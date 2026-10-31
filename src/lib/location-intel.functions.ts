@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { PLACES_PER_CATEGORY } from "./amenity-count";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { SliceProvenance, SnapshotMeta } from "@/lib/intel-snapshot.types";
 
@@ -196,7 +197,7 @@ async function fetchNearby(
   lat: number,
   lng: number,
   includedTypes: string[],
-  max = 6,
+  max = PLACES_PER_CATEGORY,
 ): Promise<{ value: PlaceLite[]; health: ProviderHealth }> {
   try {
     const res = await callGateway(`/places/v1/places:searchNearby`, {
@@ -468,12 +469,22 @@ export const getLocationIntel = createServerFn({ method: "POST" })
 
     if (!slice) {
       const [schoolsR, hospitalsR, groceriesR, transitR, restaurantsR, banksR] = await Promise.all([
-        fetchNearby(data.lat, data.lng, ["school", "primary_school", "secondary_school"], 6),
-        fetchNearby(data.lat, data.lng, ["hospital", "doctor", "pharmacy"], 6),
-        fetchNearby(data.lat, data.lng, ["supermarket", "grocery_store"], 6),
-        fetchNearby(data.lat, data.lng, ["bus_station", "transit_station", "train_station"], 6),
-        fetchNearby(data.lat, data.lng, ["restaurant", "cafe"], 6),
-        fetchNearby(data.lat, data.lng, ["bank", "atm"], 6),
+        fetchNearby(
+          data.lat,
+          data.lng,
+          ["school", "primary_school", "secondary_school"],
+          PLACES_PER_CATEGORY,
+        ),
+        fetchNearby(data.lat, data.lng, ["hospital", "doctor", "pharmacy"], PLACES_PER_CATEGORY),
+        fetchNearby(data.lat, data.lng, ["supermarket", "grocery_store"], PLACES_PER_CATEGORY),
+        fetchNearby(
+          data.lat,
+          data.lng,
+          ["bus_station", "transit_station", "train_station"],
+          PLACES_PER_CATEGORY,
+        ),
+        fetchNearby(data.lat, data.lng, ["restaurant", "cafe"], PLACES_PER_CATEGORY),
+        fetchNearby(data.lat, data.lng, ["bank", "atm"], PLACES_PER_CATEGORY),
       ]);
 
       const schools = schoolsR.value;

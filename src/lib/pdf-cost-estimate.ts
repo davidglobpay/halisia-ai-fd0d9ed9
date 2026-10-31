@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import { brandFooters, brandPage, getMarkSync, sanitize } from "@/lib/pdf-chrome";
 import { COST_ASSUMPTIONS, kes, type SystemEstimate } from "@/lib/construction-cost";
+import { deliverPdf } from "@/lib/pdf-delivery";
 
 export function buildCostPdf(o: {
   title: string;
@@ -69,6 +70,6 @@ export async function downloadCostPdf(o: Parameters<typeof buildCostPdf>[0]): Pr
     .replace(/[^a-z0-9]+/gi, "-")
     .toLowerCase()
     .slice(0, 40)}.pdf`;
-  doc.save(name);
+  deliverPdf(doc, name);
   return name;
 }

@@ -179,18 +179,32 @@ export function agreedPdfAdmin(
         : null,
   };
 }
+/** True when two place names differ by at most one letter (an added,
+ * dropped or swapped character), e.g. the geocoder's "Kitenkela" for
+ * "Kitengela". Short names must match exactly, so "Embu"/"Eldu" stay distinct. */
+function nearlySameName(a: string, b: string): boolean {
+  const x = nameKey(a);
+  const y = nameKey(b);
+  if (x === y) return true;
+  if (Math.min(x.length, y.length) < 6 || Math.abs(x.length - y.length) > 1) return false;
+  let i = 0;
+  while (i < x.length && i < y.length && x[i] === y[i]) i++;
+  let j = 0;
+  while (j < x.length - i && j < y.length - i && x[x.length - 1 - j] === y[y.length - 1 - j]) j++;
+  return x.length - i - j <= 1 && y.length - i - j <= 1;
+}
 export function pdfLocationLine(admin: AdminHierarchy, county?: string | null): string {
-  return [
-    ...new Set(
-      [
-        admin.locality,
-        admin.ward,
-        admin.subCounty,
-        county ? `${county} County` : null,
-        "Kenya",
-      ].filter((s): s is string => !!s),
-    ),
-  ].join(", ");
+  const parts: string[] = [];
+  for (const part of [
+    admin.locality,
+    admin.ward,
+    admin.subCounty,
+    county ? `${county} County` : null,
+    "Kenya",
+  ]) {
+    if (part && !parts.some((kept) => nearlySameName(kept, part))) parts.push(part);
+  }
+  return parts.join(", ");
 }
 export function eatTimestamp(iso: string): string {
   const date = new Date(iso);

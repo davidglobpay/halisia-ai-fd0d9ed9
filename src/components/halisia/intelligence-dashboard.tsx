@@ -1,4 +1,5 @@
 import { OutputTools, OutputVisual, OutputIcon } from "@/components/halisia/output-tools";
+import { amenityCount } from "@/lib/amenity-count";
 import { formatDateTime } from "@/lib/format-datetime";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -158,7 +159,9 @@ function spokenSummary(args: {
       [counts.restaurants, "restaurants"],
       [counts.banks, "banks"],
     ] as const;
-    const found = named.filter(([n]) => n > 0).map(([n, label]) => `${n} ${label}`);
+    const found = named
+      .filter(([n]) => n > 0)
+      .map(([n, label]) => `${amenityCount(n).replace("+", " or more")} ${label}`);
     const none = named.filter(([n]) => n === 0).map(([, label]) => label);
     if (found.length) parts.push(`Within about three kilometres: ${found.join(", ")}.`);
     if (none.length) parts.push(`None mapped nearby for ${none.join(", ")}.`);

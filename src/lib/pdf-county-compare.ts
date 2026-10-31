@@ -23,6 +23,7 @@ import {
 import { fetchStaticMapCached } from "@/lib/static-map-cache";
 import { PDF, brandPage, brandFooters, prepareMark } from "@/lib/pdf-chrome";
 import halisiaMark from "@/assets/brand/halisia-mark.png.asset.json";
+import { deliverPdf } from "@/lib/pdf-delivery";
 
 type County = { code: number; name: string; lat: number; lng: number };
 
@@ -197,5 +198,5 @@ export async function generateCountyComparePdf(counties: County[]) {
       .replace(/[^a-z0-9]+/gi, "-")
       .toLowerCase()
       .slice(0, 60) || "compare";
-  doc.save(`halisia-compare-${safe}.pdf`);
+  deliverPdf(doc, `halisia-compare-${safe}.pdf`);
 }

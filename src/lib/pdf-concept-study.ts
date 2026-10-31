@@ -9,6 +9,7 @@ import { CONCEPT_DISCLAIMER, type ConceptOutput } from "@/lib/development-studio
 import type { EvidenceBundle } from "@/lib/evidence";
 import type { ReadinessResult } from "@/lib/investment-readiness";
 import { PDF, brandPage, brandFooters, getMarkSync } from "@/lib/pdf-chrome";
+import { deliverPdf } from "@/lib/pdf-delivery";
 
 export const CONCEPT_STUDY_DISCLAIMER =
   "Conceptual AI Study — Not an Approved Architectural, Planning, Engineering or Investment Document. " +
@@ -284,5 +285,5 @@ export function downloadConceptStudy(input: {
   readiness?: ReadinessResult | null;
 }): void {
   const doc = buildConceptStudyPdf(input);
-  doc.save(conceptStudyFilename(input.property));
+  deliverPdf(doc, conceptStudyFilename(input.property));
 }
