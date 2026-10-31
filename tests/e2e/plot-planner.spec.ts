@@ -1,0 +1,80 @@
+import { expect, test, type Page } from "@playwright/test";
+
+// A plain 1×1 PNG stands in for Esri tiles so the test never depends on the network.
+const TILE = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGOo6okBAALmAWPQX80GAAAAAElFTkSuQmCC",
+  "base64",
+);
+
+async function stubImagery(page: Page, mode: "ok" | "fail" = "ok") {
+  await page.route("**/World_Imagery/**", (route) =>
+    mode === "ok"
+      ? route.fulfill({
+          status: 200,
+          contentType: "image/png",
+          body: TILE,
+          headers: { "access-control-allow-origin": "*" },
+        })
+      : route.abort(),
+  );
+}
+
+const URL =
+  "/plot-planner?lat=-1.502157&lng=36.955288&typology=3br&structure=container_40ft&plot=50x100";
+
+for (const viewport of [
+  { width: 390, height: 844 },
+  { width: 1280, height: 900 },
+]) {
+  test(`plot planner renders, drags and rotates at ${viewport.width}px`, async ({ page }) => {
+    const errors: string[] = [];
+    page.on("pageerror", (e) => errors.push(e.message));
+    await page.setViewportSize(viewport);
+    await stubImagery(page);
+    await page.goto(URL);
+
+    const canvas = page.getByTestId("plot-viewer-canvas");
+    await expect(canvas).toBeVisible({ timeout: 30_000 });
+    const readout = page.getByTestId("pp-readout");
+    await expect(readout).toContainText("(4 units)");
+    await expect(readout).toContainText("3 bedrooms");
+    await expect(readout).toContainText("Left: 1.5 m");
+    // Imagery loaded: no status banner over the scene.
+    await expect(page.getByTestId("pp-viewer").getByRole("status")).toHaveCount(0);
+
+    // Drag the house from the centre of the scene.
+    const box = (await canvas.boundingBox())!;
+    const cx = box.x + box.width / 2;
+    const cy = box.y + box.height / 2;
+    await page.mouse.move(cx, cy);
+    await page.mouse.down();
+    await page.mouse.move(cx + 90, cy + 20, { steps: 12 });
+    await page.mouse.up();
+    await expect(readout).not.toContainText("Left: 1.5 m");
+
+    await page.getByRole("slider", { name: "Rotate house" }).fill("45");
+    await expect(page.getByText("45°")).toBeVisible();
+
+    await page.getByTestId("pp-structure").selectOption("eps");
+    await page.getByTestId("pp-plot").selectOption("quarter-acre");
+    await page.getByRole("button", { name: "Centre house on plot" }).click();
+    await expect(readout).toContainText("EPS (Styrofoam) panels");
+    await expect(readout).toContainText("Left: 8.8 m");
+
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - window.innerWidth,
+    );
+    expect(overflow).toBeLessThanOrEqual(0);
+    expect(errors).toEqual([]);
+  });
+}
+
+test("plot planner explains when imagery cannot load", async ({ page }) => {
+  await stubImagery(page, "fail");
+  await page.goto(URL);
+  await expect(page.getByTestId("plot-viewer-canvas")).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId("pp-viewer").getByRole("status")).toContainText(
+    "Satellite imagery could not be loaded",
+  );
+  await expect(page.getByTestId("pp-readout")).toContainText("(4 units)");
+});

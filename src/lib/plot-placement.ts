@@ -27,6 +27,14 @@ export const CONTAINER_UNITS = {
   container_40ft: { areaM2: 29.7, lengthM: 12.192, widthM: 2.438 },
 } as const;
 
+/** "Bedsitter", "1 bedroom", "3 bedrooms". */
+export function typologyName(typology: string): string {
+  if (typology === "bedsitter") return "Bedsitter";
+  const m = /^(\d+)br$/.exec(typology);
+  if (!m) return typology;
+  return `${m[1]} bedroom${m[1] === "1" ? "" : "s"}`;
+}
+
 export type ContainerKind = keyof typeof CONTAINER_UNITS;
 
 export function isContainer(structure: string): structure is ContainerKind {
@@ -108,7 +116,8 @@ export const PLOT_SHAPES: PlotShape[] = PLOT_SIZES.map((p) => {
   const [w, d] = PLOT_SHAPES_FT[p.key];
   return {
     key: p.key,
-    label: `${p.label} (${Math.round(w)}×${Math.round(d)} ft)`,
+    // "50×100 ft" already states its size; the acre fractions get theirs added.
+    label: p.label.includes("×") ? p.label : `${p.label} (${Math.round(w)}×${Math.round(d)} ft)`,
     widthM: w * FT_TO_M,
     depthM: d * FT_TO_M,
   };
