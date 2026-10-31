@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { toast } from "sonner";
+import { deliverPdf } from "@/lib/pdf-delivery";
 
 type Request = Database["public"]["Tables"]["scout_requests"]["Row"] & {
   paid_amount_kes?: number;
@@ -1321,7 +1322,7 @@ async function downloadScoutReport(r: Request, evidence: Evidence[]) {
   line(
     `Private media, including videos and WebP images, remains available to participants in the HALISIA scout workspace. Request ID: ${r.id}`,
   );
-  pdf.save(`HALISIA_Scout_${r.id}.pdf`);
+  deliverPdf(pdf, `HALISIA_Scout_${r.id}.pdf`);
 }
 
 export function ReviewedScoutFindings({ reference }: { reference: string }) {

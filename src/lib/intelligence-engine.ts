@@ -59,6 +59,7 @@
  * Pure functions — no network, no side effects.
  */
 import type { LocationIntel, ProviderStatus } from "@/lib/location-intel.functions";
+import { AMENITY_CAP_NOTE, amenityCount } from "./amenity-count";
 import type { NarrativeOutput } from "@/lib/ai-narrative.functions";
 import type { Wave4Intel, ScoreExplain } from "@/lib/wave4-intel.functions";
 
@@ -398,9 +399,10 @@ function scoreInfrastructure(intel?: LocationIntel): ModuleOutput {
     trend: null,
     confidencePct: confidence,
     reasons: [
-      `${counts.schools} schools · ${counts.hospitals} health facilities · ${counts.groceries} shops within about 3 km`,
-      `${counts.transit} transit stops mapped nearby`,
+      `${amenityCount(counts.schools)} schools · ${amenityCount(counts.hospitals)} health facilities · ${amenityCount(counts.groceries)} shops within about 3 km`,
+      `${amenityCount(counts.transit)} transit stops mapped nearby`,
       "Counts what is listed on Google Places — not what is open, usable or in good repair",
+      AMENITY_CAP_NOTE,
     ],
     sources: [SRC_PLACES],
     missing: [

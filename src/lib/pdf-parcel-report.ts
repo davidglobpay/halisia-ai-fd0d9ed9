@@ -24,6 +24,7 @@ import { buildableEnvelope, orientedExtent, groundCoveragePct } from "@/lib/buil
 import type { MutationPlan, DeedPlanAgreement } from "@/lib/mutation-plan";
 import { frontEdgeIndexOf, type MassingStudy } from "@/lib/house-brief";
 import type { PlanFit } from "@/lib/plan-overlay";
+import { deliverPdf } from "@/lib/pdf-delivery";
 
 /**
  * The parcel report: everything the steps established, in one document.
@@ -708,6 +709,6 @@ export async function generateParcelReport(input: ParcelReportInput): Promise<st
       .replace(/^-+|-+$/g, "")
       .slice(0, 48) || "parcel";
   const filename = `halisia-parcel-report-${slug}.pdf`;
-  doc.save(filename);
+  deliverPdf(doc, filename);
   return filename;
 }

@@ -27,6 +27,7 @@ import { labelForPersona, DOSSIER_SCOPE } from "@/lib/intelligence-engine";
 import { PDF, brandPage, brandFooters, prepareMark } from "@/lib/pdf-chrome";
 import { classTally } from "@/lib/evidence-class";
 import halisiaMark from "@/assets/brand/halisia-mark.png.asset.json";
+import { deliverPdf } from "@/lib/pdf-delivery";
 
 function slugify(s: string) {
   return s
@@ -413,7 +414,7 @@ export async function generateIntelligencePdf(
   const stamp = new Date().toISOString().replace(/[-:T]/g, "").slice(0, 13);
   const filename = `halisia-readings-${slugify(address) || "location"}-${lat.toFixed(4)}-${lng.toFixed(4)}-${stamp}.pdf`;
   tick(96, "Saving…");
-  doc.save(filename);
+  deliverPdf(doc, filename);
   tick(100, "Done");
   return { filename };
 }

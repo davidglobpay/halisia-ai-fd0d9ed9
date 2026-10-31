@@ -3,6 +3,7 @@ import type { ListingAiOutput } from "@/lib/ai-listing.functions";
 import jsPDF from "jspdf";
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from "docx";
 import { brandPage, brandFooters, getMarkSync } from "@/lib/pdf-chrome";
+import { deliverBlob, deliverPdf } from "@/lib/pdf-delivery";
 
 function fmtPriceRange(ai: ListingAiOutput): string {
   const { min, max, currency } = ai.priceEstimate;
@@ -76,19 +77,12 @@ export function buildBrochureText(p: PropertyRow, ai: ListingAiOutput): string {
 export function downloadBrochure(p: PropertyRow, ai: ListingAiOutput) {
   const text = buildBrochureText(p, ai);
   const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
   const slug = p.title
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 60);
-  a.download = `halisia-brochure-${slug || p.id}.txt`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1500);
+  deliverBlob(blob, `halisia-brochure-${slug || p.id}.txt`);
 }
 
 export function formatPriceEstimate(ai: ListingAiOutput): string {
@@ -313,7 +307,7 @@ export function downloadBrochurePDF(p: PropertyRow, ai: ListingAiOutput) {
     note: "Marketing brochure. Figures are the seller's, not a valuation.",
   });
 
-  doc.save(`halisia-brochure-${slug(p.title) || p.id}.pdf`);
+  deliverPdf(doc, `halisia-brochure-${slug(p.title) || p.id}.pdf`);
 }
 
 // ---------- DOCX brochure ----------
@@ -413,12 +407,5 @@ export async function downloadBrochureDOCX(p_: PropertyRow, ai: ListingAiOutput)
 
   const docFile = new Document({ sections: [{ children }] });
   const blob = await Packer.toBlob(docFile);
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `halisia-brochure-${slug(p_.title) || p_.id}.docx`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1500);
+  deliverBlob(blob, `halisia-brochure-${slug(p_.title) || p_.id}.docx`);
 }

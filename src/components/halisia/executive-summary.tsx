@@ -174,7 +174,7 @@ export function ExecutiveSummary({
 
   // No stand-in figure: when the summary carries no confidence, none is shown.
   const confPct = narrative.confidencePct ?? null;
-  const narration = `${narrative.headline}. ${narrative.overview ?? narrative.paragraphs?.[0] ?? ""}${confPct != null ? ` Confidence ${confPct} percent, ${narrative.confidence}.` : ""} Sources: ${sources.join(", ")}. Limitations: predictions and value ranges are indicative and are not a licensed appraisal or legal opinion.`;
+  const narration = `${narrative.headline}. ${narrative.overview ?? narrative.paragraphs?.[0] ?? ""}${confPct != null ? ` Input coverage ${confPct} percent.` : ""} Sources: ${sources.join(", ")}. Limitations: predictions and value ranges are indicative and are not a licensed appraisal or legal opinion.`;
 
   return (
     <section
@@ -224,7 +224,7 @@ export function ExecutiveSummary({
         <div className="mt-2 flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
             <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
-              Confidence
+              Input coverage
             </span>
             <span
               className={`text-xs font-semibold tabular-nums ${
@@ -234,9 +234,9 @@ export function ExecutiveSummary({
                     ? "text-cyan-glow"
                     : "text-amber-glow"
               }`}
-              title="Reflects data completeness across geospatial, environmental and community signals."
+              title="Share of the expected data checks that returned anything. It measures completeness, not accuracy or certainty."
             >
-              {confPct}% · {narrative.confidence}
+              {confPct}% of inputs returned
             </span>
           </div>
           <div className="h-1.5 flex-1 min-w-[100px] rounded-full bg-white/10 overflow-hidden">
@@ -344,9 +344,9 @@ export function ExecutiveSummary({
           </div>
           {technical && (
             <div className="mt-2 text-[11px] text-muted-foreground leading-relaxed">
-              Confidence here is a coverage count, not a blend: the share of three checks that
-              returned anything. There is no freshness term and no cross-source agreement term. Last
-              updated {new Date(narrative.lastUpdated).toLocaleString()}.
+              Input coverage is a count, not a blend: the share of three checks that returned
+              anything. There is no freshness term and no cross-source agreement term. Last updated{" "}
+              {new Date(narrative.lastUpdated).toLocaleString()}.
             </div>
           )}
         </Section>

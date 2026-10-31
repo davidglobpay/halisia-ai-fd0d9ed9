@@ -150,7 +150,7 @@ function ModuleTile({ m }: { m: ModuleOutput }) {
   // The first reason is the finding itself — the elevation in metres, the air
   // quality index, the counts within 3 km. It is what the gauge used to cover.
   const lead = m.reasons[0] ?? "";
-  const narration = `${m.label}. ${projected ? "Indicative projection" : "Read from data"}. ${lead} Confidence ${m.confidencePct ?? 0} percent. ${m.reasons.slice(1).join(" ")} Sources: ${m.sources.join(", ") || "No source available"}. Limitations: ${m.limitations.join(" ")}. Next: ${m.nextStep}`;
+  const narration = `${m.label}. ${projected ? "Indicative projection" : "Read from data"}. ${lead}${m.confidencePct != null ? ` ${m.confidencePct} percent of expected inputs returned.` : ""} ${m.reasons.slice(1).join(" ")} Sources: ${m.sources.join(", ") || "No source available"}. Limitations: ${m.limitations.join(" ")}. Next: ${m.nextStep}`;
   return (
     <details className="group glass rounded-2xl">
       <summary className="flex min-h-[96px] cursor-pointer list-none items-start gap-2.5 rounded-2xl p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
@@ -167,8 +167,10 @@ function ModuleTile({ m }: { m: ModuleOutput }) {
           {/* The finding, in the words the engine published it in. No mark. */}
           <div className="mt-0.5 text-xs font-medium leading-snug text-foreground/90">{lead}</div>
           <div className="mt-1 text-[10px] text-muted-foreground">
-            {projected ? "Indicative projection · confidence" : "Read from data · confidence"}{" "}
-            {m.confidencePct ?? 0}%
+            {/* Share of this module's expected inputs that came back: coverage,
+                not certainty. Nothing is shown when no input was expected. */}
+            {projected ? "Indicative projection" : "Read from data"}
+            {m.confidencePct != null && ` · ${m.confidencePct}% of inputs returned`}
           </div>
         </div>
         <ChevronDown className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />

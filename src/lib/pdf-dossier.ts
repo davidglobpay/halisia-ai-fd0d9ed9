@@ -18,6 +18,7 @@ import halisiaMark from "@/assets/brand/halisia-mark.png.asset.json";
 import { PDF, prepareMark, drawWatermark } from "@/lib/pdf-chrome";
 import { runIntelligenceEngine } from "@/lib/intelligence-engine";
 import type { BrandImage } from "@/lib/brand-asset";
+import { deliverPdf } from "@/lib/pdf-delivery";
 
 /**
  * The brand mark for this run. Resolved once in generateLocationDossier and
@@ -722,7 +723,7 @@ export async function generateLocationDossier(opts: {
   const coord = `${lat.toFixed(4)}_${lng.toFixed(4)}`.replace(/-/g, "s");
   const filename = `halisia-dossier-${safe}-${coord}-${stamp}.pdf`;
   progress(96, "Saving PDF…");
-  doc.save(filename);
+  deliverPdf(doc, filename);
   progress(100, "Done");
   return {
     ok: true,

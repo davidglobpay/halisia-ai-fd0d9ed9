@@ -31,6 +31,7 @@ import { COUNTY_LOGOS } from "./county-logos";
 import lockupUrl from "@/assets/brand/halisia-lockup.png?url";
 import symbolUrl from "@/assets/brand/halisia-mark.png?url";
 import { buildEvidenceConclusion } from "./passport-conclusion";
+import { deliverPdf } from "@/lib/pdf-delivery";
 
 export type PassportPdfOptions = {
   admin?: AdminHierarchy | null;
@@ -1130,6 +1131,6 @@ export async function downloadPassportPdf(o: PassportPdfOptions): Promise<string
       .slice(0, 40)
       .toLowerCase() || "location"
   }.pdf`;
-  doc.save(filename);
+  deliverPdf(doc, filename);
   return filename;
 }

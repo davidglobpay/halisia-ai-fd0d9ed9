@@ -5,6 +5,7 @@
 import jsPDF from "jspdf";
 import type { ListingInsight } from "@/lib/seller-tools";
 import { PDF, brandPage, brandFooters, getMarkSync } from "@/lib/pdf-chrome";
+import { deliverBlob, deliverPdf } from "@/lib/pdf-delivery";
 
 function csvCell(v: unknown): string {
   const s = String(v ?? "");
@@ -64,14 +65,7 @@ export function insightsToCsv(rows: ListingInsight[]): string {
 }
 
 function download(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  deliverBlob(blob, filename);
 }
 
 export function downloadSellerCsv(rows: ListingInsight[]): string {
@@ -202,6 +196,6 @@ export function downloadSellerPdf(rows: ListingInsight[]): string {
   });
 
   const filename = `halisia-seller-analytics-${new Date().toISOString().slice(0, 10)}.pdf`;
-  doc.save(filename);
+  deliverPdf(doc, filename);
   return filename;
 }
