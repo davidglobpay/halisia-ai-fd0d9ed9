@@ -42,7 +42,7 @@ function BudgetPage() {
   const [plotSqft, setPlotSqft] = useState<number>(PLOT_SIZES[0].sqft);
   const [typology, setTypology] = useState<string>("2br");
   const [structure, setStructure] = useState<string>("masonry_stone");
-  const [finish, setFinish] = useState<string>("standard");
+  const [finish, setFinish] = useState<string>("basic");
 
   const buildQ = useQuery({
     queryKey: ["budget-build", typology, structure, finish, county],
