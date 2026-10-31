@@ -15,7 +15,22 @@ import { FINISHES, STRUCTURES, TYPOLOGIES, getBuildCost } from "@/lib/cost-intel
 import { kes } from "@/lib/cost-intel";
 import { Surface, SectionHeading } from "@/components/halisia/ds";
 import { KENYA_COUNTY_FACTS } from "@/lib/kenya-county-facts";
-import { priceRelevance, relevanceSummary, PRICE_STALE_MONTHS } from "@/lib/price-relevance";
+import {
+  countyCovers,
+  priceRelevance,
+  relevanceSummary,
+  PRICE_STALE_MONTHS,
+} from "@/lib/price-relevance";
+import { countyForPoint } from "@/lib/location-validation";
+import { getElevationSamples } from "@/lib/elevation.functions";
+import { datasetLabel } from "@/components/halisia/model-lab/site/site-terrain";
+import {
+  crossSamplePoints,
+  recommendBuildSystem,
+  slopeFromSamples,
+  structureName,
+  type SystemResult,
+} from "@/lib/build-recommendation";
 
 export const Route = createFileRoute("/build-cost")({
   head: () => ({
@@ -47,7 +62,36 @@ function BuildCostPage() {
   const [county, setCounty] = useState<string>("");
   const [floorArea, setFloorArea] = useState<number | null>(null);
   const [lastLoc, setLastLoc] = useState<{ lat: number; lng: number } | null>(null);
+  const [countyTouched, setCountyTouched] = useState(false);
   useEffect(() => setLastLoc(readLastPassportLocation()), []);
+  // Price for the county of the last Passport point unless the user chose one.
+  useEffect(() => {
+    if (!lastLoc || countyTouched) return;
+    const found = countyForPoint(lastLoc.lat, lastLoc.lng);
+    if (found && Object.values(KENYA_COUNTY_FACTS).some((c) => c.name === found.name)) {
+      setCounty(found.name);
+    }
+  }, [lastLoc, countyTouched]);
+
+  // General fall of the land around the last Passport point (free elevation grid).
+  const slopeQ = useQuery({
+    queryKey: ["build-cost-slope", lastLoc?.lat, lastLoc?.lng],
+    enabled: !!lastLoc,
+    staleTime: 60 * 60 * 1000,
+    retry: false,
+    queryFn: async () => {
+      const loc = lastLoc as { lat: number; lng: number };
+      const r = await getElevationSamples({
+        data: { locations: crossSamplePoints(loc.lat, loc.lng, 50) },
+      });
+      const [n, s, e, w] = r.elevations;
+      const label = datasetLabel(r.source);
+      return {
+        slopePct: slopeFromSamples({ n, s, e, w }, 100),
+        source: `${label.name}, ${label.resolution}`,
+      };
+    },
+  });
 
   const costQ = useQuery({
     queryKey: ["build-cost", typology, structure, finish, county],
@@ -73,6 +117,26 @@ function BuildCostPage() {
   const areaScale =
     !fixedSize && floorArea && costQ.data?.floorAreaM2 ? floorArea / costQ.data.floorAreaM2 : 1;
 
+  const systems: SystemResult[] = (comparisonQ.data ?? []).map((c) => {
+    const priced = c.result.costing.lines.filter((l) => l.lineTotal != null);
+    return {
+      structure: c.structure,
+      total: c.result.costing.total,
+      totalHigh: c.result.costing.totalHigh,
+      totalLines: c.result.costing.totalLines,
+      pricedShare: c.result.costing.pricedShare,
+      pricedLines: priced.length,
+      localPricedLines: county
+        ? priced.filter((l) => l.price_county && countyCovers(l.price_county, county)).length
+        : 0,
+    };
+  });
+  const advice = recommendBuildSystem(systems, {
+    county: county || null,
+    slopePct: slopeQ.data?.slopePct ?? null,
+    slopeSource: slopeQ.data?.source ?? null,
+  });
+
   return (
     <main className="mx-auto max-w-4xl px-4 pb-28 pt-6" data-testid="build-cost-page">
       <SectionHeading
@@ -80,6 +144,23 @@ function BuildCostPage() {
         title="Build cost calculator"
         description="Line-item bill of quantities costed from observed material prices. Unpriced lines are greyed out, never estimated; no total is shown unless at least 90% of the BoQ is priced."
       />
+      <p className="mt-3 text-sm">
+        <Link
+          to="/plot-planner"
+          search={{
+            typology,
+            structure,
+            ...(lastLoc ? { lat: lastLoc.lat.toFixed(6), lng: lastLoc.lng.toFixed(6) } : {}),
+          }}
+          className="underline"
+          data-testid="bc-place-on-plot"
+        >
+          Place this house on your plot
+        </Link>{" "}
+        <span className="text-xs text-muted-foreground">
+          Schematic massing on satellite imagery of your last Passport point; drag and rotate it.
+        </span>
+      </p>
       {(SITE_STRUCTURES as readonly string[]).includes(structure) && (
         <p className="mt-3 text-sm">
           <Link
@@ -123,7 +204,7 @@ function BuildCostPage() {
           >
             {STRUCTURES.map((s) => (
               <option key={s} value={s}>
-                {label(s)}
+                {structureName(s)}
               </option>
             ))}
           </select>
@@ -148,7 +229,10 @@ function BuildCostPage() {
           <select
             className="ml-2 min-h-11 rounded-lg border border-white/15 bg-background px-2"
             value={county}
-            onChange={(e) => setCounty(e.target.value)}
+            onChange={(e) => {
+              setCountyTouched(true);
+              setCounty(e.target.value);
+            }}
             data-testid="bc-county"
           >
             <option value="">National fallback</option>
@@ -192,70 +276,72 @@ function BuildCostPage() {
               lines={costQ.data.costing.lines.filter((l) => l.price_kes != null)}
               county={county}
             />
-            <table className="mt-3 w-full text-xs">
-              <thead>
-                <tr className="text-left text-muted-foreground">
-                  <th className="py-1">Item</th>
-                  <th className="py-1">Qty</th>
-                  <th className="py-1">Unit price</th>
-                  <th className="py-1">Line total</th>
-                  <th className="py-1">Source</th>
-                </tr>
-              </thead>
-              <tbody>
-                {costQ.data.costing.lines.map((l) => (
-                  <tr
-                    key={l.item_code}
-                    className={l.lineTotal == null ? "opacity-40" : undefined}
-                    data-testid={`bc-line-${l.item_code}`}
-                  >
-                    <td className="py-1">
-                      {l.name ?? l.item_code}
-                      {l.kind === "labour" ? (
-                        <span className="ml-1 text-[10px] text-muted-foreground">(labour)</span>
-                      ) : null}
-                    </td>
-                    <td className="py-1 font-mono">
-                      {l.quantity}
-                      {l.unit ? ` ${l.unit}` : ""}
-                      {l.quantity_basis ? ` · ${l.quantity_basis}` : ""}
-                    </td>
-                    <td className="py-1 font-mono">
-                      {l.price_kes != null
-                        ? l.price_kes_high != null && l.price_kes_high > l.price_kes
-                          ? `${kes(l.price_kes)}–${kes(l.price_kes_high)}`
-                          : kes(l.price_kes)
-                        : "not priced"}
-                    </td>
-                    <td className="py-1 font-mono">
-                      {l.lineTotal != null
-                        ? l.lineTotalHigh != null && l.lineTotalHigh > l.lineTotal
-                          ? `${kes(l.lineTotal * areaScale)}–${kes(l.lineTotalHigh * areaScale)}`
-                          : kes(l.lineTotal * areaScale)
-                        : "—"}
-                    </td>
-                    <td className="py-1 text-muted-foreground">
-                      {l.price_source ? `${l.price_source} · ${l.price_date}` : "—"}
-                      {l.price_kes != null
-                        ? priceRelevance({
-                            observedDate: l.price_date,
-                            priceCounty: l.price_county,
-                            requestedCounty: county,
-                          }).notes.map((n) => (
-                            <span
-                              key={n}
-                              data-testid="bc-price-note"
-                              className="ml-1 inline-block rounded-full border border-amber-400/40 bg-amber-500/10 px-1.5 text-[10px] text-amber-glow"
-                            >
-                              {n}
-                            </span>
-                          ))
-                        : null}
-                    </td>
+            <div className="mt-3 -mx-4 overflow-x-auto px-4">
+              <table className="w-full min-w-[560px] text-xs">
+                <thead>
+                  <tr className="text-left text-muted-foreground">
+                    <th className="py-1">Item</th>
+                    <th className="py-1">Qty</th>
+                    <th className="py-1">Unit price</th>
+                    <th className="py-1">Line total</th>
+                    <th className="py-1">Source</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {costQ.data.costing.lines.map((l) => (
+                    <tr
+                      key={l.item_code}
+                      className={l.lineTotal == null ? "opacity-40" : undefined}
+                      data-testid={`bc-line-${l.item_code}`}
+                    >
+                      <td className="py-1">
+                        {l.name ?? l.item_code}
+                        {l.kind === "labour" ? (
+                          <span className="ml-1 text-[10px] text-muted-foreground">(labour)</span>
+                        ) : null}
+                      </td>
+                      <td className="py-1 font-mono">
+                        {l.quantity}
+                        {l.unit ? ` ${l.unit}` : ""}
+                        {l.quantity_basis ? ` · ${l.quantity_basis}` : ""}
+                      </td>
+                      <td className="py-1 font-mono">
+                        {l.price_kes != null
+                          ? l.price_kes_high != null && l.price_kes_high > l.price_kes
+                            ? `${kes(l.price_kes)}–${kes(l.price_kes_high)}`
+                            : kes(l.price_kes)
+                          : "not priced"}
+                      </td>
+                      <td className="py-1 font-mono">
+                        {l.lineTotal != null
+                          ? l.lineTotalHigh != null && l.lineTotalHigh > l.lineTotal
+                            ? `${kes(l.lineTotal * areaScale)}–${kes(l.lineTotalHigh * areaScale)}`
+                            : kes(l.lineTotal * areaScale)
+                          : "—"}
+                      </td>
+                      <td className="py-1 text-muted-foreground">
+                        {l.price_source ? `${l.price_source} · ${l.price_date}` : "—"}
+                        {l.price_kes != null
+                          ? priceRelevance({
+                              observedDate: l.price_date,
+                              priceCounty: l.price_county,
+                              requestedCounty: county,
+                            }).notes.map((n) => (
+                              <span
+                                key={n}
+                                data-testid="bc-price-note"
+                                className="ml-1 inline-block rounded-full border border-amber-400/40 bg-amber-500/10 px-1.5 text-[10px] text-amber-glow"
+                              >
+                                {n}
+                              </span>
+                            ))
+                          : null}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
             {costQ.data.costing.total != null ? (
               <p className="mt-3 font-mono text-lg" data-testid="bc-total">
                 Estimated total: {kes(costQ.data.costing.total * areaScale)}
@@ -278,34 +364,77 @@ function BuildCostPage() {
         )}
       </Surface>
 
-      <Surface elevation={1} className="mt-4 p-4">
-        <h2 className="text-sm font-medium">Structure comparison (cheapest first)</h2>
+      <Surface elevation={1} className="mt-4 p-4" data-testid="bc-recommendation">
+        <h2 className="text-sm font-medium">
+          Best option {county ? `for ${county}` : "at national prices"} ({label(typology)},{" "}
+          {label(finish)} finish)
+        </h2>
         {comparisonQ.isLoading ? (
-          <p className="mt-2 text-xs text-muted-foreground">Comparing structures…</p>
+          <p className="mt-2 text-xs text-muted-foreground">Comparing building systems…</p>
+        ) : advice.pick ? (
+          <p className="mt-2 text-sm" data-testid="bc-pick">
+            <strong>{structureName(advice.pick.structure)}</strong> has the lowest priced total:{" "}
+            <span className="font-mono">
+              {comparisonTotalText(advice.pick.total as number, advice.pick.totalHigh, kes)}
+            </span>
+            .{" "}
+            {advice.runnerUp
+              ? advice.clearlyCheapest
+                ? `Clearly below the next option, ${structureName(advice.runnerUp.structure)}.`
+                : `Its price range overlaps ${structureName(advice.runnerUp.structure)}, so it is not clearly cheaper; compare quotes for both.`
+              : "No other system has a priced total to compare."}
+          </p>
         ) : (
-          <ul className="mt-2 space-y-1 text-xs">
-            {(comparisonQ.data ?? [])
-              .map((c) => ({
-                ...c,
-                total: c.result.costing.total,
-                totalHigh: c.result.costing.totalHigh,
-              }))
+          <p className="mt-2 text-sm" data-testid="bc-no-pick">
+            No building system has enough priced lines for this house type yet, so none is
+            recommended.
+          </p>
+        )}
+        {!comparisonQ.isLoading && (
+          <ul className="mt-3 space-y-1 text-xs" data-testid="bc-compare">
+            {[...systems]
               .sort(
                 (a, b) =>
                   (a.total ?? Number.MAX_SAFE_INTEGER) - (b.total ?? Number.MAX_SAFE_INTEGER),
               )
               .map((c) => (
-                <li key={c.structure} className="flex justify-between font-mono">
-                  <span>{label(c.structure)}</span>
-                  <span>
+                <li key={c.structure} className="flex flex-wrap justify-between gap-x-3">
+                  <button
+                    type="button"
+                    className="min-h-9 text-left underline-offset-2 hover:underline"
+                    onClick={() => setStructure(c.structure)}
+                  >
+                    {structureName(c.structure)}
+                  </button>
+                  <span className="font-mono">
                     {c.total != null
                       ? comparisonTotalText(c.total, c.totalHigh, kes)
-                      : `${Math.round(c.result.costing.pricedShare * 100)}% priced — no total`}
+                      : c.totalLines === 0
+                        ? "no bill of quantities yet"
+                        : `${Math.round(c.pricedShare * 100)}% priced — no total`}
                   </span>
                 </li>
               ))}
           </ul>
         )}
+        <h3 className="mt-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          Check before you choose
+        </h3>
+        {slopeQ.isLoading && lastLoc ? (
+          <p className="mt-1 text-xs text-muted-foreground">
+            Reading the ground around your point…
+          </p>
+        ) : null}
+        <ul className="mt-1 list-disc space-y-1 pl-4 text-xs" data-testid="bc-checks">
+          {advice.checks.map((c) => (
+            <li key={c.id}>{c.text}</li>
+          ))}
+          {!lastLoc && (
+            <li>
+              Open a Land Passport for your plot to add a reading of how much the ground falls.
+            </li>
+          )}
+        </ul>
       </Surface>
       <p className="mt-3 text-[11px] text-muted-foreground">
         Market estimate, not a valuation or a contractor's quote. Computed only from observed prices
