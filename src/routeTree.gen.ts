@@ -26,6 +26,7 @@ import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as ModelLabRouteImport } from './routes/model-lab'
 import { Route as PassportRouteImport } from './routes/passport'
+import { Route as PlotPlannerRouteImport } from './routes/plot-planner'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ReportRouteImport } from './routes/report'
@@ -146,6 +147,11 @@ const ModelLabRoute = ModelLabRouteImport.update({
 const PassportRoute = PassportRouteImport.update({
   id: '/passport',
   path: '/passport',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlotPlannerRoute = PlotPlannerRouteImport.update({
+  id: '/plot-planner',
+  path: '/plot-planner',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PricingRoute = PricingRouteImport.update({
@@ -356,6 +362,7 @@ export interface FileRoutesByFullPath {
   '/mcp': typeof McpRoute
   '/model-lab': typeof ModelLabRoute
   '/passport': typeof PassportRoute
+  '/plot-planner': typeof PlotPlannerRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/report': typeof ReportRoute
@@ -410,6 +417,7 @@ export interface FileRoutesByTo {
   '/mcp': typeof McpRoute
   '/model-lab': typeof ModelLabRoute
   '/passport': typeof PassportRoute
+  '/plot-planner': typeof PlotPlannerRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/report': typeof ReportRoute
@@ -467,6 +475,7 @@ export interface FileRoutesById {
   '/mcp': typeof McpRoute
   '/model-lab': typeof ModelLabRoute
   '/passport': typeof PassportRoute
+  '/plot-planner': typeof PlotPlannerRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/report': typeof ReportRoute
@@ -524,6 +533,7 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/model-lab'
     | '/passport'
+    | '/plot-planner'
     | '/pricing'
     | '/privacy'
     | '/report'
@@ -578,6 +588,7 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/model-lab'
     | '/passport'
+    | '/plot-planner'
     | '/pricing'
     | '/privacy'
     | '/report'
@@ -634,6 +645,7 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/model-lab'
     | '/passport'
+    | '/plot-planner'
     | '/pricing'
     | '/privacy'
     | '/report'
@@ -691,6 +703,7 @@ export interface RootRouteChildren {
   McpRoute: typeof McpRoute
   ModelLabRoute: typeof ModelLabRoute
   PassportRoute: typeof PassportRoute
+  PlotPlannerRoute: typeof PlotPlannerRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   ReportRoute: typeof ReportRoute
@@ -830,6 +843,13 @@ declare module '@tanstack/react-router' {
       path: '/passport'
       fullPath: '/passport'
       preLoaderRoute: typeof PassportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/plot-planner': {
+      id: '/plot-planner'
+      path: '/plot-planner'
+      fullPath: '/plot-planner'
+      preLoaderRoute: typeof PlotPlannerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pricing': {
@@ -1169,6 +1189,7 @@ const rootRouteChildren: RootRouteChildren = {
   McpRoute: McpRoute,
   ModelLabRoute: ModelLabRoute,
   PassportRoute: PassportRoute,
+  PlotPlannerRoute: PlotPlannerRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   ReportRoute: ReportRoute,
