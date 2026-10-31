@@ -1,11 +1,12 @@
 # HALISIA master administrator
 
 Route: /admin. Uses existing Supabase authentication and database.
-The exact initial allowlist is ceo@globpay.ai, sammyosore64@gmail.com,
-osoredavid644@gmail.com, dicksonnandwa4@gmail.com and osoredickson04@gmail.com.
-The latter two screenshot addresses were matched to existing confirmed app
-accounts. The remaining nandwadickson44… address must be entered in full before
-authorization. Never infer an address from a label.
+Administrator addresses are not stored in this repository. The owner keeps
+exactly two: a primary administrator and one backup held by a different
+person, both with MFA, because MFA recovery relies on another authorized
+account. Add or disable addresses from the allowlist panel at /admin; an
+administrator cannot revoke their own address. `install.sql` contains
+placeholders only and is for bootstrapping a fresh database.
 
 Confirmed allowlisted users receive the administrator role. Authorization
 requires enabled allowlist membership, confirmed email, unsuspended account,

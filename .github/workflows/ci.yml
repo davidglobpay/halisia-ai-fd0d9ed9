@@ -5,7 +5,7 @@ permissions:
 
 on:
   push:
-    branches: [main]
+    branches: [main, codex/reconciled-release-20261015]
   pull_request:
 
 jobs:

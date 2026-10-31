@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { parseCoordInput } from "./request-guards";
 
 /**
  * Wave 4 — Spatial overlays (admin boundaries + drainage) via Overpass.
@@ -64,11 +65,7 @@ function ringsFromWay(el: OverpassGeomEl): Array<Array<[number, number]>> {
 }
 
 export const getWave4Overlays = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => {
-    const v = input as { lat?: number; lng?: number; refresh?: boolean };
-    if (typeof v?.lat !== "number" || typeof v?.lng !== "number") throw new Error("lat/lng");
-    return { lat: v.lat, lng: v.lng, refresh: !!v.refresh };
-  })
+  .inputValidator((input: unknown) => parseCoordInput(input))
   .handler(async ({ data }): Promise<Wave4Overlays> => {
     const key = `${data.lat.toFixed(2)},${data.lng.toFixed(2)}`;
     if (!data.refresh) {

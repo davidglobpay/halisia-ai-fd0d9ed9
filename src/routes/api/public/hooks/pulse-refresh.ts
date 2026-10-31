@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { secretsMatch } from "@/lib/cron-secret.server";
 
 type Mode = "refresh" | "hourly" | "nightly";
 
@@ -15,7 +16,7 @@ export const Route = createFileRoute("/api/public/hooks/pulse-refresh")({
         // The public publishable key is not a credential; require a dedicated server secret.
         const provided = request.headers.get("x-cron-secret") ?? "";
         const expected = process.env["PULSE_CRON_SECRET"] ?? "";
-        if (!expected || provided.length !== expected.length || provided !== expected) {
+        if (!(await secretsMatch(provided, expected))) {
           return Response.json({ error: "Unauthorized" }, { status: 401 });
         }
 
