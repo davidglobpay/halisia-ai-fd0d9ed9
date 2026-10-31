@@ -235,6 +235,7 @@ export type Database = {
           currency: string
           id: string
           owner_id: string
+          project_id: string | null
           property_id: string | null
           scope: string
           status: Database["public"]["Enums"]["bid_request_status"]
@@ -251,6 +252,7 @@ export type Database = {
           currency?: string
           id?: string
           owner_id: string
+          project_id?: string | null
           property_id?: string | null
           scope: string
           status?: Database["public"]["Enums"]["bid_request_status"]
@@ -267,6 +269,7 @@ export type Database = {
           currency?: string
           id?: string
           owner_id?: string
+          project_id?: string | null
           property_id?: string | null
           scope?: string
           status?: Database["public"]["Enums"]["bid_request_status"]
@@ -275,6 +278,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "bid_requests_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "bid_requests_property_id_fkey"
             columns: ["property_id"]
@@ -414,6 +424,7 @@ export type Database = {
           lender_name: string | null
           monthly_income: number | null
           notes: string | null
+          project_id: string | null
           property_address: string | null
           property_id: string | null
           property_value: number | null
@@ -440,6 +451,7 @@ export type Database = {
           lender_name?: string | null
           monthly_income?: number | null
           notes?: string | null
+          project_id?: string | null
           property_address?: string | null
           property_id?: string | null
           property_value?: number | null
@@ -466,6 +478,7 @@ export type Database = {
           lender_name?: string | null
           monthly_income?: number | null
           notes?: string | null
+          project_id?: string | null
           property_address?: string | null
           property_id?: string | null
           property_value?: number | null
@@ -478,6 +491,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "financing_applications_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "financing_applications_property_id_fkey"
             columns: ["property_id"]
@@ -2332,6 +2352,7 @@ export type Database = {
           max_building_height_m: number | null
           owner_id: string | null
           parcel_code: string
+          project_id: string | null
           riparian_setback_m: number | null
           road_setback_m: number | null
           status: string | null
@@ -2361,6 +2382,7 @@ export type Database = {
           max_building_height_m?: number | null
           owner_id?: string | null
           parcel_code: string
+          project_id?: string | null
           riparian_setback_m?: number | null
           road_setback_m?: number | null
           status?: string | null
@@ -2390,6 +2412,7 @@ export type Database = {
           max_building_height_m?: number | null
           owner_id?: string | null
           parcel_code?: string
+          project_id?: string | null
           riparian_setback_m?: number | null
           road_setback_m?: number | null
           status?: string | null
@@ -2403,7 +2426,15 @@ export type Database = {
           verification_updated_at?: string | null
           zoning_type?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "parcels_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       professional_profiles: {
         Row: {
@@ -2650,6 +2681,104 @@ export type Database = {
         }
         Relationships: []
       }
+      project_members: {
+        Row: {
+          added_by: string | null
+          created_at: string
+          project_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          added_by?: string | null
+          created_at?: string
+          project_id: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          added_by?: string | null
+          created_at?: string
+          project_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_members_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          boundary: Json | null
+          county: string | null
+          created_at: string
+          id: string
+          latitude: number | null
+          location_key: string | null
+          longitude: number | null
+          name: string
+          notes: string | null
+          owner_id: string
+          parcel_id: string | null
+          property_id: string | null
+          stage: string
+          updated_at: string
+        }
+        Insert: {
+          boundary?: Json | null
+          county?: string | null
+          created_at?: string
+          id?: string
+          latitude?: number | null
+          location_key?: string | null
+          longitude?: number | null
+          name: string
+          notes?: string | null
+          owner_id?: string
+          parcel_id?: string | null
+          property_id?: string | null
+          stage?: string
+          updated_at?: string
+        }
+        Update: {
+          boundary?: Json | null
+          county?: string | null
+          created_at?: string
+          id?: string
+          latitude?: number | null
+          location_key?: string | null
+          longitude?: number | null
+          name?: string
+          notes?: string | null
+          owner_id?: string
+          parcel_id?: string | null
+          property_id?: string | null
+          stage?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_parcel_id_fkey"
+            columns: ["parcel_id"]
+            isOneToOne: false
+            referencedRelation: "parcels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       properties: {
         Row: {
           address: string | null
@@ -2676,6 +2805,7 @@ export type Database = {
           media_urls: string[]
           owner_id: string
           price: number | null
+          project_id: string | null
           review_state: string
           size_unit: string | null
           size_value: number | null
@@ -2711,6 +2841,7 @@ export type Database = {
           media_urls?: string[]
           owner_id: string
           price?: number | null
+          project_id?: string | null
           review_state?: string
           size_unit?: string | null
           size_value?: number | null
@@ -2746,6 +2877,7 @@ export type Database = {
           media_urls?: string[]
           owner_id?: string
           price?: number | null
+          project_id?: string | null
           review_state?: string
           size_unit?: string | null
           size_value?: number | null
@@ -2756,7 +2888,15 @@ export type Database = {
           utilities?: string[]
           view_count?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "properties_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       property_media: {
         Row: {
@@ -3410,6 +3550,7 @@ export type Database = {
           latitude: number | null
           longitude: number | null
           note: string | null
+          project_id: string | null
           ref: string
           updated_at: string
           user_id: string
@@ -3423,6 +3564,7 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           note?: string | null
+          project_id?: string | null
           ref: string
           updated_at?: string
           user_id: string
@@ -3436,11 +3578,20 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           note?: string | null
+          project_id?: string | null
           ref?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "saved_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       saved_searches: {
         Row: {
@@ -4151,6 +4302,8 @@ export type Database = {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
         Returns: boolean
       }
+      is_project_editor: { Args: { _project_id: string }; Returns: boolean }
+      is_project_member: { Args: { _project_id: string }; Returns: boolean }
       is_scout_request_participant: { Args: { _req: string }; Returns: boolean }
       is_source_member: { Args: { _source_id: string }; Returns: boolean }
       is_verified_surveyor: { Args: { _user_id: string }; Returns: boolean }
