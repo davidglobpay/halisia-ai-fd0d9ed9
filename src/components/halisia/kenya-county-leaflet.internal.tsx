@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
-import { MapContainer, TileLayer, GeoJSON, ZoomControl, ScaleControl } from "react-leaflet";
+import { MapContainer, TileLayer, GeoJSON, ScaleControl } from "react-leaflet";
+import { LeafletDock } from "@/components/halisia/map-controls/leaflet-dock";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import countiesData from "@/data/kenya-counties.json";
@@ -81,7 +82,11 @@ export default function KenyaCountyLeaflet({
         maxNativeZoom={20}
         maxZoom={21}
       />
-      <ZoomControl position="topright" />
+      <LeafletDock
+        testId="county-map-dock"
+        home={{ center: [0.5, 37.9], zoom: 6 }}
+        homeLabel="Show all of Kenya"
+      />
       <ScaleControl position="bottomleft" />
       <GeoJSON
         // @ts-expect-error - the bundled GeoJSON matches Feature<Polygon>

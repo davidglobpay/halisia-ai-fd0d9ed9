@@ -69,6 +69,39 @@ for (const viewport of [
   });
 }
 
+test("plot planner floating controls and layer menu work", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await stubImagery(page);
+  await page.goto(URL);
+  await expect(page.getByTestId("plot-viewer-canvas")).toBeVisible({ timeout: 30_000 });
+
+  for (const name of ["Zoom in", "Zoom out", "Back to the plot", "Top-down view", "Map layers"]) {
+    await expect(page.getByRole("button", { name, exact: true })).toBeVisible();
+  }
+  await page.getByRole("button", { name: "Zoom in", exact: true }).click();
+  await page.getByRole("button", { name: "Top-down view", exact: true }).click();
+  await page.getByRole("button", { name: "Back to the plot", exact: true }).click();
+
+  await page.getByRole("button", { name: "Map layers", exact: true }).click();
+  const panel = page.getByTestId("pp-dock-panel");
+  await expect(panel).toBeVisible();
+  await page.getByTestId("pp-dock-layer-ground-plain").click();
+  await expect(page.getByTestId("pp-dock-layer-ground-plain")).toHaveAttribute(
+    "aria-checked",
+    "true",
+  );
+  await page.getByTestId("pp-dock-layer-context-streetview").click();
+  await expect(page.getByTestId("pp-streetview")).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  await expect(panel).toHaveCount(0);
+
+  // The context notes always say where terrain and buildings came from, or why not.
+  await expect(page.getByTestId("pp-context")).toContainText("Terrain:");
+  await expect(page.getByTestId("pp-context")).toContainText("Neighbouring buildings:");
+  expect(errors).toEqual([]);
+});
+
 test("plot planner explains when imagery cannot load", async ({ page }) => {
   await stubImagery(page, "fail");
   await page.goto(URL);

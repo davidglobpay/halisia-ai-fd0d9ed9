@@ -1,6 +1,7 @@
 /// <reference types="google.maps" />
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
-import { AlertTriangle, Loader2, RefreshCw } from "lucide-react";
+import { AlertTriangle, Crosshair, Loader2, Minus, Plus, RefreshCw } from "lucide-react";
+import { MapControlDock } from "@/components/halisia/map-controls/map-control-dock";
 import { loadGoogleMaps, resetGoogleMapsLoader } from "@/lib/google-maps-loader";
 import { MAP_CONTEXT_LAYERS } from "@/lib/map-evidence";
 
@@ -53,9 +54,14 @@ export function MapView({
   zoom = 12,
   marker,
   className = "",
-  mapType = "roadmap",
-  theme = "dark",
-  overlays = [],
+  mapType: mapTypeProp = "roadmap",
+  theme: themeProp = "dark",
+  overlays: overlaysProp = [],
+  onMapTypeChange,
+  onThemeChange,
+  onOverlaysChange,
+  controls = true,
+  controlsTopClass = "top-14",
   onMapClick,
   markerDraggable = false,
   onMarkerDrag,
@@ -72,6 +78,14 @@ export function MapView({
   mapType?: MapTypeId;
   theme?: MapTheme;
   overlays?: OverlayId[];
+  /** Called when the user changes the basemap from the floating layer menu. */
+  onMapTypeChange?: (t: MapTypeId) => void;
+  onThemeChange?: (t: MapTheme) => void;
+  onOverlaysChange?: (o: OverlayId[]) => void;
+  /** Floating navigation and layer controls (default on). */
+  controls?: boolean;
+  /** Where the floating controls start, to clear other overlays in the corner. */
+  controlsTopClass?: string;
   onMapClick?: (loc: { lat: number; lng: number }) => void;
   markerDraggable?: boolean;
   onMarkerDrag?: (loc: { lat: number; lng: number }) => void;
@@ -101,6 +115,16 @@ export function MapView({
    */
   overlayPolygons?: { ring: MapLocation[]; color: string; fillOpacity?: number }[] | null;
 }) {
+  // Layer state follows the props and can also be changed from the floating
+  // layer menu; parents that pass on*Change handlers stay in control.
+  const [mapType, setMapTypeLocal] = useState<MapTypeId>(mapTypeProp);
+  const [theme, setThemeLocal] = useState<MapTheme>(themeProp);
+  const [overlays, setOverlaysLocal] = useState<OverlayId[]>(overlaysProp);
+  useEffect(() => setMapTypeLocal(mapTypeProp), [mapTypeProp]);
+  useEffect(() => setThemeLocal(themeProp), [themeProp]);
+  const overlaysKey = overlaysProp.join(",");
+  useEffect(() => setOverlaysLocal(overlaysProp), [overlaysKey]);
+  const rootRef = useRef<HTMLDivElement>(null);
   const el = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const markerRef = useRef<google.maps.Marker | null>(null);
@@ -150,7 +174,8 @@ export function MapView({
           styles: theme === "light" ? HALISIA_LIGHT : HALISIA_STYLE,
           mapTypeId: mapType,
           disableDefaultUI: true,
-          zoomControl: true,
+          // The shared floating controls replace Google's zoom buttons.
+          zoomControl: !controls,
           gestureHandling: "greedy",
           backgroundColor: theme === "light" ? "#f5f7fb" : "#0a1735",
         });
@@ -282,7 +307,7 @@ export function MapView({
             `https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Hydro_Reference_Overlay/MapServer/tile/${z}/${c.y}/${c.x}`,
         }),
     );
-  }, [mapReady, overlays]);
+  }, [mapReady, overlays.join(",")]);
 
   useEffect(() => {
     if (!mapReady || !mapRef.current || !window.google?.maps) return;
@@ -434,6 +459,7 @@ export function MapView({
 
   return (
     <div
+      ref={rootRef}
       data-testid="map-view"
       onDoubleClick={() => {
         if (typeof window === "undefined") return;
@@ -509,6 +535,107 @@ export function MapView({
             </div>
           )}
         </div>
+      )}
+      {controls && (
+        <MapControlDock
+          testId="map-dock"
+          topOffsetClass={controlsTopClass}
+          fullscreenTarget={rootRef}
+          actions={[
+            {
+              id: "zoom-in",
+              label: "Zoom in",
+              icon: Plus,
+              disabled: !mapReady,
+              onClick: () => mapRef.current?.setZoom((mapRef.current.getZoom() ?? zoom) + 1),
+            },
+            {
+              id: "zoom-out",
+              label: "Zoom out",
+              icon: Minus,
+              disabled: !mapReady,
+              onClick: () => mapRef.current?.setZoom((mapRef.current.getZoom() ?? zoom) - 1),
+            },
+            {
+              id: "recenter",
+              label: marker ? "Back to the pin" : "Back to the start",
+              icon: Crosshair,
+              disabled: !mapReady,
+              onClick: () => {
+                mapRef.current?.panTo(marker ?? center);
+                mapRef.current?.setZoom(Math.max(zoom, marker ? 15 : zoom));
+              },
+            },
+          ]}
+          layers={[
+            {
+              id: "basemap",
+              title: "Map",
+              kind: "single",
+              options: [
+                { id: "roadmap", label: "Map" },
+                { id: "satellite", label: "Satellite" },
+                { id: "hybrid", label: "Satellite with labels" },
+                { id: "terrain", label: "Terrain" },
+              ],
+              selected: [mapType],
+              onChange: ([v]) => {
+                const next = (v ?? "roadmap") as MapTypeId;
+                setMapTypeLocal(next);
+                onMapTypeChange?.(next);
+              },
+            },
+            {
+              id: "theme",
+              title: "Map colours",
+              kind: "single",
+              options: [
+                { id: "light", label: "Light" },
+                {
+                  id: "dark",
+                  label: "Dark",
+                  hint:
+                    mapType === "satellite" || mapType === "hybrid"
+                      ? "Applies to Map and Terrain"
+                      : undefined,
+                },
+              ],
+              selected: [theme],
+              onChange: ([v]) => {
+                const next = (v ?? "light") as MapTheme;
+                setThemeLocal(next);
+                onThemeChange?.(next);
+              },
+            },
+            {
+              id: "overlays",
+              title: "Show on the map",
+              kind: "multi",
+              options: [
+                { id: "traffic", label: "Traffic" },
+                { id: "transit", label: "Public transport" },
+                { id: "bicycling", label: "Cycling routes" },
+                {
+                  id: "slope",
+                  label: MAP_CONTEXT_LAYERS.slope.label,
+                  hint: MAP_CONTEXT_LAYERS.slope.limitation,
+                },
+                {
+                  id: "drainage",
+                  label: MAP_CONTEXT_LAYERS.drainage.label,
+                  hint: MAP_CONTEXT_LAYERS.drainage.limitation,
+                },
+              ],
+              selected: overlays,
+              onChange: (v) => {
+                const next = v as OverlayId[];
+                setOverlaysLocal(next);
+                onOverlaysChange?.(next);
+              },
+            },
+          ]}
+          layerFootnote={<>Map data © Google. Terrain hillshade and watercourses © Esri.</>}
+        />
       )}
       {!mapReady && !mapError && !authFailed && (
         <div className="absolute inset-0 grid place-items-center text-muted-foreground text-sm">

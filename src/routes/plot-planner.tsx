@@ -1,5 +1,23 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Crosshair, Eye, Minus, Plus } from "lucide-react";
+import { MapControlDock } from "@/components/halisia/map-controls/map-control-dock";
+import { StreetViewPanel } from "@/components/halisia/land-passport/street-view-panel";
+import type {
+  GroundMode,
+  LocalBuilding,
+  PlotViewerApi,
+} from "@/components/halisia/plot-planner/plot-viewer.internal";
+import { getElevationSamples } from "@/lib/elevation.functions";
+import { getNearbyBuildings } from "@/lib/site-buildings.functions";
+import { datasetLabel } from "@/components/halisia/model-lab/site/site-terrain";
+import {
+  buildingHeightSummary,
+  terrainFromSamples,
+  terrainGridPoints,
+  toLocalMetres,
+} from "@/lib/site-context";
 import { SectionHeading, Surface } from "@/components/halisia/ds";
 import { PlotViewer } from "@/components/halisia/plot-planner/plot-viewer";
 import { readLastPassportLocation } from "@/components/halisia/model-lab/site/site-params";
@@ -93,6 +111,53 @@ function PlotPlannerPage() {
     plotKey === "custom" && customW > 0 && customD > 0
       ? { widthM: customW * FT_TO_M, depthM: customD * FT_TO_M }
       : { widthM: preset.widthM, depthM: preset.depthM };
+
+  const [ground, setGround] = useState<GroundMode>("terrain");
+  const [overlays, setOverlays] = useState<string[]>(["buildings", "plot", "streetview"]);
+  const apiRef = useRef<PlotViewerApi | null>(null);
+  const viewerBoxRef = useRef<HTMLDivElement | null>(null);
+
+  // Terrain: a 10×10 elevation grid over 360 m (free public DEM; ~30–90 m data).
+  const TERRAIN_SPAN_M = 360;
+  const terrainQ = useQuery({
+    queryKey: ["pp-terrain", point?.lat, point?.lng],
+    enabled: !!point,
+    staleTime: 60 * 60_000,
+    retry: false,
+    queryFn: async () => {
+      const p = point as { lat: number; lng: number };
+      const r = await getElevationSamples({
+        data: { locations: terrainGridPoints(p.lat, p.lng, TERRAIN_SPAN_M) },
+      });
+      const label = datasetLabel(r.source);
+      return {
+        grid: terrainFromSamples(r.elevations, TERRAIN_SPAN_M),
+        source: `${label.name}, ${label.resolution}`,
+      };
+    },
+  });
+  // Neighbouring buildings from OpenStreetMap.
+  const buildingsQ = useQuery({
+    queryKey: ["pp-buildings", point?.lat, point?.lng],
+    enabled: !!point,
+    staleTime: 30 * 60_000,
+    retry: false,
+    queryFn: () =>
+      getNearbyBuildings({
+        data: { lat: (point as { lat: number }).lat, lng: (point as { lng: number }).lng },
+      }),
+  });
+  const localBuildings: LocalBuilding[] = useMemo(() => {
+    if (!point || !buildingsQ.data) return [];
+    return buildingsQ.data.buildings.map((b) => ({
+      id: b.id,
+      ring: b.ring.map((q) => toLocalMetres(q.lat, q.lng, point.lat, point.lng)),
+      heightM: b.heightM,
+      defaulted: b.heightSource === "default",
+    }));
+  }, [buildingsQ.data, point]);
+  const heightCounts = buildingHeightSummary(buildingsQ.data?.buildings ?? []);
+  const terrain = terrainQ.data?.grid ?? null;
 
   const fp = houseFootprint(typology, structure);
   const gaps = edgeDistances(house, fp, plotPlacement, plot);
@@ -261,10 +326,94 @@ function PlotPlannerPage() {
           </div>
 
           <div
-            className="relative mt-3 h-[62svh] min-h-[360px] overflow-hidden rounded-2xl border border-white/10"
+            ref={viewerBoxRef}
+            className="relative mt-3 h-[62svh] min-h-[360px] overflow-hidden rounded-2xl border border-border bg-card"
             data-testid="pp-viewer"
           >
+            <MapControlDock
+              testId="pp-dock"
+              fullscreenTarget={viewerBoxRef}
+              actions={[
+                {
+                  id: "zoom-in",
+                  label: "Zoom in",
+                  icon: Plus,
+                  onClick: () => apiRef.current?.zoomIn(),
+                },
+                {
+                  id: "zoom-out",
+                  label: "Zoom out",
+                  icon: Minus,
+                  onClick: () => apiRef.current?.zoomOut(),
+                },
+                {
+                  id: "reset",
+                  label: "Back to the plot",
+                  icon: Crosshair,
+                  onClick: () => apiRef.current?.resetView(),
+                },
+                {
+                  id: "top",
+                  label: "Top-down view",
+                  icon: Eye,
+                  onClick: () => apiRef.current?.topView(),
+                },
+              ]}
+              layers={[
+                {
+                  id: "ground",
+                  title: "Ground",
+                  kind: "single",
+                  options: [
+                    {
+                      id: "terrain",
+                      label: "Satellite on terrain",
+                      hint: terrain
+                        ? `Relief ${terrain.reliefM} m across the view`
+                        : "Terrain not available here; shown flat",
+                    },
+                    { id: "flat", label: "Satellite, flat" },
+                    { id: "plain", label: "Plain ground" },
+                  ],
+                  selected: [ground],
+                  onChange: (v) => setGround((v[0] as GroundMode) ?? "terrain"),
+                },
+                {
+                  id: "context",
+                  title: "Show",
+                  kind: "multi",
+                  options: [
+                    {
+                      id: "buildings",
+                      label: "Neighbouring buildings",
+                      hint:
+                        buildingsQ.data?.status === "unavailable"
+                          ? "OpenStreetMap did not respond"
+                          : `${heightCounts.total} within ${buildingsQ.data?.radiusM ?? 250} m`,
+                    },
+                    { id: "plot", label: "Plot outline" },
+                    { id: "streetview", label: "Street View panel" },
+                  ],
+                  selected: overlays,
+                  onChange: setOverlays,
+                },
+              ]}
+              layerFootnote={
+                <>
+                  Imagery © Esri, Maxar, Earthstar Geographics. Buildings © OpenStreetMap
+                  contributors. Terrain: {terrainQ.data?.source ?? "public elevation grid"}.
+                </>
+              }
+            />
             <PlotViewer
+              ground={ground}
+              terrain={terrain}
+              buildings={localBuildings}
+              showBuildings={overlays.includes("buildings")}
+              showPlot={overlays.includes("plot")}
+              onApi={(api) => {
+                apiRef.current = api;
+              }}
               lat={point.lat}
               lng={point.lng}
               typology={typology}
@@ -306,6 +455,24 @@ function PlotPlannerPage() {
                 The house crosses the plot outline. Move or rotate it, or choose a bigger plot.
               </p>
             )}
+            <ul className="mt-3 space-y-1 text-muted-foreground" data-testid="pp-context">
+              <li>
+                Terrain:{" "}
+                {terrainQ.isLoading
+                  ? "reading the ground…"
+                  : terrain
+                    ? `${terrainQ.data?.source}; ground at the point about ${terrain.centreElevationM} m above sea level, ${terrain.reliefM} m between the highest and lowest samples across about 360 m. A coarse grid, not a site survey.`
+                    : "not available for this point, so the ground is shown flat."}
+              </li>
+              <li>
+                Neighbouring buildings:{" "}
+                {buildingsQ.isLoading
+                  ? "loading…"
+                  : buildingsQ.data?.status === "ok"
+                    ? `${heightCounts.total} OpenStreetMap footprints within ${buildingsQ.data.radiusM} m; ${heightCounts.recorded} with a recorded height or floor count, ${heightCounts.defaulted} drawn at 3 m because none is recorded. Unmapped buildings are missing.`
+                    : "OpenStreetMap could not be reached, so none are shown."}
+              </li>
+            </ul>
             <p className="mt-3 text-muted-foreground">
               Imagery: Esri World Imagery (Esri, Maxar, Earthstar Geographics); capture date and
               positional accuracy not supplied. The plot outline is drawn from the size you chose
@@ -319,6 +486,19 @@ function PlotPlannerPage() {
               </Link>
             </p>
           </Surface>
+
+          {overlays.includes("streetview") && (
+            <Surface elevation={1} className="mt-3 p-4" data-testid="pp-streetview">
+              <h2 className="text-sm font-semibold">Street-level view near this point</h2>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Google Street View from the nearest public road, where Google has captured one. It
+                may be some distance from the plot and is dated by Google, not by HALISIA.
+              </p>
+              <div className="relative mt-3 h-[40svh] min-h-[260px] overflow-hidden rounded-2xl border border-border">
+                <StreetViewPanel lat={point.lat} lng={point.lng} className="absolute inset-0" />
+              </div>
+            </Surface>
+          )}
         </>
       )}
     </main>
