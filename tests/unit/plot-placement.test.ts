@@ -7,6 +7,7 @@ import {
   houseFootprint,
   imageryTiles,
   metresPerPixel,
+  typologyName,
 } from "@/lib/plot-placement";
 
 describe("house footprints", () => {
@@ -121,5 +122,24 @@ describe("gaps to the plot edges", () => {
     );
     expect(d.left).toBe(2.6);
     expect(d.front).toBe(11.2);
+  });
+});
+
+describe("labels", () => {
+  it("does not repeat a size already in the plot name", () => {
+    expect(PLOT_SHAPES.map((p) => p.label)).toEqual([
+      "50×100 ft",
+      "1/8 acre (50×109 ft)",
+      "1/4 acre (100×109 ft)",
+      "1/2 acre (100×218 ft)",
+      "1 acre (209×209 ft)",
+    ]);
+  });
+
+  it("names house types the way people say them", () => {
+    expect(typologyName("bedsitter")).toBe("Bedsitter");
+    expect(typologyName("1br")).toBe("1 bedroom");
+    expect(typologyName("3br")).toBe("3 bedrooms");
+    expect(typologyName("odd")).toBe("odd");
   });
 });

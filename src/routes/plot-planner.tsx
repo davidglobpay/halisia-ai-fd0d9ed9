@@ -11,6 +11,7 @@ import {
   edgeDistances,
   houseFootprint,
   isContainer,
+  typologyName,
   type Placement,
 } from "@/lib/plot-placement";
 
@@ -48,8 +49,6 @@ export const Route = createFileRoute("/plot-planner")({
   }),
   component: PlotPlannerPage,
 });
-
-const label = (s: string) => s.replaceAll("_", " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 function parseCoord(lat?: string, lng?: string) {
   const a = lat != null ? Number(lat) : Number.NaN;
@@ -158,7 +157,7 @@ function PlotPlannerPage() {
               >
                 {TYPOLOGIES.map((t) => (
                   <option key={t} value={t}>
-                    {label(t)}
+                    {typologyName(t)}
                   </option>
                 ))}
               </select>
@@ -281,8 +280,9 @@ function PlotPlannerPage() {
 
           <Surface elevation={1} className="mt-3 p-4 text-xs" data-testid="pp-readout">
             <p className="text-sm">
-              <strong>{structureName(structure)}</strong>, {label(typology)}: about {fp.floorAreaM2}{" "}
-              m² floor area, {fp.lengthM.toFixed(1)} × {fp.widthM.toFixed(1)} m footprint
+              <strong>{structureName(structure)}</strong>, {typologyName(typology)}: about{" "}
+              {fp.floorAreaM2} m² floor area, {fp.lengthM.toFixed(1)} × {fp.widthM.toFixed(1)} m
+              footprint
               {isContainer(structure) && fp.units ? ` (${fp.units.length} units)` : ""}. Plot{" "}
               {plot.widthM.toFixed(1)} × {plot.depthM.toFixed(1)} m; the house covers{" "}
               {gaps.coveragePct}% of it.
