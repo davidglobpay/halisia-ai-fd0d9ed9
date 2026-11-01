@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
+import { LeafletDock } from "@/components/halisia/map-controls/leaflet-dock";
 import {
-  LeafletDock,
   SIMPLE_BASEMAPS,
   basemapGroup,
   type SimpleBasemap,
-} from "@/components/halisia/map-controls/leaflet-dock";
+} from "@/components/halisia/map-controls/leaflet-basemaps";
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
 import L from "leaflet";
 
