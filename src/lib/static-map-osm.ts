@@ -4,6 +4,7 @@
 // the PDF dossier and any other consumer always has map imagery.
 
 import { hasMapDetail } from "./map-image-quality";
+import { esriTileUrl } from "@/lib/esri-tiles";
 
 type Layer = "roadmap-light" | "terrain" | "satellite" | "hybrid";
 
@@ -28,7 +29,7 @@ function tileUrl(layer: Layer, z: number, x: number, y: number): string {
       return `https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/${z}/${y}/${xw}`;
     case "satellite":
     case "hybrid":
-      return `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${xw}`;
+      return esriTileUrl("World_Imagery", z, y, xw);
     case "roadmap-light":
     default:
       return `https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/${z}/${y}/${xw}`;

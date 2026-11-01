@@ -19,6 +19,7 @@ import { Ruler, Hexagon, PenLine, Download, Trash2 } from "lucide-react";
 import { usePersistedState } from "@/hooks/use-persisted-state";
 import { LeafletDock } from "@/components/halisia/map-controls/leaflet-dock";
 import { MAP_CONTEXT_LAYERS } from "@/lib/map-evidence";
+import { esriTileTemplate } from "@/lib/esri-tiles";
 
 const DefaultIcon = L.icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
@@ -55,7 +56,7 @@ const BASEMAPS: Array<{
   {
     id: "esri-sat",
     name: "Esri Satellite",
-    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    url: esriTileTemplate("World_Imagery"),
     attribution: "Tiles © Esri, Maxar, Earthstar Geographics",
     max: 19,
   },
@@ -121,7 +122,7 @@ export default function LeafletLayersMap({
         {on("slope") && (
           <>
             <TileLayer
-              url="https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}"
+              url={esriTileTemplate("Elevation/World_Hillshade")}
               attribution="Hillshade © Esri"
               maxNativeZoom={16}
               maxZoom={21}

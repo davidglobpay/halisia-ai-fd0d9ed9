@@ -3,6 +3,7 @@ import { useMap } from "react-leaflet";
 import L from "leaflet";
 import { Crosshair, Minus, Plus } from "lucide-react";
 import { MapControlDock, type DockAction, type LayerGroup } from "./map-control-dock";
+import { esriTileTemplate } from "@/lib/esri-tiles";
 
 /**
  * The shared floating controls for a react-leaflet map. Render it as a child
@@ -79,7 +80,7 @@ export const SIMPLE_BASEMAPS = {
   },
   satellite: {
     label: "Satellite",
-    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    url: esriTileTemplate("World_Imagery"),
     attribution: "Imagery © Esri, Maxar, Earthstar Geographics",
     maxNativeZoom: 19,
   },

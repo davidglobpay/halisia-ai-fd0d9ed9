@@ -4,6 +4,7 @@ import { AlertTriangle, Crosshair, Loader2, Minus, Plus, RefreshCw } from "lucid
 import { MapControlDock } from "@/components/halisia/map-controls/map-control-dock";
 import { loadGoogleMaps, resetGoogleMapsLoader } from "@/lib/google-maps-loader";
 import { MAP_CONTEXT_LAYERS } from "@/lib/map-evidence";
+import { esriTileUrl } from "@/lib/esri-tiles";
 
 const MapFallback = lazy(() => import("./map-fallback.internal"));
 
@@ -292,8 +293,7 @@ export function MapView({
           name: MAP_CONTEXT_LAYERS.slope.label,
           tileSize: new g.maps.Size(256, 256),
           opacity: 0.55,
-          getTileUrl: (c, z) =>
-            `https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/${z}/${c.y}/${c.x}`,
+          getTileUrl: (c, z) => esriTileUrl("Elevation/World_Hillshade", z, c.y, c.x),
         }),
     );
     ensureImage(
