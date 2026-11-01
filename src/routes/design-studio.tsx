@@ -1,8 +1,19 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { fallback, zodValidator } from "@tanstack/zod-adapter";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { z } from "zod";
-import { AlertTriangle, ArrowLeft, Box, Eye, EyeOff, RefreshCw } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Box,
+  Crosshair,
+  Eye,
+  EyeOff,
+  Minus,
+  Plus,
+  RefreshCw,
+} from "lucide-react";
+import { MapControlDock } from "@/components/halisia/map-controls/map-control-dock";
 import { StudioViewer } from "@/components/halisia/design-studio/studio-viewer";
 import { CAMERA_PRESETS } from "@/components/halisia/design-studio/camera-presets";
 import type { StudioViewerApi } from "@/components/halisia/design-studio/studio-viewer.internal";
@@ -96,6 +107,7 @@ function DesignStudioPage() {
   );
   const [generatedFloors, setGeneratedFloors] = useState(3);
   const [api, setApi] = useState<StudioViewerApi | null>(null);
+  const viewerBoxRef = useRef<HTMLElement | null>(null);
   const [viewerState, setViewerState] = useState({ loading: true, error: null as string | null });
   const concept = useMemo(
     () => STUDIO_CONCEPTS.find((item) => item.id === conceptId) ?? STUDIO_CONCEPTS[0],
@@ -156,7 +168,63 @@ function DesignStudioPage() {
       </p>
 
       <div className="mt-5 grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <section className="relative h-[58vh] min-h-[420px] min-w-0 max-h-[760px] overflow-hidden rounded-2xl border border-foreground/10 bg-black/20 sm:h-[68vh] xl:h-[720px]">
+        <section
+          ref={viewerBoxRef}
+          className="relative h-[58vh] min-h-[420px] min-w-0 max-h-[760px] overflow-hidden rounded-2xl border border-foreground/10 bg-black/20 sm:h-[68vh] xl:h-[720px]"
+        >
+          {dimensionsValid && api && (
+            <MapControlDock
+              testId="studio-dock"
+              topOffsetClass="top-20"
+              fullscreenTarget={viewerBoxRef}
+              actions={[
+                { id: "zoom-in", label: "Zoom in", icon: Plus, onClick: () => api.zoom(0.75) },
+                { id: "zoom-out", label: "Zoom out", icon: Minus, onClick: () => api.zoom(1.33) },
+                {
+                  id: "reset",
+                  label: "Isometric view",
+                  icon: Crosshair,
+                  onClick: () => api.setView("isometric"),
+                },
+                {
+                  id: "top",
+                  label: "Aerial view",
+                  icon: Eye,
+                  onClick: () => api.setView("aerial"),
+                },
+              ]}
+              layers={[
+                {
+                  id: "light",
+                  title: "Lighting",
+                  kind: "single",
+                  options: (["day", "neutral", "night"] as const).map((item) => ({
+                    id: item,
+                    label: item[0].toUpperCase() + item.slice(1),
+                  })),
+                  selected: [environment],
+                  onChange: ([v]) => v && setEnvironment(v as StudioEnvironment),
+                },
+                {
+                  id: "show",
+                  title: "Show",
+                  kind: "multi",
+                  options: [
+                    { id: "parking", label: "Parking" },
+                    { id: "landscape", label: "Landscape" },
+                  ],
+                  selected: [
+                    ...(showParking ? ["parking"] : []),
+                    ...(showLandscape ? ["landscape"] : []),
+                  ],
+                  onChange: (v) => {
+                    setShowParking(v.includes("parking"));
+                    setShowLandscape(v.includes("landscape"));
+                  },
+                },
+              ]}
+            />
+          )}
           {dimensionsValid ? (
             <StudioViewer
               concept={concept}

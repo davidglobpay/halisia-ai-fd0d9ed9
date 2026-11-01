@@ -1,4 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import {
+  LeafletDock,
+  SIMPLE_BASEMAPS,
+  basemapGroup,
+  type SimpleBasemap,
+} from "@/components/halisia/map-controls/leaflet-dock";
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
 import L from "leaflet";
 
@@ -36,17 +42,27 @@ export default function PinPickerInternal({
   onPick: (lat: number, lng: number) => void;
 }) {
   const center: [number, number] = [lat ?? -1.286389, lng ?? 36.817223];
+  const [basemap, setBasemap] = useState<SimpleBasemap>("map");
+  const base = SIMPLE_BASEMAPS[basemap];
   return (
     <MapContainer
       center={center}
       zoom={lat != null ? 14 : 6}
+      zoomControl={false}
       className="absolute inset-0 h-full w-full"
     >
       <TileLayer
-        url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution="© OpenStreetMap contributors"
-        maxNativeZoom={20}
+        key={basemap}
+        url={base.url}
+        attribution={base.attribution}
+        maxNativeZoom={base.maxNativeZoom}
         maxZoom={21}
+      />
+      <LeafletDock
+        testId="pin-picker-dock"
+        home={{ center, zoom: lat != null ? 16 : 6 }}
+        homeLabel={lat != null ? "Back to the pin" : "Back to the start"}
+        layers={[basemapGroup(basemap, setBasemap)]}
       />
       <ClickCatcher onPick={onPick} />
       {lat != null && lng != null && (

@@ -4,7 +4,6 @@ import {
   TileLayer,
   Marker,
   Popup,
-  LayersControl,
   ScaleControl,
   Polygon,
   Polyline,
@@ -18,6 +17,7 @@ import L from "leaflet";
 import { getWave4Overlays, type Wave4Overlays } from "@/lib/wave4-overlays.functions";
 import { Ruler, Hexagon, PenLine, Download, Trash2 } from "lucide-react";
 import { usePersistedState } from "@/hooks/use-persisted-state";
+import { LeafletDock } from "@/components/halisia/map-controls/leaflet-dock";
 import { MAP_CONTEXT_LAYERS } from "@/lib/map-evidence";
 
 const DefaultIcon = L.icon({
@@ -77,7 +77,9 @@ export default function LeafletLayersMap({
   lng: number;
   label: string;
 }) {
-  const [showLabels, setShowLabels] = useState(true);
+  const [basemap, setBasemap] = useState("esri-sat");
+  const [shown, setShown] = useState<string[]>(["labels", "county", "watercourses", "facilities"]);
+  const on = (id: string) => shown.includes(id);
   const [overlays, setOverlays] = useState<Wave4Overlays | null>(null);
   useEffect(() => {
     let cancelled = false;
@@ -95,30 +97,29 @@ export default function LeafletLayersMap({
         center={[lat, lng]}
         zoom={13}
         scrollWheelZoom
+        zoomControl={false}
         className="h-full w-full"
         key={`${lat.toFixed(4)}-${lng.toFixed(4)}`}
       >
-        <LayersControl position="topright">
-          {BASEMAPS.map((b) => (
-            <LayersControl.BaseLayer key={b.id} name={b.name} checked={b.id === "esri-sat"}>
-              <TileLayer
-                url={b.url}
-                attribution={b.attribution}
-                maxNativeZoom={b.max ?? 19}
-                maxZoom={21}
-              />
-            </LayersControl.BaseLayer>
-          ))}
-          <LayersControl.Overlay name="Labels & roads" checked={showLabels}>
-            <TileLayer
-              url="https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
-              attribution="Labels © Esri"
-              maxNativeZoom={20}
-              maxZoom={21}
-              eventHandlers={{ add: () => setShowLabels(true), remove: () => setShowLabels(false) }}
-            />
-          </LayersControl.Overlay>
-          <LayersControl.Overlay name={MAP_CONTEXT_LAYERS.slope.label}>
+        {BASEMAPS.filter((b) => b.id === basemap).map((b) => (
+          <TileLayer
+            key={b.id}
+            url={b.url}
+            attribution={b.attribution}
+            maxNativeZoom={b.max ?? 19}
+            maxZoom={21}
+          />
+        ))}
+        {on("labels") && (
+          <TileLayer
+            url="https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
+            attribution="Labels © Esri"
+            maxNativeZoom={20}
+            maxZoom={21}
+          />
+        )}
+        {on("slope") && (
+          <>
             <TileLayer
               url="https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}"
               attribution="Hillshade © Esri"
@@ -126,21 +127,22 @@ export default function LeafletLayersMap({
               maxZoom={21}
               opacity={0.28}
             />
-          </LayersControl.Overlay>
-          <LayersControl.Overlay name={MAP_CONTEXT_LAYERS.drainage.label}>
+          </>
+        )}
+        {on("hydro") && (
+          <>
             <TileLayer
               url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Hydro_Reference_Overlay/MapServer/tile/{z}/{y}/{x}"
               attribution="Hydro © Esri"
               maxNativeZoom={13}
               maxZoom={21}
             />
-          </LayersControl.Overlay>
-          {overlays && (
-            <>
-              <LayersControl.Overlay
-                name={`Wave 4 · County boundary (${overlays.boundaries.county.length})`}
-                checked
-              >
+          </>
+        )}
+        {overlays && (
+          <>
+            {on("county") && (
+              <>
                 <LayerGroup>
                   {overlays.boundaries.county.map((r, i) => (
                     <Polygon
@@ -152,10 +154,10 @@ export default function LeafletLayersMap({
                     </Polygon>
                   ))}
                 </LayerGroup>
-              </LayersControl.Overlay>
-              <LayersControl.Overlay
-                name={`Wave 4 · Ward boundary (${overlays.boundaries.ward.length})`}
-              >
+              </>
+            )}
+            {on("ward") && (
+              <>
                 <LayerGroup>
                   {overlays.boundaries.ward.map((r, i) => (
                     <Polygon
@@ -172,11 +174,10 @@ export default function LeafletLayersMap({
                     </Polygon>
                   ))}
                 </LayerGroup>
-              </LayersControl.Overlay>
-              <LayersControl.Overlay
-                name={`Wave 4 · Mapped watercourses (${overlays.drainage.length})`}
-                checked
-              >
+              </>
+            )}
+            {on("watercourses") && (
+              <>
                 <LayerGroup>
                   {overlays.drainage.map((r, i) => (
                     <Polyline
@@ -188,11 +189,10 @@ export default function LeafletLayersMap({
                     </Polyline>
                   ))}
                 </LayerGroup>
-              </LayersControl.Overlay>
-              <LayersControl.Overlay
-                name={`Wave 4 · Public facilities (${overlays.facilities.length})`}
-                checked
-              >
+              </>
+            )}
+            {on("facilities") && (
+              <>
                 <LayerGroup>
                   {overlays.facilities.map((f) => (
                     <CircleMarker
@@ -215,26 +215,85 @@ export default function LeafletLayersMap({
                     </CircleMarker>
                   ))}
                 </LayerGroup>
-              </LayersControl.Overlay>
-            </>
-          )}
-          <LayersControl.Overlay name="OpenRailway">
+              </>
+            )}
+          </>
+        )}
+        {on("railway") && (
+          <>
             <TileLayer
               url="https://{s}.tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png"
               attribution="© OpenRailwayMap"
               maxNativeZoom={19}
               maxZoom={21}
             />
-          </LayersControl.Overlay>
-          <LayersControl.Overlay name="OpenSeaMap">
+          </>
+        )}
+        {on("seamap") && (
+          <>
             <TileLayer
               url="https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png"
               attribution="© OpenSeaMap"
               maxNativeZoom={18}
               maxZoom={21}
             />
-          </LayersControl.Overlay>
-        </LayersControl>
+          </>
+        )}
+        <LeafletDock
+          testId="layers-map-dock"
+          home={{ center: [lat, lng], zoom: 13 }}
+          homeLabel="Back to the point"
+          layers={[
+            {
+              id: "basemap",
+              title: "Map",
+              kind: "single",
+              options: BASEMAPS.map((b) => ({ id: b.id, label: b.name })),
+              selected: [basemap],
+              onChange: ([v]) => setBasemap(v ?? "esri-sat"),
+            },
+            {
+              id: "show",
+              title: "Show on the map",
+              kind: "multi",
+              options: [
+                { id: "labels", label: "Labels and roads" },
+                {
+                  id: "slope",
+                  label: MAP_CONTEXT_LAYERS.slope.label,
+                  hint: MAP_CONTEXT_LAYERS.slope.limitation,
+                },
+                {
+                  id: "hydro",
+                  label: `${MAP_CONTEXT_LAYERS.drainage.label} (Esri reference)`,
+                  hint: MAP_CONTEXT_LAYERS.drainage.limitation,
+                },
+                ...(overlays
+                  ? [
+                      {
+                        id: "county",
+                        label: `County boundary (${overlays.boundaries.county.length})`,
+                      },
+                      { id: "ward", label: `Ward boundary (${overlays.boundaries.ward.length})` },
+                      {
+                        id: "watercourses",
+                        label: `Watercourses, OpenStreetMap (${overlays.drainage.length})`,
+                      },
+                      {
+                        id: "facilities",
+                        label: `Public facilities (${overlays.facilities.length})`,
+                      },
+                    ]
+                  : []),
+                { id: "railway", label: "Railways (OpenRailwayMap)" },
+                { id: "seamap", label: "Sea marks (OpenSeaMap)" },
+              ],
+              selected: shown,
+              onChange: setShown,
+            },
+          ]}
+          layerFootnote={<>Basemaps © OpenStreetMap contributors and Esri.</>}
+        />
         <ScaleControl position="bottomleft" imperial={false} />
         <Marker position={[lat, lng]}>
           <Popup>

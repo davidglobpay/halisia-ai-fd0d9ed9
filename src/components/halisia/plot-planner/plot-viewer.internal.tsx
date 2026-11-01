@@ -1,7 +1,8 @@
 /**
- * House-on-plot viewer: satellite imagery as the ground, the plot outline the
- * user chose, and schematic house massing to scale, which can be dragged and
- * rotated. Reads Model Lab's schematic house builder; never modifies it.
+ * House-on-plot viewer: satellite imagery draped over the real terrain grid,
+ * neighbouring OpenStreetMap buildings, the plot outline the user chose, and
+ * schematic house massing to scale, which can be dragged and rotated. Reads
+ * Model Lab's schematic house builder; never modifies it.
  */
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
@@ -14,6 +15,23 @@ import {
   metresPerPixel,
   type Placement,
 } from "@/lib/plot-placement";
+import { heightAt, type TerrainGrid } from "@/lib/site-context";
+
+export type GroundMode = "terrain" | "flat" | "plain";
+
+export type LocalBuilding = {
+  id: number;
+  ring: Array<{ x: number; z: number }>;
+  heightM: number;
+  defaulted: boolean;
+};
+
+export type PlotViewerApi = {
+  zoomIn: () => void;
+  zoomOut: () => void;
+  resetView: () => void;
+  topView: () => void;
+};
 
 export type PlotViewerProps = {
   lat: number;
@@ -27,6 +45,12 @@ export type PlotViewerProps = {
   target: "house" | "plot";
   onHouseChange: (p: Placement) => void;
   onPlotChange: (p: Placement) => void;
+  ground?: GroundMode;
+  terrain?: TerrainGrid | null;
+  buildings?: LocalBuilding[];
+  showBuildings?: boolean;
+  showPlot?: boolean;
+  onApi?: (api: PlotViewerApi) => void;
 };
 
 const ZOOM = 19;
@@ -36,6 +60,8 @@ const WALL_TINT: Record<string, number> = {
   eps: 0xf3f1ea,
 };
 const STONE_COLOR = 0xcdbf9f;
+const DEFAULT_CAMERA = new THREE.Vector3(28, 34, 42);
+const PLOT_LIFT_M = 0.08;
 
 function disposeTree(o: THREE.Object3D) {
   o.traverse((c) => {
@@ -59,17 +85,32 @@ function loadImage(src: string): Promise<HTMLImageElement | null> {
   });
 }
 
-/** Stitch the imagery block into one canvas; null when nothing loaded. */
-async function imageryCanvas(lat: number, lng: number) {
+type Imagery = {
+  canvas: HTMLCanvasElement | null;
+  sizeM: number;
+  /** World position of the image centre (the point is the origin). */
+  centre: { x: number; z: number };
+  loaded: number;
+  total: number;
+};
+
+async function loadImagery(lat: number, lng: number): Promise<Imagery> {
+  const mpp = metresPerPixel(lat, ZOOM);
   const block = imageryTiles(lat, lng, ZOOM);
-  if (!block) return null;
+  const sizePx = block?.sizePx ?? 1280;
+  const point = block?.pointPx ?? { x: sizePx / 2, y: sizePx / 2 };
+  const base = {
+    sizeM: sizePx * mpp,
+    centre: { x: (sizePx / 2 - point.x) * mpp, z: (sizePx / 2 - point.y) * mpp },
+  };
+  if (!block) return { ...base, canvas: null, loaded: 0, total: 0 };
   const canvas = document.createElement("canvas");
-  canvas.width = block.sizePx;
-  canvas.height = block.sizePx;
+  canvas.width = sizePx;
+  canvas.height = sizePx;
   const ctx = canvas.getContext("2d");
-  if (!ctx) return null;
+  if (!ctx) return { ...base, canvas: null, loaded: 0, total: block.tiles.length };
   ctx.fillStyle = "#8a9a6a";
-  ctx.fillRect(0, 0, block.sizePx, block.sizePx);
+  ctx.fillRect(0, 0, sizePx, sizePx);
   const imgs = await Promise.all(block.tiles.map((t) => loadImage(t.src)));
   let loaded = 0;
   imgs.forEach((img, i) => {
@@ -77,7 +118,7 @@ async function imageryCanvas(lat: number, lng: number) {
     loaded++;
     ctx.drawImage(img, block.tiles[i].px, block.tiles[i].py, 256, 256);
   });
-  return loaded ? { canvas, block, loaded, total: block.tiles.length } : null;
+  return { ...base, canvas: loaded ? canvas : null, loaded, total: block.tiles.length };
 }
 
 function buildHouseGroup(typology: string, structure: string): THREE.Group {
@@ -109,44 +150,131 @@ function buildHouseGroup(typology: string, structure: string): THREE.Group {
   return group;
 }
 
-function buildPlotGroup(widthM: number, depthM: number): THREE.Group {
+type HeightFn = (x: number, z: number) => number;
+
+/**
+ * A rectangle in the plot's frame, draped over the ground: `u` runs across
+ * the plot width, `v` along its depth, both from −1/2 to +1/2 of the size.
+ */
+function drapedRect(
+  sizeU: number,
+  sizeV: number,
+  segU: number,
+  segV: number,
+  place: Placement,
+  height: HeightFn,
+  vOffset = 0,
+): THREE.BufferGeometry {
+  const a = (-place.rotationDeg * Math.PI) / 180;
+  const c = Math.cos(a);
+  const s = Math.sin(a);
+  const pos: number[] = [];
+  for (let j = 0; j <= segV; j++) {
+    for (let i = 0; i <= segU; i++) {
+      const lx = -sizeU / 2 + (sizeU * i) / segU;
+      const lz = vOffset - sizeV / 2 + (sizeV * j) / segV;
+      const x = place.x + lx * c + lz * s;
+      const z = place.z - lx * s + lz * c;
+      pos.push(x, height(x, z) + PLOT_LIFT_M, z);
+    }
+  }
+  const idx: number[] = [];
+  for (let j = 0; j < segV; j++) {
+    for (let i = 0; i < segU; i++) {
+      const p = j * (segU + 1) + i;
+      idx.push(p, p + segU + 1, p + 1, p + 1, p + segU + 1, p + segU + 2);
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  return g;
+}
+
+function buildPlotGroup(
+  widthM: number,
+  depthM: number,
+  place: Placement,
+  height: HeightFn,
+): THREE.Group {
   const group = new THREE.Group();
   group.name = "plot-outline";
   const fill = new THREE.Mesh(
-    new THREE.PlaneGeometry(widthM, depthM),
+    drapedRect(widthM, depthM, 12, 16, place, height),
     new THREE.MeshBasicMaterial({
       color: 0xf5c542,
       transparent: true,
-      opacity: 0.12,
+      opacity: 0.16,
       depthWrite: false,
+      side: THREE.DoubleSide,
     }),
   );
-  fill.rotation.x = -Math.PI / 2;
-  fill.position.y = 0.03;
   fill.name = "plot-fill";
   group.add(fill);
-  const pts = [
+  // Outline: each edge subdivided so it follows the ground.
+  const a = (-place.rotationDeg * Math.PI) / 180;
+  const c = Math.cos(a);
+  const s = Math.sin(a);
+  const corners = [
     [-widthM / 2, -depthM / 2],
     [widthM / 2, -depthM / 2],
     [widthM / 2, depthM / 2],
     [-widthM / 2, depthM / 2],
-  ].map(([x, z]) => new THREE.Vector3(x, 0.06, z));
-  const line = new THREE.LineLoop(
-    new THREE.BufferGeometry().setFromPoints(pts),
-    new THREE.LineBasicMaterial({ color: 0xf5c542 }),
+  ];
+  const pts: THREE.Vector3[] = [];
+  for (let k = 0; k < 4; k++) {
+    const [ax, az] = corners[k];
+    const [bx, bz] = corners[(k + 1) % 4];
+    for (let t = 0; t < 16; t++) {
+      const lx = ax + ((bx - ax) * t) / 16;
+      const lz = az + ((bz - az) * t) / 16;
+      const x = place.x + lx * c + lz * s;
+      const z = place.z - lx * s + lz * c;
+      pts.push(new THREE.Vector3(x, height(x, z) + PLOT_LIFT_M + 0.04, z));
+    }
+  }
+  group.add(
+    new THREE.LineLoop(
+      new THREE.BufferGeometry().setFromPoints(pts),
+      new THREE.LineBasicMaterial({ color: 0xf5c542 }),
+    ),
   );
-  group.add(line);
-  // Front (road-side) edge drawn thicker so its distance reading has a place.
-  const front = new THREE.Mesh(
-    new THREE.BoxGeometry(widthM, 0.05, 0.25),
-    new THREE.MeshBasicMaterial({ color: 0xff8a3d }),
+  // Front (road-side) edge: a draped orange strip.
+  group.add(
+    new THREE.Mesh(
+      drapedRect(widthM, 0.35, 12, 1, place, height, -depthM / 2 + 0.175),
+      new THREE.MeshBasicMaterial({ color: 0xff8a3d, side: THREE.DoubleSide }),
+    ),
   );
-  front.position.set(0, 0.06, -depthM / 2);
-  group.add(front);
+  return group;
+}
+
+function buildNeighbours(buildings: LocalBuilding[], height: HeightFn): THREE.Group {
+  const group = new THREE.Group();
+  group.name = "neighbour-buildings";
+  const recorded = new THREE.MeshStandardMaterial({ color: 0xe9e3d5, roughness: 0.9 });
+  const defaulted = new THREE.MeshStandardMaterial({ color: 0xd3ccbc, roughness: 0.9 });
+  for (const b of buildings) {
+    const shape = new THREE.Shape(b.ring.map((p) => new THREE.Vector2(p.x, -p.z)));
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: b.heightM, bevelEnabled: false });
+    geo.rotateX(-Math.PI / 2);
+    // Sit on the lowest ground under the footprint, sunk a little so slopes
+    // never leave a gap under the walls.
+    const base = Math.min(...b.ring.map((p) => height(p.x, p.z))) - 0.3;
+    const mesh = new THREE.Mesh(geo, b.defaulted ? defaulted : recorded);
+    mesh.position.y = base;
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    group.add(mesh);
+  }
   return group;
 }
 
 export default function PlotViewerInternal(props: PlotViewerProps) {
+  const ground = props.ground ?? "terrain";
+  const showBuildings = props.showBuildings ?? true;
+  const showPlot = props.showPlot ?? true;
   const hostRef = useRef<HTMLDivElement | null>(null);
   const stateRef = useRef<{
     renderer: THREE.WebGLRenderer;
@@ -156,10 +284,18 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
     house: THREE.Group | null;
     plot: THREE.Group | null;
     ground: THREE.Mesh | null;
+    neighbours: THREE.Group | null;
   } | null>(null);
   const propsRef = useRef(props);
   propsRef.current = props;
-  const [imagery, setImagery] = useState<"loading" | "ok" | "partial" | "failed">("loading");
+  const [imagery, setImagery] = useState<Imagery | null>(null);
+  const [imageryState, setImageryState] = useState<"loading" | "ok" | "partial" | "failed">(
+    "loading",
+  );
+
+  const terrainOn = ground === "terrain" && !!props.terrain;
+  const heightRef = useRef<HeightFn>(() => 0);
+  heightRef.current = terrainOn ? (x, z) => heightAt(props.terrain ?? null, x, z) : () => 0;
 
   // Scene setup, once.
   useEffect(() => {
@@ -174,8 +310,9 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xdfe9f2);
+    scene.fog = new THREE.Fog(0xdfe9f2, 260, 700);
     const camera = new THREE.PerspectiveCamera(50, 1, 0.5, 4000);
-    camera.position.set(28, 34, 42);
+    camera.position.copy(DEFAULT_CAMERA);
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.target.set(0, 0, 0);
     controls.maxPolarAngle = Math.PI / 2 - 0.05;
@@ -189,10 +326,10 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
     const sc = sun.shadow.camera as THREE.OrthographicCamera;
-    sc.left = -60;
-    sc.right = 60;
-    sc.top = 60;
-    sc.bottom = -60;
+    sc.left = -80;
+    sc.right = 80;
+    sc.top = 80;
+    sc.bottom = -80;
     scene.add(sun);
 
     stateRef.current = {
@@ -203,6 +340,7 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
       house: null,
       plot: null,
       ground: null,
+      neighbours: null,
     };
 
     const resize = () => {
@@ -217,13 +355,40 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
     resize();
     const ro = new ResizeObserver(resize);
     ro.observe(host);
+    window.addEventListener("resize", resize);
 
-    // Dragging the selected object across the ground plane.
+    // Camera commands for the floating controls.
+    const focus = () => {
+      const p = propsRef.current.plotPlacement;
+      return new THREE.Vector3(p.x, heightRef.current(p.x, p.z), p.z);
+    };
+    const dolly = (k: number) => {
+      const dir = camera.position.clone().sub(controls.target).multiplyScalar(k);
+      const len = THREE.MathUtils.clamp(dir.length(), controls.minDistance, controls.maxDistance);
+      camera.position.copy(controls.target).add(dir.setLength(len));
+    };
+    propsRef.current.onApi?.({
+      zoomIn: () => dolly(0.7),
+      zoomOut: () => dolly(1.4),
+      resetView: () => {
+        const t = focus();
+        controls.target.copy(t);
+        camera.position.copy(t).add(DEFAULT_CAMERA);
+      },
+      topView: () => {
+        const t = focus();
+        const d = Math.max(60, camera.position.distanceTo(controls.target));
+        controls.target.copy(t);
+        camera.position.set(t.x, t.y + d, t.z + 0.01);
+      },
+    });
+
+    // Dragging the selected object across the ground.
     const raycaster = new THREE.Raycaster();
-    const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+    const flat = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
     const ndc = new THREE.Vector2();
     let drag: { id: number; offset: THREE.Vector3 } | null = null;
-    const pointAt = (ev: PointerEvent) => {
+    const aim = (ev: PointerEvent) => {
       const r = renderer.domElement.getBoundingClientRect();
       ndc.set(
         ((ev.clientX - r.left) / r.width) * 2 - 1,
@@ -231,29 +396,41 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
       );
       raycaster.setFromCamera(ndc, camera);
     };
+    const groundHit = (): THREE.Vector3 | null => {
+      const st = stateRef.current;
+      if (st?.ground) {
+        const hit = raycaster.intersectObject(st.ground, false)[0];
+        if (hit) return hit.point.clone();
+      }
+      const p = new THREE.Vector3();
+      return raycaster.ray.intersectPlane(flat, p) ? p : null;
+    };
     const onDown = (ev: PointerEvent) => {
       const st = stateRef.current;
       if (!st) return;
       const obj = propsRef.current.target === "house" ? st.house : st.plot;
-      if (!obj) return;
-      pointAt(ev);
+      if (!obj || !obj.visible) return;
+      aim(ev);
       if (!raycaster.intersectObject(obj, true).length) return;
-      const hit = new THREE.Vector3();
-      if (!raycaster.ray.intersectPlane(groundPlane, hit)) return;
-      drag = { id: ev.pointerId, offset: obj.position.clone().sub(hit) };
+      const hit = groundHit();
+      if (!hit) return;
+      const cur =
+        propsRef.current.target === "house"
+          ? propsRef.current.house
+          : propsRef.current.plotPlacement;
+      drag = { id: ev.pointerId, offset: new THREE.Vector3(cur.x - hit.x, 0, cur.z - hit.z) };
       controls.enabled = false;
       renderer.domElement.setPointerCapture(ev.pointerId);
     };
     const onMove = (ev: PointerEvent) => {
       if (!drag || drag.id !== ev.pointerId) return;
-      pointAt(ev);
-      const hit = new THREE.Vector3();
-      if (!raycaster.ray.intersectPlane(groundPlane, hit)) return;
-      const p = hit.add(drag.offset);
+      aim(ev);
+      const hit = groundHit();
+      if (!hit) return;
       const cur = propsRef.current;
       const next = {
-        x: Math.round(p.x * 10) / 10,
-        z: Math.round(p.z * 10) / 10,
+        x: Math.round((hit.x + drag.offset.x) * 10) / 10,
+        z: Math.round((hit.z + drag.offset.z) * 10) / 10,
         rotationDeg: cur.target === "house" ? cur.house.rotationDeg : cur.plotPlacement.rotationDeg,
       };
       if (cur.target === "house") cur.onHouseChange(next);
@@ -280,6 +457,7 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
     return () => {
       cancelAnimationFrame(raf);
       ro.disconnect();
+      window.removeEventListener("resize", resize);
       renderer.domElement.removeEventListener("pointerdown", onDown);
       renderer.domElement.removeEventListener("pointermove", onMove);
       renderer.domElement.removeEventListener("pointerup", onUp);
@@ -294,46 +472,62 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
     };
   }, []);
 
-  // Satellite ground for the point.
+  // Satellite imagery for the point, fetched once per location.
   useEffect(() => {
     let cancelled = false;
-    setImagery("loading");
-    (async () => {
-      const st = stateRef.current;
-      if (!st) return;
-      if (st.ground) {
-        st.scene.remove(st.ground);
-        disposeTree(st.ground);
-        st.ground = null;
-      }
-      const img = await imageryCanvas(props.lat, props.lng);
-      if (cancelled || !stateRef.current) return;
-      const mpp = metresPerPixel(props.lat, ZOOM);
-      const sizePx = img?.block.sizePx ?? 1280;
-      const sizeM = sizePx * mpp;
-      const material = img
-        ? new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(img.canvas), roughness: 1 })
-        : new THREE.MeshStandardMaterial({ color: 0x8a9a6a, roughness: 1 });
-      if (img) {
-        const tex = material.map as THREE.CanvasTexture;
-        tex.colorSpace = THREE.SRGBColorSpace;
-        tex.anisotropy = st.renderer.capabilities.getMaxAnisotropy();
-      }
-      const ground = new THREE.Mesh(new THREE.PlaneGeometry(sizeM, sizeM), material);
-      ground.rotation.x = -Math.PI / 2;
-      ground.receiveShadow = true;
-      // Put the chosen point at the scene origin: x = east, z = south.
-      const point = img?.block.pointPx ?? { x: sizePx / 2, y: sizePx / 2 };
-      ground.position.set((sizePx / 2 - point.x) * mpp, 0, (sizePx / 2 - point.y) * mpp);
-      ground.name = "satellite-ground";
-      st.scene.add(ground);
-      st.ground = ground;
-      setImagery(!img ? "failed" : img.loaded < img.total ? "partial" : "ok");
-    })();
+    setImageryState("loading");
+    setImagery(null);
+    void loadImagery(props.lat, props.lng).then((img) => {
+      if (cancelled) return;
+      setImagery(img);
+      setImageryState(!img.canvas ? "failed" : img.loaded < img.total ? "partial" : "ok");
+    });
     return () => {
       cancelled = true;
     };
   }, [props.lat, props.lng]);
+
+  // Ground mesh: imagery or plain, draped on terrain or flat.
+  useEffect(() => {
+    const st = stateRef.current;
+    if (!st || !imagery) return;
+    if (st.ground) {
+      st.scene.remove(st.ground);
+      disposeTree(st.ground);
+      st.ground = null;
+    }
+    const seg = terrainOn ? 64 : 1;
+    const geo = new THREE.PlaneGeometry(imagery.sizeM, imagery.sizeM, seg, seg);
+    geo.rotateX(-Math.PI / 2);
+    if (terrainOn) {
+      const pos = geo.attributes.position as THREE.BufferAttribute;
+      for (let i = 0; i < pos.count; i++) {
+        const x = pos.getX(i) + imagery.centre.x;
+        const z = pos.getZ(i) + imagery.centre.z;
+        pos.setY(i, heightAt(props.terrain ?? null, x, z));
+      }
+      pos.needsUpdate = true;
+      geo.computeVertexNormals();
+    }
+    const useImagery = ground !== "plain" && imagery.canvas;
+    const material = useImagery
+      ? new THREE.MeshStandardMaterial({
+          map: new THREE.CanvasTexture(imagery.canvas as HTMLCanvasElement),
+          roughness: 1,
+        })
+      : new THREE.MeshStandardMaterial({ color: 0xc9c2a8, roughness: 1 });
+    if (useImagery) {
+      const tex = material.map as THREE.CanvasTexture;
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.anisotropy = st.renderer.capabilities.getMaxAnisotropy();
+    }
+    const mesh = new THREE.Mesh(geo, material);
+    mesh.position.set(imagery.centre.x, 0, imagery.centre.z);
+    mesh.receiveShadow = true;
+    mesh.name = "satellite-ground";
+    st.scene.add(mesh);
+    st.ground = mesh;
+  }, [imagery, ground, terrainOn, props.terrain]);
 
   // House massing for the chosen typology and system.
   useEffect(() => {
@@ -347,7 +541,8 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
     st.scene.add(st.house);
   }, [props.typology, props.structure]);
 
-  // Plot outline for the chosen size.
+  // Plot outline, rebuilt when its size, place or the ground changes.
+  const pp = props.plotPlacement;
   useEffect(() => {
     const st = stateRef.current;
     if (!st) return;
@@ -355,35 +550,54 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
       st.scene.remove(st.plot);
       disposeTree(st.plot);
     }
-    st.plot = buildPlotGroup(props.plot.widthM, props.plot.depthM);
+    st.plot = buildPlotGroup(props.plot.widthM, props.plot.depthM, pp, heightRef.current);
+    st.plot.visible = showPlot;
     st.scene.add(st.plot);
-  }, [props.plot.widthM, props.plot.depthM]);
+  }, [
+    props.plot.widthM,
+    props.plot.depthM,
+    pp.x,
+    pp.z,
+    pp.rotationDeg,
+    terrainOn,
+    props.terrain,
+    showPlot,
+  ]);
 
-  // Apply placements every render.
+  // Neighbouring buildings.
   useEffect(() => {
     const st = stateRef.current;
     if (!st) return;
-    if (st.house) {
-      st.house.position.set(props.house.x, 0, props.house.z);
-      st.house.rotation.y = (-props.house.rotationDeg * Math.PI) / 180;
+    if (st.neighbours) {
+      st.scene.remove(st.neighbours);
+      disposeTree(st.neighbours);
+      st.neighbours = null;
     }
-    if (st.plot) {
-      st.plot.position.set(props.plotPlacement.x, 0, props.plotPlacement.z);
-      st.plot.rotation.y = (-props.plotPlacement.rotationDeg * Math.PI) / 180;
-    }
+    if (!showBuildings || !props.buildings?.length) return;
+    st.neighbours = buildNeighbours(props.buildings, heightRef.current);
+    st.scene.add(st.neighbours);
+  }, [props.buildings, showBuildings, terrainOn, props.terrain]);
+
+  // House placement on the ground, every render.
+  useEffect(() => {
+    const st = stateRef.current;
+    if (!st?.house) return;
+    const h = heightRef.current(props.house.x, props.house.z);
+    st.house.position.set(props.house.x, h, props.house.z);
+    st.house.rotation.y = (-props.house.rotationDeg * Math.PI) / 180;
   });
 
   return (
     <div className="relative h-full w-full">
       <div ref={hostRef} className="h-full w-full" />
-      {imagery !== "ok" && (
+      {imageryState !== "ok" && ground !== "plain" && (
         <p
           role="status"
-          className="pointer-events-none absolute left-2 right-2 top-2 rounded-lg bg-background/85 px-3 py-2 text-xs"
+          className="pointer-events-none absolute bottom-2 left-2 right-16 rounded-lg bg-card/90 px-3 py-2 text-xs text-card-foreground"
         >
-          {imagery === "loading"
+          {imageryState === "loading"
             ? "Loading satellite imagery…"
-            : imagery === "partial"
+            : imageryState === "partial"
               ? "Some imagery tiles did not load; gaps show as plain ground."
               : "Satellite imagery could not be loaded; the house and plot are shown on plain ground."}
         </p>

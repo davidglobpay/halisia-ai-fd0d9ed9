@@ -31,6 +31,8 @@ export type RenderCapability = { maxWidth: number; maxHeight: number; supports8k
 
 export type StudioViewerApi = {
   setView: (preset: CameraPreset) => void;
+  /** Move the camera toward (k < 1) or away from (k > 1) what it is looking at. */
+  zoom: (k: number) => void;
   capability: () => RenderCapability;
   /** Renders offscreen at the requested size; rejects if the GPU cannot. */
   capture: (width: number, height: number) => Promise<Blob>;
@@ -356,6 +358,12 @@ export default function StudioViewerInternal(props: StudioViewerProps) {
     applyEnvironment(engine, "day");
     onApiRef.current?.({
       setView: (preset) => applyPreset(engine, preset),
+      zoom: (k) => {
+        const dir = camera.position.clone().sub(controls.target).multiplyScalar(k);
+        if (dir.length() < 2 || dir.length() > 4000) return;
+        camera.position.copy(controls.target).add(dir);
+        controls.update();
+      },
       capability: () => renderCapability(engine),
       capture: (w, h) => captureFrame(engine, w, h),
     });

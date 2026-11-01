@@ -1,4 +1,10 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import {
+  LeafletDock,
+  SIMPLE_BASEMAPS,
+  basemapGroup,
+  type SimpleBasemap,
+} from "@/components/halisia/map-controls/leaflet-dock";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet.heat";
@@ -40,6 +46,8 @@ export default function HeatmapMap({
   lng: number;
   intel: LocationIntel | undefined;
 }) {
+  const [basemap, setBasemap] = useState<SimpleBasemap>("map");
+  const [showHeat, setShowHeat] = useState(true);
   const points: Array<[number, number, number]> = [];
   if (intel) {
     const weights: Record<string, number> = {
@@ -63,16 +71,34 @@ export default function HeatmapMap({
         center={[lat, lng]}
         zoom={14}
         scrollWheelZoom
+        zoomControl={false}
         className="h-full w-full"
         key={`${lat.toFixed(4)}-${lng.toFixed(4)}`}
       >
         <TileLayer
-          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution="© OpenStreetMap contributors"
-          maxNativeZoom={20}
+          key={basemap}
+          url={SIMPLE_BASEMAPS[basemap].url}
+          attribution={SIMPLE_BASEMAPS[basemap].attribution}
+          maxNativeZoom={SIMPLE_BASEMAPS[basemap].maxNativeZoom}
           maxZoom={21}
         />
-        {points.length > 0 && <HeatOverlay points={points} />}
+        {points.length > 0 && showHeat && <HeatOverlay points={points} />}
+        <LeafletDock
+          testId="heatmap-dock"
+          home={{ center: [lat, lng], zoom: 14 }}
+          homeLabel="Back to the point"
+          layers={[
+            basemapGroup(basemap, setBasemap),
+            {
+              id: "show",
+              title: "Show on the map",
+              kind: "multi",
+              options: [{ id: "heat", label: `Amenity heat (${points.length} places)` }],
+              selected: showHeat ? ["heat"] : [],
+              onChange: (v) => setShowHeat(v.includes("heat")),
+            },
+          ]}
+        />
         <Marker position={[lat, lng]}>
           <Popup>
             <div className="text-xs">
