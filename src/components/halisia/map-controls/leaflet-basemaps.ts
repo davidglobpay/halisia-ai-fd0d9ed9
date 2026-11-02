@@ -1,4 +1,5 @@
 import type { LayerGroup } from "./map-control-dock";
+import { esriTileTemplate } from "@/lib/esri-tiles";
 
 /** The two basemaps offered on simple Leaflet maps. */
 export const SIMPLE_BASEMAPS = {
@@ -10,7 +11,7 @@ export const SIMPLE_BASEMAPS = {
   },
   satellite: {
     label: "Satellite",
-    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    url: esriTileTemplate("World_Imagery"),
     attribution: "Imagery © Esri, Maxar, Earthstar Geographics",
     maxNativeZoom: 19,
   },

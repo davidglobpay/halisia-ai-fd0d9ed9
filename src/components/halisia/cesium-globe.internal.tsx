@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { AlertTriangle, Crosshair, Eye, Loader2, Minus, Plus } from "lucide-react";
 import { MapControlDock } from "@/components/halisia/map-controls/map-control-dock";
 import { loadCesium } from "@/lib/cesium-loader";
+import { esriTileTemplate } from "@/lib/esri-tiles";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type CesiumNS = any;
@@ -118,7 +119,7 @@ export default function CesiumGlobe({
     viewer.imageryLayers.addImageryProvider(
       basemap === "satellite"
         ? new Cesium.UrlTemplateImageryProvider({
-            url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+            url: esriTileTemplate("World_Imagery"),
             credit: "Imagery © Esri, Maxar, Earthstar Geographics",
             maximumLevel: 19,
           })

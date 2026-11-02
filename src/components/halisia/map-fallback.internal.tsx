@@ -1,5 +1,6 @@
 import { MapContainer, Marker, Popup, ScaleControl, TileLayer, useMapEvents } from "react-leaflet";
 import L from "leaflet";
+import { esriTileTemplate } from "@/lib/esri-tiles";
 
 const DefaultIcon = L.icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
@@ -55,7 +56,7 @@ export default function MapFallback({
   const maxNative = mapType === "terrain" ? 17 : 19;
   const url =
     mapType === "satellite" || mapType === "hybrid"
-      ? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+      ? esriTileTemplate("World_Imagery")
       : mapType === "terrain"
         ? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
         : "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}";

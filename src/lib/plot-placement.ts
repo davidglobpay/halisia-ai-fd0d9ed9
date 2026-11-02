@@ -7,6 +7,7 @@
  * imagery is reference context with no stated capture date.
  */
 import { PLOT_SIZES, SQFT_PER_ACRE } from "@/lib/cost-intel";
+import { esriTileUrl } from "@/lib/esri-tiles";
 
 export const FT_TO_M = 0.3048;
 
@@ -153,7 +154,7 @@ export function imageryTiles(lat: number, lng: number, zoom: number, r = 2) {
       if (row < 0 || row >= n) continue;
       const col = (((x0 + dx) % n) + n) % n;
       tiles.push({
-        src: `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${zoom}/${row}/${col}`,
+        src: esriTileUrl("World_Imagery", zoom, row, col),
         px: dx * 256,
         py: dy * 256,
       });

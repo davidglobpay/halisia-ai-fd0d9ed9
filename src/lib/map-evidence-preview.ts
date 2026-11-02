@@ -1,4 +1,5 @@
 import type { EvidencePosition } from "./map-evidence";
+import { esriTileUrl } from "@/lib/esri-tiles";
 
 export type EvidenceMapLayer = "satellite" | "map" | "terrain";
 export const PREVIEW_LAYERS = {
@@ -37,7 +38,7 @@ export function mapPreviewTiles(position: EvidencePosition, layer: EvidenceMapLa
       const wrapped = ((column % n) + n) % n;
       const src =
         layer === "satellite"
-          ? `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${zoom}/${row}/${wrapped}`
+          ? esriTileUrl("World_Imagery", zoom, row, wrapped)
           : layer === "terrain"
             ? `https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/${zoom}/${row}/${wrapped}`
             : `https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/${zoom}/${row}/${wrapped}`;
