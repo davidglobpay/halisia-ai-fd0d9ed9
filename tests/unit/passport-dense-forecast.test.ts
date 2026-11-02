@@ -56,7 +56,11 @@ it("keeps dense forecast bars positive and centers fallback branding on every pa
         news: [],
       },
     );
-    expect(rect.mock.calls.length).toBeGreaterThan(96);
+    // The Passport deliberately charts only the next 24 hours of a longer
+    // forecast: one temperature and one rainfall bar per hour.
+    const printed = text.mock.calls.map((call) => [call[0]].flat().join(" "));
+    expect(printed).toContain("Temperature forecast (next 24 h)");
+    expect(rect.mock.calls.length).toBeGreaterThanOrEqual(2 * 24);
     for (const call of rect.mock.calls) expect(call[2]).toBeGreaterThan(0);
     const brand = text.mock.calls.filter((call) => call[0] === "HALISIA.AI");
     expect(brand).toHaveLength(doc.getNumberOfPages());

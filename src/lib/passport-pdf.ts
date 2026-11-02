@@ -1053,8 +1053,10 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
   // rendered, in order, with their final page numbers. Sections appear only
   // when their source returned data, so the contents list is also an honest
   // map of what this export does and does not cover.
+  // Page 2 already carries its header from next("Contents"); drawing it again
+  // would stack a hidden duplicate logo and title under the visible one.
   doc.setPage(2);
-  page("Contents");
+  y = 92;
   title("What this report contains");
   meta(
     "Sections appear only when their underlying source returned data for this export. A missing section is a data gap, not a finding.",

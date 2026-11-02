@@ -19,6 +19,17 @@ async function stubImagery(page: Page, mode: "ok" | "fail" = "ok") {
   );
 }
 
+// The first-visit guided tour would otherwise sit over the page.
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    try {
+      window.localStorage.setItem("halisia:navguide:v1:seen", String(Date.now()));
+    } catch {
+      /* storage unavailable: the tour may show, tests still scope their clicks */
+    }
+  });
+});
+
 const URL =
   "/plot-planner?lat=-1.502157&lng=36.955288&typology=3br&structure=container_40ft&plot=50x100";
 
@@ -42,7 +53,9 @@ for (const viewport of [
     // Imagery loaded: no status banner over the scene.
     await expect(page.getByTestId("pp-viewer").getByRole("status")).toHaveCount(0);
 
-    // Drag the house from the centre of the scene.
+    // Drag the house from the centre of the scene. The header and form can
+    // push the viewer below the fold, so bring it on screen first.
+    await canvas.scrollIntoViewIfNeeded();
     const box = (await canvas.boundingBox())!;
     const cx = box.x + box.width / 2;
     const cy = box.y + box.height / 2;
@@ -76,14 +89,17 @@ test("plot planner floating controls and layer menu work", async ({ page }) => {
   await page.goto(URL);
   await expect(page.getByTestId("plot-viewer-canvas")).toBeVisible({ timeout: 30_000 });
 
+  // Scope to HALISIA's dock: Google Street View on the same page has its own
+  // "Zoom in"/"Zoom out" buttons.
+  const dock = page.getByTestId("pp-dock");
   for (const name of ["Zoom in", "Zoom out", "Back to the plot", "Top-down view", "Map layers"]) {
-    await expect(page.getByRole("button", { name, exact: true })).toBeVisible();
+    await expect(dock.getByRole("button", { name, exact: true })).toBeVisible();
   }
-  await page.getByRole("button", { name: "Zoom in", exact: true }).click();
-  await page.getByRole("button", { name: "Top-down view", exact: true }).click();
-  await page.getByRole("button", { name: "Back to the plot", exact: true }).click();
+  await dock.getByRole("button", { name: "Zoom in", exact: true }).click();
+  await dock.getByRole("button", { name: "Top-down view", exact: true }).click();
+  await dock.getByRole("button", { name: "Back to the plot", exact: true }).click();
 
-  await page.getByRole("button", { name: "Map layers", exact: true }).click();
+  await dock.getByRole("button", { name: "Map layers", exact: true }).click();
   const panel = page.getByTestId("pp-dock-panel");
   await expect(panel).toBeVisible();
   await page.getByTestId("pp-dock-layer-ground-plain").click();
