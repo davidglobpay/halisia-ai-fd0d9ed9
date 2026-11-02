@@ -542,7 +542,7 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
   }, [props.typology, props.structure]);
 
   // Plot outline, rebuilt when its size, place or the ground changes.
-  const pp = props.plotPlacement;
+  const { x: ppX, z: ppZ, rotationDeg: ppRot } = props.plotPlacement;
   useEffect(() => {
     const st = stateRef.current;
     if (!st) return;
@@ -550,19 +550,15 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
       st.scene.remove(st.plot);
       disposeTree(st.plot);
     }
-    st.plot = buildPlotGroup(props.plot.widthM, props.plot.depthM, pp, heightRef.current);
+    st.plot = buildPlotGroup(
+      props.plot.widthM,
+      props.plot.depthM,
+      { x: ppX, z: ppZ, rotationDeg: ppRot },
+      heightRef.current,
+    );
     st.plot.visible = showPlot;
     st.scene.add(st.plot);
-  }, [
-    props.plot.widthM,
-    props.plot.depthM,
-    pp.x,
-    pp.z,
-    pp.rotationDeg,
-    terrainOn,
-    props.terrain,
-    showPlot,
-  ]);
+  }, [props.plot.widthM, props.plot.depthM, ppX, ppZ, ppRot, terrainOn, props.terrain, showPlot]);
 
   // Neighbouring buildings.
   useEffect(() => {
