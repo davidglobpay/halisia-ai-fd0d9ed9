@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { mapPreviewTiles } from "@/lib/map-evidence-preview";
 import { MapEvidencePreview } from "@/components/halisia/map-evidence-preview";
 import type { MapEvidence } from "@/lib/map-evidence";
+import { esriTileUrl } from "@/lib/esri-tiles";
 
 afterEach(cleanup);
 const target = { lat: -1.15123, lng: 36.96123, accuracyM: null };
@@ -40,7 +41,7 @@ describe("inline map evidence", () => {
     const tiles = mapPreviewTiles({ lat: 0, lng: 0, accuracyM: null }, "satellite", 16)!;
     expect(tiles).toHaveLength(9);
     expect(tiles[4]).toEqual({
-      src: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/16/32768/32768",
+      src: esriTileUrl("World_Imagery", 16, 32768, 32768),
       left: 0,
       top: 0,
     });

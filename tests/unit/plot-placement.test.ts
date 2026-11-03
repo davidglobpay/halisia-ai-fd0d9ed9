@@ -61,7 +61,7 @@ describe("satellite imagery tiles", () => {
     expect(t.pointPx.x).toBeLessThan(768);
     expect(t.pointPx.y).toBeGreaterThanOrEqual(512);
     expect(t.pointPx.y).toBeLessThan(768);
-    expect(t.tiles[0].src).toMatch(/World_Imagery\/MapServer\/tile\/19\/\d+\/\d+$/);
+    expect(t.tiles[0].src).toMatch(/World_Imagery\/MapServer\/tile\/19\/\d+\/\d+(\?token=[^&]+)?$/);
   });
 
   it("refuses impossible coordinates", () => {

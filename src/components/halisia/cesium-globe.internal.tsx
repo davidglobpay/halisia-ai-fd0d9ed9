@@ -146,7 +146,7 @@ export default function CesiumGlobe({
   };
 
   return (
-    <div ref={rootRef} className="absolute inset-0">
+    <div ref={rootRef} className="absolute inset-0 isolate">
       <div ref={el} className="absolute inset-0" />
       {ready && (
         <MapControlDock

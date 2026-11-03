@@ -55,6 +55,7 @@ export function StreetViewPanel({
   useEffect(() => {
     let cancelled = false;
     let pano: google.maps.StreetViewPanorama | null = null;
+    let stopWaiting: () => void = () => undefined;
     setState("loading");
     setMsg("");
 
@@ -119,20 +120,34 @@ export function StreetViewPanel({
               attempt(i + 1);
               return;
             }
-            pano = new g.maps.StreetViewPanorama(el.current, {
-              position: data.location.latLng,
-              pov: { heading: 0, pitch: 0 },
-              zoom: 1,
-              visible: true,
-              addressControl: false,
-              fullscreenControl: false,
-              motionTracking: false,
-              motionTrackingControl: false,
-              linksControl: true,
-              panControl: true,
-              zoomControl: true,
+            const position = data.location.latLng;
+            // Google draws its controls into the box straight away and
+            // crashes (getRootNode) if the box is detached or has no size
+            // yet, which happens on phones while the layout settles.
+            stopWaiting = whenSized(el.current, (host) => {
+              if (cancelled) return;
+              try {
+                pano = new g.maps.StreetViewPanorama(host, {
+                  position,
+                  pov: { heading: 0, pitch: 0 },
+                  zoom: 1,
+                  visible: true,
+                  addressControl: false,
+                  fullscreenControl: false,
+                  motionTracking: false,
+                  motionTrackingControl: false,
+                  linksControl: true,
+                  panControl: true,
+                  zoomControl: true,
+                });
+                setState("ready");
+              } catch {
+                setState("error");
+                setMsg(
+                  "Street View could not start on this device. Map and satellite views still work.",
+                );
+              }
             });
-            setState("ready");
           });
         };
 
@@ -146,6 +161,7 @@ export function StreetViewPanel({
 
     return () => {
       cancelled = true;
+      stopWaiting();
       window.removeEventListener("halisia:maps-auth-failed", onAuthFail);
       if (pano) {
         window.google?.maps?.event?.clearInstanceListeners(pano);
@@ -176,4 +192,36 @@ export function StreetViewPanel({
       )}
     </div>
   );
+}
+
+/**
+ * Calls `ready` once `node` is attached to the document and has a non-zero
+ * size, immediately if it already is. Returns a function that stops waiting.
+ */
+function whenSized(node: HTMLElement, ready: (node: HTMLElement) => void): () => void {
+  const sized = () => node.isConnected && node.clientWidth > 0 && node.clientHeight > 0;
+  if (sized()) {
+    ready(node);
+    return () => undefined;
+  }
+  if (typeof ResizeObserver === "undefined") {
+    const id = window.setInterval(() => {
+      if (!sized()) return;
+      window.clearInterval(id);
+      ready(node);
+    }, 200);
+    return () => window.clearInterval(id);
+  }
+  let done = false;
+  const ro = new ResizeObserver(() => {
+    if (done || !sized()) return;
+    done = true;
+    ro.disconnect();
+    ready(node);
+  });
+  ro.observe(node);
+  return () => {
+    done = true;
+    ro.disconnect();
+  };
 }

@@ -327,7 +327,7 @@ function PlotPlannerPage() {
 
           <div
             ref={viewerBoxRef}
-            className="relative mt-3 h-[62svh] min-h-[360px] overflow-hidden rounded-2xl border border-border bg-card"
+            className="relative isolate mt-3 h-[62svh] min-h-[360px] overflow-hidden rounded-2xl border border-border bg-card"
             data-testid="pp-viewer"
           >
             <MapControlDock
