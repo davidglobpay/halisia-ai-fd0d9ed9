@@ -19,6 +19,10 @@ async function stubImagery(page: Page, mode: "ok" | "fail" = "ok") {
   );
 }
 
+// The 3D page compiles three.js on the CI dev server; passing runs take
+// 50-60 s, at the edge of the global 60 s limit.
+test.setTimeout(120_000);
+
 // The first-visit guided tour would otherwise sit over the page.
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
