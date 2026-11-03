@@ -19,6 +19,12 @@ import { downloadPassportPdf } from "@/lib/passport-pdf";
 import { loadBrandImage } from "@/lib/brand-asset";
 afterEach(() => vi.clearAllMocks());
 it("downloads with an honest named fallback even when artwork cannot decode", async () => {
+  // A fresh tap saves straight away (src/lib/pdf-delivery.ts); a stale one
+  // goes through the Save panel and is covered in pdf-delivery.test.ts.
+  Object.defineProperty(navigator, "userActivation", {
+    configurable: true,
+    value: { isActive: true },
+  });
   await expect(
     downloadPassportPdf({
       place: "Synthetic QA",
