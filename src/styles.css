@@ -204,6 +204,12 @@
 }
 
 @layer base {
+  /* Keep Leaflet's panes and the floating map controls (z 200-1000) inside
+     each map, so pop-ups and dialogs elsewhere on the page sit above them. */
+  .leaflet-container {
+    isolation: isolate;
+  }
+
   * {
     border-color: var(--color-border);
   }

@@ -469,7 +469,7 @@ export function MapView({
         if (!markerDraggable) return;
         onMarkerDrag?.({ lat: center.lat + 0.001, lng: center.lng + 0.001 });
       }}
-      className={`${hasPositionClass ? "" : "relative"} h-full w-full overflow-hidden ${className}`}
+      className={`${hasPositionClass ? "" : "relative"} isolate h-full w-full overflow-hidden ${className}`}
     >
       <div
         ref={el}

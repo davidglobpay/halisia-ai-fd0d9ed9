@@ -289,7 +289,7 @@ export function IntelligenceDashboard({
 
       {/* Header card */}
       <div className="glass-strong rounded-2xl p-4 relative overflow-hidden">
-        <div className="absolute -top-16 -right-16 h-40 w-40 rounded-full blur-3xl opacity-40 bg-gradient-to-br from-primary to-accent" />
+        <div className="pointer-events-none absolute -top-16 -right-16 h-40 w-40 rounded-full blur-3xl opacity-40 bg-gradient-to-br from-primary to-accent" />
         <div className="flex items-start gap-2">
           <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
             Location intelligence
@@ -810,7 +810,7 @@ function AITab({ narrative, loading }: { narrative?: NarrativeOutput; loading: b
     <div className="space-y-3">
       {/* Executive summary header */}
       <div className="glass-strong rounded-2xl p-4 relative overflow-hidden">
-        <div className="absolute -bottom-16 -left-10 h-40 w-40 rounded-full blur-3xl opacity-30 bg-accent" />
+        <div className="pointer-events-none absolute -bottom-16 -left-10 h-40 w-40 rounded-full blur-3xl opacity-30 bg-accent" />
         <div className="flex items-center gap-2">
           <div className="text-[10px] uppercase tracking-widest text-accent">
             HALISIA AI · Executive summary

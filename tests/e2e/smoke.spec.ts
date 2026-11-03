@@ -47,7 +47,7 @@ test.describe("HALISIA core journey", () => {
       }
     });
     await page.route(
-      /basemaps\.cartocdn\.com|tile\.opentopomap\.org|server\.arcgisonline\.com/,
+      /basemaps\.cartocdn\.com|tile\.opentopomap\.org|server\.arcgisonline\.com|ibasemaps-api\.arcgis\.com/,
       (route) => route.abort(),
     );
 

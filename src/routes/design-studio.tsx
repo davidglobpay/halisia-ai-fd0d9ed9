@@ -170,7 +170,7 @@ function DesignStudioPage() {
       <div className="mt-5 grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
         <section
           ref={viewerBoxRef}
-          className="relative h-[58vh] min-h-[420px] min-w-0 max-h-[760px] overflow-hidden rounded-2xl border border-foreground/10 bg-black/20 sm:h-[68vh] xl:h-[720px]"
+          className="relative isolate h-[58vh] min-h-[420px] min-w-0 max-h-[760px] overflow-hidden rounded-2xl border border-foreground/10 bg-black/20 sm:h-[68vh] xl:h-[720px]"
         >
           {dimensionsValid && api && (
             <MapControlDock

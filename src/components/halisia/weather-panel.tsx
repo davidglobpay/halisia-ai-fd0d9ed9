@@ -119,7 +119,7 @@ export function WeatherPanel({ lat, lng }: { lat: number; lng: number }) {
     <div className="space-y-3" data-testid="weather-panel">
       <Terrain3D lat={lat} lng={lng} />
       <div className="glass-strong rounded-2xl p-4 relative overflow-hidden">
-        <div className="absolute -top-16 -right-10 h-40 w-40 rounded-full blur-3xl opacity-40 bg-gradient-to-br from-cyan-glow to-primary" />
+        <div className="pointer-events-none absolute -top-16 -right-10 h-40 w-40 rounded-full blur-3xl opacity-40 bg-gradient-to-br from-cyan-glow to-primary" />
         <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
           Live weather · Open-Meteo
         </div>

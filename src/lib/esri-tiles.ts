@@ -1,7 +1,8 @@
 /**
  * Esri raster tile URLs.
  *
- * With an ArcGIS Location Platform API key (VITE_ARCGIS_API_KEY, a browser key
+ * With an ArcGIS Location Platform API key (VITE_ARCGIS_API_KEY, or
+ * ARCGIS_BROWSER_API_KEY in src/config/public-browser-keys.ts; a browser key
  * restricted to HALISIA's domains with the "Static basemap tiles" privilege),
  * World Imagery and World Hillshade load from Esri's licensed, metered host
  * (ibasemaps-api.arcgis.com) — the route Esri's terms require for a commercial
@@ -12,6 +13,8 @@
  * The keyed host serves only these two services; Topo, Street and the reference
  * overlays stay on the public host.
  */
+
+import { ARCGIS_BROWSER_API_KEY } from "@/config/public-browser-keys";
 
 export type EsriService =
   | "World_Imagery"
@@ -46,7 +49,8 @@ export function arcgisApiKey(): string | undefined {
   } catch {
     raw = undefined;
   }
-  return isArcgisApiKey(raw) ? raw.trim() : undefined;
+  if (isArcgisApiKey(raw)) return raw.trim();
+  return isArcgisApiKey(ARCGIS_BROWSER_API_KEY) ? ARCGIS_BROWSER_API_KEY.trim() : undefined;
 }
 
 function base(service: EsriService, key: string | undefined) {

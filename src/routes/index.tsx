@@ -123,7 +123,7 @@ function LandingBody() {
             <div className="relative mb-4 flex items-center justify-center [perspective:1200px]">
               <div
                 aria-hidden="true"
-                className="absolute inset-0 -z-10 blur-3xl opacity-50"
+                className="pointer-events-none absolute inset-0 -z-10 blur-3xl opacity-50"
                 style={{
                   background:
                     "radial-gradient(closest-side, rgba(192,138,46,0.35), rgba(20,123,53,0.18) 55%, transparent 75%)",
@@ -338,8 +338,8 @@ function LandingBody() {
       <section id="pricing" className="py-24">
         <div className="mx-auto max-w-5xl px-4">
           <div className="glass-strong rounded-[36px] p-10 md:p-16 text-center relative overflow-hidden">
-            <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full blur-3xl opacity-40 bg-primary" />
-            <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full blur-3xl opacity-40 bg-accent" />
+            <div className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full blur-3xl opacity-40 bg-primary" />
+            <div className="pointer-events-none absolute -bottom-32 -right-32 h-96 w-96 rounded-full blur-3xl opacity-40 bg-accent" />
             <Sparkles className="h-8 w-8 text-accent mx-auto" />
             <h2 className="mt-4 text-3xl md:text-5xl font-semibold tracking-tight">
               Start with any place in Kenya.

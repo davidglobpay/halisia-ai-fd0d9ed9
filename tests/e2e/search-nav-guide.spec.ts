@@ -54,6 +54,8 @@ test.describe("search panel + nav guide", () => {
   });
 
   test("first-visit navigation guide opens and is dismissible", async ({ page }) => {
+    // playwright.config pre-marks the guide as seen; this test needs a true first visit.
+    await page.addInitScript((key) => window.localStorage.removeItem(key), NAV_GUIDE_KEY);
     await page.goto("/", { waitUntil: "domcontentloaded" });
     const dialog = page.getByRole("dialog");
     // Auto-open uses a 1.2s timeout on mount; give cold starts headroom.
