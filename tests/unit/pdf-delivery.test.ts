@@ -61,11 +61,12 @@ describe("delivering a generated PDF", () => {
     expect(getReadyFile()).toBeNull();
   });
 
-  it("still tries to save, and also offers the file, once the tap has gone stale", () => {
+  it("offers the file, without a background download, once the tap has gone stale", () => {
     setActivation(false);
     const doc = fakeDoc();
     deliverPdf(doc, "halisia-land-passport-kitengela.pdf");
-    expect(doc.save).toHaveBeenCalledWith("halisia-land-passport-kitengela.pdf");
+    // A background save here counts towards Chrome's automatic-download block.
+    expect(doc.save).not.toHaveBeenCalled();
     const ready = getReadyFile();
     expect(ready?.filename).toBe("halisia-land-passport-kitengela.pdf");
     expect(ready?.mimeType).toBe("application/pdf");
@@ -116,8 +117,9 @@ describe("delivering other files", () => {
 
   it("offers a stale-tap blob in the panel too", () => {
     setActivation(false);
-    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
     deliverBlob(new Blob(["a,b"], { type: "text/csv" }), "listings.csv");
+    expect(click).not.toHaveBeenCalled();
     expect(getReadyFile()?.filename).toBe("listings.csv");
   });
 });

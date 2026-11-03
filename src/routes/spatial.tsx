@@ -56,6 +56,7 @@ import {
   verificationDisplay,
 } from "@/lib/spatial";
 import { arFallbackMessage, arPlatformFromUA, type ArPlatform } from "@/lib/spatial-platform";
+import { SignInPrompt } from "@/components/halisia/sign-in-prompt";
 
 const TITLE = "Spatial AR / VR Land Studio — HALISIA.AI";
 const DESCRIPTION =
@@ -371,6 +372,18 @@ function SpatialPage() {
         <p className="mt-8 flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin text-accent" /> Loading parcel records…
         </p>
+      )}
+      {!parcelsQ.isLoading && !parcelsQ.isError && parcels.length === 0 && (
+        // Parcel records are readable only by their owner, administrators and
+        // verified surveyors (RLS), so an empty list is usually an access
+        // question, not a fault. Say so instead of leaving Search greyed out.
+        <div className="mt-6 space-y-3" data-testid="spatial-no-parcels">
+          <SignInPrompt feature="Parcel records" />
+          <Surface elevation={1} className="p-4 text-sm text-muted-foreground">
+            No parcel records are shared with you yet, so Search and My location have nothing to
+            match. Parcel records are visible to their owner, administrators and verified surveyors.
+          </Surface>
+        </div>
       )}
       {parcelsQ.isError && (
         <Surface elevation={1} className="mt-8 p-5 text-sm text-red-300">

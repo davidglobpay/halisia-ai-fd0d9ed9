@@ -10,8 +10,9 @@ import {
 
 /**
  * Offers the last generated file with real-tap Save and Share buttons.
- * Shown only when an export finished after the browser stopped treating the
- * original tap as user-initiated (see src/lib/pdf-delivery.ts).
+ * Shown when an export finished after the browser stopped treating the
+ * original tap as user-initiated (see src/lib/pdf-delivery.ts). It sits above
+ * dialogs and map controls so it is never hidden.
  */
 export function FileReadyPanel() {
   const [file, setFile] = useState<ReadyFile | null>(() => getReadyFile());
@@ -39,17 +40,19 @@ export function FileReadyPanel() {
       role="status"
       aria-live="polite"
       data-testid="file-ready-panel"
-      className="fixed inset-x-3 bottom-20 z-[60] mx-auto max-w-md rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-xl sm:inset-x-auto sm:right-6"
+      className="fixed inset-x-3 bottom-20 z-[2100] mx-auto max-w-md rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-xl sm:inset-x-auto sm:right-6"
     >
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold">Your file is ready</p>
+          <p className="text-sm font-semibold">
+            Your {file.mimeType === "application/pdf" ? "PDF" : "file"} is ready
+          </p>
           <p className="truncate text-xs text-muted-foreground" title={file.filename}>
             {file.filename}
             {size ? ` · ${size}` : ""}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            If the download did not start, tap Save.
+            Tap Save to download it to this device.
           </p>
         </div>
         <button

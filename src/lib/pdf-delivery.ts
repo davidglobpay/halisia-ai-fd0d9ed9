@@ -8,10 +8,12 @@
  * download in a tab and blocks or silently queues the rest as "automatic
  * downloads", which is why a second export appeared to do nothing.
  *
- * Every export therefore still tries to save immediately (desktop browsers
- * and the first export keep working exactly as before) and, when the tap is
- * no longer fresh, also publishes the file to a small "ready" panel whose
- * Save and Share buttons are real taps that browsers always honour.
+ * Every export therefore saves immediately only while the tap is still fresh.
+ * Once it is not, the file goes to a "ready" panel whose Save and Share
+ * buttons are real taps that browsers always honour. No background download
+ * is attempted then: on Android each one counts towards Chrome's "multiple
+ * automatic downloads" block, which after the first export stopped later
+ * downloads from the site altogether.
  */
 
 export type ReadyFile = {
@@ -108,18 +110,16 @@ export type SavableDoc = {
 };
 
 /**
- * Save a generated PDF. Tries the immediate save, and when the user's tap is
- * no longer fresh also offers the file in the "ready" panel.
+ * Save a generated PDF: straight away while the user's tap is still fresh,
+ * otherwise through the "ready" panel's Save button.
  */
 export function deliverPdf(doc: SavableDoc, filename: string): void {
-  const fresh = tapStillFresh(currentNavigator());
-  doc.save(filename);
-  if (!fresh) publishReadyFile(doc.output("blob"), filename);
+  if (tapStillFresh(currentNavigator())) doc.save(filename);
+  else publishReadyFile(doc.output("blob"), filename);
 }
 
 /** Same as deliverPdf, for files built as a Blob (Word, CSV, text). */
 export function deliverBlob(blob: Blob, filename: string): void {
-  const fresh = tapStillFresh(currentNavigator());
-  anchorDownload(blob, filename);
-  if (!fresh) publishReadyFile(blob, filename);
+  if (tapStillFresh(currentNavigator())) anchorDownload(blob, filename);
+  else publishReadyFile(blob, filename);
 }

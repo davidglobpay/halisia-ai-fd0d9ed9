@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { waitForDownload } from "./helpers/download";
 import { readFileSync } from "node:fs";
 
 test("Download PDF dossier triggers a PDF download with the address in the filename", async ({
@@ -11,7 +12,7 @@ test("Download PDF dossier triggers a PDF download with the address in the filen
     timeout: 20_000,
   });
 
-  const downloadPromise = page.waitForEvent("download", { timeout: 60_000 });
+  const downloadPromise = waitForDownload(page, { timeout: 60_000 });
   await page.getByTestId("download-dossier").click();
 
   // Progress UI should surface a percentage and a stage label.

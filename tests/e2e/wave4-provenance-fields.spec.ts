@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { waitForDownload } from "./helpers/download";
 import { readFileSync } from "node:fs";
 
 /**
@@ -115,7 +116,7 @@ test("PDF dossier download progress advances from low to 100% with aria-live sta
     return n;
   };
 
-  const downloadPromise = page.waitForEvent("download", { timeout: 60_000 });
+  const downloadPromise = waitForDownload(page, { timeout: 60_000 });
   await page.getByTestId("download-dossier").click();
 
   await expect(status).toBeVisible();

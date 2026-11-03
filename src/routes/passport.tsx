@@ -433,6 +433,14 @@ function PassportPage() {
         >
           <Boxes className="h-4 w-4 text-accent" /> Place a 3D development concept
         </Link>
+        <Link
+          to="/plot-planner"
+          search={{ lat: String(lat), lng: String(lng) }}
+          className="ml-2 mt-2 inline-flex min-h-10 items-center gap-2 rounded-full border border-accent/50 px-4 text-xs font-semibold text-foreground hover:bg-accent/10"
+          data-testid="open-plot-planner"
+        >
+          <Boxes className="h-4 w-4 text-accent" /> Place a house on this plot
+        </Link>
       </header>
 
       <ReviewedScoutFindings reference={s.ref} />
