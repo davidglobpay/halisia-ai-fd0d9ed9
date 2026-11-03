@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { waitForDownload } from "./helpers/download";
 import { readFileSync } from "node:fs";
 
 /**
@@ -15,7 +16,7 @@ test("PDF dossier embeds non-empty map images in cover and evidence sections", a
     timeout: 20_000,
   });
 
-  const downloadPromise = page.waitForEvent("download", { timeout: 90_000 });
+  const downloadPromise = waitForDownload(page, { timeout: 90_000 });
   await page.getByTestId("download-dossier").click();
   const download = await downloadPromise;
 

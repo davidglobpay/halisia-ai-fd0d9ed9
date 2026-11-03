@@ -39,6 +39,8 @@ const LINKS: Array<{ to: string; label: string }> = [
 // Finished public pages that previously had no menu entry.
 const MORE_LINKS: Array<{ to: string; label: string }> = [
   { to: "/pricing", label: "Pricing" },
+  { to: "/plot-planner", label: "Plot planner (3D on your land)" },
+  { to: "/build-cost", label: "Build cost calculator" },
   { to: "/design-studio", label: "3D Design Studio" },
   { to: "/model-lab", label: "Model Lab" },
   { to: "/pulse", label: "Pulse news" },

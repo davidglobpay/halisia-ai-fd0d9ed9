@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { waitForDownload } from "./helpers/download";
 
 test("PDF dossier button shows progress UI, then downloads", async ({ page }) => {
   await page.goto("/explore?q=Kilimani");
@@ -9,7 +10,7 @@ test("PDF dossier button shows progress UI, then downloads", async ({ page }) =>
   });
 
   const button = page.getByTestId("download-dossier");
-  const downloadPromise = page.waitForEvent("download", { timeout: 90_000 });
+  const downloadPromise = waitForDownload(page, { timeout: 90_000 });
   await button.click();
 
   // Progress UI cycles through stages (Fetching / Rendering / Compiling)

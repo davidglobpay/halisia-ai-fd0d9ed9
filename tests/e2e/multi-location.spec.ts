@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { waitForDownload } from "./helpers/download";
 
 // End-to-end smoke across three Kenyan cities: for each we open Explore,
 // verify Wave 1 (weather + GIS), Wave 2 (globe + terrain 3D + heatmap),
@@ -57,7 +58,7 @@ test.describe("Waves 1-4 across multiple Kenya locations", () => {
       await page.getByTestId("provenance-close").click();
 
       // PDF download
-      const downloadPromise = page.waitForEvent("download", { timeout: 90_000 });
+      const downloadPromise = waitForDownload(page, { timeout: 90_000 });
       await page.getByTestId("download-dossier").click();
       const download = await downloadPromise;
       const name = download.suggestedFilename().toLowerCase();

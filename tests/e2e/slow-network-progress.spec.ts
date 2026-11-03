@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { waitForDownload } from "./helpers/download";
 
 // Simulate slow geocode + static-map fetches so the multi-stage progress UI
 // stays visible long enough to observe, then verify the download still completes.
@@ -15,7 +16,7 @@ test("progress UI stays visible on slow network and PDF still downloads", async 
   });
 
   const button = page.getByTestId("download-dossier");
-  const downloadPromise = page.waitForEvent("download", { timeout: 120_000 });
+  const downloadPromise = waitForDownload(page, { timeout: 120_000 });
   await button.click();
 
   // At least one progress stage must be visible while we wait.

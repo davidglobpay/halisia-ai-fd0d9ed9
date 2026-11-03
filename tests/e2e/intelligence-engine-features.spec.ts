@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { waitForDownload } from "./helpers/download";
 
 test.describe("Intelligence engine · report, freshness, feedback, compare, limitations", () => {
   test("LIOS panel exposes freshness, sources, verification, feedback and limitations", async ({
@@ -39,7 +40,7 @@ test.describe("Intelligence engine · report, freshness, feedback, compare, limi
     await page.goto("/explore?q=Kilimani");
     await expect(page.getByTestId("land-intelligence-score")).toBeVisible({ timeout: 30_000 });
 
-    const dl = page.waitForEvent("download", { timeout: 45_000 });
+    const dl = waitForDownload(page, { timeout: 45_000 });
     await page.getByTestId("download-intelligence-pdf").click();
     const download = await dl;
     const name = download.suggestedFilename().toLowerCase();

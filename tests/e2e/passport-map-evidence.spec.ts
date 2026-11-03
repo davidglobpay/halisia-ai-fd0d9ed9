@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { waitForDownload } from "./helpers/download";
 import { readFileSync } from "node:fs";
 
 // UI-only synthetic fixtures: no provider requests are forwarded. These are
@@ -246,7 +247,7 @@ test("visual Passport download embeds map images and multiple branded pages", as
   );
   const button = page.getByTestId("passport-pdf");
   await expect(button).toBeEnabled();
-  const pending = page.waitForEvent("download");
+  const pending = waitForDownload(page);
   await button.click();
   const download = await pending;
   const path = await download.path();

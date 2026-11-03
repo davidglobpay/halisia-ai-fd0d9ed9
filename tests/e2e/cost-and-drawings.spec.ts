@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { waitForDownload } from "./helpers/download";
 import { readFile } from "node:fs/promises";
 
 test("Design Studio: costs, drawings, camera views, render capability and valid cost PDF", async ({
@@ -27,7 +28,7 @@ test("Design Studio: costs, drawings, camera views, render capability and valid 
   await page.getByTestId("studio-view-front").click();
   await page.getByTestId("studio-view-worms-eye").click();
   await expect(page.getByTestId("studio-xr")).toContainText(/supported|not supported/);
-  const dl = page.waitForEvent("download");
+  const dl = waitForDownload(page);
   await page.getByTestId("cost-pdf").click();
   const d = await dl;
   expect(d.suggestedFilename()).toMatch(/halisia-cost-estimate.*\.pdf$/);

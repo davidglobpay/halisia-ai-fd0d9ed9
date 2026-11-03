@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { waitForDownload } from "./helpers/download";
 
 // Verify that ?compare=… survives a full page reload.
 test("selected counties in ?compare= persist across reload", async ({ page }) => {
@@ -26,7 +27,7 @@ test("compare PDF button downloads a PDF with county names in the filename", asy
   const button = page.getByTestId("compare-pdf");
   await expect(button).toBeEnabled();
 
-  const downloadPromise = page.waitForEvent("download", { timeout: 30_000 });
+  const downloadPromise = waitForDownload(page, { timeout: 30_000 });
   await button.click();
   const download = await downloadPromise;
   const name = download.suggestedFilename().toLowerCase();

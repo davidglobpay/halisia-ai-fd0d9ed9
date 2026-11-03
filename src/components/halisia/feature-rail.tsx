@@ -48,6 +48,13 @@ const TOOLS: Tool[] = [
     Icon: MapPin,
   },
   {
+    to: "/plot-planner",
+    label: "Plot planner",
+    blurb: "Place a house type to scale on satellite imagery of your plot, on the real terrain.",
+    action: "Plan on your plot",
+    Icon: MapPin,
+  },
+  {
     to: "/design-studio",
     label: "3D Design Studio",
     blurb: "Place five Kenyan-context development concepts on dimensions you control.",
