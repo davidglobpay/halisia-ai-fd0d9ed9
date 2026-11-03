@@ -77,7 +77,7 @@ export function GeotechPanel({ lat, lng, address }: { lat: number; lng: number; 
 
       {/* Header + confidence */}
       <div className="glass-strong rounded-2xl p-4 relative overflow-hidden">
-        <div className="absolute -top-12 -right-12 h-32 w-32 rounded-full blur-3xl opacity-30 bg-gradient-to-br from-primary to-accent" />
+        <div className="pointer-events-none absolute -top-12 -right-12 h-32 w-32 rounded-full blur-3xl opacity-30 bg-gradient-to-br from-primary to-accent" />
         <div className="flex items-start gap-2">
           <div className="text-[10px] uppercase tracking-widest text-accent">
             AI Geotechnical Intelligence

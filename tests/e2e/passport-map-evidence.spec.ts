@@ -116,6 +116,7 @@ async function isolate(page: Page, fail = false) {
     }
     if (
       url.hostname === "server.arcgisonline.com" ||
+      url.hostname === "ibasemaps-api.arcgis.com" ||
       url.hostname.endsWith(".tile.opentopomap.org") ||
       url.hostname.endsWith(".basemaps.cartocdn.com")
     ) {

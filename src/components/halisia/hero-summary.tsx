@@ -242,7 +242,7 @@ export function HeroSummary({
       className="glass-strong rounded-3xl p-4 sm:p-5 relative overflow-hidden"
       aria-label="Location hero summary"
     >
-      <div className="absolute -top-24 -right-16 h-56 w-56 rounded-full bg-emerald-glow/20 blur-3xl opacity-40" />
+      <div className="pointer-events-none absolute -top-24 -right-16 h-56 w-56 rounded-full bg-emerald-glow/20 blur-3xl opacity-40" />
 
       {/* Address first: a buyer should know what they are looking at before
           they are told anything about it. */}
