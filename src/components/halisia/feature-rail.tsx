@@ -151,10 +151,10 @@ export function FeatureRail() {
               id="tools-heading"
               className="mt-2 text-2xl md:text-4xl font-semibold tracking-tight"
             >
-              Eight ways into a place.
+              {TOOLS.length} ways into a place.
             </h2>
             <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-              Search above, or pick the tool that matches what you already have: a deed, a
+              Search for a place, or pick the tool that matches what you already have: a deed, a
               coordinate, a pin on a map, or a plot you want to build on.
             </p>
           </div>
