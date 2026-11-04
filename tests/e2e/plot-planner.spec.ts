@@ -95,6 +95,10 @@ test("plot planner floating controls and layer menu work", async ({ page }) => {
 
   // Scope to HALISIA's dock: Google Street View on the same page has its own
   // "Zoom in"/"Zoom out" buttons.
+  // Street View waits for a tap instead of loading with the page.
+  await expect(page.getByTestId("pp-streetview-show")).toBeVisible();
+  await expect(page.getByTestId("street-view")).toHaveCount(0);
+
   const dock = page.getByTestId("pp-dock");
   for (const name of ["Zoom in", "Zoom out", "Back to the plot", "Top-down view", "Map layers"]) {
     await expect(dock.getByRole("button", { name, exact: true })).toBeVisible();
