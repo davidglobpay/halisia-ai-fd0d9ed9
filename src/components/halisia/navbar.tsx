@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import {
   Menu,
   X,
@@ -23,40 +23,54 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const LINKS: Array<{ to: string; label: string }> = [
+type NavLink = { to: string; label: string; hint?: string; group?: string };
+
+// Plain words a first-time visitor (or a child) can follow. The top row is
+// the everyday journeys; everything else sits under "More" with a hint.
+const LINKS: NavLink[] = [
   { to: "/", label: "Home" },
-
-  { to: "/marketplace", label: "Marketplace" },
-  { to: "/title-deed", label: "Title Deed" },
-  { to: "/spatial", label: "Spatial AR" },
-
-  { to: "/connections", label: "Connections" },
-  { to: "/compare", label: "Compare" },
-  { to: "/reports", label: "Reports" },
-  { to: "/dashboard", label: "Dashboard" },
+  { to: "/explore", label: "Explore map", hint: "Search any place in Kenya" },
+  { to: "/marketplace", label: "Buy land", hint: "Plots and homes for sale" },
+  { to: "/title-deed", label: "Title deed", hint: "Read a deed photo" },
+  { to: "/compare-locations", label: "Compare places", hint: "Two places side by side" },
+  { to: "/connections", label: "Find experts", hint: "Surveyors, lawyers, valuers" },
+  { to: "/reports", label: "My reports", hint: "Your saved reports" },
+  { to: "/dashboard", label: "My dashboard", hint: "Your activity" },
 ];
 
-// Finished public pages that previously had no menu entry.
-const MORE_LINKS: Array<{ to: string; label: string }> = [
-  { to: "/pricing", label: "Pricing" },
-  { to: "/plot-planner", label: "Plot planner (3D on your land)" },
-  { to: "/build-cost", label: "Build cost calculator" },
-  { to: "/design-studio", label: "3D Design Studio" },
-  { to: "/model-lab", label: "Model Lab" },
-  { to: "/pulse", label: "Pulse news" },
-  { to: "/compare-locations", label: "Compare locations" },
-  { to: "/land-transfer", label: "Transfer costs" },
+// Finished public pages that are not on the top row.
+const MORE_LINKS: NavLink[] = [
+  {
+    to: "/plot-planner",
+    label: "Plan a house on my plot",
+    hint: "See a house on your land in 3D",
+    group: "Plan & build",
+  },
+  { to: "/build-cost", label: "How much to build?", hint: "Cost of a house, line by line" },
+  { to: "/budget", label: "What can my budget buy?", hint: "Places that fit your money" },
+  { to: "/design-studio", label: "3D Design Studio", hint: "Try building ideas in 3D" },
+  { to: "/model-lab", label: "3D Model Lab", hint: "See a building and its shadows" },
+  { to: "/spatial", label: "AR / VR land view", hint: "Walk a surveyed plot in 3D or AR" },
+  {
+    to: "/land-transfer",
+    label: "Land transfer costs",
+    hint: "Fees to buy or transfer land",
+    group: "Learn",
+  },
+  { to: "/compare", label: "Compare counties", hint: "Counties side by side" },
+  { to: "/pulse", label: "Land news", hint: "Latest land and property news" },
+  { to: "/pricing", label: "Prices", hint: "What HALISIA costs" },
 ];
 
 // Tools behind sign-in; only listed once the user is signed in.
-const MEMBER_LINKS: Array<{ to: string; label: string }> = [
-  { to: "/admin", label: "Admin access" },
-  { to: "/sell/new", label: "Sell land" },
-  { to: "/seller-tools", label: "Seller tools" },
-  { to: "/rentals", label: "Rentals" },
-  { to: "/financing", label: "Financing" },
-  { to: "/pros", label: "Professionals" },
-  { to: "/contributions", label: "Contributions" },
+const MEMBER_LINKS: NavLink[] = [
+  { to: "/sell/new", label: "Sell land", hint: "List a plot for sale" },
+  { to: "/seller-tools", label: "Seller tools", hint: "Manage your listings" },
+  { to: "/rentals", label: "Rentals", hint: "Homes to rent" },
+  { to: "/financing", label: "Get financing", hint: "Loans for land and building" },
+  { to: "/pros", label: "Professionals", hint: "Work with experts" },
+  { to: "/contributions", label: "Contributions", hint: "What you have added" },
+  { to: "/admin", label: "Admin", hint: "Administrators only" },
 ];
 
 // Exact or nested match, so "/compare" is not active on "/compare-locations".
@@ -138,9 +152,17 @@ export function Navbar() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-52">
               {MORE_LINKS.map((l) => (
-                <DropdownMenuItem key={l.to} asChild>
-                  <Link to={l.to}>{l.label}</Link>
-                </DropdownMenuItem>
+                <Fragment key={l.to}>
+                  {l.group ? <DropdownMenuLabel>{l.group}</DropdownMenuLabel> : null}
+                  <DropdownMenuItem asChild>
+                    <Link to={l.to} className="flex flex-col items-start gap-0">
+                      <span>{l.label}</span>
+                      {l.hint ? (
+                        <span className="text-[11px] text-muted-foreground">{l.hint}</span>
+                      ) : null}
+                    </Link>
+                  </DropdownMenuItem>
+                </Fragment>
               ))}
               {!loading && user ? (
                 <>
@@ -148,7 +170,12 @@ export function Navbar() {
                   <DropdownMenuLabel>Your tools</DropdownMenuLabel>
                   {MEMBER_LINKS.map((l) => (
                     <DropdownMenuItem key={l.to} asChild>
-                      <Link to={l.to}>{l.label}</Link>
+                      <Link to={l.to} className="flex flex-col items-start gap-0">
+                        <span>{l.label}</span>
+                        {l.hint ? (
+                          <span className="text-[11px] text-muted-foreground">{l.hint}</span>
+                        ) : null}
+                      </Link>
                     </DropdownMenuItem>
                   ))}
                 </>
@@ -236,10 +263,10 @@ export function Navbar() {
             {[...LINKS, ...MORE_LINKS, ...(!loading && user ? MEMBER_LINKS : [])].map((l, idx) => {
               const active = isActive(pathname, l.to);
               const groupStart =
-                idx === LINKS.length
-                  ? "More"
-                  : idx === LINKS.length + MORE_LINKS.length
-                    ? "Your tools"
+                idx === LINKS.length + MORE_LINKS.length
+                  ? "Your tools"
+                  : idx >= LINKS.length
+                    ? (l.group ?? null)
                     : null;
               return (
                 <li key={l.to}>
@@ -257,7 +284,12 @@ export function Navbar() {
                         : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
                     }`}
                   >
-                    <span>{l.label}</span>
+                    <span className="flex min-w-0 flex-col">
+                      <span>{l.label}</span>
+                      {l.hint ? (
+                        <span className="text-[12px] text-muted-foreground">{l.hint}</span>
+                      ) : null}
+                    </span>
                     {active && (
                       <span className="text-[10px] uppercase tracking-widest text-accent">
                         Current

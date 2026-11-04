@@ -55,6 +55,20 @@ const TOOLS: Tool[] = [
     Icon: MapPin,
   },
   {
+    to: "/build-cost",
+    label: "How much to build?",
+    blurb: "Pick a house size and building material and see the cost, line by line.",
+    action: "Work out the cost",
+    Icon: Boxes,
+  },
+  {
+    to: "/budget",
+    label: "What can my budget buy?",
+    blurb: "Enter your budget and see which places can fit land plus a house.",
+    action: "Plan my budget",
+    Icon: MapPin,
+  },
+  {
     to: "/design-studio",
     label: "3D Design Studio",
     blurb: "Place five Kenyan-context development concepts on dimensions you control.",
