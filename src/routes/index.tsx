@@ -252,7 +252,7 @@ function LandingBody() {
             <span className="text-gradient">signals you can trust</span>.
           </>
         }
-        intro="Three things HALISIA can measure from public APIs, and the seven it names as gaps rather than guessing. Each reading carries its source and its confidence."
+        intro="Three things HALISIA can measure from public APIs, the gaps it names instead of guessing (title, zoning, utilities, safety and price), and who to ask next. Each reading carries its source and its confidence."
         items={PILLARS.map((p) => ({
           key: p.title,
           title: p.title,

@@ -344,8 +344,8 @@ export function KenyaCountyMap() {
               47 counties. <span className="text-gradient">Real boundaries, sourced figures.</span>
             </h2>
             <p className="mt-4 text-muted-foreground text-lg">
-              Shaded by population density from the KNBS 2019 Census — the one county-level figure
-              HALISIA can cite. Hover to explore, click to compare up to four side by side.
+              Shaded by population density from the KNBS 2019 Census, a sourced county-level figure.
+              Hover to explore, click to compare up to four side by side.
             </p>
             <button
               onClick={() => setShowSource((v) => !v)}
