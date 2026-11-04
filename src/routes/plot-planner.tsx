@@ -81,6 +81,8 @@ function PlotPlannerPage() {
   const fromUrl = useMemo(() => parseCoord(search.lat, search.lng), [search.lat, search.lng]);
   const [point, setPoint] = useState<{ lat: number; lng: number } | null>(fromUrl);
   const [coordText, setCoordText] = useState("");
+  // Which point the visitor asked to see in Street View; resets when the point moves.
+  const [streetViewFor, setStreetViewFor] = useState<string | null>(null);
   useEffect(() => {
     if (fromUrl) setPoint(fromUrl);
     else setPoint((p) => p ?? readLastPassportLocation());
@@ -494,9 +496,23 @@ function PlotPlannerPage() {
                 Google Street View from the nearest public road, where Google has captured one. It
                 may be some distance from the plot and is dated by Google, not by HALISIA.
               </p>
-              <div className="relative mt-3 h-[40svh] min-h-[260px] overflow-hidden rounded-2xl border border-border">
-                <StreetViewPanel lat={point.lat} lng={point.lng} className="absolute inset-0" />
-              </div>
+              {streetViewFor === `${point.lat},${point.lng}` ? (
+                <div className="relative mt-3 h-[40svh] min-h-[260px] overflow-hidden rounded-2xl border border-border">
+                  <StreetViewPanel lat={point.lat} lng={point.lng} className="absolute inset-0" />
+                </div>
+              ) : (
+                // Street View starts only on a tap: Google's panorama code
+                // threw on page load where Maps rejected the address, and each
+                // load is billable beyond the free monthly allowance.
+                <button
+                  type="button"
+                  onClick={() => setStreetViewFor(`${point.lat},${point.lng}`)}
+                  className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-full border border-accent/50 px-4 text-sm font-semibold hover:bg-accent/10"
+                  data-testid="pp-streetview-show"
+                >
+                  <Eye className="h-4 w-4 text-accent" aria-hidden="true" /> Show street photos
+                </button>
+              )}
             </Surface>
           )}
         </>
