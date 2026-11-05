@@ -35,21 +35,9 @@ test.describe("Geolocation denied fallback", () => {
     });
   });
 
-  test("landing page exposes manual lat,lng search when My Location is denied", async ({
-    page,
-  }) => {
-    await page.goto("/");
-    await page.getByTestId("search-my-location").first().click();
-
-    const manual = page.getByLabel(/enter latitude and longitude/i);
-    await expect(manual).toBeVisible();
-
-    await manual.fill("-1.2921, 36.8219");
-    await page.getByRole("button", { name: /^set$/i }).click();
-
-    // Manual entry drives the same search flow; landing routes to /explore.
-    await expect(page).toHaveURL(/\/explore\?q=/);
-  });
+  // The landing page no longer has a My Location button: since 27 Sep 2026
+  // its search lives on the landing map (commit 0579826). The denied-permission
+  // fallback is covered on /explore, where the button still exists.
 
   test("simulated pin remains usable inside /explore after denied permission", async ({ page }) => {
     await page.goto("/explore");

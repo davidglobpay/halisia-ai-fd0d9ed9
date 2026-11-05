@@ -1,6 +1,8 @@
 import { test, expect } from "@playwright/test";
+import { stubLocationServices } from "./helpers/server-fns";
 
 test("clicking the map reverse-geocodes and updates the sidebar address", async ({ page }) => {
+  await stubLocationServices(page);
   await page.goto("/explore?q=Karen%2C%20Nairobi");
 
   // Wait for the default Nairobi address to render in the sidebar caption.

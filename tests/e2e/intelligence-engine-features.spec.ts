@@ -1,10 +1,12 @@
 import { test, expect } from "@playwright/test";
 import { waitForDownload } from "./helpers/download";
+import { stubLocationServices } from "./helpers/server-fns";
 
 test.describe("Intelligence engine · report, freshness, feedback, compare, limitations", () => {
   test("LIOS panel exposes freshness, sources, verification, feedback and limitations", async ({
     page,
   }) => {
+    await stubLocationServices(page);
     await page.goto("/explore?q=Kilimani");
     const lios = page.getByTestId("land-intelligence-score");
     await expect(lios).toBeVisible({ timeout: 30_000 });
@@ -37,6 +39,7 @@ test.describe("Intelligence engine · report, freshness, feedback, compare, limi
   });
 
   test("Downloads an intelligence PDF containing engine sections", async ({ page }) => {
+    await stubLocationServices(page);
     await page.goto("/explore?q=Kilimani");
     await expect(page.getByTestId("land-intelligence-score")).toBeVisible({ timeout: 30_000 });
 
@@ -58,6 +61,7 @@ test.describe("Intelligence engine · report, freshness, feedback, compare, limi
   });
 
   test("Compare Locations recomputes LIOS side-by-side and shows deltas", async ({ page }) => {
+    await stubLocationServices(page);
     await page.goto("/compare-locations?a=Kilimani&b=Nakuru");
     await expect(page.getByRole("heading", { name: /Compare two locations/i })).toBeVisible();
 

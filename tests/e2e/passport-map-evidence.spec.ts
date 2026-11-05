@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import { waitForDownload } from "./helpers/download";
+import { fulfillServerFn } from "./helpers/server-fns";
 import { readFileSync } from "node:fs";
 
 // UI-only synthetic fixtures: no provider requests are forwarded. These are
@@ -87,17 +88,19 @@ async function isolate(page: Page, fail = false) {
                 airQuality: { status: "unavailable" },
                 routes: { status: "unavailable" },
               },
+              snapshot: { key: "synthetic-test", slices: {} },
             }
           : null;
-      await route.fulfill({
-        status: fixture ? 200 : 503,
-        contentType: "application/json",
-        body: JSON.stringify(
-          fixture
-            ? { result: fixture, context: {} }
-            : { error: "Synthetic test provider unavailable" },
-        ),
-      });
+      if (fixture) {
+        // Same seroval wire format the production server uses.
+        await fulfillServerFn(route, fixture);
+      } else {
+        await route.fulfill({
+          status: 503,
+          contentType: "application/json",
+          body: JSON.stringify({ error: "Synthetic test provider unavailable" }),
+        });
+      }
       return;
     }
     if (

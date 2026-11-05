@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { waitForDownload } from "./helpers/download";
+import { stubLocationServices } from "./helpers/server-fns";
 
 // End-to-end smoke across three Kenyan cities: for each we open Explore,
 // verify Wave 1 (weather + GIS), Wave 2 (globe + terrain 3D + heatmap),
@@ -12,6 +13,7 @@ test.describe("Waves 1-4 across multiple Kenya locations", () => {
       const pageErrors: string[] = [];
       page.on("pageerror", (e) => pageErrors.push(String(e)));
 
+      await stubLocationServices(page);
       await page.goto(`/explore?q=${encodeURIComponent(q)}`);
       await expect(page.getByTestId("active-address")).toContainText(
         new RegExp(q.split(" ")[0], "i"),

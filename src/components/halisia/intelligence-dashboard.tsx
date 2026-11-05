@@ -279,7 +279,7 @@ export function IntelligenceDashboard({
   const narrativeReady = narrativeQ.data != null;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" data-testid="intel-dashboard">
       {/* Level-1 hero: overall AI score + animated gauge dashboard */}
       <HeroSummary
         address={address}

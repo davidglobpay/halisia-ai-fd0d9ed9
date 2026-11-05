@@ -19,6 +19,13 @@ test("Wave 4 provenance export payload matches the drill-down factors, units, co
   page,
 }) => {
   await page.addInitScript(() => localStorage.setItem("halisia:navguide:v1:seen", "1"));
+  // The production build finishes a dossier in well under a second when map
+  // providers fail fast in CI, so progress can jump straight to 100%. Slow the
+  // server calls slightly so the intermediate stages are observable.
+  await page.route("**/_serverFn/**", async (route) => {
+    await new Promise((r) => setTimeout(r, 600));
+    await route.fallback();
+  });
   await page.goto("/explore?q=-1.292100%2C36.821900");
   await page.getByTestId("tab-wave4").click();
   await expect(page.getByTestId("wave4-panel")).toBeVisible({ timeout: 30_000 });
@@ -101,6 +108,13 @@ test("PDF dossier download progress advances from low to 100% with aria-live sta
   page,
 }) => {
   await page.addInitScript(() => localStorage.setItem("halisia:navguide:v1:seen", "1"));
+  // The production build finishes a dossier in well under a second when map
+  // providers fail fast in CI, so progress can jump straight to 100%. Slow the
+  // server calls slightly so the intermediate stages are observable.
+  await page.route("**/_serverFn/**", async (route) => {
+    await new Promise((r) => setTimeout(r, 600));
+    await route.fallback();
+  });
   await page.goto("/explore?q=-1.292100%2C36.821900");
   await expect(page.getByTestId("active-address")).toContainText(/-1\.2921.*36\.8219/, {
     timeout: 20_000,
