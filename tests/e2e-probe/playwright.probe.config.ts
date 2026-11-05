@@ -20,6 +20,7 @@ export default defineConfig({
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
     command: "node .output/server/index.mjs",
+    cwd: "../..",
     url: "http://localhost:8080",
     env: { PORT: "8080", HOST: "0.0.0.0" },
     timeout: 120_000,

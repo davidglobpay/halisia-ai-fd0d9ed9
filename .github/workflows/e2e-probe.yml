@@ -22,6 +22,8 @@ jobs:
         env:
           NITRO_PRESET: node-server
           E2E_READABLE_SERVER_FN_IDS: "1"
+      - name: Server function references in the client bundle
+        run: grep -rhoE '.{0,120}createServerRpc.{0,160}|.{0,80}_serverFn.{0,120}' .output/public/assets | head -20 || true
       - name: Server function ids in the client bundle
         run: grep -rhoE '"[A-Za-z0-9_-]{24,}"' .output/public/assets | sort -u | head -60 | while read s; do v=$(echo "$s" | tr -d '"'); printf '%s => ' "$v"; echo "$v" | tr '_-' '/+' | base64 -d 2>/dev/null | head -c 160; echo; done | grep -- "--" | head -40 || true
       - run: bunx playwright test --config=tests/e2e-probe/playwright.probe.config.ts
