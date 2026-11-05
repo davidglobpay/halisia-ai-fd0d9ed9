@@ -36,7 +36,7 @@ test.describe("Waves 1-4 across multiple Kenya locations", () => {
 
       // Wave 3 · Street
       await page.getByTestId("tab-geotech").click();
-      await expect(page.getByTestId("tab-geotech")).toHaveAttribute("aria-selected", /true/i);
+      await expect(page.getByTestId("tab-geotech")).toHaveAttribute("aria-pressed", "true");
 
       // Wave 4 · Public data + investment scoring
       await page.getByTestId("tab-wave4").click();

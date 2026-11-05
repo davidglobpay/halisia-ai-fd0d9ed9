@@ -44,7 +44,7 @@ test.describe("Intelligence engine · report, freshness, feedback, compare, limi
     await page.getByTestId("download-intelligence-pdf").click();
     const download = await dl;
     const name = download.suggestedFilename().toLowerCase();
-    expect(name).toContain("halisia-intelligence");
+    expect(name).toContain("halisia-readings");
     expect(name).toMatch(/\.pdf$/);
 
     const dest = test.info().outputPath("intelligence.pdf");

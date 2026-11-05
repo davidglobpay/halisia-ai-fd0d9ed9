@@ -47,12 +47,24 @@ export default defineConfig({
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
     { name: "mobile-chrome", use: { ...devices["Pixel 5"] } },
   ],
+  // E2E_SERVER=prod tests the production Node build (CI builds it with
+  // NITRO_PRESET=node-server). The dev server compiles hundreds of modules on
+  // first visit, so pages stayed un-hydrated for many seconds and clicks did
+  // nothing; real visitors get the production build.
   webServer: process.env.PLAYWRIGHT_BASE_URL
     ? undefined
-    : {
-        command: "npm run dev -- --host 127.0.0.1",
-        url: "http://localhost:8080",
-        reuseExistingServer: !process.env.CI,
-        timeout: 120_000,
-      },
+    : process.env.E2E_SERVER === "prod"
+      ? {
+          command: "node .output/server/index.mjs",
+          url: "http://localhost:8080",
+          env: { PORT: "8080", HOST: "0.0.0.0" },
+          reuseExistingServer: false,
+          timeout: 120_000,
+        }
+      : {
+          command: "npm run dev -- --host 127.0.0.1",
+          url: "http://localhost:8080",
+          reuseExistingServer: !process.env.CI,
+          timeout: 120_000,
+        },
 });

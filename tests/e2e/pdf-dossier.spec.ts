@@ -40,7 +40,7 @@ test("Download PDF dossier triggers a PDF download with the address in the filen
   expect(raw).toContain("Climate normals");
   // Wave 2 isometric topographic projection
   expect(raw).toContain("Isometric topographic projection");
-  // Wave 4 investment scores block + at least one composite score label
-  expect(raw).toContain("Investment scores");
-  expect(raw).toMatch(/Accessibility|Infrastructure|Environment/);
+  // The dossier was rebuilt from traceable Wave 4 readings (831aacc); it must
+  // never print composite "investment scores" again.
+  expect(raw).not.toContain("Investment scores");
 });

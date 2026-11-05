@@ -39,7 +39,8 @@ test("reports client hydration and runtime failures", async ({ page }) => {
   const snapshot: RuntimeSnapshot = await page.evaluate(() => ({
     url: window.location.href,
     readyState: document.readyState,
-    rootChildren: document.querySelector("#root")?.childElementCount ?? -1,
+    // TanStack Start renders the whole document; there is no SPA #root.
+    rootChildren: document.body?.childElementCount ?? -1,
     scriptSources: Array.from(document.scripts)
       .map((script) => script.src)
       .filter(Boolean),
@@ -69,5 +70,8 @@ test("reports client hydration and runtime failures", async ({ page }) => {
   // GitHub artifact-quota failures.
   console.log(`[runtime-diagnostics] ${JSON.stringify(snapshot)}`);
 
-  expect(snapshot.rootChildren, "React root should render at least one child").toBeGreaterThan(0);
+  expect(
+    snapshot.rootChildren,
+    "The document body should render at least one child",
+  ).toBeGreaterThan(0);
 });

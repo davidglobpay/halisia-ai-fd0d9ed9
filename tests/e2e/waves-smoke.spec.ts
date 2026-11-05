@@ -26,7 +26,7 @@ test.describe("Wave 2 & 3 tabs render", () => {
     // Street (Mapillary)
     await page.getByTestId("tab-geotech").click();
     // The Mapillary viewer either renders a canvas or a placeholder card.
-    await expect(page.getByTestId("tab-geotech")).toHaveAttribute("aria-selected", /true/i);
+    await expect(page.getByTestId("tab-geotech")).toHaveAttribute("aria-pressed", "true");
 
     // No uncaught page errors from any of the tabs.
     expect(pageErrors, `pageerrors: ${pageErrors.join(" | ")}`).toEqual([]);

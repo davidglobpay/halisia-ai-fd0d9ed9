@@ -12,6 +12,22 @@ export default defineConfig({
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
     server: { entry: "server" },
+    // Test builds only (CI sets E2E_READABLE_SERVER_FN_IDS): keep the dev-style
+    // readable server-function ids so Playwright fixtures can recognise calls.
+    // Production builds keep TanStack's default hashed ids.
+    ...(process.env.E2E_READABLE_SERVER_FN_IDS
+      ? {
+          serverFns: {
+            generateFunctionId: ({
+              filename,
+              functionName,
+            }: {
+              filename: string;
+              functionName: string;
+            }) => Buffer.from(`${filename}--${functionName}`).toString("base64url"),
+          },
+        }
+      : {}),
   },
   vite: {
     plugins: [mcpPlugin()],
