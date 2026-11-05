@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { waitForDownload } from "./helpers/download";
+import { waitForHydration } from "./helpers/hydration";
 
 test("PDF dossier button shows progress UI, then downloads", async ({ page }) => {
   await page.goto("/explore?q=Kilimani");
@@ -26,9 +27,9 @@ test("Launch CTA on landing takes the visitor to the map", async ({ page }) => {
   await page.goto("/");
   const cta = page.getByTestId("launch-cta");
   await expect(cta).toBeVisible();
+  await waitForHydration(page, "launch-cta");
   await cta.click();
   // "Start with a point" scrolls to the landing map, where the search lives.
-  // What the visitor sees is the map; the #hero-map fragment can be dropped
-  // when the router finishes loading after an early tap.
+  await expect(page).toHaveURL(/#hero-map$/);
   await expect(page.getByTestId("hero-map")).toBeInViewport({ timeout: 10_000 });
 });

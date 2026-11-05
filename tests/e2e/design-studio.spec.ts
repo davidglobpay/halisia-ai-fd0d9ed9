@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { waitForDownload } from "./helpers/download";
 import { stubLocationServices } from "./helpers/server-fns";
+import { waitForHydration } from "./helpers/hydration";
 
 test("Passport links into all five Design Studio concepts and generated massing", async ({
   page,
@@ -11,6 +12,7 @@ test("Passport links into all five Design Studio concepts and generated massing"
     // rightly refuses as a parcel position, so use a deliberate test point.
     "/passport?lat=-1.2741&lng=36.8155&label=Nairobi&source=Test&status=approximate",
   );
+  await waitForHydration(page, "open-design-studio");
   await page.getByTestId("open-design-studio").click();
   await expect(page).toHaveURL(/\/design-studio/);
   await expect(page.getByTestId("studio-context")).toContainText("Nairobi");
