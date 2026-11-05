@@ -1120,6 +1120,10 @@ export function renderPassportPdf(o: PassportPdfOptions, a: PassportPdfAssets): 
       align: "center",
     });
     doc.text(`${n}/${total}`, W - M, H - 25, { align: "right" });
+    // Name the issuer on every page, so a single printed or forwarded page
+    // still says whose document it is. Distinct from the "HALISIA.AI"
+    // header fallback, which the tests count once per page.
+    doc.text("HALISIA AI | Land Passport", M, H - 25);
   }
   return doc;
 }
