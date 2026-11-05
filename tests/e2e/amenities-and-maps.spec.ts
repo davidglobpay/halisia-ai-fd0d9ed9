@@ -40,10 +40,11 @@ test("Geotech — soil layer toggles hide/show cells and foundation cards render
   const panel = page.getByTestId("geotech-panel");
   await expect(panel).toBeVisible({ timeout: 45_000 });
 
-  const foundations = panel
-    .getByTestId("foundation-comparison")
-    .locator("[data-testid^=foundation-card-]");
-  await expect(foundations).toHaveCount(4);
+  // Foundation recommendations and costed risk cards were withdrawn on purpose
+  // (8bbad9b): foundation design needs a licensed site investigation, not a
+  // regional model. The panel must say so and must not bring them back.
+  await expect(panel.getByTestId("geotech-disclaimer")).toBeVisible();
+  await expect(panel.getByTestId("foundation-comparison")).toHaveCount(0);
 
   const clayToggle = panel.getByTestId("soil-toggle-clay");
   await expect(clayToggle).toHaveAttribute("aria-pressed", "true");
@@ -52,12 +53,6 @@ test("Geotech — soil layer toggles hide/show cells and foundation cards render
   await clayToggle.click();
   await expect(clayToggle).toHaveAttribute("aria-pressed", "false");
   await expect(clayCell).toHaveCount(0);
-
-  // Risk cards with mitigation + cost impact expand
-  const firstRisk = panel.getByTestId("risk-cards").locator("[data-testid^=risk-card-]").first();
-  await expect(firstRisk).toContainText(/cost/i);
-  await firstRisk.locator("button").first().click();
-  await expect(firstRisk).toContainText(/KES/);
 });
 
 test("Map tools — distance and area readouts, export downloads geojson", async ({ page }) => {

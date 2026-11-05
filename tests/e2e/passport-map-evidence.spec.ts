@@ -1,6 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import { waitForDownload } from "./helpers/download";
 import { fulfillServerFn } from "./helpers/server-fns";
+import { seedSyntheticSession } from "./helpers/session";
 import { readFileSync } from "node:fs";
 
 // UI-only synthetic fixtures: no provider requests are forwarded. These are
@@ -8,35 +9,9 @@ import { readFileSync } from "node:fs";
 async function isolate(page: Page, fail = false) {
   // Synthetic local session only; server functions are intercepted below.
   // This tests the signed-in UI, not production authentication.
-  await page.addInitScript(() => {
-    const user = {
-      id: "11111111-1111-4111-8111-111111111111",
-      aud: "authenticated",
-      role: "authenticated",
-      email: "qa@example.invalid",
-      app_metadata: {},
-      user_metadata: {},
-      created_at: "2026-01-01T00:00:00Z",
-    };
-    const exp = Math.floor(Date.now() / 1000) + 3600;
-    const token =
-      btoa(JSON.stringify({ alg: "HS256", typ: "JWT" })) +
-      "." +
-      btoa(JSON.stringify({ sub: user.id, exp, aud: "authenticated" })) +
-      ".synthetic-signature";
-    localStorage.setItem(
-      "sb-synthetic-auth-token",
-      JSON.stringify({
-        access_token: token,
-        refresh_token: "synthetic",
-        expires_at: exp,
-        expires_in: 3600,
-        token_type: "bearer",
-        user,
-      }),
-    );
-    localStorage.setItem("halisia:navguide:v1:seen", "test");
-  });
+  // Stored under the key the app's Supabase client actually reads.
+  await seedSyntheticSession(page);
+  await page.addInitScript(() => localStorage.setItem("halisia:navguide:v1:seen", "test"));
   const counts = { server: 0, provider: 0 };
   await page.route("**/*", async (route) => {
     const url = new URL(route.request().url());

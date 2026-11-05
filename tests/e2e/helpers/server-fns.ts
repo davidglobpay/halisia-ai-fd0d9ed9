@@ -79,7 +79,7 @@ const PLACES: Array<{ match: RegExp; address: string; lat: number; lng: number }
     lng: 36.7856,
   },
   { match: /karen/i, address: "Karen, Nairobi, Kenya (test fixture)", lat: -1.3197, lng: 36.7073 },
-  { match: /.*/, address: "Nairobi, Kenya (test fixture)", lat: -1.286389, lng: 36.817223 },
+  { match: /.*/, address: "Nairobi, Kenya (test fixture)", lat: -1.2841, lng: 36.8155 },
 ];
 
 function geocodeFixture(payload: unknown) {

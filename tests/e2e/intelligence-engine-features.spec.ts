@@ -15,26 +15,31 @@ test.describe("Intelligence engine · report, freshness, feedback, compare, limi
     await expect(page.getByTestId("download-intelligence-pdf")).toBeVisible();
     await expect(page.getByTestId("open-compare-locations")).toBeVisible();
 
-    // First module card has verification badge, source count, freshness and confidence line.
-    const first = page.getByTestId("module-card-investment");
+    // Scores, grades and the buy verdict were withdrawn from this panel (see the
+    // note at the top of land-intelligence-score.tsx): it lists only modules
+    // with data behind them and says it scores nothing.
+    await expect(lios).toContainText("HALISIA publishes no score for this place");
+    await expect(lios).not.toContainText(/Grade [A-D]/);
+
+    // First measured module card: evidence status, source count, date, confidence.
+    const first = page.getByTestId("module-card-construction");
     await expect(first).toBeVisible();
-    await expect(first).toContainText(/Verified|AI-Estimated|Unverified/);
-    await expect(first).toContainText(/sources/);
+    await expect(first).toContainText(/Measured|Partly measured/);
+    await expect(first).toContainText(/\d+ sources?/);
     await expect(first).toContainText(/Confidence \d+%/);
 
-    // Expand the "Possible limitations" drilldown.
-    await first.click();
-    const limits = page.getByTestId("limits-investment");
-    await limits.getByRole("group").first().or(limits).click(); // open <details>
-    await expect(limits).toContainText(/Cannot verify from open data/);
+    // Expand the card, then its "What to verify next" drilldown.
+    await first.locator("summary").first().click();
+    const limits = page.getByTestId("limits-construction");
+    await limits.locator("summary").click();
     await expect(limits).toContainText(/Check this next/);
 
     // Feedback widget persists a thumbs-up rating to localStorage.
-    await page.getByTestId("fb-up-investment").click();
+    await page.getByTestId("fb-up-construction").click();
     const stored = await page.evaluate(() =>
       window.localStorage.getItem("halisia:module-feedback:v1"),
     );
-    expect(stored).toContain('"investment"');
+    expect(stored).toContain('"construction"');
     expect(stored).toContain('"rating":"up"');
   });
 
@@ -54,10 +59,12 @@ test.describe("Intelligence engine · report, freshness, feedback, compare, limi
     await download.saveAs(dest);
     const { readFileSync } = await import("node:fs");
     const raw = readFileSync(dest).toString("latin1");
-    expect(raw).toContain("Executive summary");
-    expect(raw).toContain("Module scores");
-    expect(raw).toContain("Possible limitations");
-    expect(raw).toContain("Recommended professionals");
+    // Section headings of the current report (src/lib/pdf-intelligence.ts).
+    expect(raw).toContain("LOCATION READINGS");
+    expect(raw).toContain("What was measured");
+    expect(raw).toContain("Who to bring in next");
+    // The scored report it replaced must not come back.
+    expect(raw).not.toContain("Module scores");
   });
 
   test("Compare Locations recomputes LIOS side-by-side and shows deltas", async ({ page }) => {
@@ -70,13 +77,21 @@ test.describe("Intelligence engine · report, freshness, feedback, compare, limi
     await expect(a).toBeVisible();
     await expect(b).toBeVisible();
 
-    // Both columns should eventually render a numeric score & a full module list.
-    await expect(a).toContainText(/Grade/i, { timeout: 45_000 });
-    await expect(b).toContainText(/Grade/i, { timeout: 45_000 });
+    // Both columns resolve and list what was measured, without a grade.
+    for (const col of [a, b]) {
+      await expect(col).toContainText(/\d+ measured · \d+ projected · \d+ not assessed/, {
+        timeout: 45_000,
+      });
+      await expect(col).not.toContainText(/Grade [A-D]/);
+    }
+    // A module counted as measured is labelled "Measured", not "Not assessed".
+    await expect(a.locator("li", { hasText: "Construction" })).toContainText("Measured");
 
-    // Δ table appears with driver reasons.
-    await expect(page.getByTestId("cmp-delta")).toBeVisible({ timeout: 45_000 });
-    await expect(page.getByTestId("cmp-delta")).toContainText(/What drives the difference/i);
-    await expect(page.getByTestId("cmp-delta")).toContainText(/Winner/i);
+    // The difference section explains why nothing is subtracted.
+    const delta = page.getByTestId("cmp-delta");
+    await expect(delta).toBeVisible({ timeout: 45_000 });
+    await expect(delta).toContainText(/What differs between the readings/i);
+    await expect(delta).toContainText(/HALISIA publishes no scores/);
+    await expect(delta).toContainText(/not a recommendation to buy/i);
   });
 });
