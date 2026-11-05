@@ -87,7 +87,7 @@ export function HoloTile({
       )}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 basis-56">
           {eyebrow && (
             <div
               className={cn(
