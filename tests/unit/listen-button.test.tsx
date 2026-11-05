@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import { render, screen, fireEvent, cleanup, act } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ListenButton } from "@/components/halisia/listen-button";
 
@@ -104,7 +104,7 @@ describe("ListenButton with browser speech", () => {
     const { spoken } = installSpeech();
     render(<ListenButton text="Hello." />);
     fireEvent.click(screen.getByRole("button", { name: "Listen: read aloud" }));
-    spoken[0].onerror!();
+    act(() => spoken[0].onerror!());
     expect(screen.getByRole("status")).toHaveTextContent("Voice unavailable");
   });
 });
