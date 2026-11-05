@@ -1,0 +1,29 @@
+name: E2E probe (temporary)
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: ["claude/e2e-probe-*"]
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: bunx playwright install --with-deps chromium
+      - run: bunx vite build --mode production
+        env:
+          NITRO_PRESET: node-server
+          E2E_READABLE_SERVER_FN_IDS: "1"
+      - name: Targeted browser tests (desktop)
+        run: bunx playwright test zz-probe amenities-and-maps design-studio geolocation-denied intelligence-engine-features loading-ui map-click multi-location passport-map-evidence search-nav-guide wave2-terrain wave4-provenance-fields --project=chromium
+        env:
+          CI: "1"
+          E2E_SERVER: prod
