@@ -22,10 +22,12 @@ test("PDF dossier button shows progress UI, then downloads", async ({ page }) =>
   expect(download.suggestedFilename().toLowerCase()).toMatch(/\.pdf$/);
 });
 
-test("Launch CTA on landing navigates into the workspace", async ({ page }) => {
+test("Launch CTA on landing takes the visitor to the map", async ({ page }) => {
   await page.goto("/");
   const cta = page.getByTestId("launch-cta");
   await expect(cta).toBeVisible();
   await cta.click();
-  await expect(page).toHaveURL(/\/explore/);
+  // "Start with a point" scrolls to the landing map, where the search lives.
+  await expect(page).toHaveURL(/#hero-map$/);
+  await expect(page.getByTestId("hero-map")).toBeInViewport();
 });

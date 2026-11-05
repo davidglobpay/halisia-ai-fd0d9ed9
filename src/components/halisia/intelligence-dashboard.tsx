@@ -3,7 +3,7 @@ import { amenityCount } from "@/lib/amenity-count";
 import { formatDateTime } from "@/lib/format-datetime";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import {
   Activity,
   Building2,
@@ -32,11 +32,9 @@ import {
 } from "lucide-react";
 import { getLocationIntel, type LocationIntel } from "@/lib/location-intel.functions";
 import { generateNarrative, type NarrativeOutput } from "@/lib/ai-narrative.functions";
-import { WeatherPanel } from "@/components/halisia/weather-panel";
 import { LeafletLayersMap } from "@/components/halisia/leaflet-layers-map";
 import { CesiumGlobe } from "@/components/halisia/cesium-globe";
 import { HeatmapMap } from "@/components/halisia/heatmap-map";
-import { TimelinePanel } from "@/components/halisia/timeline-panel";
 import { GeotechPanel } from "@/components/halisia/geotech-panel";
 import { getGeotechIntel } from "@/lib/geotech.functions";
 import { NotificationsBell } from "@/components/halisia/notifications-bell";
@@ -52,6 +50,24 @@ import { ExecutiveSummary } from "@/components/halisia/executive-summary";
 import { LandIntelligenceScore } from "@/components/halisia/land-intelligence-score";
 import { getWave4Intel, type Wave4Intel } from "@/lib/wave4-intel.functions";
 import { ReadAloud } from "@/components/halisia/read-aloud";
+
+// The weather and timeline charts pull in echarts (about 1 MB). They only
+// render once their tab is opened, so load them on demand instead of
+// shipping them with every Explore, Title deed and Report page.
+const WeatherPanel = lazy(() =>
+  import("@/components/halisia/weather-panel").then((m) => ({ default: m.WeatherPanel })),
+);
+const TimelinePanel = lazy(() =>
+  import("@/components/halisia/timeline-panel").then((m) => ({ default: m.TimelinePanel })),
+);
+
+function PanelLoading({ label }: { label: string }) {
+  return (
+    <p role="status" className="rounded-2xl border border-border p-4 text-sm text-muted-foreground">
+      Loading {label}…
+    </p>
+  );
+}
 
 type TabId =
   | "overview"
@@ -407,7 +423,11 @@ export function IntelligenceDashboard({
             <GeotechRisksInline lat={lat} lng={lng} />
           </>
         )}
-        {tab === "weather" && <WeatherPanel lat={lat} lng={lng} />}
+        {tab === "weather" && (
+          <Suspense fallback={<PanelLoading label="weather" />}>
+            <WeatherPanel lat={lat} lng={lng} />
+          </Suspense>
+        )}
         {tab === "environment" && <EnvironmentTab intel={intelQ.data} loading={intelQ.isLoading} />}
         {tab === "amenities" && (
           <>
@@ -453,7 +473,11 @@ export function IntelligenceDashboard({
             </div>
           </div>
         )}
-        {tab === "timeline" && <TimelinePanel lat={lat} lng={lng} />}
+        {tab === "timeline" && (
+          <Suspense fallback={<PanelLoading label="timeline" />}>
+            <TimelinePanel lat={lat} lng={lng} />
+          </Suspense>
+        )}
         {tab === "geotech" && <GeotechPanel lat={lat} lng={lng} address={address} />}
         {tab === "wave4" && <Wave4Panel lat={lat} lng={lng} />}
         {tab === "evidence" && (

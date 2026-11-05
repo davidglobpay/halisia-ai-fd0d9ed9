@@ -1,28 +1,28 @@
 import { test, expect } from "@playwright/test";
 
-test("county cards are keyboard accessible with ARIA labels and Enter/Space toggles selection", async ({
+test("county cards are labelled and their Compare button works from the keyboard", async ({
   page,
 }) => {
   await page.goto("/");
 
-  const firstCard = page.getByTestId("county-card-47"); // Nairobi
-  await expect(firstCard).toBeVisible({ timeout: 15_000 });
+  const card = page.getByTestId("county-card-47"); // Nairobi
+  await expect(card).toBeVisible({ timeout: 15_000 });
 
-  // ARIA label present and mentions the metric + county
-  const label = await firstCard.getAttribute("aria-label");
+  // The card is an information card whose label names the county and its sourced metric.
+  const label = await card.getAttribute("aria-label");
   expect(label).toBeTruthy();
   expect(label!.toLowerCase()).toContain("nairobi");
-  expect(label!.toLowerCase()).toContain("comparison");
+  expect(label!.toLowerCase()).toContain("census");
 
-  // Focus + Enter selects
-  await firstCard.focus();
-  await expect(firstCard).toBeFocused();
+  // Comparison is a separate button: Enter adds, Space removes.
+  const compare = card.getByRole("button", { name: /Nairobi .*comparison/i });
+  await compare.focus();
+  await expect(compare).toBeFocused();
+  await expect(compare).toHaveAttribute("aria-pressed", "false");
   await page.keyboard.press("Enter");
-  await expect(firstCard).toHaveAttribute("aria-pressed", "true");
-
-  // Space toggles back off
+  await expect(compare).toHaveAttribute("aria-pressed", "true");
   await page.keyboard.press(" ");
-  await expect(firstCard).toHaveAttribute("aria-pressed", "false");
+  await expect(compare).toHaveAttribute("aria-pressed", "false");
 
   // The map itself has an application role for AT users
   const map = page.getByTestId("county-map");
