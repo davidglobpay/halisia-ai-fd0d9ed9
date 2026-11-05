@@ -1,12 +1,18 @@
 import { expect, test } from "@playwright/test";
 import { waitForDownload } from "./helpers/download";
+import { stubLocationServices } from "./helpers/server-fns";
+import { waitForHydration } from "./helpers/hydration";
 
 test("Passport links into all five Design Studio concepts and generated massing", async ({
   page,
 }) => {
+  await stubLocationServices(page);
   await page.goto(
-    "/passport?lat=-1.286389&lng=36.817223&label=Nairobi&source=Test&status=approximate",
+    // -1.286389, 36.817223 is the default map centre, which the Passport
+    // rightly refuses as a parcel position, so use a deliberate test point.
+    "/passport?lat=-1.2741&lng=36.8155&label=Nairobi&source=Test&status=approximate",
   );
+  await waitForHydration(page, "open-design-studio");
   await page.getByTestId("open-design-studio").click();
   await expect(page).toHaveURL(/\/design-studio/);
   await expect(page.getByTestId("studio-context")).toContainText("Nairobi");
@@ -43,8 +49,11 @@ test("Passport links into all five Design Studio concepts and generated massing"
 });
 
 test("Passport PDF downloads when no AI interpretation was generated", async ({ page }) => {
+  await stubLocationServices(page);
   await page.goto(
-    "/passport?lat=-1.286389&lng=36.817223&label=Nairobi&source=Test&status=approximate",
+    // -1.286389, 36.817223 is the default map centre, which the Passport
+    // rightly refuses as a parcel position, so use a deliberate test point.
+    "/passport?lat=-1.2741&lng=36.8155&label=Nairobi&source=Test&status=approximate",
   );
   const download = waitForDownload(page);
   await page.getByTestId("passport-pdf").click();

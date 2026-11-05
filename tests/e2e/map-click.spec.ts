@@ -1,6 +1,8 @@
 import { test, expect } from "@playwright/test";
+import { stubLocationServices } from "./helpers/server-fns";
 
 test("clicking the map reverse-geocodes and updates the sidebar address", async ({ page }) => {
+  await stubLocationServices(page);
   await page.goto("/explore?q=Karen%2C%20Nairobi");
 
   // Wait for the default Nairobi address to render in the sidebar caption.
@@ -12,7 +14,10 @@ test("clicking the map reverse-geocodes and updates the sidebar address", async 
   // Give the map a chance to finish loading (script + tiles).
   await page.waitForTimeout(3500);
 
-  const mapCard = page.locator('[class*="glass-strong"]').first();
+  // The map itself: Google Maps, or the OpenStreetMap fallback when Google
+  // refuses this host (as it does for localhost in CI). Both accept clicks.
+  const mapCard = page.getByTestId("map-view").first();
+  await expect(mapCard).toBeVisible();
   const box = await mapCard.boundingBox();
   expect(box).not.toBeNull();
   if (!box) return;

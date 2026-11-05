@@ -1,8 +1,10 @@
 import { test, expect } from "@playwright/test";
+import { stubLocationServices } from "./helpers/server-fns";
 
 test("Wave 2 terrain — hover elevation, slope/relief stats, legend and refresh", async ({
   page,
 }) => {
+  await stubLocationServices(page);
   await page.goto("/explore?q=Kisumu");
   await expect(page.getByTestId("active-address")).toContainText(/Kisumu/i, { timeout: 30_000 });
 

@@ -111,3 +111,39 @@ No assertion was removed without a replacement that checks the current behaviour
 2. Compare failures against the baseline 108.
 3. Record the after-size of the intelligence dashboard chunk.
 4. Then mark #55 ready for review.
+
+## 8. Follow-up: first production-build run and test stand-ins (5 Nov, afternoon)
+
+The first browser run against the production build (release `f6497fa`, after #55 and with the repository public) gave **131 passed, 82 failed, 1 passed on retry**, against the dev-server baseline of 109 / 108. The Compare button now responds on the first click, which confirms the hydration root cause.
+
+### Why the 82 failed
+
+Diagnosed with temporary probe runs on `claude/e2e-probe-*` branches (they changed no app code and are not part of the PR).
+
+| Cause                                                                                                                                                                    | Tests                                          | Action                                                                           |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------- | -------------------------------------------------------------------------------- |
+| The CI server has no Supabase variables or Lovable keys, so geocoding, location intelligence and reverse geocoding return errors                                         | Explore journeys, Passport, compare, map click | Test stand-ins (below)                                                           |
+| The Passport fixture answered in plain JSON; the client only reads TanStack's serialized format                                                                          | Passport evidence ×3                           | Fixture uses the real wire format                                                |
+| The synthetic session was stored under a key the Supabase client never reads                                                                                             | Passport evidence                              | Key derived from the build's Supabase URL                                        |
+| Design Studio specs used the default map centre, which the Passport rightly refuses                                                                                      | Design Studio ×2                               | Use a deliberate test point                                                      |
+| Specs written for removed features: floating search and Ctrl+K (removed 27 Sep, `0579826`), landing My Location, scored modules, grades and foundation cards (`8bbad9b`) | Search, geolocation, intelligence, geotech     | Specs follow the current screens and assert the withdrawn features do not return |
+| Protected Spatial specs (empty parcel list without an authorised account)                                                                                                | about 31                                       | Not touched                                                                      |
+| Lovable-hosted images (`/__l5e/assets-v1/`) and visual snapshots                                                                                                         | about 15                                       | Expected in CI                                                                   |
+| Throttled first paint 26.8 s against a 20 s budget                                                                                                                       | 2                                              | Open; see defects                                                                |
+
+### Test stand-ins
+
+`tests/e2e/helpers/server-fns.ts` answers `geocodeAddress`, `reverseGeocode` and `getLocationIntel` with synthetic data labelled "test fixture" or "not real evidence", serialized exactly as the production server does (seroval with `x-tss-serialized`). Every other server call still reaches the test server. Nothing is stored or used as evidence. Production builds are unchanged.
+
+### Defects found by the new runs
+
+| #   | Severity | Defect                                                                                                                                                                                    | Status                                                                                                                         |
+| --- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| 12  | P2       | The compare page said "3 measured" but listed every module as "Not assessed", and claimed HALISIA held no data for 10 of 10 modules                                                       | Fixed: measured modules read "Measured", and the panel explains that nothing is subtracted because HALISIA publishes no scores |
+| 13  | P2       | On the GIS layers map, the Back button covered the "Distance" measuring tool, so it could not be tapped                                                                                   | Fixed: that map leaves out Back, as the county map already does                                                                |
+| 14  | P2       | A tap made before the page finishes loading can be undone when the router takes over ("Start with a point" returned to the top; the Passport's Design Studio link stayed on the Passport) | Open: specs wait for hydration; needs a router-level fix and a phone check                                                     |
+| 15  | P3       | Home page first paint under throttled mobile conditions: 26.8 s against a 20 s budget                                                                                                     | Open: performance follow-up                                                                                                    |
+
+### Targeted results before the full run (desktop, production build)
+
+PASS: Explore amenities, geotech, dossier PDF and progress, Kisumu / Mombasa / Nairobi journeys, terrain, provenance export, map click, landing map search, Explore search, the guided tour, the intelligence panel and its PDF, compare, all five Passport evidence specs, and both Design Studio specs. The full six-shard result for this PR is recorded in the PR.

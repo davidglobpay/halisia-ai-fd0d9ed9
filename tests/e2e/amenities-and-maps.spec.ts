@@ -1,14 +1,17 @@
 import { test, expect } from "@playwright/test";
+import { stubLocationServices } from "./helpers/server-fns";
 
 test("Nearby Amenities — first place card shows distance, drive time, status pill", async ({
   page,
 }) => {
+  await stubLocationServices(page);
   await page.goto("/explore?q=Nairobi");
   await expect(page.getByTestId("active-address")).toContainText(/Nairobi/i, { timeout: 30_000 });
 
   // Amenities live inside the intelligence dashboard.
   const dash = page.getByTestId("intel-dashboard");
   await expect(dash).toBeVisible({ timeout: 30_000 });
+  await page.getByTestId("tab-amenities").click();
 
   // First place card
   const card = page
@@ -28,18 +31,20 @@ test("Nearby Amenities — first place card shows distance, drive time, status p
 test("Geotech — soil layer toggles hide/show cells and foundation cards render 4", async ({
   page,
 }) => {
+  await stubLocationServices(page);
   await page.goto("/explore?q=Nairobi");
   await expect(page.getByTestId("active-address")).toContainText(/Nairobi/i, { timeout: 30_000 });
   // Geotech tab (Wave 3)
-  const tab = page.getByRole("tab", { name: /geotech/i }).first();
-  if (await tab.count()) await tab.click();
+  // Dashboard sections are toggle buttons (aria-pressed), not ARIA tabs.
+  await page.getByTestId("tab-geotech").click();
   const panel = page.getByTestId("geotech-panel");
   await expect(panel).toBeVisible({ timeout: 45_000 });
 
-  const foundations = panel
-    .getByTestId("foundation-comparison")
-    .locator("[data-testid^=foundation-card-]");
-  await expect(foundations).toHaveCount(4);
+  // Foundation recommendations and costed risk cards were withdrawn on purpose
+  // (8bbad9b): foundation design needs a licensed site investigation, not a
+  // regional model. The panel must say so and must not bring them back.
+  await expect(panel.getByTestId("geotech-disclaimer")).toBeVisible();
+  await expect(panel.getByTestId("foundation-comparison")).toHaveCount(0);
 
   const clayToggle = panel.getByTestId("soil-toggle-clay");
   await expect(clayToggle).toHaveAttribute("aria-pressed", "true");
@@ -48,21 +53,15 @@ test("Geotech — soil layer toggles hide/show cells and foundation cards render
   await clayToggle.click();
   await expect(clayToggle).toHaveAttribute("aria-pressed", "false");
   await expect(clayCell).toHaveCount(0);
-
-  // Risk cards with mitigation + cost impact expand
-  const firstRisk = panel.getByTestId("risk-cards").locator("[data-testid^=risk-card-]").first();
-  await expect(firstRisk).toContainText(/cost/i);
-  await firstRisk.locator("button").first().click();
-  await expect(firstRisk).toContainText(/KES/);
 });
 
 test("Map tools — distance and area readouts, export downloads geojson", async ({ page }) => {
+  await stubLocationServices(page);
   await page.goto("/explore?q=Nairobi");
   await expect(page.getByTestId("active-address")).toContainText(/Nairobi/i, { timeout: 30_000 });
 
   // Open the multi-source GIS tab which uses leaflet with the tools.
-  const gisTab = page.getByRole("tab", { name: /gis|leaflet|multi-source/i }).first();
-  if (await gisTab.count()) await gisTab.click();
+  await page.getByTestId("tab-layers").click();
 
   const tools = page.getByTestId("map-tools").first();
   await expect(tools).toBeVisible({ timeout: 30_000 });

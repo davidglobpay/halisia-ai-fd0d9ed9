@@ -14,8 +14,11 @@ function Fallback() {
 }
 
 export function LeafletLayersMap(props: { lat: number; lng: number; label: string }) {
+  // The measuring toolbar (Distance, Area, Draw, Export) sits top-left, where
+  // MapFrame's Back button would cover "Distance". The page and the browser
+  // already offer Back, so this map leaves it out, like the county map.
   return (
-    <MapFrame>
+    <MapFrame showBack={false}>
       <ClientOnly fallback={<Fallback />}>
         <Suspense fallback={<Fallback />}>
           <InnerLeaflet {...props} />

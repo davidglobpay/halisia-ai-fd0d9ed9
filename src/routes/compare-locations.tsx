@@ -399,18 +399,23 @@ function LocationColumn({
               <li
                 key={m.id}
                 className={`flex items-center justify-between gap-2 rounded-md border px-2 py-1 ${
-                  m.score != null
+                  m.score != null || m.status === "measured"
                     ? "border-white/5 bg-white/[0.02]"
                     : "border-dashed border-white/10 bg-transparent text-muted-foreground"
                 }`}
               >
                 <span className="truncate">{m.label}</span>
                 <span className="tabular-nums font-medium">
+                  {/* Scores were withdrawn, so a measured module has no number.
+                      It is still measured: saying "Not assessed" contradicted
+                      the "N measured" count above. */}
                   {m.score != null
                     ? m.score
-                    : m.status === "projected"
-                      ? "Projected"
-                      : "Not assessed"}
+                    : m.status === "measured"
+                      ? "Measured"
+                      : m.status === "projected"
+                        ? "Projected"
+                        : "Not assessed"}
                 </span>
               </li>
             ))}
@@ -444,6 +449,10 @@ function DeltaTable({ a, b, persona }: { a: DecisionOutput; b: DecisionOutput; p
     const bm = bMap.get(am.id);
     return am.score == null || bm?.score == null;
   });
+  // Measured at both places, but HALISIA publishes no score to subtract.
+  const measuredAtBoth = notComparable.filter(
+    (am) => am.status === "measured" && bMap.get(am.id)?.status === "measured",
+  );
 
   const bothHaveReading = a.reading != null && b.reading != null;
   const readingDelta = bothHaveReading ? a.reading! - b.reading! : null;
@@ -521,8 +530,7 @@ function DeltaTable({ a, b, persona }: { a: DecisionOutput; b: DecisionOutput; p
       {notComparable.length > 0 && (
         <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
           <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-            Not comparable — HALISIA holds no data for {notComparable.length} of {a.modules.length}{" "}
-            modules at one or both locations
+            No difference computed for {notComparable.length} of {a.modules.length} modules
           </div>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {notComparable.map((m) => (
@@ -535,8 +543,11 @@ function DeltaTable({ a, b, persona }: { a: DecisionOutput; b: DecisionOutput; p
             ))}
           </div>
           <p className="mt-2 text-[11px] text-muted-foreground">
-            These are not scored at either location, so no difference can be computed. Each
-            location's report lists what to check instead.
+            HALISIA publishes no scores, so these modules are listed, not subtracted.
+            {measuredAtBoth.length > 0
+              ? ` ${measuredAtBoth.length} ${measuredAtBoth.length === 1 ? "is" : "are"} measured at both locations: open each location's report to read them side by side. The rest are not held by HALISIA at one or both locations.`
+              : " None is measured at both locations."}{" "}
+            Each location's report lists what to check instead.
           </p>
         </div>
       )}
