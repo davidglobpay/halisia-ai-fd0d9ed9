@@ -9,7 +9,6 @@
  *   glTF Sample Assets.
  */
 import * as THREE from "three";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 export type RealModelMarker = {
   kind: "sofa";
@@ -37,8 +36,9 @@ const cache = new Map<string, Promise<Prepared | null>>();
 function load(kind: RealModelMarker["kind"]): Promise<Prepared | null> {
   const hit = cache.get(kind);
   if (hit) return hit;
-  const p = new GLTFLoader()
-    .loadAsync(MODEL_URLS[kind])
+  // The loader itself is fetched on first use, keeping it out of the first download.
+  const p = import("three/examples/jsm/loaders/GLTFLoader.js")
+    .then(({ GLTFLoader }) => new GLTFLoader().loadAsync(MODEL_URLS[kind]))
     .then((gltf) => {
       const scene = gltf.scene;
       // Centre on the floor: x/z about the middle, y from the lowest point.
