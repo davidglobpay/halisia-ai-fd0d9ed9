@@ -257,7 +257,10 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
       if (reframe && modeRef.current === "orbit") frameOrbit(e);
       setInfo({ house: built, plan });
       // Swap the box sofas for real models once they have downloaded.
-      void upgradeFurniture(built.group);
+      void upgradeFurniture(built.group).then((n) => {
+        // Read by browser tests: how many real models replaced boxes.
+        if (n > 0) e.renderer.domElement.dataset.realModels = String(n);
+      });
     },
     [params.structure, params.typology, params.floorAreaM2],
   );
@@ -567,8 +570,17 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
           if (e.scene.environmentIntensity > 0.1) e.scene.environmentIntensity = e.envDay;
         }
       }
-      if (e.hq && e.finisher && !renderer.xr.isPresenting) e.finisher.render(e.camera);
+      const fin = e.hq && !renderer.xr.isPresenting ? e.finisher : null;
+      if (fin) fin.render(e.camera);
       else renderer.render(e.scene, e.camera);
+      // Read by browser tests and support: when the first frame was drawn,
+      // whether the effects are drawing, and the pixel density in use.
+      const ds = canvas.dataset;
+      if (!ds.firstFrameMs) ds.firstFrameMs = String(Math.round(now));
+      const fx = fin ? "on" : "off";
+      if (ds.effects !== fx) ds.effects = fx;
+      const pr = String(renderer.getPixelRatio());
+      if (ds.pixelRatio !== pr) ds.pixelRatio = pr;
     });
 
     placeHouse(false);
