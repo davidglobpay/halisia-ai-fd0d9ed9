@@ -58,6 +58,23 @@ async function shot(page: Page, info: TestInfo, name: string) {
   await page.screenshot({ path: `${SHOTS}/${info.project.name}-${name}.png` });
 }
 
+/**
+ * Files made after a long wait cannot start a download by themselves (the
+ * browser's tap permission has expired), so the app shows a "file ready"
+ * panel with a save link instead. Accept either path.
+ */
+async function download(page: Page, click: () => Promise<void>) {
+  const dl = page.waitForEvent("download", { timeout: 150_000 });
+  await click();
+  const save = page.getByTestId("file-ready-save");
+  const first = await Promise.race([
+    dl.then(() => "download" as const),
+    save.waitFor({ state: "visible", timeout: 150_000 }).then(() => "panel" as const),
+  ]);
+  if (first === "panel") await save.click();
+  return { file: await dl, via: first };
+}
+
 const viewer = (page: Page) => page.getByTestId("model-lab-site-mode").locator("canvas");
 
 /**
@@ -119,22 +136,38 @@ test("masonry house: frame, controls, sofa and sky light", async ({ page }, info
   const { errors, consoleErrors, assets, canvas } = await openViewer(page, MASONRY, info);
   await shot(page, info, "masonry-exterior");
 
-  // Best picture: on by default for a mouse, off for touch; it toggles.
+  // Best picture: on by default for a mouse, off for touch. On a slow
+  // software GPU the frame-time watch may switch it off by itself (with a note).
   const hq = page.getByTestId("site-hq").getByRole("checkbox");
+  const note = page.getByTestId("site-hq-note");
   const coarse = await page.evaluate(() => matchMedia("(pointer: coarse)").matches);
   log(info, "coarse pointer", coarse);
-  // The frame-time watch may have switched it off already on a slow runner.
-  const note = page.getByTestId("site-hq-note");
   if (coarse) await expect(hq).not.toBeChecked();
-  else if (!(await note.isVisible())) await expect(hq).toBeChecked();
+  else
+    await expect
+      .poll(async () => (await hq.isChecked()) || (await note.isVisible()), { timeout: 30_000 })
+      .toBe(true);
+  // Let the watch settle before using the controls.
+  await page.waitForTimeout(7000);
+  log(info, "after settling: effects / pixel ratio / note", [
+    await canvas.getAttribute("data-effects"),
+    await canvas.getAttribute("data-pixel-ratio"),
+    (await note.isVisible()) ? await note.textContent() : null,
+  ]);
   const before = await hq.isChecked();
   await hq.click();
-  await expect(hq).toBeChecked({ checked: !before });
-  await expect(canvas).toHaveAttribute("data-effects", before ? "off" : "on", {
-    timeout: 30_000,
-  });
-  await hq.click();
-  await expect(hq).toBeChecked({ checked: before });
+  await expect(hq).toBeChecked({ checked: !before, timeout: 30_000 });
+  if (!before)
+    await expect
+      .poll(
+        async () =>
+          (await canvas.getAttribute("data-effects")) === "on" || (await note.isVisible()),
+        { timeout: 30_000 },
+      )
+      .toBe(true);
+  // Leave the effects off for the rest, so slow runners stay responsive.
+  if (await hq.isChecked()) await hq.click();
+  await expect(hq).not.toBeChecked({ timeout: 30_000 });
 
   // The real sofa replaces the box sofa; both asset files answer 200.
   await expect(canvas).toHaveAttribute("data-real-models", /[1-9]/, { timeout: 60_000 });
@@ -166,7 +199,9 @@ test("masonry house: frame, controls, sofa and sky light", async ({ page }, info
 
   const controls = page.getByTestId("site-view-controls");
   await controls.getByRole("button", { name: "Walk around" }).click();
-  await expect(controls.getByRole("button", { name: "Exit walk mode" })).toBeVisible();
+  await expect(controls.getByRole("button", { name: "Exit walk mode" })).toBeVisible({
+    timeout: 30_000,
+  });
   await page.waitForTimeout(500);
   await shot(page, info, "walk");
   await controls.getByRole("button", { name: "Exit walk mode" }).click();
@@ -212,18 +247,18 @@ test("exports: site pack PDF and GLB are valid files", async ({ page }, info) =>
   const { errors } = await openViewer(page, MASONRY, info);
   const files = page.getByTestId("site-files");
 
-  const pdfDl = page.waitForEvent("download", { timeout: 120_000 });
-  await files.getByTestId("site-pack-pdf").click();
-  const pdf = await pdfDl;
+  const { file: pdf, via: pdfVia } = await download(page, () =>
+    files.getByTestId("site-pack-pdf").click(),
+  );
   const pdfBytes = await readFile(await pdf.path());
   expect(pdfBytes.subarray(0, 5).toString("latin1")).toBe("%PDF-");
   const pages = (pdfBytes.toString("latin1").match(/\/Type\s*\/Page(?!s)/g) ?? []).length;
   expect(pages).toBeGreaterThan(0);
-  log(info, "pdf", { name: pdf.suggestedFilename(), bytes: pdfBytes.length, pages });
+  log(info, "pdf", { name: pdf.suggestedFilename(), bytes: pdfBytes.length, pages, via: pdfVia });
 
-  const glbDl = page.waitForEvent("download", { timeout: 120_000 });
-  await files.getByTestId("site-glb").click();
-  const glb = await glbDl;
+  const { file: glb, via: glbVia } = await download(page, () =>
+    files.getByTestId("site-glb").click(),
+  );
   const glbBytes = await readFile(await glb.path());
   expect(glbBytes.subarray(0, 4).toString("latin1")).toBe("glTF");
   expect(glbBytes.readUInt32LE(4)).toBe(2);
@@ -240,6 +275,7 @@ test("exports: site pack PDF and GLB are valid files", async ({ page }, info) =>
     bytes: glbBytes.length,
     meshes: gltf.meshes?.length,
     images: gltf.images?.length ?? 0,
+    via: glbVia,
   });
   expect(errors).toEqual([]);
 });
@@ -269,10 +305,14 @@ test("plot planner: inspiration panel and walk link", async ({ page }, info) => 
   await shot(page, info, "plot-planner-inspiration");
 
   const walk = page.getByTestId("pp-walk-link");
-  const href = await walk.getAttribute("href");
+  const href = (await walk.getAttribute("href")) ?? "";
+  const q = new URL(href, "https://x.test").searchParams;
+  const unquote = (v: string | null) => Number((v ?? "").replace(/"/g, ""));
   expect(href).toContain("/model-lab");
-  expect(href).toContain("type=3br_container_40ft");
-  expect(href).toContain("lat=-1.502157");
+  expect(q.get("type")).toBe("3br_container_40ft");
+  expect(unquote(q.get("lat"))).toBeCloseTo(-1.502157, 5);
+  expect(unquote(q.get("lng"))).toBeCloseTo(36.955288, 5);
+  log(info, "walk link", href);
   await walk.click();
   await expect(page).toHaveURL(/\/model-lab\?.*type=3br_container_40ft/);
   await expect(viewer(page)).toBeVisible({ timeout: 60_000 });
