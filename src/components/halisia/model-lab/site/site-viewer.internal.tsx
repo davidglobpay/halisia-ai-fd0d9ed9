@@ -782,7 +782,6 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
         `The 3D model could not be saved: ${(err as Error)?.message ?? "export failed"}`,
       );
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fileBase]);
 
   const prepareQuickLook = useCallback(async () => {
@@ -796,7 +795,6 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
     } catch (err) {
       setFileError(`AR file could not be made: ${(err as Error)?.message ?? "export failed"}`);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(
     () => () => {
