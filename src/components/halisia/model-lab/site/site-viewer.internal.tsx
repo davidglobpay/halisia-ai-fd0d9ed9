@@ -3,21 +3,48 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js";
 import { USDZExporter } from "three/examples/jsm/exporters/USDZExporter.js";
+import { Sky } from "three/examples/jsm/objects/Sky.js";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 
 import { getElevationSamples } from "@/lib/elevation.functions";
+import { getBuildCost } from "@/lib/cost-intel.functions";
+import { DEFAULT_BUILD_SELECTION, comparisonTotalText, kes } from "@/lib/cost-intel";
+import { countyForPoint } from "@/lib/location-validation";
+import { KENYA_COUNTY_FACTS } from "@/lib/kenya-county-facts";
+import { imageryTiles, metresPerPixel, typologyName } from "@/lib/plot-placement";
+import { deliverBlob } from "@/lib/pdf-delivery";
+import { downloadSitePackPdf, type SitePackView } from "@/lib/pdf-site-pack";
 import { KitButton } from "@/components/halisia/ds/button";
 import { disposeSubtree } from "../disposal";
 import { QUICK_LOOK_UNAVAILABLE_MESSAGE, labPlatformFromUA, type LabPlatform } from "../device";
-import { buildHouse } from "./house-geometry";
+import { planFoundation, type FoundationPlan } from "./foundation";
 import { SCHEMATIC_LABEL, structureLabel } from "./house-spec";
+import {
+  buildFoundation,
+  buildSiteHouse,
+  scaleFigure,
+  setHouseLights,
+  type SiteHouse,
+} from "./site-house";
+import { describeStyle, loadInspiration, type DesignStyle } from "./design-style";
+import { InspirationPanel } from "./inspiration-panel";
 import type { SiteParams } from "./site-params";
-import { heightAt, loadSiteTerrain, siteDisclaimer, type SiteTerrain } from "./site-terrain";
+import {
+  SITE_SPAN_M,
+  heightAt,
+  loadSiteTerrain,
+  siteDisclaimer,
+  type SiteTerrain,
+} from "./site-terrain";
 import { eatInstant, solarPosition, sunDirection } from "./solar";
 
 const EYE_M = 1.6;
 const BODY_M = 1.75;
 const RADIUS_M = 0.25;
 const WALK_SPEED = 1.6; // m/s
+const IMAGERY_ZOOM = 19;
+/** Footings go this far below the lowest ground so nothing floats. */
+const EMBED_M = 0.4;
 
 type Engine = {
   renderer: THREE.WebGLRenderer;
@@ -26,19 +53,89 @@ type Engine = {
   controls: OrbitControls;
   sun: THREE.DirectionalLight;
   hemi: THREE.HemisphereLight;
-  house: THREE.Group;
+  sky: Sky;
+  /** Positioned at finished-floor height; holds the house and its footings. */
+  root: THREE.Group;
+  built: SiteHouse | null;
+  plan: FoundationPlan | null;
+  floorY: number;
   colliders: THREE.Box3[];
   ground: THREE.Group | null;
-  floors: THREE.Object3D[];
   terrain: SiteTerrain | null;
   yaw: number;
   pitch: number;
   baseRef: XRReferenceSpace | null;
+  envTex: THREE.Texture;
+  /** A standing person beside the house, for scale. */
+  person: THREE.Group;
 };
+
+type Imagery = { canvas: HTMLCanvasElement; tint: number } | null;
 
 function todayIso() {
   const d = new Date(Date.now() + 3 * 3600_000);
   return d.toISOString().slice(0, 10);
+}
+
+function loadImage(src: string): Promise<HTMLImageElement | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+}
+
+/** Esri World Imagery cropped to the terrain square, plus its average colour. */
+async function loadSiteImagery(lat: number, lng: number): Promise<Imagery> {
+  const block = imageryTiles(lat, lng, IMAGERY_ZOOM, 2);
+  if (!block) return null;
+  const mosaic = document.createElement("canvas");
+  mosaic.width = block.sizePx;
+  mosaic.height = block.sizePx;
+  const mctx = mosaic.getContext("2d");
+  if (!mctx) return null;
+  const imgs = await Promise.all(block.tiles.map((t) => loadImage(t.src)));
+  let loaded = 0;
+  imgs.forEach((img, i) => {
+    if (!img) return;
+    loaded++;
+    mctx.drawImage(img, block.tiles[i].px, block.tiles[i].py, 256, 256);
+  });
+  if (loaded < block.tiles.length * 0.6) return null;
+  const span = Math.round(SITE_SPAN_M / metresPerPixel(lat, IMAGERY_ZOOM));
+  const crop = document.createElement("canvas");
+  crop.width = span;
+  crop.height = span;
+  const cctx = crop.getContext("2d");
+  if (!cctx) return null;
+  cctx.drawImage(
+    mosaic,
+    block.pointPx.x - span / 2,
+    block.pointPx.y - span / 2,
+    span,
+    span,
+    0,
+    0,
+    span,
+    span,
+  );
+  let tint = 0x8a8466;
+  try {
+    const one = document.createElement("canvas");
+    one.width = 1;
+    one.height = 1;
+    const octx = one.getContext("2d");
+    if (octx) {
+      octx.drawImage(crop, 0, 0, 1, 1);
+      const [r, g, b] = octx.getImageData(0, 0, 1, 1).data;
+      tint = (r << 16) | (g << 8) | b;
+    }
+  } catch {
+    /* tainted canvas — keep the default tint */
+  }
+  return { canvas: crop, tint };
 }
 
 export default function SiteViewer({ params }: { params: SiteParams }) {
@@ -49,6 +146,7 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
   const touchMove = useRef(0);
 
   const [terrain, setTerrain] = useState<SiteTerrain | null>(null);
+  const [imagery, setImagery] = useState<Imagery | "loading">("loading");
   const [mode, setMode] = useState<"orbit" | "walk">("orbit");
   const [date, setDate] = useState(todayIso);
   const [hour, setHour] = useState(10);
@@ -59,12 +157,84 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
   const [vrError, setVrError] = useState<string | null>(null);
   const [platform, setPlatform] = useState<LabPlatform>("desktop");
   const [coarse, setCoarse] = useState(false);
-  const [glbUrl, setGlbUrl] = useState<string | null>(null);
+  const [reduced, setReduced] = useState(false);
+  const [stacked, setStacked] = useState(false);
+  const [style, setStyle] = useState<DesignStyle | null>(null);
+  const styleRef = useRef<DesignStyle | null>(null);
+  styleRef.current = style;
+  /** True between dusk and dawn: the house lights are on. */
+  const nightRef = useRef(false);
+  const [seeInside, setSeeInside] = useState(false);
+  const [cinematic, setCinematic] = useState(false);
+  const [info, setInfo] = useState<{ house: SiteHouse; plan: FoundationPlan } | null>(null);
   const [usdzUrl, setUsdzUrl] = useState<string | null>(null);
-  const [exportState, setExportState] = useState<"idle" | "busy" | "done" | "error">("idle");
-  const [exportError, setExportError] = useState<string | null>(null);
+  const [glbState, setGlbState] = useState<"idle" | "busy" | "done" | "error">("idle");
+  const [packState, setPackState] = useState<"idle" | "busy" | "done" | "error">("idle");
+  const [fileError, setFileError] = useState<string | null>(null);
 
   modeRef.current = mode;
+  const seeInsideRef = useRef(false);
+  seeInsideRef.current = seeInside;
+
+  /* ---------------- house placement (on build, terrain or stack change) */
+  const placeHouse = useCallback(
+    (stack: boolean, reframe = true) => {
+      const e = eng.current;
+      if (!e) return;
+      for (const child of [...e.root.children]) {
+        e.root.remove(child);
+        disposeSubtree(child);
+      }
+      const built = buildSiteHouse({
+        structure: params.structure,
+        typology: params.typology,
+        floorAreaM2: params.floorAreaM2,
+        stacked: stack,
+        style: styleRef.current,
+      });
+      const t = e.terrain;
+      const samples: number[] = [];
+      for (const r of built.groundRects)
+        for (const x of [r.x0, (r.x0 + r.x1) / 2, r.x1])
+          for (const z of [r.z0, (r.z0 + r.z1) / 2, r.z1]) samples.push(t ? heightAt(t, x, z) : 0);
+      const hi = Math.max(...samples);
+      const lo = Math.min(...samples);
+      const terrainKnown = t?.kind === "terrain";
+      const plan = planFoundation({
+        structure: params.structure,
+        dropM: terrainKnown ? hi - lo : null,
+        stacked: built.levels > 1,
+        source: t?.kind === "terrain" ? `${t.dataset} (${t.resolution})` : null,
+      });
+      const floorY = hi + plan.clearanceM;
+      e.root.add(built.group);
+      e.root.add(buildFoundation(built, plan, floorY - lo + EMBED_M));
+      e.root.position.set(0, floorY, 0);
+      for (const o of built.cutaway) o.visible = !seeInsideRef.current;
+      setHouseLights(built, nightRef.current);
+      const px = built.lengthM / 2 + 1.2;
+      const pz = built.widthM / 2 + 1.6;
+      e.person.position.set(px, t ? heightAt(t, px, pz) : 0, pz);
+      e.person.rotation.y = -0.6;
+      e.built = built;
+      e.plan = plan;
+      e.floorY = floorY;
+      e.colliders = built.colliders.map((b) =>
+        b.clone().translate(new THREE.Vector3(0, floorY, 0)),
+      );
+      const size = Math.max(built.lengthM, built.widthM);
+      const sc = e.sun.shadow.camera as THREE.OrthographicCamera;
+      const half = Math.max(30, size * 0.9);
+      sc.left = -half;
+      sc.right = half;
+      sc.top = half;
+      sc.bottom = -half;
+      sc.updateProjectionMatrix();
+      if (reframe && modeRef.current === "orbit") frameOrbit(e);
+      setInfo({ house: built, plan });
+    },
+    [params.structure, params.typology, params.floorAreaM2],
+  );
 
   /* ---------------- engine (once) */
   useEffect(() => {
@@ -72,7 +242,8 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
     if (!host) return;
     setPlatform(labPlatformFromUA(navigator.userAgent, navigator.maxTouchPoints));
     setCoarse(window.matchMedia("(pointer: coarse)").matches);
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    setReduced(reducedMotion);
 
     let renderer: THREE.WebGLRenderer;
     try {
@@ -84,6 +255,7 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 0.85;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.xr.enabled = true;
@@ -97,38 +269,49 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
     host.appendChild(canvas);
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xdfe9f2);
-    scene.fog = new THREE.Fog(0xdfe9f2, 150, 900);
-    const camera = new THREE.PerspectiveCamera(55, 16 / 9, 0.05, 3000);
+    scene.background = new THREE.Color(0xc9d7e3);
+    scene.fog = new THREE.Fog(0xc9d7e3, 260, 1500);
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    const envTex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    pmrem.dispose();
+    scene.environment = envTex;
+    scene.environmentIntensity = 0.45;
+
+    const sky = new Sky();
+    sky.scale.setScalar(2400);
+    const su = sky.material.uniforms;
+    su["turbidity"].value = 5;
+    su["rayleigh"].value = 1.4;
+    su["mieCoefficient"].value = 0.004;
+    su["mieDirectionalG"].value = 0.8;
+    scene.add(sky);
+
+    const camera = new THREE.PerspectiveCamera(50, 16 / 9, 0.05, 3000);
     camera.rotation.order = "YXZ";
-    camera.position.set(14, 9, 18);
+    camera.position.set(16, 9, 20);
 
     const controls = new OrbitControls(camera, canvas);
-    controls.enableDamping = !reduced;
+    controls.enableDamping = !reducedMotion;
     controls.target.set(0, 1.2, 0);
-    controls.maxPolarAngle = Math.PI / 2 - 0.05;
+    controls.maxPolarAngle = Math.PI / 2 - 0.03;
+    controls.autoRotateSpeed = 0.5;
 
-    const hemi = new THREE.HemisphereLight(0xe8f0ff, 0x6b5b40, 0.6);
-    const sunLight = new THREE.DirectionalLight(0xfff4e0, 2.4);
+    const hemi = new THREE.HemisphereLight(0xdfe9ff, 0x6b5b40, 0.5);
+    const sunLight = new THREE.DirectionalLight(0xfff1dc, 3.0);
     sunLight.castShadow = true;
     sunLight.shadow.mapSize.set(2048, 2048);
     const sc = sunLight.shadow.camera as THREE.OrthographicCamera;
-    sc.left = -30;
-    sc.right = 30;
-    sc.top = 30;
-    sc.bottom = -30;
     sc.near = 1;
-    sc.far = 200;
-    sunLight.shadow.bias = -0.0005;
-    sunLight.shadow.normalBias = 0.04;
+    sc.far = 260;
+    sunLight.shadow.bias = -0.0004;
+    sunLight.shadow.normalBias = 0.03;
     scene.add(hemi, sunLight, sunLight.target);
 
-    const built = buildHouse(params.structure, params.floorAreaM2);
-    scene.add(built.group);
-    const floors: THREE.Object3D[] = [];
-    built.group.traverse((o) => {
-      if ((o as THREE.Mesh).isMesh && o.position.y < 0.1) floors.push(o);
-    });
+    const root = new THREE.Group();
+    root.name = "house-on-site";
+    scene.add(root);
+    const person = scaleFigure();
+    scene.add(person);
 
     eng.current = {
       renderer,
@@ -137,14 +320,19 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
       controls,
       sun: sunLight,
       hemi,
-      house: built.group,
-      colliders: built.colliders,
+      sky,
+      root,
+      built: null,
+      plan: null,
+      floorY: 0,
+      colliders: [],
       ground: null,
-      floors,
       terrain: null,
       yaw: 0,
       pitch: 0,
       baseRef: null,
+      envTex,
+      person,
     };
 
     const resize = () => {
@@ -225,10 +413,7 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
         tmpM.identity().extractRotation(ctrl.matrixWorld);
         raycaster.ray.origin.setFromMatrixPosition(ctrl.matrixWorld);
         raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tmpM);
-        const hit = raycaster.intersectObjects(
-          [...(e.ground ? [e.ground] : []), ...e.floors],
-          true,
-        )[0];
+        const hit = raycaster.intersectObjects([...(e.ground ? [e.ground] : []), e.root], true)[0];
         if (hit) teleportTo(hit.point);
       });
       scene.add(ctrl);
@@ -237,8 +422,8 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
       const e = eng.current;
       if (!e) return;
       e.baseRef = renderer.xr.getReferenceSpace();
-      const start = new THREE.Vector3(0, e.terrain ? heightAt(e.terrain, 0, 9) : 0, 9);
-      teleportTo(start);
+      const z = (e.built?.widthM ?? 10) / 2 + 6;
+      teleportTo(new THREE.Vector3(0, e.terrain ? heightAt(e.terrain, 0, z) : 0, z));
       setInVr(true);
     };
     const onSessionEnd = () => {
@@ -287,14 +472,15 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
           const dx = (fwd.x * f + right.x * s) * WALK_SPEED * dt;
           const dz = (fwd.z * f + right.z * s) * WALK_SPEED * dt;
           const p = e.camera.position;
-          const t = e.terrain;
-          const feetAt = (x: number, z: number) => (t ? heightAt(t, x, z) : 0);
+          const feetAt = (x: number, z: number) => {
+            const g = e.terrain ? heightAt(e.terrain, x, z) : 0;
+            return insideHouse(e, x, z) ? Math.max(g, e.floorY + 0.12) : g;
+          };
           if (dx && !blocked(p.x + dx, p.z, feetAt(p.x + dx, p.z))) p.x += dx;
           if (dz && !blocked(p.x, p.z + dz, feetAt(p.x, p.z + dz))) p.z += dz;
           p.x = Math.max(-95, Math.min(95, p.x));
           p.z = Math.max(-95, Math.min(95, p.z));
-          // Inside the house the slab is the floor.
-          p.y = Math.max(feetAt(p.x, p.z), inside(e, p.x, p.z) ? 0.1 : -Infinity) + EYE_M;
+          p.y = feetAt(p.x, p.z) + EYE_M;
           e.camera.rotation.set(e.pitch, e.yaw, 0, "YXZ");
         } else {
           e.controls.update();
@@ -302,6 +488,8 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
       }
       renderer.render(e.scene, e.camera);
     });
+
+    placeHouse(false);
 
     return () => {
       renderer.setAnimationLoop(null);
@@ -321,6 +509,7 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
         .catch(() => undefined);
       controls.dispose();
       disposeSubtree(scene);
+      envTex.dispose();
       renderer.dispose();
       canvas.remove();
       eng.current = null;
@@ -329,28 +518,64 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* ---------------- terrain (one request) */
+  /* ---------------- terrain (one request) and satellite imagery */
   useEffect(() => {
     let alive = true;
     void loadSiteTerrain(params.lat, params.lng, (locations) =>
       getElevationSamples({ data: { locations } }),
     ).then((t) => {
-      if (!alive) return;
-      setTerrain(t);
-      const e = eng.current;
-      if (!e) return;
-      if (e.ground) {
-        e.scene.remove(e.ground);
-        disposeSubtree(e.ground);
-      }
-      e.ground = buildGround(t);
-      e.terrain = t;
-      e.scene.add(e.ground);
+      if (alive) setTerrain(t);
     });
+    if (params.lat !== null && params.lng !== null) {
+      void loadSiteImagery(params.lat, params.lng)
+        .catch(() => null)
+        .then((img) => {
+          if (alive) setImagery(img);
+        });
+    } else setImagery(null);
     return () => {
       alive = false;
     };
   }, [params.lat, params.lng]);
+
+  /* ---------------- ground mesh, then the house on it */
+  useEffect(() => {
+    const e = eng.current;
+    if (!e || !terrain) return;
+    if (e.ground) {
+      e.scene.remove(e.ground);
+      disposeSubtree(e.ground);
+    }
+    e.terrain = terrain;
+    e.ground = buildGround(terrain, imagery === "loading" ? null : imagery, e.renderer);
+    e.scene.add(e.ground);
+    placeHouse(stacked);
+    // Rebuilding the house on every imagery change is unnecessary; terrain and stack drive it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [terrain, imagery]);
+
+  useEffect(() => {
+    if (eng.current?.terrain) placeHouse(stacked);
+  }, [stacked, placeHouse]);
+
+  // A new design style rebuilds the house in place, keeping the camera.
+  useEffect(() => {
+    if (eng.current?.terrain) placeHouse(stacked, false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [style]);
+
+  useEffect(() => {
+    const e = eng.current;
+    if (!e?.built) return;
+    for (const o of e.built.cutaway) o.visible = !seeInside;
+  }, [seeInside, info]);
+
+  useEffect(() => {
+    const e = eng.current;
+    if (!e) return;
+    e.controls.autoRotate = cinematic && !reduced && mode === "orbit";
+    if (cinematic && mode === "orbit") frameOrbit(e, true);
+  }, [cinematic, reduced, mode]);
 
   /* ---------------- sun */
   useEffect(() => {
@@ -361,12 +586,18 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
     const e = eng.current;
     if (!e) return;
     const [x, y, z] = sunDirection(pos.azimuthDeg, pos.elevationDeg);
-    e.sun.position.set(x * 80, y * 80, z * 80);
+    e.sun.position.set(x * 120, y * 120, z * 120);
     e.sun.target.position.set(0, 0, 0);
     const up = pos.elevationDeg > 0;
-    e.sun.intensity = up ? 2.4 * Math.min(1, pos.elevationDeg / 10 + 0.15) : 0;
-    e.hemi.intensity = up ? 0.6 : 0.15;
-    const bg = up ? 0xdfe9f2 : 0x1b2433;
+    e.sun.intensity = up ? 3.0 * Math.min(1, pos.elevationDeg / 12 + 0.2) : 0;
+    e.hemi.intensity = up ? 0.5 : 0.08;
+    e.scene.environmentIntensity = up ? 0.45 : 0.06;
+    (e.sky.material.uniforms["sunPosition"].value as THREE.Vector3).set(x, y, z);
+    e.sky.visible = up;
+    // House lights come on from just before sunset.
+    nightRef.current = pos.elevationDeg < 4;
+    if (e.built) setHouseLights(e.built, nightRef.current);
+    const bg = up ? 0xc9d7e3 : 0x141c2a;
     (e.scene.background as THREE.Color).setHex(bg);
     (e.scene.fog as THREE.Fog).color.setHex(bg);
   }, [date, hour, params.lat, params.lng]);
@@ -379,15 +610,15 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
     touchMove.current = 0;
     if (mode === "walk") {
       e.controls.enabled = false;
-      const z = 9;
+      e.controls.autoRotate = false;
+      const z = (e.built?.widthM ?? 10) / 2 + 6;
       e.camera.position.set(0, (e.terrain ? heightAt(e.terrain, 0, z) : 0) + EYE_M, z);
       e.yaw = 0;
       e.pitch = 0;
     } else {
       if (document.pointerLockElement) document.exitPointerLock();
       e.controls.enabled = true;
-      e.camera.position.set(14, 9, 18);
-      e.controls.target.set(0, 1.2, 0);
+      frameOrbit(e);
     }
   }, [mode]);
 
@@ -406,35 +637,54 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
     }
   }, []);
 
-  const generateAr = useCallback(async () => {
-    const e = eng.current;
-    if (!e) return;
-    setExportState("busy");
-    setExportError(null);
-    try {
-      const glb = (await new GLTFExporter().parseAsync(e.house, { binary: true })) as ArrayBuffer;
-      setGlbUrl(URL.createObjectURL(new Blob([glb], { type: "model/gltf-binary" })));
-      try {
-        const usdz = await new USDZExporter().parseAsync(e.house);
-        setUsdzUrl(
-          URL.createObjectURL(new Blob([usdz as BlobPart], { type: "model/vnd.usdz+zip" })),
-        );
-      } catch {
-        setUsdzUrl(null);
-      }
-      setExportState("done");
-    } catch (err) {
-      setExportState("error");
-      setExportError((err as Error)?.message ?? "Export failed");
-    }
-  }, []);
+  const fileBase = `halisia-${params.typology}-${params.structure}${stacked ? "-stacked" : ""}`;
 
-  useEffect(
-    () => () => {
-      if (glbUrl) URL.revokeObjectURL(glbUrl);
-    },
-    [glbUrl],
-  );
+  /** Export the house and footings with the floor at the model origin. */
+  const withOriginAtFloor = async <T,>(fn: (root: THREE.Group) => Promise<T>) => {
+    const e = eng.current;
+    if (!e) throw new Error("The 3D view is not ready yet.");
+    const y = e.root.position.y;
+    e.root.position.y = 0;
+    e.root.updateMatrixWorld(true);
+    try {
+      return await fn(e.root);
+    } finally {
+      e.root.position.y = y;
+      e.root.updateMatrixWorld(true);
+    }
+  };
+
+  const saveGlb = useCallback(async () => {
+    setGlbState("busy");
+    setFileError(null);
+    try {
+      const glb = (await withOriginAtFloor((root) =>
+        new GLTFExporter().parseAsync(root, { binary: true }),
+      )) as ArrayBuffer;
+      deliverBlob(new Blob([glb], { type: "model/gltf-binary" }), `${fileBase}.glb`);
+      setGlbState("done");
+    } catch (err) {
+      setGlbState("error");
+      setFileError(
+        `The 3D model could not be saved: ${(err as Error)?.message ?? "export failed"}`,
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fileBase]);
+
+  const prepareQuickLook = useCallback(async () => {
+    setFileError(null);
+    try {
+      const usdz = await withOriginAtFloor((root) => new USDZExporter().parseAsync(root));
+      setUsdzUrl((old) => {
+        if (old) URL.revokeObjectURL(old);
+        return URL.createObjectURL(new Blob([usdz as BlobPart], { type: "model/vnd.usdz+zip" }));
+      });
+    } catch (err) {
+      setFileError(`AR file could not be made: ${(err as Error)?.message ?? "export failed"}`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useEffect(
     () => () => {
       if (usdzUrl) URL.revokeObjectURL(usdzUrl);
@@ -442,8 +692,56 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
     [usdzUrl],
   );
 
+  const savePack = useCallback(async () => {
+    const e = eng.current;
+    if (!e?.built || !e.plan) return;
+    setPackState("busy");
+    setFileError(null);
+    try {
+      const views = captureViews(e);
+      const cost = await costSummary(params, e.built);
+      const h = e.built;
+      const title = `${typologyName(params.typology)} · ${structureLabel(params.structure)}${
+        h.levels > 1 ? " (stacked two high)" : ""
+      }`;
+      downloadSitePackPdf({
+        title,
+        place:
+          params.lat !== null && params.lng !== null
+            ? `${params.lat.toFixed(6)}, ${params.lng.toFixed(6)}`
+            : null,
+        views,
+        house: h,
+        foundation: e.plan,
+        ground: siteDisclaimer(e.terrain),
+        cost,
+        inspiration:
+          style && style.source !== "default"
+            ? {
+                lines: describeStyle(style),
+                notes: style.notes,
+                thumb: loadInspiration()?.thumb ?? null,
+              }
+            : null,
+        notes: [
+          "Check the county's building lines, plot coverage and approval rules before fixing the position.",
+          "Get the boundary beacons confirmed by a licensed surveyor; the view is not placed on a surveyed boundary.",
+          "Ask an architect to turn this massing into approved drawings, and a quantity surveyor to price the final design.",
+          "Terrain comes from a 30–90 m public grid; a site level survey shows the real fall, ditches and rock.",
+        ],
+      });
+      setPackState("done");
+    } catch (err) {
+      setPackState("error");
+      setFileError(
+        `The site pack could not be made: ${(err as Error)?.message ?? "unknown error"}`,
+      );
+    }
+  }, [params, style]);
+
   const disclaimer = siteDisclaimer(terrain);
-  const fileBase = `halisia-schematic-${params.typology}-${params.structure}`;
+  const isContainer = params.structure !== "masonry_stone";
+  const h = info?.house;
 
   return (
     <div className="flex flex-col gap-4" data-testid="model-lab-site-mode">
@@ -458,7 +756,16 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
           <p className="font-semibold" data-testid="site-schematic-label">
             {SCHEMATIC_LABEL}
           </p>
-          <p data-testid="site-disclaimer">{disclaimer}</p>
+          <p data-testid="site-disclaimer">
+            {disclaimer}
+            {imagery === "loading"
+              ? " Loading satellite ground…"
+              : imagery
+                ? " Ground: Esri World Imagery draped on the terrain."
+                : params.lat !== null
+                  ? " Satellite imagery did not load, so the ground is plain."
+                  : ""}
+          </p>
         </div>
         {mode === "walk" && coarse && (
           <div className="absolute bottom-3 right-3 flex flex-col gap-2">
@@ -482,21 +789,163 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2" data-testid="site-view-controls">
         <KitButton size="sm" onClick={() => setMode(mode === "walk" ? "orbit" : "walk")}>
-          {mode === "walk" ? "Exit walk mode" : "Walk mode"}
+          {mode === "walk" ? "Exit walk mode" : "Walk around"}
         </KitButton>
-        <KitButton size="sm" onClick={() => void enterVr()} disabled={!vrSupported || inVr}>
-          Enter VR
+        <KitButton
+          size="sm"
+          variant={seeInside ? "primary" : "secondary"}
+          aria-pressed={seeInside}
+          onClick={() => setSeeInside((v) => !v)}
+          data-testid="site-see-inside"
+        >
+          {seeInside ? "Put the roof back" : "See inside"}
         </KitButton>
-        <KitButton size="sm" onClick={() => void generateAr()} disabled={exportState === "busy"}>
-          {exportState === "busy" ? "Generating…" : "Generate AR files"}
-        </KitButton>
+        {!reduced && (
+          <KitButton
+            size="sm"
+            variant={cinematic ? "primary" : "secondary"}
+            aria-pressed={cinematic}
+            onClick={() => {
+              setMode("orbit");
+              setCinematic((v) => !v);
+            }}
+          >
+            {cinematic ? "Stop fly-around" : "Fly around"}
+          </KitButton>
+        )}
+        {vrSupported && (
+          <KitButton size="sm" onClick={() => void enterVr()} disabled={inVr}>
+            Enter VR
+          </KitButton>
+        )}
       </div>
+
+      {isContainer && h && (h.units > 1 || stacked) && (
+        <label className="flex min-h-11 items-center gap-3 text-sm" data-testid="site-stack">
+          <input
+            type="checkbox"
+            className="h-5 w-5 accent-primary"
+            checked={stacked}
+            onChange={(ev) => setStacked(ev.target.checked)}
+          />
+          <span>
+            Stack the containers two high
+            <span className="block text-xs text-muted-foreground">
+              Uses about half the ground and adds an outside stair. Needs stronger footings and
+              locked connections.
+            </span>
+          </span>
+        </label>
+      )}
+
+      {h && info && (
+        <section
+          aria-label="This house on this ground"
+          className="grid gap-3 rounded-2xl border border-white/10 bg-black/10 p-4 text-sm sm:grid-cols-2"
+          data-testid="site-house-facts"
+        >
+          <div>
+            <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              Size
+            </h2>
+            <ul className="mt-1 space-y-0.5">
+              <li>
+                Footprint {h.lengthM.toFixed(1)} × {h.widthM.toFixed(1)} m (
+                {(h.lengthM * h.widthM).toFixed(0)} m² of ground)
+              </li>
+              <li>
+                Floor area about {h.floorAreaM2} m²
+                {h.levels > 1 ? ` on ${h.levels} levels` : ""}
+              </li>
+              {h.units > 0 && <li>{h.units} container units</li>}
+              <li>{h.bedrooms ? `${h.bedrooms} bedrooms` : "Open-plan bedsitter"}</li>
+            </ul>
+            <details className="mt-2">
+              <summary className="cursor-pointer text-xs font-semibold">Rooms</summary>
+              <ul className="mt-1 space-y-0.5 text-xs text-muted-foreground">
+                {h.rooms
+                  .filter((r) => r.name !== "Outside stair")
+                  .map((r, i) => (
+                    <li key={i}>
+                      {r.name}
+                      {h.levels > 1 ? (r.level ? " (upper)" : " (ground)") : ""}:{" "}
+                      {(r.x1 - r.x0).toFixed(1)} × {(r.z1 - r.z0).toFixed(1)} m
+                    </li>
+                  ))}
+              </ul>
+            </details>
+          </div>
+          <div data-testid="site-foundation">
+            <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              Suggested foundation
+            </h2>
+            <p className="mt-1 font-semibold">{info.plan.name}</p>
+            <p className="text-xs">{info.plan.summary}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{info.plan.why}</p>
+            <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs text-muted-foreground">
+              {info.plan.checks.map((c) => (
+                <li key={c}>{c}</li>
+              ))}
+            </ul>
+          </div>
+        </section>
+      )}
+
+      <InspirationPanel value={style} onApply={setStyle} testId="site-inspiration" />
+
+      <div className="flex flex-wrap items-center gap-2" data-testid="site-files">
+        <KitButton
+          size="sm"
+          variant="primary"
+          onClick={() => void savePack()}
+          disabled={packState === "busy" || !info}
+          data-testid="site-pack-pdf"
+        >
+          {packState === "busy" ? "Making the PDF…" : "Download site pack (PDF)"}
+        </KitButton>
+        <KitButton
+          size="sm"
+          onClick={() => void saveGlb()}
+          disabled={glbState === "busy" || !info}
+          data-testid="site-glb"
+        >
+          {glbState === "busy" ? "Saving…" : "Save 3D model (GLB)"}
+        </KitButton>
+        {platform === "ios" && (
+          <KitButton size="sm" onClick={() => void prepareQuickLook()}>
+            Prepare AR (iPhone)
+          </KitButton>
+        )}
+        {usdzUrl && (
+          <a rel="ar" href={usdzUrl} className="underline" data-testid="site-quicklook">
+            <img
+              alt=""
+              width={1}
+              height={1}
+              src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1' height='1'/%3E"
+            />
+            View in AR (Quick Look)
+          </a>
+        )}
+      </div>
+      <p className="text-xs text-muted-foreground">
+        The site pack has three views, a measured floor plan, the foundation suggestion and the cost
+        from the price database. The GLB opens in Windows 3D Viewer, Blender, SketchUp or online GLB
+        viewers.
+      </p>
+      {packState === "done" && (
+        <p role="status" className="text-xs">
+          Site pack ready. If it did not save on its own, tap Save on the card that appeared.
+        </p>
+      )}
+      {fileError && <p className="text-xs text-destructive">{fileError}</p>}
+
       {mode === "walk" && (
         <p className="text-xs text-muted-foreground">
           {coarse
-            ? "Drag to look; hold Forward or Back to move."
+            ? "Drag to look; hold Forward or Back to move. Walk in through the front door."
             : "Click the view to capture the pointer, look with the mouse, move with W A S D. Press Esc to release."}{" "}
           Eye height 1.6 m.
         </p>
@@ -534,28 +983,6 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
         )}
       </section>
 
-      {exportState === "done" && (
-        <div className="flex flex-wrap items-center gap-3 text-sm">
-          {glbUrl && (
-            <a className="underline" href={glbUrl} download={`${fileBase}.glb`}>
-              Download GLB
-            </a>
-          )}
-          {usdzUrl && (
-            <a rel="ar" href={usdzUrl} className="underline" data-testid="site-quicklook">
-              <img
-                alt=""
-                width={1}
-                height={1}
-                src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1' height='1'/%3E"
-              />
-              View in AR (Quick Look)
-            </a>
-          )}
-        </div>
-      )}
-      {exportError && <p className="text-xs text-destructive">AR export failed: {exportError}</p>}
-
       <details className="text-sm" data-testid="site-diagnostics">
         <summary className="cursor-pointer text-[0.6875rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
           Diagnostics
@@ -570,25 +997,29 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
             {terrain === null
               ? "loading"
               : terrain.kind === "terrain"
-                ? `${terrain.dataset}, 10×10 grid over ~200 m, relief ${terrain.reliefM.toFixed(1)} m, house at mean ${terrain.meanM.toFixed(0)} m`
+                ? `${terrain.dataset}, 10×10 grid over ~200 m, relief ${terrain.reliefM.toFixed(1)} m`
                 : "flat plane (no terrain)"}
+          </dd>
+          <dt>Imagery</dt>
+          <dd>
+            {imagery === "loading"
+              ? "loading"
+              : imagery
+                ? `Esri World Imagery z${IMAGERY_ZOOM}`
+                : "not loaded"}
+          </dd>
+          <dt>Foundation</dt>
+          <dd>
+            {info ? `${info.plan.kind}, floor ${info.plan.clearanceM} m above high ground` : "—"}
           </dd>
           <dt>VR</dt>
           <dd>{vrSupported === null ? "checking" : vrSupported ? "supported" : "not supported"}</dd>
-          <dt>Scene Viewer</dt>
-          <dd>
-            {glbUrl
-              ? "GLB generated locally; Scene Viewer needs a hosted HTTPS file, so this GLB is download-only"
-              : "no GLB generated"}
-          </dd>
           <dt>Quick Look</dt>
           <dd>
             {usdzUrl
               ? "USDZ generated"
               : `${QUICK_LOOK_UNAVAILABLE_MESSAGE} (QUICK_LOOK_UNAVAILABLE)`}
           </dd>
-          <dt>iOS AR</dt>
-          <dd>unverified on device</dd>
           <dt>Platform</dt>
           <dd>{platform}</dd>
         </dl>
@@ -597,42 +1028,191 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
   );
 }
 
-function inside(e: Engine, x: number, z: number) {
-  const b = new THREE.Box3().setFromObject(e.house);
-  return x > b.min.x && x < b.max.x && z > b.min.z && z < b.max.z;
+/* ------------------------------------------------------------------ helpers */
+
+function insideHouse(e: Engine, x: number, z: number) {
+  const h = e.built;
+  if (!h) return false;
+  return h.groundRects.some((r) => x > r.x0 && x < r.x1 && z > r.z0 && z < r.z1);
 }
 
-function buildGround(t: SiteTerrain): THREE.Group {
+/** Orbit camera framed on the house; `low` gives a lower, wider cinematic angle. */
+function frameOrbit(e: Engine, low = false) {
+  const h = e.built;
+  const size = h ? Math.max(h.lengthM, h.widthM, 8) : 12;
+  const d = size * (low ? 1.9 : 1.55) + 6;
+  e.controls.target.set(0, e.floorY + (h ? Math.min(2, h.heightM / 2) : 1.2), 0);
+  e.camera.position.set(d * 0.7, e.floorY + d * (low ? 0.22 : 0.42), d * 0.85);
+  e.controls.update();
+}
+
+function buildGround(t: SiteTerrain, imagery: Imagery, renderer: THREE.WebGLRenderer): THREE.Group {
   const group = new THREE.Group();
   group.name = "site-ground";
+  const map = imagery ? new THREE.CanvasTexture(imagery.canvas) : null;
+  if (map) {
+    map.colorSpace = THREE.SRGBColorSpace;
+    map.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  }
+  const apronColor = imagery ? imagery.tint : 0x7c8466;
   if (t.kind === "terrain") {
-    const n = t.n;
-    const geo = new THREE.PlaneGeometry(t.spanM, t.spanM, n - 1, n - 1);
+    // Resample the 10×10 grid onto a finer mesh so the imagery drapes smoothly.
+    const seg = 80;
+    const geo = new THREE.PlaneGeometry(t.spanM, t.spanM, seg, seg);
     geo.rotateX(-Math.PI / 2); // row 0 → north (−Z)
     const pos = geo.attributes.position as THREE.BufferAttribute;
-    for (let i = 0; i < pos.count; i++) pos.setY(i, t.heights[Math.floor(i / n)][i % n]);
+    for (let i = 0; i < pos.count; i++) pos.setY(i, heightAt(t, pos.getX(i), pos.getZ(i)));
     pos.needsUpdate = true;
     geo.computeVertexNormals();
     const mesh = new THREE.Mesh(
       geo,
-      new THREE.MeshStandardMaterial({ color: 0x6b7a4f, roughness: 0.97 }),
+      new THREE.MeshStandardMaterial(
+        map ? { map, roughness: 1 } : { color: 0x6b7a4f, roughness: 0.97 },
+      ),
     );
     mesh.receiveShadow = true;
+    mesh.name = "terrain";
     group.add(mesh);
     const minH = Math.min(...t.heights.flat());
     const apron = new THREE.Mesh(
-      new THREE.PlaneGeometry(1600, 1600).rotateX(-Math.PI / 2),
-      new THREE.MeshStandardMaterial({ color: 0x7c8466, roughness: 1 }),
+      new THREE.PlaneGeometry(2400, 2400).rotateX(-Math.PI / 2),
+      new THREE.MeshStandardMaterial({ color: apronColor, roughness: 1 }),
     );
-    apron.position.y = minH - 0.05;
+    apron.position.y = minH - 0.3;
+    apron.receiveShadow = true;
     group.add(apron);
   } else {
     const mesh = new THREE.Mesh(
-      new THREE.PlaneGeometry(1600, 1600).rotateX(-Math.PI / 2),
-      new THREE.MeshStandardMaterial({ color: 0x6f7360, roughness: 0.98 }),
+      new THREE.PlaneGeometry(2400, 2400).rotateX(-Math.PI / 2),
+      new THREE.MeshStandardMaterial({ color: apronColor, roughness: 0.98 }),
     );
     mesh.receiveShadow = true;
     group.add(mesh);
+    if (map) {
+      const sat = new THREE.Mesh(
+        new THREE.PlaneGeometry(SITE_SPAN_M, SITE_SPAN_M).rotateX(-Math.PI / 2),
+        new THREE.MeshStandardMaterial({ map, roughness: 1 }),
+      );
+      sat.position.y = 0.01;
+      sat.receiveShadow = true;
+      group.add(sat);
+    }
   }
   return group;
+}
+
+/** Three stills for the PDF: 3/4 view, eye-level view, and a cut-away plan from above. */
+function captureViews(e: Engine): SitePackView[] {
+  const { renderer, scene } = e;
+  if (renderer.xr.isPresenting) return [];
+  const h = e.built;
+  const W = 1600;
+  const H = 1000;
+  const prevRatio = renderer.getPixelRatio();
+  const prevSize = renderer.getSize(new THREE.Vector2());
+  renderer.setPixelRatio(1);
+  renderer.setSize(W, H, false);
+  const out: SitePackView[] = [];
+  const shot = (cam: THREE.Camera, label: string) => {
+    renderer.render(scene, cam);
+    out.push({
+      label,
+      dataUrl: renderer.domElement.toDataURL("image/jpeg", 0.88),
+      widthPx: W,
+      heightPx: H,
+    });
+  };
+  try {
+    const size = h ? Math.max(h.lengthM, h.widthM, 8) : 12;
+    const fy = e.floorY;
+    const cam = new THREE.PerspectiveCamera(40, W / H, 0.1, 3000);
+    const d = size * 1.7 + 6;
+    cam.position.set(d * 0.72, fy + d * 0.38, d * 0.82);
+    cam.lookAt(0, fy + 1.5, 0);
+    shot(cam, "Three-quarter view from the south-east, on the terrain and satellite ground.");
+
+    const eye = new THREE.PerspectiveCamera(55, W / H, 0.05, 3000);
+    const ez = (h?.widthM ?? 10) / 2 + Math.max(8, size * 0.6);
+    const ground = e.terrain ? heightAt(e.terrain, -size * 0.3, ez) : 0;
+    eye.position.set(-size * 0.3, ground + EYE_M, ez);
+    eye.lookAt(0, fy + 1.6, 0);
+    shot(eye, "Eye-level view from the front, as you would see it standing on the plot.");
+
+    const hidden = h ? h.cutaway.filter((o) => o.visible) : [];
+    hidden.forEach((o) => (o.visible = false));
+    const half = size * 0.62 + 2;
+    const top = new THREE.OrthographicCamera(
+      (-half * W) / H,
+      (half * W) / H,
+      half,
+      -half,
+      0.1,
+      500,
+    );
+    top.position.set(0, fy + 120, 0.001);
+    top.up.set(0, 0, -1);
+    top.lookAt(0, fy, 0);
+    shot(top, "Plan from above with the roof removed (north at the top).");
+    hidden.forEach((o) => (o.visible = true));
+  } finally {
+    renderer.setPixelRatio(prevRatio);
+    renderer.setSize(prevSize.x, prevSize.y, false);
+  }
+  return out;
+}
+
+async function costSummary(
+  p: SiteParams,
+  h: SiteHouse,
+): Promise<{ headline: string; detail: string[] }> {
+  const found = p.lat !== null && p.lng !== null ? countyForPoint(p.lat, p.lng) : null;
+  const county =
+    found && Object.values(KENYA_COUNTY_FACTS).some((c) => c.name === found.name)
+      ? found.name
+      : undefined;
+  const finish = DEFAULT_BUILD_SELECTION.finish;
+  const detail = [
+    `Finish: ${finish}. Prices: ${county ? `${county} where recorded, national otherwise` : "national"}.`,
+    "Covers the house only: not the land, approvals, water and power connections, boundary wall, or foundation upgrades for poor soil.",
+  ];
+  if (h.levels > 1)
+    detail.push(
+      "Stacking is not priced separately: stronger pads, the stair, structural connections and crane hire change the total.",
+    );
+  try {
+    const r = await getBuildCost({
+      data: { typology: p.typology, structure: p.structure, finish, county },
+    });
+    if (!r.lines.length)
+      return {
+        headline:
+          "No bill of quantities exists yet for this house type and building system, so no cost is shown.",
+        detail,
+      };
+    const c = r.costing;
+    if (c.total == null)
+      return {
+        headline: `Only ${Math.round(c.pricedShare * 100)}% of the bill of quantities is priced, so no total is shown (HALISIA needs at least 90%).`,
+        detail,
+      };
+    const scale =
+      p.structure === "masonry_stone" && r.floorAreaM2 && h.floorAreaM2
+        ? h.floorAreaM2 / r.floorAreaM2
+        : 1;
+    const total = c.total * scale;
+    const high = c.totalHigh != null ? c.totalHigh * scale : null;
+    if (scale !== 1)
+      detail.unshift(
+        `Scaled pro-rata from the ${r.floorAreaM2} m² template to about ${h.floorAreaM2} m².`,
+      );
+    detail.unshift(
+      `${c.pricedLines} of ${c.totalLines} bill lines priced from observed supplier and labour prices.`,
+    );
+    return { headline: `Estimated build cost: ${comparisonTotalText(total, high, kes)}`, detail };
+  } catch {
+    return {
+      headline: "The cost database could not be reached just now, so no cost is shown.",
+      detail,
+    };
+  }
 }

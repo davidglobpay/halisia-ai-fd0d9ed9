@@ -7,14 +7,15 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { buildHouse } from "@/components/halisia/model-lab/site/house-geometry";
 import {
-  houseFootprint,
-  imageryTiles,
-  isContainer,
-  metresPerPixel,
-  type Placement,
-} from "@/lib/plot-placement";
+  buildFoundation,
+  buildSiteHouse,
+  scaleFigure,
+  type SiteHouse,
+} from "@/components/halisia/model-lab/site/site-house";
+import { planFoundation } from "@/components/halisia/model-lab/site/foundation";
+import { DEFAULT_STYLE, type DesignStyle } from "@/components/halisia/model-lab/site/design-style";
+import { imageryTiles, isContainer, metresPerPixel, type Placement } from "@/lib/plot-placement";
 import { heightAt, type TerrainGrid } from "@/lib/site-context";
 
 export type GroundMode = "terrain" | "flat" | "plain";
@@ -51,15 +52,17 @@ export type PlotViewerProps = {
   showBuildings?: boolean;
   showPlot?: boolean;
   onApi?: (api: PlotViewerApi) => void;
+  /** The client's design language from the inspiration panel; HALISIA's default when null. */
+  designStyle?: DesignStyle | null;
 };
 
 const ZOOM = 19;
-const WALL_TINT: Record<string, number> = {
-  masonry_block: 0xbdbcb6,
-  precast: 0xd9d8d2,
-  eps: 0xf3f1ea,
+/** Wall colour for the systems that share the masonry shape, unless the client chose one. */
+const WALL_TINT: Record<string, string> = {
+  masonry_block: "#bdbcb6",
+  precast: "#d9d8d2",
+  eps: "#f3f1ea",
 };
-const STONE_COLOR = 0xcdbf9f;
 const DEFAULT_CAMERA = new THREE.Vector3(28, 34, 42);
 const PLOT_LIFT_M = 0.08;
 
@@ -121,33 +124,33 @@ async function loadImagery(lat: number, lng: number): Promise<Imagery> {
   return { ...base, canvas: loaded ? canvas : null, loaded, total: block.tiles.length };
 }
 
-function buildHouseGroup(typology: string, structure: string): THREE.Group {
-  const fp = houseFootprint(typology, structure);
+/**
+ * The furnished house for the chosen type and system, in the client's style.
+ * Systems without their own model (block, precast, EPS) use the masonry
+ * shape in their usual wall colour. The house's floor sits at y = 0.
+ */
+function buildHouseGroup(
+  typology: string,
+  structure: string,
+  style: DesignStyle | null | undefined,
+): { group: THREE.Group; house: SiteHouse } {
+  const tint = WALL_TINT[structure];
+  const effective: DesignStyle | null =
+    style && style.source !== "default"
+      ? style
+      : tint
+        ? { ...DEFAULT_STYLE, wallColor: tint, source: "manual" }
+        : null;
+  const house = buildSiteHouse({
+    structure: isContainer(structure) ? structure : "masonry_stone",
+    typology,
+    floorAreaM2: null,
+    style: effective,
+  });
   const group = new THREE.Group();
-  if (isContainer(structure)) {
-    for (const u of fp.units ?? [{ x: 0, z: 0 }]) {
-      const unit = buildHouse(structure, null).group;
-      unit.position.set(u.x, 0, u.z);
-      group.add(unit);
-    }
-  } else {
-    const h = buildHouse("masonry_stone", fp.floorAreaM2).group;
-    const tint = WALL_TINT[structure];
-    if (tint != null) {
-      h.traverse((c) => {
-        const m = c as THREE.Mesh;
-        const mat = m.material as THREE.MeshStandardMaterial | undefined;
-        if (mat?.color && mat.color.getHex() === STONE_COLOR) {
-          const clone = mat.clone();
-          clone.color.setHex(tint);
-          m.material = clone;
-        }
-      });
-    }
-    group.add(h);
-  }
+  group.add(house.group);
   group.name = "plot-house";
-  return group;
+  return { group, house };
 }
 
 type HeightFn = (x: number, z: number) => number;
@@ -282,6 +285,10 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
     camera: THREE.PerspectiveCamera;
     controls: OrbitControls;
     house: THREE.Group | null;
+    built: SiteHouse | null;
+    footing: THREE.Group | null;
+    footingKey: string;
+    person: THREE.Group;
     plot: THREE.Group | null;
     ground: THREE.Mesh | null;
     neighbours: THREE.Group | null;
@@ -332,12 +339,18 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
     sc.bottom = -80;
     scene.add(sun);
 
+    const person = scaleFigure();
+    scene.add(person);
     stateRef.current = {
       renderer,
       scene,
       camera,
       controls,
       house: null,
+      built: null,
+      footing: null,
+      footingKey: "",
+      person,
       plot: null,
       ground: null,
       neighbours: null,
@@ -537,9 +550,12 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
       st.scene.remove(st.house);
       disposeTree(st.house);
     }
-    st.house = buildHouseGroup(props.typology, props.structure);
+    const { group, house } = buildHouseGroup(props.typology, props.structure, props.designStyle);
+    st.house = group;
+    st.built = house;
+    st.footingKey = "";
     st.scene.add(st.house);
-  }, [props.typology, props.structure]);
+  }, [props.typology, props.structure, props.designStyle]);
 
   // Plot outline, rebuilt when its size, place or the ground changes.
   const { x: ppX, z: ppZ, rotationDeg: ppRot } = props.plotPlacement;
@@ -574,13 +590,47 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
     st.scene.add(st.neighbours);
   }, [props.buildings, showBuildings, terrainOn, props.terrain]);
 
-  // House placement on the ground, every render.
+  // House placement on the ground, every render: the floor sits just above
+  // the highest ground under the footprint, and footings reach down below
+  // the lowest, so the house never floats or sinks.
   useEffect(() => {
     const st = stateRef.current;
-    if (!st?.house) return;
-    const h = heightRef.current(props.house.x, props.house.z);
-    st.house.position.set(props.house.x, h, props.house.z);
-    st.house.rotation.y = (-props.house.rotationDeg * Math.PI) / 180;
+    if (!st?.house || !st.built) return;
+    const b = st.built;
+    const a = (-props.house.rotationDeg * Math.PI) / 180;
+    const c = Math.cos(a);
+    const s = Math.sin(a);
+    const samples: number[] = [];
+    for (const r of b.groundRects)
+      for (const lx of [r.x0, (r.x0 + r.x1) / 2, r.x1])
+        for (const lz of [r.z0, (r.z0 + r.z1) / 2, r.z1])
+          samples.push(
+            heightRef.current(props.house.x + lx * c + lz * s, props.house.z - lx * s + lz * c),
+          );
+    const hi = Math.max(...samples);
+    const lo = Math.min(...samples);
+    const plan = planFoundation({
+      structure: isContainer(props.structure) ? props.structure : "masonry_stone",
+      dropM: terrainOn ? hi - lo : null,
+    });
+    const floorY = hi + plan.clearanceM;
+    const depth = Math.round((floorY - lo + 0.4) * 20) / 20;
+    const key = `${plan.kind}|${depth}`;
+    if (key !== st.footingKey) {
+      if (st.footing) {
+        st.house.remove(st.footing);
+        disposeTree(st.footing);
+      }
+      st.footing = buildFoundation(b, plan, depth);
+      st.house.add(st.footing);
+      st.footingKey = key;
+    }
+    st.house.position.set(props.house.x, floorY, props.house.z);
+    st.house.rotation.y = a;
+    // A person beside the front corner, for scale.
+    const px = props.house.x + (b.lengthM / 2 + 1.2) * c + (b.widthM / 2 + 1.6) * s;
+    const pz = props.house.z - (b.lengthM / 2 + 1.2) * s + (b.widthM / 2 + 1.6) * c;
+    st.person.position.set(px, heightRef.current(px, pz), pz);
   });
 
   return (

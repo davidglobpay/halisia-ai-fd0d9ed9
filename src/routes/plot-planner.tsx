@@ -20,7 +20,13 @@ import {
 } from "@/lib/site-context";
 import { SectionHeading, Surface } from "@/components/halisia/ds";
 import { PlotViewer } from "@/components/halisia/plot-planner/plot-viewer";
-import { readLastPassportLocation } from "@/components/halisia/model-lab/site/site-params";
+import {
+  SITE_STRUCTURES,
+  readLastPassportLocation,
+  siteModeSearch,
+} from "@/components/halisia/model-lab/site/site-params";
+import { InspirationPanel } from "@/components/halisia/model-lab/site/inspiration-panel";
+import type { DesignStyle } from "@/components/halisia/model-lab/site/design-style";
 import { STRUCTURES, TYPOLOGIES } from "@/lib/cost-intel.functions";
 import { structureName } from "@/lib/build-recommendation";
 import {
@@ -115,6 +121,7 @@ function PlotPlannerPage() {
       : { widthM: preset.widthM, depthM: preset.depthM };
 
   const [ground, setGround] = useState<GroundMode>("terrain");
+  const [designStyle, setDesignStyle] = useState<DesignStyle | null>(null);
   const [overlays, setOverlays] = useState<string[]>(["buildings", "plot", "streetview"]);
   const apiRef = useRef<PlotViewerApi | null>(null);
   const viewerBoxRef = useRef<HTMLDivElement | null>(null);
@@ -426,6 +433,7 @@ function PlotPlannerPage() {
               target={target}
               onHouseChange={setHouse}
               onPlotChange={setPlotPlacement}
+              designStyle={designStyle}
             />
           </div>
 
@@ -482,12 +490,30 @@ function PlotPlannerPage() {
               not an architectural design; non-container systems share one single-storey shape.
               Check your county's required building lines before relying on these gaps.
             </p>
-            <p className="mt-2">
+            <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
               <Link to="/build-cost" className="underline" data-testid="pp-cost-link">
                 See the cost of this house type
               </Link>
+              {(SITE_STRUCTURES as readonly string[]).includes(structure) && (
+                <Link
+                  to="/model-lab"
+                  search={siteModeSearch(typology, structure, point)}
+                  className="underline"
+                  data-testid="pp-walk-link"
+                >
+                  Walk through it in 3D, with foundation, rooms and site pack PDF
+                </Link>
+              )}
             </p>
           </Surface>
+
+          <div className="mt-3">
+            <InspirationPanel
+              value={designStyle}
+              onApply={setDesignStyle}
+              testId="pp-inspiration"
+            />
+          </div>
 
           {overlays.includes("streetview") && (
             <Surface elevation={1} className="mt-3 p-4" data-testid="pp-streetview">
