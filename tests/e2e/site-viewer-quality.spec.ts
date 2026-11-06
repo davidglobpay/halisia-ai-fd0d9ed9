@@ -133,6 +133,9 @@ async function openViewer(page: Page, url: string, info: TestInfo) {
 }
 
 test("masonry house: frame, controls, sofa and sky light", async ({ page }, info) => {
+  // CI draws with a software GPU; a smaller canvas keeps the page responsive
+  // enough for clicks (lit interiors take seconds a frame at full desktop size).
+  if (info.project.name === "chromium") await page.setViewportSize({ width: 1024, height: 640 });
   const { errors, consoleErrors, assets, canvas } = await openViewer(page, MASONRY, info);
   await shot(page, info, "masonry-exterior");
 
@@ -189,14 +192,6 @@ test("masonry house: frame, controls, sofa and sky light", async ({ page }, info
   );
   log(info, "asset timing", timing);
 
-  const seeInside = page.getByTestId("site-see-inside");
-  await seeInside.click();
-  await expect(seeInside).toHaveAttribute("aria-pressed", "true");
-  await page.waitForTimeout(500);
-  await shot(page, info, "masonry-inside");
-  await seeInside.click();
-  await expect(seeInside).toHaveAttribute("aria-pressed", "false");
-
   const controls = page.getByTestId("site-view-controls");
   await controls.getByRole("button", { name: "Walk around" }).click();
   await expect(controls.getByRole("button", { name: "Exit walk mode" })).toBeVisible({
@@ -217,6 +212,14 @@ test("masonry house: frame, controls, sofa and sky light", async ({ page }, info
     await shot(page, info, "fly");
     await controls.getByRole("button", { name: "Stop fly-around" }).click();
   }
+
+  const seeInside = page.getByTestId("site-see-inside");
+  await seeInside.click();
+  await expect(seeInside).toHaveAttribute("aria-pressed", "true");
+  await page.waitForTimeout(500);
+  await shot(page, info, "masonry-inside");
+  await seeInside.click();
+  await expect(seeInside).toHaveAttribute("aria-pressed", "false");
 
   expect(await drawnColours(page)).toBeGreaterThan(20);
   log(info, "effects / pixel ratio at end", [
