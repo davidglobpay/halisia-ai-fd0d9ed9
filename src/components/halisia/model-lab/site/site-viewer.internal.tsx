@@ -84,6 +84,8 @@ type Engine = {
   finisher: Finisher | null;
   /** Use the finisher (desktop default; phones opt in; never in VR). */
   hq: boolean;
+  /** The person set Best picture themselves; the frame-time watch keeps their choice. */
+  hqChosen: boolean;
   /** A standing person beside the house, for scale. */
   person: THREE.Group;
 };
@@ -371,6 +373,7 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
       envDay: ENV_DAY_STUDIO,
       finisher: null,
       hq: !coarsePointer,
+      hqChosen: false,
       person,
     };
     // The real photographed sky replaces the studio light when it arrives.
@@ -530,7 +533,7 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
         const span = now - winStart;
         if (span >= GOVERNOR_WINDOW_MS && winFrames >= 2) {
           if (span / winFrames > SLOW_FRAME_MS) {
-            if (e.hq) slowRef.current();
+            if (e.hq && !e.hqChosen) slowRef.current();
             else if (renderer.getPixelRatio() > 1) {
               renderer.setPixelRatio(1);
               resize();
@@ -962,6 +965,8 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
           className="h-5 w-5 accent-primary"
           checked={hq}
           onChange={(ev) => {
+            // A choice made by hand is kept; only the pixel density may still drop.
+            if (eng.current) eng.current.hqChosen = true;
             setHq(ev.target.checked);
             setHqNote(null);
           }}
