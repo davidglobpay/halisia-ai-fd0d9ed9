@@ -321,3 +321,19 @@ test("mid-range phone: effects start off and the viewer stays usable", async ({ 
   await shot(page, info, "mobile");
   expect(errors).toEqual([]);
 });
+
+test("fallback: no sky file and no sofa file still gives a drawn house", async ({ page }, info) => {
+  test.skip(info.project.name !== "chromium", "checked once, on desktop");
+  await page.route("**/site-assets/**", (route) => route.abort());
+  const { errors, canvas } = await openViewer(page, MASONRY, info);
+  // Boxes stay in place of the sofa; the studio light stays in place of the sky.
+  await page.waitForTimeout(3000);
+  await expect(canvas).not.toHaveAttribute("data-real-models", /.+/);
+  expect(await drawnColours(page)).toBeGreaterThan(20);
+  const hq = page.getByTestId("site-hq").getByRole("checkbox");
+  if (!(await hq.isChecked())) await hq.click();
+  await expect(canvas).toHaveAttribute("data-effects", "on", { timeout: 30_000 });
+  expect(await drawnColours(page)).toBeGreaterThan(20);
+  await shot(page, info, "fallback-no-assets");
+  expect(errors).toEqual([]);
+});
