@@ -17,7 +17,7 @@ import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPa
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 
 /** "Quarry 01" (Poly Haven, CC0): a clear, sunny open-country sky. */
-export const DAY_SKY_URL = "/site-assets/sky-day-1k.hdr";
+export const DAY_SKY_URL = "/site-assets/sky-day.hdr";
 
 /** Load the day sky as an environment light. Resolves null on failure. */
 export async function loadSkyEnvironment(
