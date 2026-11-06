@@ -222,8 +222,11 @@ function finishTexture(kind: WallFinish | "roofSheet" | "roofTile", color: strin
         [448, 128],
         [64, 384],
         [448, 384],
-      ])
-        (g.beginPath(), g.arc(x, y, 5, 0, Math.PI * 2), g.fill());
+      ]) {
+        g.beginPath();
+        g.arc(x, y, 5, 0, Math.PI * 2);
+        g.fill();
+      }
     }
   } else if (kind === "brick") {
     const rows = 13;
@@ -347,8 +350,11 @@ function finishBump(kind: WallFinish | "roofSheet" | "roofTile") {
       [448, 128],
       [64, 384],
       [448, 384],
-    ])
-      (g.beginPath(), g.arc(x, y, 5, 0, Math.PI * 2), g.fill());
+    ]) {
+      g.beginPath();
+      g.arc(x, y, 5, 0, Math.PI * 2);
+      g.fill();
+    }
   } else if (kind === "brick" || kind === "stone") {
     const rows = kind === "brick" ? 13 : 4;
     const cols = kind === "brick" ? 4 : 2;

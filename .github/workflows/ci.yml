@@ -58,6 +58,14 @@ jobs:
         env:
           CI: "1"
           E2E_SERVER: prod
+      - name: Upload 3D viewer screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-3d-screenshots-${{ matrix.shard }}
+          path: test-results/site-3d
+          retention-days: 14
+          if-no-files-found: ignore
       - name: Upload Playwright report (on failure)
         if: failure()
         uses: actions/upload-artifact@v4

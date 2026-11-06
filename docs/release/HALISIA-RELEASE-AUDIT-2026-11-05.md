@@ -111,3 +111,34 @@ No assertion was removed without a replacement that checks the current behaviour
 2. Compare failures against the baseline 108.
 3. Record the after-size of the intelligence dashboard chunk.
 4. Then mark #55 ready for review.
+
+## 8. Update — 6 November 2026: 3D site viewer (PR #61)
+
+Work branch `chatgpt/site-furniture-retry-20261106` (PR #61, draft), brought up to date with the release branch by a merge commit (no rebase). BUILD_ID `2026-11-06.5`. Evidence is GitHub Actions output; no local package install was possible in the Claude environment.
+
+| Area                  | Finding                                                                                                                                                                                | Fix                                                     | Evidence                                                                                                                          | Gate                      |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| CI quality job        | Lint failed on the release branch since PR #57 (2 `no-unused-expressions` errors in `site-house.ts`, 2 unused disable directives), so typecheck, unit tests and builds never ran in CI | Statement blocks; directives removed                    | Run 42235689664 onward: prettier, eslint (0 warnings), typecheck, 96 files / 1,311 unit tests, dev and production builds all pass | PASS                      |
+| Sofa load retry       | A failed `sofa.glb` request was cached as `null` for the session                                                                                                                       | Cache cleared on failure (ChatGPT, e41896a)             | Fallback e2e test: boxes stay, frame drawn, no page errors                                                                        | PASS                      |
+| Frame-time watch      | Frames over 250 ms were ignored and 180 frames were needed, so a device drawing 1–3 frames a second was never judged                                                                   | Time-based 3 s window                                   | Phone emulation at 4x CPU: pixel ratio fell 2 → 1, frame time 1,489 → 627–650 ms (software GPU, not a phone)                      | PASS (emulation only)     |
+| Best picture by hand  | The watch switched it off again within 3 s of the person ticking it                                                                                                                    | A hand-made choice is kept; only pixel density may drop | Fallback test turns it on and it stays on                                                                                         | PASS                      |
+| Exports               | —                                                                                                                                                                                      | —                                                       | PDF 243,200 bytes, 4 pages, `%PDF-`; GLB 1,097,704 bytes, glTF 2, length matches, 298 meshes, 5 images                            | PASS                      |
+| Plot Planner          | Walk link quotes numbers (`lat=%22-1.502157%22`); the Model Lab still reads it                                                                                                         | Not changed (router behaviour; cosmetic)                | Inspiration panel, synthetic photo read on device, walk link opens the viewer                                                     | PASS, cosmetic issue open |
+| Sofa GLB optimisation | Download and use of `gltfpack` was refused by the Claude environment's safety check                                                                                                    | Not attempted; asset unchanged (216,632 bytes)          | —                                                                                                                                 | BLOCKED                   |
+
+### Sizes (production build, gzip)
+
+| Chunk                               | 5 Nov (run 42027864216) | 6 Nov (run 42239875812) |
+| ----------------------------------- | ----------------------- | ----------------------- |
+| `site-viewer.internal`              | 25.99 kB                | 36.62 kB                |
+| `render-quality` (loaded on demand) | —                       | 13.70 kB                |
+| `GLTFLoader` (loaded on demand)     | 12.90 kB                | 12.90 kB                |
+| `model-lab` route                   | 5.51 kB                 | 5.70 kB                 |
+| `plot-planner` route                | 5.20 kB                 | 5.40 kB                 |
+| `plot-viewer.internal`              | 4.09 kB                 | 4.43 kB                 |
+
+Assets: `sofa.glb` 216,632 bytes; `sky-day.hdr` 374,622 bytes (was 1,477,951 in PR #58). In CI both downloaded in under 35 ms from the local server, about 10–13 s after navigation (after the viewer's first frame at 0.8–2.0 s).
+
+### Not verified
+
+Physical phones and real GPUs (CI uses a software GPU); the live Lovable site with these changes (not published); the pre-existing browser-test failures in other areas (about 75 per run before and after this work, in Spatial, Passport, Intelligence, search and visual snapshots).

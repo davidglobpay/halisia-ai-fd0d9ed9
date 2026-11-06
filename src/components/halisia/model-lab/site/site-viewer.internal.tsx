@@ -52,6 +52,9 @@ const EMBED_M = 0.4;
 /** Daylight from the environment: the studio fallback, then the real sky. */
 const ENV_DAY_STUDIO = 0.45;
 const ENV_DAY_SKY = 0.5;
+/** Frame-time watch: average over this window, slower than this is "slow" (~22 fps). */
+const GOVERNOR_WINDOW_MS = 3000;
+const SLOW_FRAME_MS = 45;
 
 type Engine = {
   renderer: THREE.WebGLRenderer;
@@ -81,6 +84,8 @@ type Engine = {
   finisher: Finisher | null;
   /** Use the finisher (desktop default; phones opt in; never in VR). */
   hq: boolean;
+  /** The person set Best picture themselves; the frame-time watch keeps their choice. */
+  hqChosen: boolean;
   /** A standing person beside the house, for scale. */
   person: THREE.Group;
 };
@@ -257,7 +262,10 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
       if (reframe && modeRef.current === "orbit") frameOrbit(e);
       setInfo({ house: built, plan });
       // Swap the box sofas for real models once they have downloaded.
-      void upgradeFurniture(built.group);
+      void upgradeFurniture(built.group).then((n) => {
+        // Read by browser tests: how many real models replaced boxes.
+        if (n > 0) e.renderer.domElement.dataset.realModels = String(n);
+      });
     },
     [params.structure, params.typology, params.floorAreaM2],
   );
@@ -365,6 +373,7 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
       envDay: ENV_DAY_STUDIO,
       finisher: null,
       hq: !coarsePointer,
+      hqChosen: false,
       person,
     };
     // The real photographed sky replaces the studio light when it arrives.
@@ -504,26 +513,33 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
       );
     // Frame-time watch: if the device cannot keep up, drop the effects, then
     // the pixel density, so the view stays smooth rather than sharp and slow.
-    let last = performance.now();
-    let avgMs = 16;
-    let frames = 0;
+    // It judges by elapsed time (every 3 s), not by a frame count, so a device
+    // drawing only a frame or two a second is caught within seconds too.
+    let winStart = performance.now();
+    let winFrames = 0;
+    const restartWatch = () => {
+      winStart = performance.now();
+      winFrames = 0;
+    };
+    // A hidden tab stops drawing; its first frame back is not a slow frame.
+    document.addEventListener("visibilitychange", restartWatch);
     renderer.setAnimationLoop(() => {
       const e = eng.current;
       if (!e) return;
       const now = performance.now();
-      const ms = now - last;
-      last = now;
-      if (ms < 250 && !renderer.xr.isPresenting) {
-        avgMs += (ms - avgMs) * 0.05;
-        frames++;
-        if (frames > 180 && avgMs > 45) {
-          if (e.hq) slowRef.current();
-          else if (renderer.getPixelRatio() > 1) {
-            renderer.setPixelRatio(1);
-            resize();
+      if (renderer.xr.isPresenting) restartWatch();
+      else {
+        winFrames++;
+        const span = now - winStart;
+        if (span >= GOVERNOR_WINDOW_MS && winFrames >= 2) {
+          if (span / winFrames > SLOW_FRAME_MS) {
+            if (e.hq && !e.hqChosen) slowRef.current();
+            else if (renderer.getPixelRatio() > 1) {
+              renderer.setPixelRatio(1);
+              resize();
+            }
           }
-          frames = 0;
-          avgMs = 16;
+          restartWatch();
         }
       }
       const dt = Math.min(clock.getDelta(), 0.05);
@@ -567,8 +583,17 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
           if (e.scene.environmentIntensity > 0.1) e.scene.environmentIntensity = e.envDay;
         }
       }
-      if (e.hq && e.finisher && !renderer.xr.isPresenting) e.finisher.render(e.camera);
+      const fin = e.hq && !renderer.xr.isPresenting ? e.finisher : null;
+      if (fin) fin.render(e.camera);
       else renderer.render(e.scene, e.camera);
+      // Read by browser tests and support: when the first frame was drawn,
+      // whether the effects are drawing, and the pixel density in use.
+      const ds = canvas.dataset;
+      if (!ds.firstFrameMs) ds.firstFrameMs = String(Math.round(now));
+      const fx = fin ? "on" : "off";
+      if (ds.effects !== fx) ds.effects = fx;
+      const pr = String(renderer.getPixelRatio());
+      if (ds.pixelRatio !== pr) ds.pixelRatio = pr;
     });
 
     placeHouse(false);
@@ -576,6 +601,7 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
     return () => {
       alive = false;
       renderer.setAnimationLoop(null);
+      document.removeEventListener("visibilitychange", restartWatch);
       ro.disconnect();
       document.removeEventListener("mousemove", onMouseMove);
       canvas.removeEventListener("pointerdown", onPointerDown);
@@ -782,7 +808,6 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
         `The 3D model could not be saved: ${(err as Error)?.message ?? "export failed"}`,
       );
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fileBase]);
 
   const prepareQuickLook = useCallback(async () => {
@@ -796,7 +821,6 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
     } catch (err) {
       setFileError(`AR file could not be made: ${(err as Error)?.message ?? "export failed"}`);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(
     () => () => {
@@ -941,6 +965,8 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
           className="h-5 w-5 accent-primary"
           checked={hq}
           onChange={(ev) => {
+            // A choice made by hand is kept; only the pixel density may still drop.
+            if (eng.current) eng.current.hqChosen = true;
             setHq(ev.target.checked);
             setHqNote(null);
           }}
