@@ -18,4 +18,4 @@ export const BUILD_ID = "2026-11-06.5";
 
 /** What this build changed, in a few words. Non-sensitive by design. */
 export const BUILD_NOTE =
-  "3D: CI lint fixed, sofa load retries, smoother on slow devices, browser tests for the 3D viewer"; checks after the speed update";
+  "3D: CI lint fixed, sofa load retries, smoother on slow devices, browser tests for the 3D viewer";
