@@ -28,6 +28,8 @@ import {
 } from "./site-house";
 import { describeStyle, loadInspiration, type DesignStyle } from "./design-style";
 import { InspirationPanel } from "./inspiration-panel";
+import { REAL_FURNITURE_CREDITS, preloadRealFurniture, upgradeFurniture } from "./real-furniture";
+import { createFinisher, loadSkyEnvironment, type Finisher } from "./render-quality";
 import type { SiteParams } from "./site-params";
 import {
   SITE_SPAN_M,
@@ -45,6 +47,9 @@ const WALK_SPEED = 1.6; // m/s
 const IMAGERY_ZOOM = 19;
 /** Footings go this far below the lowest ground so nothing floats. */
 const EMBED_M = 0.4;
+/** Daylight from the environment: the studio fallback, then the real sky. */
+const ENV_DAY_STUDIO = 0.45;
+const ENV_DAY_SKY = 0.5;
 
 type Engine = {
   renderer: THREE.WebGLRenderer;
@@ -66,6 +71,14 @@ type Engine = {
   pitch: number;
   baseRef: XRReferenceSpace | null;
   envTex: THREE.Texture;
+  /** The real photographed sky, once loaded; used outdoors. */
+  skyEnv: THREE.Texture | null;
+  /** Environment strength by day (higher once the real sky has loaded). */
+  envDay: number;
+  /** Ambient occlusion, lamp glow and smooth edges; null when not created. */
+  finisher: Finisher | null;
+  /** Use the finisher (desktop default; phones opt in; never in VR). */
+  hq: boolean;
   /** A standing person beside the house, for scale. */
   person: THREE.Group;
 };
@@ -159,6 +172,8 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
   const [coarse, setCoarse] = useState(false);
   const [reduced, setReduced] = useState(false);
   const [stacked, setStacked] = useState(false);
+  /** Best picture: soft shadows where things meet, lamp glow, smooth edges. */
+  const [hq, setHq] = useState(false);
   const [style, setStyle] = useState<DesignStyle | null>(null);
   const styleRef = useRef<DesignStyle | null>(null);
   styleRef.current = style;
@@ -232,6 +247,8 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
       sc.updateProjectionMatrix();
       if (reframe && modeRef.current === "orbit") frameOrbit(e);
       setInfo({ house: built, plan });
+      // Swap the box sofas for real models once they have downloaded.
+      void upgradeFurniture(built.group);
     },
     [params.structure, params.typology, params.floorAreaM2],
   );
@@ -244,6 +261,9 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
     setCoarse(window.matchMedia("(pointer: coarse)").matches);
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     setReduced(reducedMotion);
+    const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
+    setHq(!coarsePointer);
+    preloadRealFurniture();
 
     let renderer: THREE.WebGLRenderer;
     try {
@@ -332,13 +352,34 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
       pitch: 0,
       baseRef: null,
       envTex,
+      skyEnv: null,
+      envDay: ENV_DAY_STUDIO,
+      finisher: null,
+      hq: !coarsePointer,
       person,
     };
+    try {
+      eng.current.finisher = createFinisher(renderer, scene, camera);
+    } catch {
+      eng.current.finisher = null;
+    }
+    // The real photographed sky replaces the studio light when it arrives.
+    let alive = true;
+    void loadSkyEnvironment(renderer).then((sky) => {
+      const e = eng.current;
+      if (!sky) return;
+      if (!alive || !e) {
+        sky.dispose();
+        return;
+      }
+      e.skyEnv = sky;
+    });
 
     const resize = () => {
       const w = host.clientWidth || 1;
       const h = host.clientHeight || 1;
       renderer.setSize(w, h, false);
+      eng.current?.finisher?.setSize(w, h, renderer.getPixelRatio());
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
     };
@@ -486,12 +527,26 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
           e.controls.update();
         }
       }
-      renderer.render(e.scene, e.camera);
+      // Outdoors the real sky lights the scene; indoors the neutral studio
+      // light reads better (a room is lit by its own walls, not the sky).
+      if (e.skyEnv) {
+        const c = e.camera.position;
+        const indoors = insideHouse(e, c.x, c.z) && c.y < e.floorY + 3.2;
+        const want = indoors ? e.envTex : e.skyEnv;
+        if (e.scene.environment !== want) {
+          e.scene.environment = want;
+          e.envDay = indoors ? ENV_DAY_STUDIO : ENV_DAY_SKY;
+          if (e.scene.environmentIntensity > 0.1) e.scene.environmentIntensity = e.envDay;
+        }
+      }
+      if (e.hq && e.finisher && !renderer.xr.isPresenting) e.finisher.render(e.camera);
+      else renderer.render(e.scene, e.camera);
     });
 
     placeHouse(false);
 
     return () => {
+      alive = false;
       renderer.setAnimationLoop(null);
       ro.disconnect();
       document.removeEventListener("mousemove", onMouseMove);
@@ -509,7 +564,9 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
         .catch(() => undefined);
       controls.dispose();
       disposeSubtree(scene);
-      envTex.dispose();
+      eng.current?.envTex.dispose();
+      eng.current?.skyEnv?.dispose();
+      eng.current?.finisher?.dispose();
       renderer.dispose();
       canvas.remove();
       eng.current = null;
@@ -558,6 +615,10 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
     if (eng.current?.terrain) placeHouse(stacked);
   }, [stacked, placeHouse]);
 
+  useEffect(() => {
+    if (eng.current) eng.current.hq = hq;
+  }, [hq]);
+
   // A new design style rebuilds the house in place, keeping the camera.
   useEffect(() => {
     if (eng.current?.terrain) placeHouse(stacked, false);
@@ -591,12 +652,13 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
     const up = pos.elevationDeg > 0;
     e.sun.intensity = up ? 3.0 * Math.min(1, pos.elevationDeg / 12 + 0.2) : 0;
     e.hemi.intensity = up ? 0.5 : 0.08;
-    e.scene.environmentIntensity = up ? 0.45 : 0.06;
+    e.scene.environmentIntensity = up ? e.envDay : 0.06;
     (e.sky.material.uniforms["sunPosition"].value as THREE.Vector3).set(x, y, z);
     e.sky.visible = up;
     // House lights come on from just before sunset.
     nightRef.current = pos.elevationDeg < 4;
     if (e.built) setHouseLights(e.built, nightRef.current);
+    e.finisher?.setNight(nightRef.current);
     const bg = up ? 0xc9d7e3 : 0x141c2a;
     (e.scene.background as THREE.Color).setHex(bg);
     (e.scene.fog as THREE.Fog).color.setHex(bg);
@@ -822,6 +884,23 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
         )}
       </div>
 
+      <label className="flex min-h-11 items-center gap-3 text-sm" data-testid="site-hq">
+        <input
+          type="checkbox"
+          className="h-5 w-5 accent-primary"
+          checked={hq}
+          disabled={!eng.current?.finisher}
+          onChange={(ev) => setHq(ev.target.checked)}
+        />
+        <span>
+          Best picture
+          <span className="block text-xs text-muted-foreground">
+            Soft shadows where walls, floors and furniture meet, glowing lamps at night and smooth
+            edges. Turn off if the view feels slow on your phone.
+          </span>
+        </span>
+      </label>
+
       {isContainer && h && (h.units > 1 || stacked) && (
         <label className="flex min-h-11 items-center gap-3 text-sm" data-testid="site-stack">
           <input
@@ -1008,6 +1087,8 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
                 ? `Esri World Imagery z${IMAGERY_ZOOM}`
                 : "not loaded"}
           </dd>
+          <dt>Models</dt>
+          <dd data-testid="site-credits">{REAL_FURNITURE_CREDITS}</dd>
           <dt>Foundation</dt>
           <dd>
             {info ? `${info.plan.kind}, floor ${info.plan.clearanceM} m above high ground` : "—"}
@@ -1112,9 +1193,20 @@ function captureViews(e: Engine): SitePackView[] {
   const prevSize = renderer.getSize(new THREE.Vector2());
   renderer.setPixelRatio(1);
   renderer.setSize(W, H, false);
+  const fin = e.hq ? e.finisher : null;
+  fin?.setSize(W, H, 1);
+  // The stills are all taken from outside, so they use the sky light.
+  const prevEnv = scene.environment;
+  const prevEnvI = scene.environmentIntensity;
+  if (e.skyEnv) {
+    scene.environment = e.skyEnv;
+    if (prevEnvI > 0.1) scene.environmentIntensity = ENV_DAY_SKY;
+  }
   const out: SitePackView[] = [];
   const shot = (cam: THREE.Camera, label: string) => {
-    renderer.render(scene, cam);
+    // Ambient occlusion assumes a perspective camera, so the plan uses the plain renderer.
+    if (fin && cam instanceof THREE.PerspectiveCamera) fin.render(cam);
+    else renderer.render(scene, cam);
     out.push({
       label,
       dataUrl: renderer.domElement.toDataURL("image/jpeg", 0.88),
@@ -1157,6 +1249,9 @@ function captureViews(e: Engine): SitePackView[] {
   } finally {
     renderer.setPixelRatio(prevRatio);
     renderer.setSize(prevSize.x, prevSize.y, false);
+    fin?.setSize(prevSize.x, prevSize.y, prevRatio);
+    scene.environment = prevEnv;
+    scene.environmentIntensity = prevEnvI;
   }
   return out;
 }
