@@ -29,7 +29,9 @@ import {
 import { describeStyle, loadInspiration, type DesignStyle } from "./design-style";
 import { InspirationPanel } from "./inspiration-panel";
 import { REAL_FURNITURE_CREDITS, preloadRealFurniture, upgradeFurniture } from "./real-furniture";
-import { createFinisher, loadSkyEnvironment, type Finisher } from "./render-quality";
+// The effects and sky loader download after the first frame, so the view opens fast.
+import type { Finisher } from "./render-quality";
+const loadQuality = () => import("./render-quality");
 import type { SiteParams } from "./site-params";
 import {
   SITE_SPAN_M,
@@ -174,6 +176,13 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
   const [stacked, setStacked] = useState(false);
   /** Best picture: soft shadows where things meet, lamp glow, smooth edges. */
   const [hq, setHq] = useState(false);
+  /** Why "Best picture" was switched off by itself, if it was. */
+  const [hqNote, setHqNote] = useState<string | null>(null);
+  const slowRef = useRef<() => void>(() => undefined);
+  slowRef.current = () => {
+    setHq(false);
+    setHqNote("Turned off by itself to keep the view smooth on this device.");
+  };
   const [style, setStyle] = useState<DesignStyle | null>(null);
   const styleRef = useRef<DesignStyle | null>(null);
   styleRef.current = style;
@@ -358,22 +367,20 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
       hq: !coarsePointer,
       person,
     };
-    try {
-      eng.current.finisher = createFinisher(renderer, scene, camera);
-    } catch {
-      eng.current.finisher = null;
-    }
     // The real photographed sky replaces the studio light when it arrives.
     let alive = true;
-    void loadSkyEnvironment(renderer).then((sky) => {
-      const e = eng.current;
-      if (!sky) return;
-      if (!alive || !e) {
-        sky.dispose();
-        return;
-      }
-      e.skyEnv = sky;
-    });
+    void loadQuality()
+      .then((m) => m.loadSkyEnvironment(renderer))
+      .catch(() => null)
+      .then((sky) => {
+        const e = eng.current;
+        if (!sky) return;
+        if (!alive || !e) {
+          sky.dispose();
+          return;
+        }
+        e.skyEnv = sky;
+      });
 
     const resize = () => {
       const w = host.clientWidth || 1;
@@ -495,9 +502,30 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
           feet + 0.3 < b.max.y &&
           feet + BODY_M > b.min.y,
       );
+    // Frame-time watch: if the device cannot keep up, drop the effects, then
+    // the pixel density, so the view stays smooth rather than sharp and slow.
+    let last = performance.now();
+    let avgMs = 16;
+    let frames = 0;
     renderer.setAnimationLoop(() => {
       const e = eng.current;
       if (!e) return;
+      const now = performance.now();
+      const ms = now - last;
+      last = now;
+      if (ms < 250 && !renderer.xr.isPresenting) {
+        avgMs += (ms - avgMs) * 0.05;
+        frames++;
+        if (frames > 180 && avgMs > 45) {
+          if (e.hq) slowRef.current();
+          else if (renderer.getPixelRatio() > 1) {
+            renderer.setPixelRatio(1);
+            resize();
+          }
+          frames = 0;
+          avgMs = 16;
+        }
+      }
       const dt = Math.min(clock.getDelta(), 0.05);
       if (!renderer.xr.isPresenting) {
         if (modeRef.current === "walk") {
@@ -616,7 +644,30 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
   }, [stacked, placeHouse]);
 
   useEffect(() => {
-    if (eng.current) eng.current.hq = hq;
+    const e = eng.current;
+    if (!e) return;
+    e.hq = hq;
+    if (!hq || e.finisher) return;
+    let alive = true;
+    void loadQuality()
+      .then((m) => {
+        const cur = eng.current;
+        if (!alive || !cur || cur.finisher) return;
+        const fin = m.createFinisher(cur.renderer, cur.scene, cur.camera);
+        const size = cur.renderer.getSize(new THREE.Vector2());
+        fin.setSize(size.x, size.y, cur.renderer.getPixelRatio());
+        fin.setNight(nightRef.current);
+        cur.finisher = fin;
+      })
+      .catch(() => {
+        if (alive) {
+          setHq(false);
+          setHqNote("Best picture is not available in this browser.");
+        }
+      });
+    return () => {
+      alive = false;
+    };
   }, [hq]);
 
   // A new design style rebuilds the house in place, keeping the camera.
@@ -721,7 +772,7 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
     setFileError(null);
     try {
       const glb = (await withOriginAtFloor((root) =>
-        new GLTFExporter().parseAsync(root, { binary: true }),
+        new GLTFExporter().parseAsync(root, { binary: true, maxTextureSize: 1024 }),
       )) as ArrayBuffer;
       deliverBlob(new Blob([glb], { type: "model/gltf-binary" }), `${fileBase}.glb`);
       setGlbState("done");
@@ -889,8 +940,10 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
           type="checkbox"
           className="h-5 w-5 accent-primary"
           checked={hq}
-          disabled={!eng.current?.finisher}
-          onChange={(ev) => setHq(ev.target.checked)}
+          onChange={(ev) => {
+            setHq(ev.target.checked);
+            setHqNote(null);
+          }}
         />
         <span>
           Best picture
@@ -898,6 +951,11 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
             Soft shadows where walls, floors and furniture meet, glowing lamps at night and smooth
             edges. Turn off if the view feels slow on your phone.
           </span>
+          {hqNote && (
+            <span className="block text-xs text-muted-foreground" data-testid="site-hq-note">
+              {hqNote}
+            </span>
+          )}
         </span>
       </label>
 

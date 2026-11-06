@@ -14,8 +14,8 @@
  * Bump BUILD_ID on every ship. A stale identifier is worse than none, because
  * it answers the question confidently and wrongly instead of not answering it.
  */
-export const BUILD_ID = "2026-11-06.2";
+export const BUILD_ID = "2026-11-06.3";
 
 /** What this build changed, in a few words. Non-sensitive by design. */
 export const BUILD_NOTE =
-  "Truer 3D picture: real sky light, soft contact shadows, lamp glow, textured brick, stone and roofs, and a real sofa model";
+  "Faster 3D: effects load only when used, sky light file 4x smaller, auto-smooth on slow devices";
