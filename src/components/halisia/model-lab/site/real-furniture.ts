@@ -57,7 +57,12 @@ function load(kind: RealModelMarker["kind"]): Promise<Prepared | null> {
       });
       return { scene: pivot, size } satisfies Prepared;
     })
-    .catch(() => null);
+    .catch(() => {
+      // A temporary network failure must not keep the box placeholder forever.
+      // Clear the rejected load so reopening the viewer can try again.
+      cache.delete(kind);
+      return null;
+    });
   cache.set(kind, p);
   return p;
 }
