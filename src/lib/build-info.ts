@@ -17,5 +17,4 @@
 export const BUILD_ID = "2026-11-06.4";
 
 /** What this build changed, in a few words. Non-sensitive by design. */
-export const BUILD_NOTE =
-  "3D furniture load retries after temporary network failures";
+export const BUILD_NOTE = "3D model reader loads on first use; checks after the speed update";
