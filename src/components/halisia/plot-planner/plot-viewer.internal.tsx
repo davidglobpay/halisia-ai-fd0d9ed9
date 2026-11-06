@@ -14,6 +14,7 @@ import {
   type SiteHouse,
 } from "@/components/halisia/model-lab/site/site-house";
 import { planFoundation } from "@/components/halisia/model-lab/site/foundation";
+import { upgradeFurniture } from "@/components/halisia/model-lab/site/real-furniture";
 import { DEFAULT_STYLE, type DesignStyle } from "@/components/halisia/model-lab/site/design-style";
 import { imageryTiles, isContainer, metresPerPixel, type Placement } from "@/lib/plot-placement";
 import { heightAt, type TerrainGrid } from "@/lib/site-context";
@@ -150,6 +151,8 @@ function buildHouseGroup(
   const group = new THREE.Group();
   group.add(house.group);
   group.name = "plot-house";
+  // Real sofa models replace the boxes in the background.
+  void upgradeFurniture(house.group);
   return { group, house };
 }
 

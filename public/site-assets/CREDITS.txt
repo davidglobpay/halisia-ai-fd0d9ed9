@@ -1,0 +1,4 @@
+sofa.glb — "Glam Velvet Sofa" © 2021 Wayfair LLC, CC BY 4.0
+  (https://creativecommons.org/licenses/by/4.0/), from the Khronos glTF Sample Assets
+  (https://github.com/KhronosGroup/glTF-Sample-Assets). Textures re-encoded to a smaller size.
+sky-day-1k.hdr — "Quarry 01" by Poly Haven (https://polyhaven.com), CC0, as shipped in the three.js examples.

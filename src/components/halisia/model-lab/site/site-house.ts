@@ -313,12 +313,124 @@ function finishTexture(kind: WallFinish | "roofSheet" | "roofTile", color: strin
   return tex;
 }
 
+const bumpCache = new Map<string, THREE.CanvasTexture>();
+
+/**
+ * A height map for a finish (white = proud, black = recessed), drawn on the
+ * same grid as the colour texture: mortar joints, board gaps, sheet ribs and
+ * tile laps catch the light instead of being painted flat.
+ */
+function finishBump(kind: WallFinish | "roofSheet" | "roofTile") {
+  if (typeof document === "undefined" || kind === "plaster") return null;
+  const hit = bumpCache.get(kind);
+  if (hit) return hit;
+  const S = 512;
+  const cv = document.createElement("canvas");
+  cv.width = S;
+  cv.height = S;
+  const g = cv.getContext("2d");
+  if (!g) return null;
+  const r = rng(kind.length * 131);
+  g.fillStyle = "#c8c8c8";
+  g.fillRect(0, 0, S, S);
+  const grain = (n: number, a: number) => {
+    for (let i = 0; i < n; i++) {
+      g.fillStyle = r() > 0.5 ? `rgba(0,0,0,${a})` : `rgba(255,255,255,${a})`;
+      g.fillRect(r() * S, r() * S, 1 + r() * 3, 1 + r() * 3);
+    }
+  };
+  if (kind === "concrete") {
+    grain(9000, 0.12);
+    g.fillStyle = "#555";
+    for (const [x, y] of [
+      [64, 128],
+      [448, 128],
+      [64, 384],
+      [448, 384],
+    ])
+      (g.beginPath(), g.arc(x, y, 5, 0, Math.PI * 2), g.fill());
+  } else if (kind === "brick" || kind === "stone") {
+    const rows = kind === "brick" ? 13 : 4;
+    const cols = kind === "brick" ? 4 : 2;
+    const rh = S / rows;
+    const cw = S / cols;
+    const gap = kind === "brick" ? 4 : 3;
+    g.fillStyle = "#3a3a3a";
+    g.fillRect(0, 0, S, S);
+    for (let y = 0; y < rows; y++) {
+      const off = y % 2 ? cw / 2 : 0;
+      for (let x = -1; x <= cols; x++) {
+        const v = kind === "stone" ? 180 + r() * 60 : 200 + r() * 20;
+        g.fillStyle = `rgb(${v},${v},${v})`;
+        g.fillRect(x * cw + off + gap, y * rh + gap, cw - gap * 2, rh - gap * 2);
+      }
+    }
+    grain(kind === "stone" ? 7000 : 3000, kind === "stone" ? 0.18 : 0.1);
+  } else if (kind === "timber") {
+    const bw = S / 6;
+    for (let i = 0; i < 6; i++) {
+      const grad = g.createLinearGradient(i * bw, 0, (i + 1) * bw, 0);
+      grad.addColorStop(0, "#202020");
+      grad.addColorStop(0.08, "#d0d0d0");
+      grad.addColorStop(0.85, "#b8b8b8");
+      grad.addColorStop(1, "#909090");
+      g.fillStyle = grad;
+      g.fillRect(i * bw, 0, bw, S);
+    }
+    grain(2500, 0.08);
+  } else if (kind === "roofSheet") {
+    const w = S / 13;
+    for (let i = 0; i < 13; i++) {
+      const grad = g.createLinearGradient(i * w, 0, (i + 1) * w, 0);
+      grad.addColorStop(0, "#202020");
+      grad.addColorStop(0.5, "#f0f0f0");
+      grad.addColorStop(1, "#202020");
+      g.fillStyle = grad;
+      g.fillRect(i * w, 0, w, S);
+    }
+  } else if (kind === "roofTile") {
+    const rh = S / 8;
+    for (let y = 0; y < 8; y++) {
+      const off = y % 2 ? 32 : 0;
+      for (let x = -1; x < 9; x++) {
+        const grad = g.createLinearGradient(0, y * rh, 0, (y + 1) * rh);
+        grad.addColorStop(0, "#202020");
+        grad.addColorStop(0.3, "#e8e8e8");
+        grad.addColorStop(1, "#a0a0a0");
+        g.fillStyle = grad;
+        g.fillRect(x * 64 + off + 2, y * rh, 60, rh - 2);
+      }
+    }
+  }
+  const tex = new THREE.CanvasTexture(cv);
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  tex.anisotropy = 4;
+  bumpCache.set(kind, tex);
+  return tex;
+}
+
+/** Bump strength in the units three.js expects (it scales with texel size). */
+const BUMP_SCALE: Record<string, number> = {
+  concrete: 0.6,
+  brick: 2.2,
+  stone: 3.0,
+  timber: 1.6,
+  roofSheet: 2.5,
+  roofTile: 3.0,
+};
+
 function finishMaterial(kind: WallFinish, color: string): THREE.MeshStandardMaterial {
   const map = finishTexture(kind, color);
   const rough = kind === "timber" ? 0.75 : kind === "concrete" ? 0.95 : 0.9;
   const mat = map
     ? new THREE.MeshStandardMaterial({ map, roughness: rough })
     : new THREE.MeshStandardMaterial({ color: hexToInt(color), roughness: rough });
+  const bumpMap = map ? finishBump(kind) : null;
+  if (bumpMap) {
+    mat.bumpMap = bumpMap;
+    mat.bumpScale = BUMP_SCALE[kind] ?? 1;
+  }
   mat.userData.worldUv = !!map;
   return mat;
 }
@@ -338,6 +450,12 @@ function roofMaterial(style: DesignStyle): THREE.MeshStandardMaterial {
       ? { map, roughness: tiles ? 0.7 : 0.45, metalness: tiles ? 0 : 0.35, side: THREE.DoubleSide }
       : { color: n, roughness: 0.55, metalness: 0.3, side: THREE.DoubleSide },
   );
+  const kind = tiles ? "roofTile" : "roofSheet";
+  const bumpMap = map ? finishBump(kind) : null;
+  if (bumpMap) {
+    mat.bumpMap = bumpMap;
+    mat.bumpScale = BUMP_SCALE[kind];
+  }
   mat.userData.worldUv = !!map;
   return mat;
 }
@@ -603,18 +721,39 @@ function sofa(ctx: Ctx, cx: number, cz: number, y: number, facing: Side, length 
   const alongZ = facing === "x0" || facing === "x1";
   // `facing` is the direction the seat looks toward.
   const s = facing === "x1" || facing === "z1" ? 1 : -1;
+  // The box sofa sits in its own group so a real model can replace it once
+  // loaded (see real-furniture.ts); the side table and rug stay.
+  const seat = new THREE.Group();
+  seat.name = "sofa";
+  seat.userData.realModel = {
+    kind: "sofa",
+    x: ctx.ox + cx,
+    y: ctx.oy + y,
+    z: ctx.oz + cz,
+    length,
+    depth: 0.9,
+    rotY:
+      facing === "z1"
+        ? 0
+        : facing === "z0"
+          ? Math.PI
+          : facing === "x1"
+            ? Math.PI / 2
+            : -Math.PI / 2,
+  };
+  ctx.group.add(seat);
   if (alongZ) {
-    addBox(ctx, 0.9, 0.42, length, m.fabric, cx, y + 0.21, cz, true);
-    addBox(ctx, 0.22, 0.45, length, m.fabric, cx - s * 0.34, y + 0.62, cz);
+    addBox(ctx, 0.9, 0.42, length, m.fabric, cx, y + 0.21, cz, true, seat);
+    addBox(ctx, 0.22, 0.45, length, m.fabric, cx - s * 0.34, y + 0.62, cz, false, seat);
     for (const e of [-1, 1])
-      addBox(ctx, 0.9, 0.6, 0.18, m.fabric, cx, y + 0.3, cz + e * (length / 2 - 0.09));
+      addBox(ctx, 0.9, 0.6, 0.18, m.fabric, cx, y + 0.3, cz + e * (length / 2 - 0.09), false, seat);
     addBox(ctx, 0.5, 0.42, 1.0, m.wood, cx + s * 1.05, y + 0.21, cz, true);
     addBox(ctx, 1.6, 0.003, 2.4, m.rug, cx + s * 0.9, y + 0.002, cz).castShadow = false;
   } else {
-    addBox(ctx, length, 0.42, 0.9, m.fabric, cx, y + 0.21, cz, true);
-    addBox(ctx, length, 0.45, 0.22, m.fabric, cx, y + 0.62, cz - s * 0.34);
+    addBox(ctx, length, 0.42, 0.9, m.fabric, cx, y + 0.21, cz, true, seat);
+    addBox(ctx, length, 0.45, 0.22, m.fabric, cx, y + 0.62, cz - s * 0.34, false, seat);
     for (const e of [-1, 1])
-      addBox(ctx, 0.18, 0.6, 0.9, m.fabric, cx + e * (length / 2 - 0.09), y + 0.3, cz);
+      addBox(ctx, 0.18, 0.6, 0.9, m.fabric, cx + e * (length / 2 - 0.09), y + 0.3, cz, false, seat);
     addBox(ctx, 1.0, 0.42, 0.5, m.wood, cx, y + 0.21, cz + s * 1.05, true);
     addBox(ctx, 2.4, 0.003, 1.6, m.rug, cx, y + 0.002, cz + s * 0.9).castShadow = false;
   }
