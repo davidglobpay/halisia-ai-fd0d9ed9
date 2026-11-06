@@ -52,6 +52,9 @@ const EMBED_M = 0.4;
 /** Daylight from the environment: the studio fallback, then the real sky. */
 const ENV_DAY_STUDIO = 0.45;
 const ENV_DAY_SKY = 0.5;
+/** Frame-time watch: average over this window, slower than this is "slow" (~22 fps). */
+const GOVERNOR_WINDOW_MS = 3000;
+const SLOW_FRAME_MS = 45;
 
 type Engine = {
   renderer: THREE.WebGLRenderer;
@@ -507,26 +510,33 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
       );
     // Frame-time watch: if the device cannot keep up, drop the effects, then
     // the pixel density, so the view stays smooth rather than sharp and slow.
-    let last = performance.now();
-    let avgMs = 16;
-    let frames = 0;
+    // It judges by elapsed time (every 3 s), not by a frame count, so a device
+    // drawing only a frame or two a second is caught within seconds too.
+    let winStart = performance.now();
+    let winFrames = 0;
+    const restartWatch = () => {
+      winStart = performance.now();
+      winFrames = 0;
+    };
+    // A hidden tab stops drawing; its first frame back is not a slow frame.
+    document.addEventListener("visibilitychange", restartWatch);
     renderer.setAnimationLoop(() => {
       const e = eng.current;
       if (!e) return;
       const now = performance.now();
-      const ms = now - last;
-      last = now;
-      if (ms < 250 && !renderer.xr.isPresenting) {
-        avgMs += (ms - avgMs) * 0.05;
-        frames++;
-        if (frames > 180 && avgMs > 45) {
-          if (e.hq) slowRef.current();
-          else if (renderer.getPixelRatio() > 1) {
-            renderer.setPixelRatio(1);
-            resize();
+      if (renderer.xr.isPresenting) restartWatch();
+      else {
+        winFrames++;
+        const span = now - winStart;
+        if (span >= GOVERNOR_WINDOW_MS && winFrames >= 2) {
+          if (span / winFrames > SLOW_FRAME_MS) {
+            if (e.hq) slowRef.current();
+            else if (renderer.getPixelRatio() > 1) {
+              renderer.setPixelRatio(1);
+              resize();
+            }
           }
-          frames = 0;
-          avgMs = 16;
+          restartWatch();
         }
       }
       const dt = Math.min(clock.getDelta(), 0.05);
@@ -588,6 +598,7 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
     return () => {
       alive = false;
       renderer.setAnimationLoop(null);
+      document.removeEventListener("visibilitychange", restartWatch);
       ro.disconnect();
       document.removeEventListener("mousemove", onMouseMove);
       canvas.removeEventListener("pointerdown", onPointerDown);
