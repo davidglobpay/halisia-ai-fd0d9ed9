@@ -85,10 +85,30 @@ describe("inline map evidence", () => {
     const { container } = render(
       createElement(MapEvidencePreview, { item, target, selected: false, onFocus: vi.fn() }),
     );
+    // A keyed tile is retried once on the public host before giving up.
     fireEvent.error(container.querySelector("img")!);
+    const retried = container.querySelector("img");
+    if (retried) {
+      expect(retried.src).toContain("server.arcgisonline.com");
+      fireEvent.error(retried);
+    }
     expect(screen.getByText(/No substitute image has been generated/)).toBeTruthy();
     expect(container.querySelector("img")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Map", exact: true }));
     expect(container.querySelector("img")?.src).toContain("World_Street_Map/MapServer/tile/");
+  });
+});
+
+describe("keyed tile fallback", () => {
+  it("maps a keyed Esri tile to the same tile on the public host", async () => {
+    const { publicTileFallback } = await import("@/lib/esri-tiles");
+    expect(
+      publicTileFallback(
+        "https://ibasemaps-api.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/17/1/2?token=abc",
+      ),
+    ).toBe(
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/17/1/2",
+    );
+    expect(publicTileFallback("https://tile.openstreetmap.org/1/2/3.png")).toBeNull();
   });
 });
