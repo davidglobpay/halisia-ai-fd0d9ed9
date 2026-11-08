@@ -45,14 +45,18 @@ export function FileReadyPanel() {
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold">
-            Your {file.mimeType === "application/pdf" ? "PDF" : "file"} is ready
+            {file.started ? "Download started" : "Your "}
+            {file.started ? "" : file.mimeType === "application/pdf" ? "PDF" : "file"}
+            {file.started ? "" : " is ready"}
           </p>
           <p className="truncate text-xs text-muted-foreground" title={file.filename}>
             {file.filename}
             {size ? ` · ${size}` : ""}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Tap Save to download it to this device.
+            {file.started
+              ? "Not in your downloads? Your browser may have held it back. Tap Save, or Share to keep it in another app."
+              : "Tap Save to download it to this device."}
           </p>
         </div>
         <button

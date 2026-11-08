@@ -4,7 +4,7 @@
 // the PDF dossier and any other consumer always has map imagery.
 
 import { hasMapDetail } from "./map-image-quality";
-import { esriTileUrl } from "@/lib/esri-tiles";
+import { esriTileUrl, loadTileImage } from "@/lib/esri-tiles";
 
 type Layer = "roadmap-light" | "terrain" | "satellite" | "hybrid";
 
@@ -37,13 +37,8 @@ function tileUrl(layer: Layer, z: number, x: number, y: number): string {
 }
 
 function loadImg(src: string): Promise<HTMLImageElement | null> {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => resolve(img);
-    img.onerror = () => resolve(null);
-    img.src = src;
-  });
+  // Keyed Esri tiles fall back to the public host when the key is refused.
+  return loadTileImage(src);
 }
 
 export async function fetchStaticMapOSM(args: {

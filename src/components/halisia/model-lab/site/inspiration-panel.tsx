@@ -15,8 +15,14 @@ import { readDesignInspiration } from "@/lib/design-inspiration.functions";
 import { MAX_INSPIRATION_IMAGES } from "@/lib/design-inspiration";
 import {
   DEFAULT_STYLE,
+  CEILING_LABEL,
+  CEILING_TYPES,
+  FLOOR_FINISHES,
+  FLOOR_LABEL,
   INTERIOR_LABEL,
   INTERIOR_MOODS,
+  LIGHTING_LABEL,
+  LIGHTING_TYPES,
   ROOF_FORMS,
   ROOF_LABEL,
   WALL_FINISHES,
@@ -506,6 +512,24 @@ export function InspirationPanel({
               options={INTERIOR_MOODS.map((m) => [m, INTERIOR_LABEL[m]])}
               value={style.interior}
               onChange={(v) => edit({ interior: v as DesignStyle["interior"] })}
+            />
+            <ChoiceGroup
+              label="Ceiling"
+              options={CEILING_TYPES.map((c) => [c, CEILING_LABEL[c]])}
+              value={style.ceiling}
+              onChange={(v) => edit({ ceiling: v as DesignStyle["ceiling"] })}
+            />
+            <ChoiceGroup
+              label="Lighting"
+              options={LIGHTING_TYPES.map((c) => [c, LIGHTING_LABEL[c]])}
+              value={style.lighting}
+              onChange={(v) => edit({ lighting: v as DesignStyle["lighting"] })}
+            />
+            <ChoiceGroup
+              label="Floors"
+              options={FLOOR_FINISHES.map((c) => [c, FLOOR_LABEL[c]])}
+              value={style.floor}
+              onChange={(v) => edit({ floor: v as DesignStyle["floor"] })}
             />
           </div>
           <div className="mt-3 flex flex-wrap gap-4">

@@ -1,6 +1,6 @@
 import { MapContainer, Marker, Popup, ScaleControl, TileLayer, useMapEvents } from "react-leaflet";
 import L from "leaflet";
-import { esriTileTemplate } from "@/lib/esri-tiles";
+import { esriTileTemplate, retryTileOnPublicHost } from "@/lib/esri-tiles";
 
 const DefaultIcon = L.icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
@@ -79,7 +79,11 @@ export default function MapFallback({
         attribution={attribution}
         maxNativeZoom={maxNative}
         maxZoom={21}
-        eventHandlers={{ tileerror: () => onTileError?.() }}
+        eventHandlers={{
+          tileerror: (e) => {
+            if (!retryTileOnPublicHost(e)) onTileError?.();
+          },
+        }}
       />
       <ScaleControl position="bottomleft" />
       <MapClickBridge onMapClick={onMapClick} />

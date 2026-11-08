@@ -1,5 +1,6 @@
 import { expect, test, type Page, type TestInfo } from "@playwright/test";
 import { mkdir, readFile } from "node:fs/promises";
+import { waitForDownload } from "./helpers/download";
 
 /**
  * 3D site viewer smoke: a real WebGL frame is drawn, the controls work, the
@@ -58,21 +59,12 @@ async function shot(page: Page, info: TestInfo, name: string) {
   await page.screenshot({ path: `${SHOTS}/${info.project.name}-${name}.png` });
 }
 
-/**
- * Files made after a long wait cannot start a download by themselves (the
- * browser's tap permission has expired), so the app shows a "file ready"
- * panel with a save link instead. Accept either path.
- */
+/** Start an export and get its file, by direct download or the Save panel. */
 async function download(page: Page, click: () => Promise<void>) {
-  const dl = page.waitForEvent("download", { timeout: 150_000 });
+  const pending = waitForDownload(page, { timeout: 150_000 });
   await click();
-  const save = page.getByTestId("file-ready-save");
-  const first = await Promise.race([
-    dl.then(() => "download" as const),
-    save.waitFor({ state: "visible", timeout: 150_000 }).then(() => "panel" as const),
-  ]);
-  if (first === "panel") await save.click();
-  return { file: await dl, via: first };
+  const file = await pending;
+  return { file, via: "download-or-panel" as const };
 }
 
 const viewer = (page: Page) => page.getByTestId("model-lab-site-mode").locator("canvas");

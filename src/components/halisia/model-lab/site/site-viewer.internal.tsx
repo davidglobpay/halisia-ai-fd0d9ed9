@@ -7,11 +7,15 @@ import { Sky } from "three/examples/jsm/objects/Sky.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 
 import { getElevationSamples } from "@/lib/elevation.functions";
+import { getNearbyBuildings } from "@/lib/site-buildings.functions";
+import type { NearbyBuilding } from "@/lib/site-context";
 import { getBuildCost } from "@/lib/cost-intel.functions";
 import { DEFAULT_BUILD_SELECTION, comparisonTotalText, kes } from "@/lib/cost-intel";
 import { countyForPoint } from "@/lib/location-validation";
 import { KENYA_COUNTY_FACTS } from "@/lib/kenya-county-facts";
 import { imageryTiles, metresPerPixel, typologyName } from "@/lib/plot-placement";
+import { loadTileImage } from "@/lib/esri-tiles";
+import { hasMapDetail } from "@/lib/map-image-quality";
 import { deliverBlob } from "@/lib/pdf-delivery";
 import { downloadSitePackPdf, type SitePackView } from "@/lib/pdf-site-pack";
 import { KitButton } from "@/components/halisia/ds/button";
@@ -28,6 +32,7 @@ import {
 } from "./site-house";
 import { describeStyle, loadInspiration, type DesignStyle } from "./design-style";
 import { InspirationPanel } from "./inspiration-panel";
+import { buildNeighbourGroup, localNeighbours } from "./site-neighbours";
 import { REAL_FURNITURE_CREDITS, preloadRealFurniture, upgradeFurniture } from "./real-furniture";
 // The effects and sky loader download after the first frame, so the view opens fast.
 import type { Finisher } from "./render-quality";
@@ -71,6 +76,8 @@ type Engine = {
   floorY: number;
   colliders: THREE.Box3[];
   ground: THREE.Group | null;
+  /** Neighbouring buildings from OpenStreetMap, on the terrain. */
+  neighbours: THREE.Group | null;
   terrain: SiteTerrain | null;
   yaw: number;
   pitch: number;
@@ -90,33 +97,32 @@ type Engine = {
   person: THREE.Group;
 };
 
-type Imagery = { canvas: HTMLCanvasElement; tint: number } | null;
+type Imagery = { canvas: HTMLCanvasElement; tint: number; zoom: number } | null;
 
 function todayIso() {
   const d = new Date(Date.now() + 3 * 3600_000);
   return d.toISOString().slice(0, 10);
 }
 
-function loadImage(src: string): Promise<HTMLImageElement | null> {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => resolve(img);
-    img.onerror = () => resolve(null);
-    img.src = src;
-  });
-}
-
 /** Esri World Imagery cropped to the terrain square, plus its average colour. */
 async function loadSiteImagery(lat: number, lng: number): Promise<Imagery> {
-  const block = imageryTiles(lat, lng, IMAGERY_ZOOM, 2);
+  // Sharpest first; step down where Esri has no imagery that sharp.
+  for (const zoom of [IMAGERY_ZOOM, IMAGERY_ZOOM - 1, IMAGERY_ZOOM - 2]) {
+    const got = await loadSiteImageryAt(lat, lng, zoom);
+    if (got) return got;
+  }
+  return null;
+}
+
+async function loadSiteImageryAt(lat: number, lng: number, zoom: number): Promise<Imagery> {
+  const block = imageryTiles(lat, lng, zoom, 2);
   if (!block) return null;
   const mosaic = document.createElement("canvas");
   mosaic.width = block.sizePx;
   mosaic.height = block.sizePx;
   const mctx = mosaic.getContext("2d");
   if (!mctx) return null;
-  const imgs = await Promise.all(block.tiles.map((t) => loadImage(t.src)));
+  const imgs = await Promise.all(block.tiles.map((t) => loadTileImage(t.src)));
   let loaded = 0;
   imgs.forEach((img, i) => {
     if (!img) return;
@@ -124,7 +130,7 @@ async function loadSiteImagery(lat: number, lng: number): Promise<Imagery> {
     mctx.drawImage(img, block.tiles[i].px, block.tiles[i].py, 256, 256);
   });
   if (loaded < block.tiles.length * 0.6) return null;
-  const span = Math.round(SITE_SPAN_M / metresPerPixel(lat, IMAGERY_ZOOM));
+  const span = Math.round(SITE_SPAN_M / metresPerPixel(lat, zoom));
   const crop = document.createElement("canvas");
   crop.width = span;
   crop.height = span;
@@ -141,6 +147,19 @@ async function loadSiteImagery(lat: number, lng: number): Promise<Imagery> {
     span,
     span,
   );
+  try {
+    const probe = document.createElement("canvas");
+    probe.width = 64;
+    probe.height = 64;
+    const pctx = probe.getContext("2d");
+    if (pctx) {
+      pctx.drawImage(crop, 0, 0, 64, 64);
+      // A blank "no imagery at this zoom" placeholder: try a coarser level.
+      if (!hasMapDetail(pctx.getImageData(0, 0, 64, 64).data)) return null;
+    }
+  } catch {
+    /* unreadable: use it as it is */
+  }
   let tint = 0x8a8466;
   try {
     const one = document.createElement("canvas");
@@ -155,7 +174,7 @@ async function loadSiteImagery(lat: number, lng: number): Promise<Imagery> {
   } catch {
     /* tainted canvas — keep the default tint */
   }
-  return { canvas: crop, tint };
+  return { canvas: crop, tint, zoom };
 }
 
 export default function SiteViewer({ params }: { params: SiteParams }) {
@@ -164,8 +183,16 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
   const modeRef = useRef<"orbit" | "walk">("orbit");
   const keys = useRef(new Set<string>());
   const touchMove = useRef(0);
+  /** On-screen pad: step sideways (-1 left, 1 right) and turn (-1 left, 1 right). */
+  const touchSide = useRef(0);
+  const touchTurn = useRef(0);
+  /** A room to stand in when walk mode starts (from "Go to a room"). */
+  const jumpRef = useRef<{ x: number; z: number; yaw: number } | null>(null);
 
   const [terrain, setTerrain] = useState<SiteTerrain | null>(null);
+  /** OpenStreetMap footprints around the site; null while loading or unavailable. */
+  const [nearby, setNearby] = useState<NearbyBuilding[] | null>(null);
+  const [neighbourCount, setNeighbourCount] = useState(0);
   const [imagery, setImagery] = useState<Imagery | "loading">("loading");
   const [mode, setMode] = useState<"orbit" | "walk">("orbit");
   const [date, setDate] = useState(todayIso);
@@ -364,6 +391,7 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
       floorY: 0,
       colliders: [],
       ground: null,
+      neighbours: null,
       terrain: null,
       yaw: 0,
       pitch: 0,
@@ -547,7 +575,8 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
         if (modeRef.current === "walk") {
           const k = keys.current;
           let f = touchMove.current;
-          let s = 0;
+          let s = touchSide.current;
+          if (touchTurn.current) e.yaw -= touchTurn.current * 1.5 * dt;
           if (k.has("w") || k.has("arrowup")) f += 1;
           if (k.has("s") || k.has("arrowdown")) f -= 1;
           if (k.has("d") || k.has("arrowright")) s += 1;
@@ -649,6 +678,44 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
     };
   }, [params.lat, params.lng]);
 
+  /* ---------------- neighbouring buildings (OpenStreetMap) */
+  useEffect(() => {
+    if (params.lat === null || params.lng === null) return;
+    let alive = true;
+    void getNearbyBuildings({ data: { lat: params.lat, lng: params.lng, refresh: false } })
+      .then((r) => {
+        if (alive) setNearby(r.status === "ok" ? r.buildings : []);
+      })
+      .catch(() => {
+        if (alive) setNearby([]);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [params.lat, params.lng]);
+
+  useEffect(() => {
+    const e = eng.current;
+    if (!e || !terrain || !nearby || params.lat === null || params.lng === null) return;
+    if (e.neighbours) {
+      e.scene.remove(e.neighbours);
+      disposeSubtree(e.neighbours);
+      e.neighbours = null;
+    }
+    const half = e.built ? Math.max(e.built.lengthM, e.built.widthM) / 2 + 3 : 12;
+    const list = localNeighbours(
+      nearby,
+      { lat: params.lat, lng: params.lng },
+      (terrain.kind === "terrain" ? terrain.spanM : SITE_SPAN_M) / 2 - 5,
+      { halfX: half, halfZ: half },
+    );
+    e.neighbours = buildNeighbourGroup(list, terrain);
+    e.scene.add(e.neighbours);
+    setNeighbourCount(list.length);
+    // The house size only changes the clear zone slightly; terrain and data drive this.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nearby, terrain]);
+
   /* ---------------- ground mesh, then the house on it */
   useEffect(() => {
     const e = eng.current;
@@ -747,12 +814,21 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
     if (!e) return;
     keys.current.clear();
     touchMove.current = 0;
+    touchSide.current = 0;
+    touchTurn.current = 0;
     if (mode === "walk") {
       e.controls.enabled = false;
       e.controls.autoRotate = false;
-      const z = (e.built?.widthM ?? 10) / 2 + 6;
-      e.camera.position.set(0, (e.terrain ? heightAt(e.terrain, 0, z) : 0) + EYE_M, z);
-      e.yaw = 0;
+      const jump = jumpRef.current;
+      jumpRef.current = null;
+      if (jump) {
+        e.camera.position.set(jump.x, e.floorY + 0.12 + EYE_M, jump.z);
+        e.yaw = jump.yaw;
+      } else {
+        const z = (e.built?.widthM ?? 10) / 2 + 6;
+        e.camera.position.set(0, (e.terrain ? heightAt(e.terrain, 0, z) : 0) + EYE_M, z);
+        e.yaw = 0;
+      }
       e.pitch = 0;
     } else {
       if (document.pointerLockElement) document.exitPointerLock();
@@ -904,22 +980,39 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
                   : ""}
           </p>
         </div>
-        {mode === "walk" && coarse && (
-          <div className="absolute bottom-3 right-3 flex flex-col gap-2">
-            {[
-              { label: "Forward", v: 1 },
-              { label: "Back", v: -1 },
-            ].map((b) => (
+        {mode === "walk" && (
+          <div
+            className="absolute bottom-3 right-3 grid grid-cols-3 gap-1.5"
+            role="group"
+            aria-label="Walk controls"
+            data-testid="site-walk-pad"
+          >
+            {(
+              [
+                ["Turn left", "↺", touchTurn, -1],
+                ["Forward", "↑", touchMove, 1],
+                ["Turn right", "↻", touchTurn, 1],
+                ["Step left", "←", touchSide, -1],
+                ["Back", "↓", touchMove, -1],
+                ["Step right", "→", touchSide, 1],
+              ] as const
+            ).map(([label, glyph, ref, v]) => (
               <button
-                key={b.label}
+                key={label}
                 type="button"
-                className="min-h-12 min-w-12 rounded-full bg-background/90 px-4 text-sm font-medium"
-                onPointerDown={() => (touchMove.current = b.v)}
-                onPointerUp={() => (touchMove.current = 0)}
-                onPointerLeave={() => (touchMove.current = 0)}
-                onPointerCancel={() => (touchMove.current = 0)}
+                aria-label={label}
+                title={label}
+                className="flex h-12 w-12 select-none items-center justify-center rounded-full bg-background/90 text-lg font-semibold shadow touch-none"
+                onPointerDown={(ev) => {
+                  ev.preventDefault();
+                  ref.current = v;
+                }}
+                onPointerUp={() => (ref.current = 0)}
+                onPointerLeave={() => (ref.current = 0)}
+                onPointerCancel={() => (ref.current = 0)}
+                onContextMenu={(ev) => ev.preventDefault()}
               >
-                {b.label}
+                {glyph}
               </button>
             ))}
           </div>
@@ -939,6 +1032,73 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
         >
           {seeInside ? "Put the roof back" : "See inside"}
         </KitButton>
+        <KitButton
+          size="sm"
+          variant="secondary"
+          data-testid="site-plan-view"
+          onClick={() => {
+            setCinematic(false);
+            setMode("orbit");
+            setSeeInside(true);
+            // After the mode switch has framed the usual view, look straight down.
+            setTimeout(() => {
+              const e = eng.current;
+              if (!e) return;
+              const size = e.built ? Math.max(e.built.lengthM, e.built.widthM, 8) : 12;
+              e.controls.target.set(0, e.floorY, 0);
+              e.camera.position.set(0, e.floorY + size * 1.35 + 4, 0.01);
+              e.controls.update();
+            }, 0);
+          }}
+        >
+          Plan view
+        </KitButton>
+        {info && info.house.rooms.some((r) => r.level === 0) && (
+          <label className="flex items-center gap-2 text-xs">
+            <span className="sr-only sm:not-sr-only">Go to</span>
+            <select
+              className="min-h-9 rounded-full border border-border bg-background px-3 text-xs"
+              aria-label="Go to a room"
+              data-testid="site-go-to-room"
+              value=""
+              onChange={(ev) => {
+                const room = info.house.rooms.filter((r) => r.level === 0)[Number(ev.target.value)];
+                if (!room) return;
+                const w = room.x1 - room.x0;
+                const d = room.z1 - room.z0;
+                // Stand near one end of the room, looking along its length.
+                const along = w >= d;
+                const jump = along
+                  ? {
+                      x: room.x0 + Math.min(0.9, w / 4),
+                      z: (room.z0 + room.z1) / 2,
+                      yaw: -Math.PI / 2,
+                    }
+                  : { x: (room.x0 + room.x1) / 2, z: room.z1 - Math.min(0.9, d / 4), yaw: 0 };
+                setCinematic(false);
+                setSeeInside(false);
+                const e = eng.current;
+                if (mode === "walk" && e) {
+                  e.camera.position.set(jump.x, e.floorY + 0.12 + EYE_M, jump.z);
+                  e.yaw = jump.yaw;
+                  e.pitch = 0;
+                } else {
+                  jumpRef.current = jump;
+                  setMode("walk");
+                }
+              }}
+            >
+              <option value="">a room…</option>
+              {info.house.rooms
+                .filter((r) => r.level === 0)
+                .map((r, i) => (
+                  <option key={`${r.name}-${i}`} value={i}>
+                    {r.name}
+                  </option>
+                ))}
+            </select>
+          </label>
+        )}
         {!reduced && (
           <KitButton
             size="sm"
@@ -1108,8 +1268,8 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
       {mode === "walk" && (
         <p className="text-xs text-muted-foreground">
           {coarse
-            ? "Drag to look; hold Forward or Back to move. Walk in through the front door."
-            : "Click the view to capture the pointer, look with the mouse, move with W A S D. Press Esc to release."}{" "}
+            ? "Drag to look; hold the arrows to walk, step or turn. Use Go to a room to stand inside any room."
+            : "Click the view to capture the pointer, look with the mouse, move with W A S D or the on-screen arrows. Press Esc to release. Use Go to a room to stand inside any room."}{" "}
           Eye height 1.6 m.
         </p>
       )}
@@ -1168,8 +1328,16 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
             {imagery === "loading"
               ? "loading"
               : imagery
-                ? `Esri World Imagery z${IMAGERY_ZOOM}`
+                ? `Esri World Imagery z${imagery.zoom}`
                 : "not loaded"}
+          </dd>
+          <dt>Neighbours</dt>
+          <dd data-testid="site-neighbours">
+            {nearby === null
+              ? "loading"
+              : neighbourCount
+                ? `${neighbourCount} buildings from OpenStreetMap (as mapped; heights estimated where not recorded)`
+                : "none mapped nearby in OpenStreetMap"}
           </dd>
           <dt>Models</dt>
           <dd data-testid="site-credits">{REAL_FURNITURE_CREDITS}</dd>

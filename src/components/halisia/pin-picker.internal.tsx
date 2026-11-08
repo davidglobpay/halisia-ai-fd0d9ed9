@@ -5,6 +5,7 @@ import {
   basemapGroup,
   type SimpleBasemap,
 } from "@/components/halisia/map-controls/leaflet-basemaps";
+import { retryTileOnPublicHost } from "@/lib/esri-tiles";
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
 import L from "leaflet";
 
@@ -57,6 +58,7 @@ export default function PinPickerInternal({
         attribution={base.attribution}
         maxNativeZoom={base.maxNativeZoom}
         maxZoom={21}
+        eventHandlers={{ tileerror: retryTileOnPublicHost }}
       />
       <LeafletDock
         testId="pin-picker-dock"

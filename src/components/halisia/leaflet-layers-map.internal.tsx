@@ -19,7 +19,7 @@ import { Ruler, Hexagon, PenLine, Download, Trash2 } from "lucide-react";
 import { usePersistedState } from "@/hooks/use-persisted-state";
 import { LeafletDock } from "@/components/halisia/map-controls/leaflet-dock";
 import { MAP_CONTEXT_LAYERS } from "@/lib/map-evidence";
-import { esriTileTemplate } from "@/lib/esri-tiles";
+import { esriTileTemplate, retryTileOnPublicHost } from "@/lib/esri-tiles";
 
 const DefaultIcon = L.icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
@@ -109,6 +109,7 @@ export default function LeafletLayersMap({
             attribution={b.attribution}
             maxNativeZoom={b.max ?? 19}
             maxZoom={21}
+            eventHandlers={{ tileerror: retryTileOnPublicHost }}
           />
         ))}
         {on("labels") && (
@@ -127,6 +128,7 @@ export default function LeafletLayersMap({
               maxNativeZoom={16}
               maxZoom={21}
               opacity={0.28}
+              eventHandlers={{ tileerror: retryTileOnPublicHost }}
             />
           </>
         )}

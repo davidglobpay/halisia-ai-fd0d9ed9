@@ -116,6 +116,9 @@ Reply with ONE JSON object and nothing else:
  "wall": "plaster" | "stone" | "brick" | "timber" | "concrete",
  "windows": "standard" | "large",
  "interior": "warm" | "modern" | "classic",
+ "ceiling": "slab" | "gypsum" | "tng" | "wood",
+ "lighting": "recessed" | "chandelier" | "pendant" | "ambient",
+ "floor": "tiles" | "wood" | "terrazzo" | "carpet",
  "wallColor": "#rrggbb", "roofColor": "#rrggbb", "trimColor": "#rrggbb",
  "notes": [up to 5 short phrases, each under 12 words, naming what you actually see]}
 Rules:
@@ -123,6 +126,7 @@ Rules:
 - "mono" is a single-slope (skillion) roof; "flat" includes flat roofs hidden behind a parapet; "hip" slopes on all four sides.
 - "large" means floor-to-ceiling or very wide glazing; otherwise "standard".
 - "interior": warm = earthy tones and natural wood; modern = light, minimal, grey or white; classic = dark wood and rich colours.
+- "ceiling": slab = plain flat plaster; gypsum = gypsum board, often with a lowered border (bulkhead); tng = tongue and groove pine boards; wood = dark timber panels. "lighting": the main room lights you see. "floor": the main living-area floor. If not visible, pick what suits the style and say so in a note.
 - Colours are the main outside wall colour, the roof colour and the window frame or trim colour.
 - If no building or room is shown, set "isBuilding": false and explain in one note.
 - Never name or describe people, brands, architects or places, and never claim the picture shows a specific real building.`;

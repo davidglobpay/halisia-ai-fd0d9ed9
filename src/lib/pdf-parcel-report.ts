@@ -22,7 +22,14 @@ import {
 } from "@/lib/parcel-geometry";
 import { buildableEnvelope, orientedExtent, groundCoveragePct } from "@/lib/buildable";
 import type { MutationPlan, DeedPlanAgreement } from "@/lib/mutation-plan";
-import { frontEdgeIndexOf, type MassingStudy } from "@/lib/house-brief";
+import { frontEdgeIndexOf, massingBlocks, type MassingStudy } from "@/lib/house-brief";
+import {
+  blockClearances,
+  dimLine,
+  drawAreaDiagram,
+  drawElevation,
+  drawSection,
+} from "@/lib/pdf-massing-drawings";
 import type { PlanFit } from "@/lib/plan-overlay";
 import { deliverPdf } from "@/lib/pdf-delivery";
 
@@ -139,7 +146,12 @@ function drawPlan(
   doc: jsPDF,
   ring: LocalXY[],
   box: { x: number; y: number; w: number; h: number },
-  opts: { envelope?: LocalXY[] | null; footprint?: LocalXY[] | null } = {},
+  opts: {
+    envelope?: LocalXY[] | null;
+    footprint?: LocalXY[] | null;
+    /** Dimension lines in local metres, drawn at the plan's scale. */
+    dims?: Array<{ a: LocalXY; b: LocalXY; text: string; offset?: number }>;
+  } = {},
 ) {
   if (ring.length < 3) return;
   const all = [...ring, ...(opts.envelope ?? []), ...(opts.footprint ?? [])];
@@ -185,6 +197,8 @@ function drawPlan(
   }
   doc.setFillColor(250, 243, 226);
   stroke(ring, PDF.gold, opts.footprint ? 0 : 0.1, 1.4);
+
+  for (const dm of opts.dims ?? []) dimLine(doc, put(dm.a), put(dm.b), dm.text, dm.offset ?? 0);
 
   // Corner numbers, so the side table below can be read against the drawing.
   doc.setFont("helvetica", "bold");
@@ -660,6 +674,103 @@ export async function generateParcelReport(input: ParcelReportInput): Promise<st
     }
   }
 
+  /* ---------------- drawings: the massing block on the plot ---------------- */
+  if (input.massing && input.massing.rect && local.length >= 3 && input.setbacks) {
+    const ms = input.massing;
+    const rect = ms.rect!;
+    const env = envelopeFor(local, input.setbacks);
+    const blocks = massingBlocks(ms, env);
+    const block = blocks[0]?.ring ?? null;
+    doc.addPage();
+    doc.setFillColor(PDF.ivory[0], PDF.ivory[1], PDF.ivory[2]);
+    doc.rect(0, 0, W, H, "F");
+    brandPage(doc, mark);
+    y = heading(doc, "Site plan: the brief on the plot", 86);
+    y = wrap(
+      doc,
+      "The boundary you sketched (gold), the buildable area after your setbacks (green) and a " +
+        "block the size of your brief (shaded), centred and square to the longest boundary. " +
+        "Dimensions in metres. A massing study, not a design or a survey.",
+      M,
+      y,
+      W - M * 2,
+      { size: 8.5, leading: 11, color: PDF.stone },
+    );
+    const dims: Array<{ a: LocalXY; b: LocalXY; text: string; offset?: number }> = [];
+    if (block) {
+      dims.push({ a: block[0], b: block[1], text: `${rect.widthM.toFixed(1)} m`, offset: -10 });
+      dims.push({ a: block[1], b: block[2], text: `${rect.depthM.toFixed(1)} m`, offset: -10 });
+      for (const c of blockClearances(block, local))
+        dims.push({ a: c.from, b: c.to, text: `${c.m.toFixed(1)} m` });
+    }
+    const planBox = { x: M, y: y + 6, w: W - M * 2, h: 420 };
+    doc.setDrawColor(PDF.stone2[0], PDF.stone2[1], PDF.stone2[2]);
+    doc.setLineWidth(0.5);
+    doc.rect(planBox.x, planBox.y, planBox.w, planBox.h, "S");
+    drawPlan(doc, local, planBox, { envelope: env?.ring ?? null, footprint: block, dims });
+    y = planBox.y + planBox.h + 18;
+    y = row(doc, "Block", `${rect.widthM.toFixed(1)} x ${rect.depthM.toFixed(1)} m`, y, W);
+    y = row(
+      doc,
+      "Floors",
+      `${ms.storeysRequested}, about ${ms.heightM.toFixed(1)} m to the top floor level`,
+      y,
+      W,
+    );
+    y = row(doc, "Footprint", `${Math.round(ms.footprintM2)} m2`, y, W);
+    if (block) {
+      const gaps = blockClearances(block, local).map((c) => c.m.toFixed(1));
+      if (gaps.length) y = row(doc, "Gaps to the boundary", `${gaps.join(", ")} m`, y, W);
+    }
+    y = row(
+      doc,
+      "Fits centred and square",
+      ms.fitsAsRectangle ? "yes" : "no - a different position or shape may",
+      y,
+      W,
+    );
+
+    doc.addPage();
+    doc.setFillColor(PDF.ivory[0], PDF.ivory[1], PDF.ivory[2]);
+    doc.rect(0, 0, W, H, "F");
+    brandPage(doc, mark);
+    y = heading(doc, "Elevations, section and room areas", 86);
+    y = wrap(
+      doc,
+      "The same block from the front and the side, cut through, and the rooms of the brief at " +
+        "their true size. Heights use a typical storey; no roof, windows or doors are fixed.",
+      M,
+      y,
+      W - M * 2,
+      { size: 8.5, leading: 11, color: PDF.stone },
+    );
+    const colW = (W - M * 2 - 16) / 2;
+    const rowH = 190;
+    const top1 = y + 22;
+    drawElevation(doc, { x: M, y: top1, w: colW, h: rowH }, "Front elevation", rect.widthM, ms);
+    drawElevation(
+      doc,
+      { x: M + colW + 16, y: top1, w: colW, h: rowH },
+      "Side elevation",
+      rect.depthM,
+      ms,
+    );
+    const top2 = top1 + rowH + 34;
+    drawSection(doc, { x: M, y: top2, w: colW, h: rowH + 20 }, rect.depthM, ms);
+    drawAreaDiagram(doc, { x: M + colW + 16, y: top2, w: colW, h: rowH + 20 }, ms);
+    y = top2 + rowH + 50;
+    wrap(
+      doc,
+      "These drawings come from the rooms, floors and setbacks entered in the app and the " +
+        "boundary sketched on imagery. An architect designs the house; a licensed surveyor fixes " +
+        "the boundary; the county approves what is built.",
+      M,
+      Math.min(y, H - 90),
+      W - M * 2,
+      { size: 8, leading: 10.5, color: PDF.stone2 },
+    );
+  }
+
   /* ---------------- page 6: the brief for an architect ---------------- */
   if (input.massingBriefText && input.massingBriefText.trim()) {
     doc.addPage();
@@ -692,8 +803,12 @@ export async function generateParcelReport(input: ParcelReportInput): Promise<st
         doc.setTextColor(PDF.stone[0], PDF.stone[1], PDF.stone[2]);
         y = 86;
       }
-      doc.text(sanitize(line), M, y);
-      y += 10;
+      // Long lines wrap instead of running off the page.
+      const parts = doc.splitTextToSize(sanitize(line), W - M * 2) as string[];
+      for (const part of parts.length ? parts : [""]) {
+        doc.text(part, M, y);
+        y += 10;
+      }
     }
   }
 

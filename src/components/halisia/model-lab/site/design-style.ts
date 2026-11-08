@@ -15,17 +15,29 @@ export const ROOF_FORMS = ["gable", "hip", "flat", "mono"] as const;
 export const WALL_FINISHES = ["plaster", "stone", "brick", "timber", "concrete"] as const;
 export const WINDOW_SIZES = ["standard", "large"] as const;
 export const INTERIOR_MOODS = ["warm", "modern", "classic"] as const;
+export const CEILING_TYPES = ["slab", "gypsum", "tng", "wood"] as const;
+export const LIGHTING_TYPES = ["recessed", "chandelier", "pendant", "ambient"] as const;
+export const FLOOR_FINISHES = ["tiles", "wood", "terrazzo", "carpet"] as const;
 
 export type RoofForm = (typeof ROOF_FORMS)[number];
 export type WallFinish = (typeof WALL_FINISHES)[number];
 export type WindowSize = (typeof WINDOW_SIZES)[number];
 export type InteriorMood = (typeof INTERIOR_MOODS)[number];
+export type CeilingType = (typeof CEILING_TYPES)[number];
+export type LightingType = (typeof LIGHTING_TYPES)[number];
+export type FloorFinish = (typeof FLOOR_FINISHES)[number];
 
 export type DesignStyle = {
   roof: RoofForm;
   wall: WallFinish;
   windows: WindowSize;
   interior: InteriorMood;
+  /** Ceiling finish: plain slab, gypsum with a bulkhead, tongue and groove, or timber panels. */
+  ceiling: CeilingType;
+  /** Main room lighting. */
+  lighting: LightingType;
+  /** Living-area floor (wet rooms are always tiled; bedrooms follow unless tiled). */
+  floor: FloorFinish;
   /** "#rrggbb" */
   wallColor: string;
   roofColor: string;
@@ -41,6 +53,9 @@ export const DEFAULT_STYLE: DesignStyle = {
   wall: "plaster",
   windows: "standard",
   interior: "warm",
+  ceiling: "gypsum",
+  lighting: "recessed",
+  floor: "tiles",
   wallColor: "#e8dfcb",
   roofColor: "#6f2f25",
   trimColor: "#2e2f31",
@@ -64,6 +79,24 @@ export const WALL_LABEL: Record<WallFinish, string> = {
 export const WINDOW_LABEL: Record<WindowSize, string> = {
   standard: "Standard windows",
   large: "Large glazing",
+};
+export const CEILING_LABEL: Record<CeilingType, string> = {
+  slab: "Flat slab, plain plaster",
+  gypsum: "Gypsum with bulkhead",
+  tng: "Tongue and groove (pine)",
+  wood: "Dark timber panels",
+};
+export const LIGHTING_LABEL: Record<LightingType, string> = {
+  recessed: "Recessed downlights",
+  chandelier: "Chandelier in living and dining",
+  pendant: "Pendant lights",
+  ambient: "Ambient cove lighting",
+};
+export const FLOOR_LABEL: Record<FloorFinish, string> = {
+  tiles: "Porcelain tiles",
+  wood: "Wood floor",
+  terrazzo: "Terrazzo",
+  carpet: "Carpet in bedrooms, tiles elsewhere",
 };
 export const INTERIOR_LABEL: Record<InteriorMood, string> = {
   warm: "Warm and earthy",
@@ -123,6 +156,9 @@ export function sanitizeStyle(raw: unknown, base: DesignStyle = DEFAULT_STYLE): 
     wall: pick(v.wall, WALL_FINISHES, base.wall),
     windows: pick(v.windows, WINDOW_SIZES, base.windows),
     interior: pick(v.interior, INTERIOR_MOODS, base.interior),
+    ceiling: pick(v.ceiling, CEILING_TYPES, base.ceiling ?? DEFAULT_STYLE.ceiling),
+    lighting: pick(v.lighting, LIGHTING_TYPES, base.lighting ?? DEFAULT_STYLE.lighting),
+    floor: pick(v.floor, FLOOR_FINISHES, base.floor ?? DEFAULT_STYLE.floor),
     wallColor: hex(v.wallColor, base.wallColor),
     roofColor: hex(v.roofColor, base.roofColor),
     trimColor: hex(v.trimColor, base.trimColor),
@@ -138,6 +174,8 @@ export function describeStyle(s: DesignStyle): string[] {
     `Walls: ${WALL_LABEL[s.wall]}`,
     `Windows: ${WINDOW_LABEL[s.windows]}`,
     `Interior: ${INTERIOR_LABEL[s.interior]}`,
+    `Ceiling: ${CEILING_LABEL[s.ceiling]}; lighting: ${LIGHTING_LABEL[s.lighting]}`,
+    `Floors: ${FLOOR_LABEL[s.floor]}`,
     `Colours: walls ${s.wallColor}, roof ${s.roofColor}, frames ${s.trimColor}`,
   ];
 }

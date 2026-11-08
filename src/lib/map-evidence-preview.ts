@@ -1,6 +1,9 @@
 import type { EvidencePosition } from "./map-evidence";
 import { esriTileUrl } from "@/lib/esri-tiles";
 
+/** Terrain previews use a zoom where relief and contours are actually drawn. */
+export const TERRAIN_PREVIEW_ZOOM = 15;
+
 export type EvidenceMapLayer = "satellite" | "map" | "terrain";
 export const PREVIEW_LAYERS = {
   satellite: { label: "Satellite", attribution: "Tiles © Esri, Maxar" },
@@ -50,4 +53,18 @@ export function mapPreviewTiles(position: EvidencePosition, layer: EvidenceMapLa
     }
   }
   return tiles;
+}
+
+/**
+ * Hillshade (shaded relief) tiles for the same block as a terrain preview, to
+ * lay over the topographic map so slopes, ridges and hollows read at a glance.
+ * Reference relief only: not a measured site slope.
+ */
+export function terrainReliefTiles(position: EvidencePosition, zoom: number) {
+  const base = mapPreviewTiles(position, "terrain", zoom);
+  if (!base) return null;
+  return base.map((tile) => {
+    const [z, row, col] = tile.src.split("/").slice(-3).map(Number);
+    return { ...tile, src: esriTileUrl("Elevation/World_Hillshade", z, row, col) };
+  });
 }

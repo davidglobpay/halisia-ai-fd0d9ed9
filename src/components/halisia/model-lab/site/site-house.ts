@@ -104,7 +104,14 @@ type Mats = Record<
   | "curtain"
   | "lamp"
   | "mirror"
-  | "person",
+  | "person"
+  | "floorLiving"
+  | "floorBed"
+  | "ceiling"
+  | "led"
+  | "chrome"
+  | "skirting"
+  | "mat",
   THREE.MeshStandardMaterial
 >;
 
@@ -114,6 +121,129 @@ const MOOD: Record<DesignStyle["interior"], number[]> = {
   modern: [0x6b7075, 0x3d4247, 0xc9ae8a, 0xd8d3c8, 0x8d9297, 0xeeeae2],
   classic: [0x2f4a66, 0x7a2f2f, 0x5e4128, 0x6e4a2c, 0x7d2e2a, 0xb9a27c],
 };
+
+type InteriorKind = "tiles" | "bathTile" | "wood" | "terrazzo" | "carpet" | "tng" | "panel";
+
+/**
+ * A 1 m x 1 m tile for an interior finish (floors and ceilings), drawn on a
+ * canvas. Repeats in world metres like the outside finishes, so a 600 mm tile
+ * or a 200 mm board reads at its true size.
+ */
+function interiorTexture(kind: InteriorKind, color: number): THREE.CanvasTexture | null {
+  if (typeof document === "undefined") return null;
+  const key = `in|${kind}|${color}`;
+  const hit = texCache.get(key);
+  if (hit) return hit as THREE.CanvasTexture;
+  const S = 512;
+  const cv = document.createElement("canvas");
+  cv.width = S;
+  cv.height = S;
+  const g = cv.getContext("2d");
+  if (!g) return null;
+  const hexStr = `#${color.toString(16).padStart(6, "0")}`;
+  const r = rng(kind.length * 131 + color);
+  g.fillStyle = shade(hexStr, 1);
+  g.fillRect(0, 0, S, S);
+  const speckle = (n: number, a: number, size = 3) => {
+    for (let i = 0; i < n; i++) {
+      g.fillStyle = r() > 0.5 ? `rgba(0,0,0,${a})` : `rgba(255,255,255,${a})`;
+      g.fillRect(r() * S, r() * S, 1 + r() * size, 1 + r() * size);
+    }
+  };
+  const grid = (n: number, grout: string, line: number) => {
+    const c = S / n;
+    for (let i = 0; i < n; i++)
+      for (let j = 0; j < n; j++) {
+        g.fillStyle = shade(hexStr, 0.96 + r() * 0.07);
+        g.fillRect(i * c, j * c, c, c);
+      }
+    g.fillStyle = grout;
+    for (let i = 0; i <= n; i++) {
+      g.fillRect(i * c - line / 2, 0, line, S);
+      g.fillRect(0, i * c - line / 2, S, line);
+    }
+  };
+  if (kind === "tiles") {
+    // 600 mm porcelain reads best as 2 x 2 per metre (500 mm), with faint veins.
+    grid(2, "rgba(120,112,100,0.55)", 3);
+    g.strokeStyle = "rgba(90,85,80,0.10)";
+    g.lineWidth = 2;
+    for (let i = 0; i < 6; i++) {
+      g.beginPath();
+      let x = r() * S;
+      let y = r() * S;
+      g.moveTo(x, y);
+      for (let k = 0; k < 6; k++) {
+        x += (r() - 0.3) * 120;
+        y += (r() - 0.5) * 120;
+        g.lineTo(x, y);
+      }
+      g.stroke();
+    }
+  } else if (kind === "bathTile") {
+    grid(4, "rgba(150,150,150,0.6)", 3);
+  } else if (kind === "terrazzo") {
+    speckle(1500, 0.05);
+    const chips = [0x8a7a68, 0x3c3c3c, 0xd9cbb0, 0x9b5a3c, 0xf2efe8];
+    for (let i = 0; i < 1400; i++) {
+      g.fillStyle = `#${chips[i % chips.length].toString(16).padStart(6, "0")}`;
+      const w = 2 + r() * 7;
+      g.beginPath();
+      g.ellipse(r() * S, r() * S, w, w * (0.5 + r() * 0.5), r() * 3, 0, Math.PI * 2);
+      g.fill();
+    }
+  } else if (kind === "carpet") {
+    speckle(26000, 0.06, 2);
+  } else if (kind === "wood" || kind === "tng" || kind === "panel") {
+    const boards = kind === "wood" ? 5 : kind === "tng" ? 10 : 2;
+    const bw = S / boards;
+    for (let b = 0; b < boards; b++) {
+      const joint = r() * S;
+      for (const [y0, y1] of [
+        [0, joint],
+        [joint, S],
+      ]) {
+        g.fillStyle = shade(hexStr, 0.88 + r() * 0.22);
+        g.fillRect(b * bw, y0, bw, y1 - y0);
+        g.strokeStyle = "rgba(60,35,15,0.18)";
+        g.lineWidth = 1;
+        for (let k = 0; k < 7; k++) {
+          const x = b * bw + r() * bw;
+          g.beginPath();
+          g.moveTo(x, y0);
+          g.bezierCurveTo(x + 6, y0 + (y1 - y0) / 3, x - 6, y0 + (2 * (y1 - y0)) / 3, x, y1);
+          g.stroke();
+        }
+        if (kind === "wood") {
+          g.fillStyle = "rgba(40,25,10,0.45)";
+          g.fillRect(b * bw, y1 - 1, bw, 2);
+        }
+      }
+      g.fillStyle = kind === "tng" ? "rgba(50,30,10,0.55)" : "rgba(40,25,10,0.4)";
+      g.fillRect(b * bw, 0, kind === "tng" ? 3 : 2, S);
+    }
+  }
+  const tex = new THREE.CanvasTexture(cv);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  tex.anisotropy = 4;
+  texCache.set(key, tex);
+  return tex;
+}
+
+function interiorMaterial(
+  kind: InteriorKind,
+  color: number,
+  roughness: number,
+): THREE.MeshStandardMaterial {
+  const map = interiorTexture(kind, color);
+  const mat = map
+    ? new THREE.MeshStandardMaterial({ map, roughness })
+    : new THREE.MeshStandardMaterial({ color, roughness });
+  mat.userData.worldUv = !!map;
+  return mat;
+}
 
 function makeMats(style: DesignStyle = DEFAULT_STYLE): Mats {
   const m = (
@@ -135,7 +265,7 @@ function makeMats(style: DesignStyle = DEFAULT_STYLE): Mats {
     glass: m(0x9fbfcf, 0.06, 0.4, { transparent: true, opacity: 0.38 }),
     frame: m(trim, 0.55, 0.25),
     wood: m(floor, 0.62),
-    tile: m(style.interior === "modern" ? 0xe4e1da : 0xd6cfc2, 0.45),
+    tile: interiorMaterial("bathTile", style.interior === "modern" ? 0xeceae5 : 0xded7cb, 0.25),
     carpet: m(0xb9ad99, 1),
     steel:
       style.wall === "timber"
@@ -163,6 +293,30 @@ function makeMats(style: DesignStyle = DEFAULT_STYLE): Mats {
     lamp: m(0xfff3dc, 0.6, 0, { emissive: 0xffd9a0, emissiveIntensity: 0.15 }),
     mirror: m(0xd9e4ea, 0.05, 1),
     person: m(0x6d6a66, 0.9),
+    floorLiving:
+      style.floor === "wood"
+        ? interiorMaterial("wood", floor, 0.55)
+        : style.floor === "terrazzo"
+          ? interiorMaterial("terrazzo", 0xd9d2c4, 0.35)
+          : interiorMaterial("tiles", style.interior === "modern" ? 0xe7e4dd : 0xd9cfbf, 0.3),
+    floorBed:
+      style.floor === "carpet"
+        ? interiorMaterial("carpet", style.interior === "classic" ? 0x8a6f5a : 0xbcae98, 1)
+        : style.floor === "terrazzo"
+          ? interiorMaterial("terrazzo", 0xd9d2c4, 0.35)
+          : style.floor === "tiles"
+            ? interiorMaterial("tiles", style.interior === "modern" ? 0xe7e4dd : 0xd9cfbf, 0.3)
+            : interiorMaterial("wood", floor, 0.55),
+    ceiling:
+      style.ceiling === "tng"
+        ? interiorMaterial("tng", 0xc99d66, 0.7)
+        : style.ceiling === "wood"
+          ? interiorMaterial("panel", 0x5b3b25, 0.65)
+          : m(style.ceiling === "gypsum" ? 0xfbfaf6 : 0xf1eee8, 0.95),
+    led: m(0xfff1d6, 0.4, 0, { emissive: 0xffd9a0, emissiveIntensity: 0.25 }),
+    chrome: m(0xe2e2e2, 0.15, 1),
+    skirting: m(style.interior === "classic" ? timber : 0x3a3631, 0.6),
+    mat: m(0x6b5a45, 1),
   };
 }
 
@@ -510,6 +664,12 @@ type Ctx = {
   lights?: THREE.Vector3[];
   /** Ceiling height above the floor finish, for light fittings. */
   ceilingY?: number;
+  /** Main lighting style for fittings. */
+  lighting?: DesignStyle["lighting"];
+  /** Ceiling finish, for bulkheads and beams. */
+  ceilingKind?: DesignStyle["ceiling"];
+  /** Ceiling-level pieces, hidden with the roof by "See inside". */
+  ceilingParts?: THREE.Object3D[];
 };
 
 function addBox(
@@ -979,27 +1139,145 @@ function plant(ctx: Ctx, x: number, z: number, y: number, size = 1.1) {
 }
 
 /**
- * A ceiling fitting: a flush disc, or a pendant with a drum shade over a
- * table. Registers a light point for the night view.
+ * A ceiling fitting in the client's lighting style. `pendant` marks the spot
+ * over a dining table or seating group. Registers one light point for the
+ * night view (the viewer caps the number of real lights).
  */
 function ceilingLight(ctx: Ctx, x: number, z: number, y: number, pendant = false) {
   const m = ctx.mats;
   const top = y + (ctx.ceilingY ?? 2.6);
+  const kind = ctx.lighting ?? "pendant";
+  const at = (px: number, py: number, pz: number) =>
+    new THREE.Vector3(ctx.ox + px, ctx.oy + py, ctx.oz + pz);
+  const put = (mesh: THREE.Mesh, px: number, py: number, pz: number) => {
+    mesh.position.copy(at(px, py, pz));
+    mesh.castShadow = false;
+    ctx.group.add(mesh);
+    return mesh;
+  };
+  if (kind === "chandelier" && pendant) {
+    addBox(ctx, 0.012, 0.55, 0.012, m.chrome, x, top - 0.28, z).castShadow = false;
+    for (const [rad, dy, n] of [
+      [0.42, 0.62, 10],
+      [0.28, 0.8, 7],
+    ] as const) {
+      put(
+        new THREE.Mesh(new THREE.TorusGeometry(rad, 0.012, 6, 32).rotateX(Math.PI / 2), m.chrome),
+        x,
+        top - dy,
+        z,
+      );
+      for (let k = 0; k < n; k++) {
+        const a = (k / n) * Math.PI * 2;
+        put(
+          new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 6), m.lamp),
+          x + Math.cos(a) * rad,
+          top - dy - 0.07,
+          z + Math.sin(a) * rad,
+        );
+      }
+    }
+    ctx.lights?.push(at(x, top - 0.85, z));
+    return;
+  }
+  if (kind === "recessed") {
+    // Four flush downlights around the spot, about 1.4 m apart.
+    for (const dx of [-0.7, 0.7])
+      for (const dz of [-0.7, 0.7]) {
+        put(
+          new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.012, 16), m.lamp),
+          x + dx,
+          top - 0.01,
+          z + dz,
+        );
+        put(
+          new THREE.Mesh(
+            new THREE.TorusGeometry(0.07, 0.008, 6, 16).rotateX(Math.PI / 2),
+            m.chrome,
+          ),
+          x + dx,
+          top - 0.012,
+          z + dz,
+        );
+      }
+    ctx.lights?.push(at(x, top - 0.35, z));
+    return;
+  }
   if (pendant) {
     addBox(ctx, 0.01, 0.6, 0.01, m.dark, x, top - 0.3, z).castShadow = false;
-    const shadeMesh = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.2, 0.26, 0.22, 20, 1, true),
-      m.lamp,
+    put(
+      new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.26, 0.22, 20, 1, true), m.lamp),
+      x,
+      top - 0.7,
+      z,
     );
-    shadeMesh.position.set(ctx.ox + x, ctx.oy + top - 0.7, ctx.oz + z);
-    ctx.group.add(shadeMesh);
-    ctx.lights?.push(new THREE.Vector3(ctx.ox + x, ctx.oy + top - 0.85, ctx.oz + z));
+    ctx.lights?.push(at(x, top - 0.85, z));
   } else {
-    const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.05, 20), m.lamp);
-    disc.position.set(ctx.ox + x, ctx.oy + top - 0.05, ctx.oz + z);
-    ctx.group.add(disc);
-    ctx.lights?.push(new THREE.Vector3(ctx.ox + x, ctx.oy + top - 0.3, ctx.oz + z));
+    const r = kind === "ambient" ? 0.12 : 0.22;
+    put(new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.05, 20), m.lamp), x, top - 0.05, z);
+    ctx.lights?.push(at(x, top - 0.3, z));
   }
+}
+
+/**
+ * The ceiling of one room in the client's finish: a gypsum bulkhead border
+ * (with a glowing cove for ambient lighting), timber beams for a timber
+ * ceiling, and an LED cove at the wall head for ambient lighting on other
+ * ceilings. Everything here is hidden with the roof by "See inside".
+ */
+function ceilingFeature(ctx: Ctx, r: Rect, y: number) {
+  const m = ctx.mats;
+  const top = y + (ctx.ceilingY ?? 2.6);
+  const w = r.x1 - r.x0;
+  const d = r.z1 - r.z0;
+  const cx = (r.x0 + r.x1) / 2;
+  const cz = (r.z0 + r.z1) / 2;
+  const parts: THREE.Object3D[] = [];
+  const keep = (o: THREE.Mesh) => {
+    o.castShadow = false;
+    parts.push(o);
+    return o;
+  };
+  if (ctx.ceilingKind === "gypsum" && w > 2.2 && d > 2.2) {
+    const b = Math.min(0.45, Math.min(w, d) * 0.15);
+    const drop = 0.12;
+    const yb = top - drop / 2;
+    keep(addBox(ctx, w, drop, b, m.ceiling, cx, yb, r.z0 + b / 2));
+    keep(addBox(ctx, w, drop, b, m.ceiling, cx, yb, r.z1 - b / 2));
+    keep(addBox(ctx, b, drop, d - 2 * b, m.ceiling, r.x0 + b / 2, yb, cz));
+    keep(addBox(ctx, b, drop, d - 2 * b, m.ceiling, r.x1 - b / 2, yb, cz));
+    if (ctx.lighting === "ambient") {
+      const yl = top - 0.02;
+      keep(addBox(ctx, w - 2 * b, 0.02, 0.03, m.led, cx, yl, r.z0 + b + 0.02));
+      keep(addBox(ctx, w - 2 * b, 0.02, 0.03, m.led, cx, yl, r.z1 - b - 0.02));
+      keep(addBox(ctx, 0.03, 0.02, d - 2 * b, m.led, r.x0 + b + 0.02, yl, cz));
+      keep(addBox(ctx, 0.03, 0.02, d - 2 * b, m.led, r.x1 - b - 0.02, yl, cz));
+    }
+  } else if (ctx.lighting === "ambient") {
+    const yl = top - 0.06;
+    keep(addBox(ctx, w - 0.1, 0.02, 0.04, m.led, cx, yl, r.z0 + 0.05));
+    keep(addBox(ctx, w - 0.1, 0.02, 0.04, m.led, cx, yl, r.z1 - 0.05));
+  }
+  if (ctx.ceilingKind === "wood" && w > 2.4) {
+    const n = Math.max(1, Math.round(w / 1.6) - 1);
+    for (let k = 1; k <= n; k++)
+      keep(addBox(ctx, 0.12, 0.16, d - 0.04, m.skirting, r.x0 + (k * w) / (n + 1), top - 0.08, cz));
+  }
+  ctx.ceilingParts?.push(...parts);
+}
+
+/** Skirting boards round a room: a dark line where wall meets floor. */
+function skirting(ctx: Ctx, r: Rect, y: number) {
+  const m = ctx.mats;
+  const w = r.x1 - r.x0;
+  const d = r.z1 - r.z0;
+  const h = 0.08;
+  const t = 0.015;
+  const yy = y + h / 2;
+  for (const z of [r.z0 + t / 2, r.z1 - t / 2])
+    addBox(ctx, w, h, t, m.skirting, (r.x0 + r.x1) / 2, yy, z).castShadow = false;
+  for (const x of [r.x0 + t / 2, r.x1 - t / 2])
+    addBox(ctx, t, h, d, m.skirting, x, yy, (r.z0 + r.z1) / 2).castShadow = false;
 }
 
 /** A table lamp standing on a surface at height `y`. */
@@ -1166,7 +1444,7 @@ function furnishMasonryRoom(ctx: Ctx, r: LaidRoom, y: number, iL: number, art: n
       bed(ctx, r, d >= 2.9 ? outer : "x0", y, w >= 3.2 ? 1.5 : 1.2);
       if (w >= 3.1 && d >= 2.9) wardrobe(ctx, r.x1 - 0.32, innerZ + si * 0.95, 0.6, 1.5, y);
       const side: Side | null = !extX1 ? "x1" : !extX0 ? "x0" : null;
-      if (side && d >= 2.9) wallArt(ctx, r, side, outerZ - si * 0.95, y + 1.5, 0.7, 0.5, art);
+      if (side && d >= 2.9) wallArt(ctx, r, side, outerZ - si * 0.95, y + 1.5, 0.9, 0.65, art);
       if (d >= 2.9 && w >= 2.8) plant(ctx, r.x0 + 0.25, innerZ + si * 0.3, y, 0.9);
       ceilingLight(ctx, cx, cz, y);
       break;
@@ -1346,7 +1624,8 @@ function buildRoof(
 }
 
 function floorMat(mats: Mats, t: RoomType) {
-  return t === "bedroom" ? mats.wood : t === "bedsit" ? mats.wood : mats.tile;
+  if (t === "bath" || t === "kitchen") return mats.tile;
+  return t === "bedroom" || t === "bedsit" ? mats.floorBed : mats.floorLiving;
 }
 
 function buildMasonry(typology: string, floorAreaM2: number | null, style: DesignStyle): SiteHouse {
@@ -1373,6 +1652,9 @@ function buildMasonry(typology: string, floorAreaM2: number | null, style: Desig
     oz: 0,
     lights: lightPoints,
     ceilingY: H - 0.02 - FLOOR,
+    lighting: style.lighting,
+    ceilingKind: style.ceiling,
+    ceilingParts: [],
   };
   const large = style.windows === "large";
 
@@ -1398,7 +1680,7 @@ function buildMasonry(typology: string, floorAreaM2: number | null, style: Desig
       iL,
       0.02,
       corridor.z1 - corridor.z0,
-      mats.tile,
+      mats.floorLiving,
       0,
       0.11,
       (corridor.z0 + corridor.z1) / 2,
@@ -1582,7 +1864,22 @@ function buildMasonry(typology: string, floorAreaM2: number | null, style: Desig
   }
 
   // Front rooms first, so the living spaces keep their lights if the cap bites.
-  [...southRooms, ...northRooms].forEach((r, i) => furnishMasonryRoom(ctx, r, FLOOR, iL, i));
+  [...southRooms, ...northRooms].forEach((r, i) => {
+    furnishMasonryRoom(ctx, r, FLOOR, iL, i);
+    ceilingFeature(ctx, r, FLOOR);
+    skirting(ctx, r, FLOOR);
+    if (r.type === "bath")
+      addBox(
+        ctx,
+        0.8,
+        0.012,
+        0.5,
+        mats.rug2,
+        (r.x0 + r.x1) / 2,
+        FLOOR + 0.006,
+        (r.z0 + r.z1) / 2,
+      ).castShadow = false;
+  });
   if (corridor)
     for (let x = -iL / 2 + 1.8; x < iL / 2 - 1; x += 3.6)
       ceilingLight({ ...ctx, lights: undefined }, x, (corridor.z0 + corridor.z1) / 2, FLOOR);
@@ -1590,6 +1887,9 @@ function buildMasonry(typology: string, floorAreaM2: number | null, style: Desig
   // Front step and a door leaf standing open.
   // The step runs down into the ground so it never floats on a slope.
   addBox(ctx, 1.4, 1.6, 0.6, mats.concrete, doorX, -0.7, W / 2 + 0.3);
+  // Door mats outside and in.
+  addBox(ctx, 0.9, 0.015, 0.5, mats.mat, doorX, 0.108, W / 2 + 0.3).castShadow = false;
+  addBox(ctx, 0.9, 0.012, 0.55, mats.mat, doorX, FLOOR + 0.006, W / 2 - T - 0.5).castShadow = false;
   addBox(ctx, 0.05, 2.0, 0.95, mats.wood, doorX - 0.5, 1.1, W / 2 - T - 0.47);
 
   // The roof in the client's form, then the ceiling under it.
@@ -1597,9 +1897,9 @@ function buildMasonry(typology: string, floorAreaM2: number | null, style: Desig
   const { parts: roofParts, rise } = buildRoof(ctx, style, L, W, H);
   cutaway.push(...roofParts);
   // Ceiling under the roof (also hidden by "See inside").
-  const ceiling = addBox(ctx, iL, 0.03, iW, mats.inner, 0, H - 0.02, 0);
+  const ceiling = addBox(ctx, iL, 0.03, iW, mats.ceiling, 0, H - 0.02, 0);
   ceiling.castShadow = false;
-  cutaway.push(ceiling);
+  cutaway.push(ceiling, ...(ctx.ceilingParts ?? []));
 
   const name = (r: LaidRoom) => {
     const same = rooms.filter((q) => q.type === r.type);
@@ -1810,6 +2110,8 @@ function buildContainers(
       oz: pos.z,
       lights: lightPoints,
       ceilingY: H - 0.2,
+      lighting: style.lighting,
+      ceilingKind: style.ceiling,
     };
     const zMinus = sameRowNeighbour(level, slot, -1);
     const zPlus = sameRowNeighbour(level, slot, 1);
@@ -1817,7 +2119,7 @@ function buildContainers(
 
     // Floor, roof plate, corner posts.
     addBox(ctx, L, 0.1, W, mats.steelTrim, 0, 0.05, 0).castShadow = false;
-    addBox(ctx, L - 2 * t, 0.02, W - 2 * t, mats.ply, 0, 0.11, 0).castShadow = false;
+    addBox(ctx, L - 2 * t, 0.02, W - 2 * t, mats.floorLiving, 0, 0.11, 0).castShadow = false;
     const top = addBox(ctx, L, 0.06, W, mats.steel, 0, H - 0.03, 0);
     top.name = "roof";
     if (level === levels - 1 || !occupied.has(`1:${slot}`)) cutaway.push(top);
