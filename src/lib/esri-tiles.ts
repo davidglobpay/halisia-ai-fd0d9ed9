@@ -83,3 +83,47 @@ export function esriTileUrl(
 export function esriImageryLicensed(key: string | undefined = arcgisApiKey()) {
   return !!key;
 }
+
+/**
+ * The same tile on the public host, or null when the URL is not a keyed Esri
+ * tile. A keyed request fails when the key is expired, over quota, missing a
+ * privilege or used from a domain it is not restricted to; the public host
+ * then still serves the same imagery, so maps never go blank for that reason.
+ */
+export function publicTileFallback(url: string): string | null {
+  if (!url.startsWith(KEYED_HOST)) return null;
+  const path = url.slice(KEYED_HOST.length).replace(/\?.*$/, "");
+  return `${PUBLIC_HOST}${path}`;
+}
+
+/** Load one tile as an image (CORS-clean for canvases), keyed host first, then public. */
+export function loadTileImage(url: string): Promise<HTMLImageElement | null> {
+  const attempt = (src: string) =>
+    new Promise<HTMLImageElement | null>((resolve) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = src;
+    });
+  return attempt(url).then((img) => {
+    if (img) return img;
+    const alt = publicTileFallback(url);
+    return alt ? attempt(alt) : null;
+  });
+}
+
+/**
+ * Leaflet `tileerror` handler: retry a failed keyed Esri tile once on the
+ * public host. Returns true when it retried (so callers can skip their own
+ * error handling for that tile).
+ */
+export function retryTileOnPublicHost(event: { tile?: unknown }): boolean {
+  const tile = event.tile as HTMLImageElement | undefined;
+  if (!tile || typeof tile.src !== "string" || tile.dataset?.retried) return false;
+  const alt = publicTileFallback(tile.src);
+  if (!alt) return false;
+  tile.dataset.retried = "1";
+  tile.src = alt;
+  return true;
+}

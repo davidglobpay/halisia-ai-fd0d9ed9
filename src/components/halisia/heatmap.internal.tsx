@@ -5,6 +5,7 @@ import {
   basemapGroup,
   type SimpleBasemap,
 } from "@/components/halisia/map-controls/leaflet-basemaps";
+import { retryTileOnPublicHost } from "@/lib/esri-tiles";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet.heat";
@@ -81,6 +82,7 @@ export default function HeatmapMap({
           attribution={SIMPLE_BASEMAPS[basemap].attribution}
           maxNativeZoom={SIMPLE_BASEMAPS[basemap].maxNativeZoom}
           maxZoom={21}
+          eventHandlers={{ tileerror: retryTileOnPublicHost }}
         />
         {points.length > 0 && showHeat && <HeatOverlay points={points} />}
         <LeafletDock

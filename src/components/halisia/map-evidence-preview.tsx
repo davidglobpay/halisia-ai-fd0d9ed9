@@ -1,6 +1,13 @@
 import { useState } from "react";
 import type { EvidencePosition, MapEvidence } from "@/lib/map-evidence";
-import { mapPreviewTiles, PREVIEW_LAYERS, type EvidenceMapLayer } from "@/lib/map-evidence-preview";
+import {
+  mapPreviewTiles,
+  PREVIEW_LAYERS,
+  TERRAIN_PREVIEW_ZOOM,
+  terrainReliefTiles,
+  type EvidenceMapLayer,
+} from "@/lib/map-evidence-preview";
+import { publicTileFallback } from "@/lib/esri-tiles";
 
 export function MapEvidencePreview({
   item,
@@ -23,7 +30,8 @@ export function MapEvidencePreview({
           ? "User-supplied point"
           : "Location context";
   // Regional estimates must not gain parcel-level visual precision.
-  const zoom = item.positionScope === "sample" ? 12 : layer === "terrain" ? 17 : 18;
+  const zoom =
+    item.positionScope === "sample" ? 12 : layer === "terrain" ? TERRAIN_PREVIEW_ZOOM : 18;
   return (
     <figure className="mt-3 min-w-0" aria-label={`Map context for ${item.label}`}>
       <div
@@ -72,7 +80,7 @@ export function MapEvidencePreview({
           {layer === "satellite"
             ? "Imagery capture date unavailable. The pin marks the recorded coordinate, not a verified parcel."
             : layer === "terrain"
-              ? "Reference relief and contours; not a measured site slope or flood assessment."
+              ? "Reference contours with shaded relief (darker faces slope away from the light); not a measured site slope or flood assessment."
               : "Reference map features; not proof of current ground conditions or legal access."}
         </p>
         <p>
@@ -102,6 +110,7 @@ function TileImage({
   const [failed, setFailed] = useState(false);
   const [loaded, setLoaded] = useState(0);
   const tiles = mapPreviewTiles(target, layer, zoom);
+  const relief = layer === "terrain" ? terrainReliefTiles(target, zoom) : null;
   if (!tiles || failed) {
     return (
       <div role="status" className="rounded-lg border border-foreground/15 bg-muted p-4 text-sm">
@@ -134,8 +143,37 @@ function TileImage({
             width={256}
             height={256}
             onLoad={() => setLoaded((count) => count + 1)}
-            onError={() => setFailed(true)}
+            onError={(ev) => {
+              // A keyed tile that fails is retried once on the public host.
+              const img = ev.currentTarget;
+              const alt = publicTileFallback(img.src);
+              if (alt && !img.dataset.retried) {
+                img.dataset.retried = "1";
+                img.src = alt;
+              } else setFailed(true);
+            }}
             className="pointer-events-none absolute max-w-none"
+            style={{ left: `calc(50% + ${tile.left}px)`, top: `calc(50% + ${tile.top}px)` }}
+          />
+        ))}
+        {relief?.map((tile) => (
+          <img
+            key={tile.src}
+            src={tile.src}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            width={256}
+            height={256}
+            onError={(ev) => {
+              const img = ev.currentTarget;
+              const alt = publicTileFallback(img.src);
+              if (alt && !img.dataset.retried) {
+                img.dataset.retried = "1";
+                img.src = alt;
+              } else img.style.display = "none";
+            }}
+            className="pointer-events-none absolute max-w-none opacity-60 mix-blend-multiply"
             style={{ left: `calc(50% + ${tile.left}px)`, top: `calc(50% + ${tile.top}px)` }}
           />
         ))}

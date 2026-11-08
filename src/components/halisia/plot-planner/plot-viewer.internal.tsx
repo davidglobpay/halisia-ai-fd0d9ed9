@@ -17,6 +17,8 @@ import { planFoundation } from "@/components/halisia/model-lab/site/foundation";
 import { upgradeFurniture } from "@/components/halisia/model-lab/site/real-furniture";
 import { DEFAULT_STYLE, type DesignStyle } from "@/components/halisia/model-lab/site/design-style";
 import { imageryTiles, isContainer, metresPerPixel, type Placement } from "@/lib/plot-placement";
+import { loadTileImage } from "@/lib/esri-tiles";
+import { hasMapDetail } from "@/lib/map-image-quality";
 import { heightAt, type TerrainGrid } from "@/lib/site-context";
 
 export type GroundMode = "terrain" | "flat" | "plain";
@@ -57,7 +59,8 @@ export type PlotViewerProps = {
   designStyle?: DesignStyle | null;
 };
 
-const ZOOM = 19;
+/** Imagery zoom levels to try, sharpest first. */
+const IMAGERY_ZOOMS = [19, 18, 17] as const;
 /** Wall colour for the systems that share the masonry shape, unless the client chose one. */
 const WALL_TINT: Record<string, string> = {
   masonry_block: "#bdbcb6",
@@ -79,16 +82,6 @@ function disposeTree(o: THREE.Object3D) {
   });
 }
 
-function loadImage(src: string): Promise<HTMLImageElement | null> {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => resolve(img);
-    img.onerror = () => resolve(null);
-    img.src = src;
-  });
-}
-
 type Imagery = {
   canvas: HTMLCanvasElement | null;
   sizeM: number;
@@ -98,9 +91,40 @@ type Imagery = {
   total: number;
 };
 
+/**
+ * Satellite imagery under the plot. Sharpest zoom first; where Esri has no
+ * imagery that sharp (common outside big towns) it steps down a level, and
+ * each tile falls back from the keyed to the public host, so a key problem or
+ * a missing zoom level no longer leaves the plot on plain ground.
+ */
 async function loadImagery(lat: number, lng: number): Promise<Imagery> {
-  const mpp = metresPerPixel(lat, ZOOM);
-  const block = imageryTiles(lat, lng, ZOOM);
+  let last: Imagery | null = null;
+  for (const zoom of IMAGERY_ZOOMS) {
+    const got = await loadImageryAt(lat, lng, zoom);
+    last = got;
+    if (got.canvas && got.loaded >= got.total * 0.6 && imageHasDetail(got.canvas)) return got;
+  }
+  return last ?? (await loadImageryAt(lat, lng, IMAGERY_ZOOMS[0]));
+}
+
+/** False for a blank or single-colour "no imagery here" placeholder mosaic. */
+function imageHasDetail(canvas: HTMLCanvasElement): boolean {
+  try {
+    const probe = document.createElement("canvas");
+    probe.width = 64;
+    probe.height = 64;
+    const ctx = probe.getContext("2d");
+    if (!ctx) return true;
+    ctx.drawImage(canvas, 0, 0, 64, 64);
+    return hasMapDetail(ctx.getImageData(0, 0, 64, 64).data);
+  } catch {
+    return true;
+  }
+}
+
+async function loadImageryAt(lat: number, lng: number, zoom: number): Promise<Imagery> {
+  const mpp = metresPerPixel(lat, zoom);
+  const block = imageryTiles(lat, lng, zoom);
   const sizePx = block?.sizePx ?? 1280;
   const point = block?.pointPx ?? { x: sizePx / 2, y: sizePx / 2 };
   const base = {
@@ -115,7 +139,7 @@ async function loadImagery(lat: number, lng: number): Promise<Imagery> {
   if (!ctx) return { ...base, canvas: null, loaded: 0, total: block.tiles.length };
   ctx.fillStyle = "#8a9a6a";
   ctx.fillRect(0, 0, sizePx, sizePx);
-  const imgs = await Promise.all(block.tiles.map((t) => loadImage(t.src)));
+  const imgs = await Promise.all(block.tiles.map((t) => loadTileImage(t.src)));
   let loaded = 0;
   imgs.forEach((img, i) => {
     if (!img) return;
