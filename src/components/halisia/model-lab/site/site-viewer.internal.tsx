@@ -7,11 +7,15 @@ import { Sky } from "three/examples/jsm/objects/Sky.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 
 import { getElevationSamples } from "@/lib/elevation.functions";
+import { getNearbyBuildings } from "@/lib/site-buildings.functions";
+import type { NearbyBuilding } from "@/lib/site-context";
 import { getBuildCost } from "@/lib/cost-intel.functions";
 import { DEFAULT_BUILD_SELECTION, comparisonTotalText, kes } from "@/lib/cost-intel";
 import { countyForPoint } from "@/lib/location-validation";
 import { KENYA_COUNTY_FACTS } from "@/lib/kenya-county-facts";
 import { imageryTiles, metresPerPixel, typologyName } from "@/lib/plot-placement";
+import { loadTileImage } from "@/lib/esri-tiles";
+import { hasMapDetail } from "@/lib/map-image-quality";
 import { deliverBlob } from "@/lib/pdf-delivery";
 import { downloadSitePackPdf, type SitePackView } from "@/lib/pdf-site-pack";
 import { KitButton } from "@/components/halisia/ds/button";
@@ -28,6 +32,7 @@ import {
 } from "./site-house";
 import { describeStyle, loadInspiration, type DesignStyle } from "./design-style";
 import { InspirationPanel } from "./inspiration-panel";
+import { buildNeighbourGroup, localNeighbours } from "./site-neighbours";
 import { REAL_FURNITURE_CREDITS, preloadRealFurniture, upgradeFurniture } from "./real-furniture";
 // The effects and sky loader download after the first frame, so the view opens fast.
 import type { Finisher } from "./render-quality";
@@ -71,6 +76,8 @@ type Engine = {
   floorY: number;
   colliders: THREE.Box3[];
   ground: THREE.Group | null;
+  /** Neighbouring buildings from OpenStreetMap, on the terrain. */
+  neighbours: THREE.Group | null;
   terrain: SiteTerrain | null;
   yaw: number;
   pitch: number;
@@ -90,33 +97,32 @@ type Engine = {
   person: THREE.Group;
 };
 
-type Imagery = { canvas: HTMLCanvasElement; tint: number } | null;
+type Imagery = { canvas: HTMLCanvasElement; tint: number; zoom: number } | null;
 
 function todayIso() {
   const d = new Date(Date.now() + 3 * 3600_000);
   return d.toISOString().slice(0, 10);
 }
 
-function loadImage(src: string): Promise<HTMLImageElement | null> {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => resolve(img);
-    img.onerror = () => resolve(null);
-    img.src = src;
-  });
-}
-
 /** Esri World Imagery cropped to the terrain square, plus its average colour. */
 async function loadSiteImagery(lat: number, lng: number): Promise<Imagery> {
-  const block = imageryTiles(lat, lng, IMAGERY_ZOOM, 2);
+  // Sharpest first; step down where Esri has no imagery that sharp.
+  for (const zoom of [IMAGERY_ZOOM, IMAGERY_ZOOM - 1, IMAGERY_ZOOM - 2]) {
+    const got = await loadSiteImageryAt(lat, lng, zoom);
+    if (got) return got;
+  }
+  return null;
+}
+
+async function loadSiteImageryAt(lat: number, lng: number, zoom: number): Promise<Imagery> {
+  const block = imageryTiles(lat, lng, zoom, 2);
   if (!block) return null;
   const mosaic = document.createElement("canvas");
   mosaic.width = block.sizePx;
   mosaic.height = block.sizePx;
   const mctx = mosaic.getContext("2d");
   if (!mctx) return null;
-  const imgs = await Promise.all(block.tiles.map((t) => loadImage(t.src)));
+  const imgs = await Promise.all(block.tiles.map((t) => loadTileImage(t.src)));
   let loaded = 0;
   imgs.forEach((img, i) => {
     if (!img) return;
@@ -124,7 +130,7 @@ async function loadSiteImagery(lat: number, lng: number): Promise<Imagery> {
     mctx.drawImage(img, block.tiles[i].px, block.tiles[i].py, 256, 256);
   });
   if (loaded < block.tiles.length * 0.6) return null;
-  const span = Math.round(SITE_SPAN_M / metresPerPixel(lat, IMAGERY_ZOOM));
+  const span = Math.round(SITE_SPAN_M / metresPerPixel(lat, zoom));
   const crop = document.createElement("canvas");
   crop.width = span;
   crop.height = span;
@@ -141,6 +147,19 @@ async function loadSiteImagery(lat: number, lng: number): Promise<Imagery> {
     span,
     span,
   );
+  try {
+    const probe = document.createElement("canvas");
+    probe.width = 64;
+    probe.height = 64;
+    const pctx = probe.getContext("2d");
+    if (pctx) {
+      pctx.drawImage(crop, 0, 0, 64, 64);
+      // A blank "no imagery at this zoom" placeholder: try a coarser level.
+      if (!hasMapDetail(pctx.getImageData(0, 0, 64, 64).data)) return null;
+    }
+  } catch {
+    /* unreadable: use it as it is */
+  }
   let tint = 0x8a8466;
   try {
     const one = document.createElement("canvas");
@@ -155,7 +174,7 @@ async function loadSiteImagery(lat: number, lng: number): Promise<Imagery> {
   } catch {
     /* tainted canvas — keep the default tint */
   }
-  return { canvas: crop, tint };
+  return { canvas: crop, tint, zoom };
 }
 
 export default function SiteViewer({ params }: { params: SiteParams }) {
@@ -166,6 +185,9 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
   const touchMove = useRef(0);
 
   const [terrain, setTerrain] = useState<SiteTerrain | null>(null);
+  /** OpenStreetMap footprints around the site; null while loading or unavailable. */
+  const [nearby, setNearby] = useState<NearbyBuilding[] | null>(null);
+  const [neighbourCount, setNeighbourCount] = useState(0);
   const [imagery, setImagery] = useState<Imagery | "loading">("loading");
   const [mode, setMode] = useState<"orbit" | "walk">("orbit");
   const [date, setDate] = useState(todayIso);
@@ -364,6 +386,7 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
       floorY: 0,
       colliders: [],
       ground: null,
+      neighbours: null,
       terrain: null,
       yaw: 0,
       pitch: 0,
@@ -648,6 +671,44 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
       alive = false;
     };
   }, [params.lat, params.lng]);
+
+  /* ---------------- neighbouring buildings (OpenStreetMap) */
+  useEffect(() => {
+    if (params.lat === null || params.lng === null) return;
+    let alive = true;
+    void getNearbyBuildings({ data: { lat: params.lat, lng: params.lng } })
+      .then((r) => {
+        if (alive) setNearby(r.status === "ok" ? r.buildings : []);
+      })
+      .catch(() => {
+        if (alive) setNearby([]);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [params.lat, params.lng]);
+
+  useEffect(() => {
+    const e = eng.current;
+    if (!e || !terrain || !nearby || params.lat === null || params.lng === null) return;
+    if (e.neighbours) {
+      e.scene.remove(e.neighbours);
+      disposeSubtree(e.neighbours);
+      e.neighbours = null;
+    }
+    const half = e.built ? Math.max(e.built.lengthM, e.built.widthM) / 2 + 3 : 12;
+    const list = localNeighbours(
+      nearby,
+      { lat: params.lat, lng: params.lng },
+      (terrain.kind === "terrain" ? terrain.spanM : SITE_SPAN_M) / 2 - 5,
+      { halfX: half, halfZ: half },
+    );
+    e.neighbours = buildNeighbourGroup(list, terrain);
+    e.scene.add(e.neighbours);
+    setNeighbourCount(list.length);
+    // The house size only changes the clear zone slightly; terrain and data drive this.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nearby, terrain]);
 
   /* ---------------- ground mesh, then the house on it */
   useEffect(() => {
@@ -1168,8 +1229,16 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
             {imagery === "loading"
               ? "loading"
               : imagery
-                ? `Esri World Imagery z${IMAGERY_ZOOM}`
+                ? `Esri World Imagery z${imagery.zoom}`
                 : "not loaded"}
+          </dd>
+          <dt>Neighbours</dt>
+          <dd data-testid="site-neighbours">
+            {nearby === null
+              ? "loading"
+              : neighbourCount
+                ? `${neighbourCount} buildings from OpenStreetMap (as mapped; heights estimated where not recorded)`
+                : "none mapped nearby in OpenStreetMap"}
           </dd>
           <dt>Models</dt>
           <dd data-testid="site-credits">{REAL_FURNITURE_CREDITS}</dd>
