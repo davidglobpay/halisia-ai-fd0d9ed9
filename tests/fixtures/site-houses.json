@@ -1,1 +1,494 @@
-{"m3gable": {"structure": "masonry_stone", "lengthM": 12.8097, "widthM": 9.2641, "heightM": 4.8533, "levels": 1, "units": 0, "rooms": [{"name": "Bedroom 1", "x0": -6.2048, "x1": -2.0683, "z0": -4.432, "z1": -0.6, "level": 0}, {"name": "Bedroom 2", "x0": -2.0683, "x1": 2.0683, "z0": -4.432, "z1": -0.6, "level": 0}, {"name": "Bedroom 3", "x0": 2.0683, "x1": 6.2048, "z0": -4.432, "z1": -0.6, "level": 0}, {"name": "Bathroom", "x0": -6.2048, "x1": -4.2048, "z0": 0.6, "z1": 4.432, "level": 0}, {"name": "Kitchen", "x0": -4.2048, "x1": -1.4048, "z0": 0.6, "z1": 4.432, "level": 0}, {"name": "Living / dining", "x0": -1.4048, "x1": 6.2048, "z0": 0.6, "z1": 4.432, "level": 0}], "outlines": [{"x0": -6.4048, "x1": 6.4048, "z0": -4.632, "z1": 4.632, "level": 0}], "drawing": {"walls": [{"axis": "x", "at": -4.532, "from": -6.4048, "to": 6.4048, "thick": 0.2, "exterior": true, "openings": [{"at": -4.1366, "width": 1.5, "bottom": 0.9, "top": 2.1, "glass": true}, {"at": 0, "width": 1.5, "bottom": 0.9, "top": 2.1, "glass": true}, {"at": 4.1366, "width": 1.5, "bottom": 0.9, "top": 2.1, "glass": true}]}, {"axis": "x", "at": 4.532, "from": -6.4048, "to": 6.4048, "thick": 0.2, "exterior": true, "openings": [{"at": -5.2048, "width": 0.6, "bottom": 1.5, "top": 2.1, "glass": true}, {"at": -2.8048, "width": 1.5, "bottom": 0.9, "top": 2.1, "glass": true}, {"at": 5.2048, "width": 1, "bottom": 0.1, "top": 2.1, "glass": false}, {"at": -0.0048, "width": 2, "bottom": 0.9, "top": 2.1, "glass": true}]}, {"axis": "z", "at": -6.3048, "from": -4.432, "to": 4.432, "thick": 0.2, "exterior": true, "openings": [{"at": -2.516, "width": 1.2, "bottom": 0.9, "top": 2.1, "glass": true}]}, {"axis": "z", "at": 6.3048, "from": -4.432, "to": 4.432, "thick": 0.2, "exterior": true, "openings": [{"at": -2.516, "width": 1.2, "bottom": 0.9, "top": 2.1, "glass": true}]}, {"axis": "x", "at": -0.6, "from": -6.2048, "to": 6.2048, "thick": 0.1, "exterior": false, "openings": [{"at": -5.3048, "width": 0.85, "bottom": 0.1, "top": 2.2, "glass": false}, {"at": -1.1683, "width": 0.85, "bottom": 0.1, "top": 2.2, "glass": false}, {"at": 2.9683, "width": 0.85, "bottom": 0.1, "top": 2.2, "glass": false}]}, {"axis": "x", "at": 0.6, "from": -6.2048, "to": 6.2048, "thick": 0.1, "exterior": false, "openings": [{"at": -5.2048, "width": 0.75, "bottom": 0.1, "top": 2.2, "glass": false}, {"at": -2.8048, "width": 1.4, "bottom": 0.1, "top": 2.2, "glass": false}, {"at": 2.4, "width": 6.4097, "bottom": 0.1, "top": 2.2, "glass": false}]}, {"axis": "z", "at": -2.0683, "from": -4.432, "to": -0.6, "thick": 0.1, "exterior": false, "openings": []}, {"axis": "z", "at": 2.0683, "from": -4.432, "to": -0.6, "thick": 0.1, "exterior": false, "openings": []}, {"axis": "z", "at": -4.2048, "from": 0.6, "to": 4.432, "thick": 0.1, "exterior": false, "openings": []}, {"axis": "z", "at": -1.4048, "from": 0.6, "to": 4.432, "thick": 0.1, "exterior": false, "openings": [{"at": 2.516, "width": 2.832, "bottom": 0.1, "top": 2.3, "glass": false}]}], "wallHeightM": 2.8, "floorM": 0.12, "roof": {"form": "gable", "pitchDeg": 22, "eaveM": 0.45, "riseM": 2.0533}, "doorX": 5.2048}, "style": {"roof": "gable", "wall": "plaster", "windows": "standard", "interior": "warm", "ceiling": "gypsum", "lighting": "recessed", "floor": "tiles", "wallColor": "#e8dfcb", "roofColor": "#6f2f25", "trimColor": "#2e2f31", "notes": [], "source": "default"}, "foundation": {"kind": "strip_slab", "name": "Strip footing and ground slab", "summary": "Concrete strip footings under every load-bearing wall, a stone plinth wall to floor level and a ground-floor slab on compacted hardcore with a damp-proof membrane.", "why": "The ground under the footprint falls about 0.20 m, which cannot see small bumps, ditches or rock. Nearly level ground suits the most common and cheapest Kenyan foundation.", "clearanceM": 0.15, "checks": ["Soil type is not known here (no soil reading for this point). Trial pits or a geotechnical report decide footing depth and width; expansive black cotton soil needs a different design.", "A structural engineer designs and signs the foundation. This is a planning suggestion, not a design."]}, "dropM": 0.2}, "m2flat": {"structure": "masonry_stone", "lengthM": 10.2995, "widthM": 7.4711, "heightM": 3.45, "levels": 1, "units": 0, "rooms": [{"name": "Bedroom 1", "x0": -4.9497, "x1": 0, "z0": -3.5355, "z1": -0.6, "level": 0}, {"name": "Bedroom 2", "x0": 0, "x1": 4.9497, "z0": -3.5355, "z1": -0.6, "level": 0}, {"name": "Bathroom", "x0": -4.9497, "x1": -2.9497, "z0": 0.6, "z1": 3.5355, "level": 0}, {"name": "Kitchen", "x0": -2.9497, "x1": -0.1497, "z0": 0.6, "z1": 3.5355, "level": 0}, {"name": "Living / dining", "x0": -0.1497, "x1": 4.9497, "z0": 0.6, "z1": 3.5355, "level": 0}], "outlines": [{"x0": -5.1497, "x1": 5.1497, "z0": -3.7355, "z1": 3.7355, "level": 0}], "drawing": {"walls": [{"axis": "x", "at": -3.6355, "from": -5.1497, "to": 5.1497, "thick": 0.2, "exterior": true, "openings": [{"at": -2.4749, "width": 1.5, "bottom": 0.9, "top": 2.1, "glass": true}, {"at": 2.4749, "width": 1.5, "bottom": 0.9, "top": 2.1, "glass": true}]}, {"axis": "x", "at": 3.6355, "from": -5.1497, "to": 5.1497, "thick": 0.2, "exterior": true, "openings": [{"at": -3.9497, "width": 0.6, "bottom": 1.5, "top": 2.1, "glass": true}, {"at": -1.5497, "width": 1.5, "bottom": 0.9, "top": 2.1, "glass": true}, {"at": 3.9497, "width": 1, "bottom": 0.1, "top": 2.1, "glass": false}, {"at": 1.2503, "width": 2, "bottom": 0.9, "top": 2.1, "glass": true}]}, {"axis": "z", "at": -5.0497, "from": -3.5355, "to": 3.5355, "thick": 0.2, "exterior": true, "openings": [{"at": -2.0678, "width": 1.2, "bottom": 0.9, "top": 2.1, "glass": true}]}, {"axis": "z", "at": 5.0497, "from": -3.5355, "to": 3.5355, "thick": 0.2, "exterior": true, "openings": [{"at": -2.0678, "width": 1.2, "bottom": 0.9, "top": 2.1, "glass": true}]}, {"axis": "x", "at": -0.6, "from": -4.9497, "to": 4.9497, "thick": 0.1, "exterior": false, "openings": [{"at": -4.0497, "width": 0.85, "bottom": 0.1, "top": 2.2, "glass": false}, {"at": 0.9, "width": 0.85, "bottom": 0.1, "top": 2.2, "glass": false}]}, {"axis": "x", "at": 0.6, "from": -4.9497, "to": 4.9497, "thick": 0.1, "exterior": false, "openings": [{"at": -3.9497, "width": 0.75, "bottom": 0.1, "top": 2.2, "glass": false}, {"at": -1.5497, "width": 1.4, "bottom": 0.1, "top": 2.2, "glass": false}, {"at": 2.4, "width": 3.8995, "bottom": 0.1, "top": 2.2, "glass": false}]}, {"axis": "z", "at": 0, "from": -3.5355, "to": -0.6, "thick": 0.1, "exterior": false, "openings": []}, {"axis": "z", "at": -2.9497, "from": 0.6, "to": 3.5355, "thick": 0.1, "exterior": false, "openings": []}, {"axis": "z", "at": -0.1497, "from": 0.6, "to": 3.5355, "thick": 0.1, "exterior": false, "openings": [{"at": 2.0678, "width": 1.9355, "bottom": 0.1, "top": 2.3, "glass": false}]}], "wallHeightM": 2.8, "floorM": 0.12, "roof": {"form": "flat", "pitchDeg": 0, "eaveM": 0.05, "riseM": 0.65}, "doorX": 3.9497}, "style": {"roof": "flat", "wall": "stone", "windows": "standard", "interior": "warm", "ceiling": "gypsum", "lighting": "recessed", "floor": "tiles", "wallColor": "#e8dfcb", "roofColor": "#6f2f25", "trimColor": "#2e2f31", "notes": [], "source": "default"}, "foundation": {"kind": "columns_beams", "name": "Columns on pad footings with ground beams", "summary": "Reinforced concrete columns on pad footings tied by ground beams, carrying a suspended floor slab; the alternative is cutting terraces into the slope.", "why": "The ground under the footprint falls about 1.60 m, which cannot see small bumps, ditches or rock. On this much fall, a suspended floor avoids deep fill and tall retaining plinths.", "clearanceM": 0.15, "checks": ["Soil type is not known here (no soil reading for this point). Trial pits or a geotechnical report decide footing depth and width; expansive black cotton soil needs a different design.", "A structural engineer designs and signs the foundation. This is a planning suggestion, not a design."]}, "dropM": 1.6}, "m1mono": {"structure": "masonry_stone", "lengthM": 7.8833, "widthM": 5.7452, "heightM": 4.1917, "levels": 1, "units": 0, "rooms": [{"name": "Bedroom", "x0": -3.7417, "x1": 1.5417, "z0": -2.6726, "z1": 0, "level": 0}, {"name": "Bathroom", "x0": 1.5417, "x1": 3.7417, "z0": -2.6726, "z1": 0, "level": 0}, {"name": "Kitchen", "x0": -3.7417, "x1": -0.9417, "z0": 0, "z1": 2.6726, "level": 0}, {"name": "Living / dining", "x0": -0.9417, "x1": 3.7417, "z0": 0, "z1": 2.6726, "level": 0}], "outlines": [{"x0": -3.9417, "x1": 3.9417, "z0": -2.8726, "z1": 2.8726, "level": 0}], "drawing": {"walls": [{"axis": "x", "at": -2.7726, "from": -3.9417, "to": 3.9417, "thick": 0.2, "exterior": true, "openings": [{"at": -1.1, "width": 1.5, "bottom": 0.9, "top": 2.1, "glass": true}, {"at": 2.6417, "width": 0.6, "bottom": 1.5, "top": 2.1, "glass": true}]}, {"axis": "x", "at": 2.7726, "from": -3.9417, "to": 3.9417, "thick": 0.2, "exterior": true, "openings": [{"at": -2.3417, "width": 1.5, "bottom": 0.9, "top": 2.1, "glass": true}, {"at": 2.7417, "width": 1, "bottom": 0.1, "top": 2.1, "glass": false}, {"at": 0.4583, "width": 2, "bottom": 0.9, "top": 2.1, "glass": true}]}, {"axis": "z", "at": -3.8417, "from": -2.6726, "to": 2.6726, "thick": 0.2, "exterior": true, "openings": [{"at": -1.3363, "width": 1.2, "bottom": 0.9, "top": 2.1, "glass": true}, {"at": 1.3363, "width": 1.2, "bottom": 0.9, "top": 2.1, "glass": true}]}, {"axis": "z", "at": 3.8417, "from": -2.6726, "to": 2.6726, "thick": 0.2, "exterior": true, "openings": []}, {"axis": "x", "at": 0, "from": -3.7417, "to": 3.7417, "thick": 0.1, "exterior": false, "openings": [{"at": -2.8417, "width": 0.85, "bottom": 0.1, "top": 2.2, "glass": false}, {"at": 2.6417, "width": 0.75, "bottom": 0.1, "top": 2.2, "glass": false}]}, {"axis": "z", "at": 1.5417, "from": -2.6726, "to": 0, "thick": 0.1, "exterior": false, "openings": []}, {"axis": "z", "at": -0.9417, "from": 0, "to": 2.6726, "thick": 0.1, "exterior": false, "openings": [{"at": 1.3363, "width": 1.6726, "bottom": 0.1, "top": 2.3, "glass": false}]}], "wallHeightM": 2.8, "floorM": 0.12, "roof": {"form": "mono", "pitchDeg": 10, "eaveM": 0.45, "riseM": 1.3917}, "doorX": 2.7417}, "style": {"roof": "mono", "wall": "plaster", "windows": "standard", "interior": "warm", "ceiling": "gypsum", "lighting": "recessed", "floor": "tiles", "wallColor": "#e8dfcb", "roofColor": "#555555", "trimColor": "#2e2f31", "notes": [], "source": "default"}, "foundation": {"kind": "strip_slab", "name": "Strip footing and ground slab", "summary": "Concrete strip footings under every load-bearing wall, a stone plinth wall to floor level and a ground-floor slab on compacted hardcore with a damp-proof membrane.", "why": "The ground under the footprint falls about 0.10 m, which cannot see small bumps, ditches or rock. Nearly level ground suits the most common and cheapest Kenyan foundation.", "clearanceM": 0.15, "checks": ["Soil type is not known here (no soil reading for this point). Trial pits or a geotechnical report decide footing depth and width; expansive black cotton soil needs a different design.", "A structural engineer designs and signs the foundation. This is a planning suggestion, not a design."]}, "dropM": 0.1}, "c40": {"structure": "container_40ft", "lengthM": 12.192, "widthM": 4.876, "heightM": 5.792, "levels": 2, "units": 3, "rooms": [{"name": "Living / kitchen", "x0": -6.046, "x1": 6.046, "z0": -2.388, "z1": -0.05, "level": 0}, {"name": "Study / lounge", "x0": -6.046, "x1": 0, "z0": 0.05, "z1": 2.388, "level": 0}, {"name": "Bedroom", "x0": 0, "x1": 6.046, "z0": 0.05, "z1": 2.388, "level": 0}, {"name": "Bedroom", "x0": -6.046, "x1": 0, "z0": -2.388, "z1": -0.05, "level": 1}, {"name": "Dressing / store", "x0": 0, "x1": 3.446, "z0": -2.388, "z1": -0.05, "level": 1}, {"name": "Bathroom", "x0": 3.446, "x1": 6.046, "z0": -2.388, "z1": -0.05, "level": 1}, {"name": "Outside stair", "x0": -7.346, "x1": -6.346, "z0": -1.869, "z1": 3.591, "level": 0}], "outlines": [{"x0": -6.096, "x1": 6.096, "z0": -2.438, "z1": 0, "level": 0}, {"x0": -6.096, "x1": 6.096, "z0": -0.0, "z1": 2.438, "level": 0}, {"x0": -6.096, "x1": 6.096, "z0": -2.438, "z1": 0, "level": 1}], "style": {"roof": "gable", "wall": "plaster", "windows": "standard", "interior": "warm", "ceiling": "gypsum", "lighting": "recessed", "floor": "tiles", "wallColor": "#e8dfcb", "roofColor": "#6f2f25", "trimColor": "#2e2f31", "notes": [], "source": "default"}, "foundation": {"kind": "container_pads", "name": "Concrete pad footings", "summary": "Reinforced concrete pads under each corner casting (and mid-span on 40 ft units), the container bolted or welded to plates cast into them.", "why": "The ground under the footprint falls about 0.30 m, which cannot see small bumps, ditches or rock. Pads keep the steel off the ground, let air and water pass underneath and need little digging.", "clearanceM": 0.3, "checks": ["Two-high stacking: pads sized for both levels, upper units locked with twist-locks or welded plates, and a wind check on the stack.", "Soil type is not known here (no soil reading for this point). Trial pits or a geotechnical report decide footing depth and width; expansive black cotton soil needs a different design.", "A structural engineer designs and signs the foundation. This is a planning suggestion, not a design."]}, "dropM": 0.3}}
+{
+  "m3gable": {
+    "structure": "masonry_stone",
+    "lengthM": 12.8097,
+    "widthM": 9.2641,
+    "heightM": 4.8533,
+    "levels": 1,
+    "units": 0,
+    "rooms": [
+      { "name": "Bedroom 1", "x0": -6.2048, "x1": -2.0683, "z0": -4.432, "z1": -0.6, "level": 0 },
+      { "name": "Bedroom 2", "x0": -2.0683, "x1": 2.0683, "z0": -4.432, "z1": -0.6, "level": 0 },
+      { "name": "Bedroom 3", "x0": 2.0683, "x1": 6.2048, "z0": -4.432, "z1": -0.6, "level": 0 },
+      { "name": "Bathroom", "x0": -6.2048, "x1": -4.2048, "z0": 0.6, "z1": 4.432, "level": 0 },
+      { "name": "Kitchen", "x0": -4.2048, "x1": -1.4048, "z0": 0.6, "z1": 4.432, "level": 0 },
+      { "name": "Living / dining", "x0": -1.4048, "x1": 6.2048, "z0": 0.6, "z1": 4.432, "level": 0 }
+    ],
+    "outlines": [{ "x0": -6.4048, "x1": 6.4048, "z0": -4.632, "z1": 4.632, "level": 0 }],
+    "drawing": {
+      "walls": [
+        {
+          "axis": "x",
+          "at": -4.532,
+          "from": -6.4048,
+          "to": 6.4048,
+          "thick": 0.2,
+          "exterior": true,
+          "openings": [
+            { "at": -4.1366, "width": 1.5, "bottom": 0.9, "top": 2.1, "glass": true },
+            { "at": 0, "width": 1.5, "bottom": 0.9, "top": 2.1, "glass": true },
+            { "at": 4.1366, "width": 1.5, "bottom": 0.9, "top": 2.1, "glass": true }
+          ]
+        },
+        {
+          "axis": "x",
+          "at": 4.532,
+          "from": -6.4048,
+          "to": 6.4048,
+          "thick": 0.2,
+          "exterior": true,
+          "openings": [
+            { "at": -5.2048, "width": 0.6, "bottom": 1.5, "top": 2.1, "glass": true },
+            { "at": -2.8048, "width": 1.5, "bottom": 0.9, "top": 2.1, "glass": true },
+            { "at": 5.2048, "width": 1, "bottom": 0.1, "top": 2.1, "glass": false },
+            { "at": -0.0048, "width": 2, "bottom": 0.9, "top": 2.1, "glass": true }
+          ]
+        },
+        {
+          "axis": "z",
+          "at": -6.3048,
+          "from": -4.432,
+          "to": 4.432,
+          "thick": 0.2,
+          "exterior": true,
+          "openings": [{ "at": -2.516, "width": 1.2, "bottom": 0.9, "top": 2.1, "glass": true }]
+        },
+        {
+          "axis": "z",
+          "at": 6.3048,
+          "from": -4.432,
+          "to": 4.432,
+          "thick": 0.2,
+          "exterior": true,
+          "openings": [{ "at": -2.516, "width": 1.2, "bottom": 0.9, "top": 2.1, "glass": true }]
+        },
+        {
+          "axis": "x",
+          "at": -0.6,
+          "from": -6.2048,
+          "to": 6.2048,
+          "thick": 0.1,
+          "exterior": false,
+          "openings": [
+            { "at": -5.3048, "width": 0.85, "bottom": 0.1, "top": 2.2, "glass": false },
+            { "at": -1.1683, "width": 0.85, "bottom": 0.1, "top": 2.2, "glass": false },
+            { "at": 2.9683, "width": 0.85, "bottom": 0.1, "top": 2.2, "glass": false }
+          ]
+        },
+        {
+          "axis": "x",
+          "at": 0.6,
+          "from": -6.2048,
+          "to": 6.2048,
+          "thick": 0.1,
+          "exterior": false,
+          "openings": [
+            { "at": -5.2048, "width": 0.75, "bottom": 0.1, "top": 2.2, "glass": false },
+            { "at": -2.8048, "width": 1.4, "bottom": 0.1, "top": 2.2, "glass": false },
+            { "at": 2.4, "width": 6.4097, "bottom": 0.1, "top": 2.2, "glass": false }
+          ]
+        },
+        {
+          "axis": "z",
+          "at": -2.0683,
+          "from": -4.432,
+          "to": -0.6,
+          "thick": 0.1,
+          "exterior": false,
+          "openings": []
+        },
+        {
+          "axis": "z",
+          "at": 2.0683,
+          "from": -4.432,
+          "to": -0.6,
+          "thick": 0.1,
+          "exterior": false,
+          "openings": []
+        },
+        {
+          "axis": "z",
+          "at": -4.2048,
+          "from": 0.6,
+          "to": 4.432,
+          "thick": 0.1,
+          "exterior": false,
+          "openings": []
+        },
+        {
+          "axis": "z",
+          "at": -1.4048,
+          "from": 0.6,
+          "to": 4.432,
+          "thick": 0.1,
+          "exterior": false,
+          "openings": [{ "at": 2.516, "width": 2.832, "bottom": 0.1, "top": 2.3, "glass": false }]
+        }
+      ],
+      "wallHeightM": 2.8,
+      "floorM": 0.12,
+      "roof": { "form": "gable", "pitchDeg": 22, "eaveM": 0.45, "riseM": 2.0533 },
+      "doorX": 5.2048
+    },
+    "style": {
+      "roof": "gable",
+      "wall": "plaster",
+      "windows": "standard",
+      "interior": "warm",
+      "ceiling": "gypsum",
+      "lighting": "recessed",
+      "floor": "tiles",
+      "wallColor": "#e8dfcb",
+      "roofColor": "#6f2f25",
+      "trimColor": "#2e2f31",
+      "notes": [],
+      "source": "default"
+    },
+    "foundation": {
+      "kind": "strip_slab",
+      "name": "Strip footing and ground slab",
+      "summary": "Concrete strip footings under every load-bearing wall, a stone plinth wall to floor level and a ground-floor slab on compacted hardcore with a damp-proof membrane.",
+      "why": "The ground under the footprint falls about 0.20 m, which cannot see small bumps, ditches or rock. Nearly level ground suits the most common and cheapest Kenyan foundation.",
+      "clearanceM": 0.15,
+      "checks": [
+        "Soil type is not known here (no soil reading for this point). Trial pits or a geotechnical report decide footing depth and width; expansive black cotton soil needs a different design.",
+        "A structural engineer designs and signs the foundation. This is a planning suggestion, not a design."
+      ]
+    },
+    "dropM": 0.2
+  },
+  "m2flat": {
+    "structure": "masonry_stone",
+    "lengthM": 10.2995,
+    "widthM": 7.4711,
+    "heightM": 3.45,
+    "levels": 1,
+    "units": 0,
+    "rooms": [
+      { "name": "Bedroom 1", "x0": -4.9497, "x1": 0, "z0": -3.5355, "z1": -0.6, "level": 0 },
+      { "name": "Bedroom 2", "x0": 0, "x1": 4.9497, "z0": -3.5355, "z1": -0.6, "level": 0 },
+      { "name": "Bathroom", "x0": -4.9497, "x1": -2.9497, "z0": 0.6, "z1": 3.5355, "level": 0 },
+      { "name": "Kitchen", "x0": -2.9497, "x1": -0.1497, "z0": 0.6, "z1": 3.5355, "level": 0 },
+      {
+        "name": "Living / dining",
+        "x0": -0.1497,
+        "x1": 4.9497,
+        "z0": 0.6,
+        "z1": 3.5355,
+        "level": 0
+      }
+    ],
+    "outlines": [{ "x0": -5.1497, "x1": 5.1497, "z0": -3.7355, "z1": 3.7355, "level": 0 }],
+    "drawing": {
+      "walls": [
+        {
+          "axis": "x",
+          "at": -3.6355,
+          "from": -5.1497,
+          "to": 5.1497,
+          "thick": 0.2,
+          "exterior": true,
+          "openings": [
+            { "at": -2.4749, "width": 1.5, "bottom": 0.9, "top": 2.1, "glass": true },
+            { "at": 2.4749, "width": 1.5, "bottom": 0.9, "top": 2.1, "glass": true }
+          ]
+        },
+        {
+          "axis": "x",
+          "at": 3.6355,
+          "from": -5.1497,
+          "to": 5.1497,
+          "thick": 0.2,
+          "exterior": true,
+          "openings": [
+            { "at": -3.9497, "width": 0.6, "bottom": 1.5, "top": 2.1, "glass": true },
+            { "at": -1.5497, "width": 1.5, "bottom": 0.9, "top": 2.1, "glass": true },
+            { "at": 3.9497, "width": 1, "bottom": 0.1, "top": 2.1, "glass": false },
+            { "at": 1.2503, "width": 2, "bottom": 0.9, "top": 2.1, "glass": true }
+          ]
+        },
+        {
+          "axis": "z",
+          "at": -5.0497,
+          "from": -3.5355,
+          "to": 3.5355,
+          "thick": 0.2,
+          "exterior": true,
+          "openings": [{ "at": -2.0678, "width": 1.2, "bottom": 0.9, "top": 2.1, "glass": true }]
+        },
+        {
+          "axis": "z",
+          "at": 5.0497,
+          "from": -3.5355,
+          "to": 3.5355,
+          "thick": 0.2,
+          "exterior": true,
+          "openings": [{ "at": -2.0678, "width": 1.2, "bottom": 0.9, "top": 2.1, "glass": true }]
+        },
+        {
+          "axis": "x",
+          "at": -0.6,
+          "from": -4.9497,
+          "to": 4.9497,
+          "thick": 0.1,
+          "exterior": false,
+          "openings": [
+            { "at": -4.0497, "width": 0.85, "bottom": 0.1, "top": 2.2, "glass": false },
+            { "at": 0.9, "width": 0.85, "bottom": 0.1, "top": 2.2, "glass": false }
+          ]
+        },
+        {
+          "axis": "x",
+          "at": 0.6,
+          "from": -4.9497,
+          "to": 4.9497,
+          "thick": 0.1,
+          "exterior": false,
+          "openings": [
+            { "at": -3.9497, "width": 0.75, "bottom": 0.1, "top": 2.2, "glass": false },
+            { "at": -1.5497, "width": 1.4, "bottom": 0.1, "top": 2.2, "glass": false },
+            { "at": 2.4, "width": 3.8995, "bottom": 0.1, "top": 2.2, "glass": false }
+          ]
+        },
+        {
+          "axis": "z",
+          "at": 0,
+          "from": -3.5355,
+          "to": -0.6,
+          "thick": 0.1,
+          "exterior": false,
+          "openings": []
+        },
+        {
+          "axis": "z",
+          "at": -2.9497,
+          "from": 0.6,
+          "to": 3.5355,
+          "thick": 0.1,
+          "exterior": false,
+          "openings": []
+        },
+        {
+          "axis": "z",
+          "at": -0.1497,
+          "from": 0.6,
+          "to": 3.5355,
+          "thick": 0.1,
+          "exterior": false,
+          "openings": [{ "at": 2.0678, "width": 1.9355, "bottom": 0.1, "top": 2.3, "glass": false }]
+        }
+      ],
+      "wallHeightM": 2.8,
+      "floorM": 0.12,
+      "roof": { "form": "flat", "pitchDeg": 0, "eaveM": 0.05, "riseM": 0.65 },
+      "doorX": 3.9497
+    },
+    "style": {
+      "roof": "flat",
+      "wall": "stone",
+      "windows": "standard",
+      "interior": "warm",
+      "ceiling": "gypsum",
+      "lighting": "recessed",
+      "floor": "tiles",
+      "wallColor": "#e8dfcb",
+      "roofColor": "#6f2f25",
+      "trimColor": "#2e2f31",
+      "notes": [],
+      "source": "default"
+    },
+    "foundation": {
+      "kind": "columns_beams",
+      "name": "Columns on pad footings with ground beams",
+      "summary": "Reinforced concrete columns on pad footings tied by ground beams, carrying a suspended floor slab; the alternative is cutting terraces into the slope.",
+      "why": "The ground under the footprint falls about 1.60 m, which cannot see small bumps, ditches or rock. On this much fall, a suspended floor avoids deep fill and tall retaining plinths.",
+      "clearanceM": 0.15,
+      "checks": [
+        "Soil type is not known here (no soil reading for this point). Trial pits or a geotechnical report decide footing depth and width; expansive black cotton soil needs a different design.",
+        "A structural engineer designs and signs the foundation. This is a planning suggestion, not a design."
+      ]
+    },
+    "dropM": 1.6
+  },
+  "m1mono": {
+    "structure": "masonry_stone",
+    "lengthM": 7.8833,
+    "widthM": 5.7452,
+    "heightM": 4.1917,
+    "levels": 1,
+    "units": 0,
+    "rooms": [
+      { "name": "Bedroom", "x0": -3.7417, "x1": 1.5417, "z0": -2.6726, "z1": 0, "level": 0 },
+      { "name": "Bathroom", "x0": 1.5417, "x1": 3.7417, "z0": -2.6726, "z1": 0, "level": 0 },
+      { "name": "Kitchen", "x0": -3.7417, "x1": -0.9417, "z0": 0, "z1": 2.6726, "level": 0 },
+      { "name": "Living / dining", "x0": -0.9417, "x1": 3.7417, "z0": 0, "z1": 2.6726, "level": 0 }
+    ],
+    "outlines": [{ "x0": -3.9417, "x1": 3.9417, "z0": -2.8726, "z1": 2.8726, "level": 0 }],
+    "drawing": {
+      "walls": [
+        {
+          "axis": "x",
+          "at": -2.7726,
+          "from": -3.9417,
+          "to": 3.9417,
+          "thick": 0.2,
+          "exterior": true,
+          "openings": [
+            { "at": -1.1, "width": 1.5, "bottom": 0.9, "top": 2.1, "glass": true },
+            { "at": 2.6417, "width": 0.6, "bottom": 1.5, "top": 2.1, "glass": true }
+          ]
+        },
+        {
+          "axis": "x",
+          "at": 2.7726,
+          "from": -3.9417,
+          "to": 3.9417,
+          "thick": 0.2,
+          "exterior": true,
+          "openings": [
+            { "at": -2.3417, "width": 1.5, "bottom": 0.9, "top": 2.1, "glass": true },
+            { "at": 2.7417, "width": 1, "bottom": 0.1, "top": 2.1, "glass": false },
+            { "at": 0.4583, "width": 2, "bottom": 0.9, "top": 2.1, "glass": true }
+          ]
+        },
+        {
+          "axis": "z",
+          "at": -3.8417,
+          "from": -2.6726,
+          "to": 2.6726,
+          "thick": 0.2,
+          "exterior": true,
+          "openings": [
+            { "at": -1.3363, "width": 1.2, "bottom": 0.9, "top": 2.1, "glass": true },
+            { "at": 1.3363, "width": 1.2, "bottom": 0.9, "top": 2.1, "glass": true }
+          ]
+        },
+        {
+          "axis": "z",
+          "at": 3.8417,
+          "from": -2.6726,
+          "to": 2.6726,
+          "thick": 0.2,
+          "exterior": true,
+          "openings": []
+        },
+        {
+          "axis": "x",
+          "at": 0,
+          "from": -3.7417,
+          "to": 3.7417,
+          "thick": 0.1,
+          "exterior": false,
+          "openings": [
+            { "at": -2.8417, "width": 0.85, "bottom": 0.1, "top": 2.2, "glass": false },
+            { "at": 2.6417, "width": 0.75, "bottom": 0.1, "top": 2.2, "glass": false }
+          ]
+        },
+        {
+          "axis": "z",
+          "at": 1.5417,
+          "from": -2.6726,
+          "to": 0,
+          "thick": 0.1,
+          "exterior": false,
+          "openings": []
+        },
+        {
+          "axis": "z",
+          "at": -0.9417,
+          "from": 0,
+          "to": 2.6726,
+          "thick": 0.1,
+          "exterior": false,
+          "openings": [{ "at": 1.3363, "width": 1.6726, "bottom": 0.1, "top": 2.3, "glass": false }]
+        }
+      ],
+      "wallHeightM": 2.8,
+      "floorM": 0.12,
+      "roof": { "form": "mono", "pitchDeg": 10, "eaveM": 0.45, "riseM": 1.3917 },
+      "doorX": 2.7417
+    },
+    "style": {
+      "roof": "mono",
+      "wall": "plaster",
+      "windows": "standard",
+      "interior": "warm",
+      "ceiling": "gypsum",
+      "lighting": "recessed",
+      "floor": "tiles",
+      "wallColor": "#e8dfcb",
+      "roofColor": "#555555",
+      "trimColor": "#2e2f31",
+      "notes": [],
+      "source": "default"
+    },
+    "foundation": {
+      "kind": "strip_slab",
+      "name": "Strip footing and ground slab",
+      "summary": "Concrete strip footings under every load-bearing wall, a stone plinth wall to floor level and a ground-floor slab on compacted hardcore with a damp-proof membrane.",
+      "why": "The ground under the footprint falls about 0.10 m, which cannot see small bumps, ditches or rock. Nearly level ground suits the most common and cheapest Kenyan foundation.",
+      "clearanceM": 0.15,
+      "checks": [
+        "Soil type is not known here (no soil reading for this point). Trial pits or a geotechnical report decide footing depth and width; expansive black cotton soil needs a different design.",
+        "A structural engineer designs and signs the foundation. This is a planning suggestion, not a design."
+      ]
+    },
+    "dropM": 0.1
+  },
+  "c40": {
+    "structure": "container_40ft",
+    "lengthM": 12.192,
+    "widthM": 4.876,
+    "heightM": 5.792,
+    "levels": 2,
+    "units": 3,
+    "rooms": [
+      {
+        "name": "Living / kitchen",
+        "x0": -6.046,
+        "x1": 6.046,
+        "z0": -2.388,
+        "z1": -0.05,
+        "level": 0
+      },
+      { "name": "Study / lounge", "x0": -6.046, "x1": 0, "z0": 0.05, "z1": 2.388, "level": 0 },
+      { "name": "Bedroom", "x0": 0, "x1": 6.046, "z0": 0.05, "z1": 2.388, "level": 0 },
+      { "name": "Bedroom", "x0": -6.046, "x1": 0, "z0": -2.388, "z1": -0.05, "level": 1 },
+      { "name": "Dressing / store", "x0": 0, "x1": 3.446, "z0": -2.388, "z1": -0.05, "level": 1 },
+      { "name": "Bathroom", "x0": 3.446, "x1": 6.046, "z0": -2.388, "z1": -0.05, "level": 1 },
+      { "name": "Outside stair", "x0": -7.346, "x1": -6.346, "z0": -1.869, "z1": 3.591, "level": 0 }
+    ],
+    "outlines": [
+      { "x0": -6.096, "x1": 6.096, "z0": -2.438, "z1": 0, "level": 0 },
+      { "x0": -6.096, "x1": 6.096, "z0": -0.0, "z1": 2.438, "level": 0 },
+      { "x0": -6.096, "x1": 6.096, "z0": -2.438, "z1": 0, "level": 1 }
+    ],
+    "style": {
+      "roof": "gable",
+      "wall": "plaster",
+      "windows": "standard",
+      "interior": "warm",
+      "ceiling": "gypsum",
+      "lighting": "recessed",
+      "floor": "tiles",
+      "wallColor": "#e8dfcb",
+      "roofColor": "#6f2f25",
+      "trimColor": "#2e2f31",
+      "notes": [],
+      "source": "default"
+    },
+    "foundation": {
+      "kind": "container_pads",
+      "name": "Concrete pad footings",
+      "summary": "Reinforced concrete pads under each corner casting (and mid-span on 40 ft units), the container bolted or welded to plates cast into them.",
+      "why": "The ground under the footprint falls about 0.30 m, which cannot see small bumps, ditches or rock. Pads keep the steel off the ground, let air and water pass underneath and need little digging.",
+      "clearanceM": 0.3,
+      "checks": [
+        "Two-high stacking: pads sized for both levels, upper units locked with twist-locks or welded plates, and a wind check on the stack.",
+        "Soil type is not known here (no soil reading for this point). Trial pits or a geotechnical report decide footing depth and width; expansive black cotton soil needs a different design.",
+        "A structural engineer designs and signs the foundation. This is a planning suggestion, not a design."
+      ]
+    },
+    "dropM": 0.3
+  }
+}
