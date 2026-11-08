@@ -46,6 +46,7 @@ import {
   type SiteTerrain,
 } from "./site-terrain";
 import { eatInstant, solarPosition, sunDirection } from "./solar";
+import { tourPose, type TourSite } from "./film-tour";
 
 const EYE_M = 1.6;
 const BODY_M = 1.75;
@@ -73,6 +74,8 @@ type Engine = {
   root: THREE.Group;
   built: SiteHouse | null;
   plan: FoundationPlan | null;
+  /** Ground fall under the footprint, metres (null when no terrain was read). */
+  dropM: number | null;
   floorY: number;
   colliders: THREE.Box3[];
   ground: THREE.Group | null;
@@ -188,6 +191,10 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
   const touchTurn = useRef(0);
   /** A room to stand in when walk mode starts (from "Go to a room"). */
   const jumpRef = useRef<{ x: number; z: number; yaw: number } | null>(null);
+  /** The film tour: when it started (performance.now) and the site it films. */
+  const tourRef = useRef<{ start: number; site: TourSite; onEnd: () => void } | null>(null);
+  const [touring, setTouring] = useState(false);
+  const [hdState, setHdState] = useState<"idle" | "busy" | "done" | "error">("idle");
 
   const [terrain, setTerrain] = useState<SiteTerrain | null>(null);
   /** OpenStreetMap footprints around the site; null while loading or unavailable. */
@@ -274,6 +281,7 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
       e.person.rotation.y = -0.6;
       e.built = built;
       e.plan = plan;
+      e.dropM = terrainKnown ? hi - lo : null;
       e.floorY = floorY;
       e.colliders = built.colliders.map((b) =>
         b.clone().translate(new THREE.Vector3(0, floorY, 0)),
@@ -388,6 +396,7 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
       root,
       built: null,
       plan: null,
+      dropM: null,
       floorY: 0,
       colliders: [],
       ground: null,
@@ -571,7 +580,18 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
         }
       }
       const dt = Math.min(clock.getDelta(), 0.05);
-      if (!renderer.xr.isPresenting) {
+      const tour = tourRef.current;
+      if (tour && !renderer.xr.isPresenting) {
+        const pose = tourPose(tour.site, (now - tour.start) / 1000);
+        if (pose) {
+          e.camera.position.set(pose.pos.x, pose.pos.y, pose.pos.z);
+          e.camera.lookAt(pose.look.x, pose.look.y, pose.look.z);
+          if (e.camera.fov !== pose.fov) {
+            e.camera.fov = pose.fov;
+            e.camera.updateProjectionMatrix();
+          }
+        } else tour.onEnd();
+      } else if (!renderer.xr.isPresenting) {
         if (modeRef.current === "walk") {
           const k = keys.current;
           let f = touchMove.current;
@@ -740,6 +760,13 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
     const e = eng.current;
     if (!e) return;
     e.hq = hq;
+    // Sharper sun shadows with Best picture on a computer; phones keep the lighter map.
+    const shadowPx = hq && !window.matchMedia("(pointer: coarse)").matches ? 4096 : 2048;
+    if (e.sun.shadow.mapSize.x !== shadowPx) {
+      e.sun.shadow.mapSize.set(shadowPx, shadowPx);
+      e.sun.shadow.map?.dispose();
+      e.sun.shadow.map = null;
+    }
     if (!hq || e.finisher) return;
     let alive = true;
     void loadQuality()
@@ -750,6 +777,7 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
         const size = cur.renderer.getSize(new THREE.Vector2());
         fin.setSize(size.x, size.y, cur.renderer.getPixelRatio());
         fin.setNight(nightRef.current);
+        fin.setGrade(1);
         cur.finisher = fin;
       })
       .catch(() => {
@@ -905,6 +933,65 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
     [usdzUrl],
   );
 
+  const stopTour = useCallback(() => {
+    if (!tourRef.current) return;
+    tourRef.current = null;
+    setTouring(false);
+    const e = eng.current;
+    if (!e) return;
+    e.camera.fov = 50;
+    e.camera.updateProjectionMatrix();
+    e.controls.enabled = true;
+    frameOrbit(e);
+  }, []);
+
+  const startTour = useCallback(() => {
+    const e = eng.current;
+    if (!e?.built || e.renderer.xr.isPresenting) return;
+    const h = e.built;
+    setCinematic(false);
+    setMode("orbit");
+    setSeeInside(false);
+    e.controls.enabled = false;
+    tourRef.current = {
+      start: performance.now(),
+      site: {
+        lengthM: h.lengthM,
+        widthM: h.widthM,
+        heightM: h.heightM,
+        floorY: e.floorY,
+        doorX: h.drawing?.doorX ?? null,
+        groundAt: (x, z) => (e.terrain ? heightAt(e.terrain, x, z) : 0),
+      },
+      onEnd: stopTour,
+    };
+    setTouring(true);
+  }, [stopTour]);
+
+  // Leaving the view, or Escape, ends the tour.
+  useEffect(() => {
+    if (!touring) return;
+    const onKey = (ev: KeyboardEvent) => ev.key === "Escape" && stopTour();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [touring, stopTour]);
+
+  /** The current view as a large, finished photograph (4K on a computer, 1440p on a phone). */
+  const saveHdPicture = useCallback(() => {
+    const e = eng.current;
+    if (!e || e.renderer.xr.isPresenting) return;
+    setHdState("busy");
+    setFileError(null);
+    try {
+      const blob = renderStill(e, window.matchMedia("(pointer: coarse)").matches);
+      deliverBlob(blob, `${fileBase}-hd.jpg`);
+      setHdState("done");
+    } catch (err) {
+      setHdState("error");
+      setFileError(`The picture could not be made: ${(err as Error)?.message ?? "unknown error"}`);
+    }
+  }, [fileBase]);
+
   const savePack = useCallback(async () => {
     const e = eng.current;
     if (!e?.built || !e.plan) return;
@@ -936,6 +1023,20 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
                 thumb: loadInspiration()?.thumb ?? null,
               }
             : null,
+        drawings: {
+          structure: h.structure,
+          lengthM: h.lengthM,
+          widthM: h.widthM,
+          heightM: h.heightM,
+          levels: h.levels,
+          units: h.units,
+          rooms: h.rooms,
+          outlines: h.outlines,
+          drawing: h.drawing,
+          style: h.style,
+          foundation: e.plan,
+          dropM: e.dropM,
+        },
         notes: [
           "Check the county's building lines, plot coverage and approval rules before fixing the position.",
           "Get the boundary beacons confirmed by a licensed surveyor; the view is not placed on a surveyed boundary.",
@@ -960,6 +1061,12 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
     <div className="flex flex-col gap-4" data-testid="model-lab-site-mode">
       <div className="relative h-[60vh] min-h-[320px] overflow-hidden rounded-2xl border border-white/10 bg-black/20">
         <div ref={hostRef} className="h-full w-full" />
+        {touring && (
+          <>
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-[9%] bg-black" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[9%] bg-black" />
+          </>
+        )}
         {webglError && (
           <p className="absolute inset-0 flex items-center justify-center p-4 text-sm">
             WebGL is unavailable in this browser: {webglError}
@@ -1112,6 +1219,35 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
             {cinematic ? "Stop fly-around" : "Fly around"}
           </KitButton>
         )}
+        {!reduced && (
+          <KitButton
+            size="sm"
+            variant={touring ? "primary" : "secondary"}
+            aria-pressed={touring}
+            data-testid="site-film-tour"
+            onClick={() => (touring ? stopTour() : startTour())}
+            disabled={!info}
+          >
+            {touring ? "Stop the film" : `Film tour (${isContainer ? 28 : 35} s)`}
+          </KitButton>
+        )}
+        <KitButton
+          size="sm"
+          variant="secondary"
+          data-testid="site-golden-hour"
+          onClick={() => setHour(17.4)}
+        >
+          Golden hour
+        </KitButton>
+        <KitButton
+          size="sm"
+          variant="secondary"
+          data-testid="site-hd-picture"
+          onClick={saveHdPicture}
+          disabled={hdState === "busy" || inVr}
+        >
+          {hdState === "busy" ? "Making the picture…" : "Save HD picture"}
+        </KitButton>
         {vrSupported && (
           <KitButton size="sm" onClick={() => void enterVr()} disabled={inVr}>
             Enter VR
@@ -1435,6 +1571,61 @@ function buildGround(t: SiteTerrain, imagery: Imagery, renderer: THREE.WebGLRend
 }
 
 /** Three stills for the PDF: 3/4 view, eye-level view, and a cut-away plan from above. */
+/**
+ * Render the current camera view off-screen at a fixed large size, with the
+ * finishing effects and the film grade, and the sharpest sun shadows.
+ */
+function renderStill(e: Engine, phone: boolean): Blob {
+  const { renderer, camera } = e;
+  const gl = renderer.getContext();
+  const limit = Math.min(
+    renderer.capabilities.maxTextureSize,
+    gl.getParameter(gl.MAX_RENDERBUFFER_SIZE) as number,
+  );
+  let W = phone ? 2560 : 3840;
+  let H = phone ? 1440 : 2160;
+  if (W > limit) {
+    H = Math.floor((H * limit) / W);
+    W = limit;
+  }
+  const prevRatio = renderer.getPixelRatio();
+  const prevSize = renderer.getSize(new THREE.Vector2());
+  const prevAspect = camera.aspect;
+  const prevShadow = e.sun.shadow.mapSize.x;
+  const fin = e.finisher;
+  renderer.setPixelRatio(1);
+  renderer.setSize(W, H, false);
+  camera.aspect = W / H;
+  camera.updateProjectionMatrix();
+  fin?.setSize(W, H, 1);
+  if (prevShadow < 4096) {
+    e.sun.shadow.mapSize.set(4096, 4096);
+    e.sun.shadow.map?.dispose();
+    e.sun.shadow.map = null;
+  }
+  let dataUrl = "";
+  try {
+    if (fin && !renderer.xr.isPresenting) fin.render(camera);
+    else renderer.render(e.scene, camera);
+    dataUrl = renderer.domElement.toDataURL("image/jpeg", 0.92);
+  } finally {
+    renderer.setPixelRatio(prevRatio);
+    renderer.setSize(prevSize.x, prevSize.y, false);
+    camera.aspect = prevAspect;
+    camera.updateProjectionMatrix();
+    fin?.setSize(prevSize.x, prevSize.y, prevRatio);
+    if (prevShadow < 4096) {
+      e.sun.shadow.mapSize.set(prevShadow, prevShadow);
+      e.sun.shadow.map?.dispose();
+      e.sun.shadow.map = null;
+    }
+  }
+  const bin = atob(dataUrl.slice(dataUrl.indexOf(",") + 1));
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new Blob([bytes], { type: "image/jpeg" });
+}
+
 function captureViews(e: Engine): SitePackView[] {
   const { renderer, scene } = e;
   if (renderer.xr.isPresenting) return [];

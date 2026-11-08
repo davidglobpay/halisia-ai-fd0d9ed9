@@ -19,7 +19,13 @@ import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
 import { containerCount, containerLayout, TYPOLOGY_AREA_M2 } from "@/lib/plot-placement";
-import { DEFAULT_STYLE, hexToInt, type DesignStyle, type WallFinish } from "./design-style";
+import {
+  DEFAULT_STYLE,
+  hexToInt,
+  roofCoverKind,
+  type DesignStyle,
+  type WallFinish,
+} from "./design-style";
 import type { FoundationPlan } from "./foundation";
 import {
   CONTAINER_DIMS,
@@ -34,6 +40,37 @@ import type { SiteStructure } from "./site-params";
 
 export type PlanRect = { x0: number; x1: number; z0: number; z1: number; level: number };
 export type PlanRoom = PlanRect & { name: string };
+
+/** A door or window in a drawn wall: along-wall centre and width, heights above the slab. */
+export type DrawnOpening = {
+  at: number;
+  width: number;
+  bottom: number;
+  top: number;
+  glass: boolean;
+};
+/** One straight wall as built, for the drawings (house-local metres). */
+export type DrawnWall = {
+  axis: "x" | "z";
+  /** Centre line across the wall (z for an x-wall, x for a z-wall). */
+  at: number;
+  from: number;
+  to: number;
+  thick: number;
+  exterior: boolean;
+  openings: DrawnOpening[];
+};
+/** What the drawing set needs beyond the plan rooms (masonry only). */
+export type HouseDrawing = {
+  walls: DrawnWall[];
+  /** Outside wall height from the top of the slab to the wall plate, metres. */
+  wallHeightM: number;
+  /** Floor finish above the underside of the slab. */
+  floorM: number;
+  roof: { form: DesignStyle["roof"]; pitchDeg: number; eaveM: number; riseM: number };
+  /** Centre of the front door along the south wall. */
+  doorX: number;
+};
 
 export type SiteHouse = {
   group: THREE.Group;
@@ -62,6 +99,8 @@ export type SiteHouse = {
   /** Shared glowing material of every lamp shade; its emissive intensity is the switch. */
   lampMaterial: THREE.MeshStandardMaterial;
   style: DesignStyle;
+  /** Walls, openings and roof as built, for the architectural drawings (masonry only). */
+  drawing?: HouseDrawing;
 };
 
 export function bedroomsOf(typology: string): number {
@@ -600,10 +639,7 @@ function roofMaterial(style: DesignStyle): THREE.MeshStandardMaterial {
     return new THREE.MeshStandardMaterial({ color: hexToInt(style.roofColor), roughness: 0.9 });
   // Warm reds and browns read as clay tiles; everything else as iron sheet.
   const n = hexToInt(style.roofColor);
-  const rr = (n >> 16) & 255;
-  const gg = (n >> 8) & 255;
-  const bb = n & 255;
-  const tiles = rr > gg + 25 && rr > bb + 25 && style.roof !== "mono";
+  const tiles = roofCoverKind(style) === "tiles";
   const map = finishTexture(tiles ? "roofTile" : "roofSheet", style.roofColor);
   const mat = new THREE.MeshStandardMaterial(
     map
@@ -670,6 +706,8 @@ type Ctx = {
   ceilingKind?: DesignStyle["ceiling"];
   /** Ceiling-level pieces, hidden with the roof by "See inside". */
   ceilingParts?: THREE.Object3D[];
+  /** When set, every wall is also recorded here for the drawings. */
+  drawn?: DrawnWall[];
 };
 
 function addBox(
@@ -755,6 +793,21 @@ function addWall(
   },
 ) {
   const { parts, ops } = wallParts(o.from, o.to, o.height, o.openings ?? []);
+  ctx.drawn?.push({
+    axis: o.axis,
+    at: o.at,
+    from: o.from,
+    to: o.to,
+    thick: o.thick,
+    exterior: !!o.inside,
+    openings: (o.openings ?? []).map((op) => ({
+      at: op.at,
+      width: op.width,
+      bottom: o.y0 + op.bottom,
+      top: o.y0 + op.top,
+      glass: !!op.glass,
+    })),
+  });
   let mat: THREE.Material | THREE.Material[] = o.mat;
   if (o.inside) {
     // Face order +x, -x, +y, -y, +z, -z; the normal is z for an x-wall, x for a z-wall.
@@ -1655,6 +1708,7 @@ function buildMasonry(typology: string, floorAreaM2: number | null, style: Desig
     lighting: style.lighting,
     ceilingKind: style.ceiling,
     ceilingParts: [],
+    drawn: [],
   };
   const large = style.windows === "large";
 
@@ -1924,6 +1978,18 @@ function buildMasonry(typology: string, floorAreaM2: number | null, style: Desig
     lights: makeLights(group, lightPoints),
     lampMaterial: mats.lamp,
     style,
+    drawing: {
+      walls: ctx.drawn ?? [],
+      wallHeightM: H,
+      floorM: FLOOR,
+      roof: {
+        form: style.roof,
+        pitchDeg: style.roof === "mono" ? 10 : style.roof === "flat" ? 0 : ROOF_PITCH_DEG,
+        eaveM: style.roof === "flat" ? 0.05 : 0.45,
+        riseM: rise,
+      },
+      doorX,
+    },
   };
 }
 

@@ -63,6 +63,18 @@ export const DEFAULT_STYLE: DesignStyle = {
   source: "default",
 };
 
+/** Warm reds and browns read as clay tiles; everything else (and every mono-pitch) as iron sheet. */
+export function roofCoverKind(
+  s: Pick<DesignStyle, "roof" | "roofColor">,
+): "flat" | "tiles" | "sheet" {
+  if (s.roof === "flat") return "flat";
+  const n = parseInt((s.roofColor || "#000000").replace("#", "").slice(0, 6), 16) || 0;
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  return r > g + 25 && r > b + 25 && s.roof !== "mono" ? "tiles" : "sheet";
+}
+
 export const ROOF_LABEL: Record<RoofForm, string> = {
   gable: "Pitched (gable)",
   hip: "Hipped",
