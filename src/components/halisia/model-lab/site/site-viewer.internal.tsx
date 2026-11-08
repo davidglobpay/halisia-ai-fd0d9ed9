@@ -676,7 +676,7 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
   useEffect(() => {
     if (params.lat === null || params.lng === null) return;
     let alive = true;
-    void getNearbyBuildings({ data: { lat: params.lat, lng: params.lng } })
+    void getNearbyBuildings({ data: { lat: params.lat, lng: params.lng, refresh: false } })
       .then((r) => {
         if (alive) setNearby(r.status === "ok" ? r.buildings : []);
       })
