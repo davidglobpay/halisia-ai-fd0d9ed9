@@ -14,6 +14,12 @@
  * is attempted then: on Android each one counts towards Chrome's "multiple
  * automatic downloads" block, which after the first export stopped later
  * downloads from the site altogether.
+ *
+ * Even a fresh-tap download can be held back: Chrome on Android shows a
+ * small "download multiple files?" bar for the second file from a site, and
+ * if it is missed or dismissed the download silently never happens. So the
+ * panel is offered after every export, saying the download has started when
+ * it was started, with Save and Share as the always-working way out.
  */
 
 export type ReadyFile = {
@@ -22,6 +28,8 @@ export type ReadyFile = {
   sizeBytes: number;
   mimeType: string;
   blob: Blob;
+  /** A download was already started for this file; the panel is the backup. */
+  started: boolean;
 };
 
 type Listener = (file: ReadyFile | null) => void;
@@ -57,7 +65,7 @@ function emit() {
 }
 
 /** Replace the file offered by the panel, releasing the previous one. */
-export function publishReadyFile(blob: Blob, filename: string): ReadyFile | null {
+export function publishReadyFile(blob: Blob, filename: string, started = false): ReadyFile | null {
   if (typeof URL === "undefined" || typeof URL.createObjectURL !== "function") return null;
   if (current) URL.revokeObjectURL(current.url);
   current = {
@@ -66,6 +74,7 @@ export function publishReadyFile(blob: Blob, filename: string): ReadyFile | null
     sizeBytes: blob.size,
     mimeType: blob.type || "application/octet-stream",
     blob,
+    started,
   };
   emit();
   return current;
@@ -114,12 +123,14 @@ export type SavableDoc = {
  * otherwise through the "ready" panel's Save button.
  */
 export function deliverPdf(doc: SavableDoc, filename: string): void {
-  if (tapStillFresh(currentNavigator())) doc.save(filename);
-  else publishReadyFile(doc.output("blob"), filename);
+  const fresh = tapStillFresh(currentNavigator());
+  if (fresh) doc.save(filename);
+  publishReadyFile(doc.output("blob"), filename, fresh);
 }
 
 /** Same as deliverPdf, for files built as a Blob (Word, CSV, text). */
 export function deliverBlob(blob: Blob, filename: string): void {
-  if (tapStillFresh(currentNavigator())) anchorDownload(blob, filename);
-  else publishReadyFile(blob, filename);
+  const fresh = tapStillFresh(currentNavigator());
+  if (fresh) anchorDownload(blob, filename);
+  publishReadyFile(blob, filename, fresh);
 }

@@ -53,12 +53,14 @@ describe("tap freshness", () => {
 });
 
 describe("delivering a generated PDF", () => {
-  it("saves immediately and shows no panel while the tap is still fresh", () => {
+  it("starts the download while the tap is fresh and still offers Save as a backup", () => {
     setActivation(true);
     const doc = fakeDoc();
     deliverPdf(doc, "a.pdf");
     expect(doc.save).toHaveBeenCalledWith("a.pdf");
-    expect(getReadyFile()).toBeNull();
+    // Chrome on Android can hold a second download back silently.
+    expect(getReadyFile()?.filename).toBe("a.pdf");
+    expect(getReadyFile()?.started).toBe(true);
   });
 
   it("offers the file, without a background download, once the tap has gone stale", () => {
@@ -111,7 +113,7 @@ describe("delivering other files", () => {
     expect(revoked).toHaveLength(0);
     vi.advanceTimersByTime(60_000);
     expect(revoked).toHaveLength(1);
-    expect(getReadyFile()).toBeNull();
+    expect(getReadyFile()?.started).toBe(true);
     vi.useRealTimers();
   });
 
@@ -121,6 +123,7 @@ describe("delivering other files", () => {
     deliverBlob(new Blob(["a,b"], { type: "text/csv" }), "listings.csv");
     expect(click).not.toHaveBeenCalled();
     expect(getReadyFile()?.filename).toBe("listings.csv");
+    expect(getReadyFile()?.started).toBe(false);
   });
 });
 
