@@ -183,6 +183,11 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
   const modeRef = useRef<"orbit" | "walk">("orbit");
   const keys = useRef(new Set<string>());
   const touchMove = useRef(0);
+  /** On-screen pad: step sideways (-1 left, 1 right) and turn (-1 left, 1 right). */
+  const touchSide = useRef(0);
+  const touchTurn = useRef(0);
+  /** A room to stand in when walk mode starts (from "Go to a room"). */
+  const jumpRef = useRef<{ x: number; z: number; yaw: number } | null>(null);
 
   const [terrain, setTerrain] = useState<SiteTerrain | null>(null);
   /** OpenStreetMap footprints around the site; null while loading or unavailable. */
@@ -570,7 +575,8 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
         if (modeRef.current === "walk") {
           const k = keys.current;
           let f = touchMove.current;
-          let s = 0;
+          let s = touchSide.current;
+          if (touchTurn.current) e.yaw -= touchTurn.current * 1.5 * dt;
           if (k.has("w") || k.has("arrowup")) f += 1;
           if (k.has("s") || k.has("arrowdown")) f -= 1;
           if (k.has("d") || k.has("arrowright")) s += 1;
@@ -808,12 +814,21 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
     if (!e) return;
     keys.current.clear();
     touchMove.current = 0;
+    touchSide.current = 0;
+    touchTurn.current = 0;
     if (mode === "walk") {
       e.controls.enabled = false;
       e.controls.autoRotate = false;
-      const z = (e.built?.widthM ?? 10) / 2 + 6;
-      e.camera.position.set(0, (e.terrain ? heightAt(e.terrain, 0, z) : 0) + EYE_M, z);
-      e.yaw = 0;
+      const jump = jumpRef.current;
+      jumpRef.current = null;
+      if (jump) {
+        e.camera.position.set(jump.x, e.floorY + 0.12 + EYE_M, jump.z);
+        e.yaw = jump.yaw;
+      } else {
+        const z = (e.built?.widthM ?? 10) / 2 + 6;
+        e.camera.position.set(0, (e.terrain ? heightAt(e.terrain, 0, z) : 0) + EYE_M, z);
+        e.yaw = 0;
+      }
       e.pitch = 0;
     } else {
       if (document.pointerLockElement) document.exitPointerLock();
@@ -965,22 +980,39 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
                   : ""}
           </p>
         </div>
-        {mode === "walk" && coarse && (
-          <div className="absolute bottom-3 right-3 flex flex-col gap-2">
-            {[
-              { label: "Forward", v: 1 },
-              { label: "Back", v: -1 },
-            ].map((b) => (
+        {mode === "walk" && (
+          <div
+            className="absolute bottom-3 right-3 grid grid-cols-3 gap-1.5"
+            role="group"
+            aria-label="Walk controls"
+            data-testid="site-walk-pad"
+          >
+            {(
+              [
+                ["Turn left", "↺", touchTurn, -1],
+                ["Forward", "↑", touchMove, 1],
+                ["Turn right", "↻", touchTurn, 1],
+                ["Step left", "←", touchSide, -1],
+                ["Back", "↓", touchMove, -1],
+                ["Step right", "→", touchSide, 1],
+              ] as const
+            ).map(([label, glyph, ref, v]) => (
               <button
-                key={b.label}
+                key={label}
                 type="button"
-                className="min-h-12 min-w-12 rounded-full bg-background/90 px-4 text-sm font-medium"
-                onPointerDown={() => (touchMove.current = b.v)}
-                onPointerUp={() => (touchMove.current = 0)}
-                onPointerLeave={() => (touchMove.current = 0)}
-                onPointerCancel={() => (touchMove.current = 0)}
+                aria-label={label}
+                title={label}
+                className="flex h-12 w-12 select-none items-center justify-center rounded-full bg-background/90 text-lg font-semibold shadow touch-none"
+                onPointerDown={(ev) => {
+                  ev.preventDefault();
+                  ref.current = v;
+                }}
+                onPointerUp={() => (ref.current = 0)}
+                onPointerLeave={() => (ref.current = 0)}
+                onPointerCancel={() => (ref.current = 0)}
+                onContextMenu={(ev) => ev.preventDefault()}
               >
-                {b.label}
+                {glyph}
               </button>
             ))}
           </div>
@@ -1000,6 +1032,73 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
         >
           {seeInside ? "Put the roof back" : "See inside"}
         </KitButton>
+        <KitButton
+          size="sm"
+          variant="secondary"
+          data-testid="site-plan-view"
+          onClick={() => {
+            setCinematic(false);
+            setMode("orbit");
+            setSeeInside(true);
+            // After the mode switch has framed the usual view, look straight down.
+            setTimeout(() => {
+              const e = eng.current;
+              if (!e) return;
+              const size = e.built ? Math.max(e.built.lengthM, e.built.widthM, 8) : 12;
+              e.controls.target.set(0, e.floorY, 0);
+              e.camera.position.set(0, e.floorY + size * 1.35 + 4, 0.01);
+              e.controls.update();
+            }, 0);
+          }}
+        >
+          Plan view
+        </KitButton>
+        {info && info.house.rooms.some((r) => r.level === 0) && (
+          <label className="flex items-center gap-2 text-xs">
+            <span className="sr-only sm:not-sr-only">Go to</span>
+            <select
+              className="min-h-9 rounded-full border border-border bg-background px-3 text-xs"
+              aria-label="Go to a room"
+              data-testid="site-go-to-room"
+              value=""
+              onChange={(ev) => {
+                const room = info.house.rooms.filter((r) => r.level === 0)[Number(ev.target.value)];
+                if (!room) return;
+                const w = room.x1 - room.x0;
+                const d = room.z1 - room.z0;
+                // Stand near one end of the room, looking along its length.
+                const along = w >= d;
+                const jump = along
+                  ? {
+                      x: room.x0 + Math.min(0.9, w / 4),
+                      z: (room.z0 + room.z1) / 2,
+                      yaw: -Math.PI / 2,
+                    }
+                  : { x: (room.x0 + room.x1) / 2, z: room.z1 - Math.min(0.9, d / 4), yaw: 0 };
+                setCinematic(false);
+                setSeeInside(false);
+                const e = eng.current;
+                if (mode === "walk" && e) {
+                  e.camera.position.set(jump.x, e.floorY + 0.12 + EYE_M, jump.z);
+                  e.yaw = jump.yaw;
+                  e.pitch = 0;
+                } else {
+                  jumpRef.current = jump;
+                  setMode("walk");
+                }
+              }}
+            >
+              <option value="">a room…</option>
+              {info.house.rooms
+                .filter((r) => r.level === 0)
+                .map((r, i) => (
+                  <option key={`${r.name}-${i}`} value={i}>
+                    {r.name}
+                  </option>
+                ))}
+            </select>
+          </label>
+        )}
         {!reduced && (
           <KitButton
             size="sm"
@@ -1169,8 +1268,8 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
       {mode === "walk" && (
         <p className="text-xs text-muted-foreground">
           {coarse
-            ? "Drag to look; hold Forward or Back to move. Walk in through the front door."
-            : "Click the view to capture the pointer, look with the mouse, move with W A S D. Press Esc to release."}{" "}
+            ? "Drag to look; hold the arrows to walk, step or turn. Use Go to a room to stand inside any room."
+            : "Click the view to capture the pointer, look with the mouse, move with W A S D or the on-screen arrows. Press Esc to release. Use Go to a room to stand inside any room."}{" "}
           Eye height 1.6 m.
         </p>
       )}
