@@ -11,7 +11,9 @@ import {
   fromLocalMetres,
   parseArea,
   perimeterM,
+  tidyRingIndexes,
   toLocalMetres,
+  DUPLICATE_CORNER_M,
   type LatLng,
 } from "@/lib/parcel-geometry";
 
@@ -32,6 +34,13 @@ import {
  */
 
 type Mode = "idle" | "drawing" | "editing";
+
+/** Drop accidental corners (double taps, nudged mid-side handles); keep the rest as drawn. */
+function tidy(next: LatLng[]): LatLng[] {
+  if (next.length < 4) return next;
+  const keep = tidyRingIndexes(toLocalMetres(next, next[0]));
+  return keep.length === next.length ? next : keep.map((i) => next[i]);
+}
 
 export function ParcelDraw({
   center,
@@ -87,7 +96,22 @@ export function ParcelDraw({
   const addPoint = useCallback(
     (p: { lat: number; lng: number }) => {
       if (mode !== "drawing") return;
-      push([...ring, { lat: p.lat, lng: p.lng }]);
+      const tap = { lat: p.lat, lng: p.lng };
+      if (ring.length) {
+        const pts = toLocalMetres([...ring, tap], ring[0]);
+        const t = pts[pts.length - 1];
+        const near = pts
+          .slice(0, -1)
+          .findIndex((q) => Math.hypot(q.x - t.x, q.y - t.y) < DUPLICATE_CORNER_M * 2);
+        // Tapping the first corner again closes the shape; tapping any other
+        // existing corner is a slip, not a new corner.
+        if (near === 0 && ring.length >= 3) {
+          setMode("idle");
+          return;
+        }
+        if (near >= 0) return;
+      }
+      push([...ring, tap]);
     },
     [mode, push, ring],
   );
@@ -209,7 +233,7 @@ export function ParcelDraw({
           polygon={ring.length >= 3 ? ring : null}
           polygonEditable={mode === "editing"}
           onPolygonChange={(next) => {
-            setRing(next);
+            setRing(tidy(next));
             setFitted(null);
           }}
           onMapClick={addPoint}
@@ -220,7 +244,7 @@ export function ParcelDraw({
             <span className="glass rounded-full px-3 py-1 text-[11px]">
               {ring.length < 3
                 ? `Tap each corner · ${ring.length} placed, ${3 - ring.length} more to close a shape`
-                : `${ring.length} corners · tap to add more, or press Draw again to stop`}
+                : `${ring.length} corners · tap the first corner to finish, or tap to add more`}
             </span>
           </div>
         )}
@@ -251,11 +275,20 @@ export function ParcelDraw({
               }`}
             >
               <p className="text-foreground">
-                Your sketch is{" "}
-                <span className="font-semibold tabular-nums">
-                  {Math.abs(diffPct).toFixed(1)}% {diffPct >= 0 ? "larger" : "smaller"}
-                </span>{" "}
-                than the area on the deed.
+                {Math.abs(diffPct) < 0.05 ? (
+                  <>
+                    Your sketch now{" "}
+                    <span className="font-semibold">matches the area on the deed</span>.
+                  </>
+                ) : (
+                  <>
+                    Your sketch is{" "}
+                    <span className="font-semibold tabular-nums">
+                      {Math.abs(diffPct).toFixed(1)}% {diffPct >= 0 ? "larger" : "smaller"}
+                    </span>{" "}
+                    than the area on the deed.
+                  </>
+                )}
                 {Math.abs(diffPct) > 5 && (
                   <>
                     {" "}
@@ -270,16 +303,30 @@ export function ParcelDraw({
               <button
                 type="button"
                 onClick={applyFit}
-                className="mt-2 inline-flex min-h-9 items-center gap-1.5 rounded-full glass border border-white/12 px-3.5 py-1.5 text-xs transition hover:bg-white/5"
+                disabled={Math.abs(diffPct) < 0.05}
+                className="mt-2 inline-flex min-h-9 items-center gap-1.5 rounded-full glass border border-white/12 px-3.5 py-1.5 text-xs transition hover:bg-white/5 disabled:opacity-50"
               >
                 <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
                 Resize my sketch to the deed&rsquo;s area
               </button>
               {fitted && (
                 <p className="mt-2 text-[11px] text-muted-foreground">
-                  Resized about its own centre by ×{fitted.factor.toFixed(3)}, keeping the shape you
-                  drew. It now measures the deed&rsquo;s area — which says nothing about whether it
-                  sits over the right ground. Undo puts your original back.
+                  Resized about its own centre, keeping the shape you drew: each side ×
+                  {fitted.factor.toFixed(2)}, so the area ×{(fitted.factor ** 2).toFixed(2)}. It now
+                  measures the deed&rsquo;s area — which says nothing about whether it sits over the
+                  right ground. Undo puts your original back.
+                  {Math.abs(fitted.factor - 1) > 0.25 && (
+                    <>
+                      {" "}
+                      <span className="font-semibold text-foreground">
+                        That was a big change: your sketch was{" "}
+                        {Math.abs(Math.round(fitted.errorPct))}%{" "}
+                        {fitted.errorPct < 0 ? "smaller" : "larger"} than the deed. Check that you
+                        traced the right plot and its true corners before relying on the resized
+                        shape.
+                      </span>
+                    </>
+                  )}
                 </p>
               )}
             </div>

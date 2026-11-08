@@ -180,6 +180,57 @@ export function fitToArea(ring: LocalXY[], targetAreaM2: number): AreaFit | null
   };
 }
 
+/** Corners closer than this to the previous corner are treated as the same corner. */
+export const DUPLICATE_CORNER_M = 1.5;
+/** A corner that turns less than this is a point on a straight side, not a corner. */
+export const STRAIGHT_TURN_DEG = 4;
+
+/**
+ * Remove accidental corners: a second tap on (or a drag of) an existing
+ * corner, and the extra point a map adds when the middle of a side is nudged.
+ * Either turns a four-sided plot into a six-cornered one with sides of 0.3 m,
+ * which then reads as a plot with an inward corner and shrinks the buildable
+ * envelope for no reason. Returns the indexes of the corners to keep, so the
+ * caller can keep the original coordinates. Never drops below three corners.
+ */
+export function tidyRingIndexes(
+  ring: LocalXY[],
+  minSideM = DUPLICATE_CORNER_M,
+  straightDeg = STRAIGHT_TURN_DEG,
+): number[] {
+  const all = ring.map((_, i) => i);
+  if (ring.length <= 3) return all;
+  const dist = (a: LocalXY, b: LocalXY) => Math.hypot(a.x - b.x, a.y - b.y);
+  // 1. Merge corners that sit on top of the previous kept one (closing side too).
+  let keep: number[] = [0];
+  for (let i = 1; i < ring.length; i++)
+    if (dist(ring[i], ring[keep[keep.length - 1]]) >= minSideM) keep.push(i);
+  while (keep.length > 3 && dist(ring[keep[keep.length - 1]], ring[keep[0]]) < minSideM) keep.pop();
+  if (keep.length < 3) return all;
+  // 2. Drop points on a straight side, one at a time (the straightest first).
+  for (;;) {
+    if (keep.length <= 3) break;
+    let worst = -1;
+    let worstTurn = Infinity;
+    for (let k = 0; k < keep.length; k++) {
+      const a = ring[keep[(k - 1 + keep.length) % keep.length]];
+      const b = ring[keep[k]];
+      const c = ring[keep[(k + 1) % keep.length]];
+      const h1 = Math.atan2(b.y - a.y, b.x - a.x);
+      const h2 = Math.atan2(c.y - b.y, c.x - b.x);
+      let turn = Math.abs(((h2 - h1) * 180) / Math.PI) % 360;
+      if (turn > 180) turn = 360 - turn;
+      if (turn < worstTurn) {
+        worstTurn = turn;
+        worst = k;
+      }
+    }
+    if (worstTurn >= straightDeg) break;
+    keep = keep.filter((_, k) => k !== worst);
+  }
+  return keep;
+}
+
 /** Rotate a ring about a point, degrees clockwise. For placing a plan. */
 export function rotate(ring: LocalXY[], degrees: number, about: LocalXY): LocalXY[] {
   const t = -degrees * D2R; // clockwise on screen is negative in maths convention
