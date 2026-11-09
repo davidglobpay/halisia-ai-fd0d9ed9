@@ -11,6 +11,7 @@ import { brandFooters, brandPage, getMarkSync, sanitize, PDF, type RGB } from "@
 import { deliverPdf } from "@/lib/pdf-delivery";
 import type { PlanRect, PlanRoom } from "@/components/halisia/model-lab/site/site-house";
 import type { FoundationPlan } from "@/components/halisia/model-lab/site/foundation";
+import { addDrawingSet, type DrawingSetInput } from "@/lib/pdf-architectural-drawings";
 
 export type SitePackView = { label: string; dataUrl: string; widthPx: number; heightPx: number };
 
@@ -37,6 +38,8 @@ export type SitePackInput = {
   /** The client's design inspiration, when they gave one. */
   inspiration?: { lines: string[]; notes: string[]; thumb: string | null } | null;
   notes: string[];
+  /** The full drawing set (plans, elevations, sections, roof, foundation, schedules). */
+  drawings?: Omit<DrawingSetInput, "title" | "place" | "issued"> | null;
 };
 
 const m2 = (v: number) => `${v.toFixed(1)} m²`;
@@ -263,6 +266,31 @@ export function buildSitePackPdf(o: SitePackInput): jsPDF {
       );
     t(list.join("   ·   "), 7.5, false, PDF.stone);
     gap(10);
+  }
+
+  if (o.drawings) {
+    newPage();
+    t("Architectural drawing set", 14, true);
+    t(
+      "The next sheets are drawn from this house exactly as it stands in the 3D view, at true scale on A4 landscape: floor plan (A-01), four elevations (A-02), two sections with the construction build-up (A-03), roof plan and truss (S-01), foundation plan and footing detail (S-02), and the door, window, room and finishes schedules (A-04).",
+      9,
+    );
+    t(
+      "Footing, slab, beam and roof-member sizes are typical Kenyan practice for budgeting and discussion. They are not an engineer's design: an architect and a structural engineer must design, sign and obtain approval before building.",
+      8.5,
+      true,
+      PDF.red,
+    );
+    addDrawingSet(doc, {
+      ...o.drawings,
+      title: o.title,
+      place: o.place,
+      issued: new Date().toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      }),
+    });
   }
 
   brandFooters(doc, mark, {
