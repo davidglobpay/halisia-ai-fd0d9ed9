@@ -20,7 +20,14 @@ const NAV_GUIDE_SEEN = {
   origins: [
     {
       origin: new URL(baseURL).origin,
-      localStorage: [{ name: "halisia:navguide:v1:seen", value: "1" }],
+      localStorage: [
+        { name: "halisia:navguide:v1:seen", value: "1" },
+        // The 3D views' pop-up guides likewise; one spec checks they appear.
+        ...["plot-planner", "site-viewer", "terrain-3d", "globe"].map((id) => ({
+          name: `halisia:viewer-guide:${id}:seen`,
+          value: "1",
+        })),
+      ],
     },
   ],
 };

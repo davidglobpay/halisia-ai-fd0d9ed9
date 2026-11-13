@@ -1,14 +1,17 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Crosshair, Eye, Minus, Plus, RotateCcw } from "lucide-react";
+import { Crosshair, Eye, Minus, PersonStanding, Plus, RotateCcw } from "lucide-react";
 import { MapControlDock } from "@/components/halisia/map-controls/map-control-dock";
 import { StreetViewPanel } from "@/components/halisia/land-passport/street-view-panel";
 import type {
+  ContextStyle,
   GroundMode,
   LocalBuilding,
+  LocalInfra,
   PlotViewerApi,
 } from "@/components/halisia/plot-planner/plot-viewer.internal";
+import { ViewerGuide } from "@/components/halisia/viewer-guide";
 import { getElevationSamples } from "@/lib/elevation.functions";
 import { getNearbyBuildings } from "@/lib/site-buildings.functions";
 import { datasetLabel } from "@/components/halisia/model-lab/site/site-terrain";
@@ -140,7 +143,13 @@ function PlotPlannerPage() {
 
   const [ground, setGround] = useState<GroundMode>("terrain");
   const [designStyle, setDesignStyle] = useState<DesignStyle | null>(null);
-  const [overlays, setOverlays] = useState<string[]>(["buildings", "plot", "streetview"]);
+  const [overlays, setOverlays] = useState<string[]>([
+    "buildings",
+    "infrastructure",
+    "plot",
+    "streetview",
+  ]);
+  const [contextStyle, setContextStyle] = useState<ContextStyle>("real");
   const apiRef = useRef<PlotViewerApi | null>(null);
   const viewerBoxRef = useRef<HTMLDivElement | null>(null);
 
@@ -183,6 +192,22 @@ function PlotPlannerPage() {
       defaulted: b.heightSource === "default",
     }));
   }, [buildingsQ.data, point]);
+  const localInfra: LocalInfra[] = useMemo(() => {
+    if (!point || !buildingsQ.data) return [];
+    return (buildingsQ.data.infrastructure ?? []).map((l) => ({
+      id: l.id,
+      kind: l.kind,
+      widthM: l.widthM,
+      name: l.name,
+      points: l.points.map((q) => toLocalMetres(q.lat, q.lng, point.lat, point.lng)),
+    }));
+  }, [buildingsQ.data, point]);
+  const infraCounts = {
+    roads: localInfra.filter((l) => l.kind !== "rail" && l.kind !== "power" && l.kind !== "path")
+      .length,
+    rail: localInfra.filter((l) => l.kind === "rail").length,
+    power: localInfra.filter((l) => l.kind === "power").length,
+  };
   const heightCounts = buildingHeightSummary(buildingsQ.data?.buildings ?? []);
   const terrain = terrainQ.data?.grid ?? null;
 
@@ -528,6 +553,12 @@ function PlotPlannerPage() {
                   icon: Eye,
                   onClick: () => apiRef.current?.topView(),
                 },
+                {
+                  id: "eye",
+                  label: "Eye level from the road",
+                  icon: PersonStanding,
+                  onClick: () => apiRef.current?.eyeLevel(),
+                },
               ]}
               layers={[
                 {
@@ -549,6 +580,25 @@ function PlotPlannerPage() {
                   onChange: (v) => setGround((v[0] as GroundMode) ?? "terrain"),
                 },
                 {
+                  id: "style",
+                  title: "Surroundings look",
+                  kind: "single",
+                  options: [
+                    {
+                      id: "real",
+                      label: "As photographed",
+                      hint: "Plain blocks over the satellite photo",
+                    },
+                    {
+                      id: "model",
+                      label: "Model style",
+                      hint: "The neighbourhood drawn in the same style as your design",
+                    },
+                  ],
+                  selected: [contextStyle],
+                  onChange: (v) => setContextStyle((v[0] as ContextStyle) ?? "real"),
+                },
+                {
                   id: "context",
                   title: "Show",
                   kind: "multi",
@@ -560,6 +610,14 @@ function PlotPlannerPage() {
                         buildingsQ.data?.status === "unavailable"
                           ? "OpenStreetMap did not respond"
                           : `${heightCounts.total} within ${buildingsQ.data?.radiusM ?? 250} m`,
+                    },
+                    {
+                      id: "infrastructure",
+                      label: "Roads, rail and power lines",
+                      hint:
+                        buildingsQ.data?.status === "ok"
+                          ? `${infraCounts.roads} roads, ${infraCounts.rail} rail, ${infraCounts.power} power lines`
+                          : "From OpenStreetMap",
                     },
                     { id: "plot", label: "Plot outline" },
                     { id: "streetview", label: "Street View panel" },
@@ -598,6 +656,28 @@ function PlotPlannerPage() {
               building={building}
               features={features}
               gardenCourt={gardenCourt}
+              infrastructure={localInfra}
+              showInfrastructure={overlays.includes("infrastructure")}
+              contextStyle={contextStyle}
+            />
+            <ViewerGuide
+              id="plot-planner"
+              title="Moving around the 3D plot"
+              steps={[
+                ["Turn the view", "Drag with one finger (or the mouse) on empty ground."],
+                ["Zoom", "Pinch, scroll, or use + and − on the right."],
+                ["Slide the view", "Drag with two fingers (right-drag on a computer)."],
+                [
+                  "Move the house",
+                  "Drag the house itself. Switch to “Plot outline” above to move the plot.",
+                ],
+                [
+                  "See what is around",
+                  "Tap a neighbouring building or road to see its height or type.",
+                ],
+                ["Eye level", "The person button stands you at the road, looking at the house."],
+                ["Layers", "The layers button switches satellite, terrain and Model style."],
+              ]}
             />
           </div>
 
@@ -677,7 +757,7 @@ function PlotPlannerPage() {
                 {buildingsQ.isLoading
                   ? "loading…"
                   : buildingsQ.data?.status === "ok"
-                    ? `${heightCounts.total} OpenStreetMap footprints within ${buildingsQ.data.radiusM} m; ${heightCounts.recorded} with a recorded height or floor count, ${heightCounts.defaulted} drawn at 3 m because none is recorded. Unmapped buildings are missing.`
+                    ? `${heightCounts.total} OpenStreetMap footprints within ${buildingsQ.data.radiusM} m; ${heightCounts.recorded} with a recorded height or floor count, ${heightCounts.defaulted} drawn at 3 m because none is recorded. Unmapped buildings are missing. Roads, rail and power lines: ${infraCounts.roads} roads, ${infraCounts.rail} railway lines and ${infraCounts.power} power lines mapped; road widths are typical for their class, not measured.`
                     : "OpenStreetMap could not be reached, so none are shown."}
               </li>
             </ul>

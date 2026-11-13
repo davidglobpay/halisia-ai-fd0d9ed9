@@ -23,21 +23,26 @@ import { heightAt, type TerrainGrid } from "@/lib/site-context";
 import { NO_FEATURES, type BuildingPlan, type SiteFeatures } from "@/lib/building-types";
 import { buildBuildingMassing } from "./building-massing";
 import { buildSiteFeatures } from "./site-features";
+import {
+  buildInfrastructure,
+  buildNeighbours,
+  describeBuilding,
+  type ContextStyle,
+  type LocalBuilding,
+  type LocalInfra,
+} from "./context-layers";
 
 export type GroundMode = "terrain" | "flat" | "plain";
 
-export type LocalBuilding = {
-  id: number;
-  ring: Array<{ x: number; z: number }>;
-  heightM: number;
-  defaulted: boolean;
-};
+export type { LocalBuilding, LocalInfra, ContextStyle } from "./context-layers";
 
 export type PlotViewerApi = {
   zoomIn: () => void;
   zoomOut: () => void;
   resetView: () => void;
   topView: () => void;
+  /** Stand at the road edge at eye height, looking at the house. */
+  eyeLevel: () => void;
 };
 
 export type PlotViewerProps = {
@@ -66,6 +71,11 @@ export type PlotViewerProps = {
   features?: SiteFeatures;
   /** Lay a courtyard in the garden (it does not fit inside the building). */
   gardenCourt?: boolean;
+  /** Roads, railways and power lines around the plot. */
+  infrastructure?: LocalInfra[];
+  showInfrastructure?: boolean;
+  /** "real": massing over the satellite photo; "model": the same look as the design. */
+  contextStyle?: ContextStyle;
 };
 
 /** Imagery zoom levels to try, sharpest first. */
@@ -289,27 +299,6 @@ function buildPlotGroup(
   return group;
 }
 
-function buildNeighbours(buildings: LocalBuilding[], height: HeightFn): THREE.Group {
-  const group = new THREE.Group();
-  group.name = "neighbour-buildings";
-  const recorded = new THREE.MeshStandardMaterial({ color: 0xe9e3d5, roughness: 0.9 });
-  const defaulted = new THREE.MeshStandardMaterial({ color: 0xd3ccbc, roughness: 0.9 });
-  for (const b of buildings) {
-    const shape = new THREE.Shape(b.ring.map((p) => new THREE.Vector2(p.x, -p.z)));
-    const geo = new THREE.ExtrudeGeometry(shape, { depth: b.heightM, bevelEnabled: false });
-    geo.rotateX(-Math.PI / 2);
-    // Sit on the lowest ground under the footprint, sunk a little so slopes
-    // never leave a gap under the walls.
-    const base = Math.min(...b.ring.map((p) => height(p.x, p.z))) - 0.3;
-    const mesh = new THREE.Mesh(geo, b.defaulted ? defaulted : recorded);
-    mesh.position.y = base;
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-    group.add(mesh);
-  }
-  return group;
-}
-
 export default function PlotViewerInternal(props: PlotViewerProps) {
   const ground = props.ground ?? "terrain";
   const showBuildings = props.showBuildings ?? true;
@@ -331,6 +320,7 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
     plot: THREE.Group | null;
     ground: THREE.Mesh | null;
     neighbours: THREE.Group | null;
+    infra: THREE.Group | null;
   } | null>(null);
   const propsRef = useRef(props);
   propsRef.current = props;
@@ -338,6 +328,10 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
   const [imageryState, setImageryState] = useState<"loading" | "ok" | "partial" | "failed">(
     "loading",
   );
+  const style: ContextStyle = props.contextStyle ?? "real";
+  const showInfra = props.showInfrastructure ?? true;
+  /** What a tap on a neighbouring building or road says. */
+  const [picked, setPicked] = useState<string | null>(null);
 
   const terrainOn = ground === "terrain" && !!props.terrain;
   const heightRef = useRef<HeightFn>(() => 0);
@@ -395,6 +389,7 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
       plot: null,
       ground: null,
       neighbours: null,
+      infra: null,
     };
 
     const resize = () => {
@@ -433,6 +428,25 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
           .copy(t)
           .add(DEFAULT_CAMERA.clone().multiplyScalar(Math.max(1, (h + 20) / 40)));
       },
+      eyeLevel: () => {
+        const p = propsRef.current;
+        const st = stateRef.current;
+        // Stand 6 m outside the plot's road edge, on its centre line.
+        const a = (-p.plotPlacement.rotationDeg * Math.PI) / 180;
+        const v = -p.plot.depthM / 2 - 6;
+        const x = p.plotPlacement.x + v * Math.sin(a);
+        const z = p.plotPlacement.z + v * Math.cos(a);
+        const eye = new THREE.Vector3(x, heightRef.current(x, z) + 1.7, z);
+        const h = st?.massing?.heightM ?? 5;
+        const target = new THREE.Vector3(
+          p.house.x,
+          heightRef.current(p.house.x, p.house.z) + Math.min(h * 0.4, 12),
+          p.house.z,
+        );
+        controls.minDistance = 2;
+        controls.target.copy(target);
+        camera.position.copy(eye);
+      },
       topView: () => {
         const t = focus();
         const d = Math.max(60, camera.position.distanceTo(controls.target));
@@ -467,9 +481,33 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
       const st = stateRef.current;
       if (!st) return;
       const obj = propsRef.current.target === "house" ? st.house : st.plot;
-      if (!obj || !obj.visible) return;
       aim(ev);
-      if (!raycaster.intersectObject(obj, true).length) return;
+      if (!obj || !obj.visible || !raycaster.intersectObject(obj, true).length) {
+        // Not grabbing the house or plot: a tap on a neighbour or a road says what it is.
+        const hits = [
+          ...(st.neighbours ? raycaster.intersectObject(st.neighbours, true) : []),
+          ...(st.infra ? raycaster.intersectObject(st.infra, true) : []),
+        ].sort((p, q) => p.distance - q.distance);
+        const ud = hits[0]?.object.userData;
+        if (ud?.building) setPicked(describeBuilding(ud.building as LocalBuilding));
+        else if (ud?.infra) {
+          const l = ud.infra as LocalInfra;
+          const what =
+            l.kind === "rail"
+              ? "Railway"
+              : l.kind === "path"
+                ? "Footpath"
+                : l.kind === "track"
+                  ? "Track"
+                  : l.kind === "major"
+                    ? "Main road"
+                    : "Road";
+          setPicked(
+            `${what}${l.name ? `: ${l.name}` : ""}, from OpenStreetMap. Drawn about ${l.widthM.toFixed(1)} m wide, a typical width for its class, not a measurement.`,
+          );
+        }
+        return;
+      }
       const hit = groundHit();
       if (!hit) return;
       const cur =
@@ -567,13 +605,16 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
       pos.needsUpdate = true;
       geo.computeVertexNormals();
     }
-    const useImagery = ground !== "plain" && imagery.canvas;
+    const useImagery = ground !== "plain" && style !== "model" && imagery.canvas;
     const material = useImagery
       ? new THREE.MeshStandardMaterial({
           map: new THREE.CanvasTexture(imagery.canvas as HTMLCanvasElement),
           roughness: 1,
         })
-      : new THREE.MeshStandardMaterial({ color: 0xc9c2a8, roughness: 1 });
+      : new THREE.MeshStandardMaterial({
+          color: style === "model" ? 0xd5dac6 : 0xc9c2a8,
+          roughness: 1,
+        });
     if (useImagery) {
       const tex = material.map as THREE.CanvasTexture;
       tex.colorSpace = THREE.SRGBColorSpace;
@@ -585,7 +626,7 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
     mesh.name = "satellite-ground";
     st.scene.add(mesh);
     st.ground = mesh;
-  }, [imagery, ground, terrainOn, props.terrain]);
+  }, [imagery, ground, terrainOn, props.terrain, style]);
 
   // House massing for the chosen typology and system.
   useEffect(() => {
@@ -701,9 +742,23 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
       st.neighbours = null;
     }
     if (!showBuildings || !props.buildings?.length) return;
-    st.neighbours = buildNeighbours(props.buildings, heightRef.current);
+    st.neighbours = buildNeighbours(props.buildings, heightRef.current, style);
     st.scene.add(st.neighbours);
-  }, [props.buildings, showBuildings, terrainOn, props.terrain]);
+  }, [props.buildings, showBuildings, terrainOn, props.terrain, style]);
+
+  // Roads, railways and power lines.
+  useEffect(() => {
+    const st = stateRef.current;
+    if (!st) return;
+    if (st.infra) {
+      st.scene.remove(st.infra);
+      disposeTree(st.infra);
+      st.infra = null;
+    }
+    if (!showInfra || !props.infrastructure?.length) return;
+    st.infra = buildInfrastructure(props.infrastructure, heightRef.current, style);
+    st.scene.add(st.infra);
+  }, [props.infrastructure, showInfra, terrainOn, props.terrain, style]);
 
   // House placement on the ground, every render: the floor sits just above
   // the highest ground under the footprint, and footings reach down below
@@ -789,6 +844,23 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
   return (
     <div className="relative h-full w-full">
       <div ref={hostRef} className="h-full w-full" />
+      {picked && (
+        <div
+          role="status"
+          className="absolute left-14 right-16 top-2 z-10 flex items-start gap-2 rounded-xl bg-card/95 px-3 py-2 text-xs text-card-foreground shadow"
+          data-testid="pp-picked"
+        >
+          <span className="flex-1">{picked}</span>
+          <button
+            type="button"
+            onClick={() => setPicked(null)}
+            className="min-h-8 rounded-full border border-border px-2"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+      )}
       {imageryState !== "ok" && ground !== "plain" && (
         <p
           role="status"
