@@ -8,7 +8,7 @@
  * editable. The result is "inspired by", never a copy or a drawing.
  */
 import { useEffect, useRef, useState } from "react";
-import { ImagePlus, Link2, Sparkles, Video, X } from "lucide-react";
+import { ImagePlus, Link2, Sparkles, Trash2, Video, X } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { readDesignInspiration } from "@/lib/design-inspiration.functions";
@@ -301,15 +301,24 @@ export function InspirationPanel({
   };
 
   const reset = () => {
+    if (
+      typeof window !== "undefined" &&
+      !window.confirm(
+        "Remove this design? Your pictures, the style read from them and your choices are deleted from this device, and the 3D house goes back to HALISIA's default.",
+      )
+    )
+      return;
     clearInspiration();
     setPics([]);
     setPalette([]);
     setSavedThumb(null);
     setLink("");
     setNote("");
-    setMessage(null);
+    setMessage("Design removed. The 3D house is back to HALISIA's default style.");
     onApply(null);
   };
+
+  const hasSomething = (value && value.source !== "default") || pics.length > 0 || !!link || !!note;
 
   const chip = "min-h-11 rounded-full border px-4 text-sm font-medium";
 
@@ -330,9 +339,14 @@ export function InspirationPanel({
             feel.
           </p>
         </div>
-        {value && value.source !== "default" && (
-          <button type="button" onClick={reset} className={`${chip} border-border`}>
-            Use HALISIA default
+        {hasSomething && (
+          <button
+            type="button"
+            onClick={reset}
+            className={`${chip} inline-flex items-center gap-2 border-red-500/50 text-red-600 dark:text-red-400`}
+            data-testid={`${testId}-remove`}
+          >
+            <Trash2 className="h-4 w-4" aria-hidden="true" /> Remove this design
           </button>
         )}
       </div>
@@ -576,6 +590,14 @@ export function InspirationPanel({
             Inspired by your pictures, not a copy of that building and not an architect&apos;s
             drawing. Room layout, sizes and costs still follow HALISIA&apos;s house types.
           </p>
+          <button
+            type="button"
+            onClick={reset}
+            className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-full border border-red-500/50 px-4 text-sm text-red-600 dark:text-red-400"
+            data-testid={`${testId}-remove-bottom`}
+          >
+            <Trash2 className="h-4 w-4" aria-hidden="true" /> Remove this design and start fresh
+          </button>
         </div>
       )}
     </section>

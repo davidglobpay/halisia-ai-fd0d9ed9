@@ -20,6 +20,9 @@ import { imageryTiles, isContainer, metresPerPixel, type Placement } from "@/lib
 import { loadTileImage } from "@/lib/esri-tiles";
 import { hasMapDetail } from "@/lib/map-image-quality";
 import { heightAt, type TerrainGrid } from "@/lib/site-context";
+import { NO_FEATURES, type BuildingPlan, type SiteFeatures } from "@/lib/building-types";
+import { buildBuildingMassing } from "./building-massing";
+import { buildSiteFeatures } from "./site-features";
 
 export type GroundMode = "terrain" | "flat" | "plain";
 
@@ -57,6 +60,12 @@ export type PlotViewerProps = {
   onApi?: (api: PlotViewerApi) => void;
   /** The client's design language from the inspiration panel; HALISIA's default when null. */
   designStyle?: DesignStyle | null;
+  /** A larger building (apartments, offices, mixed-use) instead of a house. */
+  building?: BuildingPlan | null;
+  /** Garden features drawn on the plot. */
+  features?: SiteFeatures;
+  /** Lay a courtyard in the garden (it does not fit inside the building). */
+  gardenCourt?: boolean;
 };
 
 /** Imagery zoom levels to try, sharpest first. */
@@ -313,8 +322,11 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
     controls: OrbitControls;
     house: THREE.Group | null;
     built: SiteHouse | null;
-    footing: THREE.Group | null;
+    footing: THREE.Object3D | null;
     footingKey: string;
+    /** Footprint of the larger building, when one is shown instead of a house. */
+    massing: { lengthM: number; widthM: number; heightM: number } | null;
+    features: THREE.Group | null;
     person: THREE.Group;
     plot: THREE.Group | null;
     ground: THREE.Mesh | null;
@@ -377,6 +389,8 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
       built: null,
       footing: null,
       footingKey: "",
+      massing: null,
+      features: null,
       person,
       plot: null,
       ground: null,
@@ -412,8 +426,12 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
       zoomOut: () => dolly(1.4),
       resetView: () => {
         const t = focus();
-        controls.target.copy(t);
-        camera.position.copy(t).add(DEFAULT_CAMERA);
+        // Pull back for a tall building so the whole of it is in view.
+        const h = stateRef.current?.massing?.heightM ?? 0;
+        controls.target.copy(t).add(new THREE.Vector3(0, h * 0.35, 0));
+        camera.position
+          .copy(t)
+          .add(DEFAULT_CAMERA.clone().multiplyScalar(Math.max(1, (h + 20) / 40)));
       },
       topView: () => {
         const t = focus();
@@ -577,12 +595,82 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
       st.scene.remove(st.house);
       disposeTree(st.house);
     }
-    const { group, house } = buildHouseGroup(props.typology, props.structure, props.designStyle);
-    st.house = group;
-    st.built = house;
+    st.footing = null;
     st.footingKey = "";
+    if (props.building) {
+      const m = buildBuildingMassing(props.building, props.designStyle);
+      const group = new THREE.Group();
+      group.name = "plot-house";
+      group.add(m.group);
+      st.house = group;
+      st.built = null;
+      st.massing = { lengthM: m.lengthM, widthM: m.widthM, heightM: m.heightM };
+      // First time a tall building appears, step back so it is all in view.
+      const cam = st.camera.position.distanceTo(st.controls.target);
+      if (cam < m.heightM * 1.6) {
+        const dir = st.camera.position
+          .clone()
+          .sub(st.controls.target)
+          .setLength(m.heightM * 1.9 + 30);
+        st.controls.target.y += m.heightM * 0.3;
+        st.camera.position.copy(st.controls.target).add(dir);
+      }
+    } else {
+      const { group, house } = buildHouseGroup(props.typology, props.structure, props.designStyle);
+      st.house = group;
+      st.built = house;
+      st.massing = null;
+    }
     st.scene.add(st.house);
-  }, [props.typology, props.structure, props.designStyle]);
+  }, [props.typology, props.structure, props.designStyle, props.building]);
+
+  // Garden, fountain and courtyard on the plot.
+  const feats = props.features ?? NO_FEATURES;
+  const featKey = `${feats.gardens}|${feats.fountain}|${!!props.gardenCourt}`;
+  const { x: hX, z: hZ, rotationDeg: hRot } = props.house;
+  const { x: pX, z: pZ, rotationDeg: pRot } = props.plotPlacement;
+  const fpL = props.building?.lengthM ?? stateRef.current?.built?.lengthM ?? 0;
+  const fpW = props.building?.widthM ?? stateRef.current?.built?.widthM ?? 0;
+  useEffect(() => {
+    const st = stateRef.current;
+    if (!st) return;
+    if (st.features) {
+      st.scene.remove(st.features);
+      disposeTree(st.features);
+      st.features = null;
+    }
+    const f = propsRef.current.features ?? NO_FEATURES;
+    if (!f.gardens && !f.fountain && !propsRef.current.gardenCourt) return;
+    const lengthM = st.massing?.lengthM ?? st.built?.lengthM ?? 0;
+    const widthM = st.massing?.widthM ?? st.built?.widthM ?? 0;
+    st.features = buildSiteFeatures({
+      plot: propsRef.current.plot,
+      plotPlacement: { x: pX, z: pZ, rotationDeg: pRot },
+      house: { x: hX, z: hZ, rotationDeg: hRot },
+      footprint: { lengthM, widthM },
+      features: f,
+      gardenCourt: !!propsRef.current.gardenCourt,
+      height: heightRef.current,
+    });
+    st.scene.add(st.features);
+  }, [
+    featKey,
+    hX,
+    hZ,
+    hRot,
+    pX,
+    pZ,
+    pRot,
+    fpL,
+    fpW,
+    props.plot.widthM,
+    props.plot.depthM,
+    terrainOn,
+    props.terrain,
+    props.building,
+    props.typology,
+    props.structure,
+  ]);
 
   // Plot outline, rebuilt when its size, place or the ground changes.
   const { x: ppX, z: ppZ, rotationDeg: ppRot } = props.plotPlacement;
@@ -622,11 +710,49 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
   // the lowest, so the house never floats or sinks.
   useEffect(() => {
     const st = stateRef.current;
-    if (!st?.house || !st.built) return;
-    const b = st.built;
+    if (!st?.house) return;
     const a = (-props.house.rotationDeg * Math.PI) / 180;
     const c = Math.cos(a);
     const s = Math.sin(a);
+    if (st.massing) {
+      // A larger building: ground floor just above the highest ground under
+      // it, on a concrete podium that reaches below the lowest.
+      const m = st.massing;
+      const hs: number[] = [];
+      for (const lx of [-m.lengthM / 2, 0, m.lengthM / 2])
+        for (const lz of [-m.widthM / 2, 0, m.widthM / 2])
+          hs.push(
+            heightRef.current(props.house.x + lx * c + lz * s, props.house.z - lx * s + lz * c),
+          );
+      const hi = Math.max(...hs);
+      const lo = Math.min(...hs);
+      const floorY = hi + 0.15;
+      const depth = Math.round((floorY - lo + 0.6) * 20) / 20;
+      const key = `podium|${depth}|${m.lengthM}|${m.widthM}`;
+      if (key !== st.footingKey) {
+        if (st.footing) {
+          st.house.remove(st.footing);
+          disposeTree(st.footing);
+        }
+        const podium = new THREE.Mesh(
+          new THREE.BoxGeometry(m.lengthM + 0.4, depth, m.widthM + 0.4),
+          new THREE.MeshStandardMaterial({ color: 0xa9a49a, roughness: 0.95 }),
+        );
+        podium.position.y = -depth / 2;
+        podium.receiveShadow = true;
+        st.footing = podium;
+        st.house.add(podium);
+        st.footingKey = key;
+      }
+      st.house.position.set(props.house.x, floorY, props.house.z);
+      st.house.rotation.y = a;
+      const px = props.house.x + (m.lengthM / 2 + 1.2) * c + (-m.widthM / 2 - 2.5) * s;
+      const pz = props.house.z - (m.lengthM / 2 + 1.2) * s + (-m.widthM / 2 - 2.5) * c;
+      st.person.position.set(px, heightRef.current(px, pz), pz);
+      return;
+    }
+    if (!st.built) return;
+    const b = st.built;
     const samples: number[] = [];
     for (const r of b.groundRects)
       for (const lx of [r.x0, (r.x0 + r.x1) / 2, r.x1])

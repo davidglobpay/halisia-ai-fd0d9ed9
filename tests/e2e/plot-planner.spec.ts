@@ -135,3 +135,48 @@ test("plot planner explains when imagery cannot load", async ({ page }) => {
   );
   await expect(page.getByTestId("pp-readout")).toContainText("(4 units)");
 });
+
+test("plot planner: larger buildings, features and start again", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  page.on("dialog", (d) => void d.accept());
+  await stubImagery(page);
+  await page.goto(
+    "/plot-planner?lat=-1.502157&lng=36.955288&typology=3br&structure=masonry_stone&plot=half-acre",
+  );
+  await expect(page.getByTestId("plot-viewer-canvas")).toBeVisible({ timeout: 30_000 });
+
+  // Houses cannot have a lift.
+  await expect(page.getByTestId("pp-feature-elevator")).toBeDisabled();
+
+  await page.getByTestId("pp-typology").selectOption("res_high");
+  const readout = page.getByTestId("pp-building-readout");
+  await expect(readout).toContainText("Residential high-rise");
+  await expect(readout).toContainText("12 floors");
+  await expect(page.getByTestId("pp-structure")).toHaveCount(0);
+  await page.getByTestId("pp-floors").selectOption("20");
+  await expect(readout).toContainText("20 floors");
+
+  await page.getByTestId("pp-feature-elevator").check();
+  await page.getByTestId("pp-feature-gardens").check();
+  await page.getByTestId("pp-feature-fountain").check();
+  const notes = page.getByTestId("pp-feature-notes");
+  await expect(notes).toContainText("lift core");
+  await expect(notes).toContainText("Gardens:");
+  await expect(notes).toContainText("Fountain: about");
+
+  await page.getByTestId("pp-typology").selectOption("mixed");
+  await expect(readout).toContainText("Mixed-use");
+  await expect(page.getByTestId("pp-cost-link")).toHaveCount(0);
+
+  await page.getByTestId("pp-start-again").click();
+  await expect(page.getByTestId("pp-building-readout")).toHaveCount(0);
+  await expect(page.getByTestId("pp-readout")).toContainText("3 bedrooms");
+  await expect(page.getByTestId("pp-feature-gardens")).not.toBeChecked();
+
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - window.innerWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(0);
+  expect(errors).toEqual([]);
+});
