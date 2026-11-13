@@ -1,7 +1,7 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Crosshair, Eye, Minus, Plus } from "lucide-react";
+import { Crosshair, Eye, Minus, Plus, RotateCcw } from "lucide-react";
 import { MapControlDock } from "@/components/halisia/map-controls/map-control-dock";
 import { StreetViewPanel } from "@/components/halisia/land-passport/street-view-panel";
 import type {
@@ -26,6 +26,19 @@ import {
   siteModeSearch,
 } from "@/components/halisia/model-lab/site/site-params";
 import { InspirationPanel } from "@/components/halisia/model-lab/site/inspiration-panel";
+import { clearInspiration } from "@/components/halisia/model-lab/site/design-style";
+import {
+  BUILDING_SPECS,
+  BUILDING_TYPES,
+  FEATURE_LABEL,
+  NO_FEATURES,
+  defaultBuildingOffset,
+  featureAvailability,
+  isBuildingType,
+  planBuilding,
+  type SiteFeatures,
+} from "@/lib/building-types";
+import { layoutFeatures, toWorld } from "@/lib/site-layout";
 import type { DesignStyle } from "@/components/halisia/model-lab/site/design-style";
 import { STRUCTURES, TYPOLOGIES } from "@/lib/cost-intel.functions";
 import { structureName } from "@/lib/build-recommendation";
@@ -95,10 +108,15 @@ function PlotPlannerPage() {
   }, [fromUrl]);
 
   const [typology, setTypology] = useState<string>(
-    TYPOLOGIES.includes(search.typology as (typeof TYPOLOGIES)[number])
+    TYPOLOGIES.includes(search.typology as (typeof TYPOLOGIES)[number]) ||
+      isBuildingType(search.typology ?? "")
       ? (search.typology as string)
       : "3br",
   );
+  const [floorsBy, setFloorsBy] = useState<Record<string, number>>({});
+  const [features, setFeatures] = useState<SiteFeatures>(NO_FEATURES);
+  // Bumped by "Start again" so the inspiration panel forgets its pictures too.
+  const [inspirationKey, setInspirationKey] = useState(0);
   const [structure, setStructure] = useState<string>(
     STRUCTURES.includes(search.structure as (typeof STRUCTURES)[number])
       ? (search.structure as string)
@@ -168,8 +186,68 @@ function PlotPlannerPage() {
   const heightCounts = buildingHeightSummary(buildingsQ.data?.buildings ?? []);
   const terrain = terrainQ.data?.grid ?? null;
 
-  const fp = houseFootprint(typology, structure);
+  const building = isBuildingType(typology)
+    ? planBuilding(
+        typology,
+        floorsBy[typology] ?? BUILDING_SPECS[typology].floors.default,
+        plot,
+        features,
+      )
+    : null;
+  const fp = building
+    ? { lengthM: building.lengthM, widthM: building.widthM, floorAreaM2: building.gfaM2 }
+    : houseFootprint(typology, structure);
   const gaps = edgeDistances(house, fp, plotPlacement, plot);
+  const available = featureAvailability(typology, building?.floors ?? 1);
+  // A courtyard in the garden: for houses, or when the building is too small to wrap one.
+  const gardenCourt = features.courtyardOutdoor && (!building || building.courtInGarden);
+  const layout = layoutFeatures(
+    { plot, plotPlacement, house, footprint: fp },
+    features,
+    gardenCourt,
+  );
+
+  /** Put a building at its assumed front setback, centred across the plot. */
+  const placeBuilding = (t: string) => {
+    if (!isBuildingType(t)) return;
+    const plan = planBuilding(t, floorsBy[t] ?? BUILDING_SPECS[t].floors.default, plot, features);
+    const off = defaultBuildingOffset(t, plan, plot);
+    const w = toWorld(plotPlacement, off.u, off.v);
+    setHouse({
+      x: Math.round(w.x * 10) / 10,
+      z: Math.round(w.z * 10) / 10,
+      rotationDeg: plotPlacement.rotationDeg,
+    });
+  };
+
+  /** Clear everything back to a fresh start: type, plot, positions, features and design. */
+  const startAgain = () => {
+    if (
+      !window.confirm(
+        "Start again? This removes the building type, plot, positions, features and your saved design inspiration.",
+      )
+    )
+      return;
+    setTypology("3br");
+    setStructure("masonry_stone");
+    setPlotKey("50x100");
+    setCustomFt({ w: "", d: "" });
+    setFloorsBy({});
+    setFeatures(NO_FEATURES);
+    setHouse({ x: 0, z: 0, rotationDeg: 0 });
+    setPlotPlacement({ x: 0, z: 0, rotationDeg: 0 });
+    setTarget("house");
+    clearInspiration();
+    setDesignStyle(null);
+    setInspirationKey((k) => k + 1);
+  };
+
+  // Keep a building at its setback when the plot size changes.
+  useEffect(() => {
+    if (isBuildingType(typology)) placeBuilding(typology);
+    // Only on a new plot size; typology changes place it from the select.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [plot.widthM, plot.depthM]);
   const selected = target === "house" ? house : plotPlacement;
   const setSelected = target === "house" ? setHouse : setPlotPlacement;
 
@@ -222,35 +300,77 @@ function PlotPlannerPage() {
         <>
           <div className="mt-4 flex flex-wrap gap-3">
             <label className="text-xs">
-              House type
+              Building type
               <select
-                className="ml-2 min-h-11 rounded-lg border border-white/15 bg-background px-2"
+                className="ml-2 min-h-11 max-w-[15rem] rounded-lg border border-white/15 bg-background px-2"
                 value={typology}
-                onChange={(e) => setTypology(e.target.value)}
+                onChange={(e) => {
+                  const t = e.target.value;
+                  setTypology(t);
+                  if (isBuildingType(t)) placeBuilding(t);
+                  else if (isBuildingType(typology)) setHouse({ ...plotPlacement });
+                }}
                 data-testid="pp-typology"
               >
-                {TYPOLOGIES.map((t) => (
-                  <option key={t} value={t}>
-                    {typologyName(t)}
-                  </option>
-                ))}
+                <optgroup label="Houses">
+                  {TYPOLOGIES.map((t) => (
+                    <option key={t} value={t}>
+                      {typologyName(t)}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="Apartments, offices and mixed-use">
+                  {BUILDING_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {BUILDING_SPECS[t].label}
+                    </option>
+                  ))}
+                </optgroup>
               </select>
             </label>
-            <label className="text-xs">
-              Building system
-              <select
-                className="ml-2 min-h-11 rounded-lg border border-white/15 bg-background px-2"
-                value={structure}
-                onChange={(e) => setStructure(e.target.value)}
-                data-testid="pp-structure"
-              >
-                {STRUCTURES.map((s) => (
-                  <option key={s} value={s}>
-                    {structureName(s)}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {building ? (
+              <label className="text-xs">
+                Floors
+                <select
+                  className="ml-2 min-h-11 rounded-lg border border-white/15 bg-background px-2"
+                  value={building.floors}
+                  onChange={(e) =>
+                    setFloorsBy((f) => ({ ...f, [typology]: Number(e.target.value) }))
+                  }
+                  data-testid="pp-floors"
+                >
+                  {Array.from(
+                    {
+                      length:
+                        BUILDING_SPECS[building.type].floors.max -
+                        BUILDING_SPECS[building.type].floors.min +
+                        1,
+                    },
+                    (_, i) => BUILDING_SPECS[building.type].floors.min + i,
+                  ).map((n) => (
+                    <option key={n} value={n}>
+                      {n === 1 ? "1 floor" : `${n} floors`} (G{n > 1 ? ` + ${n - 1}` : ""})
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : (
+              <label className="text-xs">
+                Building system
+                <select
+                  className="ml-2 min-h-11 rounded-lg border border-white/15 bg-background px-2"
+                  value={structure}
+                  onChange={(e) => setStructure(e.target.value)}
+                  data-testid="pp-structure"
+                >
+                  {STRUCTURES.map((s) => (
+                    <option key={s} value={s}>
+                      {structureName(s)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
             <label className="text-xs">
               Plot
               <select
@@ -333,6 +453,47 @@ function PlotPlannerPage() {
               Centre house on plot
             </button>
           </div>
+
+          <fieldset className="mt-3 text-xs" data-testid="pp-features">
+            <legend className="font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              Features
+            </legend>
+            <div className="mt-1 flex flex-wrap gap-2">
+              {(Object.keys(FEATURE_LABEL) as Array<keyof SiteFeatures>).map((k) => {
+                const why = available[k];
+                return (
+                  <label
+                    key={k}
+                    className={`flex min-h-11 items-center gap-2 rounded-full border px-3 ${features[k] && !why ? "border-primary bg-primary/10" : "border-white/15"} ${why ? "opacity-60" : ""}`}
+                    title={why ?? undefined}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={features[k] && !why}
+                      disabled={!!why}
+                      onChange={(e) => setFeatures((f) => ({ ...f, [k]: e.target.checked }))}
+                      data-testid={`pp-feature-${k}`}
+                    />
+                    {FEATURE_LABEL[k]}
+                    {why && <span className="sr-only">({why})</span>}
+                  </label>
+                );
+              })}
+              <button
+                type="button"
+                onClick={startAgain}
+                className="ml-auto inline-flex min-h-11 items-center gap-2 rounded-full border border-white/15 px-4"
+                data-testid="pp-start-again"
+              >
+                <RotateCcw className="h-4 w-4" aria-hidden="true" /> Start again
+              </button>
+            </div>
+            {!building && (
+              <p className="mt-1 text-muted-foreground">
+                Elevator and indoor courtyard are for the apartment, office and mixed-use types.
+              </p>
+            )}
+          </fieldset>
 
           <div
             ref={viewerBoxRef}
@@ -434,18 +595,27 @@ function PlotPlannerPage() {
               onHouseChange={setHouse}
               onPlotChange={setPlotPlacement}
               designStyle={designStyle}
+              building={building}
+              features={features}
+              gardenCourt={gardenCourt}
             />
           </div>
 
           <Surface elevation={1} className="mt-3 p-4 text-xs" data-testid="pp-readout">
-            <p className="text-sm">
-              <strong>{structureName(structure)}</strong>, {typologyName(typology)}: about{" "}
-              {fp.floorAreaM2} m² floor area, {fp.lengthM.toFixed(1)} × {fp.widthM.toFixed(1)} m
-              footprint
-              {isContainer(structure) && fp.units ? ` (${fp.units.length} units)` : ""}. Plot{" "}
-              {plot.widthM.toFixed(1)} × {plot.depthM.toFixed(1)} m; the house covers{" "}
-              {gaps.coveragePct}% of it.
-            </p>
+            {building ? (
+              <BuildingReadout plan={building} plot={plot} />
+            ) : (
+              <p className="text-sm">
+                <strong>{structureName(structure)}</strong>, {typologyName(typology)}: about{" "}
+                {fp.floorAreaM2} m² floor area, {fp.lengthM.toFixed(1)} × {fp.widthM.toFixed(1)} m
+                footprint
+                {isContainer(structure) && "units" in fp && fp.units
+                  ? ` (${fp.units.length} units)`
+                  : ""}
+                . Plot {plot.widthM.toFixed(1)} × {plot.depthM.toFixed(1)} m; the house covers{" "}
+                {gaps.coveragePct}% of it.
+              </p>
+            )}
             <ul className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 sm:grid-cols-4">
               <li>
                 Front (orange edge): <span className="font-mono">{gap(gaps.front)}</span>
@@ -462,9 +632,37 @@ function PlotPlannerPage() {
             </ul>
             {!gaps.inside && (
               <p role="alert" className="mt-2 text-amber-glow">
-                The house crosses the plot outline. Move or rotate it, or choose a bigger plot.
+                The {building ? "building" : "house"} crosses the plot outline. Move or rotate it,
+                or choose a bigger plot.
               </p>
             )}
+            {building?.warnings.length || layout.notes.length ? (
+              <ul className="mt-2 list-disc space-y-1 pl-5" data-testid="pp-feature-notes">
+                {building?.warnings.map((w) => (
+                  <li key={w} className="text-amber-glow">
+                    {w}
+                  </li>
+                ))}
+                {building && features.elevator && building.lifts > 0 && (
+                  <li>
+                    Elevator: a lift core with about {building.lifts} lift
+                    {building.lifts === 1 ? "" : "s"} and a stair, rising above the roof (rule of
+                    thumb; a lift engineer sizes them).
+                  </li>
+                )}
+                {building?.court && (
+                  <li>
+                    {building.court.roofed ? "Indoor courtyard (atrium)" : "Courtyard"}: about{" "}
+                    {building.court.lengthM} × {building.court.widthM} m in the middle of the
+                    building
+                    {building.court.roofed ? ", under a glass roof" : ", open to the sky"}.
+                  </li>
+                )}
+                {layout.notes.map((n) => (
+                  <li key={n}>{n}</li>
+                ))}
+              </ul>
+            ) : null}
             <ul className="mt-3 space-y-1 text-muted-foreground" data-testid="pp-context">
               <li>
                 Terrain:{" "}
@@ -491,10 +689,12 @@ function PlotPlannerPage() {
               Check your county's required building lines before relying on these gaps.
             </p>
             <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
-              <Link to="/build-cost" className="underline" data-testid="pp-cost-link">
-                See the cost of this house type
-              </Link>
-              {(SITE_STRUCTURES as readonly string[]).includes(structure) && (
+              {!building && (
+                <Link to="/build-cost" className="underline" data-testid="pp-cost-link">
+                  See the cost of this house type
+                </Link>
+              )}
+              {!building && (SITE_STRUCTURES as readonly string[]).includes(structure) && (
                 <Link
                   to="/model-lab"
                   search={siteModeSearch(typology, structure, point)}
@@ -509,6 +709,7 @@ function PlotPlannerPage() {
 
           <div className="mt-3">
             <InspirationPanel
+              key={inspirationKey}
               value={designStyle}
               onApply={setDesignStyle}
               testId="pp-inspiration"
@@ -544,5 +745,59 @@ function PlotPlannerPage() {
         </>
       )}
     </main>
+  );
+}
+
+function BuildingReadout({
+  plan,
+  plot,
+}: {
+  plan: ReturnType<typeof planBuilding>;
+  plot: { widthM: number; depthM: number };
+}) {
+  const spec = BUILDING_SPECS[plan.type];
+  const n = (v: number) => v.toLocaleString("en-KE");
+  return (
+    <div data-testid="pp-building-readout">
+      <p className="text-sm">
+        <strong>{spec.label}</strong>, {plan.floors} floor{plan.floors === 1 ? "" : "s"}, about{" "}
+        {plan.heightM} m tall. Footprint {plan.lengthM} × {plan.widthM} m on a{" "}
+        {plot.widthM.toFixed(1)} × {plot.depthM.toFixed(1)} m plot.
+      </p>
+      <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 sm:grid-cols-4">
+        <div>
+          <dt className="text-muted-foreground">Floor area, all floors</dt>
+          <dd className="font-mono">{n(plan.gfaM2)} m²</dd>
+        </div>
+        <div>
+          <dt className="text-muted-foreground">Ground covered</dt>
+          <dd className="font-mono">{plan.coveragePct}%</dd>
+        </div>
+        <div>
+          <dt className="text-muted-foreground">Plot ratio</dt>
+          <dd className="font-mono">{plan.plotRatio}</dd>
+        </div>
+        <div>
+          <dt className="text-muted-foreground">
+            {plan.homes > 0 && plan.lettableM2 > 0
+              ? "Homes and shop space"
+              : plan.homes > 0
+                ? "Apartments"
+                : "Lettable space"}
+          </dt>
+          <dd className="font-mono">
+            {plan.homes > 0 ? `about ${plan.homes} of ~85 m²` : ""}
+            {plan.homes > 0 && plan.lettableM2 > 0 ? " + " : ""}
+            {plan.lettableM2 > 0 ? `${n(plan.lettableM2)} m²` : ""}
+          </dd>
+        </div>
+      </dl>
+      <p className="mt-2 text-muted-foreground">
+        Planning rules of thumb: setbacks assumed at {spec.setback.front} m front,{" "}
+        {spec.setback.side} m sides and {spec.setback.back} m back; 80% of floor area usable. The
+        county&apos;s zoning sets the real building lines, ground coverage, plot ratio and height,
+        and an architect and engineer design the building.
+      </p>
+    </div>
   );
 }
