@@ -180,3 +180,43 @@ test("plot planner: larger buildings, features and start again", async ({ page }
   expect(overflow).toBeLessThanOrEqual(0);
   expect(errors).toEqual([]);
 });
+
+test("plot planner: first-visit guide, eye level, model style and road layer", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  // A first-time visitor: the 3D guide has not been seen.
+  await page.addInitScript(() => {
+    try {
+      window.localStorage.removeItem("halisia:viewer-guide:plot-planner:seen");
+    } catch {
+      /* storage unavailable */
+    }
+  });
+  await stubImagery(page);
+  await page.goto(URL);
+  await expect(page.getByTestId("plot-viewer-canvas")).toBeVisible({ timeout: 30_000 });
+
+  const guide = page.getByTestId("guide-plot-planner");
+  await expect(guide).toBeVisible();
+  await expect(guide).toContainText("1 of 7");
+  await guide.getByRole("button", { name: "Next" }).click();
+  await expect(guide).toContainText("2 of 7");
+  await guide.getByRole("button", { name: "Close the guide" }).click();
+  await expect(guide).toHaveCount(0);
+  // It comes back from the ? button.
+  await page.getByTestId("guide-plot-planner-button").click();
+  await expect(guide).toBeVisible();
+  await guide.getByRole("button", { name: "Close the guide" }).click();
+
+  const dock = page.getByTestId("pp-dock");
+  await dock.getByRole("button", { name: "Eye level from the road", exact: true }).click();
+  await dock.getByRole("button", { name: "Map layers", exact: true }).click();
+  await page.getByTestId("pp-dock-layer-style-model").click();
+  await expect(page.getByTestId("pp-dock-layer-style-model")).toHaveAttribute(
+    "aria-checked",
+    "true",
+  );
+  await expect(page.getByTestId("pp-dock-layer-context-infrastructure")).toBeVisible();
+  await page.keyboard.press("Escape");
+  expect(errors).toEqual([]);
+});

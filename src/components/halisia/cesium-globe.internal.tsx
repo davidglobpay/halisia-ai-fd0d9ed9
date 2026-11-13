@@ -3,6 +3,7 @@ import { AlertTriangle, Crosshair, Eye, Loader2, Minus, Plus } from "lucide-reac
 import { MapControlDock } from "@/components/halisia/map-controls/map-control-dock";
 import { loadCesium } from "@/lib/cesium-loader";
 import { esriTileTemplate } from "@/lib/esri-tiles";
+import { ViewerGuide } from "@/components/halisia/viewer-guide";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type CesiumNS = any;
@@ -194,6 +195,22 @@ export default function CesiumGlobe({
             },
           ]}
           layerFootnote={<>Ground is a smooth globe here, without terrain heights.</>}
+        />
+      )}
+      {ready && (
+        <ViewerGuide
+          id="globe"
+          title="Moving around the globe"
+          steps={[
+            ["Turn the globe", "Drag with one finger or the mouse."],
+            ["Zoom", "Pinch, scroll, or use + and − on the right."],
+            ["Tilt", "Drag with two fingers up or down (right-drag or Ctrl-drag on a computer)."],
+            ["Back to the point", "The target button flies you back to this location."],
+            [
+              "Map or satellite",
+              "The layers button switches the map, satellite photos and a flat map.",
+            ],
+          ]}
         />
       )}
       {!ready && !error && (

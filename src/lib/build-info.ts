@@ -14,8 +14,8 @@
  * Bump BUILD_ID on every ship. A stale identifier is worse than none, because
  * it answers the question confidently and wrongly instead of not answering it.
  */
-export const BUILD_ID = "2026-11-13.1";
+export const BUILD_ID = "2026-11-13.2";
 
 /** What this build changed, in a few words. Non-sensitive by design. */
 export const BUILD_NOTE =
-  "Plot planner: apartment, office and mixed-use buildings with floors, lifts, courtyards, fountain and gardens; remove a saved design";
+  "Location details open where you tap; 3D roads, rail and power lines, model-style surroundings, eye level and pop-up guides on 3D views";

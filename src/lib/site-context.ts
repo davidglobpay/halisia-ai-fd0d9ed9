@@ -150,6 +150,74 @@ export function parseOverpassBuildings(
   return out;
 }
 
+export type InfraKind = "major" | "road" | "minor" | "track" | "path" | "rail" | "power";
+
+/** A road, railway or power line near the plot, as a polyline. */
+export type InfraLine = {
+  id: number;
+  kind: InfraKind;
+  /** Width drawn in 3D, metres (a typical carriageway or corridor, not a survey). */
+  widthM: number;
+  name: string | null;
+  points: Array<{ lat: number; lng: number }>;
+};
+
+const HIGHWAY_KIND: Record<string, [InfraKind, number]> = {
+  motorway: ["major", 14],
+  trunk: ["major", 12],
+  primary: ["major", 10],
+  secondary: ["road", 8],
+  tertiary: ["road", 7],
+  motorway_link: ["major", 7],
+  trunk_link: ["major", 7],
+  primary_link: ["major", 7],
+  secondary_link: ["road", 6],
+  tertiary_link: ["road", 6],
+  residential: ["minor", 5],
+  unclassified: ["minor", 5],
+  living_street: ["minor", 4.5],
+  service: ["minor", 3.5],
+  track: ["track", 3],
+  footway: ["path", 1.5],
+  path: ["path", 1.2],
+  cycleway: ["path", 1.5],
+  pedestrian: ["path", 3],
+  steps: ["path", 1.5],
+};
+
+/** Roads, railways and power lines from an Overpass `out tags geom` response. */
+export function parseOverpassInfrastructure(
+  json: { elements?: OverpassWay[] } | null | undefined,
+  limit = 500,
+): InfraLine[] {
+  const out: InfraLine[] = [];
+  for (const el of json?.elements ?? []) {
+    if (el.type !== "way" || !el.tags || !el.geometry || el.tags.building) continue;
+    let kind: InfraKind | null = null;
+    let widthM = 0;
+    const hw = el.tags.highway;
+    if (hw && HIGHWAY_KIND[hw]) [kind, widthM] = HIGHWAY_KIND[hw];
+    else if (el.tags.railway && /^(rail|light_rail|tram|narrow_gauge)$/.test(el.tags.railway)) {
+      kind = "rail";
+      widthM = 3;
+    } else if (el.tags.power === "line" || el.tags.power === "minor_line") {
+      kind = "power";
+      widthM = 0.2;
+    }
+    if (!kind) continue;
+    const lanes = Number(el.tags.lanes);
+    if (kind !== "rail" && kind !== "power" && Number.isFinite(lanes) && lanes > 0)
+      widthM = Math.max(widthM, Math.min(30, lanes * 3.5));
+    const points = el.geometry
+      .filter((g) => Number.isFinite(g.lat) && Number.isFinite(g.lon))
+      .map((g) => ({ lat: g.lat, lng: g.lon }));
+    if (points.length < 2) continue;
+    out.push({ id: el.id, kind, widthM, name: el.tags.name ?? el.tags.ref ?? null, points });
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+
 /** Plain summary for the legend: how many heights were recorded vs defaulted. */
 export function buildingHeightSummary(buildings: readonly NearbyBuilding[]) {
   const recorded = buildings.filter((b) => b.heightSource !== "default").length;

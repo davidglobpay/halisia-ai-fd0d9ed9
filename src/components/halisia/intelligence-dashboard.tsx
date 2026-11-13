@@ -3,7 +3,7 @@ import { amenityCount } from "@/lib/amenity-count";
 import { formatDateTime } from "@/lib/format-datetime";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Suspense, lazy, useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useRef, useState } from "react";
 import {
   Activity,
   Building2,
@@ -216,7 +216,22 @@ export function IntelligenceDashboard({
   lng: number;
   address: string;
 }) {
-  const [tab, setTab] = useState<TabId>("overview");
+  const [tab, setTabState] = useState<TabId>("overview");
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const tappedRef = useRef(false);
+  const setTab = (id: TabId) => {
+    tappedRef.current = true;
+    setTabState(id);
+  };
+  // After a tap, bring the opened detail into view (never on first load).
+  useEffect(() => {
+    if (!tappedRef.current) return;
+    tappedRef.current = false;
+    const el = panelRef.current;
+    if (!el) return;
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  }, [tab]);
   const queryClient = useQueryClient();
 
   // Wave 3 auto-launch: prefetch AI Geotechnical Intelligence as soon as
@@ -401,95 +416,111 @@ export function IntelligenceDashboard({
                   );
                 })}
               </ul>
+              {activeHere && (
+                // The detail opens inside the section whose chip was tapped,
+                // not at the bottom of the page.
+                <div
+                  ref={panelRef}
+                  className="mt-3 scroll-mt-24"
+                  data-testid="wave-detail"
+                  role="region"
+                  aria-label={`${meta.label} · ${items.find((t) => t.id === tab)?.label ?? ""}`}
+                >
+                  <motion.div
+                    key={tab}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25 }}
+                    className="space-y-3"
+                  >
+                    {tab === "overview" && (
+                      <>
+                        <OverviewTab
+                          intel={intelQ.data}
+                          loading={intelQ.isLoading}
+                          narrative={narrativeQ.data}
+                        />
+                        <GeotechRisksInline lat={lat} lng={lng} />
+                      </>
+                    )}
+                    {tab === "weather" && (
+                      <Suspense fallback={<PanelLoading label="weather" />}>
+                        <WeatherPanel lat={lat} lng={lng} />
+                      </Suspense>
+                    )}
+                    {tab === "environment" && (
+                      <EnvironmentTab intel={intelQ.data} loading={intelQ.isLoading} />
+                    )}
+                    {tab === "amenities" && (
+                      <>
+                        <AmenitiesTab intel={intelQ.data} loading={intelQ.isLoading} />
+                        <GeotechRisksInline lat={lat} lng={lng} />
+                      </>
+                    )}
+                    {tab === "layers" && (
+                      <div className="space-y-2">
+                        <LeafletLayersMap lat={lat} lng={lng} label={address} />
+                        <div className="text-[11px] text-muted-foreground px-1">
+                          Multi-source GIS: Esri satellite, street and topographic reference maps,
+                          OpenStreetMap, OpenRailway & OpenSeaMap overlays. Toggle basemaps and
+                          overlays via the top right control.
+                        </div>
+                      </div>
+                    )}
+                    {tab === "heatmap" && (
+                      <div className="space-y-2">
+                        <HeatmapMap lat={lat} lng={lng} intel={intelQ.data} />
+                        <div className="text-[11px] text-muted-foreground px-1">
+                          Density heatmap of nearby amenities (Google Places). Warmer colours = more
+                          services concentrated within a short walk.
+                        </div>
+                      </div>
+                    )}
+                    {tab === "globe" && (
+                      <div className="space-y-2">
+                        <CesiumGlobe lat={lat} lng={lng} label={address} />
+                        <div className="text-[11px] text-muted-foreground px-1">
+                          True 3D globe rendered with CesiumJS. Drag to orbit, scroll to zoom,
+                          right-click to tilt.
+                        </div>
+                      </div>
+                    )}
+                    {tab === "terrain3d" && (
+                      <div className="space-y-2">
+                        <Terrain3D lat={lat} lng={lng} height="h-72" variant="expanded" />
+                        <div className="text-[11px] text-muted-foreground px-1">
+                          Isometric 3D slope &amp; contour projection over a 9×9 elevation grid (~18
+                          km²) sampled from Open-Topo-Data ASTER 30m. Hover any tile to inspect its
+                          elevation and precise coordinates; use Refresh to re-sample.
+                        </div>
+                      </div>
+                    )}
+                    {tab === "timeline" && (
+                      <Suspense fallback={<PanelLoading label="timeline" />}>
+                        <TimelinePanel lat={lat} lng={lng} />
+                      </Suspense>
+                    )}
+                    {tab === "geotech" && <GeotechPanel lat={lat} lng={lng} address={address} />}
+                    {tab === "wave4" && <Wave4Panel lat={lat} lng={lng} />}
+                    {tab === "evidence" && (
+                      <div className="space-y-3">
+                        {devMode && <MapsDiagnostics lat={lat} lng={lng} />}
+                        <EvidenceTab intel={intelQ.data} />
+                      </div>
+                    )}
+                    {tab === "ai" && (
+                      <AITab
+                        narrative={narrativeQ.data}
+                        loading={narrativeQ.isLoading || intelQ.isLoading}
+                      />
+                    )}
+                  </motion.div>
+                </div>
+              )}
             </HoloTile>
           );
         })}
       </div>
-
-      <motion.div
-        key={tab}
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25 }}
-        className="space-y-3"
-      >
-        {tab === "overview" && (
-          <>
-            <OverviewTab
-              intel={intelQ.data}
-              loading={intelQ.isLoading}
-              narrative={narrativeQ.data}
-            />
-            <GeotechRisksInline lat={lat} lng={lng} />
-          </>
-        )}
-        {tab === "weather" && (
-          <Suspense fallback={<PanelLoading label="weather" />}>
-            <WeatherPanel lat={lat} lng={lng} />
-          </Suspense>
-        )}
-        {tab === "environment" && <EnvironmentTab intel={intelQ.data} loading={intelQ.isLoading} />}
-        {tab === "amenities" && (
-          <>
-            <AmenitiesTab intel={intelQ.data} loading={intelQ.isLoading} />
-            <GeotechRisksInline lat={lat} lng={lng} />
-          </>
-        )}
-        {tab === "layers" && (
-          <div className="space-y-2">
-            <LeafletLayersMap lat={lat} lng={lng} label={address} />
-            <div className="text-[11px] text-muted-foreground px-1">
-              Multi-source GIS: Esri satellite, street and topographic reference maps,
-              OpenStreetMap, OpenRailway & OpenSeaMap overlays. Toggle basemaps and overlays via the
-              top right control.
-            </div>
-          </div>
-        )}
-        {tab === "heatmap" && (
-          <div className="space-y-2">
-            <HeatmapMap lat={lat} lng={lng} intel={intelQ.data} />
-            <div className="text-[11px] text-muted-foreground px-1">
-              Density heatmap of nearby amenities (Google Places). Warmer colours = more services
-              concentrated within a short walk.
-            </div>
-          </div>
-        )}
-        {tab === "globe" && (
-          <div className="space-y-2">
-            <CesiumGlobe lat={lat} lng={lng} label={address} />
-            <div className="text-[11px] text-muted-foreground px-1">
-              True 3D globe rendered with CesiumJS. Drag to orbit, scroll to zoom, right-click to
-              tilt.
-            </div>
-          </div>
-        )}
-        {tab === "terrain3d" && (
-          <div className="space-y-2">
-            <Terrain3D lat={lat} lng={lng} height="h-72" variant="expanded" />
-            <div className="text-[11px] text-muted-foreground px-1">
-              Isometric 3D slope &amp; contour projection over a 9×9 elevation grid (~18 km²)
-              sampled from Open-Topo-Data ASTER 30m. Hover any tile to inspect its elevation and
-              precise coordinates; use Refresh to re-sample.
-            </div>
-          </div>
-        )}
-        {tab === "timeline" && (
-          <Suspense fallback={<PanelLoading label="timeline" />}>
-            <TimelinePanel lat={lat} lng={lng} />
-          </Suspense>
-        )}
-        {tab === "geotech" && <GeotechPanel lat={lat} lng={lng} address={address} />}
-        {tab === "wave4" && <Wave4Panel lat={lat} lng={lng} />}
-        {tab === "evidence" && (
-          <div className="space-y-3">
-            {devMode && <MapsDiagnostics lat={lat} lng={lng} />}
-            <EvidenceTab intel={intelQ.data} />
-          </div>
-        )}
-        {tab === "ai" && (
-          <AITab narrative={narrativeQ.data} loading={narrativeQ.isLoading || intelQ.isLoading} />
-        )}
-      </motion.div>
     </div>
   );
 }

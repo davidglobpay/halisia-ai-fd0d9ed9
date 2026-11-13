@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Download, Loader2, Mountain, RefreshCw } from "lucide-react";
+import { Download, Loader2, Minus, Mountain, Plus, RefreshCw, RotateCcw } from "lucide-react";
+import { ViewerGuide } from "@/components/halisia/viewer-guide";
 import {
   cellLatLng,
   drawIsometricTerrain,
@@ -39,6 +40,8 @@ export function Terrain3D({
   const [nonce, setNonce] = useState(0);
   const [hover, setHover] = useState<{ x: number; y: number } | null>(null);
   const [pointer, setPointer] = useState<{ x: number; y: number } | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const boxRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const ctrl = new AbortController();
@@ -93,13 +96,15 @@ export function Terrain3D({
     };
   }, [grid, hover]);
 
-  const onMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  // Mouse hover and finger taps both inspect a tile. The canvas may be zoomed
+  // with a CSS scale, so map the pointer through its on-screen size.
+  const onMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (!grid || !ref.current || !layoutRef.current) return;
     const rect = ref.current.getBoundingClientRect();
-    const dpr = window.devicePixelRatio || 1;
-    const x = (e.clientX - rect.left) * dpr;
-    const y = (e.clientY - rect.top) * dpr;
-    setPointer({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+    const box = boxRef.current?.getBoundingClientRect() ?? rect;
+    const x = (e.clientX - rect.left) * (ref.current.width / rect.width);
+    const y = (e.clientY - rect.top) * (ref.current.height / rect.height);
+    setPointer({ x: e.clientX - box.left, y: e.clientY - box.top });
     const cell = pickIsoCell(grid, layoutRef.current, x, y);
     setHover(cell);
   };
@@ -157,16 +162,65 @@ export function Terrain3D({
         </div>
       </div>
       <div
+        ref={boxRef}
         className={`relative ${height} rounded-xl border border-white/5 bg-[radial-gradient(circle_at_50%_20%,rgba(45,140,255,0.16),transparent_70%)] overflow-hidden`}
       >
         <canvas
           ref={ref}
-          onMouseMove={onMove}
-          onMouseLeave={() => {
+          onPointerMove={onMove}
+          onPointerDown={onMove}
+          onPointerLeave={(e) => {
+            if (e.pointerType !== "mouse") return;
             setHover(null);
             setPointer(null);
           }}
-          className="absolute inset-0 h-full w-full cursor-crosshair"
+          style={{ transform: `scale(${zoom})`, transformOrigin: "50% 50%" }}
+          className="absolute inset-0 h-full w-full cursor-crosshair transition-transform"
+          data-testid="terrain-3d-canvas"
+        />
+        <div className="absolute right-2 top-2 z-10 flex flex-col overflow-hidden rounded-full border border-white/10 bg-card/90 shadow">
+          <button
+            type="button"
+            onClick={() => setZoom((z) => Math.min(3, +(z + 0.5).toFixed(1)))}
+            aria-label="Zoom in"
+            className="grid h-9 w-9 place-items-center"
+            data-testid="terrain-3d-zoom-in"
+          >
+            <Plus className="h-4 w-4" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setZoom((z) => Math.max(1, +(z - 0.5).toFixed(1)))}
+            aria-label="Zoom out"
+            className="grid h-9 w-9 place-items-center border-t border-white/10"
+          >
+            <Minus className="h-4 w-4" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setZoom(1)}
+            aria-label="Reset the view"
+            className="grid h-9 w-9 place-items-center border-t border-white/10"
+          >
+            <RotateCcw className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </div>
+        <ViewerGuide
+          id="terrain-3d"
+          title="Reading the 3D terrain"
+          position="top"
+          steps={[
+            [
+              "Find a height",
+              "Tap or hover over any tile to see its height above sea level and its position.",
+            ],
+            ["Zoom", "Use + and − on the right; the arrow resets the view."],
+            [
+              "Read the colours",
+              "Dark green is the lowest ground and pale cream the highest; the bar at the bottom gives the range.",
+            ],
+            ["Get fresh readings", "Refresh, above the view, samples the ground again."],
+          ]}
         />
         {!grid && !err && (
           <div className="absolute inset-0 grid place-items-center text-xs text-muted-foreground">
@@ -196,7 +250,7 @@ export function Terrain3D({
         )}
         {/* Legend */}
         {stats && (
-          <div className="absolute bottom-2 left-2 right-2 flex items-center gap-2 text-[9px] text-muted-foreground">
+          <div className="absolute bottom-2 left-14 right-2 flex items-center gap-2 text-[9px] text-muted-foreground">
             <span>{stats.minM} m</span>
             <div
               className="flex-1 h-1.5 rounded-full"

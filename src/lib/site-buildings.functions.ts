@@ -1,6 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { parseCoordInput } from "./request-guards";
-import { parseOverpassBuildings, type NearbyBuilding } from "./site-context";
+import {
+  parseOverpassBuildings,
+  parseOverpassInfrastructure,
+  type InfraLine,
+  type NearbyBuilding,
+} from "./site-context";
 
 /**
  * OpenStreetMap building footprints around a point, for neighbourhood context
@@ -21,6 +26,8 @@ const cache = new Map<string, { at: number; value: NearbyBuildingsResult }>();
 export type NearbyBuildingsResult = {
   status: "ok" | "unavailable";
   buildings: NearbyBuilding[];
+  /** Roads, railways and power lines in the same radius. */
+  infrastructure: InfraLine[];
   radiusM: number;
   source: string;
   retrievedAt: string;
@@ -57,11 +64,14 @@ export const getNearbyBuildings = createServerFn({ method: "POST" })
     const hit = cache.get(key);
     if (hit && Date.now() - hit.at < TTL_MS) return hit.value;
 
-    const q = `[out:json][timeout:20];way["building"](around:${BUILDINGS_RADIUS_M},${data.lat},${data.lng});out tags geom 400;`;
+    const around = `(around:${BUILDINGS_RADIUS_M},${data.lat},${data.lng})`;
+    // Buildings first, so the output cap never drops them for roads.
+    const q = `[out:json][timeout:25];(way["building"]${around};way["highway"]${around};way["railway"~"^(rail|light_rail|tram|narrow_gauge)$"]${around};way["power"~"^(line|minor_line)$"]${around};);out tags geom 900;`;
     const json = await overpass(q);
     const value: NearbyBuildingsResult = {
       status: json ? "ok" : "unavailable",
       buildings: json ? parseOverpassBuildings(json as never) : [],
+      infrastructure: json ? parseOverpassInfrastructure(json as never) : [],
       radiusM: BUILDINGS_RADIUS_M,
       source: "OpenStreetMap contributors (ODbL), via Overpass API",
       retrievedAt: new Date().toISOString(),

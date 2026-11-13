@@ -8,7 +8,7 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
 
 import { getElevationSamples } from "@/lib/elevation.functions";
 import { getNearbyBuildings } from "@/lib/site-buildings.functions";
-import type { NearbyBuilding } from "@/lib/site-context";
+import { toLocalMetres, type InfraLine, type NearbyBuilding } from "@/lib/site-context";
 import { getBuildCost } from "@/lib/cost-intel.functions";
 import { DEFAULT_BUILD_SELECTION, comparisonTotalText, kes } from "@/lib/cost-intel";
 import { countyForPoint } from "@/lib/location-validation";
@@ -33,6 +33,13 @@ import {
 import { describeStyle, loadInspiration, type DesignStyle } from "./design-style";
 import { InspirationPanel } from "./inspiration-panel";
 import { buildNeighbourGroup, localNeighbours } from "./site-neighbours";
+import {
+  buildInfrastructure,
+  buildNeighbours as buildModelNeighbours,
+  type ContextStyle,
+  type LocalInfra,
+} from "@/components/halisia/plot-planner/context-layers";
+import { ViewerGuide } from "@/components/halisia/viewer-guide";
 import { REAL_FURNITURE_CREDITS, preloadRealFurniture, upgradeFurniture } from "./real-furniture";
 // The effects and sky loader download after the first frame, so the view opens fast.
 import type { Finisher } from "./render-quality";
@@ -81,6 +88,8 @@ type Engine = {
   ground: THREE.Group | null;
   /** Neighbouring buildings from OpenStreetMap, on the terrain. */
   neighbours: THREE.Group | null;
+  /** Roads, railways and power lines around the site. */
+  infra: THREE.Group | null;
   terrain: SiteTerrain | null;
   yaw: number;
   pitch: number;
@@ -199,6 +208,9 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
   const [terrain, setTerrain] = useState<SiteTerrain | null>(null);
   /** OpenStreetMap footprints around the site; null while loading or unavailable. */
   const [nearby, setNearby] = useState<NearbyBuilding[] | null>(null);
+  const [nearbyInfra, setNearbyInfra] = useState<InfraLine[]>([]);
+  /** "model": the surroundings drawn in the same style as the house. */
+  const [ctxStyle, setCtxStyle] = useState<ContextStyle>("real");
   const [neighbourCount, setNeighbourCount] = useState(0);
   const [imagery, setImagery] = useState<Imagery | "loading">("loading");
   const [mode, setMode] = useState<"orbit" | "walk">("orbit");
@@ -401,6 +413,7 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
       colliders: [],
       ground: null,
       neighbours: null,
+      infra: null,
       terrain: null,
       yaw: 0,
       pitch: 0,
@@ -704,7 +717,10 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
     let alive = true;
     void getNearbyBuildings({ data: { lat: params.lat, lng: params.lng, refresh: false } })
       .then((r) => {
-        if (alive) setNearby(r.status === "ok" ? r.buildings : []);
+        if (alive) {
+          setNearby(r.status === "ok" ? r.buildings : []);
+          setNearbyInfra(r.status === "ok" ? (r.infrastructure ?? []) : []);
+        }
       })
       .catch(() => {
         if (alive) setNearby([]);
@@ -729,12 +745,48 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
       (terrain.kind === "terrain" ? terrain.spanM : SITE_SPAN_M) / 2 - 5,
       { halfX: half, halfZ: half },
     );
-    e.neighbours = buildNeighbourGroup(list, terrain);
+    e.neighbours =
+      ctxStyle === "model"
+        ? buildModelNeighbours(
+            list.map((b, i) => ({ id: i, ...b })),
+            (x, z) => heightAt(terrain, x, z),
+            "model",
+          )
+        : buildNeighbourGroup(list, terrain);
     e.scene.add(e.neighbours);
     setNeighbourCount(list.length);
     // The house size only changes the clear zone slightly; terrain and data drive this.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nearby, terrain]);
+  }, [nearby, terrain, ctxStyle]);
+
+  /* ---------------- roads, railways and power lines (OpenStreetMap) */
+  useEffect(() => {
+    const e = eng.current;
+    if (!e || !terrain || params.lat === null || params.lng === null) return;
+    if (e.infra) {
+      e.scene.remove(e.infra);
+      disposeSubtree(e.infra);
+      e.infra = null;
+    }
+    if (!nearbyInfra.length) return;
+    const lat = params.lat;
+    const lng = params.lng;
+    const half = (terrain.kind === "terrain" ? terrain.spanM : SITE_SPAN_M) / 2 - 2;
+    const lines: LocalInfra[] = nearbyInfra
+      .map((l) => ({
+        id: l.id,
+        kind: l.kind,
+        widthM: l.widthM,
+        name: l.name,
+        points: l.points
+          .map((q) => toLocalMetres(q.lat, q.lng, lat, lng))
+          .filter((p) => Math.abs(p.x) <= half && Math.abs(p.z) <= half),
+      }))
+      .filter((l) => l.points.length >= 2);
+    e.infra = buildInfrastructure(lines, (x, z) => heightAt(terrain, x, z), ctxStyle);
+    e.scene.add(e.infra);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nearbyInfra, terrain, ctxStyle]);
 
   /* ---------------- ground mesh, then the house on it */
   useEffect(() => {
@@ -745,12 +797,16 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
       disposeSubtree(e.ground);
     }
     e.terrain = terrain;
-    e.ground = buildGround(terrain, imagery === "loading" ? null : imagery, e.renderer);
+    e.ground = buildGround(
+      terrain,
+      imagery === "loading" || ctxStyle === "model" ? null : imagery,
+      e.renderer,
+    );
     e.scene.add(e.ground);
     placeHouse(stacked);
     // Rebuilding the house on every imagery change is unnecessary; terrain and stack drive it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [terrain, imagery]);
+  }, [terrain, imagery, ctxStyle]);
 
   useEffect(() => {
     if (eng.current?.terrain) placeHouse(stacked);
@@ -1061,6 +1117,28 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
     <div className="flex flex-col gap-4" data-testid="model-lab-site-mode">
       <div className="relative h-[60vh] min-h-[320px] overflow-hidden rounded-2xl border border-white/10 bg-black/20">
         <div ref={hostRef} className="h-full w-full" />
+        {!touring && (
+          <ViewerGuide
+            id="site-viewer"
+            title="Moving around your house"
+            buttonClassName="left-2 bottom-3"
+            steps={[
+              ["Turn the view", "Drag with one finger (or the mouse)."],
+              ["Zoom", "Pinch or scroll. Plan view looks straight down with the roof off."],
+              ["Slide the view", "Drag with two fingers (right-drag on a computer)."],
+              ["Walk inside", "Choose Walk, then use the arrow pad, or Go to a room to jump in."],
+              ["See inside", "See inside lifts the roof so you can look into the rooms."],
+              [
+                "Film and pictures",
+                "Film tour plays a short film; Save HD picture keeps the view.",
+              ],
+              [
+                "Surroundings",
+                "Switch the neighbourhood between the photo and model style, to match your design.",
+              ],
+            ]}
+          />
+        )}
         {touring && (
           <>
             <div className="pointer-events-none absolute inset-x-0 top-0 h-[9%] bg-black" />
@@ -1238,6 +1316,15 @@ export default function SiteViewer({ params }: { params: SiteParams }) {
           onClick={() => setHour(17.4)}
         >
           Golden hour
+        </KitButton>
+        <KitButton
+          size="sm"
+          variant={ctxStyle === "model" ? "primary" : "secondary"}
+          aria-pressed={ctxStyle === "model"}
+          data-testid="site-context-style"
+          onClick={() => setCtxStyle((v) => (v === "model" ? "real" : "model"))}
+        >
+          {ctxStyle === "model" ? "Surroundings: model style" : "Surroundings: as photographed"}
         </KitButton>
         <KitButton
           size="sm"
