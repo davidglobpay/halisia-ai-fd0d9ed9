@@ -23,10 +23,10 @@ import { heightAt, type TerrainGrid } from "@/lib/site-context";
 import { NO_FEATURES, type BuildingPlan, type SiteFeatures } from "@/lib/building-types";
 import { buildBuildingMassing } from "./building-massing";
 import { buildSiteFeatures } from "./site-features";
+import { describeMeasurement, footprintDims, measureBetween } from "@/lib/measure-3d";
 import {
   buildInfrastructure,
   buildNeighbours,
-  describeBuilding,
   type ContextStyle,
   type LocalBuilding,
   type LocalInfra,
@@ -76,7 +76,49 @@ export type PlotViewerProps = {
   showInfrastructure?: boolean;
   /** "real": massing over the satellite photo; "model": the same look as the design. */
   contextStyle?: ContextStyle;
+  /** Ground heights multiplied by this to show the slopes (buildings stay true). */
+  reliefScale?: number;
+  /** Tape-measure mode: taps pick points instead of moving the house. */
+  measuring?: boolean;
 };
+
+/** What the info card shows after a tap. */
+type Picked =
+  | { kind: "text"; text: string }
+  | { kind: "building"; b: LocalBuilding & { corrected?: boolean } };
+
+/** A text label that always faces the camera, for the tape measure. */
+function labelSprite(text: string): THREE.Sprite {
+  const cv = document.createElement("canvas");
+  const g = cv.getContext("2d");
+  const font = "600 44px system-ui, sans-serif";
+  let w = 400;
+  if (g) {
+    g.font = font;
+    w = Math.ceil(g.measureText(text).width) + 48;
+  }
+  cv.width = w;
+  cv.height = 80;
+  const c = cv.getContext("2d");
+  if (c) {
+    c.fillStyle = "rgba(20,24,22,0.86)";
+    c.beginPath();
+    c.roundRect(0, 0, w, 80, 24);
+    c.fill();
+    c.font = font;
+    c.fillStyle = "#ffffff";
+    c.textBaseline = "middle";
+    c.fillText(text, 24, 42);
+  }
+  const tex = new THREE.CanvasTexture(cv);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const sprite = new THREE.Sprite(
+    new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true }),
+  );
+  sprite.renderOrder = 10;
+  sprite.userData.aspect = w / 80;
+  return sprite;
+}
 
 /** Imagery zoom levels to try, sharpest first. */
 const IMAGERY_ZOOMS = [19, 18, 17] as const;
@@ -321,6 +363,7 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
     ground: THREE.Mesh | null;
     neighbours: THREE.Group | null;
     infra: THREE.Group | null;
+    measure: THREE.Group | null;
   } | null>(null);
   const propsRef = useRef(props);
   propsRef.current = props;
@@ -331,11 +374,26 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
   const style: ContextStyle = props.contextStyle ?? "real";
   const showInfra = props.showInfrastructure ?? true;
   /** What a tap on a neighbouring building or road says. */
-  const [picked, setPicked] = useState<string | null>(null);
+  const [picked, setPicked] = useState<Picked | null>(null);
+  /** Heights the user corrected for neighbouring buildings (OpenStreetMap id → metres). */
+  const [heightFix, setHeightFix] = useState<Record<number, number>>({});
+  /** The last tape-measure reading, in words. */
+  const [measureText, setMeasureText] = useState<string | null>(null);
+  const measurePts = useRef<THREE.Vector3[]>([]);
+  const clearMeasureRef = useRef<() => void>(() => {});
 
   const terrainOn = ground === "terrain" && !!props.terrain;
+  const relief = terrainOn && !props.measuring ? Math.max(1, props.reliefScale ?? 1) : 1;
   const heightRef = useRef<HeightFn>(() => 0);
-  heightRef.current = terrainOn ? (x, z) => heightAt(props.terrain ?? null, x, z) : () => 0;
+  {
+    // Exaggerate around the ground at the plot, so the plot stays where it is.
+    const base = terrainOn ? heightAt(props.terrain ?? null, 0, 0) : 0;
+    heightRef.current = terrainOn
+      ? relief === 1
+        ? (x, z) => heightAt(props.terrain ?? null, x, z)
+        : (x, z) => base + (heightAt(props.terrain ?? null, x, z) - base) * relief
+      : () => 0;
+  }
 
   // Scene setup, once.
   useEffect(() => {
@@ -390,6 +448,7 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
       ground: null,
       neighbours: null,
       infra: null,
+      measure: null,
     };
 
     const resize = () => {
@@ -455,6 +514,69 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
       },
     });
 
+    // Tape measure: two points, a line between them, guides showing the
+    // ground distance and the rise, and a label at the middle.
+    const drawMeasure = () => {
+      const st = stateRef.current;
+      if (!st) return;
+      if (st.measure) {
+        scene.remove(st.measure);
+        disposeTree(st.measure);
+        st.measure = null;
+      }
+      const pts = measurePts.current;
+      if (!pts.length) return;
+      const g = new THREE.Group();
+      g.name = "tape-measure";
+      const dot = new THREE.MeshBasicMaterial({ color: 0xffb020, depthTest: false });
+      for (const p of pts) {
+        const m = new THREE.Mesh(
+          new THREE.SphereGeometry(Math.max(0.3, camera.position.distanceTo(p) * 0.008), 16, 12),
+          dot,
+        );
+        m.position.copy(p);
+        m.renderOrder = 9;
+        g.add(m);
+      }
+      if (pts.length === 2) {
+        const [a, b] = pts;
+        const line = (from: THREE.Vector3, to: THREE.Vector3, color: number, dashed: boolean) => {
+          const geo = new THREE.BufferGeometry().setFromPoints([from, to]);
+          const mat = dashed
+            ? new THREE.LineDashedMaterial({ color, dashSize: 0.6, gapSize: 0.4, depthTest: false })
+            : new THREE.LineBasicMaterial({ color, depthTest: false });
+          const l = new THREE.Line(geo, mat);
+          if (dashed) l.computeLineDistances();
+          l.renderOrder = 9;
+          g.add(l);
+        };
+        const corner = new THREE.Vector3(b.x, a.y, b.z);
+        line(a, b, 0xffb020, false);
+        line(a, corner, 0xffffff, true);
+        line(corner, b, 0xffffff, true);
+        const m = measureBetween(a, b);
+        const label = labelSprite(`${m.directM.toFixed(2)} m`);
+        const mid = a.clone().add(b).multiplyScalar(0.5);
+        const d = camera.position.distanceTo(mid);
+        const h = Math.max(1.2, d * 0.045);
+        label.scale.set(h * (label.userData.aspect as number), h, 1);
+        label.position.copy(mid).add(new THREE.Vector3(0, h * 0.9, 0));
+        g.add(label);
+        setMeasureText(describeMeasurement(m));
+      } else setMeasureText("Now tap the second point.");
+      scene.add(g);
+      st.measure = g;
+    };
+    const addMeasurePoint = (p: THREE.Vector3) => {
+      measurePts.current = measurePts.current.length >= 2 ? [p] : [...measurePts.current, p];
+      drawMeasure();
+    };
+    clearMeasureRef.current = () => {
+      measurePts.current = [];
+      drawMeasure();
+      setMeasureText(null);
+    };
+
     // Dragging the selected object across the ground.
     const raycaster = new THREE.Raycaster();
     const flat = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
@@ -477,9 +599,24 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
       const p = new THREE.Vector3();
       return raycaster.ray.intersectPlane(flat, p) ? p : null;
     };
+    // In tape-measure mode a short tap (not a drag) picks a point.
+    let tap: { id: number; x: number; y: number; t: number } | null = null;
+    const pickPoint = (): THREE.Vector3 | null => {
+      const st = stateRef.current;
+      if (!st) return null;
+      const targets: THREE.Object3D[] = [];
+      for (const o of [st.house, st.neighbours, st.ground, st.features])
+        if (o && o.visible) targets.push(o);
+      const hit = raycaster.intersectObjects(targets, true)[0];
+      return hit ? hit.point.clone() : groundHit();
+    };
     const onDown = (ev: PointerEvent) => {
       const st = stateRef.current;
       if (!st) return;
+      if (propsRef.current.measuring) {
+        tap = { id: ev.pointerId, x: ev.clientX, y: ev.clientY, t: performance.now() };
+        return;
+      }
       const obj = propsRef.current.target === "house" ? st.house : st.plot;
       aim(ev);
       if (!obj || !obj.visible || !raycaster.intersectObject(obj, true).length) {
@@ -489,8 +626,11 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
           ...(st.infra ? raycaster.intersectObject(st.infra, true) : []),
         ].sort((p, q) => p.distance - q.distance);
         const ud = hits[0]?.object.userData;
-        if (ud?.building) setPicked(describeBuilding(ud.building as LocalBuilding));
-        else if (ud?.infra) {
+        if (ud?.building) {
+          const id = (ud.building as LocalBuilding).id;
+          const orig = propsRef.current.buildings?.find((x) => x.id === id);
+          setPicked({ kind: "building", b: orig ?? (ud.building as LocalBuilding) });
+        } else if (ud?.infra) {
           const l = ud.infra as LocalInfra;
           const what =
             l.kind === "rail"
@@ -502,9 +642,10 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
                   : l.kind === "major"
                     ? "Main road"
                     : "Road";
-          setPicked(
-            `${what}${l.name ? `: ${l.name}` : ""}, from OpenStreetMap. Drawn about ${l.widthM.toFixed(1)} m wide, a typical width for its class, not a measurement.`,
-          );
+          setPicked({
+            kind: "text",
+            text: `${what}${l.name ? `: ${l.name}` : ""}, from OpenStreetMap. Drawn about ${l.widthM.toFixed(1)} m wide, a typical width for its class, not a measurement.`,
+          });
         }
         return;
       }
@@ -533,6 +674,17 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
       else cur.onPlotChange(next);
     };
     const onUp = (ev: PointerEvent) => {
+      if (tap && tap.id === ev.pointerId) {
+        const moved = Math.hypot(ev.clientX - tap.x, ev.clientY - tap.y);
+        const quick = performance.now() - tap.t < 500;
+        tap = null;
+        if (moved < 8 && quick && propsRef.current.measuring) {
+          aim(ev);
+          const p = pickPoint();
+          if (p) addMeasurePoint(p);
+        }
+        return;
+      }
       if (!drag || drag.id !== ev.pointerId) return;
       drag = null;
       controls.enabled = true;
@@ -600,7 +752,7 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
       for (let i = 0; i < pos.count; i++) {
         const x = pos.getX(i) + imagery.centre.x;
         const z = pos.getZ(i) + imagery.centre.z;
-        pos.setY(i, heightAt(props.terrain ?? null, x, z));
+        pos.setY(i, heightRef.current(x, z));
       }
       pos.needsUpdate = true;
       geo.computeVertexNormals();
@@ -626,7 +778,7 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
     mesh.name = "satellite-ground";
     st.scene.add(mesh);
     st.ground = mesh;
-  }, [imagery, ground, terrainOn, props.terrain, style]);
+  }, [imagery, ground, terrainOn, props.terrain, style, relief]);
 
   // House massing for the chosen typology and system.
   useEffect(() => {
@@ -708,6 +860,7 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
     props.plot.depthM,
     terrainOn,
     props.terrain,
+    relief,
     props.building,
     props.typology,
     props.structure,
@@ -730,7 +883,17 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
     );
     st.plot.visible = showPlot;
     st.scene.add(st.plot);
-  }, [props.plot.widthM, props.plot.depthM, ppX, ppZ, ppRot, terrainOn, props.terrain, showPlot]);
+  }, [
+    props.plot.widthM,
+    props.plot.depthM,
+    ppX,
+    ppZ,
+    ppRot,
+    terrainOn,
+    props.terrain,
+    relief,
+    showPlot,
+  ]);
 
   // Neighbouring buildings.
   useEffect(() => {
@@ -742,9 +905,14 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
       st.neighbours = null;
     }
     if (!showBuildings || !props.buildings?.length) return;
-    st.neighbours = buildNeighbours(props.buildings, heightRef.current, style);
+    const list = props.buildings.map((b) =>
+      heightFix[b.id] !== undefined
+        ? { ...b, heightM: heightFix[b.id], defaulted: false, corrected: true }
+        : b,
+    );
+    st.neighbours = buildNeighbours(list, heightRef.current, style);
     st.scene.add(st.neighbours);
-  }, [props.buildings, showBuildings, terrainOn, props.terrain, style]);
+  }, [props.buildings, showBuildings, terrainOn, props.terrain, style, relief, heightFix]);
 
   // Roads, railways and power lines.
   useEffect(() => {
@@ -758,7 +926,7 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
     if (!showInfra || !props.infrastructure?.length) return;
     st.infra = buildInfrastructure(props.infrastructure, heightRef.current, style);
     st.scene.add(st.infra);
-  }, [props.infrastructure, showInfra, terrainOn, props.terrain, style]);
+  }, [props.infrastructure, showInfra, terrainOn, props.terrain, style, relief]);
 
   // House placement on the ground, every render: the floor sits just above
   // the highest ground under the footprint, and footings reach down below
@@ -841,16 +1009,65 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
     st.person.position.set(px, heightRef.current(px, pz), pz);
   });
 
+  // Leaving tape-measure mode clears the reading.
+  useEffect(() => {
+    if (!props.measuring) clearMeasureRef.current();
+  }, [props.measuring]);
+
   return (
     <div className="relative h-full w-full">
       <div ref={hostRef} className="h-full w-full" />
+      {props.measuring && (
+        <div
+          role="status"
+          data-testid="pp-measure"
+          className="absolute bottom-2 left-2 right-16 z-10 flex items-center gap-2 rounded-xl bg-card/95 px-3 py-2 text-xs text-card-foreground shadow"
+        >
+          <span className="flex-1">
+            {measureText ??
+              "Tape measure: tap a point on the ground, a roof, a wall or the house, then tap a second point."}
+          </span>
+          {measureText && (
+            <button
+              type="button"
+              onClick={() => clearMeasureRef.current()}
+              className="min-h-8 rounded-full border border-border px-2"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      )}
+      {relief > 1 && !props.measuring && (
+        <p
+          data-testid="pp-relief-note"
+          className="pointer-events-none absolute bottom-2 left-2 z-10 rounded-full bg-black/60 px-2 py-1 text-[11px] text-white"
+        >
+          Ground heights ×{relief} to show the slopes; buildings at true height.
+        </p>
+      )}
       {picked && (
         <div
           role="status"
           className="absolute left-14 right-16 top-2 z-10 flex items-start gap-2 rounded-xl bg-card/95 px-3 py-2 text-xs text-card-foreground shadow"
           data-testid="pp-picked"
         >
-          <span className="flex-1">{picked}</span>
+          {picked.kind === "text" ? (
+            <span className="flex-1">{picked.text}</span>
+          ) : (
+            <BuildingCard
+              b={picked.b}
+              fixedM={heightFix[picked.b.id]}
+              onHeight={(h) =>
+                setHeightFix((cur) => {
+                  const next = { ...cur };
+                  if (h === null) delete next[picked.b.id];
+                  else next[picked.b.id] = h;
+                  return next;
+                })
+              }
+            />
+          )}
           <button
             type="button"
             onClick={() => setPicked(null)}
@@ -873,6 +1090,72 @@ export default function PlotViewerInternal(props: PlotViewerProps) {
               : "Satellite imagery could not be loaded; the house and plot are shown on plain ground."}
         </p>
       )}
+    </div>
+  );
+}
+
+/** Length, width, footprint and height of a tapped neighbouring building. */
+function BuildingCard({
+  b,
+  fixedM,
+  onHeight,
+}: {
+  b: LocalBuilding;
+  fixedM: number | undefined;
+  onHeight: (heightM: number | null) => void;
+}) {
+  const d = footprintDims(b.ring);
+  const h = fixedM ?? b.heightM;
+  const floors = Math.max(1, Math.round(h / 3));
+  const source =
+    fixedM !== undefined
+      ? "height you set"
+      : b.defaulted
+        ? "no height recorded, drawn as one floor"
+        : "recorded height or floor count";
+  return (
+    <div className="flex-1 space-y-1" data-testid="pp-building-card">
+      <p className="font-medium">Building from OpenStreetMap</p>
+      <p>
+        Length <b>{d.lengthM.toFixed(1)} m</b> · Width <b>{d.widthM.toFixed(1)} m</b> · Footprint{" "}
+        <b>{Math.round(d.areaM2)} m²</b>
+      </p>
+      <p>
+        Height <b>{h.toFixed(1)} m</b> (about {floors} floor{floors === 1 ? "" : "s"}; {source})
+      </p>
+      <div className="flex flex-wrap items-center gap-1 pt-0.5">
+        <span className="text-muted-foreground">Know the floors?</span>
+        <button
+          type="button"
+          aria-label="One floor fewer"
+          disabled={floors <= 1}
+          onClick={() => onHeight(Math.max(1, floors - 1) * 3)}
+          className="min-h-8 min-w-8 rounded-full border border-border px-2 disabled:opacity-40"
+        >
+          −
+        </button>
+        <button
+          type="button"
+          aria-label="One floor more"
+          disabled={floors >= 60}
+          onClick={() => onHeight(Math.min(60, floors + 1) * 3)}
+          className="min-h-8 min-w-8 rounded-full border border-border px-2 disabled:opacity-40"
+        >
+          +
+        </button>
+        {fixedM !== undefined && (
+          <button
+            type="button"
+            onClick={() => onHeight(null)}
+            className="min-h-8 rounded-full border border-border px-2"
+          >
+            Undo
+          </button>
+        )}
+      </div>
+      <p className="text-muted-foreground">
+        Footprint measured from the mapped outline. Use the tape measure for anything else.
+      </p>
     </div>
   );
 }

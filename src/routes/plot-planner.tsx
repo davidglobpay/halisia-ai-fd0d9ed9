@@ -1,7 +1,7 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Crosshair, Eye, Minus, PersonStanding, Plus, RotateCcw } from "lucide-react";
+import { Crosshair, Eye, Minus, PersonStanding, Plus, RotateCcw, Ruler } from "lucide-react";
 import { MapControlDock } from "@/components/halisia/map-controls/map-control-dock";
 import { StreetViewPanel } from "@/components/halisia/land-passport/street-view-panel";
 import type {
@@ -150,6 +150,8 @@ function PlotPlannerPage() {
     "streetview",
   ]);
   const [contextStyle, setContextStyle] = useState<ContextStyle>("real");
+  const [measuring, setMeasuring] = useState(false);
+  const [reliefScale, setReliefScale] = useState(1);
   const apiRef = useRef<PlotViewerApi | null>(null);
   const viewerBoxRef = useRef<HTMLDivElement | null>(null);
 
@@ -559,6 +561,13 @@ function PlotPlannerPage() {
                   icon: PersonStanding,
                   onClick: () => apiRef.current?.eyeLevel(),
                 },
+                {
+                  id: "measure",
+                  label: measuring ? "Stop measuring" : "Tape measure",
+                  icon: Ruler,
+                  pressed: measuring,
+                  onClick: () => setMeasuring((m) => !m),
+                },
               ]}
               layers={[
                 {
@@ -578,6 +587,18 @@ function PlotPlannerPage() {
                   ],
                   selected: [ground],
                   onChange: (v) => setGround((v[0] as GroundMode) ?? "terrain"),
+                },
+                {
+                  id: "relief",
+                  title: "Ground relief",
+                  kind: "single",
+                  options: [
+                    { id: "1", label: "True heights", hint: "Use this for measuring" },
+                    { id: "2", label: "Slopes ×2", hint: "Ground heights doubled to see the fall" },
+                    { id: "3", label: "Slopes ×3", hint: "Ground heights tripled" },
+                  ],
+                  selected: [String(reliefScale)],
+                  onChange: (v) => setReliefScale(Number(v[0] ?? 1) || 1),
                 },
                 {
                   id: "style",
@@ -659,6 +680,8 @@ function PlotPlannerPage() {
               infrastructure={localInfra}
               showInfrastructure={overlays.includes("infrastructure")}
               contextStyle={contextStyle}
+              measuring={measuring}
+              reliefScale={reliefScale}
             />
             <ViewerGuide
               id="plot-planner"
@@ -673,7 +696,15 @@ function PlotPlannerPage() {
                 ],
                 [
                   "See what is around",
-                  "Tap a neighbouring building or road to see its height or type.",
+                  "Tap a neighbouring building for its length, width, footprint and height. If you know its floors, set them with − and +.",
+                ],
+                [
+                  "Tape measure",
+                  "The ruler button: tap any two points (ground, roof, wall, house) for the straight distance, the distance across the ground and the height between them.",
+                ],
+                [
+                  "See the slopes",
+                  "Layers → Ground relief ×2 or ×3 exaggerates the ground so gentle slopes show. Measuring always uses true heights.",
                 ],
                 ["Eye level", "The person button stands you at the road, looking at the house."],
                 ["Layers", "The layers button switches satellite, terrain and Model style."],

@@ -198,9 +198,9 @@ test("plot planner: first-visit guide, eye level, model style and road layer", a
 
   const guide = page.getByTestId("guide-plot-planner");
   await expect(guide).toBeVisible();
-  await expect(guide).toContainText("1 of 7");
+  await expect(guide).toContainText("1 of 9");
   await guide.getByRole("button", { name: "Next" }).click();
-  await expect(guide).toContainText("2 of 7");
+  await expect(guide).toContainText("2 of 9");
   await guide.getByRole("button", { name: "Close the guide" }).click();
   await expect(guide).toHaveCount(0);
   // It comes back from the ? button.
@@ -217,6 +217,42 @@ test("plot planner: first-visit guide, eye level, model style and road layer", a
     "true",
   );
   await expect(page.getByTestId("pp-dock-layer-context-infrastructure")).toBeVisible();
+  await page.keyboard.press("Escape");
+  expect(errors).toEqual([]);
+});
+
+test("plot planner: tape measure and ground relief", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await stubImagery(page);
+  await page.goto(URL);
+  const canvas = page.getByTestId("plot-viewer-canvas");
+  await expect(canvas).toBeVisible({ timeout: 30_000 });
+
+  const dock = page.getByTestId("pp-dock");
+  await dock.getByRole("button", { name: "Tape measure", exact: true }).click();
+  const panel = page.getByTestId("pp-measure");
+  await expect(panel).toContainText("tap a point");
+
+  // Two short taps a little apart on the scene.
+  const box = await canvas.boundingBox();
+  if (!box) throw new Error("no canvas box");
+  const cx = box.x + box.width / 2;
+  const cy = box.y + box.height / 2;
+  await page.mouse.click(cx - 60, cy + 40);
+  await expect(panel).toContainText("second point");
+  await page.mouse.click(cx + 60, cy + 60);
+  await expect(panel).toContainText("m straight");
+  await expect(panel).toContainText("across the ground");
+  await panel.getByRole("button", { name: "Clear" }).click();
+  await expect(panel).toContainText("tap a point");
+
+  await dock.getByRole("button", { name: "Stop measuring", exact: true }).click();
+  await expect(panel).toHaveCount(0);
+
+  await dock.getByRole("button", { name: "Map layers", exact: true }).click();
+  await page.getByTestId("pp-dock-layer-relief-2").click();
+  await expect(page.getByTestId("pp-dock-layer-relief-2")).toHaveAttribute("aria-checked", "true");
   await page.keyboard.press("Escape");
   expect(errors).toEqual([]);
 });
